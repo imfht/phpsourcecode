@@ -1,0 +1,87 @@
+{layout name="passport:layout" /}
+<div class="titlebar">
+    <div class="fn-left">
+        <svg class="icon" aria-hidden="true"><use xlink:href="#icon-gongzuorizhi"></use></svg> 公众号管理
+    </div>
+</div>
+<div class="wechat_box">
+    <div class="wechat">
+        <div class="wechat_title">菜单预览</div>
+        <div class="wechat_menu">
+            <ul class="pre_menu_item">
+                {foreach $menu as $vo}
+                    {if $vo.parent_id == 0}
+                        <li><a {$parent_id == $vo.id ?'class="fn-fb blue"':''} href="{:url('passport.official/index',['parent_id'=>$vo.id])}">{$vo.name}</a><div class="sub-pre-menu-box">{foreach $menu as $rs}{if $rs.parent_id == $vo.id}<span>{$rs.name}</span>{/if}{/foreach}  </div></li>
+                    {/if}
+                {/foreach}   
+            </ul>
+        </div>
+    </div>
+    <div class="wechat_lists">
+        <div id="actionbar">
+            <div class="fn-left button-group">
+                {if $action_btn}
+                    <a href="javascript:;" url="{:url('passport.official/menuAdd',['parent_id' => $parent_id])}" class="button button-green win"><i class="iconfont icon-add_icon"></i>增加自定义菜单</a>
+                {/if}
+                <button class="button button-blue weixin_menu"><i class="iconfont icon-wechat"></i>立即同步当前菜单</button>
+            </div>
+        </div>
+        <div class="tipbox tipbox-warning mb10">
+            友情提示：<span class="gray"><p>1、添加公众号菜单后必须点击同步菜单功能,才能同步您的公众号菜单</p><p>2、一级菜单不超过3个，二级菜单不超过5个。</p></span>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="w40 fn-tac"><input type="checkbox" onclick="CheckAll(this)"></th>
+                    <th class="w180">操作</th>
+                    <th class="w60 fn-tac">排序</th>
+                    <th class="w200">菜单名称</th>
+                    <th class="w120 fn-tac">链接类型</th>
+                    <th>链接/触发KEY/小程序地址</th>
+                    <th class="w140">更新时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {foreach $lists as $vo}
+                    <tr>
+                        <td class="fn-tac"><input type="checkbox" onclick="CheckAll(this)"></td>
+                        <td>
+                            <a class="button win" href="javascript:;" url="{:url('passport.official/menuEdit',['id' => $vo.id])}"><i class="iconfont icon-edit"></i>编辑</a>
+                            <a class="button isDel" url="{:url('passport.official/menuDel',['id' => $vo.id])}" href="javascript:;"><i class="iconfont icon-lajixiang"></i>删除</a>
+                        </td>
+                        <td class="fn-tac"><input name="sort" class="fn-tac w40 input input-mini" type="text" value="{$vo['sort']}" id="{$vo.id}" /></td>
+                        <td>{$vo.name}</td>
+                        <td class="w120 fn-tac">
+                            {if $vo.types == 'click'}
+                                <span class="badge bg-red">点击类型</span>
+                            {elseif $vo.types == 'miniprogram'}
+                                <span class="badge bg-red">小程序类型</span>
+                            {else}
+                                <span class="badge bg-red">网页连接</span>
+                            {/if}
+                        </td>
+                        <td>{if $vo.types == 'click'}{$vo.key}{elseif $vo.types == 'miniprogram'}{$vo.pagepath}{else}{$vo.url}{/if}</td>
+                        <td>{$vo.update_time|date='Y-m-d H:i'}</td>
+                    </tr>
+                {/foreach}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+Do('base','layer',function () {
+    sort("{:url('passport.official/menuSort')}");
+    $('.isDel').isDel();
+    $(".win").win();
+    $(".weixin_menu").click(function() {
+        parent.layer.confirm('您确定要同步授权公众号微信菜单?同步后原菜单将会被覆盖替换。',{icon:3},function(index){
+            parent.layer.close(index);
+            var load = parent.layer.load(0,{shade: [0.2,'#000']}); 
+            $.post('{:url("passport.official/menuSync")}',function(data) {
+                parent.layer.close(load); 
+                parent.layer.alert(data.msg);
+            },"json");
+        });
+    })
+})
+</script>

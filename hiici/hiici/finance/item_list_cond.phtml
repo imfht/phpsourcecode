@@ -1,0 +1,131 @@
+<?php require_once('finance/inc/item_kind.php') ?>
+<?php require_once('finance/inc/item_status.php') ?>
+<?php 
+
+if (!empty($_POST)) die;
+
+$user_id = @intval($_GET['user_id']);
+if (!empty($user_id)) {
+	$cond = "WHERE user_id = ".$user_id." AND audited = 'Y'";
+
+} else {
+	$lmcy_id = intval($_GET['lmcy_id']);
+	$cond = "WHERE lmcy_id = ".$lmcy_id." AND audited = 'Y'";
+}
+
+$page = @intval($_GET['page']);
+
+if (empty($page)) { $page = 1; }
+$limit = 15;
+
+$items = dt_query("SELECT id, kind, name, money, revenue, term, status, invest, lmcy_id, c_at FROM finance_item $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$items) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php if (!empty($user_id)) { ?>
+<?php require_once('finance/inc/nav_sub_tz.html') ?>
+<?php } else { ?>
+<div class="finance-lmcy-h-img" style="background-image:url('img/finance/lmcy/h_img/<?php echo $lmcy_id ?>')">
+	<div class="container">
+		<div class="row clearfix">
+			<div class="col-md-9 column"> </div>
+			<div class="col-md-3 column">
+				<a class="btn btn-success btn-lg" href="<?php echo s_url('?c=finance&a=item_add_index&lmcy_id='.$lmcy_id) ?>">我要融资</a>
+			</div>
+		</div>
+	</div>
+</div>
+<?php } ?>
+<div class="container">
+	<?php if (!empty($user_id)) { ?>
+	<h3 style="font-size:18px"> [<?php echo dt_query_one('SELECT name FROM user_info WHERE id = '.$user_id)['name'] ?>] 所有融资项目 </h3>
+	<?php } else { ?>
+	<h3 style="font-size:17px"> 全部项目 </h3>
+	<?php } ?>
+	<hr style="border-top:1px solid #ccc">
+	<div class="row clearfix">
+		<div class="col-md-9 column" style="border-right: 1px solid #ccc">
+			<?php while($item = mysql_fetch_array($items)) { ?>
+			<div class="finance-item-well">
+				<div class="row clearfix">
+					<div class="col-md-8 column">
+						<h4 style="font-size:16px"> <a href="<?php echo s_url('?c=finance&a=item_show&item_id='.$item['id']) ?>"><?php echo $item['name'] ?></a> </h4>
+						<span class="label label-info"><?php echo $item_status[$item['status']]['name'] ?></span>
+						<span class="label label-default"><span class="glyphicon glyphicon-retweet"></span> <?php echo $item_kind[$item['kind']]['name'] ?></span>
+						<a href="<?php echo s_url('?c=finance&a=item_list_cond&lmcy_id='.$item['lmcy_id']) ?>"><span class="label label-success"><span class="glyphicon glyphicon-th-large"></span> <?php echo dt_query_one('SELECT name FROM finance_lmcy WHERE id = '.$item['lmcy_id'])['name'] ?></span></a>
+						<div class="row clearfix" style="margin-top:25px">
+							<div class="col-md-3 column">
+								<a class="btn btn-default btn-lg btn-block" href="<?php echo s_url('?c=finance&a=item_show&item_id='.$item['id']) ?>">查看详情</a>
+							</div>
+							<div class="col-md-9 column">
+								<div class="progress progress-striped active" style="margin-bottom:5px;height:16px;width:180px">
+									<div class="progress-bar progress-bar-success" style="width: <?php $p_b_w = (time() - $item['c_at'])/(31*24*3600); echo ($p_b_w < 1) ? $p_b_w * 100 : 100; ?>%">
+										<span class="sr-only"></span>
+									</div>
+								</div>
+								<p style="margin-top:5px"> 项目<?php echo $item_status[$item['status']]['name'] ?>，融资金额 <span class="important"><?php echo $item['money'] ?></span> 元 </p>
+
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 column">
+						<div class="finance-item-stamp status-<?php echo $item['status'] ?>"></div>
+						<ul class="list-unstyled">
+							<li> <span class="info-item">融资金额</span> <?php echo $item['money'] ?> </li>
+							<li> <span class="info-item">年化收益</span>  <span class="important"><?php echo $item['revenue'] ?>%</span> </li>
+							<li> <span class="info-item">融资期限</span>  <?php echo $item['term'] ?> 个月 </li>
+							<li> <span class="info-item">意向投资</span>  <span style="font-size:15px"><?php echo $item['invest'] ?> 人</span> </li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<?php } ?>
+
+			<?php if (!empty($user_id)) { ?>
+			<?php pagination('finance_item', $cond, $page, $limit, '?c=finance&a=item_list_cond&user_id='.$user_id.'&page=') ?>
+			<?php } else { ?>
+			<?php pagination('finance_item', $cond, $page, $limit, '?c=finance&a=item_list_cond&lmcy_id='.$lmcy_id.'&page=') ?>
+			<?php } ?>
+		</div>
+
+		<div class="col-md-3 column">
+			<br>
+			<section>
+				<h3 style="font-size:18px">项目概况</h3>
+				<hr style="border-top:1px dashed #ccc">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>状态</th>
+							<th class="text-center">项目数</th>
+							<th class="text-right">金额（元）</th>
+						</tr>
+					</thead>
+					<tbody>
+					<tr>
+						<td><?php echo $item_status[FINANCE_ITEM_STATUS_TB]['name'] ?></td>
+						<td class="text-center"><?php echo dt_count('finance_item', $cond." AND status = ".FINANCE_ITEM_STATUS_TB) ?></td>
+						<td class="text-right"><?php echo dt_sum('finance_item', 'money', $cond." AND status = ".FINANCE_ITEM_STATUS_TB) ?></td>
+					</tr>
+					<tr>
+						<td><?php echo $item_status[FINANCE_ITEM_STATUS_HK]['name'] ?></td>
+						<td class="text-center"><?php echo dt_count('finance_item', $cond." AND status = ".FINANCE_ITEM_STATUS_HK) ?></td>
+						<td class="text-right"><?php echo dt_sum('finance_item', 'money', $cond." AND status = ".FINANCE_ITEM_STATUS_HK) ?></td>
+					</tr>
+					<tr>
+						<td><?php echo $item_status[FINANCE_ITEM_STATUS_JS]['name'] ?></td>
+						<td class="text-center"><?php echo dt_count('finance_item', $cond." AND status = ".FINANCE_ITEM_STATUS_JS) ?></td>
+						<td class="text-right"><?php echo dt_sum('finance_item', 'money', $cond." AND status = ".FINANCE_ITEM_STATUS_JS) ?></td>
+					</tr>
+					</tbody>
+				</table>
+			</section>
+		</div>
+	</div>
+</div>
+
+

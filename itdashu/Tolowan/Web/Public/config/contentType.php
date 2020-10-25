@@ -1,0 +1,21 @@
+<?php
+$settings = array(
+    'html' => 'text/html',
+    'atom' => 'application/atom+xml',
+    'css' => 'text/css',
+    'js' => 'text/javascript',
+    'jpeg' => 'image/jpeg',
+    'json' => 'application/json',
+    'pdf' => 'application/pdf',
+    'rss' => 'application/rss+xml; charset=ISO-8859-1',
+    'txt' => 'text/plain',
+    'xml' => 'text/xml',
+    'png' => 'image/png',
+    'jpg' => 'image/jpeg',
+    'gif' => 'image/gif',
+    'exe' => 'application/octet-stream',
+    'zip' => 'application/zip',
+    'mp3' => 'audio/mpeg',
+    'mpg' => 'video/mpeg',
+    'avi' => 'video/x-msvideo',
+);

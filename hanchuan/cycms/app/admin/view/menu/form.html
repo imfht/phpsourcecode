@@ -1,0 +1,148 @@
+{extend name="common:base" /}
+{block name="content"}
+<div class="row">
+<form class="form-horizontal" action="{:url('index',['act'=>'update'])}" method="post">
+<input name="id" type="hidden" value="{$current.id ?? 0}">
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="pid"> 上级菜单 </label>
+    <div class="col-sm-9">
+    <select id="pid" name="pid" class="col-xs-10 col-sm-5">
+        <option value="0">顶级菜单</option>
+        {volist name="list" id="v"}
+        <option {notempty name="current"}{$current.pid == $v.id ? 'selected="selected"' : ''}{/notempty} value="{$v.id}">{$v.title}</option>
+        {notempty name="v.children"}
+        {volist name="v.children" id="vv"}
+        <option {notempty name="current"}{$current.pid == $vv.id ? 'selected="selected"' : ''}{/notempty} value="{$vv.id}">&nbsp;&nbsp;┗━{$vv.title}</option>
+        {notempty name="vv.children"}
+        {volist name="vv.children" id="vvv"}
+        <option {notempty name="current"}{$current.pid == $vvv.id ? 'selected="selected"' : ''}{/notempty} value="{$vvv.id}">&nbsp;&nbsp;&nbsp;&nbsp;┗━{$vvv.title}</option>
+        {/volist}
+        {/notempty}
+        {/volist}
+        {/notempty}
+        {/volist}
+    </select>
+    <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle"></span>
+        </span>
+    </div>
+</div>
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="title"> 菜单名称 </label>
+    <div class="col-sm-9">
+        <input type="text" name="title" id="title" class="col-xs-10 col-sm-5" value="{$current.title ?? ''}" required="required">
+        <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle"></span>
+        </span>
+    </div>
+</div>
+
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="url"> 链接 </label>
+    <div class="col-sm-9">
+        <input type="text" name="url" id="url" placeholder="链接，如：Index/index" class="col-xs-10 col-sm-5" value="{$current.url ?? ''}" required="required">
+        <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle"></span>
+        </span>
+    </div>
+</div>
+
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="icon"> ICON图标 </label>
+    <div class="col-sm-9">
+        <input type="text" name="icon" id="icon" placeholder="menu-icon fa fa-xxx" class="col-xs-10 col-sm-5" value="{$current.icon ?? ''}">
+        <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle"></span>
+        </span>
+    </div>
+</div>
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="status"> 显示状态 </label>
+    <div class="control-label no-padding-left col-sm-1">
+        <label>
+            <input name="status" id="status" {notempty name="current"}{if condition="$current.status eq 1"}checked="checked"{/if}{else /}checked="checked"{/notempty} value="1" class="ace ace-switch ace-switch-2" type="checkbox" />
+            <span class="lbl"></span>
+        </label>
+    </div>
+    <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle"></span>
+    </span>
+</div>
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="o"> 排序 </label>
+    <div class="col-sm-9">
+        <input type="number" name="o" id="o" placeholder="" class="col-xs-10 col-sm-5" value="{$current.o ?? '0'}">
+        <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle">越小越靠前</span>
+        </span>
+    </div>
+</div>
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="tips"> 页面提示</label>
+    <div class="col-sm-9">
+        <textarea name="tips" id="tips" placeholder="页面提示" class="col-xs-10 col-sm-5" rows="5">{$current.tips ?? ''}</textarea>
+        <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle">后台页面提示</span>
+        </span>
+    </div>
+</div>
+<div class="space-4"></div>
+<div class="col-md-offset-2 col-md-9">
+    <button id="submit" class="btn btn-info" type="submit">
+        <i class="icon-ok bigger-110"></i>
+        提交
+    </button>
+
+    &nbsp; &nbsp; &nbsp;
+    <button class="btn" type="reset">
+        <i class="icon-undo bigger-110"></i>
+        重置
+    </button>
+</div>
+</form>
+</div>
+{/block}
+{block name="javascript"}
+<script type="text/javascript">
+$(function(){
+    $(".check-all").click(function(){
+        $(".ids").prop("checked", this.checked);
+    });
+    $(".ids").click(function(){
+        var option = $(".ids");
+        option.each(function(i){
+            if(!this.checked){
+                $(".check-all").prop("checked", false);
+                return false;
+            }else{
+                $(".check-all").prop("checked", true);
+            }
+        });
+    });
+    $("#submit").click(function(){
+        bootbox.confirm({
+            title: "系统提示",
+            message: "确定要删除所选记录？", 
+            callback:function(result){
+                if(result){
+                    $("#form").submit();
+                }
+            },
+            buttons: {
+                "cancel" : {"label" : "取消"},
+                "confirm" : {
+                        "label" : "确定",
+                        "className" : "btn-danger"
+                    }
+            }
+        });
+    });
+})
+</script>
+{/block}

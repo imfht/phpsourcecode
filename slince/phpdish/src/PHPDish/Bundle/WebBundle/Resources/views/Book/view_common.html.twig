@@ -1,0 +1,71 @@
+{% extends 'PHPDishWebBundle::layout.html.twig' %}
+
+{% block title %} {{ book.name }} {% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{{ asset('build/js/book.js') }}"></script>
+    <script>
+        window.book = {{ book|serialize('json', serialization_context().setGroups(['Default']))|raw }};
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="container narrow-layout">
+    {% from  'PHPDishWebBundle:Macros:notification.html.twig' import flashes %}
+    {{ flashes() }}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-u category-detail book-detail">
+                <div class="panel-heading">
+                    <div class="media category">
+                        <div class="media-left media-middle">
+                            {% set bookUrl = path('book_view', {'slug': book.slug}) %}
+                            <a href="{{ bookUrl }}" class="avatar">
+                                <img src="{{ book.cover|imagine_filter('middle_rectangle') }}" class="media-object img-responsive"/>
+                            </a>
+                        </div>
+                        <div class="media-body">
+                            <div class="pull-right follow-panel" data-role="follow-category" data-book="true" data-slug="{{ book.slug }}"  data-price="{{ book.chargePrice|money }}">
+                                {% if app.user and book.isFollowedBy(app.user) %}
+                                    <button class="btn btn-default" data-action="unfollow"><i class="if i-check"></i> {{ 'book.have_buy'|trans }}</button>
+                                {% else %}
+                                    <button class="btn u-btn-outline-primary" data-action="follow"><i class="if i-plus"></i> {{ book.charging ? "#{book.chargePrice|money} " : 'ui.free'|trans }}{{ 'ui.buy'|trans }}</button>
+                                {% endif %}
+                            </div>
+                            <h4 class="media-heading">
+                                <a class="name" href="{{ bookUrl }}">{{ book.name }}</a>
+                                {% if is_granted('edit', book) %}
+                                    <a class="meta" href="{{ path('book_edit', {'slug': book.slug}) }}" title="{{ 'ui.edit'|trans }}">
+                                        <i class="if i-edit"></i> {{ 'ui.edit'|trans }}
+                                    </a>
+                                {% endif %}
+                            </h4>
+                            <ul class="list-unstyled list-inline meta">
+                                <li>{{ 'ui.article'|trans }} {{ book.postCount }}</li>
+                                <li>{{ 'ui.follower'|trans }} {{ book.followerCount }}</li>
+                            </ul>
+                            <div>{{ book.description }}</div>
+                        </div>
+                    </div>
+                </div>
+                <ul class="list-unstyled list-inline tab-nav" data-pjax-container="list-container">
+                    <li {% if tab == 'about' %} class="active" {% endif %}>
+                        <a href="{{ path('book_view', {'slug': book.slug}) }}"><i class="fa fa-file-text-o"></i> {{ 'book.description'|trans }}</a>
+                    </li>
+                    <li {% if tab == 'summary' %} class="active" {% endif %}>
+                        <a href="{{ path('book_summary', {'slug': book.slug}) }}"><i class="fa fa-bars"></i> {{ 'book.read'|trans }}</a>
+                    </li>
+                    <li {% if tab == 'follower' %} class="active" {% endif %}>
+                        <a href="{{ path('book_followers', {'slug': book.slug}) }}"><i class="fa fa-rss"></i> {{ 'book.follower'|trans }}</a>
+                    </li>
+                </ul>
+                <div id="book-details">
+                    {% block book_content %}
+                        <div class="empty-data">{{ 'ui.empty_data'|trans }}</div>
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

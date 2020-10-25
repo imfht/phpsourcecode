@@ -1,0 +1,672 @@
+{extend name="../application/common/view/template/mobile/weui_base.html" /}
+
+{block name="title"}{:lang("客户管理")}{/block}
+
+{block name="content"}
+<script type="text/html" id="tpl_home">
+    <div class="page">
+        <div class="page__bd" style="height: 100%;">
+            <div class="weui-tab">
+                <div id="panel_container" class="weui-tab__panel"> </div>
+                <div class="weui-tabbar">
+                    <a data-id="tpl_eba_list" href="javascript:;" class="weui-tabbar__item weui-bar__item_on">
+                        <img src="__STATIC__/vendor/weui/images/icon_tabbar.png" alt="" class="weui-tabbar__icon">
+                        <p class="weui-tabbar__label">客户列表</p>
+                    </a>
+                    <a data-id="tpl_record" href="javascript:;" class="weui-tabbar__item">
+                        <img src="__STATIC__/vendor/weui/images/icon_tabbar.png" alt="" class="weui-tabbar__icon">
+                        <p class="weui-tabbar__label">新增客户</p>
+                    </a>
+                    <!--
+                    <a data-id="tpl_me" href="javascript:;" class="weui-tabbar__item">
+                        <img src="__STATIC__/vendor/weui/images/icon_tabbar.png" alt="" class="weui-tabbar__icon">
+                        <p class="weui-tabbar__label">我</p>
+                    </a>
+                    -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var page_var = {
+            curr_eba_id: '',
+            eba_data:{},
+            get_eba_info: function(eba_id){
+                var eba_data = this.eba_data;
+                var temp_info = {};
+                eba_data.forEach(function(v, k){
+                    v.ebas.forEach(function(vi, ki){
+                        if(vi['eba_id'] == eba_id){
+                            temp_info = eba_data[k]['ebas'][ki];
+                        }
+                    });
+                });
+                return temp_info;
+            }
+        };
+
+        function error_tip (error_str){
+            var $tooltips = $('.js_tooltips');
+            if ($tooltips.css('display') != 'none') return;
+            $tooltips.text(error_str);
+            // toptips的fixed, 如果有`animation`, `position: fixed`不生效
+            $('.page.cell').removeClass('slideIn');
+            $tooltips.css('display', 'block');
+            setTimeout(function () {
+                $tooltips.css('display', 'none');
+            }, 2000);
+        }
+
+        /*
+        page_var.eba_data = [{
+            service_name: '第一区域',
+            ebas: [{
+                eba_name: 'yang'
+            },{
+                eba_name: 'zhi'
+            }]
+        },{
+            service_name: '第二区域',
+            ebas: [{
+                eba_name: 'yang'
+            },{
+                eba_name: 'zhi'
+            }]
+        }];
+        */
+
+        $(function () {
+            $('.weui-tabbar__item').on('click', function () {
+                $(this).addClass('weui-bar__item_on').siblings('.weui-bar__item_on').removeClass('weui-bar__item_on');
+                // 初始化参数
+                page_var.curr_eba_id = '';
+
+                var id = $(this).data('id');
+                window.pageManager.set_inner_content(id);
+            });
+
+            /*
+            $("#wx_get_pict").on('click', function(){
+                wx.chooseImage({
+                    count: 1, // 默认9
+                    sizeType: ['original', 'compressed'], // 可以指定是原图还是压缩图，默认二者都有
+    //                    sourceType: ['album', 'camera'], // 可以指定来源是相册还是相机，默认二者都有
+                    sourceType: ['camera'],
+                    success: function (res) {
+                        var localIds = res.localIds; // 返回选定照片的本地ID列表，localId可以作为img标签的src属性显示图片
+                        console.log("图片id列表: " + localIds);
+                    }
+                });
+            });
+            */
+        });
+    </script>
+</script>
+
+
+<script type="text/html" id="tpl_eba_list">
+    <div class="page">
+        <!--
+        <div class="page__hd">
+            <h1 class="page__title">SearchBar</h1>
+            <p class="page__desc">搜索栏</p>
+        </div>
+        -->
+
+        <div class="page__bd">
+            <!--<a href="javascript:;" class="weui-btn weui-btn_primary">点击展现searchBar</a>-->
+            <div class="weui-search-bar" id="searchBar">
+                <form class="weui-search-bar__form">
+                    <div class="weui-search-bar__box">
+                        <i class="weui-icon-search"></i>
+                        <input type="search" class="weui-search-bar__input" id="searchInput" placeholder="搜索" required/>
+                        <a href="javascript:" class="weui-icon-clear" id="searchClear"></a>
+                    </div>
+                    <label class="weui-search-bar__label" id="searchText">
+                        <i class="weui-icon-search"></i>
+                        <span>搜索</span>
+                    </label>
+                </form>
+                <a href="javascript:" class="weui-search-bar__cancel-btn" id="searchCancel">取消</a>
+            </div>
+
+            <div id="eba_list" >
+                <div v-for="(eba_service, index) in eba_data">
+                    <div class="weui-cells__title">{{ eba_service.service_name }}</div>
+                    <div v-for="(eba, key) in eba_service.ebas" class="weui-cells">
+                        <a :data-name="eba.eba_id" v-on:click="eba_cell_click(eba.eba_id)" class="weui-cell weui-cell_access" href="javascript:;">
+                            <div class="weui-cell__bd">
+                                <!-- <p>{{ get_eba_info(eba) }}</p> -->
+                                <div v-html="get_eba_info(eba)"></div>
+                            </div>
+                            <div class="weui-cell__ft">
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            <div>
+        </div>
+
+        <div class="page__ft">
+            <p></p>
+            <p></p>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function(){
+            var eba_list = new Vue({
+                el: '#eba_list',
+                data: {
+                    eba_data: {}
+                },
+                computed: {
+                },
+                methods : {
+                    get_eba_info: function(eba){
+                        var ret = '<p>';
+                        if(eba != undefined){
+                            if(eba.eba_name != ''){
+                                ret = '<p>' + eba.eba_name ;
+                            }
+                            if(eba.linkman != ''){
+                                ret += '<span style="color:red;font-size: 9px;">' + eba.linkman + '</span>';
+                            }
+                            if(eba.mobile_no != ''){
+                                ret += '<span style="color:#002b36;font-size: 9px">' + eba.mobile_no + '</span>';
+                            }
+                        }
+                        ret += '</p>';
+                        return ret;
+                    },
+                    eba_cell_click: function(eba_id){
+                        console.log(eba_id);
+                        page_var.curr_eba_id = eba_id;
+                        window.pageManager.set_inner_content("tpl_record");
+                    },
+                }
+            });
+
+            var search_field = ['eba_id', 'eba_name', 'office_no', 'mobile_no', 'service_id', 'address', 'linkman'];
+
+            /*
+            function eba_cell_init(){
+                console.log('eba_cell_init');
+                $('.eba_cell').on('click', function(){
+                    console.log('eba name click');
+                    window.pageManager.set_inner_content("tpl_record");
+                });
+            }
+            */
+
+            function init_eba_list () {
+                $.post('get_eba_list', function(data){
+                    console.log(data);
+                    page_var.eba_data = clone(data);
+                    eba_list.eba_data = clone(data);
+                    // eba_cell_init();
+
+                });
+            }
+
+            function init_search () {
+                var $searchBar = $('#searchBar'),
+                    $searchResult = $('#searchResult'),
+                    $searchText = $('#searchText'),
+                    $searchInput = $('#searchInput'),
+                    $searchClear = $('#searchClear'),
+                    $searchCancel = $('#searchCancel');
+
+                function hideSearchResult(){
+                    $searchResult.hide();
+                    $searchInput.val('');
+                }
+                function cancelSearch(){
+                    // hideSearchResult();
+                    $searchBar.removeClass('weui-search-bar_focusing');
+                    $searchText.show();
+                }
+
+                $searchText.on('click', function(){
+                    $searchBar.addClass('weui-search-bar_focusing');
+                    $searchInput.focus();
+                });
+                $searchInput
+                    .on('blur', function () {
+                        if(!this.value.length) cancelSearch();
+                    })
+                    .on('input', function(){
+                        if(this.value.length) {
+                            var temp_str = $(this).val();
+                            var temp_data = clone(page_var.eba_data);
+                            temp_data.forEach(function(v, k){
+                                temp_data[k]['ebas'] = temp_data[k]['ebas'].$like_contains(search_field, temp_str);
+                            });
+                            eba_list.eba_data = temp_data;
+                        } else {
+                            var temp_data = clone(page_var.eba_data);
+                            eba_list.eba_data = temp_data;
+                        }
+                    })
+                ;
+                $searchClear.on('click', function(){
+                    var temp_data = clone(page_var.eba_data);
+                    eba_list.eba_data = temp_data;
+                    $searchInput.val("");
+                    $searchInput.focus();
+                });
+                $searchCancel.on('click', function(){
+                    var temp_data = clone(page_var.eba_data);
+                    eba_list.eba_data = temp_data;
+                    $searchInput.val("");
+                    cancelSearch();
+                    $searchInput.blur();
+                });
+            }
+
+            init_eba_list();
+            init_search();
+        });
+    </script>
+</script>
+
+
+<script type="text/html" id="tpl_me">
+    <div class="page">
+        <div class="page__hd">
+            <h1 class="page__title">List</h1>
+            <p class="page__desc">列表</p>
+        </div>
+        <div class="page__bd">
+        </div>
+    </div>
+    <script>
+        $(function(){
+            
+        });
+    </script>
+</script>
+
+<script type="text/html" id="tpl_record">
+    <div class="page">
+        <div class="page__bd">
+            <div id="record_title" class="weui-cells__title">添加客户</div>
+            <div>
+                <img id="pict_left_up" style="height:150px;width:45%;" src="__STATIC__/vendor/weui/images/pic_article_1.png" alt="">
+                <img id="pict_right_up" style="height:150px;width:45%;" src="__STATIC__/vendor/weui/images/pic_article_2.png" alt="">
+            </div>
+
+			<div id="loadingToast" style="display:none;">
+				<div class="weui-mask_transparent"></div>
+				<div class="weui-toast">
+					<i class="weui-loading weui-icon_toast"></i>
+					<p id="loadingToast_content" class="weui-toast__content">名片识别中</p>
+				</div>
+			</div>
+
+            <div class="weui-cells weui-cells_form">
+                <form id="eba_record">
+                <!--
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">公司编号</label></div>
+                    <div class="weui-cell__bd">
+                        <input name="eba_id" class="weui-input" placeholder="保存后自动产生"/>
+                    </div>
+                </div>
+                -->
+
+                <input name="eba_id" type="hidden" v-model="curr_eba_info.eba_id" />
+                <input id="pict_left_name" name="pict_left_name" type="hidden" />
+                <input id="pict_right_name" name="pict_right_name" type="hidden" />
+
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">公司名称</label></div>
+                    <div class="weui-cell__bd">
+                        <input name="eba_name" v-model="curr_eba_info.eba_name" class="weui-input" placeholder="请输入公司名称"/>
+                    </div>
+                </div>
+
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">联系人</label></div>
+                    <div class="weui-cell__bd">
+                        <input name="linkman" v-model="curr_eba_info.linkman" class="weui-input" placeholder="请输入联系人"/>
+                    </div>
+                </div>
+
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">手机号码</label></div>
+                    <div class="weui-cell__bd">
+                        <input name="mobile_no" v-model="curr_eba_info.mobile_no" class="weui-input" placeholder="请输入手机号码"/>
+                    </div>
+                </div>
+
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">办公号码</label></div>
+                    <div class="weui-cell__bd">
+                        <input name="office_no" v-model="curr_eba_info.office_no" class="weui-input" placeholder="请输入办公号码"/>
+                    </div>
+                </div>
+
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">邮箱</label></div>
+                    <div class="weui-cell__bd">
+                        <input name="e_mail" v-model="curr_eba_info.e_mail" class="weui-input" placeholder="请输入邮箱"/>
+                    </div>
+                </div>
+
+                <!--
+                <div class="weui-cells__title">性别</div>
+                <div class="weui-cells weui-cells_radio">
+                    <label class="weui-cell weui-check__label" for="gender_a">
+                        <div class="weui-cell__bd">
+                            <p>男</p>
+                        </div>
+                        <div class="weui-cell__ft">
+                            <input type="radio" name="gender" class="weui-check" id="gender_a" checked="checked"/>
+                            <span class="weui-icon-checked"></span>
+                        </div>
+                    </label>
+                    <label class="weui-cell weui-check__label" for="gender_b">
+                        <div class="weui-cell__bd">
+                            <p>女</p>
+                        </div>
+                        <div class="weui-cell__ft">
+                            <input type="radio" name="gender" class="weui-check" id="gender_b" />
+                            <span class="weui-icon-checked"></span>
+                        </div>
+                    </label>
+                </div>
+                -->
+
+                <!--
+                <div class="weui-cells__title">客户状态</div>
+                <div class="weui-cells weui-cells_radio">
+                    <label class="weui-cell weui-check__label" for="state_l">
+                        <div class="weui-cell__bd">
+                            <p>临时</p>
+                        </div>
+                        <div class="weui-cell__ft">
+                            <input type="radio" name="state" class="weui-check" id="state_l" checked="checked"/>
+                            <span class="weui-icon-checked"></span>
+                        </div>
+                    </label>
+                    <label class="weui-cell weui-check__label" for="state_z">
+                        <div class="weui-cell__bd">
+                            <p>正式</p>
+                        </div>
+                        <div class="weui-cell__ft">
+                            <input type="radio" name="state" class="weui-check" id="state_z" />
+                            <span class="weui-icon-checked"></span>
+                        </div>
+                    </label>
+                </div>
+                -->
+
+                <!--
+                <div class="weui-cells">
+                    <div class="weui-cell weui-cell_select weui-cell_select-after">
+                        <div class="weui-cell__hd">
+                            <label for="" class="weui-label">所在区域</label>
+                        </div>
+                        <div class="weui-cell__bd">
+                            <select class="weui-select" name="service_id">
+                                <option value="1">中国</option>
+                                <option value="2">美国</option>
+                                <option value="3">英国</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                -->
+
+                <div class="weui-cell">
+                    <div class="weui-cell__hd"><label class="weui-label">详细地址</label></div>
+                    <div class="weui-cell__bd">
+                        <input id="address" name="address" v-model="curr_eba_info.address" class="weui-input" placeholder="请输入详细地址" />
+                    </div>
+                </div>
+
+                <div class="weui-cell weui-cell_vcode">
+                    <div class="weui-cell__hd"><label class="weui-label">地图位置</label></div>
+                    <div class="weui-cell__bd">
+                        <input id="other_im_no" name="other_im_no" v-model="curr_eba_info.other_im_no" readOnly="readOnly" class="weui-input" placeholder="先输地址再定位"/>
+                    </div>
+                    <div class="weui-cell__ft">
+                        <button id="map_search" class="weui-vcode-btn">地图定位</button>
+                    </div>
+                </div>
+                <div id="map_container" style="height:300px;"></div>
+				<a id="map_navigate" href="javascript:;" class="weui-btn weui-btn_mini weui-btn_primary">导航</a>
+
+                </form>
+                <div class="weui-cells__tips">企业微信中只能创建临时客户，未产生业务之前可以删除；一旦产生业务或转为正式客户，将不能删除</div>
+                <div class="weui-btn-area">
+                    <a class="weui-btn weui-btn_primary" href="javascript:" id="save">保存</a>
+                    <a class="weui-btn weui-btn_primary" href="javascript:" id="remove">删除</a>
+                </div>
+                <div class="page__ft">
+                    <p></p>
+                    <p></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function(){
+            var map_site = '';
+            var vu_eba = new Vue({
+                el: '#eba_record',
+                data: { 
+                    curr_eba_info : {}
+                }
+            });
+            console.log('record click: ' + page_var.curr_eba_id);
+            if(page_var.curr_eba_id == '') {
+                // 新增客户
+                $('#record_title').text('新建客户资料');
+                vu_eba.curr_eba_info = {
+                    eba_id: '',
+                    eba_name: '',
+                    should_in: 0,
+                    linkman: '',
+                    office_no: '',
+                    mobile_no: '',
+                    e_mail: '',
+                    last_touch_date: '',
+                    last_sell_date: '',
+                    address: '',
+                    other_im_no: '', // 默认地图初始地点
+                    eba_grade: '',
+                    gender: '',
+                    state: 'L', // 临时
+                    service_id: '000' // 服务区域
+                }
+            } else {
+                // 编辑客户
+                $('#record_title').text('编辑客户资料');
+                vu_eba.curr_eba_info = page_var.get_eba_info(page_var.curr_eba_id);
+            }
+
+            var geocoder, map, marker = null;
+            var other_im_no = document.getElementById("other_im_no");
+            var address = document.getElementById("address");
+            // 地图
+            var map_init = function () {
+                var curr_eba_info = vu_eba.curr_eba_info;
+                var site_x = 0, site_y = 0;
+                console.log('map_init ');
+
+                if(curr_eba_info != null && curr_eba_info.other_im_no != ''){
+                    var temp = curr_eba_info.other_im_no;
+                    site_x = temp.substr(0, temp.indexOf(","));
+                    site_y = temp.slice(temp.indexOf(",") + 1);
+                    console.log('site_x: ' + site_x + ' site_y: ' + site_y);
+                }
+                var center = new qq.maps.LatLng(site_x, site_y);
+                map = new qq.maps.Map(document.getElementById('map_container'), {
+                    center: center,
+                    zoom: 15
+                });
+
+                var middle_div = document.createElement("div");
+                    middle_div.style.left = "50%";
+                    middle_div.style.top = "50%";
+                    middle_div.style.position = "absolute";
+                    middle_div.style.width = "36px";
+                    middle_div.style.zIndex = "100000";
+                    middle_div.innerHTML = '<img src="https://www.cdlhome.com.sg/mobile_assets/images/icon-location.png" />';
+                document.getElementById("map_container").appendChild(middle_div);
+
+                //调用地址解析类
+                geocoder = new qq.maps.Geocoder({
+                    complete: function (result) {
+                        map.setCenter(result.detail.location);
+                        // vu_eba.curr_eba_info.other_im_no = result.detail.location;
+                        other_im_no.value = result.detail.location;
+                    }
+                });
+                // 当地图中心改变时触发
+                qq.maps.event.addListener(map, 'center_changed', function() {
+                    // $('#other_im_no').val(map.getCenter());
+                    // vu_eba.curr_eba_info.other_im_no = map.getCenter();
+                    other_im_no.value = map.getCenter();
+                });
+            };
+            // 定位
+            $('#map_search').on('click', function () {
+                if(address.value != '') {
+                    //通过getLocation();方法获取位置信息值
+                    geocoder.getLocation(address.value);
+                }
+            });
+            map_init();
+
+            // 导航
+            $('#map_navigate').on('click', function(){
+                if(other_im_no.value != '') {
+                    site_x = other_im_no.value.substr(0, other_im_no.value.indexOf(","));
+                    site_y = other_im_no.value.slice(other_im_no.value.indexOf(",") + 1);
+
+                    wx.openLocation({
+                        latitude: site_x, // 纬度，浮点数，范围为90 ~ -90
+                        longitude: site_y, // 经度，浮点数，范围为180 ~ -180。
+                        name: '', // 位置名
+                        address: address.value, // 地址详情说明
+                        scale: 20, // 地图缩放级别,整形值,范围从1~28。默认为16
+                    });
+                }
+            });
+
+            var pict_left_up = $('#pict_left_up');
+            var pict_right_up = $('#pict_right_up');
+            var pict_left_name = $('#pict_left_name');
+            var pict_right_name = $('#pict_right_name');
+
+            var $loadingToast = $('#loadingToast');
+            var $loadingToast_content = $('#loadingToast_content');
+
+            $('#save').on('click', function(){
+                var post_data = $('#eba_record').serializeArray();
+                // 显示提示
+                if ($loadingToast.css('display') == 'none') {
+                    $loadingToast_content.text("保存中");
+                    $loadingToast.fadeIn(100);
+                }
+                $.post('save', post_data, function(data){
+					$loadingToast.fadeOut(100);
+                    // 新增之后,写入主键值,变成修改
+                    if(data.state == 'success') {
+                        vu_eba.curr_eba_info.eba_id = data.pk_id;
+                        pict_left_name.val("");
+                    }
+                    error_tip(data.info);
+                })
+            });
+
+            $('#remove').on('click', function() {
+                var delete_id = vu_eba.curr_eba_info.eba_id;
+                if(delete_id == '') {
+                    // 清空
+                    document.getElementById('eba_record').reset();
+                } else {
+                    // 删除
+                    $.post('remove', { eba_id: delete_id }, function(data){
+                        // 删除之后,清空表单内容
+                        if(data.state == 'success') {
+                            document.getElementById('eba_record').reset();
+                        }
+                        error_tip(data.info);
+                    })
+                }
+            });
+
+            // 微信拍照上传到服务器，服务器下载此文件，并传回文件在服务器上的文件名
+            function read_card(pict_ele, input_ele) {
+                wx.chooseImage({
+                    count: 1, // 默认9
+                    sizeType: ['compressed'],       // 可以指定是原图还是压缩图，默认二者都有
+                    sourceType: ['album', 'camera'],            // 可以指定来源是相册还是相机，默认二者都有
+                    // sourceType: ['camera'],
+                    success: function (res) {
+                        var localIds = res.localIds;            // 返回选定照片的本地ID列表，localId可以作为img标签的src属性显示图片
+                        // alert('选择照片之后的参数: ' + JSON.stringify(localIds));
+                        pict_ele.attr('src', localIds[0]);      // 前端 选择或拍照的图片
+
+                        // 显示提示
+                        if ($loadingToast.css('display') == 'none') {
+                            $loadingToast_content.text("名片识别中");
+					        $loadingToast.fadeIn(100);
+                        }
+
+                        wx.uploadImage({
+                            localId: localIds[0],               // 需要上传的图片的本地ID，由chooseImage接口获得
+                            isShowProgressTips: 1,              // 默认为1，显示进度提示
+                            success: function (res) {
+                                var serverId = res.serverId;    // 返回图片的服务器端ID
+                                // alert('上传之后的照片资源id: ' + JSON.stringify(serverId));
+                                // 请求服务器端下载图片并识别名片，并返回名片信息
+                                // 文件在数据保存的时候再保存
+                                $.post('read_card', {img_id: serverId}, function(data){
+                                    if(data.state == 'success') {
+                                        $loadingToast_content.text("{:lang('名片识别成功')}");
+                                        $loadingToast.fadeOut(100);
+
+                                        // 设置已识别的临时名片文件名
+                                        input_ele.val(data.temp_name);
+                                        // 识别的名片信息
+                                        if(data.card_info != undefined && (typeof data.card_info == 'object')) {
+                                            for(var i in data.card_info) {
+                                                if (data.card_info.hasOwnProperty(i)) {
+                                                    for(var ci in vu_eba.curr_eba_info){
+                                                        if(vu_eba.curr_eba_info.hasOwnProperty(ci)) {
+                                                            if( i == ci ){
+                                                                vu_eba.curr_eba_info[ci] = data.card_info[i];
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        $loadingToast_content.text("{:lang('名片识别失败')}");
+                                        $loadingToast.fadeOut(100);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            pict_left_up.on('click', function(){
+                read_card(pict_left_up, pict_left_name);
+            });
+
+            pict_right_up.on('click', function(){
+                read_card(pict_right_up, pict_right_name);
+            });
+
+        });
+    </script>
+</script>
+{/block}

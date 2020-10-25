@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>店铺申请</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body style="background:#F4F5F6;">
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>店铺申请</h1>
+</header>
+<div class="hui-wrap">
+  <div style="margin-top:35px;" class="hui-form" id="form1">
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">店铺名称：</div>
+      <input type="text" name="name" id="name" class="hui-input hui-input-clear" placeholder="请输入店铺名称" checkType="string" />
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">店铺类型：</div>
+      <div style="width:100%;">
+        <select id="shop_type">
+			#{foreach from=$shop_type key=k item=v}#  
+          <option value="#{$v.id}#">#{$v.typename}#</option>       
+			#{/foreach}# 
+        </select>
+      </div>
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">联系手机：</div>
+      <input type="text" name="mobile" id="mobile" class="hui-input hui-input-clear" placeholder="请输入店铺联系手机" checkType="string" />
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">联系地址：</div>
+      <input type="text" name="address" id="address" class="hui-input hui-input-clear" placeholder="请输入店铺联系地址" checkType="string" />
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">店铺介绍</div>
+      <div class="hui-form-textarea">
+        <textarea placeholder="店铺介绍..." name="intro" id="intro"></textarea>
+      </div>
+    </div>
+    <div style="padding:10px; padding-top:10px;">
+      <button type="button" class="hui-button hui-button-large hui-primary" id="submit">提交申请</button>
+    </div>
+  </div>
+</div>
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-form.js" charset="utf-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-select-beautify.js" charset="utf-8"></script> 
+<script type="text/javascript">
+hui.formInit();
+
+hui('#shop_type').selectBeautify(showVal);
+function showVal(val){
+    hui.toast('选项值 : ' + val);
+}
+//设置一个对象来控制是否进入AJAX过程
+var post_flag = false; 
+hui('#submit').click(function(){
+	//如果正在提交则直接返回，停止执行
+	if(post_flag) return; 
+	//标记当前状态为正在提交状态
+	post_flag = true;
+	
+	//验证
+	var res = huiFormCheck('#form1');
+	var name = hui('#name').val();
+	var type_id = hui('#shop_type').val();
+	var mobile = hui('#mobile').val();
+	var address = hui('#address').val();
+	var intro = hui('#intro').val();
+	//提交
+	if(res){
+		hui.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/WxShop/shop_add/',
+			data : {name:name,type_id:type_id,mobile:mobile,address:address,intro:intro},
+			backType:'json',
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.code=='sucess'){
+					hui.iconToast('操作成功', 'success');
+					var url='#{$smarty.const.ACT}#/home/WxMember/member_center/'
+					window.location.href=url;
+				}else{
+					hui.upToast(data.message);
+					post_flag =false; //在提交成功之后将标志标记为可提交状态
+				}
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});	
+	}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<?php
+$tmp =
+<<<EOF
+//版权所有(C) 2014 www.ilinei.com
+
+namespace {$table[_NAMESPACE]}\model;
+
+//{$table[CNAME]}
+class _{$table[IDENTITY]}{
+EOF;
+
+$code .= $tmp;
+
+if(count($table['FILES']) > 3){
+	$tmp = 
+<<<EOF
+
+	//获取文件
+	public function get_files(\${$table[IDENTITY]}, \$filenum){
+		\${$table[IDENTITY]}_files = array();
+		for(\$i = 1; \$i <= \$filenum; \$i++){
+			if(is_array(\${$table[IDENTITY]}['FILE'.sprintf('%02d', \$i)])) \${$table[IDENTITY]}_files[] = \${$table[IDENTITY]}['FILE'.sprintf('%02d', \$i)];
+		}
+
+		return \${$table[IDENTITY]}_files;
+	}
+
+EOF;
+	$code .= $tmp;
+}
+
+$tmp =
+<<<EOF
+
+	//搜索
+	public function search(){
+		global \$_var;
+	
+		\$querystring = \$wheresql = '';
+	
+EOF;
+	
+$code .= $tmp;
+
+if($table['CODE']['CREATETIME']){
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_txtBeginDate']){
+			\$querystring .= '&txtBeginDate='.\$_var['gp_txtBeginDate'];
+			\$wheresql .= " AND a.CREATETIME >= '{\$_var[gp_txtBeginDate]}'";
+		}
+
+		if(\$_var['gp_txtEndDate']){
+			\$querystring .= '&txtEndDate='.\$_var['gp_txtEndDate'];
+			\$wheresql .= " AND a.CREATETIME <= '{\$_var[gp_txtEndDate]}'";
+		}
+	
+EOF;
+	
+	$code .= $tmp;
+}elseif($table['CODE']['USER']){
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_txtBeginDate']){
+			\$querystring .= '&txtBeginDate='.\$_var['gp_txtBeginDate'];
+			\$wheresql .= " AND a.EDITTIME >= '{\$_var[gp_txtBeginDate]}'";
+		}
+
+		if(\$_var['gp_txtEndDate']){
+			\$querystring .= '&txtEndDate='.\$_var['gp_txtEndDate'];
+			\$wheresql .= " AND a.EDITTIME <= '{\$_var[gp_txtEndDate]}'";
+		}
+	
+EOF;
+	
+	$code .= $tmp;
+}
+
+if(count($table['KEYWORDS']) > 0){
+	$keywords = array();
+	
+	foreach ($table['KEYWORDS'] as $key => $val){
+		$keywords[] = $val['key'];
+	}
+	
+	$concat = 'CONCAT('.implode(', ', $keywords).')';
+	
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_txtKeyword']){
+			\$_var['gp_txtKeyword'] = trim(\$_var['gp_txtKeyword']);
+			\$querystring .= '&txtKeyword='.\$_var['gp_txtKeyword'];
+
+			\$_var['gp_sltType'] = \$_var['gp_sltType'] + 0;
+
+			if(\$_var['gp_sltType'] == 0){
+				\$wheresql .= " AND {$concat} LIKE '%{\$_var[gp_txtKeyword]}%'";
+			}
+EOF;
+	
+	$code .= $tmp;
+	
+	foreach ($table['KEYWORDS'] as $key => $val){
+		$num = $key + 1;
+		$tmp =
+<<<EOF
+elseif(\$_var['gp_sltType'] == {$num}){
+				\$wheresql .= " AND {$val[key]} LIKE '%{\$_var[gp_txtKeyword]}%'";
+			}
+EOF;
+		$code .= $tmp;
+		unset($num);
+	}
+	
+	$tmp =
+<<<EOF
+
+		}
+	
+EOF;
+	
+	$code .= $tmp;
+	}
+
+if($table['CODE']['DISTRICT']){
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_sltSProvinceId']){
+			\$querystring .= '&sltSProvinceId='.\$_var['gp_sltSProvinceId'];
+			\$wheresql .= " AND a.PROVINCEID  = '{\$_var[gp_sltSProvinceId]}'";
+		}
+
+		if(\$_var['gp_sltSCityId']){
+			\$querystring .= '&sltSCityId='.\$_var['gp_sltSCityId'];
+			\$wheresql .= " AND a.CITYID  = '{\$_var[gp_sltSCityId]}'";
+		}
+
+		if(\$_var['gp_sltSCountyId']){
+			\$querystring .= '&sltSCountyId='.\$_var['gp_sltSCountyId'];
+			\$wheresql .= " AND a.COUNTYID  = '{\$_var[gp_sltSCountyId]}'";
+		}
+	
+EOF;
+	
+	$code .= $tmp;
+}
+
+if($table['CODE']['STATUS']){
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_sltStatus']){
+			\$querystring .= '&sltStatus='.\$_var['gp_sltStatus'];
+			if(\$_var['gp_sltStatus'] == 1) \$wheresql .= " AND a.STATUS  = 1";
+			elseif(\$_var['gp_sltStatus'] == 2) \$wheresql .= " AND a.STATUS  = 0";
+		}
+	
+EOF;
+	
+	$code .= $tmp;
+}elseif($table['CODE']['ISAUDIT']){
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_sltIsAudit']){
+			\$querystring .= '&sltIsAudit='.\$_var['gp_sltIsAudit'];
+			if(\$_var['gp_sltIsAudit'] == 1) \$wheresql .= " AND a.ISAUDIT  = 1";
+			elseif(\$_var['gp_sltIsAudit'] == 2) \$wheresql .= " AND a.ISAUDIT  = 0";
+		}
+	
+EOF;
+	
+	$code .= $tmp;
+}else
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	if($key == 'group'){
+		$code .= "
+		if(\$_var['gp_sltSGroupID']) {
+			\$querystring .= '&sltSGroupID='.\$_var['gp_sltSGroupID'];
+			\$wheresql .= \" AND a.GROUPID  = '{\$_var[gp_sltSGroupID]}'\";
+		}
+	";
+		continue;
+	}
+	
+	$name = strtolower($key);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	$name_upper = strtoupper($key);
+	
+	$code .= "
+		if(\$_var['gp_sltS{$name}ID']) {
+			\$querystring .= '&sltS{$name}ID='.\$_var['gp_sltS{$name}ID'];
+			\$wheresql .= \" AND a.{$name_upper}ID  = '{\$_var[gp_sltS{$name}ID]}'\";
+		}
+	";
+	}
+
+$tmp =
+<<<EOF
+
+		if(\$_var['gp_hdnSearchShow']) \$querystring .= '&hdnSearchShow='.\$_var['gp_hdnSearchShow'];
+		if(\$_var['gp_nextquery']) \$querystring .= '&nextquery='.\$_var['gp_nextquery'];
+
+		return array('querystring' => \$querystring, 'wheresql' => \$wheresql);
+	}
+
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['STATUS']){
+	$tmp =
+<<<EOF
+
+	//获取状态值
+	public function get_status(){
+		return array(
+		0 => '未启用',
+		1 => '已启用'
+		);
+	}
+
+EOF;
+	
+	$code .= $tmp;
+}
+
+$tmp =
+<<<EOF
+
+	//根据ID获取记录
+	public function get_by_id(\${$table[IDENTITY]}id){
+		global \$db;
+
+		return \$db->fetch_first("SELECT * FROM tbl_{$table[IDENTITY]} WHERE {$table[PRIMARY_KEY]} = '{\${$table[IDENTITY]}id}'");
+	}
+
+	//获取数量
+	public function get_count(\$wheresql = ''){
+		global \$db;
+
+		return \$db->result_first("SELECT COUNT(1) FROM tbl_{$table[IDENTITY]} a WHERE 1 {\$wheresql}") + 0;
+	}
+
+	//获取列表
+	public function get_list(\$start , \$perpage, \$wheresql = '', \$ordersql = ''){
+		global \$db;
+
+		!\$ordersql && \$ordersql = "ORDER BY a.{$table[ORDER_KEY]} DESC";
+		\$perpage > 0 && \$limitsql = "LIMIT \$start, \$perpage";
+
+		\$rows = array();
+		\$temp_query = \$db->query("SELECT a.* FROM tbl_{$table[IDENTITY]} a WHERE 1 {\$wheresql} {\$ordersql} {\$limitsql}");
+		while(\$row = \$db->fetch_array(\$temp_query)){
+			\$row = format_row_files(\$row);
+			\$rows[] = \$row;
+		}
+
+		return \$rows;
+	}
+
+	//获取所有记录
+	public function get_all(\$wheresql = '', \$ordersql = ''){
+		global \$db;
+
+		!\$ordersql && \$ordersql = "ORDER BY a.{$table[ORDER_KEY]} DESC";
+
+		\$rows = array();
+		\$temp_query = \$db->query("SELECT a.* FROM tbl_{$table[IDENTITY]} a WHERE 1 {\$wheresql} {\$ordersql}");
+		while(\$row = \$db->fetch_array(\$temp_query)){
+			\$row = format_row_files(\$row);
+			\$rows[] = \$row;
+		}
+
+		return \$rows;
+	}
+
+	//添加
+	public function insert(\$data){
+		global \$db;
+
+		\$db->insert('tbl_{$table[IDENTITY]}', \$data);
+
+		return \$db->insert_id();
+	}
+
+	//修改
+	public function update(\$id, \$data){
+		global \$db;
+
+		\$db->update('tbl_{$table[IDENTITY]}', \$data, "{$table[PRIMARY_KEY]} = '{\$id}'");
+	}
+
+	//删除
+	public function delete(\$id){
+		global \$db;
+
+		\$db->delete('tbl_{$table[IDENTITY]}', "{$table[PRIMARY_KEY]} = '{\$id}'");
+	}
+}
+EOF;
+
+$code .= $tmp;
+?>

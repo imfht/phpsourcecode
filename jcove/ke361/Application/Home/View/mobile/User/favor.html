@@ -1,0 +1,136 @@
+<extend name="Public/base"/>
+<block name="head">
+	 <link rel="stylesheet" type="text/css" href="__MOBILE__/css/list.css">
+	 <link rel="stylesheet" type="text/css" href="__MOBILE__/css/user.css">
+</block>
+<block name="body">
+
+ 	<div class="container">
+ 		<div class="row">
+       		<div class="col-xs-12 col-md-10 goods-list">
+		        <ul class="clear">
+		            <volist name='goods' id='vo'>
+		            <li class="list-unstyled">
+		                <div class="item">
+		                    <div class="goods-pic">
+		            
+		                        <if condition="$config.SHOW_GOODS_DETAIL gt 0">
+		                        	<a target="_blank" class="pic-img" href="{$vo.url}">
+		                            	<img class="lazy img-responsive" src="{$vo.pic_url}" alt="{$vo.name}" style="display: inline;">
+		                       		</a>
+		                       	<else/>
+		                       		<notempty name="vo.click_url">
+			                    		
+			                       		 <a class="pic-img"  href="{$goods['click_url']}" target="_blank">
+			                           		 <img class="lazy img-responsive" src="{$vo.pic_url}" alt="{$vo.name}" style="display: inline;">
+		                       			 </a>
+			                        <else/>
+			                        	<a  biz-itemid="{$vo['num_iid']}" isconvert=1 href="{$vo['item_url']}" target="_blank">
+			                        	    <img class="lazy img-responsive" src="{$vo.pic_url}" alt="{$vo.name}" style="display: inline;">
+		                 	      		</a>
+			                    	</notempty>
+		                        </if>
+		                        
+		                    </div>
+		                    
+		                    <h5 class="title">
+		                    	<if condition="$config.SHOW_GOODS_DETAIL gt 0">
+		                        	<a target="_blank" class="black" href="{$vo.url}">{$vo.name}</a>
+		                       	<else/>
+		                       		<notempty name="vo.click_url">
+			                    		<a class="black"  href="{$goods['click_url']}" target="_blank">{$vo.name}</a>
+			                        <else/>
+			                        	<a  biz-itemid="{$vo['num_iid']}" isconvert=1 href="{$vo['item_url']}" target="_blank">{$vo.name}</a>
+			                    	</notempty>
+		                        </if>
+		                       
+		                    </h5>
+		                    <div class="goods-price">
+		                        <span class="price-current">
+		                            <em>￥</em>{$vo['price']}
+		                        </span>
+		                        <span class="des-other">
+		                            <del>
+		                                <em>￥</em>
+		                                {$vo['market_price']}
+		                            </del>
+		                            
+		                        </span>
+		                        <span style="padding-left:10px;">
+		                        	月销:{$vo['volume']}
+		                        </span>
+		                       
+		                    </div>
+		                    <!-- like -->
+		                    <a href="javascript:;" data-title="{$vo.name}" onclick="favor({$vo['id']})" data-key="" title="加入收藏" class="y-like my-like active">
+		                        <i class="like-ico l-active"><span class="heart_left"></span><span class="heart_right"></span></i>
+		                    </a>
+		                    <!-- end like -->
+		                    <div style="display:block" class="box-hd">
+		                    </div>
+		                </div>
+		            </li>
+		        	</volist>
+		        </ul>
+		     </div>
+        </div>
+        <notempty name="_page">
+    	 <div class="row">
+				<div class="col-sm-12 ">
+					<button id="next" class="btn" p="2" total-page="{$total_page}">
+						点击加载更多
+					</button>
+				</div>
+			
+	      </div>
+    </notempty>
+	</div>
+  
+    <script>
+   
+    $(".goods-list li").hover(
+    function(){
+       //当鼠标放上去的时候,程序处理
+       $(this).addClass("hover1 hover");
+    },
+    function(){
+       //当鼠标离开的时候,程序处理
+       $(this).removeClass("hover1 hover");
+    });	
+    $(function(){
+		$('.goods-list').find('li').each(function(){
+			
+			a = $('.goods-list').innerWidth()/2*1.55;
+			b = $('.goods-list').innerWidth()/2*0.95;
+			$(this).find('.goods-pic').each(function(){
+				$(this).innerHeight(Math.round(b)-1);	
+			});
+			$(this).innerHeight(Math.round(a)-1);	
+			
+			});
+		  
+		  $('#next').click(function(){
+		  	LoadPage();  
+		  }); 
+		  heightlight_bottom_nav("{:U('index')}"); 
+	});
+	 
+	function LoadPage(){
+		var id="{$cate['id']}";
+		var currentPage = $('#next').attr('p') ? $('#next').attr('p') : 1;
+		$.get("{:U('User/favor')}",{'p':currentPage,'id':id},function(result){
+			if(result.errno==0){
+				$('.goods-list ul').append(result.content);
+				$('#next').attr('p',result.p);
+				if(result.p>$('#next').attr('total-page')){
+					$('#next').html('木有了，亲');
+					$('#next').attr('disabled',true);
+					$('#next').addClass('disabled');
+				}
+			}
+			
+		},'json');	
+	}
+
+</script>
+</block>

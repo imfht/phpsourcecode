@@ -1,0 +1,116 @@
+<include file="Common/header" />
+<script>
+    require(['angular', 'bootstrap', 'util'], function(angular, $, u){
+        angular.module('app', []).controller('joinPanel', function($scope, $http) {
+            $scope.input = {:json_encode($profiles)};
+            $scope.error = {};
+            $scope.save = function() {
+                var error = false;
+                angular.forEach($scope.input, function(val, key){
+                    if($.trim(val) == '') {
+                        $scope.error[key] = true;
+                        error = true;
+                    } else {
+                        $scope.error[key] = false;
+                    }
+                });
+                if(error) {
+                    return;
+                }
+                var params = angular.copy($scope.input);
+                $http.post(location.href, params).success(function(content){
+                    if(content == 'success') {
+                        location.href = "{$forward}";
+                    } else if (u.is_error(content)) {
+                        u.message(content.message);
+                    } else {
+                        u.message('未知错误');
+                    }
+                });
+            }
+        });
+        angular.bootstrap(document, ['app']);
+    });
+</script>
+<div class="container-fluid container-dock ng-cloak" ng-controller="joinPanel">
+    <div class="page-header">
+        <h2>完善个人资料</h2>
+    </div>
+    <div class="animated fadeInUp">
+        <div class="alert alert-info">
+            {$message}
+        </div>
+        <div class="page-header"></div>
+        <div class="row row-group">
+            <div class="col-xs-12">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="javascript:;">完善个人资料</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <foreach name="ds" item="row">
+                    <if condition="in_array($row['name'], array('state', 'city', 'district'))">
+                        <if condition="!defined('REQUIRE_DIS')">
+                            <script>
+                                require(['jquery', 'district'], function(m){
+                                    $(function(){
+                                        var elms = {
+                                            province: $('select[ng-model="input.state"]')[0],
+                                            city: $('select[ng-model="input.city"]')[0],
+                                            district: $('select[ng-model="input.district"]')[0]
+                                        };
+                                        var vals = {
+                                            province: "{$profiles['state']}",
+                                            city: "{$profiles['city']}",
+                                            district: "{$profiles['district']}"
+                                        };
+                                        m.render(elms, vals);
+                                    });
+                                });
+                            </script>
+                        </if>
+                        <div class="form-group has-feedback" ng-class="{'has-error': error.<?php echo $row['name'];?>}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-{$row['icon']} text-success"></i></span>
+                                <select class="form-control" ng-model="input.{$row['name']}"></select>
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="error.{$row['name']}"></span>
+                        </div>
+                        <?php define('REQUIRE_DIS', true);?>
+                        
+                        <elseif condition="$row['name'] == 'address'"/>
+                        <div class="form-group has-feedback" ng-class="{'has-error': error.<?php echo $row['name'];?>}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-{$row['icon']} text-success"></i></span>
+                                <textarea class="form-control" ng-model="input.{$row['name']}" rows="4" placeholder="请输入你的{$row['title']}"></textarea>
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="error.{$row['name']}"></span>
+                        </div>
+                        <else/>
+                        <div class="form-group has-feedback" ng-class="{'has-error': error.<?php echo $row['name'];?>}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-{$row['icon']} text-success"></i></span>
+                                <input ng-model="input.{$row['name']}" type="text" class="form-control" placeholder="请输入你的{$row['title']}" required="required">
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="error.{$row['name']}"></span>
+                        </div>
+                    </if>
+                </foreach>
+                <div class="form-group">
+                    <button class="btn btn-primary btn-block" type="button" ng-click="save();">确认并继续</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<ul class="nav nav-bardown nav-justified" style="z-index:10;">
+    <li>
+        <a href="javascript:;" onclick="history.go(-1);" class="pull-left" style="height:100%;padding:1em 2em"><i class="fa fa-reply text-danger"></i></a>
+    </li>
+</ul>
+<include file="Common/footer" />

@@ -1,0 +1,57 @@
+<?php
+/** English (US) Pack **/
+return array(
+	'name'=>'English (US)',
+	'mod'=>array(
+		'installed'=>'System installed.',
+		'notInstalled'=>'System not installed.',
+		'uninstalled'=>'System uninstalled.',
+		'updated'=>'System updated.',
+		'missingArguments'=>'Missing necessary arguments.',
+		'permissionDenied'=>'Permission denied.',
+		'databaseUpdated'=>'Database updated.',
+		'noDatabasePrefix'=>'Missing database prefix.',
+		'directoryUnwritable'=>'{path} is not writable.',
+		'linkUnavailable'=>'Link unvailable.',
+		'notExists'=>'The requested {module} doesn\'t exist',
+		'noSearchKeys'=>'{module} search keyword not set.',
+		'noData'=>'No {module} data.',
+		'countDelete'=>'Deleted {count} records.',
+		'methodDenied'=>'{method}() method can\'t be called by current object.',
+		'invalidSessionId'=>'Invalid session ID.',
+		'addFailed'=>'{module} addition failed.',
+		'updateFailed'=>'{module} update failed.',
+		'deleteFailed'=>'{module} deletion failed.',
+		'deleted'=>'Deleted {module}.',
+		'socketOnTip'=>'Socket server is running...',
+		'socketFastCGIWarning'=>'Socket server cannot be ran in Fast-CGI mode.',
+		),
+	'user'=>array(
+		'label'=>'User',
+		'notLoggedIn'=>'User not logged in.',
+		'loggedIn'=>'User logged in.',
+		'loggedOut'=>'User logged out.',
+		'wrongPassword'=>'Wrong password.',
+		'nameTooShort'=>'Username too short.',
+		'nameTooLong'=>'Username too long.',
+		'usernameUnavailable'=>'Username unavailable.',
+		'passwordTooShort'=>'Password too short.',
+		'passwordTooLong'=>'Password too long.',
+		),
+	'file'=>array(
+		'label'=>'File',
+		'invalidType'=>'Invalid file type.',
+		'sizeTooLarge'=>'File size too large.',
+		'uploadFailed'=>'File upload failed.',
+		),
+	'category'=>array(
+		'label'=>'Category',
+		'invalidName'=>'Category name unavailable.',
+		),
+	'post'=>array(
+		'label'=>'Post',
+		),
+	'comment'=>array(
+		'label'=>'Comment',
+		),
+	);

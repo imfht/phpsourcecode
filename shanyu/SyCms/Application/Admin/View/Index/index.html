@@ -1,0 +1,298 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title>山雨内容管理系统</title>
+    <link rel="shortcut Icon" href="__PUBLIC__/Img/favicon.ico" />
+
+    <link rel="stylesheet" href="__PUBLIC__/Css/reset.css" type="text/css" />
+    <link rel="stylesheet" href="__PUBLIC__/Admin/admin.css" type="text/css" />
+    <link rel="stylesheet" href="__PUBLIC__/Css/iconfont.css" type="text/css" />
+
+    <script type="text/javascript" src="__PUBLIC__/sea.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/sea.config.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/Js/Jquery/jquery.min.js"></script>
+</head>
+
+<body>
+<div id="layout-top">
+    <div id="layout-nav" class="cl">
+        <div class="logo fl">
+            <a href="{:U('Admin/Index/index')}"><img src="__PUBLIC__/Admin/logo.png" width="180" height="40" /></a>
+            <a class="ZoomMenu zoom fr" href="javascript:;"><i class="icon-list"></i></a>
+        </div>
+        <div class="nav fl">
+            <ul class="TopMenu float">
+                <foreach name="Think.session.admin_menu" key="key" item="top_menu">
+                <li>
+                	<a <eq name="key" value="0">class="current"</eq> href="javascript:;">
+                		<present name="top_menu.icon"><i class="icon-{$top_menu.icon}"></i></present>
+                		{$top_menu.name}
+                	</a>
+                </li>
+                </foreach>
+            </ul>
+        </div>
+        <div class="user fr">
+            <ul class="float">
+                <li>
+                    <a href="{:U('/','','',true)}" target="_blank">
+                        <i class="icon-computer"></i>进入前台
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0);">
+                    	<i class="icon-user"></i>{$Think.session.admin_info.realname|default="管理员"}
+                    </a>
+                </li>
+                <li>
+                    <a href="{:U('Admin/Public/logout')}">
+                    	<i class="icon-exit"></i>退出登录
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="layout-tab" class="cl">
+        <!-- 搜索菜单 -->
+        <div class="search fl">
+        <div class="input-group"><input id="SearchKey" type="text" name="keywords" /><span id="Search" class="text-icon" data-url="{:U('Admin/Index/search')}"><i class="icon-search"></i></span></div>
+        </div>
+        <div class="action fl">
+            <!-- 快捷菜单 -->
+            <ul class="float">
+            	<foreach name="admin_menu" item="nav">
+                <li><a class="OpenApp" data-url="{:U($nav['name'])}" href="javascript:;"><notempty name="nav.title_menu">{$nav.title_menu}<else />{$nav.title}</notempty></a></li>
+                </foreach>
+
+            </ul>
+        </div>
+        <div class="action fr">
+            <!-- 快捷操作 -->
+            <ul class="float">
+                <li><a id="ReloadIframe"><i class="icon-reload"></i>刷新页面</a></li>
+                <li><a id="ClearCache" data-url="{:U('Admin/Index/delCache')}" href="javascript:void(0);"><i class="icon-clear"></i>清理缓存</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div id="layout-mid">
+    <div id="layout-menu" class="LeftMenu">
+        <foreach name="Think.session.admin_menu" key="key" item="top">
+        <ul class="menu hide" <eq name="key" value="0">style="display:block;"</eq> >
+            <foreach name="top.item" item="mid">
+            <li>
+                <p>
+                	<present name="mid.icon"><i class="icon-{$mid.icon}"></i></present>
+                	{$mid.name}
+                	<span class="fr"><i class="icon-bottom"></i></span>
+                </p>
+                <ul class="item">
+                    <foreach name="mid.item" item="bot">
+                    <li>
+                    	<a class="OpenApp" data-url="{:U($bot['url'])}" href="javascript:;" >{$bot.name}</a>
+                    </li>
+                    </foreach>
+                </ul>
+            </li>
+            </foreach>
+        </ul>
+        </foreach>
+    </div>
+	<!-- main_begin-->
+<div id="layout-main">
+	<iframe id="iframe" src="{:U('Admin/Index/system')}" style="width:100%;height:100%" frameborder="no" border="0"></iframe>
+</div>
+    <!-- main_end-->
+    <div class="clear"></div>
+</div>
+<div id="loading" class="hide">
+	数据加载中<br/>
+	<img src="__PUBLIC__/Img/loading.gif" />
+</div>
+<script type="text/javascript">
+//全局高度监听窗口变化
+$(window).resize(function() {
+    $("#layout-mid").css("height", $(window).height() - 75);
+    if($(window).width() < 1200){
+        if($('#layout-menu').is(':visible') == true){
+            $('#layout-menu').hide();
+            $('#layout-main').css('margin-left','0px');
+        }
+    }
+}).resize();
+
+//隐藏/显示左侧菜单
+$('.ZoomMenu').click(function(e) {
+    if($('#layout-menu').is(':visible') == true){
+        $('#layout-menu').hide();
+        $('#layout-main').css('margin-left','0px');
+    }else{
+        $('#layout-menu').show();
+        $('#layout-main').css('margin-left','220px');
+    }
+});
+
+//点击顶部菜单显示左侧菜单
+$('.TopMenu>li').click(function(e) {
+    $('.TopMenu>li>a').removeClass('current');
+    $(this).find('a').addClass('current');
+    var index = $(this).index();
+    $('.LeftMenu>ul').hide().eq(index).show();
+});
+
+var clickTime=null;
+//.OpenApp 双击左侧菜单打开新窗口
+$('.OpenApp').dblclick(function(e) {
+    clearTimeout(clickTime);
+    var url=$(this).data('url');
+    windowOpen(url);
+    function windowOpen(url,target){
+        var a = document.createElement("a");
+        a.setAttribute("href", url);
+        if(target == null){ target = '_blank'; }
+        a.setAttribute("target", target);
+        document.body.appendChild(a);
+        if(a.click){
+            a.click();
+        }else{
+            try{
+                var evt = document.createEvent('Event');
+                a.initEvent('click', true, true);
+                a.dispatchEvent(evt);
+            }catch(e){
+                window.open(url);
+            }
+        }
+        document.body.removeChild(a);
+    }
+});
+
+//全局iframe元素
+window.iframe = $('#iframe').get(0);
+
+//.OpenApp 点击左侧菜单
+$('.OpenApp').click(function(e) {
+    var $this=$(this);
+    clearTimeout(clickTime);
+    clickTime = setTimeout(function(){
+        //高亮点击菜单
+        $('.OpenApp').removeClass('current');
+        $this.addClass('current');
+
+        var url = $this.data('url');
+        //判断iframe的url
+        // var now = 'http://' + window.location.host + $(this).data('url');
+        // if(iframe.src == now) return false;
+
+        //判断iframe加载完成
+        loading(1,url);
+        if(iframe.attachEvent){    
+            iframe.attachEvent("onload", function(){        
+                loading();
+            });
+        }else{    
+            iframe.onload = function(){        
+                loading();
+            };
+        }
+
+        function loading(type,url){
+            type = (typeof(type)=="undefined") ? 0 : type ;
+            if(type){
+                $('#loading').fadeIn('fast');
+                $('#iframe').fadeOut('fast',function(){
+                    iframe.src = url;
+                });
+            }else{
+                $('#loading').fadeOut('fast');
+                $('#iframe').fadeIn('fast');
+            }
+        };
+    },100);
+});
+
+//左侧菜单折叠监听
+$('.LeftMenu>ul>li>p').bind('click', function() {
+    if ($(this).next().is(":visible")) {
+        $(this).find("span>i:last").removeClass('icon-bottom').addClass('icon-right');
+        $(this).next().slideUp('fast').end().addClass("current");;
+    } else {
+        $(this).find("span>i:last").removeClass('icon-right').addClass('icon-bottom');
+        $(this).next().slideDown('fast').end().removeClass("current");;
+    }
+});
+
+//搜索点击绑定
+$('#Search').click(function(e) {
+    var val = $.trim($('#SearchKey').val());
+    if(val == '') return false;
+    var url = $(this).data('url');
+    
+    iframe.src= url +'?keywords=' +val;
+});
+//搜索回车绑定
+$('#SearchKey').on('keydown', function (e) {
+    if (e.keyCode == 13) {
+        $('#Search').click();
+    }
+});
+
+seajs.use(['dialog'],function(dialog){
+    //定义全局dialog
+    window.dialog = dialog;
+    //缓存清除提示
+    $('#ClearCache').click(function(event) {
+        var url=$(this).data('url');
+        $.get(url, function(result){
+            dialog({
+                id: 'AjaxGetBox',
+                content: '<p class="tc">'+result.info+'</p>',
+                width: 300,
+                padding: 10,
+                quickClose: true,
+            }).show();
+            if(result.status){
+                setTimeout(function(){
+                    reloadPage();
+                }, 2000); 
+            }
+        });
+    });
+});
+//刷新iframe
+$('#ReloadIframe').click(function(event) {
+    reloadPage(iframe.contentWindow);
+});
+function reloadPage(win) {
+    if(typeof(win) == 'undefined'){win=window;}
+    var location = win.location;
+    location.href = location.pathname + location.search;
+}
+
+//键盘按键绑定修改
+$(document).bind('keydown',function(e){
+    e = window.event||e;
+    //F5刷新iframe
+    if(e.keyCode==116){
+        reloadPage(iframe.contentWindow);
+        return false;
+    }
+    //禁用退格键Backspace
+    // if(e.keyCode==8){
+    //     return false;
+    // }
+}); 
+</script>
+
+<style>
+	#think_page_trace_open{
+	    left: 0 !important;
+	    right: auto !important;
+	}
+</style>
+
+</body>
+</html>

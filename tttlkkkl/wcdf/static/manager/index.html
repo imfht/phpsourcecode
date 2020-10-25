@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <title>企业号快捷开发平台</title>
+    <script type="text/javascript" src="/common/layui/layui.js"></script>
+    <link href="/common/layui/css/layui.css" rel="stylesheet" media="all">
+    <script type="text/javascript" src="/common/jquery-3.2.0.min.js"></script>
+    <script type="text/javascript" src="public/base.js"></script>
+    <link href="public/base.css" rel="stylesheet" media="all">
+</head>
+<body>
+<div class="main">
+    <div class="top">
+        <ul class="layui-nav" lay-filter="top_nav">
+            <li class="layui-nav-item layui-this"><a href="/manager/">管理首页</a></li>
+            <div class="layui-inline avatar_warp">
+                <div id="avatar">
+                    <img src="/common/avatar.png" class="layui-circle">
+                </div>
+                <div id="notice">
+                    系统公告...
+                </div>
+            </div>
+            <li class="layui-nav-item user_nav">
+                <a href="#">root</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="#">设置</a></dd>
+                    <dd><a href="#" id="loginOut">退出</a></dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+    <div class="content">
+        <div class="left">
+            <ul class="layui-nav layui-nav-tree left-nav" lay-filter="left_nav">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="#">成员</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="#" url="/manager/member/index.html">组织架构</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;">考勤</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="#" url="/manager/work/list.html">打卡记录</a></dd>
+                        <dd><a href="#">模板设置</a></dd>
+                        <dd><a href="#">界面控制</a></dd>
+                        <dd><a href="#">二维码考勤</a></dd>
+                        <dd><a href="#">考勤分析</a></dd>
+                        <dd><a href="#">考勤月报</a></dd>
+                        <dd><a href="#">图表分析</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+        <!--展示界面-->
+        <div id="vieWindow">
+            <div class="hello">
+                欢迎您！
+            </div>
+        </div>
+    </div>
+
+</div>
+<script type="text/javascript">
+    layui.use(['element','layer'], function () {
+        var element = layui.element();
+        //退出
+        function loginOut() {
+            http.delete('/system/api/auth', '', function (data) {
+                layer.msg(data.msg || '退出失败!');
+
+                if (data.code === 0) {
+                    location.href = '/';
+                } else {
+                    layer.msg(data.msg || '退出失败!');
+                }
+            })
+        }
+        $(function () {
+            var viewWindow = $('#vieWindow');
+            var waiting = $('<div>', {'class': 'hello'});
+            $('.layui-nav').on('click', 'dd a', function () {
+                var This = $(this);
+                var url = This.attr('url');
+                //退出
+                if (This.attr('id') === 'loginOut') {
+                    return loginOut();
+                }
+                if (!url) {
+                    viewWindow.empty();
+                    waiting.addClass('hello').html('功能正在完善中，敬请期待...').appendTo(viewWindow);
+                    return false;
+                }
+                $.get(url, function (html) {
+                    viewWindow.html(html);
+                })
+            });
+            //登录鉴权
+            http.get('/system/api/auth', '', function (data) {
+                if (data.data.result == 1) {
+                    var user = data.data.user;
+                    var avatar = $('#avatar img');
+                    var title = '';
+                    if (user.avatar !== null && user.avatar !== undefined && user.avatar !== '') {
+                        avatar.attr('src', user.avatar);
+                    }
+                    if (user.position !== null && user.position !== undefined && user.position !== '') {
+                        title += '伟大的' + user.position;
+                    }
+                    if (user.name !== null && user.name !== undefined && user.name !== '') {
+                        title += '-' + user.name;
+                    }
+                    if (title !== '') {
+                        avatar.attr('title', title);
+                        viewWindow.empty();
+                        waiting.addClass('hello').html('欢迎您！' + title + '^_^').appendTo(viewWindow);
+                    }
+                } else {
+                    //进入授权流程
+                    location.href = data.data.authUrl;
+                }
+            })
+        });
+    });
+</script>
+<script type="text/javascript" src="../common/frame.js"></script>
+</body>
+</html>

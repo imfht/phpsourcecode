@@ -1,0 +1,87 @@
+<div id="interactive" class="viewport"><video id="hiici_s" width="100%" style="position:fixed" autoplay onclick="q_r_start()"></video></div>
+<canvas id="qr-canvas" style="display:none"></canvas>
+<audio id="q_audio" src="forum/inc/notify.mp3" autoplay style="display:none"></audio>
+<ul class="nav nav-tabs affix">
+	<li class="active"><a sl-scroll-to="" anchor="sl-header" id="terms-of-use-a" href="#" data-toggle="tab" class="ng-isolate-scope">二维码</a></li>
+	<li><a sl-scroll-to="" anchor="sl-header" id="privacy-and-security-a" href="#" data-toggle="tab" class="ng-isolate-scope">条形码</a></li>
+	<div class="qr-d"></div>
+</ul>
+<script src="websocket/inc/jsqrcode/grid.js"></script>
+<script src="websocket/inc/jsqrcode/version.js"></script>
+<script src="websocket/inc/jsqrcode/detector.js"></script>
+<script src="websocket/inc/jsqrcode/formatinf.js"></script>
+<script src="websocket/inc/jsqrcode/errorlevel.js"></script>
+<script src="websocket/inc/jsqrcode/bitmat.js"></script>
+<script src="websocket/inc/jsqrcode/datablock.js"></script>
+<script src="websocket/inc/jsqrcode/bmparser.js"></script>
+<script src="websocket/inc/jsqrcode/datamask.js"></script>
+<script src="websocket/inc/jsqrcode/rsdecoder.js"></script>
+<script src="websocket/inc/jsqrcode/gf256poly.js"></script>
+<script src="websocket/inc/jsqrcode/gf256.js"></script>
+<script src="websocket/inc/jsqrcode/decoder.js"></script>
+<script src="websocket/inc/jsqrcode/qrcode.js"></script>
+<script src="websocket/inc/jsqrcode/findpat.js"></script>
+<script src="websocket/inc/jsqrcode/alignpat.js"></script>
+<script src="websocket/inc/jsqrcode/databr.js"></script>
+<script src="websocket/inc/quaggaJS/quagga.min.js"></script>
+<script src="websocket/inc/quaggaJS/get_cd_info.js"></script>
+<script>
+
+var qc = document.getElementById("qr-canvas");
+var ctx = qc.getContext("2d");
+
+qrcode.callback = function(d){
+	q_r_pause('terms-of-use-a'); 
+
+	if (d.match(/\?c=forum&a=take_money/)) location = d;  
+	else if (d.match(/:\/\//)) $('div.qr-d').html('<p><a href="'+d+'">'+d+'</a></p>');  
+	else $('div.qr-d').html('<p>'+d+'</p>'); 
+};
+
+Quagga.onDetected(function(dt){
+	q_r_pause('privacy-and-security-a'); 
+
+	var cd = dt.codeResult.code;
+	$('div.qr-d').html('<p><a href="?c=bd_search&a=bd_search&wd='+cd+'">'+cd+'</a></p>'); 
+	get_cd_info(cd);
+});
+
+Quagga.init({
+	inputStream : {
+		type : "LiveStream",
+			constraints: {
+				width: 1280,
+					height: 720,
+					facing: "environment" 
+			},
+	},
+	visual: { show:false },
+	numOfWorkers: 1,
+	decoder : {
+		readers : [ 'code_128_reader', 'ean_reader', 'code_39_reader', 'code_39_vin_reader', 'codabar_reader', 'upc_reader', 'ean_8_reader', 'upc_e_reader' ]
+	}
+}, function(e) {
+	if (e) { console.log(e); return }
+		q_r_start();
+	setTimeout(function(){
+		qc.width = $('#hiici_s').width();
+		qc.height = $('#hiici_s').height();
+	}, 500);
+});
+
+function q_r_pause(l_id) {
+	q_audio.play();
+
+	$('ul.affix li').removeClass('active');
+	$('a#'+l_id).parent('li').addClass('active');
+
+	Quagga.pause();
+	auto_run_stop();
+}
+function q_r_start() {
+	$('div.qr-d').html('');
+	Quagga.start();
+	auto_run(function(){ ctx.drawImage(hiici_s, 0, 0, $('#hiici_s').width(), $('#hiici_s').height()); qrcode.decode(); }, 1000);
+}
+
+</script>

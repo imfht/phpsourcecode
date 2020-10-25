@@ -1,0 +1,235 @@
+<?php
+/**
+ * 公共组件，Form
+ *
+ * 转为早期的组件化form，不再使用声明一个对象的form
+ *
+ * @var \Ke\Web\Web     $web
+ * @var \Ke\Web\Http    $http
+ * @var \Ke\Web\Html    $html
+ * @var \Ke\Web\Context $this
+ */
+
+use Ke\Web\Html;
+use Ke\Adm\Model;
+
+//$html = $this->html;
+$data = $data ?? [];
+$dataType = false;
+$id = $id ?? '';
+$ajax = $ajax ?? false;
+$showSubmit = $showSubmit ?? true;
+
+$showSubmit = !empty($showSubmit);
+
+$message = $message ?? '';
+if (!is_string($message))
+	$message = '';
+
+if (is_array($data))
+	$dataType = Html::DATA_ARRAY;
+else if ($data instanceof ArrayAccess)
+	$dataType = Html::DATA_ARRAY_ACCESS;
+
+$prefix = $prefix ?? '';
+
+//if (!empty($prefix)) {
+//	if (is_string($prefix)) {
+//		$prefix = trim($prefix);
+//		if (!empty($prefix))
+//			$prefix = [$prefix];
+//	}
+//}
+
+$columns = $columns ?? [];
+$errors = $errors ?? [];
+$status = $status ?? null;
+
+if ($status instanceof \Ke\Utils\Status) {
+	if (!empty($status->data['errors']) && is_array($status->data['errors']))
+		$errors = array_merge($errors, $status->data['errors']);
+}
+
+/** @var \Ke\Adm\Model $model */
+$model = $model ?? false;
+$isUpdate = false;
+if ($data instanceof Model) {
+	$model = get_class($data);
+	if ($data->isExists())
+		$isUpdate = true;
+	$modelErrors = $data->getErrors();
+	foreach ($modelErrors as $field => $error) {
+		$errors[$field] = $error;
+	}
+}
+
+if (!class_exists($model) || !is_subclass_of($model, Model::class))
+	$model = false;
+else {
+	if (empty($prefix) && $prefix !== false) {
+		list($ns, $cls) = parse_class($model);
+		$prefix = class2id($cls);
+	}
+	$modelColumns = $model::getStaticColumns($isUpdate ? Model::ON_UPDATE : Model::ON_CREATE);
+	if (empty($columns) || !is_array($columns))
+		$columns = $modelColumns;
+	else {
+		foreach ($columns as $field => $column) {
+			if (is_string($column))
+				$column['label'] = $column;
+			if (!is_array($column))
+				continue;
+			if (isset($modelColumns[$field]))
+				$column = array_merge($modelColumns[$field], $column);
+			$columns[$field] = $column;
+		}
+	}
+}
+
+$attr = $attr ?? [];
+if (!is_array($attr))
+	$attr = $html->attr2array($attr);
+$html->addClass($attr, $html->getBaseClass('form', 'wrap'));
+
+$isForm = $isForm ?? true;
+
+$method = $method ?? 'post';
+$action = $action ?? '';
+
+if (empty($action))
+	$action = \Ke\Uri::current();
+
+if (!($action instanceof \Ke\Uri)) {
+	$action = $web->uri($action);
+}
+
+
+
+$isReset = $isReset ?? true;
+
+$submit = $submit ?? '';
+if (empty($submit) || !is_string($submit))
+	$submit = $html->getText(Html::SUBMIT);
+
+$reset = $reset ?? '';
+if (empty($reset) || !is_string($reset))
+	$reset = $html->getText(Html::RESET);
+
+$return = $return ?? false;
+if (empty($return))
+	$return = $web->http->query('ref', null);
+
+$isUpload = $isUpload ?? false;
+
+$buttons = $buttons ?? null;
+$formButtons = [
+	[$submit, 'submit'],
+];
+
+if (!empty($isReset))
+	$formButtons[] = [$reset, 'reset'];
+
+if (!empty($return)) {
+	$formButtons[] = [$html->getText(Html::RETURN), $return, ['class' => 'form-return-button']];
+}
+
+if (!empty($buttons) && is_array($buttons)) {
+	foreach ($buttons as $button) {
+		if (is_array($button))
+			$formButtons[] = $button;
+	}
+}
+
+$formAttr = [
+	'method' => $method,
+	'action' => $action,
+];
+
+if ($isUpload)
+	$formAttr['enctype'] = 'multipart/form-data';
+
+if (!empty($id))
+	$formAttr['id'] = $id;
+
+$class = $class ?? '';
+if (!empty($class) && (is_array($class) || is_string($class)))
+	$formAttr = $html->addClass($formAttr, $class);
+
+$prefixClass = preg_replace('#[_]+#', '-', mb_strtolower($prefix)) . '-form';
+$formAttr = $html->addClass($formAttr, $prefixClass);
+
+if (!empty($ajax))
+	$formAttr['ajax-post'] = 'ajax-post';
+
+
+$isPost = strtolower($method) === 'post';
+$postData = [];
+
+if ($isPost) {
+	if ($http->isPost($prefix)) {
+		$postData = $http->getSecurityData();
+	}
+} else {
+	$postData = $http->query($prefix);
+}
+
+// 新版本的form组件，如果用户不指定edit的字段，则不会变为可编辑的项。
+
+$form = '';
+$fields = [];
+foreach ($columns as $field => $column) {
+	if (empty($column['edit']))
+		continue;
+	$column['prefix'] = [$prefix];
+	$column['error'] = $errors[$field] ?? null;
+	// 补充一下 context
+	$column['context'] = $column['context'] ?? [];
+	$column['context']['formId'] = $id;
+	
+	$value = $postData[$field] ?? $data[$field] ?? null;
+	// 需要隐藏的字段，还是不要显示出来的好
+	if (!empty($column['hidden']))
+		$value = null;
+	$form .= $html->mkFormColumn($field, $value, $column, $data);
+}
+
+if ($isForm) {
+	if ($isPost) {
+		$form .= $html->input('hidden', $web->http->mkSecurityCode($prefix), [
+			'name' => KE_HTTP_SECURITY_FIELD,
+		]);
+	}
+	
+	if ($showSubmit)
+		$form .= $html->buttons($formButtons, 'field submit');
+	
+	if (!empty($errors) || (isset($status) && is_object($status) && ($status instanceof \Ke\Utils\Status) && $status->isFailure())) {
+		$messages = [];
+		if (isset($status))
+			$messages[] = '<div class="header">' . $status->message . '</div>';
+		else
+			$messages[] = '<div class="header">表单输入有误！</div>';
+		foreach ($errors as $error) {
+			$messages[] = "<li>{$error}</li>";
+		}
+//		$form .= $html->error('<ul class="list">' . implode('', $messages) . '</ul>');
+		$message = empty($status->message) ? '提交失败！' : $status->message;
+		$form .= $html->error($message, 'footer');
+		$html->addClass($formAttr, 'error');
+	} else if ((isset($status) && is_object($status) && ($status instanceof \Ke\Utils\Status) && $status->isSuccess())) {
+		$message = empty($status->message) ? '提交成功！' : $status->message;
+		$form .= $html->success($message, 'footer');
+		$html->addClass($formAttr, 'success');
+	} else {
+		if (!empty($message)) {
+			$form .= $html->message($message, 'default', 'footer');
+		}
+		// $form .= 'aaa';
+	}
+	
+	$form = $html->tag('form', $form, $formAttr);
+}
+
+// echo $form;
+
+echo $html->tag('div', $form, $attr);

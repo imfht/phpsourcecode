@@ -1,0 +1,154 @@
+{include file="public/header" /}
+{include file="public/breadcrumb" /}
+<div class="main">
+	<div class="page_left">	
+	<form class="layui-form feedback-form">
+		<div class="layui-form-item">
+		    <div class="">
+		    	<textarea name="content" lay-verify="layedit" autocomplete="off" placeholder="我要留言" class="llayui-textarea layui-hide" id="content"></textarea>
+		    </div>
+		</div>
+		<div class="layui-form-item">
+		    <button class="layui-btn" lay-submit="" lay-filter="feedback">提交留言</button>
+		</div>
+	</form>
+	<ul class="feedback_list"> 
+	{volist name="lists" id="vo"}
+		<li>
+			<div class="feedback_member">
+			 	{if condition="$vo['member_id'] == 0"}
+			 	<div class="avatar"><i class="layui-icon">&#xe612;</i></div>
+			 	<div class="name_date"><p class="name">游客留言</p>
+			 	{else/}
+			 	<div class="avatar"><img src="{$vo['avatar']}" alt="{$vo['nickname']}"></div>
+				<div class="name_date"><p class="name">{$vo['nickname']}</p>
+			 	{/if}
+			 	<p class="date">{$vo['create_time']|format_datetime}</p></div>
+			 	<div class="feedback_content"><?php echo html_entity_decode($vo['content']) ?></div>
+			</div>
+			{if condition="$vo['reply']"}
+			<div class="feedback_member feedback_reply">
+			 	<div class="avatar"><img src="{if $vo['admin_avatar']}{$vo['admin_avatar']}{else/}__TEMPLATE__laozhang/static/images/laozhang_avatar.png{/if}" alt="管理员头像"></div>
+				<div class="name_date"><p class="name">{if $vo['admin_name']}{$vo['admin_name']}{else/}老张{/if}</p>
+			 	<p class="date">{$vo['reply_time']|format_datetime}</p></div>
+			 	<div class="feedback_content reply_content">回复：{$vo['reply']}</div>
+			</div>
+			{/if}
+		</li>
+	{/volist}
+	</ul>
+	<div id="page">{$page}</div>
+	</div>
+	<div class="page_right">
+		{if $settings.stationmaster_name||$settings.stationmaster_occupation||$settings.stationmaster_motto||$settings.stationmaster_qqnet}
+		<div class="about_stationmaster_container">
+			<h3>博主信息</h3>
+			<ol class="page_right_list trans_3">
+				{if $settings.stationmaster_name}<li>姓名：{$settings.stationmaster_name}</li>{/if}
+				{if $settings.stationmaster_occupation}<li>职业：{$settings.stationmaster_occupation}</li>{/if}
+				{if $settings.stationmaster_motto}<li>座右铭：{$settings.stationmaster_motto}</li>{/if}
+				{if $settings.stationmaster_qqnet}<li>QQ群：{$settings.stationmaster_qqnet} {$settings.stationmaster_qqnet_code}</li>{/if}
+			</ol>
+		</div>
+		{/if}
+		<div class="mobile_qrcode_container">
+			<h3>手机扫码访问</h3>
+			<div class="mobile_qrcode wechat_qrcode trans_3">
+				{include file="public/qrcode" /}
+			</div>
+		</div>
+	</div>
+	<div class="clear"></div>
+</div>
+<script type="text/javascript">
+layui.use(['form', 'layedit'], function(){
+	var form = layui.form(),
+  	layer = layui.layer,
+  	layedit = layui.layedit,
+  	$ = layui.jquery;
+
+  //创建一个编辑器
+  var content = layedit.build('content',{
+  	tool: ['face', '|', 'left', 'center', 'right']
+    ,height: 150
+  });
+  //表单验证
+  form.verify({
+    //编辑器数据同步
+    layedit: function(value){
+      layedit.sync(content);
+      if(layedit.getText(content).length < 1){
+        return '至少得 1 个字吧...';
+      }
+    }
+
+  });
+  //监听提交
+  form.on('submit(feedback)', function(data){
+  	var is_login = false;
+  	$.ajax({
+  		type:"POST",  
+        async:false,  //设置同步请求  
+        url:'{:url("member/is_login")}',  
+        dataType:'json',  
+        success:function(data) {
+        	if(data.code == 200){
+		        is_login = true;
+		    }
+        }
+  	});
+  	if(!is_login){
+  		var login_iframe = layer.open({
+	        type: 2,
+	        title: 'QQ一键登陆',
+	        shadeClose: true,
+	        shade: false,
+	        maxmin: false, //开启最大化最小化按钮
+	        area: ['350px', '500px'],
+	        content: '{:url("index/member/other_login")}',
+	
+	    	{if condition="$settings['guest_feedback'] == 1"}
+	    	btn: ['游客留言'], //按钮
+	  	 	yes:function(){
+			  	layer.close(login_iframe);
+			  	loading = layer.load(2, {
+			      shade: [0.2,'#000'] //0.2透明度的白色背景
+			    });
+			    var param = data.field;
+			    $.post('{:url("feedback/add")}',param,function(data){
+			      if(data.code == 200){
+			        layer.close(loading);
+			        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+			          location.reload();//do something
+			        });
+			      }else{
+			        layer.close(loading);
+			        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+			      }
+			    });
+			}
+  	 		{/if}
+		});
+  	}else{
+  		loading = layer.load(2, {
+	      shade: [0.2,'#000'] //0.2透明度的白色背景
+	    });
+	    var param = data.field;
+	    $.post('{:url("feedback/add")}',param,function(data){
+	      if(data.code == 200){
+	        layer.close(loading);
+	        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+	          location.reload();//do something
+	        });
+	      }else{
+	        layer.close(loading);
+	        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+	      }
+	    });
+  	}
+    return false;
+  });
+
+});
+</script>
+{include file="public/footer" /}

@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <title>{$info.title?:$webdb.seo_keyword}</title>
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="__STATIC__/libs/bui/css/bui.css" />
+    <link rel="stylesheet" href="__STATIC__/libs/bui/css/style.css" />
+	<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+</head>
+<body>
+    <!-- 第1步: 开启单页路由 -->
+    <div id="bui-router"></div>
+	<script type="text/javascript" src="__STATIC__/js/core/jquery.min.js"></script>
+	<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+    <!-- <script src="js/zepto.js"></script>-->
+    <script src="__STATIC__/libs/bui/js/bui.js"></script>
+    <!-- 初始化单页 -->
+    <script src="__STATIC__/libs/bui/index.js?f"></script>
+	<script src="__STATIC__/js/core/vue.min.js"></script>
+
+
+<script type="text/javascript">
+//var ListMsgUserUrl = "{qb:url name='wap_msg_user_list' /}";			//获取分页的消息用户列表
+//var getShowMsgUrl = "{qb:url name='wap_show_all_msg' /}";			//获取更多分页的会话记录
+//var now_time = "{:time()}";											//当前时间点做个记录,之后的消息就当新消息处理
+var postMsgUrl = "{:urls('wxapp.msg/add')}";						//发送消息提交的地址
+var get_user_info_url = "{:urls('index/wxapp.member/getbyid')}";	//根据UID获取某个用户的相关资料
+var get_uid_by_name_url = "{:urls('index/wxapp.member/get_uid')}";	//根据帐户名获取用户uid,主要是给新用户发消息用
+
+//var tongjiMsgUrl = "{qb:url name='wap_tongji_member_feed' /}";		//获取分页的统计数据
+//var tongjiCountUrl = "{:iurl('tongji/wxapp.count/index')}";			//获取各种统计的数量
+//var tongjiAllCountUrl = "{:iurl('tongji/wxapp.count/all')}?msg=";	//获取所有的动态统计数量
+
+//var checkNewMsgUrl = "{:urls('member/wxapp.msg/checknew')}";		//检查新消息条数
+
+var my_uid = "{$userdb.uid}";										//我的UID,当前用户的UID
+//var MyFriendUrl = "{qb:url name='wap_myfriend' /}";					//获取好友列表
+//var FriendActUrl = "{:urls('member/wxapp.friend/act')}";			//添加,删除好友
+//var uid_array = [];													//用户列表中的所有用户最新消息做标志
+var chat_timer;														//为了消息聊天窗口重复的定时器
+//var MsgUserList,myFriendList,myFriendNum,qunObj={};					//框架加载有可能比页面加载快,也有可能更慢
+
+var to_uid = {:isset($info['ifread'])?$info.uid:($touid?:'""')};	//$info['ifread']变量存在是短消息的内容页传来的参数,$touid是短消息发布页传来的参数
+//var member_menu = {$menu?json_encode($menu,JSON_UNESCAPED_UNICODE):'""'};		//会员中心菜单
+</script>
+
+{include file="index@weixingz" /}<!--若没有关注微信公众号,就做个提醒-->
+
+<!--微信接口-->
+{if weixin_share()}
+<script src="__STATIC__/js/jweixin.js"></script>
+<script type="text/javascript">
+var goIntoUrl = window.location.href;
+wx.miniProgram.getEnv(function(res) {
+	if( res.miniprogram==true && !!navigator.userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/)==false ){	//安卓手机这里要特别处理		
+		if(goIntoUrl.indexOf('#')==-1){
+			//window.location.href = goIntoUrl+"#main"
+			window.location.reload();
+		}
+	}
+});
+var have_load_wx_config;
+window.onload = function(){
+	have_load_wx_config = true;
+	wx.config({
+		debug: false,
+		appId: '{:weixin_share("appId")}',
+		timestamp: {:weixin_share("timestamp")?:0},
+		nonceStr: '{:weixin_share("nonceStr")}',
+		signature: '{:weixin_share("signature")}',
+		jsApiList: [
+			'checkJsApi',
+			'onMenuShareTimeline',
+			'onMenuShareAppMessage', 
+			'hideMenuItems',
+			'showMenuItems',
+			'openLocation',
+			'getLocation',
+
+			'translateVoice',
+			'startRecord',
+			'stopRecord',
+			'onVoiceRecordEnd',
+			'playVoice',
+			'onVoicePlayEnd',
+			'pauseVoice',
+			'stopVoice',
+			'uploadVoice',
+			'downloadVoice',
+
+		  ]
+	});
+
+	wx.error(function (res) {
+		have_load_wx_config=false;
+		layer.msg(res.errMsg,{time:300})
+	});
+};
+</script>
+{/if}
+
+
+</body>
+
+</html>

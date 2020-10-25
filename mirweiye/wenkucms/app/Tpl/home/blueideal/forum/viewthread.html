@@ -1,0 +1,345 @@
+<include file="public:head" />
+<style type="text/css">
+  .detail-body img {max-width:50%;cursor: crosshair;object-fit: cover;}
+  .forum-user{margin-left: 60px;}
+  .tieinfo{float: right;font-size: 14px;color: #666;}
+  .tieinfo a {margin-right: 10px;}
+  .fly-admin-box { margin-left: 0px;float: right;}
+  .jinghua{margin-right: 20px;}
+  .quxiao{background-color:#ccc;}
+</style>
+   <!-- 主体开始 -->
+<div class="fly-panel fly-column">
+  <div class="layui-container">
+    <ul class="layui-clear">
+      <li <if condition="$cid eq ''"> class="layui-hide-xs layui-this"</if>><a href="{:U('forum/index')}" class="forumnav">论坛首页</a></li> 
+      <volist name='forum_cate' id="vo">
+        <li <if condition="$vo['id'] eq $cid"> class="layui-hide-xs layui-this"</if>><a href="{:U('forum/forumdisplay',array('cid'=>$vo['id']))}" class="forumnav">{$vo.name}</a></li>  
+      </volist>
+      <li class="layui-hide-xs layui-hide-sm layui-show-md-inline-block"><span class="fly-mid"></span></li>
+      <li class="layui-hide-xs layui-hide-sm layui-show-md-inline-block"><a href="{:U('ucenter/forum_fa')}">我发表的贴</a></li>
+    </ul> 
+    
+    <div class="fly-column-right layui-hide-xs"> 
+      <span class="fly-search"><i class="layui-icon"></i></span> 
+      <a href="{:U('doc/doc_share')}" class="layui-btn layui-btn-primary"><i class="layui-icon">&#xe681;</i> 上传文档</a> 
+    </div> 
+  </div>
+</div>
+
+<div class="layui-container">
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md8 content detail">
+      <div class="fly-panel detail-box">
+        <h1>{$info.title}
+          <span class="tieinfo">
+            <a href="#comment"><i class="iconfont" title="回答">&#xe60c;</i> {$commentcount}</a>
+            <i class="iconfont" title="人气">&#xe60b;</i> {$info.hits}
+          </span>
+        </h1>
+        
+        <div class="fly-detail-info">
+          <if condition="$info['score'] gt 0">
+           <span class="layui-badge layui-bg-red">悬赏：{$info.score} {:C('wkcms_score_name')}</span>
+
+           <if condition="$info['caina'] eq 0">
+           <span class="layui-badge" style="background-color: #999;">未结</span>
+           <else />
+           <span class="layui-badge" style="background-color: #5FB878;">已结</span>
+           </if>
+            </if>
+          <if condition="$info['top'] eq 1"><span class="layui-badge layui-bg-red zhiding">置顶</span></if>
+          <if condition="$info['jing'] eq 1"><span class="layui-badge layui-bg-red jinghua">精帖</span></if>
+            <!-- 管理员操作 -->
+            <div class="fly-admin-box"> 
+            <if condition="getisadmin($uid)">
+              <if condition="$info['caina'] eq 0">
+            <span class="layui-btn layui-btn-xs jie-admin" id="del">删除</span> </if>
+            <span class="layui-btn layui-btn-xs jie-admin <if condition="$info['top'] eq 1">quxiao</if>" <if condition="$info['top'] eq 0"> data="1" <else /> data="0"</if> id="zhiding" ><if condition="$info['top'] eq 0">置顶<else />取消置顶</if></span> 
+            <span class="layui-btn layui-btn-xs jie-admin <if condition="$info['jing'] eq 1">quxiao</if>" <if condition="$info['jing'] eq 0"> data="1" <else /> data="0"</if> id="jing" ><if condition="$info['jing'] eq 0">加精<else />取消加精</if></span> 
+            </if>
+            <if condition="$info['uid'] eq $uid">
+              <a href="{:U('ucenter/forumedit',array('id'=>$info['id'],'uid'=>$info['uid']))}"><span class="layui-btn layui-btn-xs jie-admin" id="edit">编辑帖子</span> </a>
+            </if>
+            </div>
+            
+            <!-- 管理员操作结束 -->
+        </div>
+
+
+        <div class="detail-about">
+          <a class="fly-forum-avatar" href="{:U('member/mydoclist',array('uid'=>$info['uid']))}" target="_blank" >
+            <img src="{:C('wkcms_site_url')}{$info['uid']|getavatar}" >
+          </a>
+          <div class="fly-detail-user forum-user">
+            <a href="{:U('member/mydoclist',array('uid'=>$info['uid']))}" class="fly-link" target="_blank" >
+              <cite>{$info.uid|getusername}</cite>
+            </a>
+            <span>{$vo.add_time|fdate}</span>
+          </div>
+          <div class="detail-hits forum-user" >
+            <span style="padding-right: 10px; color: #FF7200">{:C('wkcms_score_name')}：{$info.uid|getuserscore}</span>  
+            <span style="padding-right: 10px; color: #666">帖子：{$info.uid|myforum}</span>  
+            <span style="padding-right: 10px; color: #666">文档：{$info.uid|mydoccount}</span>  
+          </div>
+        </div>
+        <div class="detail-body photos">
+          {$info.content}
+        </div>
+      </div>
+
+      <div class="fly-panel detail-box" id="flyReply">
+        <fieldset class="layui-elem-field layui-field-title" style="text-align: center;">
+          <legend>回帖</legend>
+        </fieldset>
+
+        <ul class="jieda" id="jieda">
+         <empty name="commentdata['list']">
+              <li class="fly-none">消灭零回复</li>
+            </empty>
+          <volist name="commentdata['list']" id="vo">
+
+          <li >
+            <a ></a>
+            <div class="detail-about detail-about-reply">
+              <a class="fly-avatar" href="">
+                <img src="https://tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg" style="width: 45px;height: 45px;">
+              </a>
+              <div class="fly-detail-user">
+                <a href="{:U('member/mydoclist',array('uid'=>$vo['uid']))}" class="fly-link">
+                  <cite>{$vo.uid|getusername}</cite>     </a>
+                  <if condition="$info['caina'] neq 0 && $info['caina'] == $vo['id']">
+                    <i class="iconfont icon-caina" title="最佳答案"></i>
+                  <elseif condition="$info['caina'] eq 0 && $info['uid'] == $uid && $info['uid'] != $vo['uid']" />
+                  <span class="layui-btn layui-btn-xs jie-admin caina" data-id="{$vo.id}" style="float: right;background-color: #5FB878;">采纳为最佳</span> 
+                  </if>
+                
+              </div>
+
+              <!-- <i class="iconfont icon-caina" title="最佳答案"></i> -->
+
+              <div class="detail-hits">
+                <span>{$vo.add_time|fdate}</span>
+
+              </div>
+            </div>
+            <div class="detail-body jieda-body photos">
+              <p>{$vo.info|htmlspecialchars_decode}</p>
+            </div>
+
+          </li>
+          </volist>
+          
+          <!-- 无数据时 -->
+          <!-- <li class="fly-none">消灭零回复</li> -->
+        </ul>
+        
+        <div class="layui-form layui-form-pane">
+            <div class="layui-form-item layui-form-text">
+              <div class="layui-input-block">
+                <textarea id="L_content" name="content" placeholder="请输入帖子内容" class="layui-textarea"></textarea>
+              </div>
+            </div>
+            <div class="layui-form-item">
+              <input type="hidden" name="jid" value="123">
+              <button class="layui-btn" id="comment">提交回复</button>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md4">
+       
+      <div class="fly-panel">
+        <div class="fly-forum-main">
+          <a href="{:U('ucenter/forum_add')}" target="_blank" class="layui-btn layui-btn-fluid layui-btn-danger" >发表新帖</a>
+          <!-- <div style="text-align: center;padding: 15px; margin-top: 5px;">
+            <li class="layui-hide-xs layui-hide-sm layui-show-md-inline-block"><a href="#">我发表的贴</a></li> 
+            <li class="layui-hide-xs layui-hide-sm layui-show-md-inline-block"><span class="fly-mid"></span></li>
+            <li class="layui-hide-xs layui-hide-sm layui-show-md-inline-block"><a href="#">我回复的贴</a></li> 
+          </div> -->
+        </div>
+      </div>
+
+      <div class="fly-panel fly-rank fly-rank-reply" id="LAY_replyRank">
+        <h3 class="fly-panel-title">发贴总榜</h3>
+        <empty name="fBang">
+            <div class="fly-none">没有相关数据</div>
+        </empty>
+        <dl>
+          <volist name='fBang' id="vo">
+          <dd>
+            <a href="{:U('member/mydoclist',array('uid'=>$vo['uid']))}">
+              <img src="{:C('wkcms_site_url')}{$vo['uid']|getavatar}"><cite>{$vo.uid|getusername}</cite><i>{$vo['count(uid)']}次回答</i>
+            </a>
+          </dd>
+          </volist>
+        </dl>
+      </div>
+
+      <dl class="fly-panel fly-list-one">
+        <dt class="fly-panel-title">本月热帖</dt>
+        <empty name="zhoulist">
+            <div class="fly-none">没有相关数据</div>
+        </empty>
+        <volist name='zhoulist' id="vo">
+        <dd>
+          <a href="{:U('forum/viewthread',array('id'=>$vo['id']))}">{$vo.title}</a>
+          <span><i class="iconfont icon-liulanyanjing"></i> {$vo.hits}</span>
+        </dd>
+        </volist>
+      </dl>
+
+       <!-- 广告 -->
+       
+      <!-- 广告结束 -->
+      
+      <include file="public:flink" />
+
+    </div>
+  </div>
+</div>
+   <!-- 主体结束 -->
+<include file="public:footer" />
+ 
+<script> 
+ layui.use(['form', 'layedit', 'laydate','jquery'], function(){
+  var form = layui.form
+  ,layer = layui.layer
+  ,layedit = layui.layedit
+  ,laydate = layui.laydate, $ = layui.jquery;
+
+  //建立编辑器
+  var layedit;
+  var layedit_index;
+  // 编辑器上传配置
+  layedit.set({
+    uploadImage: {
+      url: "{:U('common/editer_upload')}",
+      type: 'post'
+    }
+  });
+  //初始化编辑器
+  layedit = layui.layedit ;
+  layedit_index = layedit.build('L_content', {height: 150})
+
+  // 提交表单
+  $('#comment').bind('click',function(){
+    //$(this).unbind('click');
+     var send = {};
+    send.itemid = "{$id}";
+    send.commentid = "{$commentcount}";
+    send.info = layedit.getContent(layedit_index);
+    send.toid = 0;
+    send.uid = "{$uid}";
+    send.typeid = 2;
+    var loading = layer.msg('操作中...', { icon: 16 ,shade: 0.01 });
+
+    $.post("{:U('common/ajaxadd_comment')}",send,function(res) {
+        layer.close(loading);
+        if (res.status == 1) {
+            layer.msg('回复成功',{time:1800}, function() {
+                location.reload();
+            });
+        } else {
+            layer.msg(res.msg,{time:1800});
+        }
+    });
+  });
+
+  //删除
+  $('#del').on('click',function(){
+     var send = {};
+    send.id = "{$info.id}";
+
+    layer.confirm('确定删除吗？', {
+        btn: ['确定','取消'] //按钮
+        }, function(){
+          var loading = layer.msg('操作中...', { icon: 16 ,shade: 0.01 });
+          $.post("{:U('forum/del')}",send,function(res) {
+              layer.close(loading);
+              if (res.status.status == 1) {
+                  layer.msg(res.status.msg,{time:1800}, function() {
+                      window.location.href="{$ret_url}";
+                  });
+              } else {
+                  layer.msg(res.status.msg,{time:1800});
+              }
+          });
+        });
+  });
+
+  //编辑帖子
+   
+
+  //置顶操作
+  $('#zhiding').on('click',function(){
+     var send = {};
+    send.id = "{$info.id}";
+    send.v = $('#zhiding').attr("data");
+    var loading = layer.msg('操作中...', { icon: 16 ,shade: 0.01 });
+    $.post("{:U('forum/zhiding')}",send,function(res) {
+        layer.close(loading);
+        if (res.status.status == 1) {
+            layer.msg(res.status.msg,{time:1800}, function() {
+                location.reload();
+            });
+        } else {
+            layer.msg(res.status.msg,{time:1800});
+        }
+    });
+  });
+
+  //置顶操作
+  $('#jing').on('click',function(){
+     var send = {};
+    send.id = "{$info.id}";
+    send.v = $('#jing').attr("data");
+    var loading = layer.msg('操作中...', { icon: 16 ,shade: 0.01 });
+    $.post("{:U('forum/jing')}",send,function(res) {
+        layer.close(loading);
+        if (res.status.status == 1) {
+          
+            layer.msg(res.status.msg,{time:1800}, function() {
+                location.reload();
+            });
+        } else {
+            layer.msg(res.status.msg,{time:1800});
+        }
+    });
+  });
+
+  //采纳操作
+  $('.caina').each(function()
+  {
+    $(this).bind('click',function(){
+      var send = {};
+      send.id = "{$info.id}";
+      send.v = $(this).attr('data-id');
+
+      layer.confirm('确定采纳为最佳吗？', {
+        btn: ['确定','取消'] //按钮
+        }, function(){
+          var loading = layer.msg('操作中...', { icon: 16 ,shade: 0.01 });
+          $.post("{:U('forum/caina')}",send,function(res) {
+              layer.close(loading);
+              if (res.status.status == 1) {
+                  layer.msg(res.status.msg,{time:1800}, function() {
+                      location.reload();
+                  });
+              } else {
+                  layer.msg(res.status.msg,{time:1800});
+              }
+          });
+        });
+   });
+  });
+});
+</script>  
+<script>
+layui.config({
+  version: "3.0.0"
+  ,base: '__PUBLIC__/theme/blueideal/mods/' //这里实际使用时，建议改成绝对路径
+}).extend({
+  fly: 'index'
+}).use('fly');
+</script>

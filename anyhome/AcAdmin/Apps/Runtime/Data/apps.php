@@ -1,0 +1,1 @@
+a:1:{s:5:"ajspm";a:5:{s:4:"code";s:5:"ajspm";s:4:"name";s:7:"AJSPM25";s:6:"app_id";s:14:"A6986237580001";s:7:"app_key";s:36:"5F54E123-157B-41E0-68FD-F634F462F7CF";s:5:"intro";s:7:"AJSPM25";}}

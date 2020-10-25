@@ -1,0 +1,74 @@
+<link rel="stylesheet" href="//cdn.itdashu.com/themes/AdminLTE/plugins/dropzone/dropzone.css">
+{{ content() }}
+<div class="alert alert-block alert-info">
+    <i class="fa fa-fw fa-file-image-o"></i>
+    点击图片，添加到选中列表
+</div>
+<form action="{{ url }}" class="dropzone dz-clickable">
+    <div class="fallback">
+        <input name="file" type="file" multiple/>
+    </div>
+</form>
+<script type="text/javascript">
+    function count(o){
+        var t = typeof o;
+        if(t == 'string'){
+            return o.length;
+        }else if(t == 'object'){
+            var n = 0;
+            for(var i in o){
+                n++;
+            }
+            return n;
+        }
+        return false;
+    }
+    try {
+        $(".dropzone").dropzone({
+            paramName: "upFile",
+            maxFilesize: 0.5,
+            addRemoveLinks: false,
+            uploadMultiple: true,
+            init: function () {
+                this.on("success", function (file, data) {
+                    if(count(data) > 1){
+                        return true;
+                    }
+                    $.notice(file.name+'上传成功');
+                    var jfile = jQuery(file.previewElement);
+                    if(!(typeof(data[file.name]) == "undefined")){
+                        var requestFile = data[file.name];
+                        jfile.find('[data-dz-name]').text('点击选中：'+requestFile.newName);
+                        jfile.find('[data-dz-thumbnail]').attr('alt', requestFile.newName).attr('src', requestFile.url).addClass('images-box-item');
+                        jfile.find('[data-dz-uploadprogress]').text('上传成功了');
+                    }else{
+                        jfile.remove();
+                    }
+                });
+                this.on("successmultiple", function (file, data) {
+                    $.notice(count(data)+'个文件上传成功');
+                    alert(count(data)+'个文件上传成功，上传失败图像将从列表删除');
+                    for(x in file){
+                        if(!(typeof(data[file[x].name]) == "undefined")){
+                            var requestFile = data[file[x].name];
+                            jQuery(file[x].previewElement).find('[data-dz-name]').text('点击选中：'+requestFile.newName);
+                            jQuery(file[x].previewElement).find('[data-dz-thumbnail]').attr({alt:requestFile.newName,src:data[file[x].name].url});
+                            jQuery(file[x].previewElement).find('[data-dz-uploadprogress]').text('上传成功了');
+                        }else{
+                            jQuery(file[x].previewElement).remove();
+                        }
+                    }
+                });
+            },
+            dictDefaultMessage: '<span class="bigger-150 bolder"><i class="fa fa-caret-right red"></i> 拖拽或点击上传</span> <br /><i class="upload-icon fa fa-cloud-upload blue fa-3x"></i>'
+            ,
+            dictResponseError: '文件上传失败!',
+
+            //change the previewTemplate to use Bootstrap progress bars
+            previewTemplate: "<div class=\"dz-preview dz-file-preview\">\n  <div class=\"dz-details\">\n    <div class=\"dz-size\" data-dz-size></div>\n    <img class=\"images-box-item\" data-dz-thumbnail />\n  </div>\n  <div class=\"progress progress-small progress-striped active\"><div class=\"progress-bar progress-bar-success\" data-dz-uploadprogress></div></div>\n  <div class=\"dz-success-mark\"><span></span></div>\n  <div class=\"dz-error-mark\"><span></span></div>\n  <div class=\"dz-error-message\"><span data-dz-errormessage></span></div>\n</div>"
+        });
+    } catch (e) {
+        alert('图片上传组件出错，请联系管理员处理!');
+    }
+
+</script>

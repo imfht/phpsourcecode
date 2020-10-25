@@ -1,0 +1,260 @@
+<include file="Common/header" />
+<script>
+    require(['angular', 'bootstrap', 'util'], function(angular, $, u){
+        angular.module('app', []).controller('payment', function($scope, $http){
+            $scope.selected = false;
+            $scope.type = '';
+            
+            $scope.select = function(t) {
+                $scope.type = t;
+                $scope.selected = true;
+            };
+        });
+        angular.bootstrap(document, ['app']);
+        $(function(){
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var from = $(e.relatedTarget).attr('href');
+                var to = $(e.delegateTarget).attr('href');
+                if($(to).index() < $(from).index()) {
+                    $(to).removeClass('fadeInRight fadeInLeft').addClass('fadeInLeft');
+                } else {
+                    $(to).removeClass('fadeInRight fadeInLeft').addClass('fadeInRight');
+                }
+            });
+        });
+    });
+</script>
+<div class="container-fluid container-dock animated fadeInUp ng-cloak" ng-controller="payment">
+    <div>
+        <div class="page-header">
+            <h4>订单信息</h4>
+        </div>
+        <div>
+            <p class="form-control-static">订单编号: {$trade['tid']}</p>
+            <p class="form-control-static">商品名称: {$trade['title']}</p>
+            <p class="form-control-static">支付金额: {:sprintf('%.2f', $trade['fee'])}<span class="muted"> 元</span></p>
+        </div>
+    </div>
+    <div>
+        <ul class="nav nav-tabs" style="margin-top:1em;">
+            <li class="active"><a href="#direct" role="tab" data-toggle="tab">直接到账</a></li>
+            <if condition="$setting['delivery']['enable']">
+                <li><a href="#collect" role="tab" data-toggle="tab">货到付款</a></li>
+            </if>
+            <if condition="$setting['guarantee']['enable']">
+                <li><a href="#guarantee" role="tab" data-toggle="tab">云支付</a></li>
+            </if>
+        </ul>
+        <div class="tab-content" style="margin-top:1em;">
+            <div class="tab-pane animated active fadeInLeft" id="direct">
+                <div class="steps">
+                    <div class="row text-center">
+                        <div class="col-xs-6">
+                            <span class="fa-stack fa-2x">
+                                <i class="fa fa-adjust fa-stack-2x"></i>
+                            </span>
+                            <div class="help-block">付款给商家</div>
+                        </div>
+                        <div class="col-xs-6">
+                            <span class="fa-stack fa-2x">
+                                <i class="fa fa-circle-o fa-stack-2x"></i>
+                            </span>
+                            <div class="help-block">商家收款后发货</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="clearfix">
+                    <div class="list-group">
+                        <if condition="$setting['credit']['enable']">
+                            <label class="form-group">
+                                <div class="col-xs-2">
+                                    <input type="radio" name="type" value="credit">
+                                    <i class="fa fa-check-circle text-muted"></i>
+                                </div>
+                                <div class="col-xs-10">
+                                    使用账户余额支付
+                                    <div class="help-block">当前账户余额 {php echo sprintf('%.2f', $credtis[$setting['creditbehaviors']['currency']]);}</div>
+                                </div>
+                            </label>
+                        </if>
+                        <if condition="$pay['alipay']['enable']">
+                            <div class="list-group-item" ng-click="select('alipay');">
+                                <div class="row">
+                                    <div class="col-xs-2 text-center">
+                                        <i class="fa fa-check-circle text-muted fa-3x" ng-class="{'text-success': type == 'alipay'}" style="margin-top:.3em;"></i>
+                                    </div>
+                                    <div class="col-xs-10">
+                                        <h4>使用支付宝支付</h4>
+                                        <div class="help-block">每笔最高3万, 每日限额5万</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </if>
+                        <if condition="$pay['weixin']['enable']">
+                            <div class="list-group-item" ng-click="select('weixin');">
+                                <div class="row">
+                                    <div class="col-xs-2 text-center">
+                                        <i class="fa fa-check-circle text-muted fa-3x" ng-class="{'text-success': type == 'weixin'}" style="margin-top:.3em;"></i>
+                                    </div>
+                                    <div class="col-xs-10">
+                                        <h4>使用微信支付</h4>
+                                        <div class="help-block">每笔最高1万, 每日限额1万</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </if>
+                    </div>
+                </div>
+            </div>
+            <if condition="$setting['delivery']['enable']">
+                <div class="tab-pane animated" id="collect">
+                    <div class="steps">
+                        <div class="row text-center">
+                            <div class="col-xs-4">
+                                <span class="fa-stack fa-2x">
+                                    <i class="fa fa-adjust fa-stack-2x"></i>
+                                    <i class="fa fa-rotate-90 fa-adjust fa-stack-2x"></i>
+                                </span>
+                                <div class="help-block">在系统下订单</div>
+                            </div>
+                            <div class="col-xs-4">
+                                <span class="fa-stack fa-2x">
+                                    <i class="fa fa-adjust fa-stack-2x"></i>
+                                </span>
+                                <div class="help-block">商家发货</div>
+                            </div>
+                            <div class="col-xs-4">
+                                <span class="fa-stack fa-2x">
+                                    <i class="fa fa-circle-o fa-stack-2x"></i>
+                                </span>
+                                <div class="help-block">送货上门收款</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                        <label class="form-group">
+                            <div class="col-xs-2">
+                                <input type="radio" name="type" value="delivery">
+                                <i class="fa fa-check-circle text-muted"></i>
+                            </div>
+                            <div class="col-xs-10">
+                                货到付款
+                                <div class="help-block">验货后付款, 网购更安心</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </if>
+            <if condition="$setting['guarantee']['enable']">
+                <div class="tab-pane animated" id="guarantee">
+                    <div class="alert alert-info">
+                        <div class="row text-center">
+                            <div class="col-xs-4">
+                                <span class="fa-stack fa-2x">
+                                    <i class="fa fa-adjust fa-stack-2x"></i>
+                                    <i class="fa fa-rotate-90 fa-adjust fa-stack-2x"></i>
+                                </span>
+                                <div class="help-block">付款给微擎</div>
+                            </div>
+                            <div class="col-xs-4">
+                                <span class="fa-stack fa-2x">
+                                    <i class="fa fa-adjust fa-stack-2x"></i>
+                                </span>
+                                <div class="help-block">发货/您确认收货</div>
+                            </div>
+                            <div class="col-xs-4">
+                                <span class="fa-stack fa-2x">
+                                    <i class="fa fa-circle-o fa-stack-2x"></i>
+                                </span>
+                                <div class="help-block">微擎付款给商家</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info clearfix">
+                        <label class="form-group">
+                            <div class="col-xs-1">
+                                <input type="radio" name="type" value="alipay" checked>
+                            </div>
+                            <div class="col-xs-11">
+                                担保支付
+                                <div class="help-block">还未支持</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </if>
+        </div>
+    </div>
+    <div style="margin-top:1em;">
+        <if condition="$pay['alipay']['enable']">
+            <div ng-show="selected && type == 'alipay'">
+                <if condition="is_error($aParams)">
+                    <a href="javascript:;" onclick="alert('支付宝支付初始化失败. 请选择其他支付手段, 或者稍后重试');" class="btn btn-warning btn-block btn-lg">支付宝支付</a>
+                    <else/>
+                    <a href="{$aParams['url']}" class="btn btn-warning btn-block btn-lg">支付宝支付</a>
+                </if>
+            </div>
+        </if>
+        <if condition="$pay['weixin']['enable']">
+            <div ng-show="selected && type == 'weixin'">
+                <div>
+                    <button class="btn btn-warning btn-block btn-lg" disabled="disabled" type="button" id="wBtn">微信支付(必须使用微信内置浏览器)</button>
+                </div>
+                <script type="text/javascript">
+                    document.addEventListener('WeixinJSBridgeReady', function onBridgeReady() {
+                        require(['jquery', 'util'], function($, u) {
+                            $('#wBtn').removeAttr('disabled');
+                            $('#wBtn').html('微信支付');
+                            $('#wBtn').click(function() {
+                                <if condition="!is_error($wParams)">
+                                    WeixinJSBridge.invoke('getBrandWCPayRequest', {
+                                        'appId' : "{$wParams['appId']}",
+                                        'timeStamp': "{$wParams['timeStamp']}",
+                                        'nonceStr' : "{$wParams['nonceStr']}",
+                                        'package' : "{$wParams['package']}",
+                                        'signType' : "{$wParams['signType']}",
+                                        'paySign' : "{$wParams['paySign']}"
+                                    }, function(res) {
+                                        if(res.err_msg == 'get_brand_wcpay_request:ok') {
+                                            location.search += '&done=1';
+                                        } else {
+                                            alert('启动微信支付失败, 请检查你的支付参数. 详细错误为: ' + res.err_msg);
+                                            //history.go(-1);
+                                        }
+                                    });
+                                    <else/>
+                                    u.message('初始化微信支付失败. 请稍后重试, 或者使用其他支付方式');
+                                </if>
+                            });
+                        });
+                    });
+                </script>
+            </div>
+        </if>
+        <if condition="$setting['credit']['enable']">
+            <div class="pay-btn" id="credit-panel" style="display:none;">
+                <form action="{php echo url('mc/cash/credit');}" method="post">
+                    <input type="hidden" name="params" value="{php echo base64_encode(json_encode($params));}" />
+                    <button class="btn btn-warning btn-block btn-lg" type="submit" value="credit">余额支付 （余额支付当前 {php echo sprintf('%.2f', $credtis[$setting['creditbehaviors']['currency']]);}元)</button>
+                </form>
+            </div>
+        </if>
+        <if condition="$setting['delivery']['enable']">
+            <div class="pay-btn" id="delivery-panel" style="display:none;">
+                <form action="{php echo url('mc/cash/delivery');}" method="post">
+                    <input type="hidden" name="params" value="{php echo base64_encode(json_encode($params));}" />
+                    <button class="btn btn-warning btn-block btn-lg" type="submit" value="delivery">货到付款</button>
+                </form>
+            </div>
+        </if>
+        <div ng-hide="selected">
+            <button type="button" class="btn btn-primary btn-block btn-lg" disabled>请选择支付方式</button>
+        </div>
+    </div>
+</div>
+<ul class="nav nav-bardown nav-justified" style="z-index:10;">
+    <li>
+        <a href="javascript:;" onclick="history.go(-1);" class="pull-left" style="height:100%;padding:1em 2em"><i class="fa fa-reply text-danger"></i></a>
+    </li>
+</ul>
+<include file="Common/footer" />

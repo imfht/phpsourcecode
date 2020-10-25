@@ -1,0 +1,71 @@
+<script src="//cdn.itdashu.com/library/jquery-nestable/jquery.nestable.min.js"></script>
+<div id="{{ id }}" class="dd dd-draghandle">
+    {% if title_display is empty %}
+        {% set title_display = false %}
+    {% endif %}
+
+    {% if title == null AND title_display == true %}
+        <h4 class="header smaller lighter grey">{{ title }}</h4>
+        <div class="space-8"></div>
+    {% endif %}
+    {%- macro hierarchical_list(data) %}
+        <ol class="dd-list">
+            {%- for key,item in data %}
+                <li data-id="{{ key }}" class="dd-item dd2-item">
+                    <div class="dd-handle dd2-handle">
+                        <i class="glyphicon glyphicon-move bigger-130"></i>
+                    </div>
+                    <div class="dd2-content">
+                        {{ item['label'] }}
+                        <a data-placement="top" data-rel="tooltip" data-original-title="删除" class="pull-right"
+                           data-target="#right_handle"
+                           href="{{ url(['for':'adminFormFieldEdit','form_id':form_id,'id':key]) }}"><i
+                                    class="fa fa-fw fa-trash"></i></a>
+                        <a data-placement="top" data-rel="tooltip" data-original-title="编辑" class="pull-right"
+                           data-target="#right_handle"
+                           href="{{ url(['for':'adminFormFieldDelete','form_id':form_id,'id':key]) }}"><i class=" fa fa-fw
+                           fa-pencil"></i></a>
+                    </div>
+                </li>
+            {%- endfor %}
+        </ol>
+    {%- endmacro %}
+    {% if data %}
+        {{ hierarchical_list(data.items,type) }}
+        <button type="submit" ajax-box="#main" class="btn btn-success btn-block save_sort">保存排序</button>
+    {% else %}
+        <div class="dd-list">程序提供的数据合法或为空。</div>
+    {% endif %}
+    <div class="overlay">
+        <i class="fa fa-refresh fa-spin"></i>
+    </div>
+</div>
+<script type="text/javascript">
+    (function ($) {
+        $('#{{ id }}').nestable();
+        $('.dd-handle a').on('mousedown', function (e) {
+            e.stopPropagation();
+        });
+        //$('[data-rel="tooltip"]').tooltip();
+        $("#{{ id }} .save_sort").click(function () {
+            $("#{{ id }} .overlay").css('display', 'block');
+            var e = $("#{{ id }}");
+            var list = e.length ? e : $(e.target),
+                    output = list.data('output');
+            if (window.JSON) {
+                var postJson = window.JSON.stringify(list.nestable('serialize'));
+                ajaxbox = $(this).attr('ajax-box');
+                $.post("{{ url }}", {
+                    rh: postJson
+                }, function (data) {
+                    $("#{{ id }} .overlay").css('display', 'none');
+                    $(ajaxbox).html(data);
+                }, "html");
+            } else {
+                alert('您的浏览器不安全，不支持本系统.');
+            }
+        })
+        $('[data-rel="tooltip"]').tooltip();
+
+    })(jQuery);
+</script>

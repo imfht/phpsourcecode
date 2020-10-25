@@ -1,0 +1,356 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader',array('name'=>'任务详情','search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a onclick="go_return_url();" class="btn btn-sm btn-primary">返回</a>
+			</div>
+			<div class="pull-right">
+				<eq name="no_assign" value="1">
+					<a onclick="let_me_do({$task_id})" class="btn btn-sm btn-primary">我来处理</a>
+				</eq>
+			</div>
+		</div>
+	</div>
+	<form method='post' id="form_data" name="form_data" enctype="multipart/form-data"   class="well form-horizontal">
+		<input type="hidden" id="ajax" name="ajax" value="0">
+		<input type="hidden" id="executor" name="executor" value="{$vo.executor}">
+		<input type="hidden" id="opmode" name="opmode" value="add">
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">标题：</label>
+			<div class="col-sm-10">
+				<p class="form-control-static">
+					{$vo.name}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="name">发起人：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.user_name}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="name">发起时间：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.create_time|to_date}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="name">谁来执行：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.executor|show_contact}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="expected_time">期望完成时间：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.expected_time|substr=0,16}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="content">任务说明：</label>
+			<div class="col-xs-10">
+				<div class="task_content form-control-static">
+					{$vo.content}
+				</div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/view',array('add_file'=>$vo['add_file'],'mode'=>'show'))}
+			</div>
+		</div>
+	</form>
+
+	{:W('PageHeader',array('name'=>'任务执行情况','search'=>'N'))}
+	<div class="ul_table border-bottom">
+		<ul>
+			<li class="thead">
+				<span class="col-9 text-center">指派给</span>
+				<span class="col-6 text-center">状态</span>
+				<span class="col-6 text-center">执行人</span>
+				<span class="col-13 text-center">计划完成时间</span>
+				<span class="col-13 text-center">已完成情况</span>
+				<span class="col-13 pull-right">附件</span>
+				<span class="auto">执行内容</span>
+				
+			</li>
+			<volist name="task_log" id="item">
+				<li class="tbody">
+					<span class="col-9 text-center">&nbsp;{$item.executor_name}</span>
+					<span class="col-6 text-center">&nbsp;{$item.status|task_status}</span>
+					<span class="col-6 text-center">&nbsp;{$item.transactor_name}&nbsp;</span>
+					<span class="col-13 text-center">&nbsp;{$item.plan_time|substr=0,16}&nbsp;</span>
+					<span class="col-13 text-center"> &nbsp;
+						<eq name='item.status' value='10'>
+							{$item.finish_rate|finish_rate}
+						</eq>
+						<egt name='item.status' value='20'>
+							{$item.finish_time|substr=0,16}
+						</egt>&nbsp;</span>
+						<span class="col-13 pull-right">
+							{:W('FileUpload/link',array($item['add_file']))}
+						</span>
+						
+					<span class="auto">
+						<div style="overflow:hidden">
+							{$item.feed_back}
+						</div> </span>
+				</li>
+			</volist>
+		</ul>
+	</div>
+	<eq name="is_working" value="1">
+		<div class="ibox task_todo">
+			<div class="ibox-title">
+				<h5 class="smaller">我的执行情况</h5>
+				<div class="ibox-tools no-border">
+					<ul class="nav nav-tabs" id="myTab">
+						<li class="active">
+							<a href="#working" data-toggle="tab">执行情况</a>
+						</li>
+						<li>
+							<a href="#forword" data-toggle="tab">转交任务</a>
+						</li>
+						<li>
+							<a href="#reject" data-toggle="tab">拒绝接受</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="ibox-content">
+				<div class="tab-content">
+					<div class="tab-pane active" id="working">
+						<form method='post' id="form_data_working" name="form_data_working" >
+							<input type="hidden" name="status" value="10">
+							<input type="hidden" name="id" value="{$task_working.id}">
+							<div class="form-group col-sm-6">
+								<label class="col-sm-4 control-label" >计划完成时间：</label>
+								<div class="col-sm-8">
+									<input class="input-date-time form-control" name="plan_time" value="{$task_working.plan_time|substr=0,16}" check="require" msg="请输入计划完成时间" readonly="readonly">
+								</div>
+							</div>
+							<div class="form-group col-sm-6">
+								<label class="col-sm-4 control-label" >完成率：</label>
+								<div class="col-sm-8">
+									<div class="form-control-static" >
+										<input type="hidden" id="finish_rate" name="finish_rate"/>
+										<div  class="slider_box" >
+											<div id="basic_slider"></div>
+											<div class="right" id="basic_slider_val">
+												{$task_working.finish_rate|default=0}%
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label" >执行内容：</label>
+								<div class="col-sm-10">
+									<p>
+									<textarea id="feed_back" name="feed_back" class="col-xs-12 simple " style="height:120px">{$task_working.feed_back}</textarea>
+									</p>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label" for="name">附件：</label>
+								<div class="col-sm-10">
+									{:W('FileUpload/edit',array($task_working['add_file']))}
+									<p></p>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="tab-pane" id="forword">
+						<form method='post' id="form_data_forword" name="form_data_forword" >
+							<input type="hidden" name="id" value="{$task_working.id}">
+							<input type="hidden" name="task_id" value="{$task_working.task_id}">
+							<input type="hidden" name="status" value="21">
+							<input type="hidden" id="forword_executor" name="forword_executor" >
+							<div class="form-group col-sm-12">
+								<label class="col-sm-2 control-label" for="name">转交给：</label>
+								<div class="col-sm-10">
+									<div id="actor_wrap" class="inputbox">
+										<a class="pull-right btn btn-link text-center" onclick="popup_actor();"><i class="fa fa-user"></i> </a>
+										<div class="wrap" >
+											<span class="address_list"></span>
+											<span class="text" >
+												<input class="letter" type="text"  >
+											</span>
+										</div>
+										<div class="search dropdown ">
+											<ul class="dropdown-menu"></ul>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label" >执行内容：</label>
+								<div class="col-sm-10">
+									<textarea id="feed_back" name="feed_back" class="col-xs-12 simple" style="height:120px" check="require" msg="请输入执行内容">{$task_working.feed_back}</textarea>
+									<p></p>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="tab-pane" id="reject">
+						<form method='post' id="form_data_reject" name="form_data_reject" >
+							<input type="hidden" name="status" value="22">
+							<input type="hidden" name="id" value="{$task_working.id}">
+							<div class="form-group">
+								<label class="col-sm-2 control-label" >执行内容：</label>
+								<div class="col-sm-10">
+									<textarea id="feed_back" name="feed_back" class="col-xs-12 simple" style="height:120px" >{$task_working.feed_back}</textarea>
+									<p></p>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+				<div class="widget-toolbox clearfix">
+					<div class="pull-left col-sm-8 col-sm-offset-2">
+						<a onclick="save_log();" class="btn btn-sm btn-primary col-6">提交</a>
+						<a onclick="go_return_url();" class="btn btn-sm btn-default">取消</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</eq>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		$(function() {
+			show_content();
+		});
+
+		function popup_actor() {
+			winopen("{:U('popup/task')}",560, 470);
+		}
+
+		function accept($task_log_id) {
+			sendAjax("{:U('accept')}", 'task_log_id=' + $task_log_id, function(data) {
+				if (data.status) {
+					ui_alert(data.info, function() {
+						location.reload(true);
+					});
+				}
+			});
+		}
+
+		function let_me_do($task_id) {
+			sendAjax("{:U('let_me_do')}", 'task_id=' + $task_id, function(data) {
+				if (data.status) {
+					ui_alert(data.info, function() {
+						location.reload(true);
+					});
+				}
+			});
+		}
+
+		function save_log() {
+			$status_name = $(".task_todo .tab-pane.active").attr('id');
+			if ($status_name == "forword") {
+				if ($(".address_list span").length == 0) {
+					ui_error('请选择要转交的人');
+					return false;
+				} else {
+					$("#forword_executor").val("");
+					$("#actor_wrap span.address_list span").each(function() {
+						$("#forword_executor").val($("#forword_executor").val() + $(this).find("b").text() + '|' + $(this).attr("data") + ";");
+					});
+				}
+			}
+			$form_name = "form_data_" + $status_name;
+			if (check_form($form_name)) {
+				var vars = $("#" + $form_name).serialize();
+				if ($status_name == "working") {
+					sendAjax("{:U('save_log')}", vars, function(data) {
+						if (data.status) {
+							ui_alert(data.info, function() {
+								location.reload(true);
+							});
+						} else {
+							ui_error(data.info);
+						}
+					});
+				}
+
+				if ($status_name == "forword") {
+					ui_confirm('转交以后不能修改了,是否提交?', function() {
+						sendAjax("{:U('save_log')}", vars, function(data) {
+							if (data.status) {
+								ui_alert(data.info, function() {
+									location.reload(true);
+								});
+							} else {
+								ui_error(data.info);
+							}
+						});
+					});
+				}
+
+				if ($status_name == "reject") {
+					ui_confirm('选择拒绝以后不能修改了,是否提交?', function() {
+						sendAjax("{:U('save_log')}", vars, function(data) {
+							if (data.status) {
+								ui_alert(data.info, function() {
+									location.reload(true);
+								});
+							} else {
+								ui_error(data.info);
+							}
+						});
+					});
+				}
+			}
+		}
+
+
+		$(document).ready(function() {
+			$(document).on("click", ".inputbox .address_list a.del", function() {
+				$(this).parent().parent().remove();
+			});
+
+			$("#basic_slider").noUiSlider({
+				start : parseInt('{$task_working.finish_rate|default=0}'),
+				step : 1,
+				behaviour : 'tap',
+				connect : 'upper',
+				range : {
+					'min' : 0,
+					'max' : 100,
+				},
+			});
+			$("#basic_slider").on('slide', function() {
+				$("#finish_rate").val($(this).val());
+				$("div.slider_box .right").text(Math.abs($(this).val()) + "%");
+			});
+
+			set_val('status', '{$task_working.finish_rate}');
+			$("#slider-range-priority").slider({
+				range : "min",
+				min : 0,
+				max : 100,
+				value : '{$task_working.finish_rate}',
+				slide : function(event, ui) {
+					$("#finish_rate").val(ui.value);
+					$("#slider_val").text(ui.value + "%");
+				}
+			});
+		});
+	</script>
+</block>

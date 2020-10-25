@@ -1,0 +1,117 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?=$this->HelpUrl('receivablesList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th width="10%"><?=$this->translate('销售单号')?></th>
+                                <!--<th width="10%"><?=$this->translate('入库单号')?></th>-->
+                                <th width="10%"><?=$this->translate('客户')?></th>
+                                <th width="10%"><?=$this->translate('付款方式')?></th>
+                                <th width="10%"><?=$this->translate('应收金额')?></th>
+                                <th width="10%"><?=$this->translate('已收金额')?></th>
+                                <th width="10%"><?=$this->translate('操作')?></th>
+                            </tr>
+                            <?php
+                            $sForm = $this->searchForm;
+                            $sForm->prepare();
+                            ?>
+                            <?= $this->form()->openTag($sForm); ?>
+                            <tr>
+                                <td>
+                                    <?= $this->formElement($sForm->get('sales_order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('sales_order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('customer_name')); ?>
+                                    <?=$this->formElementErrors($sForm->get('customer_name'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('receivable_code')); ?>
+                                    <?=$this->formElementErrors($sForm->get('receivable_code'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('sales_start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('sales_end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('sales_start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('sales_end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                    <?php if(!empty(array_filter($sForm->getData()))) { ?>
+                                        <a href="<?=$this->url('accounts-receivable');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <?= $this->form()->closeTag(); ?>
+                            </thead>
+
+                            <?php if($this->receivablesList) foreach ($this->receivablesList as $receivableValue) {?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($receivableValue->getSalesOrderSn())?></td>
+                                    <!--<td></td>-->
+                                    <td><?=$this->escapeHtml($receivableValue->getCustomerName());?></td>
+                                    <td><?=$this->salesHelper()->orderReceivables($receivableValue->getReceivableCode())?></td>
+                                    <td><?=$this->erpCurrencyFormat($receivableValue->getReceivableAmount())?></td>
+                                    <td>
+                                        <span <?=($receivableValue->getReceivableAmount() == $receivableValue->getFinishAmount() ? 'class="text-green"' : '')?>><?=$this->erpCurrencyFormat($receivableValue->getFinishAmount())?></span>
+                                        <?php if($receivableValue->getFinishAmount() != 0.0000) { ?>
+                                            <a href="<?= $this->url('accounts-receivable',
+                                                ['action'=>'receivableLog', 'id'=>$receivableValue->getReceivableId()]); ?>" title="<?=$this->translate('收款记录')?>"><i class="fa fa-book text-green"></i></a>
+                                        <?php } ?>
+                                    </td>
+                                    <td>
+                                        <?php if($receivableValue->getReceivableAmount() != $receivableValue->getFinishAmount()) { ?>
+                                            <a href="<?= $this->url('accounts-receivable',
+                                                ['action'=>'addReceivable', 'id'=>$receivableValue->getReceivableId()]); ?>"
+                                               class="btn btn-xs btn-success"><i class="fa fa-usd"></i> <?=$this->translate('收款')?></a>
+                                        <?php } ?>
+                                        <a href="<?= $this->url('accounts-receivable',
+                                            ['action'=>'show', 'id'=>$receivableValue->getReceivableId()]); ?>"
+                                           class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('查看')?>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->receivablesList, 'Sliding', 'layout/page', ['route' => 'accounts-receivable']); ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

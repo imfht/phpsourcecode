@@ -1,0 +1,131 @@
+<include file="public:top" />
+<!--编辑菜单-->
+<form class="layui-form layui-form-pane" action="" style="padding:20px;">
+  <input type="hidden" name="start_time" value="2018-05-29" />
+  <input type="hidden" name="end_time" value="2030-05-29" />
+  <div class="layui-form-item">
+    <label class="layui-form-label">{$info.id}{:L('ad_name')}</label>
+    <div class="layui-input-block">
+      <input type="text" name="name" id="name" placeholder="请输入" class="layui-input" value="{$info.name}">
+    </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">{:L('ad_url')}</label>
+    <div class="layui-input-block">
+      <input type="text" name="url" id="url" placeholder="请输入" class="layui-input" value="{$info.url}">
+    </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">{:L('adboard')}</label>
+    <div class="layui-input-block">
+    <input type="text" class="layui-input" value=" {$board_info.name} ({$board_info.width}*{$board_info.height}) - 禁止编辑" disabled="">
+    </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">{:L('ad_type')}</label>
+    <div class="layui-input-block">
+    <select name="type" id="type" lay-filter="leixing">
+        <volist name="ad_type_arr" id="val" >
+        <option value="{$key}" <if condition="$info['type'] eq $key">selected="selected"</if>>{$val}</option>
+        </volist>
+    </select>
+    </div>
+  </div>
+  <div class="layui-form-item" id="ad_image" style="display:none;">
+    <label class="layui-form-label">{:L('ad_image')}</label>
+    <div class="layui-input-block">
+       <button type="button" name="img1" class="layui-btn layui-btn-primary" id="upimg"><i class="layui-icon"></i>只允许图片文件</button>
+       <div class="layui-form-mid " style="width: 100%"><img src="" height="36" id="imgval" style="max-width:450px;display: none;"></div>
+    </div>
+  </div>
+
+  <div class="layui-form-item" id="ad_code" style="display:none;">
+    <label class="layui-form-label">{:L('ad_code')}</label>
+    <div class="layui-input-block">
+       <textarea name="code" id="intro" class="layui-textarea">{$info.content}</textarea>
+    </div>
+  </div>
+
+  <div class="layui-form-item" id="ad_text" style="display:none;">
+    <label class="layui-form-label">{:L('ad_text')}</label>
+    <div class="layui-input-block">
+       <textarea name="text" id="text" class="layui-textarea">{$info.content}</textarea>
+    </div>
+  </div>
+   
+  <div class="layui-form-item">
+        <label class=""></label>
+        <div class="layui-input-block">
+        <button class="layui-btn" lay-submit="" lay-filter="content_edit">提交保存</button>
+        </div>
+    </div>
+<input type="hidden" name="img" id="J_img" value="{$info.content}">
+<input type="hidden" name="id" id="id" value="{$info.id}" />
+</form>
+
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+layui.use(['layer','jquery','form','upload'], function () {
+    // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form, upload = layui.upload;
+ 
+    
+    //判断是否有图片
+    var  str='{$info.content}';
+    if (str !== '') {
+      $('#imgval').show().attr('src','{$img_dir}{$info.content}'); 
+
+    }
+
+
+   //上传图片
+    upload.render({
+    elem: '#upimg'
+    ,url: "{:U('ad/ajax_upload_img')}"
+    ,field:'img'
+    ,acceptMime: 'image/*'
+    ,done: function(res, index, upload){
+      if (res.status == 1) {
+        layer.msg('上传成功',{time:1800});
+        var path = "{$img_dir}" + res.info;
+        $('#J_img').val(res.info);
+        $('#imgval').show().attr('src',path); 
+      }else {
+        layer.msg('上传失败',{time:1800});
+      }
+    }
+  }); 
+  //当前类型
+    $(function(){  
+       var style = "{$info.type}";
+       $('#ad_'+ style).show();
+    });  
+
+  //选择类型
+  form.on('select(leixing)', function(data){
+      if (data.value == 'code') {
+        $('#ad_code').show();
+        $('#ad_text').hide();
+        $('#ad_image').hide();
+      }
+      if (data.value == 'text') {
+        $('#ad_code').hide();
+        $('#ad_text').show();
+        $('#ad_image').hide();
+      }
+      if (data.value == 'image') {
+        $('#ad_code').hide();
+        $('#ad_text').hide();
+        $('#ad_image').show();
+      }
+        
+  });
+
+  Oper.initUpdate(layui, '新闻', 'content_edit', 'ad/edit');
+});
+</script>
+</body>
+</html>

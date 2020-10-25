@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta content="IE=EmulateIE7" http-equiv="X-UA-Compatible">
+<title>订单详情--<!--{$mallname}--></title>
+<!--{include(file='static.html')}-->
+</head>
+<body>
+<!--{include(file='head.html')}-->
+<!--主体内容-->
+	<div class="container">
+    <!--左侧菜单-->
+		<div class="per_left">
+           <!--{include(file='userleft.html')}-->
+        </div>
+        <!--左侧菜单end-->
+        <div class="per_right">
+        	<div class="per_right_cont">
+            	
+				<div class="add_list">
+                	<blockquote>
+                	  <p class="tradep">订单号：<!--{$trade['tradeid']}-->
+                	    订单状态：<!--{getCommonCache('$trade[status]','tradestatus')}--></p>
+              	  </blockquote>
+					
+					<div class="tradeinfo">
+						<h1>物流信息</h1>
+						<ul>
+							<!--{if $send}-->
+								<li><label>物流公司：</label><!--{$company.company}--></li>
+								<li><label>运单号码：</label><!--{$send.sendno}--></li>
+								<!--{if $kuaidi_status}-->
+									<li>
+										<label>物流跟踪:</label>
+										<div id="wltrace">
+											<img src="template/front/<!--{$tpl}-->/images/loading2.gif" />
+										</div>
+										<script type="text/javascript">
+											var url = "<!--{url('index','mytrade','trace')}-->";
+											$.get(url,{com:'<!--{$company.kuaidi}-->',nu:'<!--{$send.sendno}-->'},function(data){
+												$("#wltrace").html(data);
+											})
+										</script>
+									</li>
+								<!--{/if}-->
+							<!--{else}-->
+								<li>尚未发货</li>
+							<!--{/if}-->
+						</ul>
+					</div>
+
+					<div class="tradeinfo">
+						<h1>收货信息</h1>
+						<ul>
+							<li><label>订 单 号：</label><!--{$trade['tradeid']}--></li>
+							<li><label>收 件 人：</label><!--{$trade['receiver_name']}--></li>
+							<li><label>联系电话：</label><!--{$trade['receiver_link']}--></li>
+							<li><label>收件人地址：</label><!--{getDistrict($trade[receiver_province],$trade[receiver_city],$trade[receiver_district])}-->
+								<!--{$trade['receiver_address']}--></li>
+							<li><label>邮政编码：</label><!--{$trade['receiver_zip']}--></li>
+						</ul>
+					</div>
+
+					<div class="tradeinfo">
+						<h1>订单详情</h1>
+						<ul>
+							<li><label>买家选择送货方式：</label><!--{$way}--></li>
+							<li><label>支付方式：</label>
+								<!--{if $trade['payment'] == 'cod'}-->
+									货到付款
+								<!--{elseif $trade['payment'] == 'alipay'}-->
+									支付宝
+								<!--{/if}-->
+							</li>
+							<li><label>订单生成时间：</label><!--{date('Y-m-d H:i',$trade['addtime'])}--></li>
+							<li><label>发货时间：</label><!--{if $send}--><!--{date('Y-m-d H:i',$send.sendtime)}--><!--{else}-->--<!--{/if}--></li>
+							<li><label>是否开发票：</label><!--{if $trade.istax}-->是<!--{else}-->否<!--{/if}--></li>
+							<li><label>发票抬头：</label><!--{def($trade.tax_company,'--')}--></li>
+							<li><label>送货要求：</label>
+								<!--{if $trade.posttype == 1}-->
+									工作日、双休日与假日均可送货
+								<!--{elseif $trade.posttype == 2}-->
+									只有双休日、假日送货
+								<!--{elseif $trade.posttype == 3}-->
+									只有工作日送货
+								<!--{/if}-->
+							</li>
+						</ul>
+					</div>
+					
+					<div class="tradeinfo">
+						<h1>订单费用</h1>
+						<ul>
+							<li><label>商品费用（￥）：</label><!--{getPrice($trade.itemfee)}--></li>
+							<!--{if $trade.man}-->
+							<li><label>满减优惠（￥）：</label><!--{$trade.man}--></li>
+							<!--{/if}-->
+							<!--{if $trade.coupon}-->
+							<li><label>优惠券：</label><!--{$trade.coupon}-->元面额</li>
+							<!--{/if}-->
+							<li><label>物流费用（￥）：</label><!--{getPrice($trade.postfee)}--></li>
+						</ul>
+					</div>
+
+					<div class="tradeinfo">
+						<h1>商品详情</h1>
+						<table width="100%" border="0" cellspacing="0" cellpadding="0">
+							 <thead>
+								<tr align="center">
+									<th width="60%" colspan="2">商品名称</th>
+									<th width="20%" nowrap>单价（￥）</th>
+									<th width="10%">数量</th>
+									<th width="10%" nowrap>小计（￥）</th>
+								</tr>
+							  </thead>
+							<tbody>
+							<!--{foreach $orders order}-->
+							  <tr align="center">
+									<td align="left" width="5%">
+										<a href="<!--{url('index','item','index','itemid=$order[itemid]')}-->" target="_blank">
+											<img src="<!--{$order.itemimg}-->_50x50.jpg" width="50" height="50" />
+										</a>
+									</td>
+									<td style="text-align:left;" width="55%">
+										 <a href="<!--{url('index','item','index','itemid=$order[itemid]')}-->" target="_blank"><!--{$order.itemname}--></a>
+										 <!--{if $order.mealtitle}-->
+												<span class="text_orange">[套餐：<!--{$order.mealtitle}-->]</span>
+										<!--{/if}-->
+										<!--{if $gifts[$order[orderid]]}-->
+												<!--{$tmpgifts = unserialize($gifts[$order[orderid]][gift]);}-->
+												<!--{foreach $tmpgifts gift}-->
+													<div>
+														<span class="text_orange">[赠品]</span>
+														<a href="<!--{url('index','item','index','itemid=$gift[gitemid]')}-->" target="_blank" ><!--{$gift.gitemname}--></a>
+														<span class="text_orange">x<!--{$gift.num}--></span>
+													</div>
+												<!--{/foreach}-->
+										<!--{/if}-->
+									</td>
+									<td style="text-align:left;">
+										商品：<!--{getPrice($order.price)}-->
+										<!--{if $order.discount}-->
+											<br />限折优惠：<!--{getPrice($order.discount * $order.num)}-->
+										<!--{elseif $order.tuan}-->
+											<br />团购优惠：<!--{getPrice($order.tuan * $order.num)}-->
+										<!--{/if}-->
+									</td>
+									<td><!--{$order.num}--></td>
+									<td class="text_red"><!--{getPrice($order.price * $order.num)}--></td>
+							  </tr>
+							  <!--{/foreach}-->
+							</tbody>
+						</table>
+					</div>
+					<div class="tradeinfo">
+						<p class="total">
+							商品金额(￥<!--{getPrice($trade['itemfee'])}-->)  
+							+ 物流费用(￥<!--{getPrice($trade['postfee'])}-->)
+							<!--{if $trade.coupon}-->
+							- 优惠券(￥<!--{$trade.coupon}-->)
+							<!--{/if}-->
+							<!--{if $trade.man}-->
+							- 满减优惠(<!--{$trade.man}-->)
+							<!--{/if}-->
+							= 订单总金额(￥<!--{getPrice($trade['totalfee'])}-->)
+						</p>
+					</div>
+					
+					
+
+                </div>
+            </div>
+        </div>
+        <div class="clear"></div>
+	</div>
+    <!--主体内容 end-->
+
+<!--{include(file='foot.html')}-->
+
+</body>
+</html>

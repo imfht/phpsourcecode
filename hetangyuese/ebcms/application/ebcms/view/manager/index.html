@@ -1,0 +1,87 @@
+{include file='common/header' /}
+<script>
+    var M = {};
+    $(function() {
+        M.password = function(id){
+            EBCMS.MSG.confirm('<p>请输入密码：<p/><p><input type="text" class="form-control" value="'+EBCMS.FN.random_str(8,'0123456789abcdefghijklmnopqrstuvwxyz')+'" id="re_password"><p/><p><button type="button" class="btn btn-sm btn-danger" onclick="$(\'#re_password\').val(EBCMS.FN.random_str(8,\'0123456789abcdefghijklmnopqrstuvwxyz\'));">随机</button><p/>',function(){
+                EBCMS.CORE.submit({
+                    url:'{:url('password')}',
+                    queryParams:{
+                        id:id,
+                        password:$('#re_password').val()
+                    },
+                    success:function(res){
+                        if (!res.code) {
+                            EBCMS.MSG.alert(res.msg);
+                        }else{
+                            EBCMS.MSG.notice(res.msg);
+                        };
+                    }
+                });
+            });
+        }
+    });
+</script>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>
+                <span>账户管理</span>
+                <a href="{:url('add')}"><span class="glyphicon glyphicon-plus"></span></a>
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-ebcms">
+                    <tbody>
+                        <tr>
+                            <th style="width:70px;">id</th>
+                            <th style="width:130px;">操作</th>
+                            <th style="width:170px;">处理</th>
+                            <th>昵称</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                        </tr>
+                        {php}
+                            $data = \app\ebcms\model\Manager::order('sort desc,id asc') -> select();
+                        {/php}
+                        {foreach name='data' item='vo'}
+                            <tr>
+                                <td>{$vo.id}</td>
+                                <td>
+                                    {if condition="check_auth('status') && config('super_admin')!=$vo['email']"}
+                                        {eq name='vo.status' value='1'}
+                                        <button type="button" class="btn btn-primary btn-sm ebcms-do" url="{:url('status')}" data-id='{$vo.id}' data-value='0'><span class="glyphicon glyphicon-ok-sign"></span></button>
+                                        {else/}
+                                        <button type="button" class="btn btn-warning btn-sm ebcms-do" url="{:url('status')}" data-id='{$vo.id}' data-value='1'><span class="glyphicon glyphicon-ban-circle"></span></button>
+                                        {/eq}
+                                    {/if}
+                                    {if condition="check_auth('edit')"}
+                                        <a href="{:url('edit',['id'=>$vo['id']])}" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    {/if}
+                                    {if condition="check_auth('delete') && config('super_admin')!=$vo['email']"}
+                                        <button type="button" class="btn btn-primary btn-sm ebcms-do" url="{:url('delete')}" data-id='{$vo.id}' confirm="删除后不可恢复，确定删除？"><span class="glyphicon glyphicon-remove"></span></button>
+                                    {/if}
+                                </td>
+                                <td>
+                                    {if condition="check_auth('group') && config('super_admin')!=$vo['email']"}
+                                        <a href="{:url('group',['id'=>$vo['id']])}" class="btn btn-primary btn-sm">分配角色</a>
+                                    {/if}
+                                    {if condition="check_auth('password') && config('super_admin')!=$vo['email']"}
+                                        <button onclick="M.password('{$vo.id}');" type="button" class="btn btn-primary btn-sm">重置密码</button>
+                                    {/if}
+                                </td>
+                                <td>{$vo.nickname}</td>
+                                <td>{$vo.email}</td>
+                                <td>
+                                    {foreach name='vo.group' item='v'}
+                                        <span>{$v.title}</span>
+                                    {/foreach}
+                                </td>
+                            </tr>
+                        {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{include file='common/footer' /}

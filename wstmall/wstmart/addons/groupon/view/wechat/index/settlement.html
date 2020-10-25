@@ -1,0 +1,242 @@
+{extend name="$LAYOUT_WECHAT_BASE" /}
+{block name="title"}确认订单 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__ROOT__/addons/groupon/view/wechat/index/css/settlement.css?v={$v}">
+{/block}
+{block name="header"}
+    <header style="background:#ffffff;" class="ui-header ui-header-positive wst-header">
+    	<a href="{:addon_url('groupon://goods/wxlists')}"><i class="ui-icon-return"></i></a><h1>确认订单</h1>
+    </header>
+{/block}
+{block name="main"}
+     {php}$shopFreight = 0;$shopIds = '';$freight = 0;{/php}
+	 {php}
+		if($carts['goodsType']==0 && !$carts['carts']['isFreeShipping']){
+	        if(!empty($userAddress)){
+	            $freight = WSTOrderFreight($carts['carts']['shopId'],$userAddress['areaId2']);
+	            $shopFreight = $shopFreight + $freight;
+	        }else{
+	            $freight = 0;
+	            $shopFreight = $shopFreight + $freight;
+	        }
+        }
+     {/php}
+     <section class="ui-container">
+       <input type="hidden" name="" value="{$carts['goodsType']}" id="goodsType" autocomplete="off">
+       <input type="hidden" name="" value="{if isset($userAddress['addressId']) }{$userAddress['addressId']}{/if}" id="addressId" autocomplete="off">
+	   <input type="hidden" name="" value="{if isset($userAddress['addressId']) }{$userAddress['areaId2']}{/if}" id="areaId" autocomplete="off">
+       {if($carts['goodsType']==0)}
+		<ul class="ui-list ui-list-text ui-list-link wst-se-address">
+		    
+		    {if empty($userAddress)}
+		    <li onclick="javascript:addAddress(1);"><h4><p class="infono">您还没添加收货地址，请添加。</p></h4></li>
+		    {else}
+		    <li onclick="javascript:addAddress(1,{$userAddress['addressId']});"><h5>
+		    	<p class="infot">{$userAddress['userName']}    {$userAddress['userPhone']}</p>
+		    	<p class="infob"><i class="ui-icon-pin"></i>{$userAddress['areaName']}{$userAddress['userAddress']}</p>
+		    </h5></li>
+		    {/if}
+		    
+		</ul>
+		{/if}
+		<div class="wst-se-sh">
+			<p class="ui-nowrap-flex shopn" shopId="{$carts['carts']['shopId']}">{$carts['carts']['shopName']}</p>
+			<ul class="ui-row goods">
+			    <li class="ui-col ui-col-25">
+			    	<div class="img j-imgAdapt">
+				    	<a href="javascript:void(0);" onclick="javascript:goGoods({$carts['carts']['grouponId']});">
+				    	<img src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{:WSTImg($carts['carts']['goods']['goodsImg'],3)}" title="{$carts['carts']['goods']['goodsName']}">
+				    	</a>
+			    	</div>
+			    </li>
+			    <li class="ui-col ui-col-75">
+			    	<ul class="ui-row info">
+			    		<li class="ui-col ui-col-75">
+			    			<div class="name"><p class="names">{$carts['carts']['goods']['goodsName']}</p>
+			    			{if(!empty($carts['carts']['goods']['specNames']))}
+			    			<p class="spec">规格：
+			    			{volist name="$carts['carts']['goods']['specNames']" id="sp"}
+								{$sp['catName']}:{$sp['itemName']}
+							{/volist}
+			    			</p>
+			    			{/if}</div>
+			    		</li>
+					    <li class="ui-col ui-col-25"><p class="price">¥{$carts['carts']['goods']['shopPrice']}</p><p class="number">×{$carts['carts']['goods']['cartNum']}</p></li>
+					</ul>
+			    </li>
+			</ul>
+			<div class="cost">
+				{if($carts['goodsType']==0)}<div>运费：<span id="shopF">¥{php}echo sprintf("%.2f", $freight);{/php}</span></div>{/if}
+				<div>店铺合计{if($carts['goodsType']==0)}(含运费){/if}：<span id="shopC">¥{php}echo sprintf("%.2f",$freight+$carts['carts']['goodsMoney']);{/php}</span></div>
+			</div>
+			<div class="remarks">
+			<textarea id="remark_{$carts['carts']['shopId']}" autocomplete="off" placeholder="填写订单备注"></textarea>
+			</div>
+		</div>
+		<ul class="ui-list ui-list-text ui-list-link ui-list-active wst-se-mode">
+		    <li class="mode" onclick="javascript:dataShow('payments');">
+		        <h4 class="ui-nowrap">支付方式</h4>
+		        <div class="ui-txt-info" id="paymentst">{if !empty($payments['1'])}{$payments['1']['0']['payName']}{else}{$payments['0']['0']['payName']}{/if}</div>
+		    </li>
+		    {if($carts['goodsType']==0)}
+		    <li class="mode" onclick="javascript:dataShow('gives');">
+		        <h4 class="ui-nowrap">配送方式</h4>
+		        <div class="ui-txt-info" id="givest">快递运输</div>
+		    </li>
+		    {/if}
+		    <li class="{if(WSTConf('CONF.isOpenScorePay')==1)}mode{/if}" onclick="javascript:getInvoiceList();">
+		        <h4 class="ui-nowrap">发票信息</h4>
+		        <div class="ui-txt-info" id="invoicest">不开发票</div>
+		    </li>
+		    {if(WSTConf('CONF.isOpenScorePay')==1)}
+		   	<li onclick="javascript:dataShow('score');">
+		        <h4 class="ui-nowrap">积分支付</h4>
+		        <div class="ui-txt-info" id="scoret">否</div>
+		    </li>
+		    {/if}
+		</ul>
+     </section>
+{/block}
+{block name="footer"}
+		{/* 大加载 */}
+		<div class="ui-loading-block" id="Loadl">
+		    <div class="ui-loading-cnt">
+		        <i class="ui-loading-bright"></i>
+		        <p id="j-Loadl">正在加载中...</p>
+		    </div>
+		</div>
+        <footer class="ui-footer wst-footer-btns" style="height:85px; border-top: 1px solid #e8e8e8;" id="footer">
+			<div class="wst-se-total">应付总金额(含运费)：<span id="totalMoney">
+			¥{if empty($userAddress)}
+             {php}echo sprintf("%.2f", $carts["goodsTotalMoney"]);{/php}
+             {else}
+             {php}echo sprintf("%.2f", $carts["goodsTotalMoney"]+$shopFreight);{/php}
+             {/if}
+			</span></div>
+			<div class="wst-se-confirm"><button class="button" onclick="javascript:submitOrder();">确定</button></div>
+        </footer>
+{/block}
+{block name="include"}
+{/* 遮盖层  */}
+<div class="wst-cover" id="cover"></div>
+{/* 支付方式 */}
+<input type="hidden" name="" value="{if !empty($payments['1'])}1{else}0{/if}" id="paymentsh" autocomplete="off">
+<input type="hidden" name="" value="{if !empty($payments['1'])}{$payments['1']['0']['payCode']}{else}{$payments['0']['0']['payCode']}{/if}" id="paymentsw" autocomplete="off">
+<div class="wst-fr-box frame" id="payments">
+	<div class="title"><span>支付方式</span><i class="ui-icon-close-page" onclick="javascript:dataHide('payments');"></i><div class="wst-clear"></div></div>
+	<div class="content" id="content">
+    {if !empty($payments)} 
+       {php}$paymentkey = 0;{/php}
+       {volist name='$payments' id='paymentvo'}
+          {volist name='$paymentvo' id='paymentitem'}
+          <ul class="ui-list" onclick="javascript:onSwitch(this);">
+             <li><div class="wst-list-infose1"><span>{$paymentitem['payName']}</span></div></li>
+             <i class="ui-icon-push payments_{$paymentitem['payCode']} ui-icon-checked-s" payCode="{$paymentitem['payCode']}" mode="{$paymentitem['isOnline']}" word="{$paymentitem['payName']}"></i>
+          </ul>
+          {php}$paymentkey++;{/php}
+          {/volist}
+       {/volist}
+    {/if}
+	</div>
+	<button class="button" onclick="javascript:inDetermine('payments');">确定</button>
+</div>
+{/* 配送方式 */}
+<input type="hidden" name="" value="0" id="givesh" autocomplete="off">
+<div class="wst-fr-box frame" id="gives">
+	<div class="title"><span>配送方式</span><i class="ui-icon-close-page" onclick="javascript:dataHide('gives');"></i><div class="wst-clear"></div></div>
+	<div class="content" id="content">
+         <ul class="ui-list" onclick="javascript:onSwitch(this);">
+             <li><div class="wst-list-infose1"><span>快递运输</span></div></li>
+             <i class="ui-icon-push gives0 ui-icon-checked-s wst-active" mode="0" word="快递运输"></i>
+         </ul>
+		 <div class="wst-se-line"><p></p></div>
+         <ul class="ui-list" onclick="javascript:onSwitch(this);">
+             <li><div class="wst-list-infose1"><span>自提</span></div></li>
+             <i class="ui-icon-push gives1 ui-icon-unchecked-s" mode="1" word="自提"></i>
+         </ul>
+	</div>
+	<button class="button" onclick="javascript:inDetermine('gives');">确定</button>
+</div>
+{/* 用户发票列表  */}
+<script type="text/html" id="invoiceBox">
+	{{# for(var i = 0; i < d.length; i++){ }}
+		<li invId="{{d[i].id}}" invCode="{{d[i].invoiceCode}}">{{d[i].invoiceHead}}</li>
+	{{# } }}
+</script>
+
+{/* 发票信息层  */}
+<div class="invoice_box" id="frame">
+    <div class="title" id="boxTitle"><span>发票信息</span><i class="ui-icon-close-page" onclick="javascript:invoiceHide();"></i><div class="wst-clear"></div></div>
+    <div class="content" id="invoice_content">
+		<div class="inv_item">
+			<div class="inv_tit">发票抬头</div>
+			<ul class="ui-list inv_ul" onclick="javascript:invOnSwitch(this,0);">
+	             <li><div class="pdtb10"><span>个人</span></div></li>
+	             <i class="ui-icon-push invoices0 ui-icon-checked-s wst-active inv_chk" mode="0" word="个人"></i>
+	        </ul>
+	        <ul class="ui-list inv_ul" onclick="javascript:invOnSwitch(this,1);">
+	             <li><div class="pdtb10"><span>单位</span></div></li>
+	             <i class="ui-icon-push invoices1 ui-icon-unchecked-s inv_chk" mode="1" word="单位"></i>
+	        </ul>
+	        <input type="hidden" id="invoice_obj" value="0" />
+	        <div class="wst-clear"></div>
+			
+			<div class="inv_hidebox">
+				<div class="inv_head_inputbox">
+					<input class="inv_head_input" type="text" id="invoice_head" placeholder="请填写单位名称" />
+					<input type="hidden" id="invoiceId" value="0" />
+					<div id="inv_headlist">
+						<ul class="inv_list_item">
+						</ul>
+					</div>
+				</div>
+				<div class="inv_code_inputbox">
+					<input class="inv_code_input" type="text" id="invoice_code" placeholder="请填写纳税人识别码" />
+				</div>
+			</div>
+		</div>
+		<div class="inv_item">
+			<input type="hidden" id="isInvoice" value="0" />
+			<div class="inv_tit inv_line">发票内容</div>
+			<ul class="ui-list inv_ul none_float" onclick="javascript:isInvoice(this,0);">
+	             <li><div class="pdtb10"><span>不开发票</span></div></li>
+	             <i class="ui-icon-push invoices0 ui-icon-checked-s wst-active inv_chk" mode="0" word="不开发票"></i>
+	        </ul>
+	        <ul class="ui-list inv_ul none_float" onclick="javascript:isInvoice(this,1);">
+	             <li><div class="pdtb10"><span>明细</span></div></li>
+	             <i class="ui-icon-push invoices1 ui-icon-unchecked-s inv_chk" mode="1" word="明细"></i>
+	        </ul>
+	        <div class="wst-clear"></div>
+		</div>
+
+		<ul class="inv_tip">
+			<li><i>·</i>发票金额不包含优惠券和积分支付部分</li>
+			<li><i>·</i>第三方卖家销售的商品发票由商家开具、寄出、发票内容由商家决定</li>
+		</ul>
+		<button class="button" onclick="javascript:saveInvoice();">确定</button>
+    </div>
+</div>
+
+{/* 积分支付 */}
+<input type="hidden" name="" value="0" id="scoreh" autocomplete="off">
+<div class="wst-fr-box frame" id="score">
+	<div class="title"><span>积分支付</span><i class="ui-icon-close-page" onclick="javascript:dataHide('score');"></i><div class="wst-clear"></div></div>
+	<div class="content" id="content">
+         <ul class="ui-list" onclick="javascript:onSwitch(this);">
+             <li><div class="wst-list-infose1"><span>是</span></div></li>
+             <i class="ui-icon-push score1 ui-icon-checked-s wst-active" mode="1" word="是"></i>
+         </ul>
+		 <div class="wst-se-line"><p></p></div>
+         <ul class="ui-list" onclick="javascript:onSwitch(this);">
+             <li><div class="wst-list-infose1"><span>否</span></div></li>
+             <i class="ui-icon-push score0 ui-icon-unchecked-s" mode="0" word="否"></i>
+         </ul>
+         <div class="wst-fr-score">（可用<span id="userOrderScore">{$userOrderScore}</span>个积分，可抵<span>¥<span id="userOrderMoney">{$userOrderMoney}</span></span>）</div>
+	</div>
+	<button class="button" onclick="javascript:inDetermine('score');">确定</button>
+</div>
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__WECHAT__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/wechat/index/js/settlement.js?v={$v}'></script>
+{/block}

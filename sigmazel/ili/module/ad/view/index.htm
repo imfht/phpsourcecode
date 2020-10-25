@@ -1,0 +1,126 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<h3 class="title">{lang ad.index.view.header}</h3>
+				</div>
+				<div class="widget-content">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="javascript:void(null);" id="btn_delete_list" class="btn btn-small" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+							<a href="{$ADMIN_SCRIPT}/ad/_pub" id="btn_submit" class="btn btn-small" {$dispatches[operations][add]}>{lang ad.index.view.operation.add}</a>						
+						</div>
+					</div>
+					
+					<hr/>
+					<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/ad&page={$_var[page]}&psize={$_var[psize]}" method="post">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th width="20"><input type="checkbox" class="fancy" name="cbxAll"/></th>
+									<th width="90">{lang ad.index.view.th.pic}</th>
+									<th width="160">{lang ad.index.view.th.identity}</th>
+						            <th>{lang ad.index.view.th.name}</th>
+						            <th width="120">{lang ad.index.view.th.size}</th>
+						            <th width="120">{lang ad.index.view.th.edit}</th>
+						            <th width="90">{lang ad.index.view.th.operate}</th>
+								</tr>       
+							</thead>
+							<tbody id="tbl_body">
+								<!--{loop $ads $_loop $ad}-->
+								<tr class="item-row">
+									<td>
+					                	<input type="checkbox" class="fancy" name="cbxItem[]" title="{$ad[TITLE]}" value="{$ad[ADID]}" />
+					            	</td>
+					            	<td>
+	            						<!--{if is_array($ad[FILE01])}-->
+	            							<img src="{$ad[FILE01][0]}" width="80" style="width:80px;" />
+	            						<!--{else}-->
+	            							<img src="static/images/no-picture.jpg" width="80" style="width:80px; height:60px;" />
+	            						<!--{/if}-->
+	            					</td>
+	            					<td>{$ad[IDENTITY]}</td>
+	            					<td>
+	            						<p>{$ad[TITLE]} <span class="muted">[{$ad[TYPENAME]}]</span></p>
+	            					</td>
+	            					<td>
+	            						{$ad[WIDTH]}px * {$ad[HEIGHT]}px
+	            					</td>
+	            					<td class="f10">{$ad[USERNAME]}<br/>{$ad[EDITTIME]}</td>
+									<td>
+							            <a class="btn btn-mini btn-primary" href="{$ADMIN_SCRIPT}/ad/_update&id={$ad[ADID]}&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}" {$dispatches[operations][edit]}>{lang admin.operation.edit}</a>
+							            <a class="btn btn-mini btn-delete" title="{$ad[TITLE]}" data="{$ad[ADID]}" href="javascript:void(null);" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+					            	</td>
+								</tr>
+								<!--{/loop}-->
+								<!--{if count($ads) == 0}-->
+							        <tr>
+							            <td colspan="7">
+							                * {lang admin.operation.empty}
+							            </td>
+							        </tr>
+							    <!--{/if}-->
+							</tbody>
+						</table>
+					</form>
+					
+					<hr/>
+					{$pager}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+$(function(){
+	$('.fancy').uniform();
+	
+	$('#btn_delete_list').click(function(){
+		if($("#frm_grid input[name='cbxItem[]']:checked").length > 0){
+			var tempHTML = '<p>';
+			$("#frm_grid input[name='cbxItem[]']:checked").each(function(){
+				tempHTML += $(this).attr('title') + '； ';
+			});
+			
+			tempHTML += '</p>';
+			
+			$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang ad.index.view.operation.delete.message}</p>' + tempHTML, callback:function(){
+				$('#modal_dialog .btn-primary').click(function(){
+					$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/ad&do=delete_list&page={$_var[page]}&psize={$_var[psize]}');
+					$('#frm_grid').submit();
+				});
+			}});
+		}else $.dialog({message:'{lang ad.index.view.operation.empty}'});
+	});
+	
+	$("#frm_grid input[name='cbxAll']").click(function(){
+		if(this.checked){
+			$('#frm_grid .item-row').addClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', true).parent().addClass('checked');
+		}else{
+			$('#frm_grid .item-row').removeClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', false).parent().removeAttr('class');
+		}
+	});
+	
+	$("#frm_grid input[name='cbxItem[]']").click(function(){
+		if(this.checked) $(this).parent().parent().parent().parent().addClass('warning');
+		else $(this).parent().parent().parent().parent().removeClass('warning');
+	});
+	
+	$('#frm_grid .btn-delete').click(function(){
+		var adid = $(this).attr('data');
+		var tempHTML = '<p>' + $(this).attr('title') + '； </p>';
+		$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang ad.index.view.operation.delete.one}</p>' + tempHTML, callback:function(){
+			$('#modal_dialog .btn-primary').click(function(){
+				$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/ad&do=delete&id=' + adid + '&page={$_var[page]}&psize={$_var[psize]}');
+				$('#frm_grid').submit();
+			});
+		}});
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

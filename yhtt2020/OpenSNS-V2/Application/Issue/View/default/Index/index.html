@@ -1,0 +1,97 @@
+<extend name="Base/common"/>
+
+<block name="style">
+    <link href="__CSS__/issue.css" rel="stylesheet" type="text/css"/>
+</block>
+<block name="header">
+    <include file="Public/_nav"/>
+</block>
+<block name="body">
+    <div class="issue-wrap">
+    <if condition="$display_type eq 'masonry'">
+        <div class="display_type">
+            <a href="{:U('Issue/Index/index',array('issue_id'=>$_GET['issue_id'],'display_type'=>'list'))}" title={:L('_LIST_')}><i class="icon-th"></i></a>
+            <a class="current" title="{:L('_FLOW_')}"><i class="icon-align-justify"></i></a>
+        </div>
+        <else/>
+        <div class="display_type">
+            <a class="current" title="{:L('_LIST_')}"><i class="icon-th"></i></a>
+            <a href="{:U('Issue/Index/index',array('issue_id'=>$_GET['issue_id'],'display_type'=>'masonry'))}" title={:L('_FLOW_')}><i class="icon-align-justify"></i></a>
+        </div>
+    </if>
+
+    <div class="issue_list">
+        <volist name="contents" id="vo">
+            <div class="item_inner">
+                <div class="item_core">
+                    <div class="item_type">{$vo.issue.title}</div>
+                    <a href="{:U('Issue/Index/issueContentDetail',array('id'=>$vo['id']))}">
+                        <if condition="$display_type eq 'masonry'">
+                            <img class="cover" src="{$vo.cover_id|getThumbImageById=255}" height="{$vo.cover_height|default=253}"/>
+                            <else/>
+                            <img class="cover" src="{$vo.cover_id|getThumbImageById=255,200}"/>
+                        </if>
+                    </a>
+
+                    <h3><a href="{:U('Issue/Index/issueContentDetail',array('id'=>$vo['id']))}" class="text-more">{$vo.title}</a></h3>
+                    <div class="spliter"></div>
+
+                        <ul class="operation clearfix">
+                            <li><i class="icon-eye-open"></i>{$vo.view_count}</li>
+                            <li>
+                                {:Hook('support',array('table'=>'issue_content','row'=>$vo['id'],'app'=>'Issue','uid'=>$vo['uid'],'jump'=>'issue/index/issuecontentdetail'))}
+                            </li>
+                            <li><i class="icon-comments-alt"></i>{$vo.reply_count}</li>
+                        </ul>
+
+                    <div class="spliter"></div>
+                    <div><a class="author" href="{$vo.user.space_url}">
+                        <img src="{$vo.user.avatar128}"
+                             ucard="{$vo.uid}" class="avatar-img">{$vo.user.nickname|getShortSp=4}
+                    </a>
+
+                        <div class="pull-right ctime">{$vo.create_time|friendlyDate}</div>
+                    </div>
+                </div>
+            </div>
+    </volist>
+    </div>
+        <if condition="count($contents) eq 0">
+            <div style="font-size:3em;padding:2em 0;color: #ccc;text-align: center">{:L('_NOTHING_')}</div>
+        </if>
+    <div>
+        <div class="pull-right">
+
+            {:getPagination($totalPageCount,16)}
+        </div>
+    </div>
+
+    <include file="_box"/>
+    </div>
+</block>
+<block name="script">
+    <if condition="$display_type eq 'masonry'">
+        <script src="__JS__/masonry/jquery.masonry.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('.issue_list').masonry({
+                    itemSelector: '.item_inner',
+                    gutterWidth: 20,
+                    columnWidth: 255,
+                    isFitWidth: true
+                });
+
+                _tag='http:';
+                if($('.item_core>a>img').first().attr('src').indexOf(_tag)!=-1) {
+                    $('.item_core>a>img').each(function () {
+                        _height = $(this).height();
+                        _src = $(this).attr('src');
+                        _src = _src.replace(/auto/, _height);
+                        $(this).attr('src', _src);
+                    });
+                }
+            });
+        </script>
+    </if>
+</block>
+

@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>数据验证</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>数据验证</legend>
+			<ol>
+                                <li>
+                                        <h2 class="title_h2">什么是数据验证</h2>
+                                        我们平时处理数据，一般包含以下三步：
+					<br>1.检验数据合法性
+					<br>2.获取检验过的合法数据
+					<br>3.根据业务逻辑保存数据
+                                </li>
+				<li>
+                                        <h2 class="title_h2">数据验证</h2>
+					在我们的代码里可以通过下面的方法进行数据验证。
+					<pre class="brush:php">
+						Sr::checkData($data, $rules, &$returnData, &$errorMessage, &$errorKey = null, &$db = null) 
+					</pre>
+					参数说明：
+					<br><b>$data</b>   需要检验的数据，一般是表单Sr::post()数据,或者其它数组数据都可以。
+					<br>格式：
+					<pre class="brush:php">
+						array('key1'=>'值1',...,'keyn'=>'值n',)
+					</pre>
+					<b>$rules</b> 验证规则
+					<br>格式：
+					<pre class="brush:php">
+					array(
+						'key1'=>array(
+							'规则1'=>'验证失败提示信息',
+							.....
+							'规则n'=>'验证失败提示信息'
+						),
+						....
+						'keyn'=>array(
+							'规则1'=>'验证失败提示信息',
+							.....
+							'规则n'=>'验证失败提示信息'
+						),
+					)
+					</pre>
+					<b>$returnData</b> 验证通过后，处理过的数据，
+					<br>这个应该是我们下一步要使用的合法数据，比如读取其中的数据插入数据库等。
+					<br><b>$errorMessage</b> 当验证失败的时候这个变量存储的就是错误提示信息。
+					<br><b>$errorKey</b> 当验证失败的时候这个变量存储的就是验证失败的那个key字段名称。
+					<br><b>$db</b> 当unique和exists规则验证的数据不是当前默认的数据库连接时，可以指定使用的数据库连接对象。
+					<br><b>示例：</b>
+					<br>继续上面2中的数据，为了安全，我们需要检验<code>$data=array('title'=>'值','content'=>'值')</code>
+					<br>首先我们总结下要验证的逻辑：
+					<br>1.标题不能为空，过滤html，剔除两边空格，长度最大50字符。
+					<br>2.内容不能为空，要进行xss过滤。
+					<br>那么我们的验证规则就是：
+					<pre class="brush:php">
+						$rule=array(
+							'atitle'=>array(
+								'functions[strip_tags,trim]'=>'',
+								'required'=>'标题不能为空',
+								'max_len[50]'=>'标题最多50字符'
+							),
+							'content'=>array(
+								'required'=>'内容不能为空',
+								'xss'=>'',
+							)
+						);
+					</pre>
+					接着我们就可以通过规则验证$data数据了,代码如下：
+					<pre class="brush:php">
+						$isOkay=Sr::checkData($data,$rule,$retData,$errorMsg);
+						if($isOkay){
+							//验证成功，$retData是验证处理过的数据。
+							//do sth else
+							Sr::dump($retData);
+						}else{
+							//验证失败，$errorMsg是提示信息
+							echo $errorMsg;
+						}
+					</pre>
+					上面验证规则用到了很多规则，最下面是Soter支持的所有规则和用法。
+				</li>
+				<li>
+                                        <h2 class="title_h2">读取数据</h2>
+					在我们的代码里可以通过下面的方法进行读取数据,根据$map从$sourceData中读取数据。
+					<pre class="brush:php">
+						Sr::readData(Array $map, $sourceData = null) 
+					</pre>
+					参数说明：
+					<br><b>$map</b> 字段映射数组,格式：array('表单name名称'=>'表字段名称',...)
+					<br><b>$sourceData</b> 数据源，格式：array('表单name名称'=>'值',...),一般是$_POST。
+					<br>最后会返回读取后的数据，格式是：array('表字段名称'=>'值',...)。
+					<br><b>示例：</b>
+					<br>比如表单数据：
+					<br>标题：<code>$_POST['title'] = ' 文章<a>xxx</a>标题 '</code>;
+					<br>内容：<code>$_POST['content']='内容<a>xxx</a>内容，<a onclick="alert();">xxx</a>脚本<script>xxxxx</script>'</code>;
+					<br>防止跨站token：<code>$_POST['token'] = '09adfu09adfmca09dma0'</code>;
+					<br>标题和内容对应数据库字段：art_title,art_content
+					<br>$map=array('title'=>'art_title','content'=>'art_content');
+					<br>然后我们就可以通过<code>Sr::checkData()</code>验证数据的合法性，最后读取验证后的数据插入数据库。
+					<pre class="brush:php">
+						$isOkay=Sr::checkData($_POST,$rule,$retData,$errorMsg);
+						if($isOkay){
+							//验证成功，$retData是验证处理过的数据。
+							//从$retData中读取要插入数据库的数据放入$data
+							$data=Sr::readData($map,$retData);
+						}else{
+							//验证失败，$errorMsg是提示信息
+							echo $errorMsg;
+						}
+					</pre>
+					上面读到的<code>$data=array('art_title'=>'值','art_content'=>'值')</code>，可以看到把无关的表单字段都过滤掉了。
+                                </li>
+				<li>
+                                        <h2 class="title_h2">自定义验证规则</h2>
+					Soter提供了一些验证规则，但是这些规则肯定无法满足所有的需求，那么我们可以拓展Soter的验证规则。
+					<br>在入口文件里面我们可以看到下面的配置：
+					<pre class="brush:php">
+						//设置自定义数据验证规则，参数可以是配置文件名称，也可以是规则数组
+						->setDataCheckRules('rules')
+					</pre>
+					配置文件rules.php内容如下：
+					<pre class="brush:php">
+						//验证规则返回布尔代表成功和失败
+						//如果要改变传入的值，把改变后的值赋值给$returnValue变量即可
+						//对于一个字段多条验证规则存在的时候，如果设置$break为true那么该字段的该条规则之后的验证规则不在起作用
+
+						return array(
+							'myRule' => function($key, $value, $data, $args, &$returnValue, &$break, &$db) {
+								    if ($value<100) {
+									   return false;
+								    }
+								    return true;
+							},
+							'encodePassword' => function($key, $value, $data, $args, &$returnValue, &$break, &$db) {
+									if (!$value) {
+									       return false;
+									}
+									$returnValue=md5($value);
+									return true;
+							    },
+							'optional' => function($key, $value, $data, $args, &$returnValue, &$break, &$db) {
+								    $break=!isset($data[$key]);
+								    return true;
+							},
+						);
+					</pre>
+					可以看到我们自定义了规则，名称是myRule和encodePassword，规则是一个匿名函数，函数接收了几个参数，
+					<br>然后函数里面进行了一些逻辑验证，返回验证成功还是失败。
+					<br>而且上面的规则还自定义了一个和系统规则相同的optional，那么系统规则就会被这里的规则覆盖。
+					<br><b class="text_strong">参数含义如下：</b>
+					<br><b>$key</b>   要验证的数据在$data中的key键
+					<br><b>$value</b> 要验证的数据,也就是：$data[$key]
+					<br><b>$data</b>  要验证的数据
+					<br><b>$args</b>  规则后面的参数数组，比如：range_len[6,16]，那么$args就是array(6,16)
+					<br><b>$returnValue</b> 如果要改变传入$value的值，把改变后的值赋值给$returnValue变量即可。
+					<br>比如上面我们自定义规则encodePassword，把值md5加密了一次，
+					<br>那么Sr::checkData($data, $rules, &$returnData, &$errorMessage, &$errorKey, &$db = null)验证数据通过之后，
+					<br><b>$returnData</b>的数据中的使用了encodePassword规则的字段都会被md5加密。
+					<br><b>$break</b> 对于一个字段多条验证规则存在的时候，如果设置$break为true那么该字段的该条规则之后的验证规则不在起作用
+					<br><b class="text_strong">返回值说明：</b>
+					<br>返回布尔代表成功和失败。
+					<br>返回成功ture，Soter会使用字段的验证规则数组中当前规则下面的规则继续验证。
+					<br>返回失败false，Soter会终止验证，设置验证失败信息，然后返回false验证失败。
+
+                                </li>
+				<li>
+                                        <h2 class="title_h2">Soter验证规则</h2>
+					<table class="table table-bordered table-hover" style="word-break: normal;">
+						<tbody>
+							<tr>
+								<th>
+									规则名称
+								</th>
+								<th>
+									功能描述
+								</th>
+								<th>
+									举例
+								</th>
+							</tr>
+							<tr>
+								<td>
+									array
+								</td>
+								<td>
+									如果元素不是数组，则返回FALSE。
+									<br>如果元素不满足数组长度范围，则返回FALSE
+								</td>
+								<td>
+									array 元素值必须是数组，可以为空。
+									<br>array[2],数组长度最小是2
+									<br>array[1,2],数组长度必须是1到2
+									<br>array[2,2],数组长度必须是2
+								</td>
+							</tr>
+							<tr>
+								<td>
+									notArray
+								</td>
+								<td>
+									如果元素值是数组，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									required
+								</td>
+								<td>
+									如果元素为空，则返回FALSE。
+									<br>支持数组，数组的时候，数组为空或者数组中有一个元素为空则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									requiredKey
+								</td>
+								<td>
+									如果数据中不存在指定的键名称，则返回FALSE。
+
+								</td>
+								<td>
+									requiredKey 数据中必须包含当前字段。
+									requiredKey[email] 数据中必须包含当前字段和email字段。
+									<br>requiredKey[email,user] 数据中必须包含当前字段和email,user字段。
+								</td>
+							</tr>
+							<tr>
+								<td>
+									default
+								</td>
+								<td>
+									当没有对应字段的值或者值为空的时候那么就会使用默认规则的值作为该字段的值。然后用这个值继续后面的规则进行验证。
+									<br>支持数组，数组的时候，数组中为空的元素会使用默认规则的参数值作为元素的值。
+								</td>
+								<td>
+									default[默认值]
+									<br/>数组的时候可以设置多个默认值：
+									<br/>default[默认值0,默认值1,默认值2...默认值n]
+									<br/>默认值依次赋值给数组的元素,如果只设置了“默认值0”那么数组所有的元素值都会被设置为“默认值0”
+								</td>
+							</tr>
+							<tr>
+								<td>
+									optional
+								</td>
+								<td>
+									可以为空规则。这个规则应该在字段验证规则数组里面第一位。因为验证是按着字段验证规则数组从前往后验证的。
+								</td>
+								<td>
+									<br>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									functions
+								</td>
+								<td>
+									调用系统函数，这些函数应该都是至少接收一个参数，然后返回处理后的结果，比如trim，htmlspceialchars。
+									<br>支持数组，数组的时候，数组里面的所有元素都会使用这些函数处理。
+								</td>
+								<td>
+									functions[htmlspecialchars]<br>
+									functions[trim,md5]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									xss
+								</td>
+								<td>
+									过滤xss代码，要验证的数据可以是字符串也可以是数组。
+								</td>
+								<td>
+
+								</td>
+							</tr>
+							<tr>
+								<td>
+									match
+								</td>
+								<td>
+									如果表单元素的值与参数中对应的表单字段的值不相等，则返回FALSE
+								</td>
+								<td>
+									match[password2]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									equal
+								</td>
+								<td>
+									如果表单元素的值不与指定的值相等，则返回FALSE。
+								</td>
+								<td>
+									equal[snail]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									enum
+								</td>
+								<td>
+									如果表单元素值不在指定的几个值中，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素不在指定的几个值中，则返回FALSE。
+								</td>
+								<td>
+									enum[0,1]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									unique
+								</td>
+								<td>
+									如果表单元素的值与指定数据表栏位有重复，则返回False（注：比如unique[user.email]，那么验证类会去查找user表中email字段有没有与表单元素一样的值，如存重复，则返回false，这样开发者就不必另写callback验证代码。如果指定了id:1,那么除了id为1之外的记录的email字段不能与表单元素一样，如果一样返回false）<br>
+									unique[table.field,id:1],其中的id:1支持变量。<br>
+									比如：id:#user_id,<br>
+									那么就会使用get或者post的user_id内容作为id内容。
+								</td>
+								<td>
+									unique[table.field]<br>
+									unique[table.field,id:1]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									exists
+								</td>
+								<td>
+									规则说明：<br>
+									(1).如果表单元素的值在指定数据表的字段中不存在则返回false，如果存在返回true<br>
+									(2).比如exists[cat.cid]，那么验证类会去查找cat表中cid字段有没有与表单元素一样的值<br>
+									(3).cat.cid，cat是表名称（不要带前缀）cid是字段名称。<br>
+									cat.cid后面还可以指定附加的where条件。<br>
+									比如：exists[users.uname,user_id:2,...] 可以多个条件，逗号分割。<br>
+									上面的规则生成的where条件就是array('uname'=&gt;$value,'user_id'=&gt;2,....)
+									exists[table.field,id:1],其中的id:1支持变量。<br>
+									比如：id:#user_id,<br>
+									那么就会使用get或者post的user_id内容作为id内容。
+								</td>
+								<td>
+									exists[table.field]<br>
+									exists[table.field,id:1]<br>
+									exists[table.field,id:#id]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									min_len
+								</td>
+								<td>
+									如果表单元素值的字符长度小于参数定义的值，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素的字符长度小于参数定义的值，则返回FALSE。
+								</td>
+								<td>
+									min_len[8]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									max_len
+								</td>
+								<td>
+									如果表单元素值的字符长度大于参数定义的值，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素的字符长度大于参数定义的值，则返回FALSE。
+								</td>
+								<td>
+									max_len[8]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									range_len
+								</td>
+								<td>
+									如果表单元素值的字符长度不在指定的范围，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素的字符长度不在指定的范围，则返回FALSE。
+								</td>
+								<td>
+									range_len[6,16]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									len
+								</td>
+								<td>
+									如果表单元素值的字符长度不是指定的大小，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值的字符长度不是指定的大小，则返回FALSE。
+								</td>
+								<td>
+									len[8]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									min
+								</td>
+								<td>
+									如果表单元素值不是数字或者小于指定的值，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素的值不是数字或者小于指定的值，则返回FALSE。
+								</td>
+								<td>
+									min[8]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									max
+								</td>
+								<td>
+									如果表单元素值不是数字或者大于指定的值，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是数字或者大于指定的值，则返回FALSE。
+								</td>
+								<td>
+									max[8]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									range
+								</td>
+								<td>
+									如果表单元素值不是数字或者大小不在指定的范围内，则返回 FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是数字或者大小不在指定的范围内，则返回FALSE。
+								</td>
+								<td>
+									range[1,10]
+								</td>
+							</tr>
+							<tr>
+								<td>
+									alpha
+								</td>
+								<td>
+									如果元素值中包含除字母以外的字符，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值中包含除字母以外的字符，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									alpha_num
+								</td>
+								<td>
+									如果表单元素中包含除字母和数字以外的字符，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值中包含除字母和数字以外的字符，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									alpha_dash
+								</td>
+								<td>
+									如果表单元素值中包含除字母/数字/下划线/破折号以外的其他字符，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值中包含除字母/数字/下划线/破折号以外的其他字符，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									alpha_start
+								</td>
+								<td>
+									如果元素值不是字母开头，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是字母开头，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									num
+								</td>
+								<td>
+									如果表单元素中不是纯数字，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是纯数字，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									int
+								</td>
+								<td>
+									如果表单元素中不是整数，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是整数，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									float
+								</td>
+								<td>
+									如果表单元素中不是小数，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是小数，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									numeric
+								</td>
+								<td>
+									如果表单元素中不是一个数，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个数，则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									natural
+								</td>
+								<td>
+									如果表单元素值中包含了非自然数的其他数值（其他数值不包括零），则返回FALSE。自然数形如：0,1,2,3....等等。
+									<br>支持数组，数组的时候，数组里面存在元素值包含了非自然数的其他数值（其他数值不包括零），则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									natural_no_zero
+								</td>
+								<td>
+									如果表单元素值包含了非自然数的其他数值 （其他数值包括零），则返回FALSE。非零的自然数：1,2,3.....等等。
+									<br>支持数组，数组的时候，数组里面存在元素值包含了非自然数的其他数值（其他数值包括零），则返回FALSE。
+								</td>
+								<td>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									email
+								</td>
+								<td>
+									如果表单元素值包含不合法的email地址，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值包含不合法的email地址，则返回FALSE。
+								</td>
+								<td>
+									email 必须是email，不能为空<br>
+									email[true] 必须是email，可以为空。
+								</td>
+							</tr>
+							<tr>
+								<td>
+									url
+								</td>
+								<td>
+									如果表单元素值不是一个网址，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个网址，则返回FALSE。
+								</td>
+								<td>
+									url 必须是url，不能为空<br>
+									url[true] 必须是url，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									qq
+								</td>
+								<td>
+									如果表单元素值不是一个QQ号，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个QQ号，则返回FALSE。
+								</td>
+								<td>
+									qq  必须是qq，不能为空<br>
+									qq[true] 必须是qq，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									phone
+								</td>
+								<td>
+									如果表单元素值不是一个电话号码，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个电话号码，则返回FALSE。
+								</td>
+								<td>
+									phone 必须是电话号码，不能为空<br>
+									phone[true] 必须是电话号码，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									mobile
+								</td>
+								<td>
+									如果表单元素值不是一个手机号，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个手机号，则返回FALSE。
+								</td>
+								<td>
+									mobile 必须是手机号，不能为空<br>
+									mobile[true] 必须是手机号，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									zipcode
+								</td>
+								<td>
+									如果表单元素值不是一个邮政编码，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个邮政编码，则返回FALSE。
+								</td>
+								<td>
+									zipcode 必须是邮政编码，不能为空<br>
+									zipcode[true] 必须是邮政编码，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									idcard
+								</td>
+								<td>
+									如果表单元素值不是一个身份证号，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个身份证号，则返回FALSE。
+								</td>
+								<td>
+									idcard 必须是身份证号，不能为空<br>
+									idcard[true] 必须是身份证号，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									ip
+								</td>
+								<td>
+									如果表单元素值不是一个合法的IPv4地址，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是一个合法的IPv4地址，则返回FALSE。
+								</td>
+								<td>
+									ip 必须是IPv4地址，不能为空<br>
+									ip[true] 必须是IPv4地址，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									chs
+								</td>
+								<td>
+									如果表单元素值不是汉字，或者不是指定的长度，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是汉字，或者不是指定的长度，则返回FALSE。
+								</td>
+								<td>
+									chs 必须是汉字不能为空<br>
+									chs[false] 必须是汉字，不能为空<br>
+									chs[true] 必须是汉字，可以为空<br>
+									chs[false,2] 必须是2个汉字，不能为空<br>
+									chs[true,2] 必须是2个汉字，可以为空<br>
+									chs[true,2,3] 必须是2-3个汉字，可以为空<br>
+									chs[false,2,] 必须是2个以上汉字，不能为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									date
+								</td>
+								<td>
+									如果表单元素值不是正确的日期格式YYYY-MM-DD，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是正确的日期格式YYYY-MM-DD，则返回FALSE。
+								</td>
+								<td>
+									date 必须是正确的日期格式，不能为空<br>
+									date[true] 必须是正确的日期格式，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									time
+								</td>
+								<td>
+									如果表单元素值不是正确的时间格式HH:MM:SS，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是正确的时间格式HH:MM:SS，则返回FALSE。
+								</td>
+								<td>
+									time 必须是正确的时间格式，不能为空<br>
+									time[true] 必须是正确的时间格式，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									datetime
+								</td>
+								<td>
+									如果表单元素值不是正确的日期时间格式YYYY-MM-DD HH:MM:SS，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不是正确的日期时间格式YYYY-MM-DD HH:MM:SS，则返回FALSE。
+								</td>
+								<td>
+									datetime 必须是正确的日期时间格式，不能为空<br>
+									datetime[true] 必须是正确的日期时间格式，可以为空
+								</td>
+							</tr>
+							<tr>
+								<td>
+									reg
+								</td>
+								<td>
+									如果表单元素值不匹配指定的正则表达式，则返回FALSE。
+									<br>支持数组，数组的时候，数组里面存在元素值不匹配指定的正则表达式，则返回FALSE。
+								</td>
+								<td>
+									reg[/^[]]$/]<br>
+									reg[/^A$/i]<br>
+									模式修正符说明:<br>
+									i 表示在和模式进行匹配进不区分大小写<br>
+									m 将模式视为多行，使用^和$表示任何一行都可以以正则表达式开始或结束<br>
+									s 如果没有使用这个模式修正符号，元字符中的"."默认不能表示换行符号,将字符串视为单行<br>
+									x 表示模式中的空白忽略不计<br>
+									e 正则表达式必须使用在preg_replace替换字符串的函数中时才可以使用(讲这个函数时再说)<br>
+									A 以模式字符串开头，相当于元字符^<br>
+									Z 以模式字符串结尾，相当于元字符$<br>
+									U 正则表达式的特点：就是比较“贪婪”，使用该模式修正符可以取消贪婪模式
+								</td>
+							</tr>
+							<tr>
+								<td>
+									参数默认分割符
+								</td>
+								<td>
+									参数默认分割符是逗号, 可以改变这个符号，通过在]后面指定即可。
+								</td>
+								<td>
+									range[3#5]#   使用#分割参数
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

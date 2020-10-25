@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>接口网络异常状态模拟</title>
+	<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="/public/layui/css/layui.css" />
+	<script type="text/javascript" src="/public/layui/layui.js"></script>
+	<style>
+		h1{ padding: .7em 0 .3em; font-weight: bold;}
+		.layui-form-label{ width: 140px;}
+		.layui-input-block{ margin-left: 170px;}
+		.layui-form-switch{ float: right;}
+	</style>
+</head>
+<body>
+	<div class="layui-container">
+		<h1 style="text-align: center;">模拟数据</h1>
+		<div class="layui-row">
+			<form class="layui-form" action="">
+				<input type="checkbox" lay-filter="active" lay-skin="switch" lay-text="开启|关闭" checked>
+				<!--{loop $mockcfg[config] $module $controllers}-->
+				<h1>{$module}</h1>
+				<!--{loop $controllers $controller $actions}-->
+				<fieldset class="layui-elem-field layui-field-title site-title">
+					<legend><a name="grid">{$controller}</a></legend>
+				</fieldset>
+				<!--{loop $actions $action $status}-->
+				<div class="layui-form-item">
+				  <label class="layui-form-label">{$action}</label>
+				  <div class="layui-input-block">
+					<select name="{$action}" data-module="{$module}" data-controller="{$controller}" autocomplete="off">
+						<!--{loop $status_map $key $stat}-->
+						<option value="{$key}" {if $status==$key}selected{/if}>{$stat}</option>
+						<!--{/loop}-->
+					</select>
+				  </div>
+				</div>
+				<!--{/loop}-->
+				<!--{/loop}-->
+				<!--{/loop}-->
+			</form>
+		</div>
+	</div>
+	<div style="text-align: center; padding: 80px 0 50px; color: rgba(0,0,0,.5);">© 2020 test only</div>
+	<script>
+	layui.use(['layer', 'form'], function(){
+		var form = layui.form;
+		form.render('select');
+		form.on('select', function(data){
+			layer.load();
+			$.ajax({
+				type: 'POST',
+				url:'/mock/config',
+				data: {
+					'module':  $(data.elem).data('module'),
+					'controller': $(data.elem).data('controller'),
+					'action': data.elem.name,
+					'status': data.value,
+				},
+				success: result => {
+					layer.closeAll('loading');
+					if(result.status == 1){
+						layer.msg('操作成功');
+					}else{
+						layer.msg('修改失败:' + result.message);
+					}
+				},
+				error: (xhr, errorType, error) => {
+					layer.closeAll('loading');
+					alert('请求出错:' + xhr.status + ' ' + error);
+				}
+			})
+		});
+		form.on('switch(active)', function(data){
+			let active = data.elem.checked ? '1' : '0'; //开关是否开启，true或者false
+			layer.load();
+			$.ajax({
+				type: 'POST',
+				url:'/mock/config',
+				data: {
+					active
+				},
+				success: result => {
+					layer.closeAll('loading');
+					if(result.status == 1){
+						layer.msg('操作成功');
+					}else{
+						layer.msg('修改失败:' + result.message);
+					}
+				},
+				error: (xhr, errorType, error) => {
+					layer.closeAll('loading');
+					alert('请求出错:' + xhr.status + ' ' + error);
+				}
+			})
+		});  
+	});
+	</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+language: php
+
+dist: trusty
+
+matrix:
+  include:
+    - php: 7.1
+    - php: 7.2
+    - php: 7.3
+    - php: 7.2
+      env: LINT=true
+    - php: 7.2
+      env: PHAR=true
+
+services:
+  - mysql
+
+install:
+  - printf "\n" | pecl install -f swoole
+
+before_script:
+  - phpenv config-rm xdebug.ini
+  - echo "USE mysql;\nUPDATE user SET password=PASSWORD('123456') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
+  - composer install --no-dev
+  - php -v
+  - php -m
+
+script:
+  - |
+    if [[ $LINT != "" ]]; then
+      composer install --dev
+      vendor/bin/phpcs
+    elif [[ $PHAR != "" ]]; then
+      composer install --dev
+      vendor/bin/box compile
+      ./SMProxy.phar start -c tests/conf
+      php tests/test.php
+    else
+      tests/run
+      php tests/test.php
+    fi

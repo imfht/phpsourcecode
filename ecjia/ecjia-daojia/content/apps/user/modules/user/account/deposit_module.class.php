@@ -1,0 +1,159 @@
+<?php
+//
+//    ______         ______           __         __         ______
+//   /\  ___\       /\  ___\         /\_\       /\_\       /\  __ \
+//   \/\  __\       \/\ \____        \/\_\      \/\_\      \/\ \_\ \
+//    \/\_____\      \/\_____\     /\_\/\_\      \/\_\      \/\_\ \_\
+//     \/_____/       \/_____/     \/__\/_/       \/_/       \/_/ /_/
+//
+//   上海商创网络科技有限公司
+//
+//  ---------------------------------------------------------------------------------
+//
+//   一、协议的许可和权利
+//
+//    1. 您可以在完全遵守本协议的基础上，将本软件应用于商业用途；
+//    2. 您可以在协议规定的约束和限制范围内修改本产品源代码或界面风格以适应您的要求；
+//    3. 您拥有使用本产品中的全部内容资料、商品信息及其他信息的所有权，并独立承担与其内容相关的
+//       法律义务；
+//    4. 获得商业授权之后，您可以将本软件应用于商业用途，自授权时刻起，在技术支持期限内拥有通过
+//       指定的方式获得指定范围内的技术支持服务；
+//
+//   二、协议的约束和限制
+//
+//    1. 未获商业授权之前，禁止将本软件用于商业用途（包括但不限于企业法人经营的产品、经营性产品
+//       以及以盈利为目的或实现盈利产品）；
+//    2. 未获商业授权之前，禁止在本产品的整体或在任何部分基础上发展任何派生版本、修改版本或第三
+//       方版本用于重新开发；
+//    3. 如果您未能遵守本协议的条款，您的授权将被终止，所被许可的权利将被收回并承担相应法律责任；
+//
+//   三、有限担保和免责声明
+//
+//    1. 本软件及所附带的文件是作为不提供任何明确的或隐含的赔偿或担保的形式提供的；
+//    2. 用户出于自愿而使用本软件，您必须了解使用本软件的风险，在尚未获得商业授权之前，我们不承
+//       诺提供任何形式的技术支持、使用担保，也不承担任何因使用本软件而产生问题的相关责任；
+//    3. 上海商创网络科技有限公司不对使用本产品构建的商城中的内容信息承担责任，但在不侵犯用户隐
+//       私信息的前提下，保留以任何方式获取用户信息及商品信息的权利；
+//
+//   有关本产品最终用户授权协议、商业授权与技术服务的详细内容，均由上海商创网络科技有限公司独家
+//   提供。上海商创网络科技有限公司拥有在不事先通知的情况下，修改授权协议的权力，修改后的协议对
+//   改变之日起的新授权用户生效。电子文本形式的授权协议如同双方书面签署的协议一样，具有完全的和
+//   等同的法律效力。您一旦开始修改、安装或使用本产品，即被视为完全理解并接受本协议的各项条款，
+//   在享有上述条款授予的权力的同时，受到相关的约束和限制。协议许可范围以外的行为，将直接违反本
+//   授权协议并构成侵权，我们有权随时终止授权，责令停止损害，并保留追究相关责任的权力。
+//
+//  ---------------------------------------------------------------------------------
+//
+defined('IN_ECJIA') or exit('No permission resources.');
+
+/**
+ * 用户充值申请
+ * @author royalwang
+ */
+class user_account_deposit_module extends api_front implements api_interface
+{
+    public function handleRequest(\Royalcms\Component\HttpKernel\Request $request)
+    {
+
+        if ($_SESSION['user_id'] <= 0) {
+            return new ecjia_error(100, __('Invalid session', 'user'));
+        }
+        $amount     = $this->requestData('amount');
+        $user_note  = $this->requestData('note', '');
+        $account_id = $this->requestData('account_id', 0);
+        $payment_id = $this->requestData('payment_id', 0);
+        $user_id    = $_SESSION['user_id'];
+
+        $api_version = $this->request->header('api-version');
+        //判断用户有没申请注销
+        if (version_compare($api_version, '1.25', '>=')) {
+            $account_status = Ecjia\App\User\Users::UserAccountStatus($user_id);
+            if ($account_status == Ecjia\App\User\Users::WAITDELETE) {
+                return new ecjia_error('account_status_error', __('当前账号已申请注销，不可执行此操作！', 'user'));
+            }
+        }
+
+
+        $amount = floatval($amount);
+        if ($amount <= 0) {
+            $result = new ecjia_error('amount_gt_zero', __('请在“金额”栏输入大于0的数字！', 'user'));
+            return $result;
+        }
+        if (!$user_id) {
+            return new ecjia_error(100, __('Invalid session', 'user'));
+        }
+
+        RC_Loader::load_app_func('admin_order', 'orders');
+
+        if ($account_id > 0) {
+            $res      = RC_DB::table('user_account')->where('id', $account_id)->first();
+            $order_sn = $res['order_sn'];
+        } else {
+            $order_sn = ecjia_order_deposit_sn();
+        }
+
+        /* 变量初始化 */
+        $surplus = array(
+            'user_id'      => $user_id,
+            'order_sn'     => $order_sn,
+            'account_id'   => intval($account_id),
+            'process_type' => 0,
+            'payment_id'   => intval($payment_id),
+            'user_note'    => $user_note,
+            'amount'       => $amount,
+            'from_type'    => 'user',
+            'from_value'   => $user_id
+        );
+
+        if ($surplus['payment_id'] <= 0) {
+            $result = new ecjia_error('select_payment_pls', __('请选择支付方式！', 'user'));
+            return $result;
+        }
+
+        //获取支付方式名称
+        $payment_info = with(new Ecjia\App\Payment\PaymentPlugin)->getPluginDataById($surplus['payment_id']);
+        if (empty($payment_info)) {
+            $result = new ecjia_error('select_payment_pls_again', __('支付方式无效，请重新选择支付方式！', 'user'));
+        }
+        $surplus['payment']      = $payment_info['pay_code'];
+        $surplus['payment_name'] = $payment_info['pay_name'];
+
+        if ($surplus['account_id'] > 0) {
+            //更新会员账目明细
+            $surplus['account_id'] = $this->em_update_user_account($surplus);
+        } else {
+            RC_Loader::load_app_func('admin_user', 'user');
+            //插入会员账目明细
+            $surplus['account_id'] = insert_user_account($surplus, $amount);
+        }
+
+        $order['payment']['payment_id'] = $surplus['payment_id'];
+        $order['payment']['account_id'] = $surplus['account_id'];
+
+
+        return array('payment' => $order['payment'], 'order_sn' => $surplus['order_sn']);
+    }
+
+    /**
+     * 更新会员账目明细
+     *
+     * @access  public
+     * @param   array $surplus 会员余额信息
+     *
+     * @return  int
+     */
+    private function em_update_user_account($surplus)
+    {
+        $data = array(
+            'amount'    => $surplus['amount'],
+            'user_note' => empty($surplus['user_note']) ? '' : $surplus['user_note'],
+            'payment'   => empty($surplus['payment']) ? '' : $surplus['payment'],
+        );
+        RC_DB::table('user_account')->where('id', $surplus['account_id'])->update($data);
+        return $surplus['account_id'];
+    }
+}
+
+
+
+// end

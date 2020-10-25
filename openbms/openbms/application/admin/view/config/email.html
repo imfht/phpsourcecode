@@ -1,0 +1,103 @@
+{extend name="base" /}
+{block name="body"}
+<div class="layui-card">
+    <div class="layui-card-header">邮件设置</div>
+    <div class="layui-card-body">
+        <form action="{:url('admin/config/email')}" class="layui-form" method="post">
+            <div class="layui-form-item">
+                <label class="layui-form-label">smtp服务器</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="host" value="{$data.host|default=''}" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">设置 SMTP 服务器的地址，如 smtp.qq.com</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">smtp协议</label>
+                <div class="layui-input-inline">
+                    <select name="secure">
+                        <option value="tls" {if isset($data.secure) and $data.secure eq 'tls'}selected{/if}>非SSL协议</option>
+                        <option value="ssl" {if isset($data.secure) and $data.secure eq 'ssl'}selected{/if}>SSL协议</option>
+                    </select>
+                </div>
+                <div class="layui-form-mid layui-word-aux">设置 SMTP 协议</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">smtp端口</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="port" value="{$data.port|default=''}" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">设置 SMTP 服务器的端口，非SSL协议默认为 25，SSL协议默认为465</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">发送邮箱</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="username" value="{$data.username|default=''}" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">使用 SMTP 协议发送的邮件地址，如 openbms@163.com</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">验证密码</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="password" value="{$data.password|default=''}" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">使用 SMTP 协议发送的验证密码</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">发送人</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="fromname" value="{$data.fromname|default=''}" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">使用 SMTP 协议发送的发送人名称</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">测试邮箱</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="email" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-input-inline">
+                    <button class="layui-btn layui-btn-primary" lay-filter="email" lay-submit=""><i class="fa fa-send-o"></i> 发送</button>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-filter="*" lay-submit="">保存</button>
+                    <button class="layui-btn layui-btn-primary" type="reset">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{/block}
+{block name="js"}
+<script>
+    form.on('submit(email)', function (data) {
+        var index = layer.msg('发送中，请稍候', {
+            icon: 16,
+            time: false,
+            shade: 0.3
+        });
+        $(data.elem).attr('disabled', true);
+        $.ajax({
+            url: "{:url('admin/config/sendEmail')}",
+            type: data.form.method,
+            dataType: 'json',
+            data: $(data.form).serialize(),
+            success: function (result) {
+                if (result.code === 1 && result.url != '') {
+                    setTimeout(function () {
+                        layer.closeAll();
+                    }, 1000);
+                }
+                $(data.elem).attr('disabled', false);
+                layer.close(index);
+                layer.msg(result.msg);
+            },
+            error: function (xhr, state, errorThrown) {
+                layer.close(index);
+                layer.msg(state + '：' + errorThrown);
+            }
+        });
+        return false;
+    });
+</script>
+{/block}

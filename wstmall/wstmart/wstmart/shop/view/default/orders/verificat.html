@@ -1,0 +1,116 @@
+{extend name="default/base" /}
+{block name="title"}待核销订单 - 卖家中心{__block__}{/block}
+{block name="css"}
+<style>
+
+.v-btn{background: #03a9f4;border: 0;line-height: 45px;padding: 6px 12px;width: 200px;font-size: 18px;color: #fff;border-radius: 4px;}
+.v-btn:hover{opacity: 0.9;}
+.binfo{line-height: 35px;font-size: 14px;margin-top: 30px;position: relative;}
+.binfo .lcol{float: left;width:50%;}
+.binfo .rcol{float: right;width:50%;}
+.btn-box{text-align: center;margin-top: 30px;}
+.has-verificat{border: 2px solid #EA4341;width: 80px;height: 35px;line-height: 35px;position: absolute;right: 50px;font-size: 14px;font-weight: bold;color: #EA4341;text-align: center;}
+</style>
+{/block}
+{block name="main"}
+
+  <div class='wst-shop-content'>
+      <div class='wst-toolbar' style="box-shadow: rgb(245, 245, 245) 5px 5px 6px 3px;">
+          <input type='text' class="s-query" value="" id='verificationCode' placeholder='请输入订单核验码' maxlength="30" onkeyup="javascript:WST.isChinese(this,1)" style="width: 500px;" />
+          <a class="btn btn-primary" onclick="getVerificatOrder()"><i class="fa fa-search"></i>查询</a>
+      </div>
+      
+      <div id='loading' style="display: none;">
+         <img src="__SHOP__/img/ajax-loader.gif">正在加载数据...
+      </div>
+      <div id="orderInfo"></div>
+    <script id="tblist" type="text/html">
+      
+
+      <div class='order-box' style="padding:10px;margin: 0;">
+        <div class="binfo">
+          <div class="verificat has-verificat" style="{{(d.orderStatus>0)?'':'display: none'}}">已核验</div>
+          <div class="bitem">
+            <div class="lcol"><label>订单编号：</label>{{d.orderNo}}</div>
+            <div class="rcol"><label>订单状态：</label>{{d.orderStatusName}}</div>
+            
+            <div class='f-clear'></div>
+          </div>
+          <div class="bitem">
+            <div class="lcol"><label>下单时间：</label>{{d.createTime}}</div>
+            <div class="rcol"><label>支付状态：</label><span style="color:{{d.isPay?'':'red'}}">{{d.isPay?'已支付':'货到付款'}}</span></div>
+            <div class='f-clear'></div>
+          </div>
+          <div class="bitem">
+            <div class="lcol"><label>下单用户：</label>{{d.userName}}</div>
+            {{# if(d.isInvoice==1) { }}
+            <div class="rcol"><label>发票状态：</label><span style="color:{{d.isMakeInvoice?'':'red'}}">{{d.isMakeInvoice?'已开':'未开'}}</span></div>
+            {{# } }}
+            <div class='f-clear'></div>
+          </div>
+          <div class="bitem">
+            <div class="lcol"><label>手机号码：</label>{{d.userPhone}}</div>
+            <div class="rcol verificat" style="{{(d.orderStatus>1)?'':'display: none'}}"><label>核验时间：</label><span id="verificationTime">{{d.verificationTime}}</span></div>
+            
+            <div class='f-clear'></div>
+          </div>
+        </div>
+        <div class='box-head'>商品清单</div>
+        <div class='goods-head' style="margin: 0">
+          <div class='goods'>商品</div>
+          <div class='number'>商品编号</div>
+          <div class='price'>单价</div>
+          <div class='num'>数量</div>
+          <div class='t-price'>总价</div>
+        </div>
+        <div class='goods-item'>
+          <div class='goods-list'>
+            {{# for(var i = 0; i < d.goods.length; i++){ }}
+             <div class='item j-g'>
+             <div class='goods'>
+                <div class='img'>
+                  <img src='__ROOT__/{{d.goods[i].goodsImg}}' width='80' height='80' title='{{d.goods[i].goodsName}}'/>
+                </div>
+                <div class='name'>
+                  <div style="font-weight:bold;font-size:13px;">
+                  {{#if (d.goods[i].goodsCode=='gift'){}}【赠品】{{# } }}{{d.goods[i].goodsName}}
+                  </div>
+                  <div class='spec'>{{d.goods[i].goodsSpecNames}}</div>
+                </div>
+             </div>
+             <div class="number">{{d.goods[i].goodsSn}}</div>
+             <div class='price'>¥{{d.goods[i].goodsPrice}}</div>
+             <div class='num'>{{d.goods[i].goodsNum}}</div>
+             <div class='t-price'>¥{{d.goods[i].goodsPrice * d.goods[i].goodsNum}}</div>
+             <div class='f-clear'></div>
+             </div>
+             {{# } }}
+          </div>
+        </div>
+        <div class='goods-footer'>
+          <div class='goods-summary' style='text-align:right'>
+             <div class='summary'>商品总金额：¥<span>{{d.goodsMoney}}</span></div>
+             <div class='summary line'>应付总金额：¥<span>{{d.totalMoney}}</span></div>
+             <div class='summary'>积分抵扣金额：¥-<span>{{d.scoreMoney}}</span></div>
+             {{# if(d.useScore>0){ }}
+             <div class='summary '>使用积分数：<span>{{d.useScore}}个</span></div>
+             {{# } }}
+             {{ d['hook']?d['hook']:"" }}
+             <div class='summary'>实付总金额：¥<span>{{d.realTotalMoney}}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-box" style="{{(d.orderStatus==0)?'':'display: none'}}"><button class='btn btn-primary' onclick="orderVerificat()"><i class="fa fa-check"></i>&nbsp;确认核消并发货</button></div>
+    </script>
+  </div>
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__SHOP__/orders/orders.js?v={$v}'></script>
+<script>
+$('#verificationCode').keydown(function(e){
+    if(e.keyCode == 13){
+        getVerificatOrder();
+    }
+});
+</script>
+{/block}

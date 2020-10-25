@@ -1,0 +1,109 @@
+<div class="dux-tip dux-box uk-clearfix">
+    <div class="tip-header">
+        <h1><i class="fa fa-check success"></i>订单已提交，请您进行支付！</h1>
+        <p><span class="uk-text-danger">{$totalPrice}</span>元
+            <!--loop{$currencyAppend as $vo}-->
+            + <span class="uk-text-danger">{$vo.money}</span> {$vo.name}
+
+            <!--{/if}-->
+        </p>
+    </div>
+</div>
+<form action="{url('pay')}" data-dux="form-bind" method="post" data-callback="submit"  data-advanced="false">
+    <!--if{$currencyList}-->
+<div class="dux-box dux-pay-body">
+    <div class="box-header">
+        抵扣方式
+    </div>
+
+    <ul class="dux-type-list">
+        <!--loop{$currencyList as $key => $vo}-->
+        <li>
+            <label class="dux-flex ">
+                <div class="uk-float-left flex-1">
+                    {$vo.name}
+                    <!--if{$currencyExchange[$key]}-->
+                    <p><span class="uk-text-danger">{$currencyExchange[$key]['rate_money']} {$currencyExchange[$key]['name']} 抵扣 1元</span></p>
+                    <!--{/if}-->
+                    <p>
+                        <!--if{$currencyExchange[$key]['min_limit']}-->
+                        最少使用 {$currencyExchange[$key]['min_limit']}{$currencyExchange[$key]['unit']} {$currencyExchange[$key]['name']}
+                        <!--{/if}-->
+                        <!--if{$currencyExchange[$key]['max_limit']}-->
+                        最多使用 {$currencyExchange[$key]['max_limit']}{$currencyExchange[$key]['unit']} {$currencyExchange[$key]['name']}
+                        <!--{/if}-->
+                    </p>
+                    <p>余额 <span class="uk-text-danger">{$vo.amount}</span> {$vo.unit}</p>
+                </div>
+                <div>
+                    <input class="uk-checkbox" type="checkbox"  name="currency[]" value="{$key}" checked>
+                </div>
+            </label>
+        </li>
+        <!--{/loop}-->
+    </ul>
+</div>
+
+    <!--{/if}-->
+
+<div class="dux-box">
+    <div class="box-header">
+        请选择支付方式
+    </div>
+    <ul class="dux-type-list">
+        <?php $i = 0; ?>
+        <!--loop{$payList as $type => $vo}-->
+        <?php $i++; ?>
+        <li>
+            <label class="uk-clearfix">
+                <div class="uk-float-left">{$vo.name}</div>
+                <div class="uk-float-right">
+                    <!--if{$i == 1}-->
+                    <input class="uk-radio" type="radio" name="type" value="{$type}" data-password="{$vo.password}" checked>
+                    <!--{else}-->
+                    <input class="uk-radio" type="radio" name="type" value="{$type}" data-password="{$vo.password}">
+                    <!--{/if}-->
+                </div>
+            </label>
+
+        </li>
+        <!--{/loop}-->
+    </ul>
+</div>
+
+
+    <div class="dux-box pay-password" style="display: none">
+        <div class="box-header">
+            请输入支付密码
+        </div>
+        <div class="box-content">
+            <input type="password" name="password" class="uk-form-field" maxlength="6" minlength="6" placeholder="请输入6位数字支付密码">
+        </div>
+    </div>
+
+<div class="uk-padding-small">
+    <input type="hidden" name="order_no" value="{$orderNo}">
+    <button class="uk-button uk-button-primary uk-button-block" type="submit">确认订单，立即支付</button>
+</div>
+
+</form>
+
+
+<script>
+    Do('base', function () {
+        window.submit = function (msg, url) {
+            window.location.href = url;
+        };
+        var initPassword = function() {
+            if($('input[name="type"]:checked').data('password') == 1) {
+                $('.pay-password').show();
+            }else {
+                $('.pay-password').hide();
+            }
+        };
+        $('input[name="type"]').change(function () {
+            initPassword();
+        });
+        initPassword();
+    });
+</script>

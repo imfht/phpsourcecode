@@ -1,0 +1,111 @@
+{namespace n=GeorgRinger\News\ViewHelpers}
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+    <f:layout name="Default" />
+
+    This Template is responsible for creating a table of domain objects.
+
+    If you modify this template, do not forget to change the overwrite settings
+    in /Configuration/ExtensionBuilder/settings.yaml:
+    Resources:
+    Private:
+    Templates:
+    List.html: keep
+
+    Otherwise your changes will be overwritten the next time you save the extension in the extension builder
+
+    <f:section name="content">
+<f:flashMessages />
+<style type="text/css">
+.panel-footer{background-color: #fff;}
+.pagination{margin: 0;}
+</style>
+    <div class="hide"><f:flashMessages  /></div>
+    <f:form action="search" name="pay" class="search-form clearfix" method="GET">
+        <div class="row">
+            <div class="form-group col-md-5">
+                <label for="pay-name" class="control-label">捐款单位</label>
+                <f:form.textfield name="pay-name" class="form-control" id="pay-name" value="{arguments.pay-name}" placeholder="单位名称" />
+            </div>
+            <div class="form-group col-md-5">
+                <label for="pay-time-start" class="control-label">捐款时间</label>
+                <div class="row clearfix">
+                    <div class="pay-time-start col-sm-6">
+                        <div class='input-group date form_date'>
+                            <f:form.textfield name="pay-time-start" class="form-control" id="pay-time-start" value="{arguments.pay-time-start}" placeholder="开始时间" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="pay-time-end col-sm-6">
+                        <div class='input-group date form_date'>
+					      	<f:form.textfield name="pay-time-end" class="form-control" id="pay-time-end" value="{arguments.pay-time-end}" placeholder="结束时间" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+						</div>
+                    </div>
+                </div>
+                <script type="text/javascript">
+				    $(function () {
+				    	$('.form_date').datetimepicker({
+				            language:  'zh-CN',
+				            format: 'yyyy-mm-dd',
+				            weekStart: 1,
+				    		autoclose: 1,
+				    		startView: 2,
+				    		minView: 3,
+				    		forceParse: 0
+				        });
+				    });
+				</script> 
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-md-5">
+                <label for="pay-money" class="control-label">捐款金额</label>
+                <f:form.hidden name="pay-money" id="pay-money" value="{arguments.pay-money}" />
+                <input type="number" class="form-control" id="money" min="1" max="1000000" placeholder="检索大于这个金额的捐款"  value="{arguments.pay-money}" onchange="getMoney()" />
+            </div>
+            <div class="form-group col-md-5">
+                <label for="pay-payment" class="control-label">捐款渠道</label>
+                <f:form.textfield name="pay-payment" class="form-control" id="pay-payment" value="{arguments.pay-payment}" placeholder="捐款渠道" />
+            </div>
+            <div class="form-group col-md-2">
+                <label class="control-label">&nbsp;</label>
+                <f:form.submit value="搜索" class="btn c-btn-square c-theme-btn c-btn-uppercase c-btn-bold form-control" />
+            </div>
+        </div>
+    </f:form>
+
+    <n:widget.paginate objects="{pays}" as="paysItems" configuration="{settings.paginate}">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>捐款单位</th>
+                        <th>捐款金额</th>
+                        <th>捐赠时间</th>
+                        <th>捐款渠道</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <f:for each="{paysItems}" as="pay"  iteration="itemIteration1">
+                    <tr>
+                        <td>{f:cObject(typoscriptObjectPath:'lib.calc', data:'{itemIteration1.cycle}+({page}-1)*{settings.paginate.itemsPerPage}')}</td>
+                        <td>{pay.name}</td>
+                        <td><f:format.currency currencySign="￥" decimalSeparator="." thousandsSeparator="," prependCurrency="true">{pay.money}</f:format.currency></td>
+                        <td>{pay.crdate -> f:format.date(format:'Y-m-d')}</td>
+                        <td>{pay.payment}</td>
+                    </tr>
+                </f:for>
+                <f:if condition="{pays}">
+                    <f:else><tr><td colspan="5" class="text-center text-danger">查询无数据</td></tr></f:else>
+                </f:if>
+                </tbody>
+            </table>
+        </div>
+    </n:widget.paginate>
+</f:section>
+</html>

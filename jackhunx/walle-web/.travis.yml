@@ -1,0 +1,32 @@
+language: php
+php:
+  - 5.4
+  - 5.5
+  - 5.6
+
+mysql:
+  database: travis_ci_drupal_module_example_test
+  username: root
+  encoding: utf8
+
+install:
+  - travis_retry composer self-update && composer update nothing && composer --version
+  - travis_retry composer global require "fxp/composer-asset-plugin:~1.0.3"
+  - composer install --prefer-source --no-interaction --dev
+  - wget http://codeception.com/codecept.phar -O vendor/bin/codecept && chmod +x vendor/bin/codecept
+  - echo 'xdebug.max_nesting_level=600' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+
+
+before_script:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS walle DEFAULT CHARSET utf8 COLLATE utf8_general_ci;'
+  - ./yii migrate/up  --interactive=0
+  - cd tests && ../vendor/bin/codecept build
+
+script:
+  - ../vendor/bin/codecept run
+matrix:
+  fast_finish: true
+
+notifications:
+    on_success: never
+    on_failure: always

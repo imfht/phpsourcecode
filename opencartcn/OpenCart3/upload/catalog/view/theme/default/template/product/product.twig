@@ -1,0 +1,227 @@
+{{ header }}
+<div id="product-product" class="container">
+  {{ include(helper.template('_partial/breadcrumb')) }}
+  <div class="row">{{ column_left }}
+    {% if column_left and column_right %}
+    {% set class = 'col-sm-6' %}
+    {% elseif column_left or column_right %}
+    {% set class = 'col-sm-9' %}
+    {% else %}
+    {% set class = 'col-sm-12' %}
+    {% endif %}
+    <div id="content" class="{{ class }}">{{ content_top }}
+      <div class="row">
+        <div class="col-sm-5">
+          {% if images %}
+          {% set first = images|first %}
+          <div class="elevate-zoom-preview">
+            <a href="{{ first.popup }}">
+              <img id="elevate-zoom" src="{{ first.preview }}" data-zoom-image="{{ first.popup }}" class="img-responsive">
+            </a>
+          </div>
+          <ul class="thumbnails list-inline" id="product-thumbnail-gallery">
+            {% for image in images %}
+            <li class="image-additional"><a class="thumbnail elevatezoom-gallery" rel="group" data-image="{{ image.preview }}" data-zoom-image="{{ image.popup }}" href="{{ image.popup }}" title="{{ heading_title }}"> <img src="{{ image.thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></a></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        <div class="col-sm-7 product-description">
+          <h1>{{ heading_title }}</h1>
+          {% if review_status %}
+          <div class="stars-box">
+            <div class="rating">
+              {% for i in 1..5 %}
+              <span class="fa fa-stack"><i class="fa fa-star fa-stack-1x {{ rating < i ? 'off' }}"></i></span>
+              {% endfor %}
+            </div>
+            <div class="more-review">
+              <a href="javascript:void(0);">{{ reviews }}</a> / <a href="javascript:void(0);">{{ text_write }}</a>
+            </div>
+          </div>
+          {% endif %}
+          <div class="product-price-wrapper">
+            {% if not special %}
+              <h2>{{ price }}</h2>
+            {% else %}
+              <span class="price-new">{{ special }}</span>
+              <span class="price-old" style="text-decoration: line-through;">{{ price }}</span>
+            {% endif %}
+            {% if points %}
+              <span class="points">{{ text_points }} {{ points }}</span>
+            {% endif %}
+          </div>
+          <ul class="list-unstyled product-attribute">
+            {% if manufacturer %}
+            <li><span class="title">{{ text_manufacturer }}</span> <a href="{{ manufacturers }}"><span>{{ manufacturer }}</span></a></li>
+            {% endif %}
+            <li><span class="title">{{ text_model }}</span> <span>{{ model }}</span></li>
+            {% if reward %}
+            <li><span class="title">{{ text_reward }}</span> <span>{{ reward }}</span></li>
+            {% endif %}
+            <li><span class="title">{{ text_stock }}</span> <span>{{ stock }}</span></li>
+          </ul>
+          {% if price %}
+          <hr>
+          <ul class="tax-discounts-box">
+            {% if tax %}
+            <li>{{ text_tax }} {{ tax }}</li>
+            {% endif %}
+
+            {% if discounts %}
+            {% for discount in discounts %}
+            <li>{{ discount.quantity }}{{ text_discount }}{{ discount.price }}</li>
+            {% endfor %}
+            {% endif %}
+          </ul>
+          {% endif %}
+          <div id="product">
+            {% include(helper.template('_partial/product/options')) %}
+            <div class="form-group product-cart-action">
+              <div class="quantity-input-wrapper">
+                <a href="#" class="quantity-down">-</a>
+                <input type="text" name="quantity" value="{{ minimum }}" size="2" id="input-quantity" class="form-control" />
+                <a href="#" class="quantity-up">+</a>
+                <input type="hidden" name="product_id" value="{{ product_id }}" />
+              </div>
+
+              <button type="button" id="button-cart" data-loading-text="{{ text_loading }}" class="btn btn-primary">{{ button_cart }}</button>
+              <div class="wishlist-share">
+                <button type="button" data-toggle="tooltip" class="btn btn-default" title="{{ button_wishlist }}" onclick="wishlist.add('{{ product_id }}');"><i class="fa fa-heart"></i></button>
+                <button type="button" data-toggle="tooltip" class="btn btn-default" title="{{ button_compare }}" onclick="compare.add('{{ product_id }}');"><i class="fa fa-exchange"></i></button>
+              </div>
+            </div>
+
+            {% if minimum > 1 %}
+            <div class="alert alert-info"><i class="fa fa-info-circle"></i> {{ text_minimum }}</div>
+            {% endif %}</div>
+            {{ include(helper.template('_partial/share'), {share_url: share}) }}
+        </div>
+      </div>
+      <ul class="nav nav-tabs">
+        <li class="active"><a href="#tab-description" data-toggle="tab">{{ tab_description }}</a></li>
+        {% if attribute_groups %}
+        <li><a href="#tab-specification" data-toggle="tab">{{ tab_attribute }}</a></li>
+        {% endif %}
+        {% if review_status %}
+        <li><a href="#tab-review" data-toggle="tab">{{ tab_review }}</a></li>
+        {% endif %}
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane active" id="tab-description">{{ description }}</div>
+        {% if attribute_groups %}
+        <div class="tab-pane" id="tab-specification">
+          <table class="table table-bordered">
+            {% for attribute_group in attribute_groups %}
+            <thead>
+              <tr><td colspan="2"><strong>{{ attribute_group.name }}</strong></td></tr>
+            </thead>
+            <tbody>
+            {% for attribute in attribute_group.attribute %}
+            <tr><td>{{ attribute.name }}</td><td>{{ attribute.text }}</td></tr>
+            {% endfor %}
+              </tbody>
+            {% endfor %}
+          </table>
+        </div>
+        {% endif %}
+        {% if review_status %}
+        <div class="tab-pane" id="tab-review">
+          <form class="form-horizontal" id="form-review">
+            <div id="review"></div>
+            {{ include(helper.template('_partial/product/review_form')) }}
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% if products %}
+      <h3 class="widget-title"><span>{{ text_related }}</span></h3>
+      <div class="row"> {% set i = 0 %}
+        {% for product in products %}
+        {% if column_left and column_right %}
+        {% set class = 'col-xs-8 col-sm-6' %}
+        {% elseif column_left or column_right %}
+        {% set class = 'col-xs-6 col-md-4' %}
+        {% else %}
+        {% set class = 'col-xs-6 col-sm-3' %}
+        {% endif %}
+        <div class="{{ class }}">
+          {{ include(helper.template('_partial/product/product_single')) }}
+        </div>
+        {% if column_left and column_right and (i + 1) % 2 == 0 %}
+        <div class="clearfix visible-md visible-sm"></div>
+        {% elseif column_left or column_right and (i + 1) % 3 == 0 %}
+        <div class="clearfix visible-md"></div>
+        {% elseif (i + 1) % 4 == 0 %}
+        <div class="clearfix visible-md"></div>
+        {% endif %}
+        {% set i = i + 1 %}
+        {% endfor %} </div>
+        {% endif %}
+        {% if tags %}
+        <p>{{ text_tags }}
+        {% for i in 0..tags|length %}
+        {% if i < (tags|length - 1) %} <a href="{{ tags[i].href }}">{{ tags[i].tag }}</a>,
+        {% else %} <a href="{{ tags[i].href }}">{{ tags[i].tag }}</a> {% endif %}
+        {% endfor %} </p>
+        {% endif %}
+      {{ content_bottom }}</div>
+    {{ column_right }}</div>
+</div>
+<script type="text/javascript"><!--
+  jQuery(document).ready(function($) {
+    $('.quantity-input-wrapper a').click(function(e) {
+      e.preventDefault();
+      if( $(this).hasClass('quantity-up')) {
+        $('#input-quantity').val( parseInt($('#input-quantity').val()) + 1 );
+      } else {
+        if( parseInt($('#input-quantity').val())  > {{ minimum }} ) {
+          $('#input-quantity').val( parseInt($('#input-quantity').val()) - 1 );
+        }
+      }
+    });
+
+    $('#button-cart').productInfoToCart({
+      data: [
+        '#product input[type=\'text\']',
+        '#product input[type=\'hidden\']',
+        '#product input[type=\'radio\']:checked',
+        '#product input[type=\'checkbox\']:checked',
+        '#product select, #product textarea'
+      ],
+    });
+
+    if ($(window).width() >= 768) {
+      $('#elevate-zoom').elevateZoom({
+        lensShape: 'basic',
+        lensSize: 150,
+        zoomWindowOffetx: 10,
+        zoomWindowWidth: 450,
+        zoomWindowHeight: 450,
+        borderSize: 1,
+        borderColour: '#eaeaea',
+        gallery: 'product-thumbnail-gallery',
+        galleryActiveClass: 'active',
+        cursor:'pointer',
+      });
+
+      $('#elevate-zoom').bind('click', function(e) {
+        var ez = $('#elevate-zoom').data('elevateZoom');
+        $.fancybox(ez.getGalleryList());
+        return false;
+      });
+    } else {
+      $('.elevatezoom-gallery').fancybox({
+        openEffect : 'none',
+        helpers : {
+          title : null
+        }
+      });
+      $('.elevate-zoom-preview a').bind('click', function(e) {
+        $('.elevatezoom-gallery').eq(0).trigger('click');
+        return false;
+      });
+    }
+  });
+//--></script>
+{{ footer }}

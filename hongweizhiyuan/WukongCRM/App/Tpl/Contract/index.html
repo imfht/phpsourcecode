@@ -1,0 +1,228 @@
+<include file="Public:header" />
+<div class="container">
+	<!-- Docs nav ================================================== -->
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li class="active"><a  href="{:U('contract/index')}"><img src="__PUBLIC__/img/hetong.png"/>&nbsp; {:L('CONTRACT')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=30" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />
+	<p class="view"><b>{:L('VIEW_NAV')}</b>
+	<img src=" __PUBLIC__/img/by_owner.png"/> <a href="{:U('contract/index')}" <if condition="$Think.get.by eq null">class="active"</if>>{:L('ALL')}</a> |
+	<a href="{:U('contract/index','by=me')}" <if condition="$Think.get.by eq 'me'">class="active"</if>>{:L('MY_RESPONSIBLE')}</a> | 
+	<a href="{:U('contract/index','by=sub')}" <if condition="$Think.get.by eq 'sub'">class="active"</if>>{:L('SUBORDINATE_RESPONSIBLE')}</a> | 
+	<a href="{:U('contract/index','by=create')}" <if condition="$Think.get.by eq 'create'">class="active"</if>>{:L('I_CREATED')}</a> |
+	<a href="{:U('contract/index','by=subcreate')}" <if condition="$Think.get.by eq 'subcreate'">class="active"</if>>{:L('SUBORDINATE_CREATE')}</a> &nbsp; &nbsp; &nbsp; &nbsp;
+	<img src="__PUBLIC__/img/by_time.png"/> 
+	<a href="{:U('contract/index','by=today')}" <if condition="$Think.get.by eq 'today'">class="active"</if>>{:L('SIGN_UP_TODAY')}</a> | 
+	<a href="{:U('contract/index','by=week')}" <if condition="$Think.get.by eq 'week'">class="active"</if>>{:L('THIS_WEEK_SIGNED_A_CONTRACT')}</a> | 
+	<a href="{:U('contract/index','by=month')}" <if condition="$Think.get.by eq 'month'">class="active"</if>>{:L('THIS_MONTH_SIGNED_A_CONTRACT')}</a>   &nbsp;
+	<a href="{:U('contract/index','by=add')}" <if condition="$Think.get.by eq 'add'">class="active"</if>>{:L('RECENTLY_CREATED')}</a> | 
+	<a href="{:U('contract/index','by=update')}" <if condition="$Think.get.by eq 'update'">class="active"</if>>{:L('RECENT_UPDATES')}</a>  &nbsp;  &nbsp;   &nbsp;  &nbsp; 
+	
+	<a href="{:U('contract/index','by=deleted')}" <if condition="$Think.get.by eq 'deleted'">class="active"</if>><img src="__PUBLIC__/img/task_garbage.png"/> {:L('RECYCLE_BIN')}</a> &nbsp; &nbsp;
+	</p>
+	<div class="row">
+		<div class="span12">
+			<ul class="nav pull-left">
+				<li class="pull-left"><a id="delete"  class="btn" style="margin-right: 8px;"><i class="icon-remove"></i>{:L('DELETE')}</a></li>
+				<li class="pull-left">
+				<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action="" method="get">
+					<ul class="nav pull-left">
+						<li class="pull-left">
+							<select id="field" style="width:auto" onchange="changeCondition()" name="field">
+								<option class="all" value="all">{:L('ANY_FIELD')}</option>
+								<option class="word" value="number">{:L('CONTRACT_NO')}</option>
+								<option class="role" value="owner_role_id">{:L('OWNER_ROLE')}</option>
+								<option class="customer" value="customer_id">{:L('CUSTOMER')}</option>
+								<option class="date" value="create_time">{:L('CREATION_DATE')}</option>
+								<option class="date" value="update_time">{:L('MODIFICATION_DATE')}</option>
+								<option class="date" value="due_time">{:L('CONTRACT_TIME')}</option>
+								<option class="number" value="price">{:L('QUOTATION')}</option>
+								<option class="word" value="description">{:L('REMARK')}</option>
+							</select>&nbsp;&nbsp;
+						</li>
+						<li id="conditionContent" class="pull-left">
+							<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+								<option value="contains">{:L('CONTAINS')}</option>
+								<option value="is">{:L('IS')}</option>								
+								<option value="start_with">{:L('START_WITH')}</option>
+								<option value="end_with">{:L('END_WITH')}</option>
+								<option value="is_empty">{:L('IS_EMPTY')}</option>
+							</select>&nbsp;&nbsp;
+						</li>
+						<li id="searchContent" class="pull-left">
+							<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+						</li>
+						<li class="pull-left">
+							<input type="hidden" name="m" value="contract"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" class="btn"> <img src="__PUBLIC__/img/search.png"/>  {:L('SEARCH')}</button>
+						</li>
+					</ul>
+				</form>
+				</li>
+			</ul>
+			<div class="pull-right">
+				<a class="btn btn-primary" href="{:U('contract/add')}"><i class="icon-plus"></i>&nbsp;{:L('ADD_THE_CONTRACT')}</a>
+			</div>
+		</div>
+		<div class="span12">
+			<form id="form1"  method="post">
+			<table class="table table-hover table-striped table_thead_fixed">
+				<notempty name="list">
+					<thead>
+						<tr>
+							<th><input class="check_all" id="check_all" type="checkbox" /> &nbsp;</th>
+							<th>{:L('CONTRACT_NO')}</th>
+							<th>{:L('CUSTOMER')}</th>
+							<if condition="C('ismobile') neq 1">
+							<th>{:L('CONTACTS')}</th>
+							<th>{:L('OWNER_ROLE')}</th>
+							<th>
+								<if condition="$_GET['asc_order'] == 'due_time'">
+									<a href="{:U('contract/index','desc_order=due_time&'.$parameter)}">
+										{:L('SIGNING_DATE')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<elseif condition="$_GET['desc_order'] == 'due_time'"/>
+									<a href="{:U('contract/index','asc_order=due_time&'.$parameter)}">
+										{:L('SIGNING_DATE')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<else/>
+									<a href="{:U('contract/index','desc_order=due_time&'.$parameter)}">{:L('SIGNING_DATE')}</a>
+								</if>
+							</th>
+							<th>
+								<if condition="$_GET['asc_order'] == 'price'">
+									<a href="{:U('contract/index','desc_order=price&'.$parameter)}">
+										{:L('QUOTATION')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<elseif condition="$_GET['desc_order'] == 'price'"/>
+									<a href="{:U('contract/index','asc_order=price&'.$parameter)}">
+										{:L('QUOTATION')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<else/>
+									<a href="{:U('contract/index','desc_order=price&'.$parameter)}">{:L('QUOTATION')}</a>
+								</if>
+							</th>
+							<th>{:L('STATUS')}</th></if>
+							<if condition="C('ismobile') neq 1 and $Think.get.by eq 'deleted'">
+								<th>{:L('DELETE_ROLE')}</th>
+								<th>{:L('DELETE_TIME')}</th>
+							<elseif condition="C('ismobile') neq 1" />
+								<th>
+									<if condition="$_GET['asc_order'] == 'end_date'">
+										<a href="{:U('contract/index','desc_order=end_date&'.$parameter)}">
+											{:L('CONTRACT_OUT_OF_DATE')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+										</a>
+									<elseif condition="$_GET['desc_order'] == 'end_date'"/>
+										<a href="{:U('contract/index','asc_order=end_date&'.$parameter)}">
+											{:L('CONTRACT_OUT_OF_DATE')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+										</a>
+									<else/>
+										<a href="{:U('contract/index','desc_order=end_date&'.$parameter)}">{:L('CONTRACT_OUT_OF_DATE')}</a>
+									</if>
+								</th>
+							</if>
+							
+							<th>{:L('OPERATING')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+							<tr><td colspan="11">{$page}</td></tr>
+					</tfoot>
+					<tbody>
+						<volist name="list" id="vo">
+							<tr>
+								<td><input type="checkbox" class="check_list" name="contract_id[]" value="{$vo.contract_id}"/> &nbsp;
+								</td>
+								<td><a href="{:U('contract/view','id='.$vo['contract_id'])}">{$vo.number}</a></td>
+								<td><a href="{:U('customer/view','id='.$vo['customer_id'])}">{$vo.customer_name}</a></td>
+								<if condition="C('ismobile') neq 1">
+								<td><a href="{:U('contacts/view','id='.$vo['contacts_id'])}">{$vo.contacts_name}</a></td>
+								<td><notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty></td>
+								<td><notempty name="vo.due_time">{$vo.due_time|date="Y-m-d H:i",###}</notempty></td>
+								<td>{$vo.price}{:L('yuan')}</td>
+								<td>{$vo.status}</td>
+								</if>
+								<if condition="C('ismobile') neq 1 and $Think.get.by eq 'deleted'">
+									<td><notempty name="vo.deletor.user_name"><a class="role_info" rel="{$vo.deletor.role_id}" href="javascript:void(0)">{$vo.deletor.user_name}</a></notempty></td>
+									<td>
+										<if condition="$vo.days lt 0"><font color="blue">{:L('DELINQUENCY_DATE')}</font>
+										<elseif condition="$vo.days elt 10 and $vo.days egt 0"/><font color="red">{$vo.days}<font>
+										<else />{$vo.days}{:L('DAY')}</if>
+									</td>
+								<elseif condition="C('ismobile') neq 1" />
+									<td>
+										<if condition="$vo.days lt 0">
+											<font color="blue">{:L('DELINQUENCY_DATE')}</font>
+										<elseif condition="$vo.days gt 10"/>
+										   {$vo.days}{:L('DAY')}
+										<elseif condition="$vo.days elt 10 and $vo.days gt 0"/>
+											<font color="red">{$vo.days}{:L('DAY')}<font>
+										<elseif condition="isset($vo['days'])"/>
+										    <font color="red">{$vo.days}{:L('DAY')}<font>
+										<else />
+											{$vo.days}
+										</if>
+									</td>
+								</if>
+
+								<td>
+									<a href="{:U('contract/view','id='.$vo['contract_id'])}" title="{:L('VIEW')}">{:L('VIEW')}</a>
+									<if condition="$Think.get.by neq 'deleted'">
+										<a href="{:U('contract/edit','id='.$vo['contract_id'])}">{:L('EDITING')}</a>
+									<else />
+										<a href="{:U('contract/revert','id='.$vo['contract_id'])}" title="{:L('RESET')}">{:L('RESET')}</a>
+									</if>
+								</td>
+							</tr> 
+						</volist>
+					</tbody>
+				<else/>
+					<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+				</notempty>
+			</table>
+			</form>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$(function(){
+	<if condition="$Think.get.field neq null">
+		$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+		$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+		$("#search").prop('value', '{$Think.get.search}');
+	</if>
+	
+	$("#check_all").click(function(){
+		$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+	});
+	$('#delete').click(function(){
+		if(confirm('{:L('ARE_YOU_SURE_YOU_WANT_TO_DELETE')}')){
+		<if condition="$Think.session.admin eq 1 and $Think.get.by eq 'deleted'">
+			$("#form1").attr('action', '{:U("contract/completedelete")}');
+			$("#form1").submit();
+		<else />
+			$("#form1").attr('action', '{:U("contract/delete")}');
+			$("#form1").submit();
+		</if>
+		}
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+});
+</script>
+<include file="Public:footer" />

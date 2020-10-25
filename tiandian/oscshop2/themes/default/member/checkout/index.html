@@ -1,0 +1,267 @@
+{extend name="./themes/default/index/public/base.html" /}
+{block name="content"}
+<link href="__RES__/home/css/checkout.css" rel="stylesheet" type="text/css">  
+<div id="checkout-box" class="allWrap">
+	<div class="clearfix">
+		<div>
+			<h1>商品结算</h1>
+		</div>
+		<div class="checkout">		   
+		    
+		    <?php if ($shipping_required) { ?>
+			    <div id="shipping-address">
+			      <div class="checkout-heading"><span>收货地址</span></div>
+			      <div class="checkout-content"></div>
+			    </div>
+			    <div id="shipping-method">
+			      <div class="checkout-heading"><span>货运方式</span></div>
+			      <div class="checkout-content"></div>
+			    </div>
+		    <?php } ?>
+		    
+		    <div id="payment-method">
+		      <div class="checkout-heading"><span>支付方式</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		    <div id="confirm">
+		      <div class="checkout-heading"><span>完成订单</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		  </div>	
+	</div>		
+</div>			
+{/block}
+{block name="javascript"}
+<script>	
+//div下滑效果
+$('.checkout-heading a').live('click', function() {
+	$('.checkout-content').slideUp('slow');
+	
+	$(this).parent().parent().find('.checkout-content').slideDown('slow');
+});
+<?php if (osc_service('member','user')->is_login()) { ?> 
+//已经登录
+
+<?php if($shipping_required){ ?>
+$(document).ready(function() {	
+		$.ajax({
+			url: '{:url("/shipping_address")}',
+			dataType: 'html',
+			success: function(html) {
+				$('#shipping-address .checkout-content').html(html);				
+				$('#shipping-address .checkout-content').slideDown('slow');				
+				$('#checkout .checkout-heading a').remove();		
+				$('#shipping-address .checkout-heading a').remove();
+				$('#shipping-method .checkout-heading a').remove();
+				$('#payment-method .checkout-heading a').remove();	
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+				alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			}
+		});		
+});
+<?php }else{ ?>
+$(document).ready(function() {	
+		$.ajax({
+			url: '{:url("/payment_method")}',
+			dataType: 'html',
+			success: function(html) {
+				$('#payment-method .checkout-content').html(html);
+						
+				$('#shipping-method .checkout-content').slideUp('slow');
+				
+				$('#payment-method .checkout-content').slideDown('slow');
+
+				$('#shipping-method .checkout-heading a').remove();
+				$('#payment-method .checkout-heading a').remove();
+				
+				$('#shipping-method .checkout-heading').append('<a>修改</a>');	
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+				alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			}
+		});		
+});
+<?php } ?>
+//收货地址
+$('#button-shipping-address').live('click', function() {
+	$.ajax({
+		url: '{:url("/validate_shipping_address")}',
+		type: 'post',
+		data: $('#shipping-address input[type=\'text\'],#shipping-address input[type=\'hidden\'], #shipping-address input[type=\'password\'], #shipping-address input[type=\'checkbox\']:checked, #shipping-address input[type=\'radio\']:checked, #shipping-address select'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-shipping-address').attr('disabled', true);
+			$('#button-shipping-address').after('<span class="wait">&nbsp;<img src="__PUBLIC__/image/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-shipping-address').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+		//	alert('444');
+			if (json['redirect']) {
+			//	alert('333');
+				location = json['redirect'];
+			} else if (json['error']) {
+			//	alert('222');
+				if (json['error']) {
+					$('#shipping-address .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error'] +'</div>');
+					
+					$('.warning').fadeIn('slow');
+				}
+				
+			
+				
+			} else {
+			//	alert('111');
+				$.ajax({
+					url: '{:url("/shipping_method")}',
+					dataType: 'html',
+					success: function(html) {
+						$('#shipping-method .checkout-content').html(html);
+						
+						$('#shipping-address .checkout-content').slideUp('slow');
+						
+						$('#shipping-method .checkout-content').slideDown('slow');
+						
+						$('#shipping-address .checkout-heading a').remove();
+						$('#shipping-method .checkout-heading a').remove();
+						$('#payment-method .checkout-heading a').remove();
+						
+						$('#shipping-address .checkout-heading').append('<a>修改</a>');							
+						
+						$.ajax({
+							url: '{:url("/shipping_address")}',
+							dataType: 'html',
+							success: function(html) {
+								$('#shipping-address .checkout-content').html(html);
+							},
+							error: function(xhr, ajaxOptions, thrownError) {
+								alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+							}
+						});
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});	
+					
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+
+//货运方式
+$('#button-shipping-method').live('click', function() {
+	$.ajax({
+		url: '{:url("/validate_shipping_method")}',
+		type: 'post',
+		data: $('#shipping-method input[type=\'radio\']:checked, #shipping-method textarea'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-shipping-method').attr('disabled', true);
+			$('#button-shipping-method').after('<span class="wait">&nbsp;<img src="__PUBLIC__/image/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-shipping-method').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+			
+			if (json['redirect']) {
+				location = json['redirect'];
+			} else if (json['error']) {
+				if (json['error']['warning']) {
+					$('#shipping-method .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '</div>');
+					
+					$('.warning').fadeIn('slow');
+				}			
+			} else {
+				$.ajax({
+					url: '{:url("/payment_method")}',
+					dataType: 'html',
+					success: function(html) {
+						$('#payment-method .checkout-content').html(html);
+						
+						$('#shipping-method .checkout-content').slideUp('slow');
+						
+						$('#payment-method .checkout-content').slideDown('slow');
+
+						$('#shipping-method .checkout-heading a').remove();
+						$('#payment-method .checkout-heading a').remove();
+						
+						$('#shipping-method .checkout-heading').append('<a>修改</a>');	
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});					
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+
+//支付方式
+$('#button-payment-method').live('click', function() {
+	$.ajax({
+		url: '{:url("/validate_payment_method")}', 
+		type: 'post',
+		data: $('#payment-method input[type=\'radio\']:checked, #payment-method input[type=\'checkbox\']:checked'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-payment-method').attr('disabled', true);
+			$('#button-payment-method').after('<span class="wait">&nbsp;<img src="__PUBLIC__/image/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-payment-method').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+			
+			if (json['redirect']) {
+				location = json['redirect'];
+			} else if (json['error']) {
+				if (json['error']['warning']) {
+					$('#payment-method .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '</div>');
+					
+					$('.warning').fadeIn('slow');
+				}			
+			} else {
+				$.ajax({
+					url: '{:url("/confirm")}',
+					dataType: 'html',
+					success: function(html) {
+						$('#confirm .checkout-content').html(html);
+						
+						$('#payment-method .checkout-content').slideUp('slow');
+						
+						$('#confirm .checkout-content').slideDown('slow');
+						
+						$('#payment-method .checkout-heading a').remove();
+						
+						$('#payment-method .checkout-heading').append('<a>修改</a>');	
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});	
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+<?php } ?>	
+</script>
+{/block}

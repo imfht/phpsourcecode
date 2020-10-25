@@ -1,0 +1,151 @@
+<extend name="Public/base"/>
+<block name="style">
+<style>
+.category {
+    background-color: #fff;
+    border-bottom-width: 0;
+    margin: 10px 0;
+}
+.category .hd {
+    height:35px;
+    font-weight: bold;
+}
+
+.category .check, .category .fold, .category .order, .category .name {
+    float: left;
+    height: 35px;
+    line-height: 35px;
+}
+
+.category .fold {
+    text-align: center;
+    width: 50px;
+}
+.category .order {
+    width: 90px;
+    text-align: center;
+}
+.category .order input {
+    width: 40px;
+}
+.category .order, .category .order input {
+    text-align: center;
+}
+
+.category input {
+    height:30px;
+   line-height:30px;
+}
+.input-mini {
+    width: 50px;
+}
+.category .btn{
+	padding: 3px 12px;
+}
+.category .cate-item dt{
+	padding:3px 0;
+	border-bottom: 1px solid #e7e7e7;
+}
+
+.category i{
+    cursor: pointer;
+    font-size:16px;
+}
+
+.panel-body > dl > dt .tab-sign {
+    display: none;
+}
+.panel-body > dl > dd > dl > dt .tab-sign {
+    background-position: 0 0;
+    width: 55px;
+}
+
+.panel-body > dl > dd > dl:last-child > dt .tab-sign {
+    background-position: -55px 0;
+}
+.panel-body > dl > dd > dl > dd > dl > dt .tab-sign {
+    background-position: 0 -30px;
+    width: 110px;
+}
+</style>	
+</block>
+<block name="content">
+<h3 class="col-md-8">分类管理</h3>
+<div class="col-md-4">
+	<a class="btn btn-success pull-right" href="<{:U('add')}>">新 增</a>
+</div>
+<div class="row">
+	<div class="col-lg-12">
+		<div class="panel panel-default category">
+			<div class="panel-heading">
+				<div class="hd cf">
+					<div class="fold">折叠</div>
+					<div class="order">排序</div>
+					<div class="order">发布</div>
+					<div class="name">名称</div>
+				</div>
+            </div>
+        	<div class="panel-body">
+                 <{:R('Category/tree', array($tree))}> 
+        	</div>
+		</div>
+	</div>
+</div>
+</block>
+
+<block name="script">
+	<script type="text/javascript">
+		highlight_subnav("<{:U('Config/group')}>","<{:U('Category/index')}>");
+		(function($){
+			/* 分类展开收起 */
+			$(".category dd").prev().find(".fold i").addClass("fa-minus-square")
+				.click(function(){
+					var self = $(this);
+					if(self.hasClass("fa-minus-square")){
+						self.closest("dt").next().slideUp("fast", function(){
+							self.removeClass("fa-minus-square").addClass("fa-plus-square");
+						});
+					} else {
+						self.closest("dt").next().slideDown("fast", function(){
+							self.removeClass("fa-plus-square").addClass("fa-minus-square");
+						});
+					}
+				});
+
+			/* 三级分类删除新增按钮 */
+			$(".category dd dd .add-sub").remove();
+
+			/* 实时更新分类信息 */
+			$(".category")
+				.on("submit", "form", function(){
+					var self = $(this);
+					$.post(
+						self.attr("action"),
+						self.serialize(),
+						function(data){
+							/* 提示信息 */
+							var name = data.status ? "success" : "error", msg;
+							msg = self.find(".msg").addClass(name).text(data.info)
+									  .css("display", "inline-block");
+							setTimeout(function(){
+								msg.fadeOut(function(){
+									msg.text("").removeClass(name);
+								});
+							}, 1000);
+						},
+						"json"
+					);
+					return false;
+				})
+                .on("focus","input",function(){
+                    $(this).data('param',$(this).closest("form").serialize());
+
+                })
+                .on("blur", "input", function(){
+                    if($(this).data('param')!=$(this).closest("form").serialize()){
+                        $(this).closest("form").submit();
+                    }
+                });
+		})(jQuery);
+	</script>
+</block>

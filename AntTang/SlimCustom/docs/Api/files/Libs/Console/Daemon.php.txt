@@ -1,0 +1,134 @@
+<?php
+/**
+ * @package     Daemon.php
+ * @author      Jing Tang <tangjing3321@gmail.com>
+ * @link        http://www.slimphp.net/
+ * @version     2.0
+ * @copyright   Copyright (c) http://www.slimphp.net
+ * @date        2017年6月7日
+ */
+
+namespace SlimCustom\Libs\Console;
+
+use SlimCustom\Libs\App;
+use Clio\Daemon as ClioDaemon;
+
+/**
+ * Daemon
+ * 
+ * @author Jing Tang <tangjing3321@gmail.com>
+ */
+class Daemon
+{
+    /**
+     * callables
+     *
+     * @var array
+     */
+    private $callables;
+    
+    /**
+     * Run 启动任务
+     * 
+     * @throws \Exception
+     * @return boolean
+     */
+    public function run()
+    {
+        $pidPath = App::$instance->dataPath() . '/daemon/master/';
+        $pidFile =  $pidPath . 'pid.txt';
+        if (ClioDaemon::isRunning($pidFile)) {
+            return true;
+        }
+        else {
+            try {
+                is_dir($pidPath) ?: filesystem()->makeDirectory($pidPath, 0777, true, true);
+                pcntl_signal(SIGCHLD, SIG_DFL);
+                ClioDaemon::work([
+                    'pid' => $pidFile,
+                    'stdin' => '/dev/null',
+                    'stdout' => $pidPath . 'stdout.txt',
+                    'stderr' => $pidPath . 'stderr.txt'
+                ], function () {
+                    while (true) {
+                        //$res = [];
+                        if (! empty($this->callables)) {
+                            foreach ($this->callables as $name => $callable) {
+                                if (! $callable instanceof \Closure) {
+                                    throw new \Exception('Invalid callable to process');
+                                }
+                                $callable(time());
+                                //$res[$name] = $callable(time()) ? true : false;
+                            }
+                        }
+                        sleep(1);
+                    }
+                });
+                return true;
+            }
+            catch (\Exception $e) {
+                logger()->info($e);
+                return false;
+            }
+        }
+    }
+    
+    /**
+     * Kill 关闭任务
+     * 
+     * @param string $name  任务名称
+     * @param string $delete  是否删除运行文件
+     * @return boolean
+     */
+    public function kill($name, $delete = false)
+    {
+        $pidFile =  App::$instance->dataPath() . '/daemon/' . $name . '/pid.txt';
+        return ClioDaemon::kill($pidFile);
+    }
+
+    /**
+     * Call 任务回调
+     * 
+     * @param integer $schedule 时间计划(单位秒)
+     * @param string $name 任务名称                      
+     * @param callable $callable 任务回调
+     * @return \SlimCustom\Libs\Console\Daemon  
+     */
+    public function call($schedule, $name, \Closure $callable)
+    {
+        $this->callables[$name] = function($time) use ($schedule, $name, $callable) {
+            // 时间计划
+            if (isset($this->lastRunTime)) {
+                if (($time - $this->lastRunTime) <= $schedule) {
+                    return false;
+                }
+            }
+            // 检测任务是否运行
+            $pidPath = App::$instance->dataPath() . '/daemon/' . $name . '/';
+            $pidFile =  $pidPath . 'pid.txt';
+            if (ClioDaemon::isRunning($pidFile)) {
+                return true;
+            }
+            else {
+                try {
+                    is_dir($pidPath) ?: filesystem()->makeDirectory($pidPath, 0777, true, true);
+                    // 忽略信号处理，防止僵尸进程
+                    pcntl_signal(SIGCHLD, SIG_IGN);
+                    ClioDaemon::work([
+                        'pid' => $pidFile, // required
+                        'stdin' => '/dev/null', // defaults to /dev/null
+                        'stdout' => $pidPath . 'stdout.txt', // defaults to /dev/null
+                        'stderr' => $pidPath . 'stderr.txt'
+                    ], $callable);
+                    $this->lastRunTime = time();
+                    return true;
+                }
+                catch (\Exception $e) {
+                    throw $e;
+                }
+            }
+        };
+        $this->callables[$name] = $this->callables[$name]->bindTo(new \stdClass());
+        return $this;
+    }
+}

@@ -1,0 +1,234 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li class="active"><a  href="{:U('finance/index','t=receivables')}"><img src="__PUBLIC__/img/yingshoukuan.png"/>&nbsp; {:L('RECEIVABLES')}</a></li>
+		  <li><a href="{:U('finance/index','t=payables')}"><img src="__PUBLIC__/img/yingfukuan.png"/> &nbsp; {:L('PAYABLES')}</a></li>
+		  <li><a href="{:U('finance/index','t=receivingorder')}"><img src="__PUBLIC__/img/shoukuandan.png"/> &nbsp; {:L('RECEIVINGORDER')}</a></li>
+		  <li><a href="{:U('finance/index','t=paymentorder')}"><img src="__PUBLIC__/img/fukuandan.png"/> &nbsp; {:L('PAYMENTORDER')}</a></li>
+		  <li><a href="{:U('finance/analytics')}"><img src="__PUBLIC__/img/tongji.png"/> &nbsp; {:L('STATISTICS')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=29" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />	
+	<p class="view">
+		<b>{:L('VIEW_NAV')}</b>
+		<img src=" __PUBLIC__/img/by_owner.png"/> 
+		<a href="{:U('finance/index','t=receivables')}" <if condition="$Think.get.by eq null">class="active"</if>>{:L('ALL')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=me')}" <if condition="$Think.get.by eq 'me'">class="active"</if>>{:L('MY_RESPONSIBLE')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=create')}" <if condition="$Think.get.by eq 'create'">class="active"</if>>{:L('MY_CREATE')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=sub')}" <if condition="$Think.get.by eq 'sub'">class="active"</if>>{:L('SUBORDINATE_RESPONSIBLE')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=subcreate')}" <if condition="$Think.get.by eq 'subcreate'">class="active"</if>>{:L('SUBORDINATE_CREATE')}</a> &nbsp;  &nbsp; 
+		<img src=" __PUBLIC__/img/by_status.png"/> 
+		<a href="{:U('finance/index','t=receivables&by=none')}" <if condition="$Think.get.by eq 'none'">class="active"</if>>{:L('NO_RECEIVING')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=part')}" <if condition="$Think.get.by eq 'part'">class="active"</if>>{:L('PARTIALLY_RECEIVED')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=all')}" <if condition="$Think.get.by eq 'all'">class="active"</if>>{:L('HAS_BEEN_RECEIVING')}</a> &nbsp;  &nbsp; 
+		<img src="__PUBLIC__/img/by_time.png"/> 
+		<a href="{:U('finance/index','t=receivables&by=today')}" <if condition="$Think.get.by eq 'today'">class="active"</if>>{:L('TODAY RECEIVABLE')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=week')}" <if condition="$Think.get.by eq 'week'">class="active"</if>>{:L('THIS WEEK RECEIVABLE')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=month')}" <if condition="$Think.get.by eq 'month'">class="active"</if>>{:L('THIS MONTH RECEIVABLE')}</a> &nbsp; 
+		<a href="{:U('finance/index','t=receivables&by=add')}" <if condition="$Think.get.by eq 'add'">class="active"</if>>{:L('RECENTLY_CREATED')}</a> | 
+		<a href="{:U('finance/index','t=receivables&by=update')}" <if condition="$Think.get.by eq 'update'">class="active"</if>>{:L('RECENTLY_MODIFIED')}</a> 	 &nbsp;  &nbsp; 
+		<a href="{:U('finance/index','t=receivables&by=deleted')}" <if condition="$Think.get.by eq 'deleted'">class="active"</if>><img src="__PUBLIC__/img/task_garbage.png"/> {:L('RECYCLE_BIN')}</a>  
+	</p>
+	<div class="row">
+		<div class="span12">
+			<div class="pull-left">
+				<if condition="$Think.session.admin eq 1 or $Think.get.by neq 'deleted'"><a id="delete"  class="btn" style="margin-right: 8px;"><i class="icon-remove"></i> {:L('DELETE')}</a></if>
+			</div>
+			<div class="pull-left">
+				<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action="index.php" method="get">
+					<ul class="nav pull-left">
+					<li class="pull-left">
+						<select style="width:auto" name="field" id="field" onchange="changeCondition()">
+							<option class="all" value="all">{:L('ANY FIELD')}</option>
+							<option class="word" value="name">{:L('RECEIVABLES NAME')}</option>
+							<option class="contract" value="contract_id">{:L('CONTRACT NUMBER')}</option>
+							<option class="customer" value="customer_id">{:L('CUSTOMER')}</option>
+							<option class="number" value="price">{:L('AMOUNT OF RECEIVING')}</option>
+							<option class="date" value="pay_time">{:L('RECEIVING TIME')}</option>
+							<option class="receivables_status" value="status">{:L('STATUS')}</option>
+							<option class="word" value="description">{:L('DESCRIPTION')}</option>
+							<option class="role" value="owner_role_id">{:L('OWNER_ROLE')}</option>
+							<option class="role" value="creator_role_id">{:L('CREATOR_ROLE')}</option>						
+							<option class="date" value="create_time">{:L('CREATE_TIME')}</option>
+							<option class="date" value="update_time">{:L('UPDATE_TIME')}</option>	
+						</select>&nbsp;&nbsp;
+					</li>
+					<li id="conditionContent" class="pull-left">
+						<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+							<option value="contains">{:L('CONTAINS')}</option>
+							<option value="not_contain">{:L('NOT_CONTAIN')}</option>
+							<option value="is">{:L('IS')}</option>
+							<option value="isnot">{:L('ISNOT')}</option>						
+							<option value="start_with">{:L('START_WITH')}</option>
+							<option value="end_with">{:L('END_WITH')}</option>
+							<option value="is_empty">{:L('IS_EMPTY')}</option>
+							<option value="is_not_empty">{:L('IS_NOT_EMPTY')}</option>
+						</select>&nbsp;&nbsp;
+					</li>
+					<li id="searchContent" class="pull-left"><input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;</li>
+					<li class="pull-left"><input type="hidden" name="m" value="finance"/><input type="hidden" name="t" value="receivables"/>
+					<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+					<button type="submit" class="btn"> <img src="__PUBLIC__/img/search.png"/>  {:L('SEARCH')}</button></li>
+					</ul>
+				</form>
+			</div>
+			<div class="pull-right">
+				<a class="btn btn-primary" href="{:U('finance/add','t=receivables')}"><i class="icon-plus"></i>&nbsp; {:L('ADD RECEIVABLES')}</a>
+				&nbsp; <a class="btn btn-primary" href="{:U('finance/add','t=receivingorder')}"><i class="icon-plus"></i>&nbsp; {:L('ADD RECEIVINGORDER')}</a>
+			</div>
+		</div>
+		<div class="span12">
+			<form id="form1" action="" method="post">
+			<table class="table table-hover table-striped table_thead_fixed"> 
+				<notempty name="list">
+				<thead>
+					<tr>
+						<th><input class="check_all" id="check_all" type="checkbox" /></th>
+						<th>{:L('RECEIVABLES NAME')}</th>
+						<th>{:L('CUSTOMER')}</th>
+						<th>{:L('CONTRACT NUMBER')}</th>
+						<th>
+							<if condition="$_GET['asc_order'] == 'price'">
+								<a href="{:U('finance/index','&t='.$_GET['t'].'&desc_order=price&'.$parameter)}">
+									{:L('AMOUNT OF RECEIVING')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+								</a>
+							<elseif condition="$_GET['desc_order'] == 'price'"/>
+								<a href="{:U('finance/index','&t='.$_GET['t'].'&asc_order=price&'.$parameter)}">
+									{:L('AMOUNT OF RECEIVING')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+								</a>
+							<else/>
+								<a href="{:U('finance/index','&t='.$_GET['t'].'&desc_order=price&'.$parameter)}">{:L('AMOUNT OF RECEIVING')}</a>
+							</if>
+						</th>
+						<th>
+							<if condition="$_GET['asc_order'] == 'pay_time'">
+								<a href="{:U('finance/index','&t='.$_GET['t'].'&desc_order=pay_time&'.$parameter)}">
+									{:L('RECEIVING TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+								</a>
+							<elseif condition="$_GET['desc_order'] == 'pay_time'"/>
+								<a href="{:U('finance/index','&t='.$_GET['t'].'&asc_order=pay_time&'.$parameter)}">
+									{:L('RECEIVING TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+								</a>
+							<else/>
+								<a href="{:U('finance/index','&t='.$_GET['t'].'&desc_order=pay_time&'.$parameter)}">{:L('RECEIVING TIME')}</a>
+							</if>
+						</th>
+						<th>{:L('STATUS')}</th>
+						<th>{:L('OWNER_ROLE')}</th><th>{:L('CREATOR_ROLE')}</th></if>
+						<if condition="$Think.get.by eq 'deleted' and C('ismobile') neq 1">
+							<th>{:L('DELETE_ROLE')}</th>
+							<th>{:L('DELETE_TIME')}</th>
+						<elseif condition="C('ismobile') neq 1"/>
+							<th>
+								<?php if($_GET['asc_order'] == 'create_time'){ ?>
+									<a href="{:U('finance/index','&t='.$_GET['t'].'&desc_order=create_time&'.$parameter)}">
+										{:L('CREATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<?php }elseif($_GET['desc_order'] == 'create_time'){ ?>
+									<a href="{:U('finance/index','&t='.$_GET['t'].'&asc_order=create_time&'.$parameter)}">
+										{:L('CREATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<?php }else{ ?>
+									<a href="{:U('finance/index','&t='.$_GET['t'].'&desc_order=create_time&'.$parameter)}">{:L('CREATE_TIME')}</a>
+								<?php } ?>
+							</th>
+						</if>
+						<th>{:L('OPERATING')}</th>
+					</tr>
+				</thead>
+				<tfoot>
+					<tr style="background: #029BE2;color: #fff;font-size: 12px;">
+						<td colspan="11">当前页金额总计：{$money}（元）金额总计：{$sum_money}（元）</td>
+					</tr>
+					<tr>
+						<td colspan="11">
+							{$page}
+						</td>
+					</tr>
+				</tfoot> 
+				<tbody>
+					<volist name="list" id="vo">
+						<tr>
+							<td>
+								<input type="checkbox" class="check_list" name="receivables_id[]" value="{$vo.receivables_id}"/>
+							</td>
+							<td>
+								<a href="{:U('finance/view','t=receivables&id='.$vo['receivables_id'])}">{$vo.name}</a>
+							</td>
+							<td><a href="{:U('customer/view','id='.$vo['customer_id'])}">{$vo['customer_name']}</a></td>
+							<td><a href="{:U('contract/view','id='.$vo['contract_id'])}">{$vo['contract_name']}</a></td>
+							<if condition="C('ismobile') neq 1">
+								<td>{:L('YUAN',array($vo['price']))}</td>
+								<td><if condition="$vo['pay_time'] gt 0">{$vo['pay_time']|date="Y-m-d",###}</if></td>
+								<td>
+									<if condition="$vo['status'] eq 2">{:L('HAS_BEEN_RECEIVING')}<elseif condition="$vo['status'] eq 1" />{:L('PARTIALLY_RECEIVED')}<font color="red">({:L('ARREARAGE',array($vo['un_payable']))})</font><else />{:L('NO_RECEIVING')}</if>
+								</td>
+								<td><a class="role_info" rel="{$vo['owner']['role_id']}" href="javascript:void(0)">{$vo['owner']['user_name']}</a></td>
+								<td><a class="role_info" rel="{$vo['creator_role_id']}" href="javascript:void(0)">{$vo['creator_name']}</a></td>
+							</if>
+							<if condition="$Think.get.by eq 'deleted' and C('ismobile') neq 1">
+								<td><a class="role_info" rel="{$vo['delete_role_id']}" href="javascript:void(0)">{$vo['deleted']['user_name']}</a></td>
+								<td><if condition="$vo['delete_time'] gt 0">{$vo['delete_time']|date="Y-m-d",###}</if></td>
+							<elseif condition="C('ismobile') neq 1"/>
+								
+								<td><if condition="$vo['create_time'] gt 0">{$vo['create_time']|date="Y-m-d",###}</if></td>
+							</if>
+							
+							<td>
+								<a href="{:U('finance/view','t=receivables&id='.$vo['receivables_id'])}">{:L('VIEW')}</a>&nbsp; <if condition="$Think.get.by eq 'deleted'">
+									<a href="{:U('finance/revert','t=receivables&id='.$vo['receivables_id'])}">{:L('RESET')}</a>
+								<else />
+									<a href="{:U('finance/edit','t=receivables&id='.$vo['receivables_id'])}">{:L('EDIT')}</a>
+								</if>
+							</td>
+						</tr>
+					</volist>
+				</tbody>
+				<else />
+					<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+				</notempty>
+			</table>
+			</form>
+		</div> <!-- End #tab1 -->	
+	</div> <!-- End #main-content -->
+</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+	<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+	$("#dialog-role-info").dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight: 400,
+		position: ["center",100]
+	});
+	$(function(){
+		<if condition="$Think.get.field neq null">
+			$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+			$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+			$("#search").prop('value', '{$Think.get.search}');
+		</if>
+		$("#check_all").click(function(){
+			$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+		});
+		$('#delete').click(function(){
+			if(confirm('{:L('CONFIRM_DELETE')}')){
+			<if condition="$Think.session.admin eq 1 and $Think.get.by eq 'deleted'">
+				$("#form1").attr('action', '{:U('finance/completedelete','t=receivables')}');
+				$("#form1").submit();
+			<else />
+				$("#form1").attr('action', '{:U('finance/delete','t=receivables')}');
+				$("#form1").submit();
+			</if>
+			}
+		});
+		$(".role_info").click(function(){
+			$role_id = $(this).attr('rel');
+			$('#dialog-role-info').dialog('open');
+			$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+		});
+	});
+</script>
+<include file="Public:footer" />	

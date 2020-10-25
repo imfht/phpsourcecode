@@ -1,0 +1,105 @@
+{include file="common/head"/}
+<div class="admin-main layui-anim layui-anim-upbit">
+    <fieldset class="layui-elem-field layui-field-title">
+        <legend>节日元素管理</legend>
+    </fieldset>
+    <div class="demoTable">
+        <div class="layui-inline">
+            <input class="layui-input" name="key" id="key" placeholder="{:lang('pleaseEnter')}关键字">
+        </div>
+        <button class="layui-btn" id="search" data-type="reload">{:lang('search')}</button>
+        <a href="{:url('index')}" class="layui-btn">显示全部</a>
+        <a href="{:url('index')}" class="layui-btn layui-btn-normal" style="float:right;">返回节日列表</a>
+        <a href="{:url('add_element',array('pid'=>input('pid')))}" class="layui-btn" style="float:right;">{:lang('add')}节日元素</a>
+        <div style="clear: both;"></div>
+    </div>
+    <table class="layui-table" id="list" lay-filter="list"></table>
+</div>
+{include file="common/foot"/}
+<script type="text/html" id="order">
+    <input name="{{d.id}}" data-id="{{d.id}}" class="list_order layui-input" value=" {{d.sort}}" size="10"/>
+</script>
+<script type="text/html" id="open">
+    <input type="checkbox" name="open" value="{{d.id}}" lay-skin="switch" lay-text="开启|关闭" lay-filter="open" {{ d.open == 1 ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="action">
+    <a href="{:url('edit_element')}?id={{d.id}}&pid={{d.pid}}" class="layui-btn layui-btn-xs">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    layui.use(['table','form'], function() {
+        var table = layui.table,form = layui.form,$ = layui.jquery;
+        var tableIn = table.render({
+            id: 'ad',
+            elem: '#list',
+            url: '{:url("element")}',
+            method: 'post',
+            where: {pid: "{:input('pid')}"},
+            page:true,
+            cols: [[
+                {field: 'id', title: '{:lang("id")}', width: 80, fixed: true},
+                {field: 'title', title: '节日元素名称', width: 400},
+                {field: 'sort', align: 'center', title: '{:lang("order")}', width: 120, templet: '#order'},
+                {field: 'open', align: 'center', title: '{:lang("status")}', width: 100, toolbar: '#open'},
+                {field: 'addtime', title: '{:lang("add")}{:lang("time")}',width: 150},
+                {width: 180, align: 'center', toolbar: '#action'}
+            ]],
+            limit:10
+        });
+        form.on('switch(open)', function(obj){
+            loading =layer.load(1, {shade: [0.1,'#fff']});
+            var id = this.value;
+            var open = obj.elem.checked===true?1:0;
+            $.post('{:url("elementState")}',{'id':id,'open':open},function (res) {
+                layer.close(loading);
+                if (res.status==1) {
+                    tableIn.reload();
+                }else{
+                    layer.msg(res.msg,{time:1000,icon:2});
+                    return false;
+                }
+            })
+        });
+        //搜索
+        $('#search').on('click', function () {
+            var key = $('#key').val();
+            if ($.trim(key) === '') {
+                layer.msg('{:lang("pleaseEnter")}关键字！', {icon: 0});
+                return;
+            }
+            tableIn.reload({ page: {page: 1}, where: {key: key}});
+        });
+        table.on('tool(list)', function(obj) {
+            var data = obj.data;
+            if (obj.event === 'del'){
+                layer.confirm('您确定要删除该节日元素吗？', function(index){
+                    var loading = layer.load(1, {shade: [0.1, '#fff']});
+                    $.post("{:url('delElement')}",{id:data.id},function(res){
+                        layer.close(loading);
+                        if(res.code===1){
+                            layer.msg(res.msg,{time:1000,icon:1});
+                            tableIn.reload();
+                        }else{
+                            layer.msg('操作失败！',{time:1000,icon:2});
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+        $('body').on('blur','.list_order',function() {
+            var id = $(this).attr('data-id');
+            var sort = $(this).val();
+            var loading = layer.load(1, {shade: [0.1, '#fff']});
+            $.post('{:url("elementOrder")}',{id:id,sort:sort},function(res){
+                layer.close(loading);
+                if(res.code === 1){
+                    layer.msg(res.msg, {time: 1000, icon: 1});
+                    tableIn.reload();
+                }else{
+                    layer.msg(res.msg,{time:1000,icon:2});
+                }
+            })
+        });
+    })
+</script>

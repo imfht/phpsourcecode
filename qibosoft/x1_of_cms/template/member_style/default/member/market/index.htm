@@ -1,0 +1,93 @@
+{extend name="$member_style_layout" /}
+
+{block name="title"}应用市场{/block}
+{block name="content"}
+{php}$type||$type=0; $house[$type]="class='red'";{/php}
+
+
+<link rel="stylesheet" href="__STATIC__/css/waporder.css">
+ 
+<div class="ListOrder">
+    <!--
+	<ul class="topinfo">
+		<ol><a href="{:get_url('user',['uid'=>$rs['shop_uid']])}"><img src="{$rs.shop_uid|get_user_icon}" onerror="this.src='__STATIC__/images/nopic.png';"/><span>这是标题</span></a></ol>
+		<li><i class="fa fa-clock-o"></i>2012-25-21</li>		
+	</ul>
+	-->
+	{volist name="$listdb" id="rs"}
+	<ul class="listshop" style="margin-top:10px;">
+		<li class="img"><a href="#"><img src="{$rs.picurl|tempdir}" onerror="this.src='__STATIC__/images/nopic.png';"/></a></li>
+		<li class="infos">
+			<div style="height:auto;">
+				<a href="#"><b>{$rs.name}</b></a>
+			</div>
+			<p>
+				{if $rs.testday}可试用 <b style="color:red;">{$rs.testday}</b> 天 {else /} 无试用期 {/if}
+			</p>
+		</li>
+	</ul>
+	<ul class="" style="color:#999;">
+		介绍:{$rs.about}
+	</ul>
+	<ul class="otherinfo"> 
+		<ol><span>&yen;{$rs['_money'][0]['money']}</span>元{$rs['_money'][0]['title']}</ol>
+		 <li>
+		 {if $rs.endtime==-1}
+		 未购买
+		 {elseif $rs.endtime==0}
+		 <i class="fa fa-clock-o"></i>已购买,长期有效
+		 {elseif $rs.endtime<time()}
+		 <i class="fa fa-clock-o"></i>失效于:{:date('Y-m-d H:i',$rs.endtime)}
+		 {else /}
+		 <i class="fa fa-clock-o"></i>已买,有效期:{:date('Y-m-d H:i',$rs.endtime)}
+		 {/if}
+		 </li> 
+	</ul>
+	<div class="actions">
+		{if $rs.is_power&&$rs.endtime!=0&&$rs.endtime!=$userdb.group_endtime}
+			<a href="{:urls('freebuy',['id'=>$rs['id'],'is_m'=>$rs['is_m']])}">免费使用</a> 
+		{else /}
+			{if $rs.testday&&$rs.endtime==-1}<a href="{:urls('test',['id'=>$rs['id'],'is_m'=>$rs['is_m']])}">试用</a> {/if}
+			{if $rs._money&&$rs.endtime!=0}<a href='javascript:buyapp("{$rs.id}","{$rs.is_m}",{:json_encode($rs._money)})'>{$rs.endtime>time()?'续期':'购买'}</a>{/if}
+		{/if}
+	</div>
+	{/volist}
+</div>
+<script type="text/javascript" src="__STATIC__/js/pay.js"></script>
+<script type="text/javascript">
+function buyapp(id,is_m,con){
+	var str = '';
+	con.forEach((rs,i)=>{
+		str += `<div class="choose_type"><input type="radio" name="type" value="${i}">${rs.money}元${rs.title}</div>`;
+	});
+	layer.alert('<div class="warp_choose">'+str+'</div>',{title:'请选择',},function(){
+		var obj = $(".warp_choose input:checked");
+		if(obj.length==0){
+			alert('请选择一项!');
+			return ;
+		}
+		$.get("{:urls('buy')}?id="+id+"&is_m="+is_m+"&type="+obj.val(),function(res){
+			if(res.code==0){
+				layer.msg('购买成功!');
+			}else{
+				layer.alert(res.msg);
+				if(res.msg.indexOf('余额不足')>-1){
+					setTimeout(function(){
+						Pay.mobpay( con[obj.val()].money , '购买应用' , function(type,index){
+							layer.close(index);
+							if(type=='ok'){
+								layer.msg('充值成功');
+							}else{
+								layer.alert('充值失败');
+							}
+						});
+						//callpay();
+					},1000);
+				}
+			}
+		});
+	});
+}
+</script>
+
+{/block}

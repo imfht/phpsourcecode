@@ -1,0 +1,255 @@
+#!/usr/bin/env php
+<?php
+
+namespace Timo\cli;
+
+use Timo\File\File;
+
+define('DS', DIRECTORY_SEPARATOR);
+define('ROOT_PATH', dirname(dirname(__DIR__)) . DS);
+define('FRAME_PATH', dirname(__DIR__) . DS);
+define('LIBRARY_PATH', FRAME_PATH . 'src' . DS);
+date_default_timezone_set('Asia/Chongqing');
+
+class Tool
+{
+    protected $command = null;
+
+    protected $params = array();
+
+    private $project_dir = '';
+    private $project_path = '';
+    private $app_dir = '';
+
+    private $commands = [
+        '-v' => 'version',
+        '-version' => 'version',
+        '-c' => 'create',
+    ];
+
+    public function __construct()
+    {
+        spl_autoload_register([$this, 'loadClass']);
+        $this->parseParams();
+    }
+
+    public function run()
+    {
+        if (!method_exists($this, $this->command)) {
+            die("There is an error in the input command\n");
+        }
+
+        call_user_func_array(array($this, $this->command), $this->params);
+    }
+
+    /**
+     * 框架版本号
+     */
+    public function version()
+    {
+        echo 'TimoPHP v1.7.6' . PHP_EOL;
+    }
+
+    /**
+     * 创建一个项目
+     *
+     * @param string $project_name 项目名
+     * @param string $app_name 应用名
+     */
+    public function create($project_name = '', $app_name = 'web')
+    {
+        if (empty($project_name)) {
+            die("please input project name\n");
+        }
+
+        $this->project_dir = ROOT_PATH . $project_name;
+        $this->app_dir = $this->project_dir . DS . 'app' . DS . $app_name;
+
+        if (is_dir($this->app_dir)) {
+            die("application " . $project_name . '.' . $app_name . " is exists.");
+        }
+
+        File::mkDir($this->project_dir);
+
+        $this->makeDir($app_name);
+
+        $this->makeFile($app_name);
+
+        echo 'Create Success: ' . $project_name . '.' . $app_name . PHP_EOL;
+    }
+
+    private function makeDir($app_name)
+    {
+        $dirs = array(
+            'app/' . $app_name . '/controller',
+            'app/' . $app_name . '/model',
+            'app/' . $app_name . '/template/default/Index',
+            'app/' . $app_name . '/view',
+            'cache',
+            'config/dev',
+            'config/pro',
+            'config/test',
+            'lib',
+            'logs',
+            'model',
+            'public/' . $app_name . '/static/css',
+            'public/' . $app_name . '/static/images',
+            'public/' . $app_name . '/static/js',
+        );
+
+        $this->project_path = $this->project_dir . DS;
+
+        foreach ($dirs as $dir) {
+            $dir = $this->project_path . $dir;
+            File::mkDir($dir);
+        }
+    }
+
+    private function makeFile($app_name)
+    {
+        $copies = [
+            ['source' => 'app.config.default.php', 'target' => 'app/' . $app_name . '/config.php'],
+            ['source' => 'db.config.default.php', 'target' => 'config/dev/db.config.php'],
+            ['source' => 'db.config.default.php', 'target' => 'config/pro/db.config.php'],
+            ['source' => 'db.config.default.php', 'target' => 'config/test/db.config.php'],
+        ];
+        foreach ($copies as $copy) {
+            if (!file_exists($this->project_path . $copy['target'])) {
+                copy(FRAME_PATH . 'bin/copy/' . $copy['source'], $this->project_path . $copy['target']);
+            }
+        }
+        $puts = array(
+            [
+                'file' => 'app/' . $app_name . '/controller/Index.php',
+                'cont' => $this->getController($app_name)
+            ],
+            [
+                'file' => 'app/' . $app_name . '/template/default/Index/index.tpl.php',
+                'cont' => "<h1>TimoPHP is a Fast Sample Smart MVC+ Framework.</h1>"
+            ],
+            [
+                'file' => 'public/' . $app_name . '/index.php',
+                'cont' => $this->getIndex($app_name)
+            ],
+            [
+                'file' => 'public/' . $app_name . '/.htaccess',
+                'cont' => $this->getHtAccess()
+            ],
+            ['file' => 'config/dev/common.config.php', 'cont' => "<?php\r\nreturn [];"],
+            ['file' => 'config/pro/common.config.php', 'cont' => "<?php\r\nreturn [];"],
+            ['file' => 'config/test/common.config.php', 'cont' => "<?php\r\nreturn [];"],
+            ['file' => 'cache/index.html', 'cont' => ''],
+            ['file' => 'logs/index.html', 'cont' => ''],
+        );
+        foreach ($puts as $put) {
+            $file = $this->project_path . $put['file'];
+            if (!file_exists($file)) {
+                file_put_contents($file, $put['cont']);
+            }
+        }
+    }
+
+    private function getController($app_name)
+    {
+        $str = <<<EOD
+<?php
+
+namespace app\\{$app_name}\controller;
+
+use Timo\Core\Controller;
+
+class Index extends Controller
+{
+	public function index()
+	{
+		return \$this->render();
+	}
+}
+
+EOD;
+        return $str;
+    }
+
+    function getIndex($app_name)
+    {
+        $str = <<<EOD
+<?php
+
+use Timo\Core\Engine;
+use Timo\Exception\CoreException;
+
+define('APP_NAME', '{$app_name}');
+define('APP_DEBUG', true);
+define('ENV', 'dev');
+define('ROOT_PATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
+
+//require ROOT_PATH . 'vendor/autoload.php';
+require ROOT_PATH . '../TimoPHP/boot.php';
+
+try {
+    \$engine = new Engine();
+    \$engine->start();
+} catch(Exception \$e) {
+    CoreException::handle(\$e);
+} catch(Error \$e) {
+    CoreException::handle(\$e);
+}
+
+EOD;
+        return $str;
+    }
+
+    private function getHtAccess()
+    {
+        $str = <<<EOD
+<IfModule mod_rewrite.c>
+  Options +FollowSymlinks
+  RewriteEngine On
+
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.*)$ index.php/$1 [QSA,PT,L]
+</IfModule>
+EOD;
+        return $str;
+    }
+
+    private function parseParams()
+    {
+        global $argv;
+        global $argc;
+        if ($argc < 2) {
+            die("Lack of command parameters\n create project_name\n");
+        }
+
+        $this->command = $argv[1];
+        if (isset($this->commands[$argv[1]])) {
+            $this->command = $this->commands[$argv[1]];
+        }
+
+        $this->params = array_slice($argv, 2);
+    }
+
+    private function loadClass($class_name)
+    {
+        $class_name = str_replace('\\', DIRECTORY_SEPARATOR, $class_name);
+        $pos = strpos($class_name, DIRECTORY_SEPARATOR);
+        $space = substr($class_name, 0, $pos);
+
+        if ($space == 'Timo') {
+            $class_name = substr($class_name, $pos + 1);
+            $class_file = LIBRARY_PATH . $class_name . '.php';
+        } else {
+            $class_file = FRAME_PATH . $class_name . '.php';
+        }
+
+        if (!file_exists($class_file)) {
+            throw new \Exception('class ' . $class_file . ' not found.', 404);
+        } else {
+            require $class_file;
+        }
+    }
+}
+
+$tool = new Tool();
+$tool->run();

@@ -1,0 +1,266 @@
+{extend name="index:layout" /}
+
+{block name="menu"}
+{/block}
+
+{block name="content"}
+
+
+
+{php}
+$posturl = purl('config');
+print <<<EOT
+
+
+<SCRIPT LANGUAGE="JavaScript" src="__STATIC__/admin/default/jquery-1.2.6.min.js"></SCRIPT>
+
+
+<script>
+$(function() { 
+	if($.browser.msie) { 
+		//alert("this is msie"); 
+		//////////alert('当前页面特效在IE浏览器下是不能兼容使用的，请使用新版firfox或chrome浏览器操作。');
+	} /*else if($.browser.safari) { 
+	alert("this is safari!"); 
+	} else if($.browser.mozilla) { 
+	alert("this is mozilla!"); 
+	} else if($.browser.opera) { 
+	alert("this is opera"); 
+	} else { 
+	alert("i don't konw!"); 
+	}*/
+});
+</script>
+
+<link rel="stylesheet" href="__STATIC__/admin/default/base/appmenu.css" type="text/css">
+<form name="form_work" method="post" action="$posturl" id="ordermenuList">
+<div class="MainContainer MainContainers">
+	<div class="Header"><span class="tag">微信菜单设置</span></div>
+	<div class="addfup"><span>添加大分类</span></div>
+	<ul class='Tables h'>
+		<li class="li1">移动</li>
+		<li class="li2">名称</li>
+		<li class="li3">超链接</li>
+		<li class="li4">关键字</li>
+		<li class="li5">操作</li>
+	</ul>
+	<div class="ContList">
+
+
+EOT;
+$i=0;
+foreach($listdb1 AS $key=>$rs){
+$i++;
+print <<<EOT
+
+
+		<dl class="sorts$i">
+			<input type="hidden" value="$i" class="fup" />
+			<dt>
+				<ul class='Tables'>
+					<li class="li1"><span onmouseover="movebigsort()" class="move1">移动</span></li>
+					<li class="li2"><input name="postdb[$i][name]" type="text" value="$rs[name]" placeholder="点击输入菜单名称"/></li>
+					<li class="li3"><input name="postdb[$i][linkurl]" type="text" value="$rs[linkurl]" placeholder="点击输入菜单链接"/></li>
+					<li class="li4"><input name="postdb[$i][keyword]" type="text" value="$rs[keyword]" placeholder="点击输入菜单关键字"/></li>
+					<li class="li5"><span class="add1" onclick="addsorts($i)">添加</span> <span class="move1" onclick="movefups($i)">删除</span></li>
+				</ul>
+			</dt>
+			<dd>
+
+
+EOT;
+$j=0;
+foreach($rs[children] AS $keys=>$rss){
+$j++;
+print <<<EOT
+
+
+				<ul class="Tables fid$j">
+					<input type="hidden" value="$j" class="fid" />
+					<li class="li1"><span onmouseover="movesmall('.sorts$i')" class="move2">移动</span></li>
+					<li class="li2"><input name="postdb[$i][$j][name]" type="text" value="$rss[name]" placeholder="点击输入菜单名称"/></li>
+					<li class="li3"><input name="postdb[$i][$j][linkurl]" type="text" value="$rss[linkurl]" placeholder="点击输入菜单链接"/></li>
+					<li class="li4"><input name="postdb[$i][$j][keyword]" type="text" value="$rss[keyword]" placeholder="点击输入菜单关键字"/></li>
+					<li class="li5"><span class="move1" onclick="movesorts($i,$j)">删除</span></li>
+				</ul>
+
+
+EOT;
+}
+print <<<EOT
+
+
+			</dd>
+		</dl>		
+
+
+EOT;
+}
+print <<<EOT
+
+
+	</div>
+	<div class="submits1">  
+		<span onClick="getGroupOrders()">生成公众号菜单</span>
+		<input type="hidden" name="postdb[menulist]" id="Menu_list">
+	</div>
+</div>
+</form>
+<script>
+function check_inputs(){
+	var checks=0;
+	$('.ContList dl dt').each(function(){
+		var names=$(this).find('.li2 input').val();
+		var linkurls=$(this).find('.li3 input').val();
+		var keywords=$(this).find('.li4 input').val();		
+		if(names!=''&&linkurls==''&&keywords==''){
+			alert(names+'菜单的链接和关键字不能两项同时为空！');
+			checks=1;
+		}
+	});
+	$('.ContList dl dd ul').each(function(){
+		var names1=$(this).find('.li2 input').val();
+		var linkurls1=$(this).find('.li3 input').val();
+		var keywords1=$(this).find('.li4 input').val();		
+		if(names1!=''&&linkurls1==''&&keywords1==''){
+			alert(names1+'菜单的链接和关键字不能两项同时为空！');
+			checks=1;
+		}
+	});
+	return checks;
+}
+function getGroupOrders(){
+	var errorinput=check_inputs();
+	if(errorinput!=1){
+		var lists=new Array();
+		var j=0;
+		$('.ContList dl').each(function(){
+			j++;
+			var sorts=$(this).find('.fup').val();
+			var sortn=new Array();
+			var i=0;
+			$(this).find('.fid').each(function(){			
+				if($(this).val()!=''){
+					i++;
+					sortn[i]=$(this).val();
+				}
+			});
+			var sortns = sorts+'@'+sortn.join(",");
+			lists[j]=sortns;
+		});
+		var sort_layout=lists.join("#");
+		$('#Menu_list').val(sort_layout);
+		$('#ordermenuList').submit();
+	}
+}
+function movefups(num){
+	$('.sorts'+num).remove();
+}
+function movesorts(num1,num2){
+	$('.sorts'+num1+' .fid'+num2).remove();
+}
+function changetype(num){
+	var theobj=$('.type'+num);
+	var theinput=theobj.find('input');
+	var theval=theinput.val();
+	if(theval==1){
+		theinput.val(0);
+		theobj.removeClass('types1');
+		theobj.addClass('types0');
+	}else{
+		theinput.val(1);
+		theobj.removeClass('types0');
+		theobj.addClass('types1');
+	}
+}
+function movebigsort(){
+	order_list(".move1",".ContList","dl");
+}
+function movesmall(box_obj){
+	order_list(".move2",box_obj+' dd',"ul");
+}
+$('.MainContainer .addfup').click(function(){
+	var num=1;
+	$('.ContList dl').each(function(){
+		num++;
+	});	
+	if(num>3){
+		alert('一级菜单不能超过3个');
+	}else{
+		var str='<dl class="sorts'+num+'"><input type="hidden" value="'+num+'" class="fup" /><dt><ul class="Tables"><li class="li1"><span onmouseover="movebigsort()" class="move1">移动</span></li><li class="li2"><input name="postdb['+num+'][name]" type="text" placeholder="点击输入菜单名称"/></li><li class="li3"><input name="postdb['+num+'][linkurl]" type="text" placeholder="点击输入菜单链接"/></li><li class="li4"><input name="postdb['+num+'][keyword]" type="text" placeholder="点击输入菜单关键字"/></li><li class="li5"><span class="add1" onclick="addsorts('+num+')">添加</span> <span class="move1" onclick="movefups('+num+')">删除</span></li></ul></dt><dd></dd></dl>';
+		$(".ContList").append(str);
+	}						
+});
+function addsorts(num){
+	var num1=1;
+	$('.sorts'+num+' dd ul').each(function(){
+		num1++;
+	});
+	if(num1>5){
+		alert('二级菜单不能超过5个');
+	}else{
+		var str='<ul class="Tables fid'+num1+'"><input type="hidden" value="'+num1+'" class="fid" /><li class="li1"><span onmouseover="movesmall(\'.sorts'+num+'\')" class="move2">移动</span></li><li class="li2"><input name="postdb['+num+']['+num1+'][name]" type="text" placeholder="点击输入菜单名称"/></li><li class="li3"><input name="postdb['+num+']['+num1+'][linkurl]" type="text" placeholder="点击输入菜单链接"/></li><li class="li4"><input name="postdb['+num+']['+num1+'][keyword]" type="text" placeholder="点击输入菜单关键字"/></li><li class="li5"><span class="move1" onclick="movesorts('+num+','+num1+')">删除</span></li></ul>';
+		$('.sorts'+num+' dd').append(str);	
+	}	
+}
+</script>
+<div class="MainContainers">
+	<div class="Header"><span class="tag">说明</span></div>
+	<div class="Conter">
+		<ul class="notes">
+			<li class="b">提醒：非认证的订阅号不能使用自定义菜单</li>
+			<li>使用自自定义菜单前，请先的“微信接口设置”页面配置好【AppId】【 AppSecret】这两项参数！</li>
+			<li>注意：目前自定义菜单最多包括3个一级菜单，每个一级菜单最多包含5个二级菜单。一级菜单最多4个汉字，二级菜单最多7个汉字，多出来的部分将会以“...”代替，如果菜单设置了超链接关键字就没有效果。请注意，创建自定义菜单后，由于微信客户端缓存，需要24小时微信客户端才会展现出来。建议测试时可以尝试取消关注公众账号后再次关注，则可以看到创建后的效果。
+微信官方强调：修改后，需要重新关注，或者最迟隔天才会看到修改后的效果！</li>
+<li class="b">小程序跳转注意事项!!</li>
+<li>关键字那一项统一输入右边红色代码:<font color="red">pages/hy/web/index?url=</font></li>
+<li>默认只能是当前系统的小程序,如果是其它关联的小程序,就需要在前面加上小程序的appid用“|”隔开,比如“wx286b93c14bbf93|pages/hy/web/index?url=”</li>
+<li>超链接这一项,就输入你具体要访问的网址,比如:<font color="red">https://xxx</font>，只能是https开头的网址,并且要在小程序平台里授权的域名</li>
+		</ul>
+	</div>
+</div>
+
+
+EOT;
+{/php}
+
+
+<script src="__STATIC__/libs/jquery-ui/jquery-ui.min.js"></script> 
+<script>
+function order_list(move_tag,box_obj,move_obj){
+	$(move_tag).bind('mouseover',function(){
+		$(this).css("cursor","move")
+	});
+	var $list = $(box_obj);	
+	$list.sortable({
+		opacity: 0.6,
+		revert: true,
+		cursor: 'move',
+		handle: move_tag,
+		update: function(){
+			/* var new_order = [];
+             $list.children(chil_obj).each(function() {
+                new_order.push(this.title);
+             });
+			 var newid = new_order.join(',');
+			 alert(newid);
+			 $.ajax({
+                type: "post",
+                url: "update.php",
+                data: { id: newid, order: oldid },   //id:新的排列对应的ID,order：原排列顺序
+                beforeSend: function() {
+                     $show.html("<img src='load.gif' /> 正在更新");
+                },
+                success: function(msg) {
+                     //alert(msg);
+					 $show.html("");
+                }
+             });*/
+		}
+	});
+}
+</script>
+
+
+
+{/block}

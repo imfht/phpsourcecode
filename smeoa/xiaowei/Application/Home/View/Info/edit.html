@@ -1,0 +1,100 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'编辑:'.$vo['name'],'search'=>'N'))}
+
+	<form method='post' id="form_data" name="form_data" enctype="multipart/form-data"  class="well form-horizontal">
+		<input type="hidden" id="scope_user_id" name="scope_user_id" value="{$vo.scope_user_id}">
+		<input type="hidden" id="scope_user_name" name="scope_user_name" value="{$vo.scope_user_name}">
+		<input type="hidden" id="ajax" name="ajax" value="0">
+		<input type="hidden" id="id" name="id" value="{$vo.id}">	
+		<input type="hidden" id="opmode" name="opmode" value="edit">
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">标题：</label>
+			<div class="col-sm-10">
+				<input type="text" id="name" name="name" value="{$vo.name}" class="form-control"  check="require" msg="请输入标题">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="location">发布范围：</label>
+			<div class="col-sm-10">
+				<div id="actor_wrap" class="inputbox">
+					<a class="pull-right btn btn-link text-center" onclick="select_scope();"><i class="fa fa-user"></i> </a>
+					<div class="wrap" >
+						<span class="address_list">{$vo.scope_user_name||show_contact="edit"}</span>
+						<span class="text" >
+							<input class="letter" type="text"  >
+						</span>
+					</div>
+					<div class="search dropdown ">
+						<ul class="dropdown-menu"></ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label">设置：</label>
+			<div class="col-sm-10 row">
+				<div class="checkbox col-sm-2">
+					<label>
+						<input name="is_public" class="ace is_public" type="checkbox" value="1">
+						<span class="lbl">信息公开</span> </label>
+				</div>
+				<div class="checkbox col-sm-2">
+					<label>
+						<input name="is_sign" class="ace is_sign" type="checkbox" value="1">
+						<span class="lbl">需要签收</span> </label>
+				</div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<div class="col-xs-12">
+				<textarea  class="editor" id="content" name="content" style="width:100%;height:300px;" check="require" msg="请输入内容">{$vo.content}</textarea>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label">附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/edit',array('add_file'=>$vo['add_file']))}
+			</div>
+		</div>
+		<div class="form-group">
+			<div class="col-sm-10 col-sm-offset-2">
+				<input class="btn btn-sm btn-primary" type="button" value="保存" onclick="save();">
+				<input  class="btn btn-sm btn-default" type="button" value="取消" onclick="go_return_url();">
+			</div>
+		</div>
+	</form>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function select_scope() {
+			winopen("{:U('Popup/scope')}", 600, 550);
+		}
+
+		function save() {
+			$("#scope_user_name").val("");
+			$("#actor_wrap span.address_list span").each(function() {
+				$("#scope_user_name").val($("#scope_user_name").val() + $(this).text().replace(';', '') + '|' + $(this).attr("data") + ";");
+			});
+
+			$("#scope_user_id").val("");
+			$("#actor_wrap span.address_list span").each(function() {
+				$("#scope_user_id").val($("#scope_user_id").val() + $(this).attr("data") + ",");
+			});
+			sendForm("form_data", "{:U('save')}");
+		}
+
+		$(function() {
+			set_val('is_sign', "{$vo.is_sign}");
+			set_val('is_public', "{$vo.is_public}");
+		});
+
+		$(document).on("click", ".inputbox .address_list a.del", function() {
+			$(this).parent().parent().remove();
+		});
+	</script>
+</block>

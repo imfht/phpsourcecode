@@ -1,0 +1,162 @@
+<extend name="Base/common"/>
+
+<block name="header">
+    <link type="text/css" rel="stylesheet" href="__CSS__/news.css"/>
+    <include file="Public/_nav"/>
+</block>
+
+<block name="body">
+
+    <div class="row">
+        <div class="col-xs-8" >
+            <if condition="is_login() eq 2">
+                <div style="clear:right;">
+            </if>
+            <div class="common_block_border">
+                <notempty name="now_category">
+                    <div class="common_block_title">{$now_category.title}
+                        <div class="pull-right children_blog">
+                            <volist name="now_category['_']" id="cat">
+                                <a href="{:U('News/index/index',array('category'=>$cat['id']))}">{$cat.title}</a>
+                            </volist>
+                        </div>
+                    </div>
+                    <else/>
+                    <div class="common_block_title">{:L('_NEW_VIEW_')}</div>
+                </notempty>
+                <div class="common_block_title clearfix">
+                    <if condition="$info['cover'] neq 0">
+                        <div class="col-xs-4" >
+                            <a title="{$info.title|op_t}" href="{:U('News/index/detail',array('id'=>$info['id']))}">
+                                <img alt="{$info.title|op_t}" src="{$info.cover|getThumbImageById=200,146}" style="width: 200px;height: 146px">
+                            </a>
+                        </div>
+                        <div class="col-xs-8" >
+                            <h2>{$info.title}</h2>
+                            <p class="clearfix">
+                                <if condition="check_auth('News/Index/edit',-1)||(($info['uid'] eq is_login())&&($info['status'] neq 1))">
+                                    <a title="{:L('_EDIT_')}" href="{:U('News/index/edit',array('id'=>$info['id']))}" style="float: right"><i class="icon-edit" style="font-size: 16px;">{:L('_EDIT_')}</i></a>
+                                </if>
+				                    <span class="pull-left">
+                                        <span class="author"><a href="{$author.space_url}" ucard="{$author.uid}">{$author.nickname}</a></span>
+					                    <span> {:L('_RELEASE_AT_')} {$info.create_time|date='Y-m-d H:i',###}</span>
+                                                 </span>
+                                <if condition="($info['status'] eq 1)&&($info['dead_line'] gt time())">
+                                    <span class="pull-right" style="margin-right: 10px">{:W('Weibo/Share/shareBtn',array('param'=>array('title'=>$info['title'],'content'=>msubstr($info['description'],0,200),'img'=>getThumbImageById($info['cover'],160,160),'from'=>L('_MODULE_'),'site_link'=>U('news/index/detail',array('id'=>$info['id']))),'text'=>'分享'))}</span>
+                                </if>
+                            </p>
+                            <div style="color: #999;font-size: 14px;">{$info.description}</div>
+                        </div>
+                        <else/>
+                        <div class="col-xs-4" >
+                            <a title="{$info.title|op_t}" href="{:U('News/index/detail',array('id'=>$info['id']))}">
+                                <img alt="暂无封面" src="__IMG__/nopicture.jpg" style="width: 200px;height: 146px">
+                            </a>
+                        </div>
+                        <div class="col-xs-8" >
+                            <h2>{$info.title}</h2>
+                            <p class="clearfix">
+                                <if condition="check_auth('News/Index/edit',-1)||(($info['uid'] eq is_login())&&($info['status'] neq 1))">
+                                    <a title="{:L('_EDIT_')}" href="{:U('News/index/edit',array('id'=>$info['id']))}" style="float: right"><i class="icon-edit" style="font-size: 16px;">{:L('_EDIT_')}</i></a>
+                                </if>
+                                <span class="pull-left">
+                                    <span class="author">
+                                        <a href="{$author.space_url}" ucard="{$info.uid}">{$author.nickname}</a>
+                                    </span>
+                                    <span> {:L('_RELEASE_AT_')} {$info.create_time|date='Y-m-d H:i',###}</span>
+                                </span>
+                                <if condition="($info['status'] eq 1)&&($info['dead_line'] gt time())">
+                                    <span class="pull-right" style="margin-right: 10px">{:W('Weibo/Share/shareBtn',array('param'=>array('title'=>$info['title'],'content'=>msubstr($info['description'],0,200),'img'=>getThumbImageById($info['cover'],160,160),'from'=>L('_MODULE_'),'site_link'=>U('news/index/detail',array('id'=>$info['id']))),'text'=>L('_SHARE_')))}</span>
+                                </if>
+                            </p>
+                            <div style="color: #999;font-size: 14px;">{$info.description}</div>
+                        </div>
+                    </if>
+                </div>
+                <hr/>
+                <div class="pull-right" style="margin-top: -20px;margin-right: 15px;">
+                    {:W('Common/Share/detailShare')}
+                </div>
+                <notempty name="info['banner']">
+                    <div class="news-banner">
+                        <img alt="{$info.title|op_t}" src="{$info.banner|getThumbImageById=500,200}" style="width: 500px;height: 200px">
+                    </div>
+                </notempty>
+                <section id="contents">
+                    <if condition="$info['source'] neq ''"><div style="margin-bottom: 20px;color: #C0C0C0;"><i class="icon-chrome"></i> {:L('_SOURCE_')}：<a target="_blank" href="{$info.source}">{$info.source}</a></div></if>
+                    <div class="news-content">
+                        <if condition="$info['illegal_status'] neq false">
+                            <div class="<if condition="$info['banner'] eq 0">illegal-status<else/>illegal-status-b</if>">
+                                <span class="illegal-info">注意：此资讯的状态是{$info.illegal_status}状态，您是管理员所以依然可以阅读</span>
+                            </div>
+                        </if>
+                        {$info.detail.content|render}
+                    </div>
+                </section>
+                <div style="padding: 20px;">
+                    {:W('Common/Adv/render',array(array('name'=>'below_article_content','type'=>1,'width'=>'690px','height'=>'100px','title'=>'资讯文章内容下方广告')))}
+                </div>
+                <div style="padding: 20px;padding-top: 0">
+                    {:hook('localComment', array('path'=>"News/index/$info[id]", 'uid'=>$info['uid'],'count_model'=>'news','count_field'=>'comment','this_url'=>'news/index/detail'))}
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-4" >
+            <if condition="is_login() eq 2">
+                <div style="clear:right;">
+            </if>
+            <div class="common_block_border">
+                <div class="common_block_title">{:L('_AUTHOR_')}</div>
+                <div class="col-xs-4">
+                    <img class="avatar-img" src="{$author.avatar64}"/>
+                </div>
+                <div class="col-xs-8">
+                    <a href="{$author.space_url}">{$author.nickname}</a>
+                    <br/>
+                    <p class="text-more" style="width: 100%">{$author.signature}</p>
+                    <br/>
+                    文章：{$author.news_count}
+                </div>
+                <div class="clearfix" style="padding: 10px"></div>
+            </div>
+            {:W('Position/lists',array('position'=>4,'category'=>$info['category']))}
+            {:W('Hot/lists',array('category'=>$info['category']))}
+            {:W('Common/Adv/render',array(array('name'=>'news_right_below_all','type'=>1,'width'=>'360px','height'=>'100px','title'=>'资讯右侧下方广告')))}
+        </div>
+    </div>
+
+
+    </div>
+    <script type="text/javascript" charset="utf-8" src="__STATIC__/ueditor/third-party/SyntaxHighlighter/shCore.js"></script>
+    <link rel="stylesheet" type="text/css" href="__STATIC__/ueditor/third-party/SyntaxHighlighter/shCoreDefault.css"/>
+    <script type="text/javascript">
+        SyntaxHighlighter.all();
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('.popup-gallery').each(function () { // the containers for all your galleries
+                $(this).magnificPopup({
+                    delegate: '.popup',
+                    type: 'image',
+                    tLoading: 'Loading image #%curr%...',
+                    mainClass: 'mfp-img-mobile',
+                    gallery: {
+                        enabled: true,
+                        navigateByImgClick: true,
+                        preload: [0, 1] // Will preload 0 - before current, and 1 after the current image
+                    },
+                    image: {
+                        tError: '<a href="%url%">The image #%curr%</a> could not be loaded.',
+                        titleSrc: function (item) {
+                            /*           return item.el.attr('title') + '<small>by Marsel Van Oosten</small>';*/
+                            return '';
+                        }
+                    }
+                });
+            });
+
+            $('.col-xs-8>.col-xs-4').insertAfter('.col-xs-8');
+            $('.container>.col-xs-4').insertAfter('.container>.row>.col-xs-8');
+        });
+    </script>
+</block>

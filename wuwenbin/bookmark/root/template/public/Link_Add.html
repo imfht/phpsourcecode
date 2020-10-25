@@ -1,0 +1,82 @@
+<div class="menu" style="margin-top: 80px;">
+    <span>添加</span>
+    <a href="javascript:;" id="qrcode">二维码</a>
+</div>
+<div id="form1" class="form">
+    <div class="line">
+        <span>分类：</span>
+        <select id="link_cid">
+            <!--{foreach($categoryList as $v)}-->
+            <option value="<!--{$v['id']}-->"><!--{:H($v['name'])}--></option>
+            <!--{/foreach}-->
+        </select>
+    </div>
+    <div class="line">
+        <span>网址：</span>
+        <input id="link_url" type="text" value="<!--{if($link)}--><!--{:H($link['url'])}--><!--{/if}-->" />
+    </div>
+    <div class="line">
+        <span>标题：</span>
+        <input id="link_title" type="text" value="<!--{if($link)}--><!--{:H($link['title'])}--><!--{/if}-->" />
+    </div>
+    <div class="line">
+        <span>&nbsp;</span>
+        <a href="javascript:;" id="link_add_save">保存</a>
+        <a href="javascript:;" onclick="hideAction()">取消</a>
+        <!--{if($isAdded)}-->
+        <span class="warning">提示：相同的网址已存在！</span>
+        <!--{/if}-->
+    </div>
+</div>
+<div id="form2" class="form">
+    <div id="qr"></div>
+    <div class="weixin">
+        <img src="<!--{BASE_URL}-->/static/img/weixin.png" />
+        <span>微信扫描分享到朋友圈</span>
+    </div>
+</div>
+<script type="text/javascript" src="<!--{BASE_URL}-->/static/js/jquery.qrcode.min.js"></script>
+<script type="text/javascript">
+$("#link_add_save").click(function() {
+    el = $(this);
+    if(el.data("lock")) return;
+    el.data("lock", 1);
+
+    var url = "<!--{:Router::buildUrl('Link_Add')}-->";
+    var data = {};
+    data.cid = $("#link_cid").val();
+    data.url = $("#link_url").val();
+    data.title = $("#link_title").val();
+    data._token = get_token();
+    $.post(url, data, function(r) {
+        alert(r.msg);
+        if(r.status) {
+            var cid = data.cid;
+            location.href = "<!--{:Router::buildUrl('User_Index', array('uid' => $mid, 'cid' => '[cid]'))}-->".replace("[cid]", cid);
+        } else {
+            el.data("lock", 0);
+        }
+    }, "json");
+});
+
+$("#qrcode").click(function() {
+    var _this = $(this);
+    if(_this.data("is_show")) {
+        _this.data("is_show", 0);
+        $("#form2").hide();
+        $("#form1").show();
+    } else {
+        _this.data("is_show", 1);
+        $("#form1").hide();
+        $("#form2").show();
+        var url = $.trim($("#link_url").val());
+        if(url.match(/^https?:\/\/.+/i)) {
+            $("#qr").qrcode({
+                width: 240,
+                height: 240,
+                text: url
+            });
+        }
+    }
+});
+</script>

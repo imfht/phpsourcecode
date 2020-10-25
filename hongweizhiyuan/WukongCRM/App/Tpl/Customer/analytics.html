@@ -1,0 +1,343 @@
+<include file="Public:header" />
+<if condition="$total_report.add_count gt 0">
+<script src="__PUBLIC__/js/chart/highcharts.js"></script>
+<script src="__PUBLIC__/js/chart/modules/exporting.js"></script>
+</if>
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li><a  href="{:U('customer/index')}"><img src="__PUBLIC__/img/customer_icon.png"/>&nbsp; {:L('CUSTOMER')}</a></li>
+		  <li><a  href="{:U('customer/index','content=resource')}"><img src="__PUBLIC__/img/customer_source_icon.png"/>&nbsp; {:L('CUSTOMER_POOL')}</a></li>
+		  <li><a href="{:U('contacts/index')}"><img src="__PUBLIC__/img/contacts_icon.png"/> &nbsp;{:L('LINKMAN')}</a></li>
+		  <li><a href="{:U('customer/cares')}"><img src="__PUBLIC__/img/cares_icon.png"/> &nbsp;{:L('cumtomer_care')}</a></li>
+		  <li class="active"><a href="{:U('customer/analytics')}"><img src="__PUBLIC__/img/tongji.png"/> &nbsp;{:L('CLIENT_STATISTICS')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=27" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />
+	<div class="row">
+		<div class="span12">
+			<ul class="nav pull-left">
+				<li class="pull-left">
+					<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action="" method="get">
+						<ul class="nav pull-left">
+							<li class="pull-left">
+								{:L('CHOOSE_DEPARTMENT')}&nbsp; <select style="width:auto" name="department" id="department" onchange="changeRole()">
+									<option class="all" value="all">{:L('ALL')}</option>
+									<volist name="departmentList" id="vo">
+										<option value="{$vo.department_id}">{$vo.name}</option>
+									</volist>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								{:L('SELECT_THE_EMPLOYEE')}&nbsp; <select style="width:auto" name="role" id="role" onchange="changeCondition()">
+									<option class="all" value="all">{:L('ALL')}</option>
+									<volist name="roleList" id="vo">
+										<option value="{$vo.role_id}">{$vo.role_name}-{$vo.user_name}</option>
+									</volist>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								{:L('SELECT_A_DATE')}&nbsp; {:L('CONG')}<input type="text" id="start_time" name="start_time" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" class="Wdate" value="{$Think.get.start_time}"/>{:L('ZHI')}<input type="text" id="end_time" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" name="end_time" class="Wdate" value="{$Think.get.end_time}" />&nbsp;&nbsp;
+							</li>
+							<li class="pull-left"><input type="hidden" name="m" value="customer"/><input type="hidden" name="a" value="analytics"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" class="btn">{:L('SEARCH')}</button></li>
+						</ul>
+					</form>
+				</li>				
+			</ul>
+		</div>
+		<div class="span2 knowledgecate">
+			<ul class="nav nav-list">
+				<li class="active">
+					<a href="javascript:void(0);">{:L('CHOOSE_STATISTICS_CONTENT')}</a>
+				</li>
+				<li id="report"><a id="show_report" class="active" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('THE_CUSTOMER_STATISTICS')}</a></li>
+				<li id="source"><a id="show_source" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('SOURCES_OF_STATISTICAL_FIGURE')}</a></li>
+				<li id="scale"><a id="show_scale" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('THE_CUSTOMER_OF_STATISTICAL')}</a></li>
+				<li id="industry"><a id="show_industry" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('INDUSTRY_CUSTOMERS_STATISTICS')}</a></li> 
+			</ul>
+		</div>
+		<div class="span10">
+			<div id="report_content">
+				<table class="table table-hover table-striped">
+					<thead>
+						<tr>
+							<th>{:L('EMPLOYEE')}</th>
+							<th>{:L('ADD_THE_CUSTOMER')}</th>
+							<th>{:L('RESPONSIBLE_FOR_THE_CUSTOMER')}</th>
+							<th>{:L('CREATE_OPPORTUNITIES_FOR_CUSTOMERS')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr style="background:yellow">
+							<td>{:L('SUM_TO')}</td>
+							<td colspan="4"><span style="color:red;">{:L('CUSTOMER_COUNT',array($total_report['add_count'],$total_report['own_count'],$total_report['success_count']))}</span></td>
+						</tr>
+					</tfoot>
+					<tbody>
+						<volist name="reportList" id="vo">
+						<tr>
+							<td><a class="role_info" rel="{$vo.user.role_id}" href="javascript:void(0)">{$vo.user.user_name}</a></td>
+							<td>{$vo.add_count}</td>
+							<td><a href="{:U('customer/index')}&field=owner_role_id&search={$vo.user.role_id}">{$vo.own_count}</a></td>
+							<td>{$vo.success_count}</td>
+						</tr>
+						</volist>
+					</tbody>
+				</table>
+			</div>
+			
+			<div id="source_content" class="hidden">
+				<div id="an_chart" class="span6">
+					<div id="canvas_source" style="min-width: 500px; height: 500px;margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+				</div>
+			</div>
+			<div id="scale_content" class="hidden">
+				<div id="an_chart" class="span4">
+					<div id="canvas_employees"  style="min-width: 400px; height: 400px;">{:L('TEMPORARILY_NO_DATA')}</div>
+				</div>
+				<div id="an_chart" class="span4">
+					<div id="canvas_revenue" style="min-width: 400px; height: 400px;">{:L('TEMPORARILY_NO_DATA')}</div>
+				</div>
+			</div>
+			<div id="industry_content" class="hidden">
+				<div id="an_chart" class="span6">
+					<div id="canvas_industry"  style="min-width: 500px; height: 500px;margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-role-info" title="{:L('EMPLOYEE_INFORMATION')}">loading...</div>
+<script type="text/javascript">
+	<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+	$("#dialog-role-info").dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight: 400,
+		position: ["center",100]
+	});
+	
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	
+	$(function () {
+		<if condition="$total_report.add_count gt 0">
+			var chart1;
+			// Build the chart1
+			
+			$('#canvas_source').highcharts({
+				chart1: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false
+				},
+				title: {
+					text: '{:L('CUSTOMER_SOURCE_STATISTICS_SUM_TO',array($total_report['add_count']))}'
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>',
+					percentageDecimals: 1
+				},
+				plotOptions: {
+					pie: {
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: false
+						},
+						showInLegend: true
+					}
+				},
+				series: [{
+					type: 'pie',
+					name: '{:L('THE_SOURCE_OF')}',
+					data: [
+						{$source_count}
+					]
+				}]
+			});
+		
+		var chart2;
+		// Build the chart2
+		$('#canvas_revenue').highcharts({
+			chart2: {
+				plotBackgroundColor: null,
+				plotBorderWidth: null,
+				plotShadow: false
+			},
+			title: {
+				text: '{:L('CUSTOMER_TURNOVER_STATISTICS_SUM_TO',array($total_report['add_count']))}'
+			},
+			tooltip: {
+				pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>',
+				percentageDecimals: 1
+			},
+			plotOptions: {
+				pie: {
+					allowPointSelect: true,
+					cursor: 'pointer',
+					dataLabels: {
+						enabled: false
+					},
+					showInLegend: true
+				}
+			},
+			series: [{
+				type: 'pie',
+				name: '{:L('TURNOVER_ACCOUNTED_FOR')}',
+				data: [
+					{$revenue_count}
+				]
+			}]
+		});
+		
+		var chart3;
+		// Build the chart3
+		$('#canvas_employees').highcharts({
+			chart3: {
+				plotBackgroundColor: null,
+				plotBorderWidth: null,
+				plotShadow: false
+			},
+			title: {
+				text: '{:L('CUSTOMERS_EMPLOYEES_STATISTICS_SUM_TO',array($total_report['add_count']))}'
+			},
+			tooltip: {
+				pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>',
+				percentageDecimals: 1
+			},
+			plotOptions: {
+				pie: {
+					allowPointSelect: true,
+					cursor: 'pointer',
+					dataLabels: {
+						enabled: false
+					},
+					showInLegend: true
+				}
+			},
+			series: [{
+				type: 'pie',
+				name: '{:L('STAGE_OF')}',
+				data: [
+					{$employees_count}
+				]
+			}]
+		});
+
+		var chart4;
+		// Build the chart4
+		$('#canvas_industry').highcharts({
+			chart4: {
+				plotBackgroundColor: null,
+				plotBorderWidth: null,
+				plotShadow: false
+			},
+			title: {
+				text: '{:L('INDUSTRY_CUSTOMERS_STATISTICS_SUM_TO',array($total_report['add_count']))}'
+			},
+			tooltip: {
+				pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>',
+				percentageDecimals: 1
+			},
+			plotOptions: {
+				pie: {
+					allowPointSelect: true,
+					cursor: 'pointer',
+					dataLabels: {
+						enabled: false
+					},
+					showInLegend: true
+				}
+			},
+			series: [{
+				type: 'pie',
+				name: '{:L('INDUSTRY_ACCOUNTED_FOR')}',
+				data: [
+					{$industry_count}
+				]
+			}]
+		});
+		</if>
+	});
+	
+	function changeRole(){
+		department_id = $("#department option:selected").val();
+		$.ajax({
+			type:'get',
+			url:'index.php?m=user&a=getrolebydepartment&department_id='+department_id,
+			async:true,
+			success:function(data){
+				options = '<option value="all">{:L('ALL')}</option>';
+				if(data.data != null){
+					$.each(data.data, function(k, v){
+						options += '<option value="'+v.role_id+'">'+v.role_name+"-"+v.user_name+'</option>';
+					});
+				}
+				$("#role").html(options);
+				<if condition="$_GET['role']">
+				$("#role option[value='{$Think.get.role}']").prop("selected", true);
+				</if>
+			},
+			dataType:'json'});
+	}
+	
+	<if condition="$_GET['department'] and $_GET['department'] neq 'all'">
+	$("#department option[value='{$Think.get.department}']").prop("selected", true); 
+	changeRole();
+	</if>
+	<if condition="$_GET['department'] eq 'all'">
+	$("#role option[value='{$Think.get.role}']").prop("selected", true);
+	</if>
+	
+	$(function(){
+		$("#show_report").click(function(){
+			$(this).addClass('active');
+			$("#show_scale").removeClass('active');
+			$("#show_source").removeClass('active');
+			$("#show_industry").removeClass('active');
+			$("#report_content").removeClass('hidden');
+			$("#industry_content").addClass('hidden');
+			$("#scale_content").addClass('hidden');
+			$("#source_content").addClass('hidden');
+		});
+		$("#show_scale").click(function(){
+			$(this).addClass('active');
+			$("#show_report").removeClass('active');
+			$("#show_source").removeClass('active');
+			$("#show_industry").removeClass('active');
+			$("#scale_content").removeClass('hidden');
+			$("#industry_content").addClass('hidden');
+			$("#source_content").addClass('hidden');
+			$("#report_content").addClass('hidden');
+		});
+		$("#show_source").click(function(){
+			$(this).addClass('active');
+			$("#show_report").removeClass('active');
+			$("#show_scale").removeClass('active');
+			$("#show_industry").removeClass('active');
+			$("#source_content").removeClass('hidden');
+			$("#industry_content").addClass('hidden');
+			$("#scale_content").addClass('hidden');
+			$("#report_content").addClass('hidden');
+		});
+		$("#show_industry").click(function(){
+			$(this).addClass('active');
+			$("#show_report").removeClass('active');
+			$("#show_source").removeClass('active');
+			$("#show_scale").removeClass('active');
+			$("#industry_content").removeClass('hidden');
+			$("#report_content").addClass('hidden');
+			$("#source_content").addClass('hidden');
+			$("#scale_content").addClass('hidden');
+		});
+	});
+</script>
+<include file="Public:footer" />

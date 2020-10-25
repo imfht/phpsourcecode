@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>我的订单</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body>
+<header class="hui-header">
+ <div id="hui-back"></div>
+ <h1>我的订单</h1>
+ <a class="hui-header-icon hui-header-home"  href="#{$smarty.const.ACT}#"></a> </header>
+<div class="hui-common-title"> </div>
+<div class="hui-tab">
+ <div class="hui-tab-title">
+  <div>待付款</div>
+  <div>待发货</div>
+  <div>待收货</div>
+  <div>已完成</div>
+ </div>
+ <div id="refreshContainer" class="hui-refresh">
+  <div class="hui-refresh-icon"></div>
+  <div class="hui-refresh-content">
+   <div class="hui-tab-body">
+    <div class="hui-tab-body-items">
+     <div class="hui-tab-item product-order-list"><div class="product-order-none"><span class="iconfont-footer icon-shangpinkuozhan"></span><br><a href="#{$smarty.const.ACT}#" class="my-btn-black">到处去逛逛吧</a></div></div>
+     <div class="hui-tab-item product-order-list"><div class="product-order-none"><span class="iconfont-footer icon-shangpinkuozhan"></span><br><a href="#{$smarty.const.ACT}#" class="my-btn-black">到处去逛逛吧</a></div></div>
+     <div class="hui-tab-item product-order-list"><div class="product-order-none"><span class="iconfont-footer icon-shangpinkuozhan"></span><br><a href="#{$smarty.const.ACT}#" class="my-btn-black">到处去逛逛吧</a></div></div>
+     <div class="hui-tab-item product-order-list"><div class="product-order-none"><span class="iconfont-footer icon-shangpinkuozhan"></span><br><a href="#{$smarty.const.ACT}#" class="my-btn-black">到处去逛逛吧</a></div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<input type="hidden" id="tabindex" value="0">
+<input type="hidden" id="ajaxurl" value="#{$smarty.const.ACT}#/home/WxProductOrder/product_order_my_json/status/0/">
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui.js" type="text/javascript" charset="utf-8"></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui-tab.js" type="text/javascript" charset="utf-8"></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui-refresh-load-more.js" type="text/javascript"></script>
+</body>
+</html>
+<script type="text/javascript">
+hui.tab('.hui-tab');
+hui('.hui-tab .hui-tab-title div').click(function(){
+	hui.loading('加载中...');
+	
+	var tabindex=hui(this).index();
+	hui('#tabindex').val(tabindex);
+	var tabindex=hui('#tabindex').val();//表示处理每几个tab
+	
+	if(tabindex==1){//待发货
+		var ajaxurl="#{$smarty.const.ACT}#/home/WxProductOrder/product_order_my_json/status/1/";
+	}else if(tabindex==2){//待收货
+		var ajaxurl="#{$smarty.const.ACT}#/home/WxProductOrder/product_order_my_json/status/2/";
+	}else if(tabindex==3){//已完成
+		var ajaxurl="#{$smarty.const.ACT}#/home/WxProductOrder/product_order_my_json/status/3/";
+	}else{//status=0
+		var ajaxurl="#{$smarty.const.ACT}#/home/WxProductOrder/product_order_my_json/status/0/";
+	}
+	hui('#ajaxurl').val(ajaxurl);
+	refresh();
+	//console.log(tabindex);
+	console.log(ajaxurl);
+	//alert(tabindex);
+	
+ 	//alert(hui(this).index());
+})
+	
+//加载列表
+var page = 1;
+hui.refresh('#refreshContainer', refresh);
+hui.loadMore(getMore);
+//加载更多
+function getMore(){
+	var tabindex=hui('#tabindex').val();
+	var tabbody =hui('.hui-tab .hui-tab-body .hui-tab-body-items .hui-tab-item');
+	var actbody =tabbody.eq(tabindex);
+	var ajaxurl =hui('#ajaxurl').val();
+	
+	hui.ajax({
+		type : 'POST',
+		url : ajaxurl,
+		data : {pageNum:page},
+		backType:'json',
+		beforeSend : function(){hui.loading();},
+		complete : function(){hui.closeLoading();},
+		success : function(data){
+			if(data.code=='sucess'){
+            //判断加载完毕
+            if(data.list == 'null'){
+                hui.endLoadMore(true, '已经到头了...');
+                return false;
+            }
+				
+            for(var i = 0; i < data.list.length; i++){
+					   var htmltxt='';
+                var li = document.createElement('li');
+						htmltxt		+=    '<div class="ord">订单号：'+data.list[i]['ordernumber']+'<span class="sta">'+data.list[i]['status_name']+'<span></div>';
+						htmltxt		+=    '<div class="hui-row txt">';
+						htmltxt		+=      '<div class="hui-col-3 img"><img src="'+data.list[i]['img1']+'" /></div>';
+						htmltxt		+=      '<div class="hui-col-7">'+data.list[i]['name']+'</div>';
+						htmltxt		+=      '<div class="hui-col-2 hui-tr">￥'+data.list[i]['price']+'<br>X'+data.list[i]['number']+'</div>';
+						htmltxt		+=    '</div>';
+						htmltxt		+=    ' <div class="tot hui-tr">';
+						htmltxt		+=  		'共'+data.list[i]['number']+'个商品 实付：￥'+data.list[i]['money'];
+						htmltxt		+=    '</div>';
+						htmltxt		+=    ' <div class="opr hui-tr">';
+						htmltxt		+=  		'<span class="my-btn-black">取消订单</span> <span class="my-btn-red">支付订单</span>';
+						htmltxt		+=    '</div>';
+						li.innerHTML= htmltxt;
+                hui(li).appendTo(actbody);
+            }
+			}else{
+				hui.upToast(data.message);
+			}
+			page++;
+        hui.endLoadMore();
+		},
+		error : function(e){
+			console.log(JSON.stringify(e));
+			hui.iconToast('读取消息失败', 'warn');
+		}
+	});
+}
+//下拉刷新
+function refresh(){
+	var tabindex=hui('#tabindex').val();
+	var tabbody =hui('.hui-tab .hui-tab-body .hui-tab-body-items .hui-tab-item');
+	var actbody =tabbody.eq(tabindex);
+	var ajaxurl =hui('#ajaxurl').val();
+
+	//alert(tabbody.length);
+	
+	//请求数据
+	hui.ajax({
+		type : 'POST',
+		url : ajaxurl,
+		data : {pageNum:1},
+		backType:'json',
+		beforeSend : function(){hui.loading();},
+		complete : function(){hui.closeLoading();},
+		success : function(data){
+			if(data.code=='sucess'){
+            //判断加载完毕
+            if(data.list == 'null'){
+                hui.endLoadMore(true, '已经到头了...');
+                return false;
+            }
+				 var htmltxt='';
+            for(var i = 0; i < data.list.length; i++){ 
+                var li = document.createElement('li');
+						htmltxt		+= '<li>';
+						htmltxt		+=    '<div class="ord">订单号：'+data.list[i]['ordernumber']+'<span class="sta">'+data.list[i]['status_name']+'<span></div>';
+						htmltxt		+=    '<div class="hui-row txt">';
+						htmltxt		+=      '<div class="hui-col-3 img"><img src="'+data.list[i]['img1']+'" /></div>';
+						htmltxt		+=      '<div class="hui-col-7">'+data.list[i]['name']+'</div>';
+						htmltxt		+=      '<div class="hui-col-2 hui-tr">￥'+data.list[i]['price']+'<br>X'+data.list[i]['number']+'</div>';
+						htmltxt		+=    '</div>';
+						htmltxt		+=    ' <div class="tot hui-tr">';
+						htmltxt		+=  		'共'+data.list[i]['number']+'个商品 实付：￥'+data.list[i]['money'];
+						htmltxt		+=    '</div>';
+						htmltxt		+=    ' <div class="opr hui-tr">';
+						htmltxt		+=  		'<span class="my-btn-black">取消订单</span> <span class="my-btn-red">支付订单</span>';
+						htmltxt		+=    '</div>';
+						htmltxt		+= '</li>';
+            }
+				 page = 2;
+				 actbody.html(htmltxt);
+			}else{
+				hui.upToast(data.message);
+			}
+			//结束刷新
+			hui.endRefresh();
+			//重置加载更多状态
+			hui.resetLoadMore();
+		},
+		error : function(e){
+			console.log(JSON.stringify(e));
+			hui.iconToast('读取消息失败', 'warn');
+		}
+	});
+}		
+function product_send(id,status){
+	hui.ajax({
+		type : 'POST',
+		url : '#{$smarty.const.ACT}#/home/WxProductOrder/product_order_send/',
+		data : {id:id,status:status},
+		backType:'json',
+		beforeSend : function(){hui.loading();},
+		complete : function(){hui.closeLoading();},
+		success : function(data){
+			if(data.code=='sucess'){
+				//hui.upToast(data.message);
+				var url="#{$smarty.const.ACT}#/home/WxProductOrder/product_order_my/";
+				window.location.href=url;
+			}else{
+				hui.upToast(data.message);
+			}
+		},
+		error : function(e){
+			console.log(JSON.stringify(e));
+			hui.iconToast('读取消息失败', 'warn');
+		}
+	});
+}
+	
+</script>

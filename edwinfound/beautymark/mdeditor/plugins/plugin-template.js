@@ -1,0 +1,1 @@
+(function(){var b=function(a){a.fn.htmlEntities=function(){}};"function"===typeof require&&"object"===typeof exports&&"object"===typeof module?module.exports=b:"function"===typeof define?define.amd?define(["editormd"],function(a){b(a)}):define(function(a){a=a("./../../editormd");b(a)}):b(window.editormd)})();

@@ -1,0 +1,167 @@
+<extend name="Layout/ins_popup" />
+<block name="content">
+	{:W('PageHeader/popup',array('name'=>'上传头像','search'=>'N'))}
+	<div id="uploader">
+		<input type="hidden" id="avatarUpload" value="" />
+		<input type="hidden" id="img" name="img" />
+		<input type="hidden" id="id" name="id" value="{$id}"/>
+		<input type="hidden" id="x" name="x" />
+		<input type="hidden" id="y" name="y" />
+		<input type="hidden" id="w" name="w" />
+		<input type="hidden" id="h" name="h" />
+		<div class="ul_table hidden">
+			<ul id="file_list">
+				<li class="thead">
+					<span class="del">删除</span>
+					<span class="size">大小</span>
+					<span class="auto autocut">文件名</span>
+				</li>
+				<notempty name="file_list">
+					<volist name="file_list" id="file">
+						<li class="tbody" id="{$file.id}" add_file="{$file.id}" size="{$file.size}" filename="{$file.name}">
+							<div class="loading"></div>
+							<div class="data">
+								<span class="del text-center"> <a class="link del">删除</a> </span>
+								<span class="size" >{$file.size|reunit}</span>
+								<span class="auto autocut" title="{$file.name}"></span>
+							</div>
+						</li>
+					</volist>
+				</notempty>
+			</ul>
+		</div>
+		<div class="well clearfix">
+			<div class="imgchoose col-xs-9">
+				编辑头像：
+				<br/>
+				<img src="" id="target" style="max-width:440px;height:auto;"/>
+			</div>
+			<div class="col-xs-3" >				
+				<div class="text-center">
+					<a id="pickfiles" href="javascript:;" class="btn btn-sm btn-primary">上传头像</a>
+				</div>
+				<br>
+				<div class="text-center hidden">
+					当前头像：
+					<br />
+					<div><img class="current"  src="__ROOT__/{$pic}" />
+					</div>
+				</div>
+				<div class="text-center">
+					头像预览：
+					<br />
+					<div style="width:120px;height:120px;overflow:hidden;margin-left: auto;margin-right: auto;"><img class="preview" id="preview" src="" />
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<link rel="stylesheet" href="__INS__/css/plugins/jcrop/jquery.Jcrop.css" type="text/css" />
+	<script type="text/javascript" src="__INS__/js/plugins/plupload/plupload.full.min.js"></script>
+	<script type="text/javascript" src="__INS__/js/plugins/jcrop/jquery.Jcrop.min.js"></script>
+	<script>
+	
+	var uploader = new plupload.Uploader({
+		runtimes : 'html5,flash,html4',
+		browse_button : 'pickfiles', // you can pass in id...
+		container: document.getElementById('uploader'), // ... or DOM Element itself
+		url : upload_url,
+		flash_swf_url : "__INS__/js/plugins/plupload/Moxie.swf",
+		filters : {
+			max_file_size : '10mb',
+			mime_types: [{title : "Image files", extensions : "jpg,gif,png"},]
+		},
+		init: {		
+			FilesAdded: function(up, files) {
+				up.start();
+			},
+			FileUploaded: function(up,file,data) {
+				var myObject = eval('(' + data.response + ')');
+				if(myObject.status){
+					$("#img").val(myObject.path);
+					$("#target").attr("src",myObject.path);
+					$(".preview").attr("src",myObject.path);
+					$('#target').Jcrop({
+						minSize : [60, 60],
+						setSelect : [0, 0, 120, 120],
+						onChange : updatePreview,
+						onSelect : updatePreview,
+						onSelect : updateCoords,
+						aspectRatio : 1
+					}, function(){					
+						var bounds = this.getBounds();
+						boundx = bounds[0];
+						boundy = bounds[1];	
+						jcrop_api = this;
+					});
+					$(".imgchoose").show(1000);
+				}else{
+					alert(myObject.info);
+				}
+			}
+		}
+	});
+
+	uploader.init();
+
+	//头像裁剪
+	var jcrop_api, boundx, boundy;
+	
+	function updateCoords(c) {
+		$('#x').val(c.x);
+		$('#y').val(c.y);
+		$('#w').val(c.w);
+		$('#h').val(c.h);
+	};
+	
+	function updatePreview(c) {
+		if (parseInt(c.w) > 0){
+			var rx = 120 / c.w;
+			var ry = 120 / c.h;
+			$('#preview').css({"width" : Math.round(rx * boundx) + 'px',"height" : Math.round(ry * boundy) + 'px',"marginLeft" : '-' + Math.round(rx * c.x) + 'px',"marginTop" : '-' + Math.round(ry * c.y) + 'px',});
+		}
+	};
+	
+	function checkCoords(){
+		if(parseInt($('#w').val())){
+			return true;	
+		}else{
+			alert('请选择图片上合适的区域');
+			return false;	
+		}
+	};
+	
+	function save() {
+		var img = $("#img").val();
+		var x = $("#x").val();
+		var y = $("#y").val();
+		var w = $("#w").val();
+		var h = $("#h").val();
+		var id = $("#id").val();
+		if (checkCoords()) {
+			$.ajax({
+				type : "POST",
+				url : "{:U('resize_img')}",
+				data : {
+					"img" : img,
+					"x" : x,
+					"y" : y,
+					"w" : w,
+					"h" : h,
+					"id" : id
+				},
+				dataType : "json",
+				success : function(msg) {
+					if (msg.result_code == 1) {
+						$("#emp_pic", parent.document).attr("src", msg.result_des + '?t=' + Math.random());
+						$("#pic", parent.document).val(msg.result_des);
+					}
+					myclose();
+				}
+			});
+		}
+	}
+	</script>
+</block>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+<head>
+    <meta charset="UTF-8">
+    <title>{$devName}&#xe602;设备ID：{$serial_num} &#xe617;&#xe617;&#xe617;</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="stylesheet" href="/css/font.css">
+    <link rel="stylesheet" href="/css/xadmin.css">
+    <script src="/lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/js/xadmin.js"></script>
+    <script type="text/javascript" src="/js/echarts.min.js"></script>
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        .layui-card-header{
+            border-bottom: 0px solid #f6f6f6;
+        }
+        .layui-table thead span {
+            /*background-color: #acd3ed;*/
+            font-size: 15px;
+        }
+
+        .layui-table tbody tr td div {
+            font-size: 14px;
+        }
+
+        .layui-table tbody tr:hover {
+            background-color: #ffe6cc;
+        }
+
+        .layui-table tbody tr:hover td div {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body class="layui-anim layui-anim-scale flag" style="display: none"><br/>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div style="background-image: linear-gradient(rgb(255,255,255),rgba(255,255,255,0));margin-bottom: 12px">
+            <fieldset class="layui-elem-field layui-field-title">
+                <legend class="layui-icon">{$devName}&#xe602;设备ID：{$serial_num} &#xe617;&#xe617;&#xe617;</legend>
+            </fieldset>
+        </div>
+
+        <div class="layui-col-sm12 layui-col-md12" >
+            <div class="layui-card">
+                <div class="layui-card-header" style="background-image: linear-gradient(to right , #94df9a , #abffb1);color: #070707">设置数据刷新频率（默认为3s）</div>
+                <div class="layui-card-body" style="background-image: linear-gradient(to right, #abffb1 , #4acc5c);">
+                    <button id="up1" class="layui-btn layui-btn-radius"
+                            style="width: 120px;height: 40px;font-size: 20px;margin-bottom: 7px;margin-left: 10px">1s
+                    </button>
+                    <button id="up2" class="layui-btn layui-btn-radius"
+                            style="width: 120px;height: 40px;font-size: 20px;margin-bottom: 7px">3s
+                    </button>
+                    <button id="up3" class="layui-btn layui-btn-radius"
+                            style="width: 120px;height: 40px;font-size: 20px;margin-bottom: 7px">7s
+                    </button>
+                    <button id="up4" class="layui-btn layui-btn-radius"
+                            style="width: 120px;height: 40px;font-size: 20px;margin-bottom: 7px">60s
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-sm12 layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header"style="background-image: linear-gradient(#c9bbdd , #ffffff);">实时数据</div>
+                <div class="layui-card-body" style="min-height: 280px;">
+                    <div id="main1" class="layui-col-sm12" style="height: 300px"></div>
+
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-sm12 layui-col-md8">
+            <div class="layui-card">
+                <div class="layui-card-header" style="background-image: linear-gradient(#7da9dd , #ffffff);">最近数据</div>
+                <div class="layui-card-body" style="min-height: 280px;">
+                    <div id="main2" class="layui-col-sm12" style="height: 300px;"></div>
+
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-sm12 layui-col-md12" style="min-height: 837px">
+
+            <div class="layui-card"  >
+                <div class="layui-card-header" style="background-image: linear-gradient(#ffe6cc , #ffffff);">历史数据
+                    <button class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:6px;float:right"
+                             id="refresh" title="刷新">
+                        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+                    </button>
+                </div>
+
+                <div class="layui-card-body" style="background-image: linear-gradient(#ffffff , #ffe6cc);">
+                <form class="layui-form layui-col-space5" action="" id="myForm">
+                        <div class="layui-inline">
+                            <label class="layui-form-label" style="padding: 5px ;width: 90px">日期范围查询</label>
+                            <div class="layui-input-inline">
+                                <input style="width: 260px" type="text" id="selectDate" name="selectDate"
+                                       lay-verify="selectDate" placeholder="请选择要查询数据的日期范围" autocomplete="off"
+                                       class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+
+                            <button class="layui-btn" lay-submit="" lay-filter="search">
+                                <i class="layui-icon">&#xe615;</i>查找
+                            </button>
+                        </div>
+                    </form>
+                    <table id="demo" lay-filter="demo"></table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-radius layui-btn-lg" lay-event="optimize_sql"
+                style="background-color: #57ddc2">
+            <i class="layui-icon layui-icon-senior"></i>优化数据库
+        </button>
+
+    </div>
+</script>
+<script type="text/javascript">
+    var deviceName = '{$devName}';
+    var serial_num = '{$serial_num}';
+    layui.use(['table', 'form', 'layer', 'jquery', 'laydate'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var laydate = layui.laydate
+        var updateTime = 3000;
+
+        //动态显示
+
+        parent.layui.notice.remove();
+        parent.layui.notice.info('序列号为：' + serial_num + '的' + deviceName + '实时动态界面界面', '已进入', parent.noticeOpt1);
+        // setTimeout(function () {
+        //     $('.flag').show();
+        //     myChart1.resize();
+        //     myChart2.resize();
+        // }, 30);
+        $('.flag').show();
+        // myChart1.resize();
+        // myChart2.resize();
+
+        $("#refresh").click(function () {
+            $("#myForm")[0].reset();
+            layui.form.render();
+            parent.layui.notice.remove();
+            parent.layui.notice.success("历史数据列表已校准", "<div class = 'layui-icon layui-icon-heart-fill'> 同步成功</div>", parent.noticeOpt6);
+            table.render({
+                elem: '#demo'
+                // , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+                , url: '/index/Tools/device_detailMsg?deviceName=' + deviceName + '&serial_num=' + serial_num //数据接口
+                , loading: true
+                , size: 'sm'
+                , page: {
+                    curr: 1
+                    , layout: ['limit', 'prev', 'page', 'next', 'skip']//自定义布局顺序
+                    , limit: 20	//初始  每页几条数据
+                    , groups: 5 	//最多几个跳页按钮
+                    , prev: '上一页'
+                    , next: '下一页'
+                    // , first: false //不显示首页
+                    // , last: false //不显示尾页
+                }
+                , cols: [[ //表头
+                    {field: 'time', title: '时间', align: 'center', minWidth: 120}
+                    , {field: 'data', title: '数据', minWidth: 120, align: 'center'}
+
+                ]]
+            });
+        });
+
+
+
+        //日期时间初始化
+        laydate.render({
+            elem: '#selectDate'
+            , trigger: 'click' //采用click弹出
+            , type: 'datetime'
+            , range: '~'
+            , format: 'yyyy-MM-dd HH:mm:ss'
+            , theme: 'grid'
+
+        });
+        // 自定义验证规则
+        form.verify({
+            selectDate: function (value) {
+                if (!value) {
+                    // console.log(value);
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('请选择要查询数据的日期范围', '操作异常', parent.noticeOpt5);
+                    return '请选择要查询数据的日期范围！';
+                }
+                if (value.length !== 41) {
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('格式错误，请在日期选择框中选择日期范围，不要手动输入！', '操作异常', parent.noticeOpt5);
+                    return '格式错误，请在日期选择框中选择日期范围，不要手动输入！'
+                }
+                // console.log(value.length);
+            },
+
+        });
+        //搜索历史数据
+        form.on('submit(search)', function (data) {
+            // console.log(data.field.selectDate.split(' ~ '));
+            var selectDate = data.field.selectDate.split(' ~ ');
+            // console.log(selectDate[0]);
+            // console.log(selectDate[1]);
+            layer.msg('搜索中', {time: 500});
+            var load = layer.load();
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    // deviceName: deviceName
+                    // ,serial_num: serial_num
+                    startDate: selectDate[0]
+                    , endDate: selectDate[1]
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+                , done: function (res, curr, count) {
+                    layer.close(load);
+                    parent.layui.notice.remove();
+                    if (count === 0) {
+                        parent.layui.notice.success(res.msg, '搜索完成', parent.noticeOpt4);
+                        layer.msg('搜索完成，' + res.msg, {time: 1500});
+                    } else {
+                        parent.layui.notice.success('找到' + count + '条数据', '搜索完成', parent.noticeOpt4);
+                        layer.msg('搜索完成，找到' + count + '条数据', {time: 1500});
+                    }
+                }
+            });
+            return false;
+        });
+
+        //设置刷新图标的时间间隔
+        $("#up1").click(function () {
+            updateTime = 1000;
+            clearInterval(interval1);
+            interval1 = setInterval(update, updateTime);
+            layer.msg('已重新设置间隔为1s', {icon: 6, time: 1000});
+            update();
+        });
+        $("#up2").click(function () {
+            updateTime = 3000;
+            clearInterval(interval1);
+            interval1 = setInterval(update, updateTime);
+            layer.msg('已重新设置间隔为3s', {icon: 6, time: 1000});
+            update();
+        });
+        $("#up3").click(function () {
+            updateTime = 7000;
+            clearInterval(interval1);
+            interval1 = setInterval(update, updateTime);
+            layer.msg('已重新设置间隔为7s', {icon: 6, time: 1000});
+            update();
+        });
+        $("#up4").click(function () {
+            updateTime = 60000;
+            clearInterval(interval1);
+            interval1 = setInterval(update, updateTime);
+            layer.msg('已重新设置间隔为60s', {icon: 6, time: 1000});
+            update();
+        });
+        //当前数据
+        var myChart1 = echarts.init(document.getElementById('main1'));
+        var option1 = {
+            tooltip: {
+                formatter: "{a} <br/>{b} : {c}{$unit}"
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            series: [
+                {
+                    name: '当前数据',
+                    type: 'gauge',
+                    detail: {formatter: '{value}{$unit}'},
+                    data: [{value: 0}],
+                    splitNumber: 10
+                }
+            ]
+        };
+        //近期数据
+        var myChart2 = echarts.init(document.getElementById('main2'));
+        var option2 = {
+            tooltip: {
+                trigger: 'axis',
+                showContent: true,
+                formatter: "{a} <br/>{b} : {c}{$unit}"
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: ['loading...', 'loading...', 'loading...', 'loading...', 'loading...', 'loading...', 'loading...']
+            },
+            yAxis: {
+                type: 'value',
+                splitLine: {show: true}
+            },
+            series: [
+                {
+                    name: '近期数据',
+                    data: [0, 0, 0, 0, 0, 0, 0],
+                    type: 'line',
+                    itemStyle: {normal: {label: {show: true}}},
+                    areaStyle: {}
+                }
+            ],
+            color: '#93ccff'
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart1.setOption(option1);
+        myChart2.setOption(option2);
+        update();
+        layer.msg('当前数据更新间隔为3s', {icon: 6, time: 2000});
+        var interval1 = setInterval(update, updateTime);
+
+        function update() {
+            // var timestamp = Date.parse(new Date());
+            $.ajax({
+                type: "POST",
+                url: "/index/Tools/echarts",
+                data: {
+                    deviceName: deviceName,
+                    serial_num: serial_num,
+                },
+                success: function (msg) {
+                    // console.log(timestampToTime(msg[1].time));
+                    option1.series[0].data[0].value = msg[0].data;
+                    // console.log(msg);
+                    for (var i = 0; i < 7; i++) {
+                        msg[i].time = timestampToTime(msg[i].time);
+                    }
+                    option2.series[0].data[6] = msg[0].data;
+                    option2.xAxis.data[6] = msg[0].time;
+                    option2.series[0].data[5] = msg[1].data;
+                    option2.xAxis.data[5] = msg[1].time;
+                    option2.series[0].data[4] = msg[2].data;
+                    option2.xAxis.data[4] = msg[2].time;
+                    option2.series[0].data[3] = msg[3].data;
+                    option2.xAxis.data[3] = msg[3].time;
+                    option2.series[0].data[2] = msg[4].data;
+                    option2.xAxis.data[2] = msg[4].time;
+                    option2.series[0].data[1] = msg[5].data;
+                    option2.xAxis.data[1] = msg[5].time;
+                    option2.series[0].data[0] = msg[6].data;
+                    option2.xAxis.data[0] = msg[6].time;
+                    myChart1.setOption(option1);
+                    myChart2.setOption(option2);
+                },
+                error: function () {
+                    layer.alert('数据传输失败，请联系后台管理员！', {icon: 5})
+                }
+            });
+
+        }
+
+//根据窗口的大小变动图表 --- 重点
+        window.onresize = function () {
+            myChart1.resize();
+            myChart2.resize();
+
+        };
+
+        //时间戳转换成时间
+        function timestampToTime(timestamp) {
+            var date = new Date(timestamp * 1000);//时间戳为10位需*1000，时间戳为13位的话不需乘1000
+            var Y = date.getFullYear() + '-';
+            var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-';
+            var D = (date.getDate() < 10 ? '0' + date.getDate() : date.getDate()) + ' ';
+            var h = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours()) + ':';
+            var m = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()) + ':';
+            var s = (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
+            return h + m + s;
+        }
+
+        // 初始化历史数据表
+        var tableIns = table.render({
+            elem: '#demo'
+            // , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+            , url: '/index/Tools/device_detailMsg?deviceName=' + deviceName + '&serial_num=' + serial_num //数据接口
+            , loading: true
+            , size: 'sm'
+            , page: {
+                curr: 1
+                , layout: ['limit', 'prev', 'page', 'next', 'skip']//自定义布局顺序
+                , limit: 20	//初始  每页几条数据
+                , groups: 5 	//最多几个跳页按钮
+                , prev: '上一页'
+                , next: '下一页'
+                // , first: false //不显示首页
+                // , last: false //不显示尾页
+            }
+            , cols: [[ //表头
+                {field: 'time', title: '时间', align: 'center', minWidth: 120}
+                , {field: 'data', title: '数据', minWidth: 120, align: 'center'}
+
+            ]]
+            //     , done: function (res, curr, count) {
+            //         //如果是异步请求数据方式，res即为你接口返回的信息。
+            //         //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+            //         // console.log(res.data);
+            //
+            //         //得到数据总量
+            //         // console.log(count);
+            //     }
+        });
+
+        table.on('toolbar(demo)', function (obj) {
+            if (obj.event === 'refresh') {
+                location.reload();
+            }
+        });
+
+
+    });
+
+
+</script>
+
+</body>
+</html>

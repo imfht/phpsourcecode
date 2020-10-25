@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Document</title>
+		<link rel="stylesheet" href="../../../../../css/base.css">
+		<style type="text/css" >
+			fieldset{ padding: 20px; font-family: 'Microsoft Yahei';}
+			.control-group{ margin-bottom: 10px; }
+			.xcr {color: #E26F50;}
+			.span6 { width: 50%; float: left; }
+		</style>
+	</head>
+	<body>
+		<fieldset>
+			<form class="form-horizontal">
+				<div class="control-group">
+					<label for="control_fileupload_title"><var id="lang_control_title"></var> <span class="xcr">*</span></label>
+					<div>
+						<input type="text" id="control_fileupload_title">
+					</div>
+				</div>
+			</form>
+		</fieldset>
+		<script src="../../../../src/core.js"></script>
+		<script src="../../../../src/base.js"></script>
+		<script src="../../../../src/common.js"></script>
+		<script src="../fc.js"></script>
+		<script src="../internal_controls.js"></script>
+		<script>
+			var G = parent.G;
+			(function() {
+				// span元素内没有文本时，会被ueditor清掉，所以这里给予一个空格
+				var tpl = '' +  
+						'<ic data-id="<%=id%>" data-type="fileupload" data-title="<%=title%>" contenteditable="false">' +
+							'<button type="button" class="btn" title="<%=title%>">上传</button>' + 
+						'</ic>',
+						fc = new Fc(editor, tpl),
+						editing = UE.plugins['formcontrols'].editing,
+						oldData;
+
+				if (editing) {
+					oldData = fc.getControlData(editing);
+					$G('control_fileupload_title').value = oldData.title;
+				}
+
+				dialog.onok = function() {
+					var data, title = $G('control_fileupload_title').value;
+					if ($.trim(title) === "") {
+						alert(editor.getLang("fc.noNameTip"));
+						return false;
+					}
+
+					data = {
+						title: title
+					};
+
+					if (editing) {
+						data.id = oldData.id;
+						fc.updateContorl(editing, data);
+						delete UE.plugins['formcontrols'].editing;
+						dialog.close();
+					} else {
+						$('body').waitingC();
+						$.get(Ibos.app.url('workflow/api/getNextItemID', {id: parent.Ibos.app.g('formid')}), function(res) {
+							$('body').stopWaiting();
+							if (res.isSuccess) {
+								data.id = res.id;
+								fc.addControl(data);
+								dialog.close();
+							} else {
+								alert(editor.getLang("fc.addError"));
+							}
+						}, 'json');
+					}
+					return false;
+				};
+			})();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,367 @@
+<extend name="Public/base"/>
+<block name="style">
+    <style>
+    .form-group {
+        width:400px;
+    }
+    .area_box {
+        width:400px;
+    }
+    .area_box span {
+        display:inline-block;
+        margin:0 5px 5px 5px;
+        padding:5px;
+        text-align: center;
+        border:1px solid #b6e5e9;
+        background-color: #ddf3f5;
+    }
+    .area_box a {
+        display:inline-block;
+        margin:0 5px 5px 5px;
+        padding:5px;
+        text-align: center;
+        border:1px solid #ffdea2;
+        background-color: #fff0d5;
+    }
+
+    .checkbox-inline {
+        margin-left:10px;
+    }
+
+    /* 为正在被拖动的条目应用半透明外观 */
+    #sortableList > tr.dragging {
+      visibility: visible;
+      opacity: .3;
+    }
+    </style>
+</block>
+<block name="body">
+<div class="main-title">
+    <h2><?php echo(!empty($delivery) ? '编辑': '添加')?>模板</h2>
+</div>
+
+
+<div class="with-padding">
+    <div class="form-group">
+      <label for="exampleInputAccount1">模板名称</label>
+      <input type="text" class="form-control" id="template_title" placeholder="必填" minlength="1" value="{$delivery.title}" >
+    </div>
+    <div class="form-group">
+        <label for="exampleInputAccount1">模板简述</label>
+        <div class="">
+            <textarea class="form-control" id="template_brief" rows="3" placeholder="可以输入多行文本">{$delivery.brief}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="">模板类型</label>
+        <div>
+            <label class="radio-inline">
+              <input type="radio" name="template-type" data-type="common" value="0"> 固定运费模板
+            </label>
+            <label class="radio-inline">
+               <input type="radio" name="template-type" data-type="custom" value="1"> 自定义运费模板
+            </label>
+        </div>
+    </div>
+
+    <div class="form-group common_tmp hide">
+        <label for="">固定运费模板</label>
+        <div class="">
+            <div class="input-group">
+                <span class="input-group-addon">￥</span>
+                <input type="number" class="form-control" name="common_cost" placeholder="￥10.00" value="{$delivery.rule.express.cost}">
+            </div>
+        </div>
+    </div>
+
+    <div class="custom_tmp hide">
+         <label for="">自定义运费模板</label>
+        <div class="">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>配送区域</th>
+                    <th>首N件</th>
+                    <th>首费（￥）</td>
+                    <th>续N件</th>
+                    <th>续费（￥）</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr data-type="normal_list">
+                        <td>默认地区</td>
+                        <td data-type="start">
+                            <div class="spe-td"><input class="form-control" type="text" value="{$delivery.rule.express.normal.start}" placeholder="必填"/></div>
+                        </td>
+                        <td data-type="start_fee">
+                            <div class="spe-td"><input class="form-control" type="text" value="{$delivery.rule.express.normal.start_fee}" placeholder="必填"/></div>
+                        </td>
+                        <td data-type="add">
+                            <div class="spe-td"><input class="form-control" type="text" value="{$delivery.rule.express.normal.add}" placeholder="必填"/></div>
+                        </td>
+                        <td data-type="add_fee">
+                            <div class="spe-td"><input class="form-control" type="text" value="{$delivery.rule.express.normal.add_fee}" placeholder="必填"/></div>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr class="add-more-delivery">
+                        <td colspan="6">为指定地区设置运费</td>
+                    </tr>
+                    <notempty name="delivery.rule.express.custom">
+                    <volist name="delivery.rule.express.custom" id="custom">
+                    <tr data-type="custom_list">
+                    <td data-type="area">
+                    <div class="area_box clearfix">
+                    <volist name="custom.area" id="area">
+                        <span data-id="{$area.id}" data-value="{$area.name}">{$area.name}</span>
+                    </volist>
+                    </div>
+                    </td>
+                    <td data-type="start">
+                        <div class="spe-td"><input class="form-control" type="text" value="{$custom.cost.start}" placeholder="必填"/></div>
+                    </td>
+                    <td data-type="start_fee">
+                        <div class="spe-td"><input class="form-control" type="text" value="{$custom.cost.start_fee}" placeholder="必填"/></div>
+                    </td>
+                    <td data-type="add">
+                        <div class="spe-td"><input class="form-control" type="text" value="{$custom.cost.add}" placeholder="必填"/></div>
+                    </td>
+                    <td data-type="add_fee">
+                       <div class="spe-td"><input class="form-control" type="text" value="{$custom.cost.add_fee}" placeholder="必填"/></div>
+                    </td>
+                    <td><button class="btn btn-danger" type="button" id="delCustom">删除</button></td>
+                    </tr>
+                    </volist>
+                    </notempty>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6">
+                            <button class="btn btn-link" type="button" data-toggle="modal" data-target="#areaModal">添加地区运费规则
+                            </button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="">
+            <button type="submit" class="btn btn-secondary" >保存</button>
+            <button class="btn btn-secondary" onclick="javascript:history.back(-1);return false;" >返回</button>
+        </div>
+    </div>
+
+</div>
+<!--指定地址选择弹出框-->
+<div class="modal fade" id="areaModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+        <h4 class="modal-title">地区选择</h4>
+      </div>
+      <div class="modal-body">
+        <div class="area-choose" data-type="area_choose">
+            <volist name="district" id="district">
+            <label class="checkbox-inline">
+                <input type="checkbox" value="{$district.id}" data-id="{$district.id}" data-value="{$district.name}"> {$district.name}
+            </label>
+            </volist>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" id="area-save">下一步</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var delivery = {$delivery|json_encode};
+$(function(){
+    disableSelect();
+    //显示隐藏模板类型编辑区
+    $(':radio[data-type="common"]').click(function(){
+        $('.custom_tmp').removeClass('show');
+        $('.custom_tmp').addClass('hide');
+        $('.common_tmp').removeClass('hide');
+        $('.common_tmp').addClass('show');
+    });
+    $(':radio[data-type="custom"]').click(function(){
+        $('.common_tmp').removeClass('show');
+        $('.common_tmp').addClass('hide');
+        $('.custom_tmp').removeClass('hide');
+        $('.custom_tmp').addClass('show');
+    });
+    //默认选中运费模板类型
+    var valuation = '{$delivery.valuation}';
+    if(valuation==1){
+        $(':radio[data-type="custom"]').trigger("click");
+    }else{
+        $(':radio[data-type="common"]').trigger("click");
+    }
+    //保存按钮事件
+    $('button[type="submit"]').click(function(){
+        var title,brief,valuation,rule,common_cost,start,start_fee,add,add_fee,normal,cusArry,custr,areaArr,area,custom;
+        title=$('#template_title').val();
+        brief=$('#template_brief').val();
+        valuation=$(':radio[name="template-type"]:checked').val();
+        
+        if(valuation==0){
+            common_cost = $('input[name="common_cost"]').val();
+            rule = {
+                "express":{
+                    "name":"普通快递",
+                    "cost":common_cost
+                }
+            };
+            rule = JSON.stringify(rule);
+        }else{
+            //自定义模板设置
+            //默认地区数据获取
+            start = $('tr[data-type="normal_list"]').find('td[data-type="start"] input').val();
+            start_fee = $('tr[data-type="normal_list"]').find('td[data-type="start_fee"] input').val();
+            add = $('tr[data-type="normal_list"]').find('td[data-type="add"] input').val();
+            add_fee = $('tr[data-type="normal_list"]').find('td[data-type="add_fee"] input').val();
+                normal = {
+                    "start":start,
+                    "start_fee":start_fee,
+                    "add":add,
+                    "add_fee":add_fee
+                };
+            //指定地区数据获取
+            cusArray = Array();
+            custr = $('tr[data-type="custom_list"]');
+            for(var i=0;i<custr.length;i++){
+                areaArr = Array();
+                area=$(custr[i]).find('td[data-type="area"] span');
+                for(var j=0;j<area.length;j++){
+                    var areaObj={};
+                    areaObj = {
+                        "id":$(area[j]).attr('data-id'),
+                        "name":$(area[j]).attr('data-value')
+                    }
+                    areaArr.push(areaObj);
+                }
+                start = $(custr[i]).find('td[data-type="start"] input').val();
+                start_fee = $(custr[i]).find('td[data-type="start_fee"] input').val();
+                add = $(custr[i]).find('td[data-type="add"] input').val();
+                add_fee = $(custr[i]).find('td[data-type="add_fee"] input').val();
+                custom = {
+                    "area":areaArr,
+                    "cost":{
+                        "start":start,
+                        "start_fee":start_fee,
+                        "add":add,
+                        "add_fee":add_fee
+                    }
+                };
+                cusArray.push(custom);
+            }
+            //组装合并数据
+            rule = {
+                "express":{
+                    "name":"普通快递",
+                    "normal":normal,
+                    "custom":cusArray
+                }
+            };
+            rule = JSON.stringify(rule);
+        }
+
+        var url = '__SELF__';
+        var data = {
+            "id":"{$delivery.id}",
+            "title":title,
+            "brief":brief,
+            "valuation":valuation,
+            "rule":rule
+        };
+        $.post(url,data,success,"json");
+        return false;
+
+        function success(data) {
+            if (data.status) {
+                toast.success(data.info, '温馨提示');
+                setTimeout(function () {
+                    window.location.href = data.url
+                }, 1000);
+            } else {
+                toast.error(data.info, '温馨提示');
+            }
+        }
+    });
+    //添加指定地区规则
+    $('#area-save').click(function(){
+        var areaEle = $('div[data-type="area_choose"] input:checked');
+        var areaHtm = '';
+        for(var i=0;i<areaEle.length;i++){
+            areaId = $(areaEle[i]).val();
+            areaName = $(areaEle[i]).attr('data-value');
+            areaHtm+='<span data-id="'+areaId+'" data-value="'+areaName+'">'+areaName+'</span>';
+        }
+        if(areaHtm==''){
+            toast.error('地区未选择', '温馨提示');
+            return false;
+        }
+        var trHtm = '<tr data-type="custom_list">'+
+                    '<td data-type="area">'+
+                    '<div class="area_box clearfix">'+areaHtm+' </div>'+
+                    '</td>'+
+                    '<td data-type="start">'+
+                    '    <div class="spe-td"><input class="form-control" type="text" placeholder="必填"/></div>'+
+                    '</td>'+
+                    '<td data-type="start_fee">'+
+                    '    <div class="spe-td"><input class="form-control" type="text" placeholder="必填"/></div>'+
+                    '</td>'+
+                    '<td data-type="add">'+
+                    '    <div class="spe-td"><input class="form-control" type="text" placeholder="必填"/></div>'+
+                    '</td>'+
+                    '<td data-type="add_fee">'+
+                    '   <div class="spe-td"><input class="form-control" type="text" placeholder="必填"/></div>'+
+                    '</td>'+
+                    '<td><button class="btn btn-danger" type="button" id="delCustom">删除</button></td>'+
+                    '</tr>';
+        $('tbody').append(trHtm);
+        $('#areaModal').modal('hide');
+        //已选择过的地区取消选择并禁用
+        areaEle.removeAttr("checked").attr("disabled",true);
+    });
+    //删除一组tr
+    $('body').on('click','#delCustom',function(){
+        //删除后将禁用地区启用
+        var _par = $(this).parent().parent('tr[data-type="custom_list"]');
+        var _span = _par.find('.area_box span');
+        var areaEle = $('div[data-type="area_choose"] input:disabled');
+        _span.each(function(){
+            var _aid=$(this).attr('data-id');
+            areaEle.each(function(){
+                if(_aid==$(this).val()){
+                    $(this).removeAttr("disabled");
+                }
+            })
+        });
+        //移除整行tr
+        _par.remove();
+    });
+    //默认加载完已选择的地区禁止再选
+    function disableSelect(){
+        var areaSpan = $('td[data-type="area"] span');
+        var chooseInp = $('div[data-type="area_choose"] input');
+        areaSpan.each(function(){
+            var sId = $(this).attr('data-id');
+            chooseInp.each(function(){
+                if($(this).attr('data-id')==sId){
+                    $(this).attr("disabled",true);
+                    return true;
+                }
+            })
+        })
+
+    }
+});
+</script>
+</block>

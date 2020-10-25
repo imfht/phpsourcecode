@@ -1,0 +1,190 @@
+var selected_sites;	//选中的网址
+
+$(document).ready(function(){
+	var winH = $(window).height();
+	var winW = $(window).width();
+	
+	//设置菜单栏高度
+	$(".menu").css("height", winH);
+	$("#dialog-login").dialog({ 
+		autoOpen: false,
+		height: 320,
+		width: 480,
+		modal: true});
+	
+	//设置浏览网址窗口位置
+	var dialogW = $("#dialog-view-sites").width();
+	var dialogH = $("#dialog-view-sites").height();
+	var posX = Math.floor((winW - dialogW)/2);
+	var posY = Math.floor((winH - dialogH)/2);
+	$("#dialog-view-sites").css("left", posX);
+	$("#dialog-view-sites").css("top", posY);
+	
+	selected_sites = new Array();
+	
+	$(".icon-menu").click(toggleMenu);
+	$("#open-login-dialog").click(openLoginDialog);
+	$("#btn-login").click(login);
+	$("#open-register-tab").click(openRegisterTab);
+	$("#view-sites").click(viewSites);
+	$(".item-category").click(getSitesByCategory);
+	$("#button-close").click(closeViewSitesDialog);
+	$("#button-add").click(addSites);
+});
+
+//打开菜单栏
+function toggleMenu(event){
+	$(".menu-items").toggle("slow");
+}
+
+//打开登录对话框
+function openLoginDialog(event){
+	$("#dialog-login").dialog("open");
+}
+
+//登录
+function login(event){
+	var tips = new Array();
+		//获取参数
+		var name = $("input[name=name]").val();
+		var password = $("input[name=password]").val();
+		
+		if(trim(name) == ""){
+				tips.push("请输入用户名");
+		}
+		if(trim(password) == ""){
+			tips.push("请输入密码");
+		}
+		
+		if(tips.length > 0){
+			//$("#dialog-login").dialog("close");
+			showTips(tips);
+			return;
+		}
+		
+		var dest = "index.php?fun=doLogin";
+		$.post(dest, {
+			name: name,
+			password: password
+		}, function(data, status){
+			$("#dialog-login").dialog("close");
+			var tips = new Array();
+			switch(data){
+				case "SUCCESS":
+				tips.push("登录成功！");
+				setTimeout("window.location.reload();", 1000);
+				break;
+				
+				default:
+				tips.push(data);
+			}
+			
+			showTips(tips);
+		});
+}
+
+//打开登录标签页
+function openRegisterTab(event){
+	window.open("index.php?fun=register", "_blank");
+}
+
+//浏览网址
+function viewSites(event){
+	$("#dialog-view-sites").show();
+}
+
+//根据分类浏览网址
+function getSitesByCategory(event){	
+	var category = $(this).children("input[name=category]").val();
+	var command = new Command("user_controller", "UserController", "getSitesByCategory", {category: category});
+	command.send(getSitesByCategoryHandler);
+}
+
+//处理根据分类获取网址的返回结果
+function getSitesByCategoryHandler(msg){
+		if(msg.no == msg.MSG_SUCCESS){
+			//清空列表
+			$("#list-sites").html('');
+			selected_sites.length = 0;
+			
+			var rows = msg.content.split(SEP_I);
+			for(var i=0;i<rows.length;i++){
+				var cols = rows[i].split(SEP_II);
+				var site =  createSiteDOMObject(cols[0], cols[1], cols[2], cols[3], cols[4], cols[5]);
+				site.className += " grid";
+				$("#list-sites").append(site);
+			}
+			
+		}
+		else{
+			showTips([msg.content]);
+		}
+}
+
+//生成 site DOM 对象
+function createSiteDOMObject(id, url, name, icon, population, category){
+		var img = document.createElement("img");
+		img.src = (icon == "")?url + "/favicon.ico":ICON_PATH + "/" + icon;
+		img.onerror = function(){
+			img.src = ICON_PATH + "/default.png";
+		};
+		img.title = "点击选中";
+		img.onclick = selectSite;
+		
+		var label = document.createElement("div");
+		var labelLink = document.createElement("a");
+		labelLink.href = url;
+		labelLink.target = "_blank";
+		var labelText = document.createTextNode(name);
+		labelLink.appendChild(labelText);
+		label.appendChild(labelLink);
+		label.className += " icon-name";
+		
+		var inputId = document.createElement("input");
+		inputId.type = "hidden";
+		inputId.name = "id";
+		inputId.value = id;
+		var inputCategory = document.createElement("input");
+		inputCategory.type = "hidden";
+		inputCategory.name = "category";
+		inputCategory.value = category;
+		var inputPopulation = document.createElement("input");
+		inputPopulation.type = "hidden";
+		inputPopulation.name = "population";
+		inputPopulation.value = population;
+		
+		var site = document.createElement("div");
+		site.appendChild(img);
+		site.appendChild(label);
+		site.appendChild(inputId);
+		site.appendChild(inputCategory);
+		site.appendChild(inputPopulation);
+		
+		return site;
+}
+
+//选中网址
+function selectSite(event){
+		var site = $(this).siblings("input[name=id]").val();
+		var index = array_index(selected_sites, site);
+		if(index == -1){
+			array_insert(selected_sites, site);
+			$(this).parent(".grid").css("background-color", "orange");
+			$(this).parent(".grid").css("box-shadow", "inset 2px 2px 5px black");
+		}
+		else{
+			array_delete(selected_sites, site);
+			$(this).parent(".grid").css("background-color", "");
+			$(this).parent(".grid").css("box-shadow", "");
+		}
+}
+
+//关闭浏览网址窗口
+function closeViewSitesDialog(event){
+	$("#dialog-view-sites").hide();
+}
+
+//添加网址到桌面
+function addSites(event){
+	
+}

@@ -1,0 +1,205 @@
+<include file="Public:header" />
+<div class="container">
+	<!-- Docs nav ================================================== -->
+	<div class="page-header">
+		<h4>{:L('EVENT')}</h4>
+	</div>
+	<include file="Public:alert" />
+	<p class="view"><b>{:L('VIEW_NAV')}</b>
+	<img src=" __PUBLIC__/img/by_owner.png"/>  <a href="{:U('event/index')}" <if condition="$Think.get.by eq null">class="active"</if>>{:L('ALL')}</a> |
+	<a href="{:U('event/index','by=me')}" <if condition="$Think.get.by eq 'me'">class="active"</if>>{:L('MY_RESPONSIBLE')}</a> |
+	<a href="{:U('event/index','by=sub')}" <if condition="$Think.get.by eq 'sub'">class="active"</if>>{:L('SUBORDINATE_RESPONSIBLE')}</a> | 
+	<a href="{:U('event/index','by=create')}" <if condition="$Think.get.by eq 'create'">class="active"</if>>{:L('MY_CREATE')}</a> | 
+	<a href="{:U('event/index','by=not_close')}" <if condition="$Think.get.by eq 'not_close'">class="active"</if>>{:L('NOTCLOSE')}</a>| 
+	<a href="{:U('event/index','by=isclose')}" <if condition="$Think.get.by eq 'isclose'">class="active"</if>>{:L('CLOSED')}</a> &nbsp; &nbsp; &nbsp; &nbsp;
+	<img src="__PUBLIC__/img/by_time.png"/> 
+	<a href="{:U('event/index','by=today')}" <if condition="$Think.get.by eq 'today'">class="active"</if>>{:L('TODAY_SCHEDULE')}</a> | 
+	<a href="{:U('event/index','by=week')}" <if condition="$Think.get.by eq 'week'">class="active"</if>>{:L('WEEK_SCHEDULE')}</a> | 
+	<a href="{:U('event/index','by=month')}" <if condition="$Think.get.by eq 'month'">class="active"</if>>{:L('MONTH_SCHEDULE')}</a> &nbsp; &nbsp; 
+	<a href="{:U('event/index','by=add')}" <if condition="$Think.get.by eq 'add'">class="active"</if>>{:L('RECENTLY_CREATED')}</a> | 
+	<a href="{:U('event/index','by=update')}" <if condition="$Think.get.by eq 'update'">class="active"</if>>{:L('RECENT_UPDATES')}</a>
+	</p>
+	<div class="row">
+		<div class="span12">
+			<ul class="nav pull-left">
+				<li class="pull-left"><a id="delete"  class="btn" style="margin-right:8px;"><i class="icon-remove"></i>{:L('DELETE')}</a></li>
+				<li class="pull-left">
+					<form class="form-inline" id="searchForm" action="" method="get">
+					<ul class="nav pull-left">
+						<li class="pull-left">
+							<select style="width:auto" name="field" id="field" onchange="changeCondition()">
+								<option class="all" value="all">{:L('ANY_FIELD')}</option>
+								<option class="word" value="subject">{:L('HEADLINE')}</option>
+								<option class="word" value="description">{:L('CONTENT')}</option>
+								<option class="role" value="owner_role_id">{:L('OWNER_ROLE')}</option>
+								<option class="date" value="start_date">{:L('START_TIME')}</option>
+								<option class="date" value="end_date">{:L('END_TIME')}</option>
+								<option class="date" value="create_date">{:L('CREATE_TIME')}</option>
+								<option class="date" value="update_date">{:L('UPDATE_TIME')}</option>
+							</select>&nbsp;&nbsp;
+						</li>
+						<li id="conditionContent" class="pull-left">
+						<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">					
+								<option value="contains">{:L('CONTAINS')}</option>
+								<option value="is">{:L('IS')}</option>
+								<option value="start_with">{:L('START_WITH')}</option>
+								<option value="end_with">{:L('END_WITH')}</option>
+								<option value="is_empty">{:L('IS_EMPTY')}</option>
+							</select>&nbsp;&nbsp;
+						</li>
+						<li id="searchContent" class="pull-left">
+							<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+						</li>
+						<li class="pull-left">
+							<input type="hidden" name="m" value="Event"/>
+							<input type="hidden" name="act" id="act" value="search"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" id="dosearch" class="btn"> <img src="__PUBLIC__/img/search.png"/>  {:L('SEARCH')}</button>
+						</li>
+					</ul>
+					</form>
+				</li>
+			</ul>
+			<div class="pull-right">
+				<a href="{:U('event/add')}" class="btn btn-primary"><i class="icon-plus"></i> &nbsp;{:L('NEW_SCHEDULE')}</a>&nbsp;
+				<div class="btn-group">
+					<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><i class="icon-wrench"></i>  &nbsp;{:L('SCHEDULING_TOOLS')}<span class="caret"></span></button>
+					<ul class="dropdown-menu">
+						<!--<li><a href="javascript:return(0);" id="import_excel"  class="link">导入日程</a></li>-->
+						<li><a href="javascript:return(0);" id="excelExport" class="link"><i class="icon-download"></i>&nbsp;{:L('EXPORT_THE_SCHEDULE')}</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="span12">
+			<form id="form1" method="post">
+				<table class="table table-hover table-striped table_thead_fixed"> 
+					<if condition="$eventlist eq null">
+						<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+					<else/>
+					<thead> 
+						<tr>
+							<th><input type="checkbox" name="check_all" id="check_all"/></th>
+							<th>{:L('THEME')}</th>
+							<th>
+								<if condition="$_GET['asc_order'] == 'start_date'">
+									<a href="{:U('event/index','desc_order=start_date&'.$parameter)}">
+										{:L('START_DATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<elseif condition="$_GET['desc_order'] == 'start_date'"/>
+									<a href="{:U('event/index','asc_order=start_date&'.$parameter)}">
+										{:L('START_DATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<else/>
+									<a href="{:U('event/index','desc_order=start_date&'.$parameter)}">{:L('START_DATE_TIME')}</a>
+								</if>
+							</th> 
+							<th>
+								<if condition="$_GET['asc_order'] == 'end_date'">
+									<a href="{:U('event/index','desc_order=end_date&'.$parameter)}">
+										{:L('END_DATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<elseif condition="$_GET['desc_order'] == 'end_date'"/>
+									<a href="{:U('event/index','asc_order=end_date&'.$parameter)}">
+										{:L('END_DATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<else/>
+									<a href="{:U('event/index','desc_order=end_date&'.$parameter)}">{:L('END_DATE_TIME')}</a>
+								</if>
+							</th>
+							<th>{:L('SCHEDULE_SITE')}</th>
+							<th>{:L('OWNER_ROLE')}</th>
+							<th>{:L('OPERATING')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr><td colspan="7">{$page}</td></tr>
+					</tfoot>
+					<tbody>
+						<volist name="eventlist" id="vo">
+							<tr>
+								<td>
+									<input name="event_id[]" class="check_list" type="checkbox" value="{$vo.event_id}"/>
+								</td>
+								<td><a href="{:U('event/view', 'id='.$vo['event_id'])}" title="{$vo.subject}">{:cutString($vo['subject'],20)}</a></td>
+								<if condition="C('ismobile') neq 1">
+								<td><notempty name="vo.start_date">{$vo.start_date|date="Y-m-d",###}</notempty></td>
+								<td><notempty name="vo.end_date">{$vo.end_date|date="Y-m-d",###}</notempty></td>
+								</if>
+								<td>{$vo.venue}</td>
+								<td><notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty></td>
+								<td> <a href="{:U('event/view', 'id='.$vo['event_id'])}">{:L('VIEW')}</a> &nbsp;
+									<a href="{:U('event/edit', 'id='.$vo['event_id'])}">{:L('EDITING')}</a> &nbsp;
+									<if condition="$Think.get.by eq isclose"><a href="{:U('event/open', 'id='.$vo['event_id'])}">{:L('OPEN')}</a><else /><a href="{:U('event/close', 'id='.$vo['event_id'])}" />{:L('CLOSE')}</a></if>
+								</td>
+							</tr>
+						</volist>
+					</tbody>
+					</if>
+				</table>
+			</form>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-import" title="{:L('IMPORT_DATA')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+$("#dialog-import").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+function changeContent(){
+	a = $("#select1  option:selected").val();
+	window.location.href="{:U('event/index', 'by=')}"+a;
+}
+$(function(){
+<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+</if>
+	$("#check_all").click(function(){
+		$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+	});
+	
+	$("#excelExport").click(function(){
+		if(confirm("{:L('CONFIRM_EXPORT_EVENT')}")){ 
+			$("#act").val('excel');	
+			$("#searchForm").submit();
+		}
+	})
+	
+	$("#dosearch").click(function(){
+		result = checkSearchForm();
+		if(result) $("#act").val('search');$("#searchForm").submit();
+	});
+	
+	$('#delete').click(function(){
+		if(confirm('{:L('CONFIRM_TO_DELETE')}')){
+			$("#form1").attr('action', '{:U("event/delete")}');
+			$("#form1").submit();
+		}
+	});
+	$("#import_excel").click(function(){
+		$('#dialog-import').dialog('open');
+		$('#dialog-import').load('{:U("event/excelimport")}');
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+})
+</script>
+<include file="Public:footer" />

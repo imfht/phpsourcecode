@@ -1,0 +1,75 @@
+#禁止访问的目录
+location ^~ /source {
+    deny all;
+    return 404; 
+}
+location ^~ /.git {
+    deny all;
+    return 404; 
+}
+location ^~ /.svn {
+    deny all;
+    return 404; 
+}
+location ^~ /.gitignore {
+    deny all;
+    return 404; 
+}
+location ^~ /.nbproject {
+    deny all;
+    return 404; 
+}
+
+伪静态去掉index.php
+1.nginx规则，下面是个完整的nginx虚拟主机配置范例，里面包含了rewrite规则。
+server {
+   listen 80;
+   server_name test.com;
+   root /www/test/microphp;
+   index index.html index.htm index.php;
+   charset UTF-8;
+
+    if (-d $request_filename) {
+      rewrite ^/(.*)([^/])$ http://$host/$1$2/ permanent;
+    }
+   
+    location /
+    {
+         #这里是rewrite规则,里面排除了public、static文件夹、robots.txt、index.php，让它们可以直接访问，其它到都会rewrite到index.php。
+         #可以根据自己情况修改public、static为你自己的需要web直接访问到的文件夹
+         if ($request_filename !~ (public|static|robots\.txt|index\.php.*) )
+         {
+            rewrite ^/(.*)$ /index.php/$1 last;      
+            break;
+         }
+    }
+    #设置PHP pathinfo支持
+    location ~ \.php {
+         fastcgi_pass 127.0.0.1:9000;
+         fastcgi_index index.php;
+         fastcgi_param SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+         fastcgi_param  PHP_VALUE  "open_basedir=$document_root:/tmp/";
+         fastcgi_split_path_info ^((?U).+\.php)(/?.+)$;
+         fastcgi_param PATH_INFO $fastcgi_path_info;
+         fastcgi_param PATH_TRANSLATED $document_root$fastcgi_path_info;
+         include fastcgi_params;
+    }
+}
+
+2.Apache rewrite规则：
+
+RewriteEngine On
+#这里是rewrite规则,里面排除了public、static文件夹、robots.txt、index.php，让它们可以直接访问，其它到都会rewrite到index.php。
+#可以根据自己情况修改public、static为你自己的需要web直接访问到的文件夹
+RewriteCond $1 !^(index\.php|static|robots\.txt)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]
+
+把上面内容写入到.htaccess文件中，然后把.htaccess文件和入口文件index.php放在一个目录里面即可。
+
+提示：
+开启rewirte后
+1.以前这样访问http://127.0.0.1/?welcome.index,现在我们可以这样访问http://127.0.0.1/welcome.index
+2.以前这样访问demo hvmc模块http://127.0.0.1/?demo,现在我们可以这样访问http://127.0.0.1/demo
+3.以前这样访问http://127.0.0.1/?welcome.index/value1&act=test,现在我们可以这样访问http://127.0.0.1/welcome.index/value1?act=test

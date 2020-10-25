@@ -1,0 +1,107 @@
+<script src="/static/common/js/jquery.2.1.1.min.js"></script>{include file="common/head"/}
+<div class="admin-main layui-anim layui-anim-upbit">
+    <fieldset class="layui-elem-field layui-field-title">
+        <legend>{$title}</legend>
+    </fieldset>
+    <form class="layui-form layui-form-pane">
+        <div class="layui-form-item">
+            <label class="layui-form-label">{:lang('AppID')}</label>
+            <div class="layui-input-4">
+                <input type="text" name="appid" lay-verify="required" placeholder="{:lang('pleaseEnter')}{:lang('AppID')}" value="{$wchat_config.appid}" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">{:lang('Appsecret')}</label>
+            <div class="layui-input-4">
+                <input type="text" name="appsecret" lay-verify="required" placeholder="{:lang('pleaseEnter')}{:lang('Appsecret')}" value="{$wchat_config.appsecret}" class="layui-input">
+            </div>
+            <div class="layui-form-mid layui-word-aux">
+                AppID以及Appsecret来自于您申请开发接口时提供的账号和密码。
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">URL</label>
+            <div class="layui-input-4">
+                <input class="layui-input" id="url" readonly value="{$call_back_url}">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">TOKEN</label>
+            <div class="layui-input-4">
+                <input type="text" name="token" placeholder="输入TOKEN" class="layui-input" value="{$wchat_config.token}">
+            </div>
+            <div class="layui-form-mid layui-word-aux">
+                请将以上URL及Token填到微信公众平台中，以完成绑定。
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">二维码</label>
+            <input type="hidden" name="qrcode" value="{$wchat_config.qrcode}" id="qrcode">
+            <div class="layui-input-block">
+                <div class="layui-upload">
+                    <button type="button" class="layui-btn layui-btn-primary" id="qrcodeBtn"><i class="icon icon-upload3"></i>点击上传</button>
+                    <div class="layui-upload-list">
+                        <img class="layui-upload-img" src="{$wchat_config.qrcode}" id="qrcodeLogo">
+                        <p id="demoText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="submit">{:lang('submit')}</button>
+            </div>
+        </div>
+    </form>
+</div>
+{include file="common/foot"/}
+
+<script>
+    layui.use(['form', 'layer','upload'], function () {
+        var form = layui.form, layer = layui.layer,upload = layui.upload, $ = layui.jquery;
+        //普通图片上传
+        var uploadInst = upload.render({
+            elem: '#qrcodeBtn'
+            ,url: '{:url("UpFiles/upload")}'
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    $('#qrcodeLogo').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res){
+                //上传成功
+                if(res.code>0){
+                    $('#qrcode').val(res.url);
+                }else{
+                    //如果上传失败
+                    return layer.msg('上传失败');
+                }
+            }
+            ,error: function(){
+                //演示失败状态，并实现重传
+                var demoText = $('#demoText');
+                demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-mini demo-reload">重试</a>');
+                demoText.find('.demo-reload').on('click', function(){
+                    uploadInst.upload();
+                });
+            }
+        });
+        form.on('submit(submit)', function (data) {
+            var loading = layer.load(1, {shade: [0.1, '#fff']});
+            $.post("{:url('setWechatConfig')}",data.field,function (res) {
+                layer.close(loading);
+                if(res.code > 0){
+                    layer.msg(res.msg,{icon: 1, time: 1000},function(){
+                        location.href = res.url;
+                    });
+                }else{
+                    layer.msg(res.msg,{icon: 2, time: 1000});
+                }
+            });
+        });
+
+    })
+</script>
+</body>
+</html>

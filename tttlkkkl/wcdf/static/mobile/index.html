@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <title>企业号授权...</title>
+    <script type="text/javascript" src="/common/mobile/layer.js"></script>
+    <script type="text/javascript" src="/common/jquery-3.2.0.min.js"></script>
+    <script type="text/javascript" src="/common/frame.js"></script>
+</head>
+<body>
+<script type="application/javascript">
+    layer.open({
+        type: 2
+        , content: '正在进入...'
+    });
+    var code = http.getQueryStringParam('code');
+    var state = http.getQueryStringParam('state');
+    if (code === null && state === null) {
+        var app = http.getQueryStringParam('app');//应用标识
+        var corp = http.getQueryStringParam('corp');//企业标识
+        //尝试更新登录态
+        http.put('/system/api/oAuth', {app: app, corp: corp}, function (data) {
+            if (data.code === 0) {
+                if (data.data.result == 1) {
+                    //跳转到目标页面
+                    location.href=data.data.jumpUrl;
+                } else {
+                    //进入授权流程
+                    location.href = data.data.authUrl;
+                }
+            } else {
+                layer.open({
+                    content: data.msg || '授权更新错误!'
+                    , skin: 'msg'
+                    , time: 2 //2秒后自动关闭
+                });
+            }
+        });
+    } else {
+        var x=http.post('/system/api/oAuth', {code: code, state: state}, function (data) {
+            if (data.code === 0) {
+                //跳转到目标页面
+                location.href = data.data;
+            } else {
+                layer.open({
+                    content: data.msg || '授权更新错误!'
+                    , skin: 'msg'
+                    , time: 2 //2秒后自动关闭
+                });
+            }
+        });
+        console.log(x);
+    }
+</script>
+</body>
+</html>

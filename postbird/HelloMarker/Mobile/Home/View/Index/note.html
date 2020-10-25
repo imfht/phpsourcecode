@@ -1,0 +1,120 @@
+<include file="Public/header" />
+<include file="Public/indexheader" />
+<div data-role="page" >
+    <div data-role="header" data-position="fixed"data-tap-toggle="false" data-theme="f">
+      <h1>详细信息</h1>
+    </div>
+    <div class="text-center">
+            <li role="presentation" class="list-group-item"><h4><{$noteInfo[0]['notename']}></h4></li>
+            <img src="__PUBLIC__/uploads/markerimage/<{$noteInfo[0]['imagesrc']}>" alt="<{$noteInfo[0]['notename']}>">
+    </div>   
+    <div data-role="main" class="content">
+    <div class="list-group">
+        <li class="list-group-item no-border text-right" >
+            <if condition="$noteInfo[0]['isshare'] eq 1">
+               <h4><small>已分享</small></h4>
+            <elseif condition="$noteInfo[0]['userid'] eq $usersessionid"/>
+               <h4><small><i class="fa fa-share-alt"></i> 分享 </small></h4>
+            </if>
+        </li>
+          <li class="list-group-item" title="分享用户"><i class="fa fa-user" ></i> ： <a href="__APP__/Home/Index/userHome/user/<{$noteInfo[0]['usernickname']}>/"><{$noteInfo[0]['usernickname']}></a></li>
+           <li class="list-group-item" title="分享时间"><i class="fa fa-clock-o" ></i> ： <{$noteInfo[0]['notetime']}></li>
+           <li class="list-group-item" title="地址"><i class="fa fa-automobile" ></i> ： <{$noteInfo[0]['noteaddress']}></li>
+           <li class="list-group-item">
+               <span>
+                   <i class="fa fa-comments" title="讨论次数"></i> ： <{$noteInfo[0]['notediscusscount']}>
+               </span>
+               <span><font id="collectWarningNoPersonal" color="red" class="hidden">不能收藏自己的记录！</font></span>
+               <span class="pull-right">
+                    <if condition="$userNoteCollectFlag eq 1">
+                       <small id="<{$noteInfo[0]['noteid']}>small">取消收藏 → </small>
+                       <i class="fa fa-heart fa-a <{$noteInfo[0]['noteid']}>-id" title="取消收藏" onclick="noteCollectWork(<{$usersessionid}>,<{$noteInfo[0]['noteid']}>,'<{$noteInfo[0]['usernickname']}>')"></i>
+                   <else />
+                       <small id="<{$noteInfo[0]['noteid']}>small">点击收藏 → </small>
+                       <i class="fa fa-heart-o fa-a <{$noteInfo[0]['noteid']}>-id" title="点击收藏" onclick="noteCollectWork(<{$usersessionid}>,<{$noteInfo[0]['noteid']}>,'<{$noteInfo[0]['usernickname']}>')"></i>
+                   </if>  <small>&nbsp; • &nbsp;  </small><font id="<{$noteInfo[0]['noteid']}>font"><{$noteInfo[0]['notecollectcount']}></font>
+                 </span>
+           </li>
+    </div>
+    <li class="list-group-item">
+      <h5>其他相关</h5>
+      <div class="list-group-item note-other-text">
+          <if condition="$noteInfo[0]['noteohterstrlen'] eq 0">
+            <div class="text-center">
+                <i class="fa fa-warning text-center"></i>
+                <span class="text-center">暂无其他信息</span>
+            </div>
+          <else/>
+            <div >
+              <p><{$noteInfo[0]['noteother']}></p>
+            </div>
+          </if>
+      </div>
+    </li>
+  </div><!--main-content-->
+  <div data-role="main" class="content">
+      <if condition="$userLoginFlag eq 1">
+            <form action="__CONTROLLER__/noteAddDiscuss/" data-ajax="false" method="post" accept-charset="utf-8">
+                <textarea name="content" class="form-control text-content" rows='10'></textarea>
+                <input type="hidden" name="noteid" value="<{$noteInfo[0]['noteid']}>">
+                <div class="form-group text-right">
+                  <input type="submit" data-role="form-inline" value="添加评论" >
+                </div>
+            </form>
+      <else />
+        <div class="panel-body">
+          需要先 <a href="__APP__/Home/User/index" data-ajax="false">登录</a> 才能回复。
+        </div>
+      </if>
+     <if condition="$noteInfoFlag eq 1">
+          <div class="panel panel-info">
+            <div class="panel-heading">
+              <h4 >相关讨论 <small>  &nbsp; • &nbsp;  <{$noteDiscussCount}> 条</small></h4>
+            </div>
+            <div class="panel-body">
+              
+             <volist name="noteDiscussRows" id="vo">
+                   <if condition="$vo.isdelete eq 1">
+                    <div class="media">
+                      <div class="media-body">
+                        <font color="#BBB"><s>该评论已删除</s></font>
+                        <hr>
+                      </div>
+                    </div>
+                  <else />
+                  <div id="<{$vo.discussid}>-media-div">
+                    <a href="__APP__/Home/Index/userHome/user/<{$vo.usernickname}>" data-ajax="false">
+                      <img src="__PUBLIC__/uploads/user/<{$vo.userlogo}>" alt="<{$vo.usernickname}>" >
+                    </a>
+                    <h5><small >用户：<{$vo.usernickname}></small></h5>
+                    <h5><small >时间：<{$vo.discusstime}></small></h5>
+                     <span class="pull-right">
+                        <if condition="$vo.usernickname eq $usersessionname">
+                           <i onclick="noteDiscussDelete(<{$usersessionid}>,<{$vo.discussid}>)" class="fa fa-trash-o fa-a"></i> &nbsp; • &nbsp;
+                        <else/>
+                        </if>
+                        <if condition="$vo.discusslike eq 1">
+                          <i id="<{$vo.discussid}>" class="fa fa-thumbs-up fa-a"onclick="noteDiscussLike(<{$usersessionid}>,<{$vo.discussid}>)"></i>
+                        <else />
+                          <i id="<{$vo.discussid}>" class="fa fa-thumbs-o-up fa-a" onclick="noteDiscussLike(<{$usersessionid}>,<{$vo.discussid}>)"></i>
+                        </if> 
+                        <span id="<{$vo.discussid}>span"><{$vo.discusslikecount}></span>
+                    </span>         
+                    <div class="media-meta" >
+                        <p ><{$vo.discusstext}></p>
+                        <hr>
+                    </div>
+                        <div class="media-right media-middle">
+                            <a href="#"><span class="badge" ><{$vo.notediscusscount}></span></a>
+                        </div>
+                  </div>
+                  </if>
+            </volist>
+            </div><!--panel-body end-->
+          </div>
+      </if>
+  </div><!--main-content end-->
+<script>
+
+</script>
+<include file="Public/footer" />

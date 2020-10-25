@@ -1,0 +1,100 @@
+<?php
+$settings = array(
+    'formId' => 'adminNodeHandleForm',
+    'formName' => '过滤',
+    'layout' => 'inline',
+    'form' => array(
+        'action' => '',
+        'method' => 'post',
+        'class' => array(),
+        'accept-charset' => 'utf-8',
+        'role' => 'form',
+        'id' => 'adminNodeHandleForm',
+    ),
+    'state' => array(
+        'label' => '更改状态',
+        'error' => '',
+        'userOptions' => array(),
+        'description' => '',
+        'field' => 'number',
+        'widget' => 'Select',
+        'options' => array(
+            '回收站', '软删除', '审核中', '正常', '不做更改',
+        ),
+        'value' => 4,
+        'validate' => array(),
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+        'required' => true,
+    ),
+    'top' => array(
+        'label' => '置顶',
+        'error' => '',
+        'userOptions' => array(),
+        'description' => '',
+        'field' => 'number',
+        'widget' => 'Select',
+        'options' => array(
+            '不置顶', '置顶', 'null' => '不做更改',
+        ),
+        'validate' => array(),
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+        'value' => 2,
+        'required' => true,
+    ),
+    'essence' => array(
+        'label' => '精华',
+        'error' => '',
+        'userOptions' => array(),
+        'description' => '',
+        'field' => 'number',
+        'widget' => 'Select',
+        'options' => array(
+            '不精华', '精华', 'null' => '不做更改',
+        ),
+        'value' => 2,
+        'validate' => array(),
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+        'required' => true,
+    ),
+    'hot' => array(
+        'label' => '热点',
+        'error' => '',
+        'userOptions' => array(),
+        'description' => '',
+        'field' => 'number',
+        'widget' => 'Select',
+        'validate' => array(),
+        'options' => array(
+            '不热点', '热点', 'null' => '不做更改',
+        ),
+        'value' => 2,
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+        'required' => true,
+    ),
+    'delete' => array(
+        'label' => '彻底删除',
+        'error' => '',
+        'userOptions' => array(),
+        'description' => '',
+        'field' => 'boole',
+        'widget' => 'Select',
+        'options' => array('否', '是'),
+        'value' => 1,
+        'validate' => array(),
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+        'required' => true,
+    ),
+    'settings' => array(
+        'save' => '\Modules\Node\Entity\NodeManager::handleSubmit',
+    ),
+);

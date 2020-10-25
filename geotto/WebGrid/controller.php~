@@ -1,0 +1,112 @@
+<?php
+/*
+ * 该类作为基础的控制器类使用
+ * */
+ 
+ class Controller{
+	 private $dbc;
+	 
+	function __construct($modelPath, $viewPath, $dbc=null){
+		define("MODEL_PATH", $modelPath);
+		define("VIEW_PATH", $viewPath);
+		
+		define("SUCCESS", 0);
+		define("NOT_LOGGED", -1);
+		define("NOT_PERMITTED", -2);
+		define("ARG_ERROR", -3);
+		define("ALREADY_EXISTS", -4);
+		define("ERROR", -5);
+		
+		define("SEP_I", "\n");	//记录分隔符
+		define("SEP_II", "\t");	//字段分割符
+		
+		define("ITEM_COUNT", 20);	//显示条目数
+		
+		$this->dbc = $dbc;
+	}
+
+	//设定数据库连接
+	function setDbc($dbc){
+		if($this->dbc != null){
+			mysqli_close($this->dbc);
+		}
+		
+		$this->dbc = $dbc;
+	}
+	
+	//获取参数
+	function getPost($name, $escape){
+		$postVal = isset($_POST[$name])?$_POST[$name]:false;
+		if($postVal){
+			//过滤
+			$postVal = mysqli_real_escape_string($this->dbc, $postVal);
+			if($escape){
+				$postVal = strip_tags($postVal);
+				//$postVal = htmlentities($postVal);
+			}
+		}
+		
+		return $postVal;
+	} 
+	
+	//加载模型
+	function loadModel($file, $name){
+		include_once(MODEL_PATH."/{$file}.php");
+		$model = new $name($this->dbc);
+		
+		return $model;
+	}
+	
+	//默认页面
+	function index(){
+		include(VIEW_PATH."/404.html");
+	}
+}
+
+//服务器-浏览器通讯类
+class Message{
+    const MSG_SEP = "[seperator]";
+    const MSG_SUCCESS = 0;
+    const MSG_ERROR = -1;
+    const MSG_NOT_LOGGED = -2;
+    const MSG_NOT_PERMITTED = -3;
+    const MSG_ARG_ERROR = -4;
+    const MSG_ALREADY_EXISTS = -5;
+    const MSG_NONE = -6;
+    
+    private $no;//消息编号
+    private $content;//通讯内容
+    private $detail;//通讯详情
+    private $generateTime;//生成时间
+    
+    function __construct($no, $content, $detail=null){
+    	$this->no = $no;
+        $this->content = $content;
+        $this->detail = $detail;
+        $this->generateTime = date("Y-m-d H:i:s");
+    }
+    
+    //获取编号
+    function getNo(){
+    	return $this->no;
+    }
+    
+    //获取通讯内容
+    function getContent(){
+    	return $this->content;
+    }
+    
+    //获取通讯详情
+    function getDetail(){
+    	return $this->detail;
+    }
+    
+    function getGenerateTime(){
+    	return $this->generateTime;
+    }
+    //生成格式化字符串
+    function form(){
+        return $this->no.Message::MSG_SEP.$this->content.Message::MSG_SEP.$this->generateTime;
+    }
+}
+?>

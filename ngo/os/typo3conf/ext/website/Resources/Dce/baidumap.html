@@ -1,0 +1,42 @@
+{namespace dce=ArminVieweg\Dce\ViewHelpers}
+<f:layout name="Default" />
+
+<f:section name="main">
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=ydzxcQpT4ofcl02srEs1xf0k"></script>
+    <div id="baidumap" style="height: 500px"></div>
+    <script type="text/javascript">
+        var map = new BMap.Map("baidumap"), myGeo = new BMap.Geocoder();
+        map.centerAndZoom(new BMap.Point(105.000, 38.000), 5);
+        map.addControl(new BMap.ScaleControl({anchor: BMAP_ANCHOR_TOP_LEFT})); // 添加比例尺控件
+        map.addControl(new BMap.NavigationControl());  //左上角，添加默认缩放平移控件
+        map.addControl(new BMap.MapTypeControl());
+        map.disableScrollWheelZoom();
+        var myIcon = new BMap.Icon("typo3conf/ext/website/Resources/Public/Images/mapicon.png", new BMap.Size(30, 36));
+        var tempArray = [
+            <f:for each="{field.addresses}" as="addressinfo" iteration="itemIteration">
+                ["{addressinfo.address}", "{addressinfo.title}", "{addressinfo.description->f:format.raw()}"]{f:if(condition: itemIteration.isLast, then: '', else:',')}
+            </f:for>
+        ];
+        var callMyGeo = function (i) {
+            if (i < tempArray.length) {
+                myGeo.getPoint(tempArray[i][0], function (point) {
+                    if (point) {
+                        var marker = new BMap.Marker(point, {icon: myIcon});  // 创建标注
+                        map.addOverlay(marker);
+                        addClickHandler(tempArray[i][1], tempArray[i][0]+'<br/>'+tempArray[i][2], marker);
+                        callMyGeo(++i);
+                    }
+                });
+            }
+        };
+        function addClickHandler(title, content, marker) {
+            marker.addEventListener("click", function (e) {
+                var p = e.target;
+                var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
+                var infoWindow = new BMap.InfoWindow(content, {width: 200, height: 100, title: title});  // 创建信息窗口对象
+                map.openInfoWindow(infoWindow, point); //开启信息窗口
+            });
+        }
+        callMyGeo(0);
+    </script>
+</f:section>

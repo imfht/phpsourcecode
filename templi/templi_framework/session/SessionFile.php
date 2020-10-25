@@ -1,0 +1,1 @@
+<?php/** * 缓存类 * @author 七觞酒 * @email 739800600@qq.com * @date  2013-3-22 */namespace framework\session;class SessionFile{    function __construct($savepath)    {        $path = $savepath;        ini_set('session.save_handler', 'files');        session_save_path($path);        session_start();    }}

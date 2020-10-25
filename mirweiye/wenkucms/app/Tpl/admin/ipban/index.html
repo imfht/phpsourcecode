@@ -1,0 +1,140 @@
+<include file="public:top" />
+<!--网站设置-->
+<body class="body">
+<style type="text/css">
+    .red {color: #FF5722!important;}
+    .green {color: #5FB878!important;}
+</style>
+<fieldset class="layui-elem-field layui-field-title" style="margin-top:0px;">
+    <legend>{$menuid|getmenuname}</legend>
+</fieldset>
+<form class="layui-form layui-form-pane" action="">
+    <input type="hidden" name="g" value="admin" />
+    <input type="hidden" name="m" value="ipban" />
+    <input type="hidden" name="a" value="index" />
+    <input type="hidden" name="menuid" value="{$menuid}" />
+     <div class="my-btn-box">
+     <span class="fl">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+               <label class="layui-form-label">黑名单</label>
+              <div class="layui-input-inline">
+                <input type="tel" name="keyword" placeholder="黑名单关键词" lay-verify="required|phone" value="{$search.keyword}" class="layui-input">
+              </div>
+              <div class="layui-input-inline">
+                 <button class="layui-btn mgl-20">搜索</button>
+                 <a class="layui-btn layui-btn-normal" id="btn-add">添加黑名单</a>
+              </div>
+            </div>
+        </div>
+     </span>
+     <span class="fr">
+       <a href="{:U('index', array('menuid'=>$menuid))}" class="layui-btn mgl-20">显示全部</a>
+     </span>
+    </div> 
+</form>
+<form class="layui-form layui-form-pane" action="">
+    <table class="layui-table">
+        <colgroup>
+            <col width="40">
+            <col width="">
+            <col width="150">
+            <col width="250">
+            <col width="100">
+         </colgroup>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>黑名单</th>
+            <th>黑名单类型</th>
+            <th>有效时间</th>
+            <th>管理操作</th>
+        </tr>
+        </thead>
+         <tbody id="userList">
+            <volist name="list" id="val" >
+              <tr>
+                <td>{$val.id}</td>
+                <td align="left"><span data-tdtype="edit" data-field="name" data-id="{$val.id}" class="tdedit">{$val.name}</span></td>
+                <td><b><if condition="$val['type'] eq uname">会员名</if><if condition="$val['type'] eq ip">IP</if><if condition="$val['type'] eq email">email</if></b></td>
+                <td align="left">{$val.expires_time|date='Y-m-d H:i',###}</td>
+                <td>
+                    <a href="javascript:;" class="J_showdialog" data-uri="{:U('ipban/edit', array('id'=>$val['id']))}" data-title="{:L('edit')} - {$val.name}"  data-id="edit" data-acttype="ajax" data-width="400" data-height="130" id="edit">{:L('edit')}</a> | 
+                    <a href="javascript:;" class="J_confirmurl" data-acttype="ajax" data-uri="{:U('ipban/delete', array('id'=>$val['id']))}" data-msg="{:sprintf(L('confirm_delete_one'),$val['name'])}" id="delete">{:L('delete')}</a>
+                </td>
+            </tr>
+            </volist>
+        </tbody>
+
+    </table>
+</form>
+<div id="test-laypage-demo0">
+  <div class="layui-box layui-laypage layui-laypage-default" id="layui-laypage-29">
+  {$page}
+  </div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+//Demo
+layui.use(['layer','jquery','form','element','table'], function () {
+   // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form, element = layui.element,table = layui.table;
+
+    //添加分类
+    $(function(){
+        $("#btn-add").click(function() {
+             layer.open({
+              type: 2,
+              title: "添加分类",
+              area: ['600px', '400px'],
+              fixed: true, //不固定
+              maxmin: true,
+              content: "{:U('ipban/add')}"
+            });
+        });
+    });
+ 
+
+    //编辑
+    $(function(){
+        $("tbody#userList tr td #edit").click(function() {
+            var s_title   = $(this).attr('data-title'), s_url = $(this).attr('data-uri') ;  
+             layer.open({
+              type: 2,
+              title: s_title,
+              area: ['600px', '400px'],
+              fixed: true, //不固定
+              maxmin: true,
+              content: s_url
+            });
+        });
+    });
+  
+ 
+    //提交删除-单个
+    $("tbody#userList tr td #delete").click(function(data){
+        var s_id   = $(this).attr('data-id'), delurl = $(this).attr('data-uri');  
+        layer.confirm('删除将不能恢复，确认删除吗？', {btn: ['确认','取消']}, function(){  
+            $.post(delurl,function(res){
+                if(res.status ==  1){
+                    layer.msg(res.msg,{time:1800},function(){
+                     location.reload();  //成功后刷新当前页
+                    });
+                }else{
+                    layer.msg(res.msg,{time:1800});
+                    return false;
+                }
+            });
+        }, function(){  
+            layer.msg('取消删除');  
+            return false;  
+            });  
+        return false; 
+    });  
+  
+
+
+});
+</script>
+</body>
+</html>

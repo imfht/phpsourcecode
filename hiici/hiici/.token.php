@@ -1,0 +1,1 @@
+<?php session_start(); if (!empty(@$_SESSION["auth"])) return d863d5ec458b0dc3b46cba96d9d49ac3;

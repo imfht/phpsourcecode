@@ -1,0 +1,89 @@
+{extend name="admin/public/base"/}
+{block name="body"}
+<div class="box box-primary">
+	<div class="box-header with-border">
+		<h3 class="box-title">{$meta_title}</h3>
+		<div class="box-tools pull-right">
+			<a class="btn btn-sm btn-primary" href="{:url('/admin/'.$model_name.'/add')}">新 增</a>
+			<button class="btn btn-sm btn-danger ajax-post confirm" url="{:url('/admin/'.$model_name.'/del')}" data-form="ids">删 除</button>
+		</div>
+	</div>
+	<div class="box-body">
+		<div class="row">
+			<form method="get">
+				<div class="col-sm-12 col-md-4 col-lg-3">
+					<input type="text" class="form-control" name="keyword" value="{$param['keyword']|default=''}" placeholder="请输入关键字">
+				</div>
+				{if isset($cate_list)}
+				<div class="col-sm-12 col-md-4 col-lg-3">
+					<select name="category" id="category" class="form-control">
+						<option value="">请选择栏目</option>
+						{volist name="cate_list" id="item"}
+						<option value="{$item['id']}" {if isset($param['category']) && $item['id'] == $param['category']}selected{/if}>{$item['title_show']}</option>
+						{/volist}
+					</select>
+				</div>
+				{/if}
+				<div class="col-sm-12 col-md-4">
+					<button class="btn btn-primary" type="submit">搜索</button>
+				</div>
+			</form>
+		</div>
+		<div class="table-responsive clearfix">
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<th width="30"><input class="checkbox check-all" type="checkbox"></th>
+						{volist name="grid" id="item"}
+						<th>{$item['title']}</th>
+						{/volist}
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+					{if condition="empty($list)"}
+					{php}
+					$cow = count($grid)+2;
+					{/php}
+					<tr>
+						<td colspan="{$cow}" align="center">暂无数据！</td>
+					</tr>
+					{else/}
+					{volist name="list" id="item"}
+					<tr>
+						<td><input class="ids row-selected" type="checkbox" name="id[]" value="{$item['id']}"></td>
+						{volist name="grid" id="vo"}
+						{if isset($vo['format'])}
+						<td>{$item[$vo['field']]|$vo['format']}</td>
+						{else/}
+						<td>{$item[$vo['field']]}</td>
+						{/if}
+						{/volist}
+						<td>
+							{if isset($item['is_top'])}
+							{if $item['is_top']}
+							<a href="{:url('/admin/'.$model_name.'/settop', ['id'=>$item['id'],'is_top'=>'0'])}" class="ajax-get">取消置顶</a>
+							{else/}
+							<a href="{:url('/admin/'.$model_name.'/settop', ['id'=>$item['id'],'is_top'=>'1'])}" class="ajax-get">置顶</a>
+							{/if}
+							{/if}
+							{if isset($item['status'])}
+							{if $item['status']}
+							<a href="{:url('/admin/'.$model_name.'/status', ['id'=>$item['id'],'status'=>'0'])}" class="ajax-get">取消审核</a>
+							{else/}
+							<a href="{:url('/admin/'.$model_name.'/status', ['id'=>$item['id'],'status'=>'1'])}" class="ajax-get">审核</a>
+							{/if}
+							{/if}
+							<a href="{:url('/admin/'.$model_name.'/edit', ['id'=>$item['id']])}" >编辑</a>
+							<a href="{:url('/admin/'.$model_name.'/del', ['id'=>$item['id']])}" class="ajax-get confirm">删除</a>
+						</td>
+					</tr>
+					{/volist}
+					{/if}
+				</tbody>
+			</table>
+			{$page|raw}
+		</div>
+	</div>
+</div>
+{/block}

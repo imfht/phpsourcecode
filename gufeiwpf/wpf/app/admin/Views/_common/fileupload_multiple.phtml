@@ -1,0 +1,151 @@
+<div class="fileupload_multiple">
+    <div class="fileupload_img">
+        <input value="<?php echo $inputvalue?>" type="hidden" class="fileupload_multiple_imginput" name="<?php echo $inputname?>"  autocomplete="off"/>
+        <div class="row fileupload_multiple_imglist">
+            <?php if($inputvalue){?>
+                <?php foreach(explode(',',$inputvalue) as $value){?>
+                    <div class="col-md-2 margin-bottom-5">
+                        <img width="80" height="80" src="<?php echo getPhotoPathUrl($value)."80x80"?>">
+                        <span data-photoid="<?php echo $value?>" class="btn btn-xs purple fileupload_multiple_del">
+                            <i class="fa fa-times"> 删除</i>
+                        </span>
+                    </div>
+                <?php }?>
+            <?php }?>
+        </div>
+        
+    </div>
+	
+    <div class="margin-top-10">
+        <span class="btn btn-success fileinput-button">
+            <i class="glyphicon glyphicon-plus"></i>
+            <span>上传...</span>
+            <!-- The file input field used as target for the file upload widget -->
+            <input class="fileupload_multiple_input" type="file" multiple="" accept="image/*"  autocomplete="off"/>
+        </span>
+        <?php if(!$no_selector){?>
+		<a class="btn blue fileupload_multiple_select_img" href="javascript:void(0);">
+			<i class="fa fa-list"> 选择图片</i>
+		</a>
+        <?php }?>
+
+    </div>
+    
+    <!-- The global progress bar -->
+    <div class="progress fileupload_progress margin-top-10" style="display: none;">
+        <div class="progress-bar progress-bar-success"></div>
+    </div>
+    <!-- The container for the uploaded files -->
+    
+	<span class="help-block">
+		 允许多张图片
+	</span>
+</div>
+
+<script>
+var PHOTO_SELECT = {
+    curr_selector : null,
+    selector_url : "<?php echo $this->url->get("Ajax/photoselector")?>"
+}
+
+jQuery(document).ready(function() {
+    
+    if(typeof WPF.fileupload !== "object"){
+        WPF.fileupload = {};        
+    }
+
+
+    
+    if(typeof WPF.fileupload.fileupload_multiple === "undefined"){
+        WPF.fileupload.fileupload_multiple = function(){
+            $('.fileupload_multiple_input').fileupload({
+                autoUpload: true,
+                acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
+                url: "<?php echo $this->url->get("Ajax/fileupload")?>",
+                dataType: 'json',
+                done: function (e, data) {
+                    
+                    if(data.result.status){
+                        
+                        var imgdiv = $(this).parents(".fileupload_multiple").find(".fileupload_img");
+                        var imglist = imgdiv.find(".fileupload_multiple_imglist");
+                        
+                        var html = '<div class="col-md-2 margin-bottom-5">'+
+                                        '<img src="'+data.result.info.thumbnailUrl+'" width="80" height="80"/>'+
+                                        '<span class="btn btn-xs purple fileupload_multiple_del" data-photoid="'+data.result.info.photoid+'">'+
+                        					'<i class="fa fa-times"> 删除</i>'+
+                        				'</span>'+
+                                    '</div>';
+                        imglist.append(html);
+                        
+                        if(imgdiv.find(".fileupload_multiple_imginput").val()==""){
+                            imgdiv.find(".fileupload_multiple_imginput").val(data.result.info.photoid);
+                        }else{
+                            var imglistarray = imgdiv.find(".fileupload_multiple_imginput").val().split(",");
+                            imglistarray.push(data.result.info.photoid);
+                            var imgliststr = imglistarray.join(",");
+                            imgdiv.find(".fileupload_multiple_imginput").val(imgliststr);
+                        }
+                        
+                    }else{
+                        alert(data.result.info);
+                    }
+                    
+                    
+                    
+                    
+                    
+                },
+                progressall: function (e, data) {
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    
+                    var progressdiv = $(this).parents(".fileupload_multiple").find(".fileupload_progress");
+                    
+                    progressdiv.show();
+                    progressdiv.find('.progress-bar').css(
+                        'width',
+                        progress + '%'
+                    );
+                    if(progress==100){
+                        setTimeout(function(){
+                            progressdiv.hide();
+                            progressdiv.find('.progress-bar').css("width",0);
+                        },500)
+                    }
+                }
+            }).prop('disabled', !$.support.fileInput)
+                .parent().addClass($.support.fileInput ? undefined : 'disabled');
+            
+            $(".fileupload_multiple").on("click",".fileupload_multiple_del",function(){
+                var imglistarray = $(this).parents(".fileupload_multiple").find(".fileupload_multiple_imginput").val().split(",");;
+                
+                var photoid = $(this).attr("data-photoid");
+                
+                jQuery.each(imglistarray,function(k,v){
+                    if(v==photoid){
+                        imglistarray.splice(k,1);
+                    }    
+                });
+                var imgliststr = imglistarray.join(",");
+                $(this).parents(".fileupload_multiple").find(".fileupload_multiple_imginput").val(imgliststr);
+                
+                
+                $(this).parent("div").remove();
+                
+            });
+        }
+        
+        if (!$().fileupload) {
+            $("head").append("<link href='<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css' rel='stylesheet' type='text/css'/>")
+        
+            $.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/js/jquery.fileupload.js", function(){
+                WPF.fileupload.fileupload_multiple();
+            });
+        }else{
+            WPF.fileupload.fileupload_multiple();
+        }
+    }
+
+
+});
+</script>

@@ -1,0 +1,168 @@
+{layout name="passport:layout" /}
+<table class="pure-table mb10 w100-100">
+    <tbody>
+        <tr>
+            <td class="w170" rowspan="5" colspan="1"><img src="{$logo}" class="w140 logo" style="border-radius: 10px;"></td>
+            <td>
+                <h5>{$member_miniapp.miniapp.title}
+                    <span class="fn-right">{if $miniapp}<span class="badge bg-blue">已授权 {$miniapp} 个应用</span>{else}<span class="badge">未授权</span>{/if}</span>
+                </h5>
+            </td>
+        </tr>
+        <tr><td colspan="1" rowspan="1">应用类型：
+            {switch $member_miniapp.miniapp.types}
+            {case mp}<span class="badge bg-blue">公众号</span>{/case}
+            {case program}<span class="badge bg-green">小程序</span>{/case}
+            {case app}<span class="badge bg-yellow">APP</span>{/case}
+            {case mp_program}<span class="badge bg-red">小程序/公众号</span>{/case}
+            {case mp_program_app}<span class="badge bg-red">小程序/公众号/APP</span>{/case}
+            {default /}<span class="badge">应用异常</span>
+            {/switch}
+        </td></tr>
+        <tr><td colspan="1" rowspan="1">服务方式：{if $member_miniapp.miniapp.is_openapp}<span class="badge">独立应用</span>{else}<span class="badge">开放平台</span>{/if}</td></tr>
+        <tr><td colspan="1" rowspan="1">更新时间：{$member_miniapp.miniapp.update_time|date='Y-m-d H:i:s'}</td></tr>
+        <tr><td colspan="1" rowspan="1">最新版本：v{$member_miniapp.miniapp.version}</td></tr>
+    </tbody>
+</table> 
+<div class="titlebar">
+    <svg class="icon fn-f18" aria-hidden="true"><use xlink:href="#icon-yingyongyuanma"></use></svg> 我的应用
+</div>
+<table class="pure-table">
+    <thead>
+        <tr>
+            <th class="w80 fn-tac">应用ID</th>
+            <th class="w200">应用名称</th> 
+            {if $member_miniapp.miniapp.types == 'mp' || $member_miniapp.miniapp.types == 'mp_program' || $member_miniapp.miniapp.types == 'mp_program_app'}
+            <th class="w120 fn-tac">公众号APPID</th>
+            {/if}
+            {if $member_miniapp.miniapp.types == 'program' || $member_miniapp.miniapp.types == 'mp_program' || $member_miniapp.miniapp.types == 'mp_program_app'}
+            <th class="w120 fn-tac">小程序APPID</th>
+            {/if}
+            <th>客户端ID</th>
+            <th class="w100 fn-tac">当前版本</th> 
+            <th class="w120">更新时间</th> 
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="fn-tac">{$member_miniapp.id}</td>
+            <td>{$member_miniapp.appname}</td>
+            {if $member_miniapp.miniapp.types == 'mp' || $member_miniapp.miniapp.types == 'mp_program' || $member_miniapp.miniapp.types == 'mp_program_app'}
+            <td class="fn-tac">{$member_miniapp.mp_appid ?: '未授权'}</td>
+            {/if}
+            {if $member_miniapp.miniapp.types == 'program' || $member_miniapp.miniapp.types == 'mp_program' || $member_miniapp.miniapp.types == 'mp_program_app'}
+            <td class="fn-tac">{$member_miniapp.miniapp_appid ?: '未授权'}</td>
+            {/if}
+            <td>{$member_miniapp.service_id}</td>
+            <td class="fn-tac">
+                {if $member_miniapp->miniapp->is_openapp}
+                    {$member_miniapp.miniapp.version}
+                {else}
+                    {if $member_miniapp->miniapp->template_id > $member_miniapp->order->update_var}
+                        <span class="badge bg-red">有新版</span>
+                    {else}
+                        {$member_miniapp.miniapp.version}
+                    {/if}
+                {/if}
+            </td>
+            <td>{$member_miniapp.miniapp.update_time|date='Y-m-d'}</td>
+        </tr>
+    </tbody>
+</table>
+{if $member_miniapp->miniapp->is_openapp == 0 && ($member_miniapp.miniapp.types != 'mp' || $member_miniapp.miniapp.types == 'app')}
+<div class="titlebar mt10">
+    <svg class="icon fn-f18" aria-hidden="true"><use xlink:href="#icon-xiaochengxu"></use></svg> 小程序
+</div>
+<ul class="crumbs">
+    <li class="{if $code.is_commit==1}off{/if} {if $code.is_commit >=1} pass{/if} fn-cp" id="create">1、基础信息设置<em></em><i></i></li>
+    <li class="{if $code.is_commit==2}off{/if} {if $code.is_commit >=2} pass{/if} fn-cp" id="addcode">2、{$update_var?'升级代码':'上传代码'}<em></em><i></i></li>
+    <li class="{if $code.is_commit==3}off{/if} {if $code.is_commit >=3} pass{/if} fn-cp" id="addpass">3、提交审核<em></em><i></i></li>
+    <li class="{if $code.is_commit==4}off{/if} {if $code.is_commit >=4} pass{/if} fn-cp" id="sendapp">4、发布小程序<em></em><i></i></li>
+</ul>
+<table class="pure-table">
+    {if $code.is_commit != 3 && $code.state == 0}
+    <tr class="setting create {if $code.is_commit==1}isnow{/if}">
+        <td class="w120 fn-tar">基础信息：</td>
+        <td>
+            <a href="{:url('system/passport.setting/pushAuth',['id' => $member_miniapp_id,'types'=>'program'])}" class="button button-red" /> <i class="iconfont icon-license"></i>授权小程序</a>
+            {if $is_authorize}
+            <button url="{:url('system/passport.miniapp/domain',['id' => $member_miniapp_id])}" type="button" class="button act" /><i class="iconfont icon-lianjie"></i>绑定业务域名</button>
+            {/if}
+        </td>
+    </tr>
+    {/if}
+{if $is_authorize}
+    <!-- 上传代码 -->
+    {if $code.is_commit == 2 || ($code.is_commit == 3 && $code.state == 0)}
+        <tr class="setting addcode {if $code.is_commit==2}isnow{/if}">
+            <td class="w120 fn-tar">上传代码：</td>
+            <td><button url="{:url('system/passport.miniapp/upcode',['id' => $member_miniapp_id])}" type="button" class="button button-yellow act" /><i class="iconfont icon-xiangshang5"></i>{$update_var?'立即升级':'上传代码'}</button></td>
+        </tr> 
+    {/if}
+    <!--提交审核 -->
+    {if $code.is_commit == 3 && $code.state == 0}
+    <tr class="setting addpass {if $code.is_commit==3}isnow{/if}">
+        <td class="w120 fn-tar">提交审核：</td><td>
+            <a href="{:url('system/passport.miniapp/submitPass')}"  type="button" class="button button-violet" /><i class="iconfont icon-add_icon"></i>提交审核</a>
+        </td>
+    </tr>
+    {/if}
+    {if $code.is_commit == 3 && $code.state == 1}
+    <tr class="setting addpass {if $code.is_commit==3}isnow{/if}">
+        <td class="w120 fn-tar">撤回审核：</td><td>
+            <button url="{:url('system/passport.miniapp/restpass',['id' => $member_miniapp_id])}"  type="button" class="button act" /><i class="iconfont icon-reduce_icon"></i>撤回审核</button>
+            <span>单个帐号每天审核撤回次数最多不超过1次，一个月不超过10次</span>
+        </td>
+    </tr>
+    <!--发布小程序 -->
+    {if $code.is_commit == 3 && $auditid.status == 0}
+        <tr class="setting addpass {if $code.is_commit==3}isnow{/if}">
+            <td class="w120 fn-tar">发布小程序：</td><td>
+                <button url="{:url('system/passport.miniapp/sendApp',['id' => $member_miniapp_id])}" type="button" class="button button-violet act" /><i class="iconfont icon-affirm_icon"></i>发布小程序</button>
+            </td>
+        </tr>
+    {/if}
+    {/if}
+    <tr>
+        <td class="w120 fn-tar">小程序状态</td><td>
+            {switch $code['is_commit']}
+            {case 1}<span class="badge bg-blue">已设置域名</span>{/case}
+            {case 2}<span class="badge bg-red">未提交审核</span>{/case}
+            {case 3}
+                {switch $auditid.status}
+                    {case 0}<span class="badge bg-green">审核通过</span>{/case}
+                    {case 1}<span class="badge bg-red">审核失败</span>{/case}
+                    {case 2}<span class="badge bg-blue">小程序审核中</span>{/case}
+                    {default /}<span class="badge bg-yellow">未提交审核</span>
+                {/switch} 
+            {/case}
+            {case 4}<span class="badge bg-green">已开通</span>{/case}
+            {default /}<span class="badge">没有状态</span>
+            {/switch} 
+        </td>
+    </tr>
+    {if !empty($auditid) && $auditid.status == 1}
+        <tr><td class="w120 fn-tar">审核失败原因</td><td>{$auditid.reason}</td></tr>
+    {/if}
+    {if $code['is_commit'] >= 2}
+        <tr><td class="w120 fn-tar">体验码：</td><td>
+            <button url="{:url('system/passport.miniapp/getqrcode',['id' => $member_miniapp_id])}" type="button" class="button act" /> <i class="iconfont icon-erweima1"></i>获取体验二维码</button></td></tr>
+        {if $code['trial_qrcode']}
+            <tr><td></td><td><img src="{$code['trial_qrcode']}" class="w200"></td></tr>
+        {/if}
+    {/if}
+{/if}
+</table>
+{/if}
+<script type="text/javascript">
+Do('base', 'layer', 'form',function () {
+    $('.setting').hide();
+    $('.isnow').show();
+    $('.crumbs >li ').click(function(){
+        $('.setting').hide();
+        $('.'+$(this).attr('id')).show();
+    })
+    $('.act').actUrl();
+    $('.win').win({'reload':1,'area':['700px','600px']})
+})
+</script>

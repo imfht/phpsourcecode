@@ -1,0 +1,71 @@
+<notdefined name="W_UPLOADIFY">
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/Js/Uploadify/uploadify.css" />
+<script type="text/javascript" src="__PUBLIC__/Js/Uploadify/jquery.uploadify.js"></script>
+<define name="W_UPLOADIFY" value="1" />
+</notdefined>
+
+<div class="IfyFileBox">
+    <input type="text" name="{$name}" value="{$value}" readonly /><input class="IfyFile" id="{$name}" type="file" />
+    <empty name="value">
+    <a class="IfyFileProgress" href="javascript:;" target="_blank"></a>
+    <else/>
+    <a class="IfyFileProgress" href="__ROOT__{$value}" target="_blank"><b class="green">图片上传成功</b></a>
+    </empty>
+</div>
+
+<script type="text/javascript">
+$(function(){
+    $('.IfyFile').uploadify({
+        'swf'      : "__PUBLIC__/Js/Uploadify/uploadify.swf",//定义uploadify.swf的路径
+        'uploader' : "{:U('Admin/Index/widget/name/uploadify')}",//后端处理路径
+        'button_image_url':'__PUBLIC__/Js/Uploadify/clarity.png',
+
+        'auto':true,//自动上传
+        'multi': false,//允许多选
+
+        'fileObjName':'IfyData',//POST名称
+        'formData' : {
+            "session_id" : "{:session_id()}",
+            //动态配置参数
+            <foreach name="config" item="v" key="k">
+            "{$k}":"{$v}",
+            </foreach>
+
+        },
+
+        'fileTypeExts' : "*.gif,*.jpg,*.jpeg,*.bmp,*.png;",
+        
+        'buttonClass':'btn',
+        'buttonText':'文件上传',
+
+        'height' : 25,
+        'width'  : 70,
+
+        'debug':false,//开启调试
+        'queueID':true,//禁用queue
+        'preventCaching':true,
+        'overrideEvents' : ['onSelect','onUploadProgress'],//禁用div.uploadify-queue,禁用progress样式
+        'onUploadStart' : function(file) {
+            var name = $('#'+this.movieName).parent('div').attr('id');
+            $("#"+name).uploadify('disable', true);
+        },
+        'onUploadProgress' : function(file, bytesUploaded, bytesTotal, totalBytesUploaded, totalBytesTotal) {
+            console.log(file);
+            var name = $('#'+this.movieName).parent('div').siblings('.IfyFileProgress');
+            var percentage = Math.round( bytesUploaded / bytesTotal * 100);
+            name.html(' <b class="green">'+file.name+' - '+percentage+'%上传完成</b> ');
+        },
+        'onUploadSuccess' : function(file, data, response) {
+            console.log(data);
+            var obj = $.parseJSON(data);
+            var name = $('#'+this.movieName).parent('div').attr('id');
+            $("input[name='"+name+"']").val(obj.path);
+            var pro = $('#'+this.movieName).parent('div').siblings('.IfyFileProgress');
+            pro.attr('href',"__ROOT__"+obj.path);
+            $("#"+name+"-button > span").text('重新上传');
+            $("#"+name).uploadify('disable', false);
+        }
+    });
+});
+
+</script>

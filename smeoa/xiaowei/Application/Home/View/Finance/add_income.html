@@ -1,0 +1,113 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'新建收入','search'=>'N'))}
+	<form method='post' id="form_data" name="form_data" enctype="multipart/form-data"   class="well form-horizontal">
+		<input type="hidden" id="ajax" name="ajax" value="0">
+		<input type="hidden" id="account_name" name="account_name" value="">
+		<input type="hidden" id="doc_type" name="doc_type" value="1">
+		<input type="hidden" id="opmode" name="opmode" value="add">
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="doc_no">单据编号：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					YYYY-####
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="end_date" >日期：</label>
+			<div class="col-sm-8">
+				<input  class="form-control input-date" type="text" id="input_date" name="input_date"    check="require" msg="请输入日期" readonly="readonly">
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="partner">客户名称：</label>
+			<div class="col-sm-8">
+				<select id="partner" name="partner" class="form-control" check="require" msg="请选择客户">
+					<option value="" >请选择客户</option>
+					{:fill_option($customer_list)}
+					{:fill_option($supplier_list)}
+					<option value="其他" >其他</option>
+				</select>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >收入项目：</label>
+			<div class="col-sm-8">
+				<select id="type" name="type" class="form-control" check="require" msg="请选择收收入项目">
+					<option value="" >请选择收入项目</option>
+					{:fill_option(get_system_config('finance_income_type'))}
+					<option value="其他" >其他</option>
+				</select>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="account_id">收款帐号：</label>
+			<div class="col-sm-8">
+				<select id="account_id" name="account_id" class="form-control" check="require" msg="请选择收款帐号">
+					<option value="" >请选择收款帐号</option>
+					{:fill_option($account_list)}
+				</select>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >账户余额：</label>
+			<div class="col-sm-8">
+				<input class="form-control" id="balance" type="text" readonly="readonly" >
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="income">金额：</label>
+			<div class="col-sm-8">
+				<input class="form-control" type="text" name="income" check="require" msg="请输入金额">
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" for="actor_name">经办人：</label>
+			<div class="col-sm-8">
+				<input class="form-control" type="text" name="actor_name" check="require" msg="请输入经办人">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="remark">摘要：</label>
+			<div class="col-sm-10">
+				<textarea name="remark" rows="4" style="width: 100%;" check="require" msg="请输入摘要" class="form-control"></textarea>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/add')}
+			</div>
+		</div>
+		<div class="form-group">
+			<div class="form-actions col-sm-10 col-sm-offset-2">
+				<input class="btn btn-sm btn-primary" type="button" value="保存" onclick="save();">
+				<input class="btn btn-sm btn-default" type="button" value="取消" onclick="go_return_url();">
+			</div>
+		</div>
+	</form>
+</block>
+<block name="js">
+	<script>
+		function save() {
+			sendForm("form_data", "{:U('save')}");
+		}
+
+		$(document).ready(function() {
+			$("#account_id").change(function() {
+				$account_name = $('#account_id option:selected').text();
+				$("#account_name").val($account_name);
+				$.getJSON("{:U('Finance/read_account')}", {
+					account_id : $(this).val()
+				}, function(data) {
+					if (data.status == 1) {
+						$("#balance").val(data.data.balance);
+					}
+				});
+			});
+		});
+	</script>
+
+</block>

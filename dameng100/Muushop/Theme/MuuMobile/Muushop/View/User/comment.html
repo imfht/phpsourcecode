@@ -1,0 +1,159 @@
+<extend name="Public/common"/>
+<block name="style">
+  <link href="__PUBLIC__/lib/webuploader/css/webuploader.css" rel="stylesheet" type="text/css"/>
+</block>
+<block name="body">
+
+<div id="main-container" class="container">
+	<div class="col-md-2">
+		<!--用户中心导航-->
+		<include file="User/_nav"/>
+	</div>
+
+	<div class="col-md-10">
+
+	<div class="common_box">
+		<h3>评价订单</h3>
+	</div>
+
+	<div class="comment_box margin-top-10 clearfix">
+	    <volist name="order.products" id="products">
+        <div class="common_box margin-bottom-10">
+          <div class="goods-box clearfix">
+              <div class="goods-item">
+                  <div class="p-img">
+                      <a href="{:U('Index/product',array('id'=>$products['id']))}" target="_blank">
+                      <img src="{$products.main_img}" title="{$products.title}" width="60" height="60">
+                      </a>
+                  </div>
+                  <div class="p-msg">
+                      <div class="p-name">
+                      	<a href="{:U('Index/product',array('id'=>$products['id']))}" class="a-link" target="_blank" title="{$products.title}">
+                      		{$products.title}
+                      	</a>
+                      	<notempty name="products.sku">
+                      	<div class="sku_box">
+                      		<foreach name="products.sku" item="sku" >
+                               <span class="sku_li_span">{$sku}</span>  
+                              </foreach>
+                      	</div>
+                      	</notempty>
+                      </div>
+
+                      <div class="goods-number">
+                          x{$products.quantity}
+                      </div>
+                  </div>
+              </div>
+
+      	</div>
+      	<div class="comment_info_box" data-toggle="comment_info">
+          	<input name="product_id" value="{$products.product_id}" type="hidden" />
+          	<input name="order_id" value="{$order.id}" type="hidden" />
+            <input name="sku_id" value="{$products.sku_id}" type="hidden" />
+            <input name="images" id="images_file_{$products.product_id}" type="hidden"  value=""/>
+            <div id="start_{$products.product_id}"  class="block clearfix" >
+              <div class="star_score"></div>
+              <p style="float:left;">您的评分：<span class="fenshu"></span> 分</p>
+              <div class="attitude"></div>
+            </div>
+
+            <div class="images_box">
+                <div id="fileList" class="uploader-list"></div>
+                <div class="upload-box-{$products.product_id} clearfix">
+                    <div id="upload_picture_{$products.product_id}" class="upload_btn">+</div>
+                </div>
+            </div>
+
+          	<textarea name="brief" class="form-control" rows="3" placeholder="说点啥~"></textarea>
+        </div>
+        <script>
+          $(function(){
+            scoreFun($("#start_{$products.product_id}"));
+          });
+        </script>
+      </div>
+
+      <script>
+
+      $(function(){
+        //上传图片
+         // 初始化Web Uploader
+        var uploader = WebUploader.create({
+            fileNumLimit: 5,//上传数量限制
+            fileSizeLimit: 10*1024*1024,//限制上传所有文件大小
+            fileSingleSizeLimit: 10*1024*1024,//限制上传单个文件大小
+            // 选完文件后，是否自动上传。
+            auto: true,
+            // swf文件路径
+            swf: '__PUBLIC__/lib/webuploader/js/Uploader.swf',
+            // 文件接收服务端。
+            server: "{:U('Home/File/uploadPicture',array('session_id'=>session_id()))}",
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#upload_picture_{$products.product_id}',
+            // 只允许选择图片文件。
+            accept: {
+                title: 'Images',
+                extensions: 'gif,jpg,jpeg,bmp,png',
+                mimeTypes: 'image/jpg,image/jpeg,image/png'
+            }
+        });
+
+        // 当有文件添加进来的时候
+        uploader.on( 'fileQueued', function( file ) {
+
+            var imgNum = $('.upload-box-{$products.product_id} .image-item');
+            if(imgNum.length>=4){
+              alert('最多允许上传5张图片');
+              //return false;
+            }else{
+              uploader.upload();
+            }
+            
+        });
+        //初始化空数组
+        var image_id = [];
+        var image_id_string ='';
+        // 文件上传成功，给item添加成功class, 用样式标记上传成功。
+        uploader.on( 'uploadSuccess', function( file,data ) {
+            
+            var data = data.data;
+            
+            image_id.push(data.file.id);
+            
+            $('.upload-box-{$products.product_id}').append('<div class="image-item"><img src="'+data.file.path+'" style="width:60px;height:60px;" /></div>');
+            image_id_string += ','+data.file.id;
+            if (image_id_string.substr(0,1)==',') image_id_string = image_id_string.substr(1);
+
+            $('#images_file_{$products.product_id}').val(image_id_string);
+        });
+        // 文件上传失败，显示上传出错。
+        uploader.on( 'uploadError', function( file ) {
+            toast.error("上传出错！请检查后重新上传！");
+        });
+        //验证文件格式以及文件大小
+        uploader.on("error", function (type) {
+            if (type == "Q_TYPE_DENIED") {
+                toast.error("请上传png、jpg、gif格式文件");
+            } else if (type == "Q_EXCEED_SIZE_LIMIT") {
+                toast.error("文件大小不能超过200k");
+            }else {
+                toast.error("上传出错！请检查后重新上传！错误代码"+type);
+            }
+        });
+    });
+    </script>
+    	</volist>
+
+      <botton class="btn btn-block" id="submit">提交评价</botton>
+    </div>
+	</div>
+</div>
+</block>
+<block name="script">
+<script type="text/javascript" src="__PUBLIC__/lib/webuploader/js/webuploader.js"></script>
+<script type="text/javascript" src="__JS__/startScore.js"></script>
+<script src="__JS__/comment.js"></script>
+
+</block>

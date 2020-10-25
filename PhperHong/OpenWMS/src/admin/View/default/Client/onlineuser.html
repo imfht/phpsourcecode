@@ -1,0 +1,92 @@
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+			<div id="alert_box_table"></div>
+			<div class="table-responsive">
+			{:NW('Table',array(
+					'columns'=>array(
+						
+						array('name'=>'mac','text'=>'MAC','width'=>'12%'),
+						array('name'=>'username','text'=>'用户名','width'=>'10%','sortable'=>false),
+						array('name'=>'auth_type','text'=>'登录方式','width'=>'12%'),
+						array('name'=>'online_time','text'=>'在线时长','width'=>'12%'),
+						array('name'=>'outgoing','text'=>'流量','width'=>'8%','sortable'=>false),
+						array('name'=>'device_type','text'=>'设备类型','width'=>'10%','sortable'=>false),
+						array('name'=>'src_url','text'=>'来路地址','width'=>'15%','sortable'=>false)
+					), 
+					'default'	=> '空',
+					'rows'		=> !is_array($rows) ? array() : $rows ,
+					'button_width'	=>'15%',
+					'button' 	=> array(
+						0	=> array('class'=>'blue', 'icon'=>'search', 'name'=>'user_info', 'title'=>'用户详情', 'field'=>array('mac')),
+						1	=> array('class'=>'red', 'icon'=>'remove', 'name'=>'tick', 'title'=>'踢下线', 'field'=>array('mac'))
+					),
+				) ,'User'
+			)}
+			</div>
+			{:W('Page/index', array('total'=>$count, 'rp'=>$pagelen, 'param'=>$param))}
+		</div>
+	</div>
+</div>
+<br/><br/><br/>
+<script type="text/javascript">
+	$(document).ready(function(){
+		$("a[name='user_info']").click(function(){
+			var mac = $(this).attr('value');
+			if (mac == ''){
+				$("#alert_box_table").jk_alert({msg: '没有获取到要查看的数据，请刷新后重试', type:'danger', show_time:12000});
+				return false;
+			}
+	
+			dialog({
+				id: 'test-dialog',
+				title: '在线用户详情',
+				width:600,
+				height:300,
+				padding:0,
+				url: "{:U('Client/online_user_info')}?mac="+mac
+			}).show();
+		});
+
+		$("a[name='tick']").click(function(){
+			var mac = $(this).attr('value');
+			if (mac == ''){
+				$("#alert_box_table").jk_alert({msg: '没有获取到要删除的数据，请刷新后重试', type:'danger', show_time:12000});
+				return false;
+			}
+	
+		
+			showdialog({
+				'title':'提示',
+				'message':'您确定要将该用户踢下线吗？',
+				'okfunction':function(){
+					$.ajax({ 
+			            url: "{:U('Client/tick')}",  
+			            data:{'mac': mac},
+			            dataType:'json',
+			            type:'POST',
+			            success: function(data){
+			                if (data.ret == 1){
+			                    $("#alert_box_table").jk_alert({ msg: data.msg, type: 'success', show_time: 3500 });
+			                    setTimeout(function(){
+			                    	location.reload();
+			                    }, 2000);
+			                    
+			                }else{
+			                    $("#alert_box_table").jk_alert({ msg: data.msg, type: 'danger', show_time: 3500 });
+			                }
+			            }
+			        });
+				}
+			})
+		});
+		$('#listRows').change(function(){
+			window.location.href = search();
+		})
+	});
+	function search(){
+		
+		var listRows = $('#listRows').val();
+		return "{:U('Client/onlineuser')}?pagelen="+listRows;
+	}
+</script>

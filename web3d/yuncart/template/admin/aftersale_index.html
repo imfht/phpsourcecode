@@ -1,0 +1,110 @@
+<!--{include(file='head.html')}-->
+<script type="text/javascript" src="template/jslib/tbox/tbox.js"></script>
+<link rel="stylesheet" href="template/jslib/tbox/tbox.css" type="text/css" />
+
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<div id="main_c">
+			<form name="seaform" id="seaform" action="<!--{url('admin','aftersale','index')}-->" method="post" onsubmit="$.oper.checkq('submit')">
+			<div class="bt_bk">
+				<span class="btn">
+					<a href="javascript:void(0);" onclick="$.oper.refresh();return false;">刷新</a>
+					<a href="javascript:void(0);" onclick="$.oper.remove();return false;">移除</a>
+				</span>
+				<span class="state_tip"></span>
+			</div>
+				<input type="hidden" value="<!--{def($pagearr['page'],1)}-->"		name="page" id="page"/>
+				<input type="hidden" value="<!--{def($pagearr['pagesize'],10)}-->"	name="pagesize" id="pagesize" />
+			</form>
+			<!--{include_page("page.html","top")}-->
+			<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center">
+						<th width="5%"><input type="checkbox" value="1" name="allselect" id="allselect" autocomplete="off" onclick="$.oper.selectall()"/></th>
+						<th width="10%">操作</th>
+						<th width="10%">订单号</th>
+						<th width="20%" colspan="2">商品</th>
+						<th width="10%">期望</th>
+						<th width="25%">问题</th>
+						<th width="10%">申请时间</th>
+						<th width="10%">处理时间</th>
+					</tr>
+				</thead>
+				<tbody id="listtbody">
+					<!--{foreach $afterlist after}-->
+					<tr align="center" id="tr_<!--{$after.afterid}-->">
+						<td><input type="checkbox" value="<!--{$after.afterid}-->" name="singleselect" autocomplete="off"/></td>
+						<td>
+							<a href="javascript:void(0);" onclick="$.oper.remove(<!--{$after.afterid}-->);return false;" class="remove"></a>
+							<a href="javascript:void(0);" onclick="After.detail(<!--{$after.afterid}-->);return false;" class="detail"></a>
+							<a href="javascript:void(0);" onclick="After.deal(<!--{$after.afterid}-->);return false;" class="fix"></a>
+						</td>
+						<td>
+							<a href="javascript:void(0)" onclick="After.trade('<!--{$after.tradeid}-->');return false;"><!--{$after.tradeid}--></a>
+						</td>
+						<td width="5%" align="left">
+							<a href="<!--{url('index','item','index','itemid=$after[itemid]')}-->" target="_blank">
+								<img src = "<!--{$after.itemimg}-->_50x50.jpg" width="50" height="50" onerror="this.onerror='',this.src='images/nopicture.jpg'" class="mid"/>
+							</a>
+						</td>
+						<td width="15%" align="left">
+							<a href="<!--{url('index','item','index','itemid=$after[itemid]')}-->" target="_blank"><!--{$after.itemname}--></a>
+						</td>
+						<td><!--{getCommonCache('$after[way]','aftersale')}--> <br />
+							<!--{if $after[chgspec]}-->
+								<span class="red"><!--{$after.chgspec}--></span>
+							<!--{/if}-->
+						</td>
+						<td align="left">
+							<!--{$after.problem}-->
+						</td>
+						<td>
+							<!--{date("m-d",$after.addtime)}-->
+						</td>
+						<td>
+							<!--{if $after.isdeal}-->
+								<!--{date("m-d H:i",$after.dealtime)}-->
+							<!--{else}-->
+								<span class="red">未处理</span>
+							<!--{/if}-->
+						</td>
+					</tr>
+					<!--{/foreach}-->
+				</tbody>
+			</table>
+			<!--{include_page("page.html","foot")}-->
+		</div>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+<!--{include(file='foot.html')}-->
+<script type="text/javascript">
+$(function(){
+	$.oper.init("<!--{url('admin','aftersale','aftersaleoper')}-->");
+});
+var After = {
+	url : "<!--{url('admin','aftersale','aftersaleoper')}-->",
+	detail:function(afterid) {
+		$.tbox.popup(this.url,"GET",{afterid:afterid,opertype:'view'});
+	},
+	trade:function(tradeid) {
+		$.tbox.popup("<!--{url('admin','trade','tradeoper')}-->",'GET',{opertype:'view',tradeid:tradeid})
+	},
+	deal:function(afterid) {
+		var _this = this;
+		jConfirm("确认处理？","确认处理",function(confirm){
+			if(confirm){
+				$.post(_this.url,{afterid:afterid,opertype:'deal'},function(data) {
+					if(data == "success") {
+						$.oper.refresh();
+					} else {
+						jAlert(data);
+					}
+				});
+			}
+		})
+	}
+}
+</script>

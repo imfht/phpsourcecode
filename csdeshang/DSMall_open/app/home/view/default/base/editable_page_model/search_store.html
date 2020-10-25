@@ -1,0 +1,96 @@
+<div class='editable-page-model'>
+<div class="div-goods-select">
+    <table class="search-form">
+        <tbody>
+        <tr>
+            <th>{$Think.lang.ds_store_name}</th>
+            <td class="w160"><input type="text" name="b_search_keyword" class="text" value="{$Request.get.keyword}" /></td>
+            <td class="tc w70"><a href="{:url(request()->controller().'/search_store')}" dstype="search_a" class="dss-btn"><i class="iconfont">&#xe718;</i>{$Think.lang.ds_search}</a></td>
+            <td class="w10"></td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="search-result" style="width:739px;">
+        {notempty name="store_list"}
+        <ul class="goods-list" dstype="bundling_goods_add_tbody" style=" width:760px;">
+            {foreach name="store_list" item="val"}
+            <li dstype="{$val.store_id}">
+                <div class="goods-thumb"><img src="{:get_store_logo($val.store_avatar)}" dstype="{$val.store_avatar}" /></div>
+                <dl class="goods-info">
+                    <dt><a href="#" target="_blank" title="{$val.store_name}">{$val.store_name}</a></dt>
+                </dl>
+                <div data-param="{gid:{$val.store_id},image:'{$val.store_avatar}',src:'{:get_store_logo($val.store_avatar)}',gname:'{$val.store_name}'}"><a href="JavaScript:void(0);" class="dssc-btn-mini dssc-btn-green" onclick="bundling_goods_add($(this))"><i class="iconfont">&#xe6db;</i>{$Think.lang.ds_add}</a></div>
+            </li>
+            {/foreach}
+        </ul>
+        {else /}
+        <div class="norecord">
+            <div class="warning-option"><i class="iconfont">&#xe64c;</i><span>{$Think.lang.no_record}</span></div>
+        </div>
+        {/notempty}
+        {notempty name="store_list"}
+        <div class="pagination">{$show_page|raw}</div>
+        {/notempty}
+    </div>
+</div>
+</div>
+
+<script>
+    $(function(){
+        /* ajax添加商品  */
+        $('.demo').unbind().ajaxContent({
+            event:'click', //mouseover
+            loaderType:"img",
+            loadingMsg:"{$Think.HOME_SITE_ROOT}/images/loading.gif",
+            target:'#editable_model_goods_ajaxContent'
+        });
+
+        $('a[dstype="search_a"]').click(function(){
+            $(this).attr('href', $(this).attr('href')+'?' +$.param({'keyword':$('input[name="b_search_keyword"]').val()}));
+            $('a[dstype="search_a"]').ajaxContent({
+                event:'dblclick', //mouseover
+                loaderType:'img',
+                loadingMsg:'{$Think.HOME_SITE_ROOT}/images/loading.gif',
+                target:'#editable_model_goods_ajaxContent'
+            });
+            $(this).dblclick();
+            return false;
+        });
+
+
+        // 验证商品是否已经被选择。
+        O = $('input[dstype="store_id"]');
+        A = new Array();
+        if(typeof(O) != 'undefined'){
+            O.each(function(){
+                A[$(this).val()] = $(this).val();
+            });
+        }
+        T = $('ul[dstype="bundling_goods_add_tbody"] li');
+        if(typeof(T) != 'undefined'){
+            T.each(function(){
+                if(typeof(A[$(this).attr('dstype')]) != 'undefined'){
+                    $(this).children(':last').html('<a href="JavaScript:void(0);" onclick="bundling_operate_delete($(\'#bundling_tr_'+$(this).attr('dstype')+'\'), '+$(this).attr('dstype')+')" class="dssc-btn-mini dssc-btn-orange"><i class="iconfont">&#xe754;</i>{$Think.lang.ds_del}</a>');
+                }
+            });
+        }
+    });
+
+    /* 添加商品 */
+    function bundling_goods_add(o){
+        eval('var _data = ' + o.parent().attr('data-param'));
+        // 隐藏第一个tr
+        $('tbody[dstype="bundling_data"]').children(':first').hide();
+        // 插入数据
+        $('<tr id="bundling_tr_' + _data.gid + '"></tr>')
+            .append('<td class="w50 "><div class="pic-thumb"><img dstype="bundling_data_img" ncname="' + _data.image + '" src="' + _data.src + '" onload="javascript:ResizeImage(this,60,60)"></span></div></td>')
+            .append('<td class="tl"><dl class="goods-name"><dt style="width: 300px;">' + _data.gname + '</dt></dl></td>')
+            .append('<td class="w90"><input type="number" min="0" max="255" size="1" name="store_id[' + _data.gid + '][sort]" value="255" /></td>')
+            .append('<td class="dscs-table-handle w90"><span><a href="javascript:void(0);" onclick="bundling_operate_delete($(\'#bundling_tr_' + _data.gid + '\'), ' + _data.gid + ')" class="btn-orange"><i class="iconfont">&#xe754;</i><p>{$Think.lang.ds_del}</p></a></span></td>')
+    .fadeIn().appendTo('tbody[dstype="bundling_data"]');
+
+        $('li[dstype="' + _data.gid + '"]').children(':last').html('<a href="JavaScript:void(0);" class="dssc-btn-mini dssc-btn-orange" onclick="bundling_operate_delete($(\'#bundling_tr_' + _data.gid + '\'), ' + _data.gid + ')"><i class="iconfont">&#xe754;</i>{$Think.lang.ds_del}</a>');
+
+    }
+
+</script> 

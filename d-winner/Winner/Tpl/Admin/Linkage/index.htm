@@ -1,0 +1,191 @@
+<script language="javascript">
+$(function(){
+	var th = $(".top").height();
+	th = 111-th;
+	var wh = $(window).height()-th;
+	$("#Linkage").treegrid({
+		//title:'联动列表',	
+		idField:'id',
+		height:wh,
+		treeField:'text',
+		autoRowHeight:false,
+		singleSelect:true,
+		striped:true,
+		rownumbers:true,
+		method:'get',
+		url:'__ACTION__/json/1',
+		fitColumns:true,
+		nowrap:Number('{$TC.config.DATA_NOWRAP}'),
+		onBeforeLoad: function () {  
+			 if($("#LinkageCon .datagrid-toolbar table tr #seleCPLinkage").length==0){
+				 var grid = $("#LinkageCon .datagrid-toolbar table tr");  
+				 var date = '<td>'+$("#selectInputLinkage").html()+'</td>';     
+				 grid.append(date); 
+				 $("#seleCPLinkage").combobox({
+					 url:'__ITEM__/__RUNTIME__/Data/Json/Linkage_data.json',
+					 editable:false,
+					 method:'get',
+					 width:120,
+					 required:false,
+					 valueField:'id',
+					 textField:'text',
+					 onSelect:function(n){
+						$.post('__URL__/change', {id:n.id}, function(data){
+							//alert(data);
+							$("#Linkage").treegrid('reload');
+						});
+					 },
+					 filter:function(q,r){
+						var opts = $(this).combobox('options');
+						var v = r[opts.textField];
+						var vu = v.toUpperCase();
+						var vp = String(getPinYin(v));
+						var qp = q.toUpperCase();
+						if(vp.indexOf(qp)>=0 || vu.indexOf(qp) >= 0){
+							return r[opts.textField];
+						}
+					}
+				 });
+			 }
+		},
+		onDblClickRow:function(e,rowIndex,rowData){
+			var se = $(this).treegrid('getSelected');
+			var idd = se['id'];
+			$("#addLinkage").dialog({
+				title:'编辑联动',
+				resizable:true,
+				width:550,
+				height:305,
+				href:'__URL__/add/act/edit/id/'+idd,
+				onOpen:function(){
+					cancel['Linkage'] = $(this);
+				},
+				onClose:function(){
+					//$(this).dialog('destroy');
+					//$("#Linkage").treegrid('reload');
+					cancel['Linkage'] = null;
+				}
+			});
+		},
+		toolbar:[{
+		iconCls: 'icon-add',
+			text : '新增',
+			handler: function(){
+				$("#addLinkage").dialog({
+					title:'新增联动',
+					resizable:true,
+					width:550,
+					height:305,
+					href:'__URL__/add/act/add',
+					onOpen:function(){
+						cancel['Linkage'] = $(this);
+					},
+					onClose:function(){
+						//$(this).dialog('destroy');
+						//$("#Linkage").treegrid('reload');
+						cancel['Linkage'] = null;
+					}
+				});
+			}
+		},'-',{
+			iconCls: 'icon-edit',
+			text : '编辑',
+			handler: function(){
+				var se = $("#Linkage").treegrid('getSelected');
+				var idd = se['id'];
+				$("#addLinkage").dialog({
+					title:'编辑联动',
+					resizable:true,
+					width:550,
+					height:305,
+					href:'__URL__/add/act/edit/id/'+idd,
+					onOpen:function(){
+						cancel['Linkage'] = $(this);
+					},
+					onClose:function(){
+						//$(this).dialog('destroy');
+						//$("#Linkage").treegrid('reload');
+						cancel['Linkage'] = null;
+					}
+				});
+			}
+		},'-',{
+			iconCls: 'icon-cancel',
+			text : '删除',
+			handler: function(){
+				var se = $("#Linkage").treegrid('getSelected');
+				var idd = se['id'];
+				$.messager.confirm('提示','确定删除吗！',function(r){
+					if(r==true){
+						$.messager.progress();
+						$.get('__URL__/del/id/'+idd, function(data){
+							$.messager.progress('close');
+							if(data==1){
+								$.messager.alert('提示','删除数据成功！','info',function(){
+									$("#Linkage").treegrid('reload');
+								});
+							}else if(data==0){
+								$.messager.alert('提示','删除数据失败！','warning');
+							}else{
+								$.messager.alert('提示','您没有删除权限！','warning');
+							}
+						});
+					}
+				});	
+			}
+		},'-',{
+			iconCls: 'icon-json',
+			text : '更新缓存',
+			handler: function(){
+				$.get('__URL__/json', function(data){
+					if(data==1){
+						$.messager.alert('提示','更新缓存成功！','info');
+					}else{
+						$.messager.alert('提示','更新缓存失败！','warning');
+					}
+				});
+			}
+		},'-',{
+			iconCls: 'icon-reload',
+			text : '重载',
+			handler: function(){
+				$.get('__URL__/clear', function(data){
+					$("#seleCPLinkage").combobox('setValue','');
+					$("#Linkage").treegrid('reload');
+				});	
+			}
+		}],
+		columns:[[  
+			{field:'id',title:'联动ID',width:50},  
+			{field:'text',title:'联动名称',width:320}, 
+			{field:'val',title:'显示样式',width:300}, 
+			{field:'code',title:'识别码',width:260},   
+			{field:'status',title:'状态',width:70}
+		]]
+	});
+	
+	$("#rightTabs").tabs({
+		onClose:function(t,i){
+			$.ajaxSetup({  
+				async : false  
+			});
+			if(t=='联动管理'){
+				$.get('__URL__/clear', function(data){});
+			}	
+			$.ajaxSetup({  
+				async : true  
+			});
+		}
+	});
+	
+	$("#rightTabs").tabs('select','联动管理');
+});
+</script>
+<div id="LinkageCon" class="con" onselectstart="return false;" style="-moz-user-select:none;">
+	<table id="Linkage"></table>
+</div>
+<div id="selectInputLinkage" style="display:none">
+ <span class="datagrid-btn-separator-nofloat"  style="margin-right:2px;"></span>
+ <input id="seleCPLinkage" size="18"  />
+</div>
+<div id="addLinkage"></div>

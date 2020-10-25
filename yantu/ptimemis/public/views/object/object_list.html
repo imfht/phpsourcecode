@@ -1,0 +1,128 @@
+<header class="data-table-header p+">
+    <div class="data-table-header__label">
+        <span style="float:left;" ng-if="objectConfig.base.opera.search" >
+            <lx-search-filter model="searchStr" ng-enter="search(searchStr)" placeholder="Search" ></lx-search-filter>
+        </span>
+        <button class="btn btn--s btn--blue-grey btn--raised" ng-click="index()" lx-ripple>
+            <i class="mdi mdi-refresh"></i>
+        </button>
+        <!-- <button class="btn btn--s btn--blue-grey btn--raised" ng-click="filter()" ng-if="objectConfig.base.opera.filter"  lx-ripple>
+            <i class="mdi mdi-filter-variant"></i>&nbsp;高级
+        </button> -->
+        <button class="btn btn--s btn--blue-grey btn--raised" ng-click="create()" ng-if="objectConfig.base.opera.store"  lx-ripple>
+            <i class="mdi mdi-plus"></i>&nbsp;新建
+        </button>
+    </div>
+    <div class="data-table-header__actions">
+ 
+
+        <button class="btn btn--s btn--blue-grey btn--raised" ng-disabled="1 == pager.currentPage" ng-click="pageNumChange(pager.currentPage-1)" lx-ripple> < </button>
+        <span class="tc-grey-500" style="line-height:30px;" >&nbsp;{{pager.currentPage}}&nbsp;/&nbsp;{{pager.lastPage}}&nbsp;</span>
+        <button class="btn btn--s btn--blue-grey btn--raised" ng-disabled="pager.lastPage == pager.currentPage" ng-click="pageNumChange(pager.currentPage+1)" lx-ripple > > </button>
+
+    </div>
+</header>
+
+<table class="data-table" >
+    <thead>
+        <tr class="data-table__selectable-row">
+            <th></th>
+            <th ng-class="{'data-table__sortable-cell':field.in_sort,
+                'data-table__sortable-cell--desc':field.in_sort && sortField==field.name && field.sort_value,
+                'data-table__sortable-cell--asc':field.in_sort && sortField==field.name && !field.sort_value}" 
+                ng-click="sortChange(field)" ng-if="field.in_list" ng-repeat="field in objectConfig.fields">         
+                <span ng-if="field.relate" > {{field.relate.comment || field.relate.name}}</span>
+                <span ng-if="!field.relate" > {{field.comment || field.name}} </span>{{field.sortValue}}
+            </th>
+            <th >
+            	操作
+            </th>
+        </tr>
+    </thead>
+    
+    <tbody >
+        <tr class="data-table__selectable-row {{bgColorList && 'bgc-'+bgColorList.color[object[bgColorList.field]]}}" ng-click="stateGo(object)" ng-repeat="object in objects" >
+            <td></td>
+            <td ng-if="field.in_list" ng-repeat="field in objectConfig.fields">
+            	<span ng-if="field.type == 'string' || field.type == 'number' || field.type == 'decimal'">
+                    {{object[field.name]}}
+                </span>
+
+                <span ng-if="field.type == 'relate'">
+                    {{object[field.relate.table+'_'+field.relate.select]}}
+                </span>
+
+                <span ng-if="field.type == 'boolean'" ng-click="$event.stopPropagation();">
+                    <input type="checkbox" id="switch_{{field.name}}_{{object.id}}" class="switch__input" ng-model="object[field.name]" ng-change="update(object,field.name);"  >
+                    <label for="switch_{{field.name}}_{{object.id}}" class="switch__label">{{object[field.name]?"是":"否"}}</label>
+                </span>
+
+                <span ng-if="field.type == 'datetime'" title="{{object[field.name]}}"  >
+                    {{object[field.name] | timeFormat}}
+                </span>
+
+                <span ng-if="field.type == 'img'" >
+                    <lx-thumbnail thumbnail-src="{{object[field.name]}}" thumbnail-width="80" thumbnail-height="60"></lx-thumbnail>
+                </span>
+
+                <span ng-if="field.type == 'enum'" >
+                    {{field.enum[object[field.name]].value}}
+                </span>
+            </td>
+          	<td >
+                <lx-dropdown  ng-click="$event.stopPropagation();" position="right">
+                    <button class="btn btn--s btn--blue-grey btn--flat" lx-ripple lx-dropdown-toggle>
+                        <i class="mdi mdi-opera"></i>&nbsp;操作
+                    </button>      
+                    <lx-dropdown-menu class="" >
+                        <ul>
+                            <li>
+                                <a class="dropdown-link" ng-click="show(object);" ng-if="objectConfig.base.opera.show">
+                                    <i class="mdi mdi-pencil"></i><span>编辑</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-link" ng-click="destroy(object);" ng-if="objectConfig.base.opera.show">
+                                    <i class="mdi mdi-delete"></i><span>删除</span>
+                                </a>
+                            </li>
+                            <li ng-if="menuList" class="dropdown-divider"></li>
+                            <li ng-repeat="opera in menuList">
+                                <a class="dropdown-link" ng-click="stateGo(object,opera);">
+                                    <i class="mdi mdi-{{opera.ico}}"></i><span>{{opera.name}}</span>
+                                </a>
+                            </li>
+                            <li ng-if="operaList" class="dropdown-divider"></li>
+                            <li ng-repeat="opera in operaList">
+                                <a class="dropdown-link" ng-click="operaGo(object,opera);">
+                                    <i class="mdi mdi-{{opera.ico}}"></i><span>{{opera.name}}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </lx-dropdown-menu>
+                </lx-dropdown>
+          	</td>
+        </tr>
+    </tbody>
+    
+</table>
+
+<lx-dialog class="dialog dialog--l" id="showDialog" auto-close="true">
+    <div class="dialog__header">
+        <div class="toolbar bgc-blue-grey-800 pl++">
+            <span class="toolbar__label tc-white fs-title">
+                {{object.id?"更新":"添加"}} {{objectConfig.base.comment || objectConfig.base.name}}
+            </span>
+        </div>
+    </div>
+
+    <div class="dialog__content p++">
+        <div id="include" ng-include="'views/object/object_show.html'"></div>
+    </div>
+
+    <div class="dialog__actions">
+        <button class="btn btn--m btn--black btn--flat" lx-ripple lx-dialog-close>取消</button>
+        <button class="btn btn--m btn--blue  btn--flat" ng-click="store(object)" ng-if="!object.id" lx-ripple>添加</button>
+        <button class="btn btn--m btn--blue  btn--flat" ng-click="update(object)" ng-if="object.id" lx-ripple>更新</button>
+    </div>
+</lx-dialog>

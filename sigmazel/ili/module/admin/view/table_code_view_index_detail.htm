@@ -1,0 +1,250 @@
+<?php
+$tmp =
+<<<EOF
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+		   		<div class="widget-header">
+					<p class="text">{$table[CNAME]}详情</p>
+				</div>
+				<div class="widget-content">
+				<table class="table">
+					<thead>
+						<th width="100">ID</th>
+						<th>{\${$table[IDENTITY]}[{$table[PRIMARY_KEY]}]}</th>
+					</thead>
+EOF;
+
+$code .= $tmp;
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	$name = $key == 'group' ? '等级' : $join;
+	$name_upper = strtoupper($key);
+	
+	$code .= "
+					<tr>
+						<td>{$name}</td>
+						<td>{\${$table[IDENTITY]}[{$name_upper}]}</td>
+					</tr>";
+	unset($name);
+	unset($name_upper);
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	//不需要显示的字段！
+	if($column['identity'] == 'AUDITTIME' 
+		|| $column['identity'] == 'CITYID' 
+		|| $column['identity'] == 'COUNTYID' 
+		|| $column['identity'] == 'PLACE') continue;
+	
+	if($column['identity'] == 'PROVINCEID'){
+		$code .= "
+					<tr>
+						<td>所在地区</td>
+						<td>{\${$table[IDENTITY]}[PLACE]}</td>
+					</tr>";
+		continue;
+	}elseif($column['identity'] == 'GENDER'){
+		$code .= "
+					<tr>
+						<td>{$column[name]}</td>
+						<td>{echo \${$table[IDENTITY]}['GENDER'] == 2 ? '女' : '男';}</td>
+					</tr>";
+		continue;
+	}elseif($column['identity'] == 'ISAUDIT'){
+		$code .= "
+					<tr>
+						<td>{$column[name]}</td>
+						<td>{echo \${$table[IDENTITY]}['ISAUDIT'] == 1 ? '已审核' : '未审核';}</td>
+					</tr>";
+		continue;
+	}
+	
+	if($column['type'] == 'text'){
+		$code .= "
+					<tr>
+						<td>{$column[name]}</td>
+						<td class=\"td-text\">{\${$table[IDENTITY]}[{$column[identity]}]}</td>
+					</tr>";
+	}else{
+		$code .= "
+					<tr>
+						<td>{$column[name]}</td>
+						<td>{\${$table[IDENTITY]}[{$column[identity]}]}</td>
+					</tr>";
+	}
+}
+
+if($table['CODE']['AUDITER']){
+	$code .= "
+					<tr>
+						<td>审核人/时间</td>
+						<td>
+							{\${$table[IDENTITY]}[AUDITER]}；
+							{\${$table[IDENTITY]}[AUDITTIME]}
+						</td>
+					</tr>";
+}elseif($table['CODE']['USER'] && !$table['CODE']['AGENT']){
+	$code .= "
+					<tr>
+						<td>审核人/时间</td>
+						<td>
+							{\${$table[IDENTITY]}[USERNAME]}；
+							{\${$table[IDENTITY]}[EDITTIME]}
+						</td>
+					</tr>";
+}elseif($table['CODE']['USER']){
+	$code .= "
+					<tr>
+						<td>操作人/时间</td>
+						<td>
+							{\${$table[IDENTITY]}[USERNAME]}；
+							{\${$table[IDENTITY]}[EDITTIME]}
+						</td>
+					</tr>";
+}
+
+$tmp = 
+<<<EOF
+
+				</table>
+				<table class="table">
+EOF;
+
+$code .= $tmp;
+
+if(count($table['FILES']) > 0 && count($table['FILES']) <= 3){
+	$tmp = 
+<<<EOF
+					<!--{if is_array(\${$table[IDENTITY]}['FILE01'])}-->
+					<tr>
+						<td width="100">大图</td>
+						<td>
+							<a href="{\${$table[IDENTITY]}[FILE01][3]}" target="_blank">
+								<img src="{\${$table[IDENTITY]}[FILE01][0]}" data="{\${$table[IDENTITY]}[FILE01][4]}" width="240" style="width:240px;" border="0"/>
+							</a>
+						</td>
+					</tr>
+					<!--{/if}-->
+EOF;
+	
+	$code .= $tmp;
+	
+	if(count($table['FILES']) > 1){
+		$tmp = 
+<<<EOF
+					<!--{if is_array(\${$table[IDENTITY]}['FILE02'])}-->
+					<tr>
+						<td>小图</td>
+						<td>
+							<a href="{\${$table[IDENTITY]}[FILE02][3]}" target="_blank">
+								<img src="{\${$table[IDENTITY]}[FILE02][0]}" data="{\${$table[IDENTITY]}[FILE02][4]}" width="240" style="width:240px;" border="0"/>
+							</a>
+						</td>
+					</tr>
+					<!--{/if}-->
+EOF;
+		
+		$code .= $tmp;
+	}
+	
+	if(count($table['FILES']) > 2){
+		$tmp = 
+<<<EOF
+					<!--{if is_array(\${$table[IDENTITY]}['FILE03'])}-->
+					<tr>
+						<td>图标</td>
+						<td>
+							<a href="{\${$table[IDENTITY]}[FILE03][3]}" target="_blank">
+								<img src="{\${$table[IDENTITY]}[FILE03][0]}" data="{\${$table[IDENTITY]}[FILE03][4]}" width="240" style="width:240px;" border="0"/>
+							</a>
+						</td>
+					</tr>
+					<!--{/if}-->
+EOF;
+		
+		$code .= $tmp;
+	}
+	
+	$tmp = 
+<<<EOF
+
+				</table>
+EOF;
+
+	$code .= $tmp;
+}elseif(count($table['FILES']) > 0){
+	$tmp = 
+<<<EOF
+				
+				<!--{if count(\${$table[IDENTITY]}_files) > 0}-->
+				<hr />
+            	<table class="table" style="width:auto;">
+            		<thead>
+            			<tr>
+	            			<th width="40">{lang admin.validate.swfupload.th.no}</th>
+	            			<th width="80">{lang admin.validate.swfupload.th.pic}</th>
+	            			<th width="240">{lang admin.validate.swfupload.th.name}</th>
+            			</tr>
+            		</thead>
+            		<tbody>
+            		<!--{loop \${$table[IDENTITY]}_files \$key \$image}-->
+            		<tr>
+		            	<td>
+			            	{echo \$key + 1;}
+		            	</td>
+		            	<td>
+		            		<a href="{\$image[3]}" target="_blank"><img class="image" width="80" style="width:80px;" src="{\$image[0]}" border="0" /></a>
+		            	</td>
+		            	<td>
+		            		<span class="imageTitle">{\$image[1]}<!--{if \$image[5]}--><br/>[{\$image[5]}px * {\$image[6]}px]<!--{/if}--></span>
+		            	</td>
+		            </tr>
+            		<!--{/loop}-->
+            		<tr{if count(\${$table[IDENTITY]}_files) > 0} style="display:none;"{/if}>
+            			<td colspan="3">{lang admin.validate.swfupload.empty}</td>
+            		</tr>
+		            </tbody>
+		        </table>
+		        <!--{/if}-->
+EOF;
+	
+	$code .= $tmp;
+}
+
+$tmp = 
+<<<EOF
+				
+				<fieldset>
+					<button type="button" class="btn" onclick="javascript:history.go(-1);">{lang admin.operation.go.back}</button>
+				</fieldset>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	var dwidth = $('#main_content').width() - 100;
+	$('#main_content .td-text img').each(function(index, item){
+		var self = item;
+		var img = new Image();
+		img.src = self.src;
+		img.onload = function(){
+			if(this.width > dwidth) $(self).css('width', '100%');
+		}
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->
+EOF;
+
+$code .= $tmp;
+?>

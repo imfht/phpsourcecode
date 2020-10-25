@@ -1,0 +1,208 @@
+<html>
+<head>
+    <css file="__PUBLIC__/css/body.css"/>
+    <css file="__STATIC__/icon/icon.css"/>
+    
+    <js file="__STATIC__/jquery-1.7.2.min.js"/>
+    <css file="__STATIC__/kindeditor/themes/default/default.css" />
+    <js file="__STATIC__/kindeditor/kindeditor-min.js"/>
+    <js file="__STATIC__/kindeditor/lang/zh_CN.js"/>
+    <css file="__STATIC__/uploadify/uploadify.css"/>
+    <js file="__STATIC__/uploadify/jquery.uploadify.js"/>
+    <js file="__STATIC__/My97DatePicker/WdatePicker.js"/>
+    <script>
+       $(function(){
+                var url1="{:U('Upload/upload_ke_json','',0)}";
+                var url2="{:U('Upload/upload_ke_manager','',0)}";
+                var editor;
+    			KindEditor.ready(function(K) {
+    				editor = K.create('.elem1', {
+                        uploadJson : url1,
+                        fileManagerJson : url2,
+                        allowFileManager : true
+    				});
+    			});
+        }); 
+     function checkboxx(x,_this){
+            obj=$('#'+x);
+            if($(_this).attr("checked")){
+                obj.val(1);
+            }else{
+                obj.val(0);
+            }
+     }
+     function showfields(){
+        if(window.ActiveXObject){ 
+            window.showModalDialog("{:U('Fields/index',array('tb'=>'site_fields'))}", null, "dialogWidth:850px;dialogHeight:400px;status:no;help:no;resizable:yes;");
+        }
+        else{
+            window.open("{:U('Fields/index',array('tb'=>'site_fields'))}","","height=300,width=800,status=no,toolbar=no,menubar=no,location=no");
+        }
+        //window.showModalDialog("{:U('Fields/index',array('tb'=>'site_fields'))}", null, "dialogWidth:850px;dialogHeight:400px;status:no;help:no;resizable:yes;");
+     }
+    </script>
+</head>
+<body>
+<form action="{:U('Site/siteHandle')}" method='post'>
+    <div class="top">
+        <div class="position"><span class="icon icon-31"></span>当前位置：站点设置</div>
+        <div class="top-title">
+            <span class="icon icon-32"></span>
+            <div class="top-tool">
+                <input class="button-b" type="submit" value="提交保存"/>
+            </div>
+        </div>
+    </div>
+    <div class="body">
+       <table class="list-tb tableTd"  border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td  colspan='2' style="padding-left:20px;background:#eee;">信息配置
+                    <a href="javascript:void(0)" onclick="showfields()" style="margin-left: 10px;text-decoration: none;color:#15afef;">字段管理</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">名称：</td>
+                <td align="left"><input name="title" style="width: 200px;" type="text" value="{$site['title']}"/><span class="remark">最大可输入50个字符,可留空</span></td>
+            </tr>
+            <tr>
+                <td width="10%" class="textRight">域名：</td>
+                <td><input name="domain" style="width: 200px;" type="text" value="{$site['domain']}"/><span class="remark">最大可输入50个字符,域名要以“http://”开头,可留空</span></td>
+            </tr>
+            <tr>
+                <td class="textRight">关键字：</td>
+                <td align="left"><input name="keywords" type="text" value="{$site['keywords']}"/><span class="remark">最大可输入150个字符,可留空</span></td>
+            </tr>
+            <tr>
+                <td class="textRight">简介：</td>
+                <td align="left"><textarea name="description">{$site['description']}</textarea></td>
+            </tr>
+            
+            <foreach name="fields" item="v">
+                    <if condition="$v.ftype eq 1">
+                        <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td> 
+                                <input type="text" name="{$v.tag}" value="{$site[$v[tag]]}"/>
+                            </td>
+                        </tr>
+                    </if>
+                    <if condition="$v.ftype eq 2">
+                        <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td>
+                                <textarea class="elem1" style="width:700px;height:300px;" name="{$v.tag}">{$site[$v[tag]]}</textarea>
+                            </td>
+                        </tr>
+                    </if>
+                    <if condition="$v.ftype eq 3">
+                        <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td> 
+                                <input type="text" name="{$v.tag}" value="{$site[$v[tag]]}"/>
+                            </td>
+                        </tr>
+                    </if>
+                    <if condition="$v.ftype eq 4">
+                         <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td> 
+                                <script>
+                                    $(function() {
+                                    	$("#{$v.tag}_s").uploadify({
+                                    		height        : 22,
+                                    		swf           : '__STATIC__/uploadify/uploadify.swf',
+                                    		uploader      : '{:U("Upload/upload_tp")}',
+                                    		width         : 60,
+                                            multi         :false, //ture多文件，false单文件
+                                            queueID:'uploadify_ppt',
+                                            buttonText:'',
+                                            removeCompleted : true,
+                                            'onUploadSuccess':function(file,data,response){
+                                                    if(data=='error') 
+                                                    {
+                                                        alert('上传出错，请检查原因!(文件大小/文件类型)');
+                                                    }
+                                                    else
+                                                    {
+                                                        $('#{$v.tag}').val(data);
+                                                    }
+                                            }
+                                    	});
+                                    });
+                                </script>
+                                <table border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td><input style="margin: 0px;margin-top:2px;" type="text" name="{$v.tag}" id="{$v.tag}" readOnly="true" value="{$site[$v[tag]]}"/></td>
+                                        <td style="padding-top: 3px;padding-left:3px;"><input type="file" name="{$v.tag}_s" id="{$v.tag}_s"/></td>
+                                        <td><div id="uploadify_ppt" style="width:400px;margin-left:5px;"></div></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </if>
+                    <if condition="$v.ftype eq 5">
+                       
+                    </if>
+                    <if condition="$v.ftype eq 6">
+                        <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td> 
+                                <input type="text" name="{$v.tag}" readOnly="true"  class="Wdate" value="{$site[$v[tag]]}" onclick="WdatePicker()"/>
+                            </td>
+                        </tr>
+                    </if>
+                    <if condition="$v.ftype eq 7">
+                        <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td>
+                                <input style="float: left;" type='checkbox' name='{$v.tag}' value="1"/>
+                            </td>
+                        </tr>
+                    </if>
+                    <if condition="$v.ftype eq 8">
+                        <tr>
+                            <td class="textRight">{$v.title}：</td>
+                            <td>
+                                    <textarea style="float:left;margin:4px 0px;" name="{$v.tag}">{$site[$v[tag]]}</textarea>
+                                    <div style="clear: both;"></div>
+                            </td>
+                        </tr>
+                    </if>
+                </foreach>
+        
+            <tr>
+                <td  colspan='2' style="padding-left:20px;background:#eee;">控制配置</td>
+            </tr>
+            
+            <tr>
+                <td class="textRight">URL模式：</td>
+                <td align="left">
+                    <select name="URL_MODEL">
+                        <option <if condition="$set['URL_MODEL']==0">selected=""</if> value="0">模式一</option>
+                        <option <if condition="$set['URL_MODEL']==1">selected=""</if> value="1">模式二</option>
+                        <option <if condition="$set['URL_MODEL']==2">selected=""</if> value="2">模式三</option>
+                    </select>
+                    <span class="remark">访问时体现的url样式，具体参考帮助</span>
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">伪静态后缀：</td>
+                <td align="left">
+                    <input name="URL_HTML_SUFFIX" value="{$set['URL_HTML_SUFFIX']}"/>
+                    <span class="remark">url模式为二、三时可用</span>
+                </td>
+            </tr>
+            <tr>
+                <td class="textRight">是否缓存：</td>
+                <td align="left">
+                    <select name="HTML_CACHE_ON">
+                        <option <if condition="$set['HTML_CACHE_ON']==0">selected=""</if> value="0">关闭</option>
+                        <option <if condition="$set['HTML_CACHE_ON']==1">selected=""</if> value="1">开启</option>
+                    </select>
+                </td>
+            </tr>
+       </table>
+    </div>
+</form>
+</body>
+</html>

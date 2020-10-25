@@ -1,0 +1,293 @@
+<!--{@name 主题详情}-->
+<!DOCTYPE html>
+<html>
+<head>
+<!--{template /tpl/_cms/view/pc_meta}-->
+<style type="text/css">
+.background-pc {background:url({$categories['05'][FILE01][0]});}
+.background-mobile {background:url({$categories['05'][FILE02][0]});}
+</style>
+</head>
+<body>
+	<!--{template /tpl/_cms/view/pc_head}-->
+	
+	<div class="forum">
+		<div class="banner banner-mini background-{echo $ismobile ? 'mobile' : 'pc';}">
+			<div class="box">
+				<p class="title">{$categories['05'][COMMENT]}</p>
+			</div>
+		</div>
+		
+		<div class="topics">
+			<div class="box">
+				<div class="left">
+					<p class="crumb">
+						<a href="index.html" title="首页">首页</a> \ <a href="forum.html" title="社区">社区</a> \  <a href="forum.html?op=topics&id={$forum[FORUMID]}&pid={$_var[gp_pid]}&tag={$_var[gp_tag]}">{$forum[NAME]}</a> \ {$topic[TITLE]}
+					</p>
+					<p class="line"></p>
+					<div class="topic">
+						<p class="title">
+							{$topic[TITLE]}
+						</p>
+						<p class="line"></p>
+						<div class="intro">
+							<p class="source">
+								<!--{if $topic['ISTOP']}-->
+								<img src="tpl/_cms/static/images/forum/icon-top.png" border="0"/>
+								<!--{/if}--> 
+								发表在 {$forum[NAME]} {$topic[EDITTIME]}
+							</p>
+							<p class="link">
+								<span class="mobile">手机查看</span>
+							</p>
+							<br class="clear"/>
+						</div>
+						
+						<div class="content">
+							{$topic[CONTENT]}
+							
+							<div class="attachment">
+							<!--{loop $topic[FILES] $loop $file}-->
+							<!--{if is_array($file)}-->
+							<p class="file">
+								<img src="{$file[3]}" border="0"/>
+							</p>
+							<!--{/if}-->
+							<!--{/loop}-->
+							</div>
+						</div>
+						<p class="line"></p>
+						<p class="misc">
+							<span class="up {echo in_array($_var['current']['USERID'], $topic['UPUSERS']) ? 'up-active' : '';}">赞 <em>{echo count($topic['UPUSERS']);}</em></span>
+							<!--{if $topic['CLOSED'] == 0}-->
+							<span class="post">回复</span>
+							<!--{/if}-->
+						</p>
+					</div>
+					<div class="posts">
+						<p class="head"><span>{$count}</span>条回复</p>
+						<ul>
+							<li class="clone" style="display:none;">
+								<p class="photo">
+									<!--{if $_var['current']['PHOTO']}-->
+									<img src="{$_var[current][PHOTO]}" border="0"/>
+									<!--{else}-->
+									<img src="tpl/_cms/static/images/forum/icon-photo.png" border="0"/>
+									<!--{/if}-->
+								</p>
+								<div class="text">
+									<p class="title">
+										<span class="username">{$_var[current][REALNAME]} </span>
+										<span class="dateline">刚刚</span>
+									</p>
+									<div class="content"></div>
+								</div>
+								<p class="button">
+									<button type="button" rel="" class="btn-post">回复</button>
+								</p>
+								<br class="clear"/>
+							</li>
+							<!--{template /tpl/_cms/view/pc_forum_posts_more}-->
+						</ul>
+					</div>
+					
+					<!--{if $topic['CLOSED'] == 0}-->
+					<div class="form form-post">
+						<form name="frmPost" action="" method="post">
+							<p class="head">我要回复</p>
+							<div class="reply"></div>
+							<p class="content">
+								<textarea name="txtPost" rows="5" cols="45" placeholder="输入内容…"></textarea>
+							</p>
+							<p class="tips">注：200字以内</p>
+							<p class="button">
+								<button type="button">确认提交</button>
+							</p>
+						</form>
+					</div>
+					<!--{/if}-->
+				</div>
+				<!--{template /tpl/_cms/view/pc_forum_right}-->
+				<br class="clear"/>
+			</div>
+		</div>
+	</div>
+	
+	<!--{template /tpl/_cms/view/pc_foot}-->
+	
+	<script type="text/javascript" src="tpl/_res/pc/js/jquery.scrollTo.js?v={$setting[Version]}"></script>
+	<script type="text/javascript">
+	var page = 1;
+	var postid = 0;
+	var logined = {echo $_var['current'] ? 1 : 0;};
+	var ismobile = {echo $ismobile ? 1 : 0;};
+	var _interval = null;
+	
+	function bind_more_event(){
+		$('.posts .more button').unbind('click').click(function(){
+			$(this).attr('disalbed', 'disabled').html('加载中……');
+            
+        	$.get('forum.html?op=posts&cmd=more&id={$topic[FORUM_TOPICID]}&rnd=' + Math.random(), {page:page + 1}, function(data){
+        		$('.posts .more').remove();
+        		$('.posts ul').append(data);
+        		
+        		bind_more_event();
+        		bind_reply_events();
+        		
+        		page++;
+        	});
+		});
+	}
+	
+	function bind_reply_events(){
+		$('.posts .btn-post').unbind('click').click(function(){
+			//未登录时，微信扫描认证
+			if(logined == 0){
+				weixin_auth();
+				return;	
+			}
+			
+			postid = $(this).attr('rel');
+			
+			var tmpHTML = '回复：';
+			tmpHTML += $('.post-' + postid + ' .content').html() + ' ';
+			tmpHTML += '...<span class="username">' + $('.post-' + postid + ' .username').text() + '</span>';
+			
+			$('.form-post .reply').html(tmpHTML);
+			$('.form-post .reply .reply').remove();
+			
+			$.scrollTo('.form-post', 100);
+		});
+	}
+	
+	function weixin_auth(){
+		if(ismobile){
+			location.href = 'auth.do?op=oauth2&ref=forum|posts||{$_var[gp_id]}';
+			return;
+		}
+		
+		var message = '';
+		{if $wx_setting['WX_OPEN'] && $wx_setting['WX_AUTH']}
+		message = '<img src="auth.do?rnd=' + Math.random() + '"/>';
+		{else}
+		message = '<br/><br/>微信公众号未开启网页授权认证！';
+		{/if}
+		
+		$.dialog({
+			title:'微信扫码登录', 
+			width:400, 
+			height:220, 
+			message:message, 
+			callback:function(){
+				{if $wx_setting['WX_OPEN'] && $wx_setting['WX_AUTH']}
+				_interval = setInterval(function(){
+					$.getJSON('auth.do?op=check&rnd=' + Math.random(), function(data){
+						if(data.success == true || data.message){
+							clearInterval(_interval);
+							
+							if(data.message) $.toast({message:data.message});
+							else{
+								logined = 1;
+								
+								$('.clone .photo img').attr('src', data.photo);
+								$('.clone .text .username').html(data.username);
+								
+								$.dialog({close:true});
+							}
+							
+							return;
+						}
+					});
+				}, 1500);
+				{/if}
+			}
+		});
+	}
+	
+	$(function(){
+		$('.misc .up').click(function(){
+			//已点赞，返回
+			if($(this).hasClass('up-active')) return;
+			
+			//未登录时，微信扫描认证
+			if(logined == 0){
+				weixin_auth();
+				return;	
+			}
+			
+			$.getJSON('forum.html?op=up&id={$_var[gp_id]}&rnd=' + Math.random(), function(data){
+				if(data.success == true){
+					var count = $('.misc .up em').text() - 0;
+					$('.misc .up em').text(count + 1);
+					$('.misc .up').addClass('up-active');
+				}
+			});
+		});
+		
+		$('.misc .post').click(function(){
+			//未登录时，微信扫描认证
+			if(logined == 0){
+				weixin_auth();
+				return;	
+			}
+			
+			postid = 0;
+			$('.form-post .reply').html('');
+			$.scrollTo('.form-post', 100);
+		});
+		
+		$('.form-post .button button').click(function(){
+			var self = this;
+			
+			//未登录时，微信扫描认证
+			if(logined == 0){
+				weixin_auth();
+				return;	
+			}
+			
+			var content = $("textarea[name='txtPost']").val();
+			if(content.trim().length == 0){
+				$.toast({message:'回复内容不能为空！'});
+				$("textarea[name='txtPost']").focus();
+				return false;
+			}
+			
+			$.post('forum.html?op=post&id={$_var[gp_id]}&rnd=' + Math.random(), {postid:postid, content:content}, function(data){
+				data = eval('(' + data + ')');
+				
+				if(data.success == true){
+					$('.posts .clone').clone().prependTo('.posts ul');
+					
+					var tmp = $('.posts ul li').first();
+					$(tmp).show().attr('class', 'post-' + data.postid);
+					
+					if(data.comment){
+						var tmpHTML = '<p class="reply">回复';
+						tmpHTML += '<span class="user">' + $('.post-' + postid + ' .username').text() + '</span>：';
+						tmpHTML += data.comment + '</p>';
+						data.content = tmpHTML + data.content;
+					}
+					
+					$('.content', tmp).html(data.content);
+					$('.btn-post', tmp).attr('rel', data.postid);
+					
+					bind_reply_events();
+					
+					var count = $('.posts .head span').text() - 0;
+					$('.posts .head span').text(count + 1);
+					
+					$("textarea[name='txtPost']").val('');
+					
+					$.scrollTo('.post-' + data.postid, 100);
+				}else{
+					$.toast({message:data.message});
+				}
+			});
+		});
+		
+		bind_more_event();
+		bind_reply_events();
+	});
+	</script>
+</body>
+</html>

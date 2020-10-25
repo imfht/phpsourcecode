@@ -1,0 +1,334 @@
+<script type="text/javascript" src="__STATIC__/layui/laydate/laydate.js"></script> 
+<style type="text/css">
+.cktr td{
+	background:#e2e1ba !important;
+}
+</style>
+<form name="form1" method="post" action="">
+<div class="MainContainers">
+  <div class="Header"><span class="tag">{if ($tab_ext['page_title'])} {$tab_ext.page_title} {else /} 内容管理 {/if}</span></div>
+
+  <div class="Conter">
+	
+	<!-- 顶部功能按钮 -->	
+	<div style="margin-bottom:10px;float:left;" class="top_menu">
+		{volist name="$tab_ext.top_button" id="rs"}
+		 {if $rs.type=='add'}
+			<a href="{$rs.href|default=auto_url('add')}" class="layui-btn layui-btn-primary {$rs.class}"><li class="{$rs.icon|default='fa fa-plus'}"></li> {$rs.title|default='新增'}</a>
+		 {elseif($rs.type=='delete') /}
+			<a href="{:auto_url('delete')}" onclick="return delete_all($(this));" class="layui-btn layui-btn-primary {$rs.class}"><li class="{$rs.icon|default='fa fa-fw fa-remove'}"></li> {$rs.title|default='批量删除'}</a>
+		 
+		 {else /}
+			<a href="{$rs.href}" class="layui-btn layui-btn-primary {$rs.class}" target="{$rs.target}" data-ids="{$rs['target-form']}"><li class="{$rs.icon|default='fa fa-external-link-square'}"></li> {$rs.title}</a>
+		 {/if}	
+		{/volist}
+	</div>
+	
+	
+	<!-- 搜索功能 -->
+	<div class="top_search">
+		{include file="$search_file" /}
+	</div>
+
+    <table class="ListTable">
+	<tr>
+	<th width="6%">
+	   <input type="checkbox" name="" onclick="choosebox($(this))">			
+			{php}$_id=$tab_ext['id']?:'id';{/php}
+			{:strtoupper($_id)}
+			{if input('_order')==$_id&&input('_by')=='desc'}
+				<a href="{:fun('Field@make_admin_filter_url',$_id,'asc',input('search_field'),input('keyword'))}"><i style="color:red;" class="glyphicon glyphicon-triangle-bottom"></i></a>
+			{elseif input('_order')==$_id&&input('_by')=='asc'}
+				<a href="{:fun('Field@make_admin_filter_url',$_id,'desc',input('search_field'),input('keyword'))}"><i style="color:red;" class="glyphicon glyphicon-triangle-top"></i></a>
+			{else /}
+				<a href="{:fun('Field@make_admin_filter_url',$_id,'asc',input('search_field'),input('keyword'))}"><i class="fa fa-unsorted"></i></a>
+			{/if}			
+	</th>
+	<!-- 自定义字段头部标题 -->
+	{volist name=":fun('field@fields_to_table',$f_array,[])" id="vs"}
+    <th>
+		<!--排序-->
+		{if in_array($vs.name,explode(',',$tab_ext.order))}
+			{if input('_order')==$vs.name&&input('_by')=='desc'}
+				<a href="{:fun('Field@make_admin_filter_url',$vs.name,'asc',input('search_field'),input('keyword'))}"><i style="color:red;" class="glyphicon glyphicon-triangle-bottom"></i></a>
+			{elseif input('_order')==$vs.name&&input('_by')=='asc'}
+				<a href="{:fun('Field@make_admin_filter_url',$vs.name,'desc',input('search_field'),input('keyword'))}"><i style="color:red;" class="glyphicon glyphicon-triangle-top"></i></a>
+			{else /}
+				<a href="{:fun('Field@make_admin_filter_url',$vs.name,'desc',input('search_field'),input('keyword'))}"><i class="fa fa-unsorted"></i></a>
+			{/if}			
+		{/if}
+		<!--筛选项-->
+		{if $tab_ext['filter_search'][$vs['name']]}
+			<i {if input('search_field')==$vs.name}style="color:red;"{/if} class="fa fa-filter" onclick="layer.tips('<a href=\'{:fun('Field@make_admin_filter_url',input('_order'),input('_by'))}\' style=\'color:#fff;\'>不限</a><br>{volist name="$tab_ext['filter_search'][$vs['name']]" id="name"}<a style=\'{if (input('keyword')!=''&&input('keyword')==$key)}color:red;{else /}color:#fff;{/if}\' href=\'{:fun('Field@make_admin_filter_url',input('_order'),input('_by'),$vs.name,$key)}\'>{$name}</a><br>{/volist}', $(this), {tips: [3, '#0FA6D8'],tipsMore: false,time:5000 });"></i>
+		{/if}
+	  {$vs.title} 
+	</th>
+	{/volist}
+	
+	<!-- 更多菜单头部标题 -->
+	{volist name=":fun('field@get_rbtn',$tab_ext['right_button'],[])" id="vs"}
+      <th>{$vs.title}</th>
+	{/volist}
+	
+	<!-- 没有特别指定按钮时,就显示默认的修改与删除 -->
+	{if !isset($tab_ext.right_button)}
+      <th width="8%">删除</th>
+      <th width="8%">修改</th> 
+	{/if}
+
+    </tr>
+
+
+{volist name="listdb" id="rs"}
+{php}$tab_ext['id'] && $rs['id']=$rs[$tab_ext['id']];{/php}
+    <tr bgcolor="#FFFFFF" class="trA list-item-{$rs.id}" onmouseover="$(this).removeClass('trA').addClass('trB')" onmouseout="$(this).removeClass('trB').addClass('trA')"> 
+      <td><input type="checkbox" name="ids[]" value="{$rs.id}"> {$rs.id}</td>
+	 <!-- 自定义字段数据列表-->
+	{volist name=":fun('field@fields_to_table',$f_array,$rs)" id="vs"}
+      <td class="{eq name='i' value='1'}Left{/eq}">{$vs.value}</td>
+	{/volist}
+    
+	<!-- 更多菜单数据列 -->
+	{volist name=":fun('field@get_rbtn',$tab_ext['right_button'],$rs)" id="vs"}
+      <td>{$vs.value}</td>
+	{/volist}
+	
+	<!-- 没有特别指定按钮时,就显示默认的修改与删除 -->
+	{if !isset($tab_ext.right_button)}
+      <td><a href="javascript:" class="_dels" onclick="delete_one({$rs.id})" title="删除"><i class="fa fa-fw fa-remove"></i></a></td>
+	  <td><a href="{:auto_url('edit','id='.$rs.id)}" title="修改"><i class="fa fa-fw fa-edit"></i></td>
+	{/if}
+
+    </tr>
+{/volist}
+  
+  </table>
+
+    <!-- <div class='submits'><input type="submit" name="Submit" value="更改排序"></div> -->
+	<div class="Showpage">{$pages}</div>
+  </div>
+</div>
+</form>
+
+{if $tab_ext.help_msg}
+<div class="MainContainers" id="help_msg">
+	<div class="Header"><span class="tag"><i class="fa fa-question-circle-o" style="font-size:18px;color:red;"></i> 重要提示</span> </div>
+	<div class="Conter">{$tab_ext.help_msg}</div>
+</div>
+{/if}
+
+<script type="text/javascript">
+
+function delete_one(id){
+	$(".list-item-"+id).addClass('cktr');
+	var url ="{:auto_url('delete')}?ids="+id;	
+	var obj = $(".list-item-"+id+" select[data-name='status']");
+	var status = obj.find("option:selected").val();
+	var btn = ("{$choose_rubbish}"&&status!=-1)?['彻底删除','放入回收站','取消']:['彻底删除','取消'];
+	layer.confirm('请慎重选择操作，彻底删除将不可恢复！',{
+		title:'提醒',
+		btn:btn,
+		btn1:function(i){
+			layer.close(i);
+			if(btn.length==3)url+="&force_delete=1";
+			act(true);
+		},
+		btn2:function(i){
+			layer.close(i);
+			if(btn.length==3){
+				act();
+			}
+			$(".list-item-"+id).removeClass('cktr');
+		},
+		btn3:function(i){
+			layer.close(i);
+			$(".list-item-"+id).removeClass('cktr');
+		},
+	});
+
+	function act(is_force){	
+		$.get(url,function(res){
+			if(res.code==0){
+				if(is_force){
+					$(".list-item-"+id).hide(1000);
+					layer.msg('删除成功',{time:1000});
+				}else{
+					obj.find("option[value='-1']").attr("selected",true);
+					layer.msg('已放入回收站',{time:1500});
+				}
+			}else{
+				layer.alert(res.msg);
+			}
+		});
+	}
+	return false;
+}
+
+var quickedit_url = "{:auto_url('quickedit')}"; //快速编辑的地址
+
+//全选
+function choosebox(that){
+	$("input[name='ids[]']").each(function(){
+		$(this).prop("checked",that.is(':checked')?true:false);
+	});
+}
+
+//批量删除
+function delete_all(that){
+	var ids = [];
+	$("input[name='ids[]']").each(function(){
+		if( $(this).is(':checked')==true){
+			ids.push($(this).val());
+		}
+	});
+	if(ids.length==0){
+		layer.alert('你必须选择一项!');
+		return false;
+	}
+	ids.forEach(function(id){
+		$(".list-item-"+id).addClass('cktr');
+	});
+	layer.confirm('请慎重选择操作，彻底删除将不可恢复！',{
+			title:'提醒',
+			btn:['彻底删除','取消'],
+		},function(){
+		var url = that.attr('href');
+		if("{$choose_rubbish}"){
+			url += "?force_delete=1";
+		}
+		$.post(url,{'ids':ids},function(res){
+			if(res.code==0){
+				layer.closeAll();
+				layer.msg('删除成功');
+				ids.forEach(function(id){
+					$(".list-item-"+id).hide(1000);
+				});
+				//setTimeout(function(){
+				//	window.location.reload();
+				//},500);
+			}else{
+				layer.alert('删除失败,详情如下:'+res.msg);
+			}
+		}).fail(function (res) {
+			layer.alert('系统故障,删除失败!!');
+		});
+
+	},function(){
+		ids.forEach(function(id){
+			$(".list-item-"+id).removeClass('cktr');
+		});
+	});
+	return false;
+}
+
+//快速编辑
+function quick_edit(that){
+	if(that.val()==that.data('value')){
+		//layer.msg('你并没有修改');
+		return ;
+	}
+	layer.load(1);
+	$.post(quickedit_url,{
+		'pk':that.data('id'),
+		'name':that.data('name'),
+		'value':that.val(),
+	},function(res){
+		layer.closeAll();
+		if(res.code==0){			
+			layer.msg('修改成功');
+			setTimeout(function(){
+				//window.location.reload();
+			},500);
+		}else{
+			layer.alert('修改失败:'+res.msg);
+		}
+	}).fail(function (res) {
+		layer.closeAll();
+		layer.alert('系统故障,删除失败!!');
+	});
+}
+
+
+function choose_ids(name){
+	var ids = [];
+	$("input[name='ids[]']").each(function(){
+		if( $(this).is(':checked')==true){
+			ids.push($(this).val());
+		}
+	});
+	if(ids.length==0){
+		layer.alert('你必须要选择一项!');
+		return false;
+	}
+	str = '';
+	ids.forEach(function(v){
+		str += name + '[]=' + v + '&';
+	});
+	return str;
+}
+
+//快速更换状态
+function change_status(){
+	$("._switch").click(function(){
+		var that = $(this);
+		var value = that.data('value');	
+		if(value==1){
+			value=0;
+		}else{			
+			value=1;
+		}
+		that.data('value',value);
+		layer.load(1);
+		$.post(quickedit_url,{
+			'pk':that.data('id'),
+			'name':that.data('name'),
+			'value':value,
+		},function(res){
+			layer.closeAll();
+			if(res.code==0){				
+				layer.msg('修改成功');
+				if(value==0){
+					that.css("color","#666666");
+					that.removeClass('fa-check-circle');
+					that.addClass('fa-ban');
+				}else{
+					that.css("color","green");
+					that.removeClass('fa-ban');
+					that.addClass('fa-check-circle');
+				}
+			}else{
+				layer.alert('修改失败:'+res.msg);
+			}
+		}).fail(function (res) {
+			layer.closeAll();
+			layer.alert('系统故障,删除失败!!');
+		});
+	});
+}
+
+
+jQuery(document).ready(function() {
+	$(".quick_edit").blur(function(){
+		quick_edit($(this))
+	});
+	$('select.select_edit').change(function(){
+		quick_edit($(this));
+	});
+	
+	//其它批量操作
+	$("a[data-ids]").click(function(){
+		var ids = $(this).data('ids');
+		if(ids!=''){
+			var str = choose_ids( ids );
+			if(str!==false){
+				window.location.href = $(this).attr('href') + '?' + str;
+			}
+			return false;
+		}
+		
+	});
+	
+	change_status();
+});
+
+</script>

@@ -1,0 +1,1334 @@
+<?php
+$table['TITLE'] = "{\${$table[IDENTITY]}[{$table[PRIMARY_KEY]}]}";
+$table['TITLE_DATA'] = "{\$data[{$table[PRIMARY_KEY]}]}";
+
+if($table['CODE']['SERIAL']){
+	$table['TITLE'] = "{\${$table[IDENTITY]}[SERIAL]}";
+	$table['TITLE_DATA'] = "{\$data[SERIAL]}";
+}elseif($table['CODE']['TITLE']){
+	$table['TITLE'] = "{\${$table[IDENTITY]}[TITLE]}";
+	$table['TITLE_DATA'] = "{\$data[TITLE]}";
+}elseif($table['CODE']['CNAME']){
+	$table['TITLE'] = "{\${$table[IDENTITY]}[CNAME]}";
+	$table['TITLE_DATA'] = "{\$data[CNAME]}";
+}elseif($table['CODE']['REALNAME']){
+	$table['TITLE'] = "{\${$table[IDENTITY]}[REALNAME]}";
+	$table['TITLE_DATA'] = "{\$data[REALNAME]}";
+}
+
+$tmp =
+<<<EOF
+//版权所有(C) 2014 www.ilinei.com
+
+namespace {$table[_NAMESPACE]}\control;
+
+use admin\model\_log;
+use {$table[_NAMESPACE]}\model\_{$table[IDENTITY]};
+EOF;
+
+$code .= $tmp;
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'category' || $key == 'subject' || $key == 'article' || $key == 'article_content' || $key == 'comment' || $key == 'keyword'){
+		$code .= "
+use cms\model\_{$key};";
+	}elseif($key == 'address' || $key == 'cart' || $key == 'credit' || $key == 'credit_online' || $key == 'credit_record' || $key == 'credit_rule'
+	|| $key == 'favorite' || $key == 'feed' || $key == 'group' || $key == 'invite' || $key == 'message' || $key == 'message_tpl'
+	|| $key == 'sms' || $key == 'third' || $key == 'user' || $key == 'user_category'){
+		$code .= "
+use user\model\_{$key};";
+	}elseif($key == 'wx' || $key == 'wx_fans' || $key == 'wx_menu' || $key == 'wx_msg' || $key == 'wx_setting'){
+		$code .= "
+use wx\model\_{$key};";
+	}elseif($key == 'forum' || $key == 'forum_post' || $key == 'forum_topic' || $key == 'forum_user'){
+		$code .= "
+use bbs\model\_{$key};";
+	}elseif($key == 'district'){
+		$code .= "
+use admin\model\_{$key};";
+	}else{
+		$code .= "
+use {$key}\model\_{$key};";
+	}
+}
+
+$tmp =
+<<<EOF
+
+
+//{$table[CNAME]}
+class index{
+EOF;
+
+$code .= $tmp;
+
+$code_model = "
+
+		\$_log = new _log();
+		\$_{$table[IDENTITY]} = new _{$table[IDENTITY]}();
+";
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'category' || $key == 'subject' || $key == 'article' || $key == 'article_content' || $key == 'comment' || $key == 'keyword'){
+		$code_model .= "
+		\$_{$key} = new _{$key}();";
+	}elseif($key == 'address' || $key == 'cart' || $key == 'credit' || $key == 'credit_online' || $key == 'credit_record' || $key == 'credit_rule'
+			|| $key == 'favorite' || $key == 'feed' || $key == 'group' || $key == 'invite' || $key == 'message' || $key == 'message_tpl'
+			|| $key == 'sms' || $key == 'third' || $key == 'user' || $key == 'user_category'){
+		$code_model .= "
+		\$_{$key} = new _{$key}();";
+	}elseif($key == 'wx' || $key == 'wx_fans' || $key == 'wx_menu' || $key == 'wx_msg' || $key == 'wx_setting'){
+		$code_model .= "
+		\$_{$key} = new _{$key}();";
+	}elseif($key == 'forum' || $key == 'forum_post' || $key == 'forum_topic' || $key == 'forum_user'){
+		$code_model .= "
+		\$_{$key} = new _{$key}();";
+	}else{
+		$code_model .= "
+		\$_{$key} = new _{$key}();";
+	}
+}
+
+if($table['CODE']['DISTRICT']){
+	$code_model .= "
+		\$_district = new _district();";
+}
+
+$code_model .= "
+
+		\$search = \$_{$table[IDENTITY]}->search();";
+
+if($table['CODE']['STATUS']){
+	$code_model .= "
+		\${$table[IDENTITY]}_status = \$_{$table[IDENTITY]}->get_status();";
+}
+
+if($table['CODE']['DISTRICT']){
+	$code_model .= "
+		\$provinces = \$_district->get_children(0); ";
+}
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+
+	$code_model .= "
+		\${$key}_list = \$_{$key}->get_all(); ";
+}
+
+$code_model .= "
+
+";
+
+$tmp =
+<<<EOF
+
+	//默认
+	public function index(){
+		global \$_var;
+EOF;
+
+$code .= $tmp;
+$code .= $code_model;
+
+if($table['CODE']['DISTRICT']){
+	$code .= "
+		if(\$_var['gp_sltSProvinceId']) \$cities = district_get_list(\$_var['gp_sltSProvinceId']);
+		if(\$_var['gp_sltSCityId']) \$counties = district_get_list(\$_var['gp_sltSCityId']);
+		";
+}
+
+$tmp =
+<<<EOF
+
+		if(\$_var['gp_do'] == 'delete'){
+			\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$_var['gp_id']);
+			if(\${$table[IDENTITY]}){
+				\$_{$table[IDENTITY]}->delete(\${$table[IDENTITY]}['{$table[PRIMARY_KEY]}']);
+
+				\$_log->insert("删除({$table[TITLE]})", '{$table[CNAME]}');
+			}
+		}elseif(\$_var['gp_do'] == 'delete_list' && is_array(\$_var['gp_cbxItem'])){
+			\${$table[IDENTITY]}_titles = '';
+
+			foreach (\$_var['gp_cbxItem'] as \$key => \$val){
+				\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$val);
+				if(\${$table[IDENTITY]}){
+					\$_{$table[IDENTITY]}->delete(\${$table[IDENTITY]}['{$table[PRIMARY_KEY]}']);
+
+					\${$table[IDENTITY]}_titles .= "{$table[TITLE]}，";
+				}
+
+				unset(\${$table[IDENTITY]});
+			}
+
+			if(\${$table[IDENTITY]}_titles) \$_log->insert("批量删除({\${$table[IDENTITY]}_titles})", '{$table[CNAME]}');
+		}
+
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['STATUS']){
+	$code_status_0 = $code_status_1 = '';
+
+	if($table['CODE']['AUDITER']){
+		$code_status_0 = "array(
+					'STATUS' => 0,
+					'AUDITID' => \$_var['current']['USERID'],
+					'AUDITTIME' => date('Y-m-d H:i:s')
+					)";
+		$code_status_1 = "array(
+					'STATUS' => 1,
+					'AUDITID' => \$_var['current']['USERID'],
+					'AUDITTIME' => date('Y-m-d H:i:s')
+					)";
+	}elseif($table['CODE']['USER'] && !$table['CODE']['AGENT']){
+		$code_status_0 = "array(
+					'STATUS' => 0,
+					'USERID' => \$_var['current']['USERID'],
+					'USERNAME' => \$_var['current']['USERNAME'],
+					'EDITTIME' => date('Y-m-d H:i:s')
+					)";
+		$code_status_1 = "array(
+					'STATUS' => 1,
+					'USERID' => \$_var['current']['USERID'],
+					'USERNAME' => \$_var['current']['USERNAME'],
+					'EDITTIME' => date('Y-m-d H:i:s')
+					)";
+	}else{
+		$code_status_0 = "array('STATUS' => 0)";
+		$code_status_1 = "array('STATUS' => 1)";
+	}
+
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_do'] == 'enable_list' && is_array(\$_var['gp_cbxItem'])){
+			\${$table[IDENTITY]}_titles = '';
+
+			foreach (\$_var['gp_cbxItem'] as \$key => \$val){
+				\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$val);
+				if(\${$table[IDENTITY]}){
+					\$_{$table[IDENTITY]}->update(\${$table[IDENTITY]}['{$table[PRIMARY_KEY]}'], {$code_status_1});
+
+					\${$table[IDENTITY]}_titles .= "{$table[TITLE]}，";
+				}
+
+				unset(\${$table[IDENTITY]});
+			}
+
+			if(\${$table[IDENTITY]}_titles) \$_log->insert("批量审核通过({\${$table[IDENTITY]}_titles})", '{$table[CNAME]}');
+		}elseif(\$_var['gp_do'] == 'disable_list' && is_array(\$_var['gp_cbxItem'])){
+			\${$table[IDENTITY]}_titles = '';
+
+			foreach (\$_var['gp_cbxItem'] as \$key => \$val){
+				\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$val);
+				if(\${$table[IDENTITY]}){
+					\$_{$table[IDENTITY]}->update(\${$table[IDENTITY]}['{$table[PRIMARY_KEY]}'], {$code_status_0});
+
+					\${$table[IDENTITY]}_titles .= "{$table[TITLE]}，";
+				}
+
+				unset(\${$table[IDENTITY]});
+			}
+
+			if(\${$table[IDENTITY]}_titles) \$_log->insert("批量不通过审核({\${$table[IDENTITY]}_titles})", '{$table[CNAME]}');
+		}
+
+EOF;
+
+	$code .= $tmp;
+}elseif($table['CODE']['ISAUDIT']){
+	$code_status_0 = $code_status_1 = '';
+
+	if($table['CODE']['AUDITER']){
+		$code_status_0 = "array(
+					'ISAUDIT' => 0,
+					'AUDITID' => \$_var['current']['USERID'],
+					'AUDITTIME' => date('Y-m-d H:i:s')
+					)";
+		$code_status_1 = "array(
+					'ISAUDIT' => 1,
+					'AUDITID' => \$_var['current']['USERID'],
+					'AUDITTIME' => date('Y-m-d H:i:s')
+					)";
+	}elseif($table['CODE']['USER'] && !$table['CODE']['AGENT']){
+		$code_status_0 = "array(
+					'ISAUDIT' => 0,
+					'USERID' => \$_var['current']['USERID'],
+					'USERNAME' => \$_var['current']['USERNAME'],
+					'EDITTIME' => date('Y-m-d H:i:s')
+					)";
+		$code_status_1 = "array(
+					'ISAUDIT' => 1,
+					'USERID' => \$_var['current']['USERID'],
+					'USERNAME' => \$_var['current']['USERNAME'],
+					'EDITTIME' => date('Y-m-d H:i:s')
+					)";
+	}else{
+		$code_status_0 = "array('ISAUDIT' => 0)";
+		$code_status_1 = "array('ISAUDIT' => 1)";
+	}
+
+	$tmp =
+<<<EOF
+
+		if(\$_var['gp_do'] == 'enable_list' && is_array(\$_var['gp_cbxItem'])){
+			\${$table[IDENTITY]}_titles = '';
+
+			foreach (\$_var['gp_cbxItem'] as \$key => \$val){
+				\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$val);
+				if(\${$table[IDENTITY]}){
+					\$_{$table[IDENTITY]}->update(\${$table[IDENTITY]}['{$table[PRIMARY_KEY]}'], {$code_status_1});
+
+					\${$table[IDENTITY]}_titles .= "{$table[TITLE]}，";
+				}
+
+				unset(\${$table[IDENTITY]});
+			}
+
+			if(\${$table[IDENTITY]}_titles) \$_log->insert("批量审核通过({\${$table[IDENTITY]}_titles})", '{$table[CNAME]}');
+		}elseif(\$_var['gp_do'] == 'disable_list' && is_array(\$_var['gp_cbxItem'])){
+			\${$table[IDENTITY]}_titles = '';
+
+			foreach (\$_var['gp_cbxItem'] as \$key => \$val){
+				\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$val);
+				if(\${$table[IDENTITY]}){
+					\$_{$table[IDENTITY]}->update(\${$table[IDENTITY]}['{$table[PRIMARY_KEY]}'], {$code_status_0});
+
+					\${$table[IDENTITY]}_titles .= "{$table[TITLE]}，";
+				}
+
+				unset(\${$table[IDENTITY]});
+			}
+
+			if(\${$table[IDENTITY]}_titles) \$_log->insert("批量不通过审核({\${$table[IDENTITY]}_titles})", '{$table[CNAME]}');
+		}
+
+EOF;
+
+	$code .= $tmp;
+}
+
+if($table['CODE']['DISTRICT']){
+	$code .= "
+		\$district_ids = array();";
+}
+
+if($table['CODE']['AUDITER']){
+	$code .= "
+		\$auditids = array();";
+}
+
+$tmp =
+<<<EOF
+
+		\${$table[IDENTITY]}_list = array();
+
+		\$count = \$_{$table[IDENTITY]}->get_count(\$search['wheresql']);
+		if(\$count){
+			\$perpage = \$_var['psize'];
+			\$pages = @ceil(\$count / \$perpage);
+			\$_var['page'] = \$_var['page'] > \$pages ? \$pages : \$_var['page'];
+			\$start = (\$_var['page'] - 1) * \$perpage;
+
+			\${$table[IDENTITY]}_rows = \$_{$table[IDENTITY]}->get_list(\$start, \$perpage, \$search['wheresql']);
+			foreach(\${$table[IDENTITY]}_rows as \$key => \$row){
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['BEGINTIME']){
+	$code .= "
+				\$row['BEGINTIME'] = \$row['BEGINTIME'] > 0 ? date('Y-m-d H:i', strtotime(\$row['BEGINTIME'])) : '';";
+}
+
+if($table['CODE']['ENDTIME']){
+	$code .= "
+				\$row['ENDTIME'] = \$row['ENDTIME'] > 0 ? date('Y-m-d H:i', strtotime(\$row['ENDTIME'])) : '';
+			";
+}
+
+if($table['CODE']['BEGINDATE']){
+	$code .= "
+				\$row['BEGINDATE'] = \$row['BEGINDATE'] > 0 ? date('Y-m-d', strtotime(\$row['BEGINDATE'])) : '';
+			";
+}
+
+if($table['CODE']['ENDDATE']){
+	$code .= "
+				\$row['ENDDATE'] = \$row['ENDDATE'] > 0 ? date('Y-m-d', strtotime(\$row['ENDDATE'])) : '';
+			";
+}
+
+if($table['CODE']['STATUS']){
+	$code .= "
+				\$row['_STATUS'] = \$row['STATUS'];
+				\$row['STATUS'] = \${$table[IDENTITY]}_status[\$row['STATUS']];
+			";
+}
+
+if($table['CODE']['DISTRICT']){
+	$code .= "
+				if(!in_array(\$row['PROVINCEID'], \$district_ids)) \$district_ids[] = \$row['PROVINCEID'];
+				if(!in_array(\$row['CITYID'], \$district_ids)) \$district_ids[] = \$row['CITYID'];
+				if(!in_array(\$row['COUNTYID'], \$district_ids)) \$district_ids[] = \$row['COUNTYID'];
+			";
+}
+
+if($table['CODE']['AUDITER']){
+	$code .= "
+				if(\$row['AUDITID']) \$auditids[] = \$row['AUDITID'];";
+}
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+
+	$name = strtoupper($key);
+	$column = $key == 'group' ? 'CNAME' : 'TITLE';
+
+	$code .= "
+
+				\$row['{$name}'] = '';
+				foreach (\${$key}_list as \$key => \${$key}){
+					if(\${$key}['{$name}ID'] == \$row['{$name}ID']){
+						\$row['{$name}'] = \${$key}['{$column}'];
+						break;
+					}
+				}
+			";
+
+	unset($name);
+	unset($column);
+}
+
+$tmp =
+<<<EOF
+
+				\${$table[IDENTITY]}_list[] = \$row;
+			}
+
+			\$pager = pager(\$count, \$perpage, \$_var['page'], "{ADMIN_SCRIPT}/{$table[IDENTITY]}{\$search[querystring]}", \$perpage);
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['DISTRICT']){
+	$tmp =
+<<<EOF
+
+
+			if(count(\$district_ids) > 0){
+				\$district_list = array();
+				\$districts = \$_district->get_list("AND DISTRICTID IN(".eimplode(\$district_ids).")");
+				foreach(\$districts as \$key => \$row){
+					\$district_list[\$row['DISTRICTID']] = \$row;
+				}
+
+				foreach (\${$table[IDENTITY]}_list as \$key => \$row){
+					if(\$district_list[\$row['COUNTYID']]) \$row['PLACE'] = \$district_list[\$row['COUNTYID']]['CNAME'].'-'.\$row['PLACE'];
+					if(\$district_list[\$row['CITYID']]) \$row['PLACE'] = \$district_list[\$row['CITYID']]['CNAME'].'-'.\$row['PLACE'];
+					if(\$district_list[\$row['PROVINCEID']]) \$row['PLACE'] = \$district_list[\$row['PROVINCEID']]['CNAME'].'-'.\$row['PLACE'];
+
+					\${$table[IDENTITY]}_list[\$key] = \$row;
+				}
+			}
+EOF;
+	$code .= $tmp;
+}
+
+if($table['CODE']['AUDITER']){
+	$tmp =
+<<<EOF
+
+
+			if(count(\$auditids) > 0){
+				\$user_list = \$_user->get_list(0, 0, "a.USERID IN(".eimplode(\$auditids).")");
+				foreach(\$user_list as \$key => \$row){
+					foreach (\${$table[IDENTITY]}_list as \$key => \$item){
+						if(\$item['USERID'] == \$row['USERID']){
+							\${$table[IDENTITY]}_list[\$key]['AUDITER'] = "{\$row[USERNAME]}";
+							break;
+						}
+					}
+				}
+			}
+EOF;
+
+	$code .= $tmp;
+}
+
+$tmp =
+<<<EOF
+
+		}
+
+		include_once view('/{$setting[SiteTheme]}/module{$table[_PATH]}/view/index');
+	}
+
+	//添加
+	public function _add(){
+		global \$_var;
+
+		\$_log = new _log();
+		\$_{$table[IDENTITY]} = new _{$table[IDENTITY]}();
+
+		if(\$_var['gp_formsubmit']){
+			\$_var['msg'] = '';
+		
+EOF;
+
+$code .= $tmp;
+
+$code_check = $code_data = '';
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	if($key == 'group') $join = '等级';
+	
+	$name = strtolower($key);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	
+	$code_check .= "
+			if(empty(\$_var['gp_slt{$name}ID']) || \$_var['gp_slt{$name}ID'] + 0 <= 0) \$_var['msg'] .='{$join}不能为空！<br/>';";
+	
+	unset($name);
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	//不需要验证的字段！
+	if(	$column['identity'] == 'HITS' 
+		|| $column['identity'] == 'UP' 
+		|| $column['identity'] == 'DOWN' 
+		|| $column['identity'] == 'ATTENT' 
+		|| $column['identity'] == 'VIEWS' 
+		|| $column['identity'] == 'ADDRESS' 
+		|| $column['identity'] == 'AGENT' 
+		|| $column['identity'] == 'STATUS' 
+		|| $column['identity'] == 'ISAUDIT' 
+		|| $column['identity'] == 'CREATETIME' 
+		|| $column['identity'] == 'AUDITID' 
+		|| $column['identity'] == 'AUDITTIME' 
+		|| $column['identity'] == 'CITYID' 
+		|| $column['identity'] == 'COUNTYID' 
+		|| $column['identity'] == 'GENDER') continue;
+	
+	$name = strtolower($column['identity']);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	
+	//地区
+	if($column['identity'] == 'PROVINCEID'){
+		$code_check .= "
+			if(\$_var['gp_sltProvinceId'] + 0 <= 0 || \$_var['gp_sltCityId'] + 0 <= 0 || \$_var['gp_sltCountyId'] + 0 <= 0) \$_var['msg'] .= '所在地区不能为空！<br/>';";
+		continue;
+	}
+	
+	//手机号码
+	if($column['identity'] == 'MOBILE'){
+		$code_check .= "
+			if(empty(\$_var['gp_txtMobile']) && empty(\$_var['gp_txtWeixin'])) \$_var['msg'] .= '手机号码不能全为空！<br/>';
+			if(\$_var['gp_txtMobile'] && !is_mobile(\$_var['gp_txtMobile'])) \$_var['msg'] .= '手机号码不正确！<br/>';";
+		continue;
+	}
+	
+	if($column['type'] == 'varchar'){
+		$code_check .= "
+			if(empty(\$_var['gp_txt{$name}'])) \$_var['msg'] .= '{$column[name]}不能为空！<br/>';";
+	}elseif($column['type'] == 'int'){
+		$code_check .= "
+			if(empty(\$_var['gp_txt{$name}'])) \$_var['msg'] .= '{$column[name]}不能为空！<br/>';
+			if(!is_cint(\$_var['gp_txt{$name}'])) \$_var['msg'] .= '{$column[name]}为整数！<br/>';";
+	}elseif($column['type'] == 'decimal'){
+		$code_check .= "
+			if(empty(\$_var['gp_txt{$name}'])) \$_var['msg'] .= '{$column[name]}不能为空！<br/>';
+			if(!is_cnumber(\$_var['gp_txt{$name}'])) \$_var['msg'] .= '{$column[name]}为浮点数！<br/>';";
+	}elseif($column['type'] == 'datetime'){
+		if($column['identity'] == 'BEGINTIME'){
+			$code_check .= "
+			if(!empty(\$_var['gp_txtBeginTime']) && !is_datetime(\$_var['gp_txtBeginTime'])) \$_var['msg'] .='{$column[name]}不正确！<br/>';";
+		}elseif($column['identity'] == 'ENDTIME'){
+			$code_check .= "
+			if(!empty(\$_var['gp_txtEndTime']) && !is_datetime(\$_var['gp_txtEndTime'])) \$_var['msg'] .='{$column[name]}不正确！<br/>';";
+		}elseif($column['identity'] == 'BEGINDATE'){
+			$code_check .= "
+			if(!empty(\$_var['gp_txtBeginDate']) && !is_shortdate(\$_var['gp_txtBeginDate'])) \$_var['msg'] .='{$column[name]}不正确！<br/>';";
+		}elseif($column['identity'] == 'ENDDATE'){
+			$code_check .= "
+			if(!empty(\$_var['gp_txtEndDate']) && !is_shortdate(\$_var['gp_txtEndDate'])) \$_var['msg'] .='{$column[name]}不正确！<br/>';";
+		}else{
+			$code_check .= "
+			if(!empty(\$_var['gp_txt{$name}']) && !is_shortdate(\$_var['gp_txt{$name}'])) \$_var['msg'] .='{$column[name]}不正确！<br/>';";
+		}
+	}
+	
+	unset($name);
+}
+
+$code .= $code_check;
+
+$tmp =
+<<<EOF
+
+
+			if(empty(\$_var['msg'])){
+				\$data = array(
+EOF;
+
+$code .= $tmp;
+
+foreach ($table['COLUMNS'] as $key => $column){
+	//不需要后台录入的字段！
+	if(	$column['identity'] == 'HITS' 
+		|| $column['identity'] == 'UP' 
+		|| $column['identity'] == 'DOWN' 
+		|| $column['identity'] == 'ATTENT' 
+		|| $column['identity'] == 'VIEWS' 
+		|| $column['identity'] == 'ADDRESS' 
+		|| $column['identity'] == 'AGENT' 
+		|| $column['identity'] == 'AUDITID' 
+		|| $column['identity'] == 'AUDITTIME') continue;
+	
+	$name = strtolower($column['identity']);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	
+	if($column['identity'] == 'PROVINCEID'){
+		$code_data .= "
+			'PROVINCEID' => \$_var['gp_sltProvinceId'] + 0, ";
+		continue;
+	}
+	
+	if($column['identity'] == 'CITYID'){
+		$code_data .= "
+			'CITYID' => \$_var['gp_sltCityId'] + 0, ";
+		continue;
+	}
+	
+	if($column['identity'] == 'COUNTYID'){
+		$code_data .= "
+				'COUNTYID' => \$_var['gp_sltCountyId'] + 0, ";
+		continue;
+	}
+	
+	if($column['identity'] == 'GENDER'){
+		$code_data .= "
+				'GENDER' => \$_var['gp_rdoGender'] + 0, ";
+		continue;
+	}
+	
+	if($column['type'] == 'varchar'){
+		$code_data .= "
+				'{$column[identity]}' => utf8substr(\$_var['gp_txt{$name}'], 0, {$column[length]}), ";
+	}elseif($column['type'] == 'text'){
+		$code_data .= "
+				'{$column[identity]}' => \$_var['gp_txt{$name}'], ";
+	}elseif($column['type'] == 'tinyint'){
+		$code_data .= "
+				'{$column[identity]}' => \$_var['gp_rdo{$name}'] + 0, ";
+	}elseif($column['type'] == 'int'){
+		$code_data .= "
+				'{$column[identity]}' => \$_var['gp_txt{$name}'] + 0, ";
+	}elseif($column['type'] == 'datetime'){
+		if($column['identity'] == 'BEGINTIME'){
+			$code_data .= "
+				'{$column[identity]}' => is_datetime(\$_var['gp_txtBeginTime']) ? \$_var['gp_txtBeginTime'] : '', ";
+		}elseif($column['identity'] == 'ENDTIME'){
+			$code_data .= "
+				'{$column[identity]}' => is_datetime(\$_var['gp_txtEndTime']) ? \$_var['gp_txtEndTime'] : '', ";
+		}elseif($column['identity'] == 'BEGINDATE'){
+			$code_data .= "
+				'{$column[identity]}' => is_shortdate(\$_var['gp_txtBeginDate']) ? \$_var['gp_txtBeginDate'] : '', ";
+		}elseif($column['identity'] == 'ENDDATE'){
+			$code_data .= "
+				'{$column[identity]}' => is_shortdate(\$_var['gp_txtEndDate']) ? \$_var['gp_txtEndDate'] : '', ";
+		}elseif($column['identity'] == 'CREATETIME'){
+			$code_data .= "
+				'{$column[identity]}' => date('Y-m-d H:i:s'), ";
+		}else{
+			$code_data .= "
+				'{$column[identity]}' => is_shortdate(\$_var['gp_txt{$name}']) ? \$_var['gp_txt{$name}'] : '', ";
+		}
+	}
+}
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	$name = strtolower($key);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	$name_upper = strtoupper($key);
+	
+	$code_data .= "
+				'{$name_upper}ID' => \$_var['gp_slt{$name}ID'] + 0, ";
+	
+	unset($name);
+}
+
+if($table['CODE']['USER'] && !$table['CODE']['AGENT']){
+	$code_data .= "
+				'USERID' => \$_var['current']['USERID'],
+				'USERNAME' => \$_var['current']['USERNAME'],
+				'EDITTIME' => date('Y-m-d H:i:s'), ";
+}
+
+if(count($table['FILES']) <= 3){
+	foreach($table['FILES'] as $key => $file){
+		$name = $key + 1;
+		$code_data .= "
+				'FILE0{$name}' => \$_var['gp_hdnFile0{$name}'], ";
+		
+		unset($name);
+	}
+	
+	$code .= $code_data;
+	$code .= "
+				);
+			";
+}else{
+	$code .= $code_data;
+	$code .= "
+				);
+
+				\$file_arr = file_upload_images({$table[FILENUM]});
+				\$data = array_merge(\$data, \$file_arr);
+		";
+}
+
+$tmp =
+<<<EOF
+
+				\${$table[IDENTITY]}id = \$_{$table[IDENTITY]}->insert(\$data);
+
+				\$_log->insert("添加{$table[CNAME]}信息(\${$table[IDENTITY]}id)", '{$table[CNAME]}');
+
+				show_message('您已经成功添加{$table[CNAME]}信息', "{ADMIN_SCRIPT}/{$table[IDENTITY]}");
+			}
+		}
+
+		include_once view('/{$setting[SiteTheme]}/module{$table[_PATH]}/view/index_edit');
+	}
+
+	//修改
+	public function _update(){
+		global \$_var;
+EOF;
+		$code .= $tmp.$code_model;
+
+$tmp =
+<<<EOF
+		\$id = \$_var['gp_id'] + 0;
+		if(\$id == 0) show_message(\$GLOBALS['lang']['error'], "{ADMIN_SCRIPT}/{$table[IDENTITY]}");
+	
+		\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$id);
+		if(\${$table[IDENTITY]} == null) show_message(\$GLOBALS['lang']['error'], "{ADMIN_SCRIPT}/{$table[IDENTITY]}");
+	
+		\${$table[IDENTITY]} = format_row_files(\${$table[IDENTITY]});
+	
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['BEGINTIME']){
+	$code .= "
+		\${$table[IDENTITY]}['BEGINTIME'] = \${$table[IDENTITY]}['BEGINTIME'] + 0 > 0 ? date('Y-m-d H:i', strtotime(\${$table[IDENTITY]}['BEGINTIME'])) : '';";
+}
+
+if($table['CODE']['ENDTIME']){
+	$code .= "
+		\${$table[IDENTITY]}['ENDTIME'] = \${$table[IDENTITY]}['ENDTIME'] + 0 > 0 ? date('Y-m-d H:i', strtotime(\${$table[IDENTITY]}['ENDTIME'])) : '';";
+}
+
+if($table['CODE']['BEGINDATE']){
+	$code .= "
+		\${$table[IDENTITY]}['BEGINDATE'] = \${$table[IDENTITY]}['BEGINDATE'] + 0 > 0 ? date('Y-m-d', strtotime(\${$table[IDENTITY]}['BEGINDATE'])) : '';";
+}
+
+if($table['CODE']['ENDDATE']){
+	$code .= "
+		\${$table[IDENTITY]}['ENDDATE'] = \${$table[IDENTITY]}['ENDDATE'] + 0 > 0 ? date('Y-m-d', strtotime(\${$table[IDENTITY]}['ENDDATE'])) : '';";
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	if($column['identity'] == 'BEGINTIME' 
+		|| $column['identity'] == 'ENDTIME' 
+		|| $column['identity'] == 'BEGINDATE' 
+		|| $column['identity'] == 'ENDDATE') continue;
+		
+	if($column['type'] == 'datetime'){
+		$code .= "
+		\${$table[IDENTITY]}['{$column[identity]}'] = \${$table[IDENTITY]}['{$column[identity]}'] + 0 > 0 ? date('Y-m-d', strtotime(\${$table[IDENTITY]}['{$column[identity]}'])) : '';";
+	}
+}
+
+if($table['CODE']['DISTRICT']){
+	$code .= "
+		if(\${$table[IDENTITY]}['PROVINCEID']) \$cities = $_district->get_list(\${$table[IDENTITY]}['PROVINCEID']);
+		if(\${$table[IDENTITY]}['CITYID']) \$counties = $_district->get_list(\${$table[IDENTITY]}['CITYID']);";
+}
+
+if(count($table['FILES']) > 3){
+	$code .= "
+	
+		\${$table[IDENTITY]}_files = \$_{$table[IDENTITY]}->get_files(\${$table[IDENTITY]}, {$table[FILENUM]});
+	";
+}
+
+$tmp =
+<<<EOF
+
+	
+		if(\$_var['gp_formsubmit']){
+			\$_var['msg'] = '';
+		
+EOF;
+
+$code .= $tmp;
+$code .= $code_check;
+
+$tmp =
+<<<EOF
+		
+		
+			if(empty(\$_var['msg'])){
+				\$data = array(
+EOF;
+
+$code .= $tmp;
+$code .= $code_data;
+$code .= "
+				);
+			";
+
+if(count($table['FILES']) > 3){
+	$code .= "
+				\$file_arr = file_upload_images({$table[FILENUM]});
+				\$data = array_merge(\$data, \$file_arr);
+		";
+}
+
+$tmp =
+<<<EOF
+
+				\$_{$table[IDENTITY]}->update(\${$table['IDENTITY']}['{$table[PRIMARY_KEY]}'], \$data);
+
+				\$_log->insert("编辑{$table[CNAME]}信息({$table[TITLE_DATA]})", '{$table[CNAME]}');
+
+				show_message('您已经成功编辑{$table[CNAME]}信息！', "{ADMIN_SCRIPT}/{$table[IDENTITY]}&page={\$_var[page]}&psize={\$_var[psize]}{\$search[querystring]}");
+			}
+		}
+
+		include_once view('/{$setting[SiteTheme]}/module{$table[_PATH]}/view/index_edit');
+	}
+
+	//查看
+	public function _detail(){
+		global \$_var;
+EOF;
+		$code .= $tmp.$code_model;
+$tmp =
+<<<EOF
+		\$id = \$_var['gp_id'] + 0;
+		if(\$id == 0) show_message(\$GLOBALS['lang']['error'], "{ADMIN_SCRIPT}/{$table[IDENTITY]}");
+
+		\${$table[IDENTITY]} = \$_{$table[IDENTITY]}->get_by_id(\$id);
+		if(\${$table[IDENTITY]} == null) show_message(\$GLOBALS['lang']['error'], "{ADMIN_SCRIPT}/{$table[IDENTITY]}");
+
+		\${$table[IDENTITY]} = format_row_files(\${$table[IDENTITY]});
+	
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['STATUS']){
+	$code .= "
+		\${$table[IDENTITY]}['_STATUS'] = \${$table[IDENTITY]}['STATUS'];
+		\${$table[IDENTITY]}['STATUS'] = \${$table[IDENTITY]}_status[\${$table[IDENTITY]}['STATUS']];
+	";
+}
+
+if($table['CODE']['BEGINTIME']){
+	$code .= "
+		\${$table[IDENTITY]}['BEGINTIME'] = \${$table[IDENTITY]}['BEGINTIME'] + 0 > 0 ? date('Y-m-d H:i', strtotime(\${$table[IDENTITY]}['BEGINTIME'])) : '';";
+}
+
+if($table['CODE']['ENDTIME']){
+	$code .= "
+		\${$table[IDENTITY]}['ENDTIME'] = \${$table[IDENTITY]}['ENDTIME'] + 0 > 0 ? date('Y-m-d H:i', strtotime(\${$table[IDENTITY]}['ENDTIME'])) : '';";
+}
+
+if($table['CODE']['BEGINDATE']){
+	$code .= "
+		\${$table[IDENTITY]}['BEGINDATE'] = \${$table[IDENTITY]}['BEGINDATE'] + 0 > 0 ? date('Y-m-d', strtotime(\${$table[IDENTITY]}['BEGINDATE'])) : '';";
+}
+
+if($table['CODE']['ENDDATE']){
+	$code .= "
+		\${$table[IDENTITY]}['ENDDATE'] = \${$table[IDENTITY]}['ENDDATE'] + 0 > 0 ? date('Y-m-d', strtotime(\${$table[IDENTITY]}['ENDDATE'])) : '';";
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	if($column['identity'] == 'BEGINTIME' 
+		|| $column['identity'] == 'ENDTIME' 
+		|| $column['identity'] == 'BEGINDATE' 
+		|| $column['identity'] == 'ENDDATE') continue;
+		
+	if($column['type'] == 'datetime'){
+		$code .= "
+		\${$table[IDENTITY]}['{$column[identity]}'] = \${$table[IDENTITY]}['{$column[identity]}'] + 0 > 0 ? date('Y-m-d', strtotime(\${$table[IDENTITY]}['{$column[identity]}'])) : '';";
+	}
+}
+
+if($table['CODE']['AUDITER']){
+	$code .= "
+		if(\${$table[IDENTITY]}['AUDITID']){
+			\$auditer = $_user->get_by_id(\${$table[IDENTITY]}['AUDITID']);
+			\${$table[IDENTITY]}['AUDITER'] = \$auditer['USERNAME'];
+		}
+	";
+}
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	$name = strtoupper($key);
+	$column = $key == 'group' ? 'CNAME' : 'TITLE';
+	
+	$code .= "
+			
+		\${$table[IDENTITY]}['{$name}'] = '';
+		foreach (\${$key}_list as \$key => \${$key}){
+			if(\${$key}['{$name}ID'] == \${$table[IDENTITY]}['{$name}ID']){
+				\${$table[IDENTITY]}['{$name}'] = \${$key}['{$column}'];
+				break;
+			}
+		}
+	";
+	
+	unset($name);
+	unset($column);
+}
+
+if(count($table['FILES']) > 3){
+	$code .= "
+		\${$table[IDENTITY]}_files = \$_{$table[IDENTITY]}->get_files(\${$table[IDENTITY]}, {$table[FILENUM]});
+	";
+}
+
+$tmp =
+<<<EOF
+
+		include_once view('/{$setting[SiteTheme]}/module{$table[_PATH]}/view/index_detail');
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['DISTRICT']){
+	$tmp =
+<<<EOF
+
+}
+
+	//市
+	public function _cities(){
+		global \$_var;
+
+		\$_district = new _district();
+
+		exit_json(\$_district->get_list(\$_var['gp_provinceid']));
+	}
+
+	//区县
+	public function _counties(){
+		global \$_var;
+
+		\$_district = new _district();
+
+		exit_json(\$_district->get_list(\$_var['gp_cityid']));
+EOF;
+	
+	$code .= $tmp;
+	}
+
+$excel_columns = array();
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	$name = strtoupper($key);
+	$excel_columns[] = array('name' => $key == 'group' ? '等级' : $join, 'identity' => $name, 'type' => 'varchar', 'length' => 30);
+	
+	unset($name);
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	//不需要导出的字段！
+	if($column['identity'] == 'AUDITTIME' 
+		|| $column['identity'] == 'CITYID' 
+		|| $column['identity'] == 'COUNTYID' 
+		|| $column['identity'] == 'PLACE') continue;
+	
+	if($column['identity'] == 'AUDITID'){
+		$excel_columns[] = array('name' => '审核人', 'identity' => 'AUDITER', 'type' => 'varchar', 'length' => 20);
+		$excel_columns[] = array('name' => '审核时间', 'identity' => 'AUDITTIME', 'type' => 'datetime', 'length' => 0);
+		continue;
+	}
+	
+	if($column['identity'] == 'PROVINCEID'){
+		$excel_columns[] = array('name' => '所在地址', 'identity' => 'PLACE', 'type' => 'varchar', 'length' => 50);
+		continue;
+	}
+	
+	if($column['type'] == 'text') continue;
+	
+	$excel_columns[] = $column;
+}
+
+if($table['CODE']['USER']){
+	if($table['CODE']['AGENT']){
+		$excel_columns[] = array('name' => '用户', 'identity' => 'USERNAME', 'type' => 'varchar', 'length' => 50);
+		$excel_columns[] = array('name' => '时间', 'identity' => 'EDITTIME', 'type' => 'datetime', 'length' => 0);
+	}else{
+		$excel_columns[] = array('name' => '操作人', 'identity' => 'USERNAME', 'type' => 'varchar', 'length' => 50);
+		$excel_columns[] = array('name' => '操作时间', 'identity' => 'EDITTIME', 'type' => 'datetime', 'length' => 0);
+	}
+}
+
+$tmp =
+<<<EOF
+
+	}
+
+	//导出excel
+	public function _excel(){
+		global \$_var, \$dispatches;
+EOF;
+	$code .= $tmp.$code_model;
+$tmp =
+<<<EOF
+		require_once ROOTPATH.'/source/lib/excel/PHPExcel.php';
+		require_once ROOTPATH.'/source/lib/excel/PHPExcel/Writer/Excel5.php';
+
+		\$excel = new PHPExcel();
+
+		\$excel_sheet = \$excel->getActiveSheet();
+
+		//表格宽度
+EOF;
+
+$code .= $tmp;
+
+$tmparr = range('A', 'Z');
+foreach ($tmparr as $key => $val) $chr_columns[] = $val;
+foreach ($tmparr as $key => $val) $chr_columns[] = 'A'.$val;
+foreach ($tmparr as $key => $val) $chr_columns[] = 'B'.$val;
+foreach ($tmparr as $key => $val) $chr_columns[] = 'C'.$val;
+
+foreach ($excel_columns as $key => $val){
+	$name = $chr_columns[$key];
+
+	$width = 10;
+	if($val['type'] == 'varchar'){
+		if($val['length'] < 25) $width = 10;
+		elseif($val['length'] > 25 && $val['length'] < 55) $width = 20;
+		elseif($val['length'] > 55 && $val['length'] < 105) $width = 30;
+		elseif($val['length'] > 105) $width = 50;
+	}
+	
+	$code .= "
+		\$excel_sheet->getColumnDimension('{$name}')->setWidth({$width});";
+	
+	unset($name);
+	unset($width);
+}
+
+$tmp =
+<<<EOF
+
+	
+		\$objStyle = \$excel_sheet->getStyle('A1');
+		\$objStyle->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+		\$objStyle->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+		\$objStyle->getFont()->setBold(true);
+
+		\$excel_sheet->getRowDimension(1)->setRowHeight(35);
+
+		//水平居中
+EOF;
+
+$code .= $tmp;
+
+foreach ($excel_columns as $key => $val){
+	$name = $chr_columns[$key];
+	
+	if($val['type'] == 'varchar' && $val['length'] > 105) continue;
+	
+	$code .= "
+		\$excel_sheet->getStyle('{$name}')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);";
+	
+	unset($name);
+}
+
+$name_limit = $chr_columns[(count($excel_columns) - 1)];
+
+$code .= "
+	
+		\$excel_sheet->mergeCells('A1:{$name_limit}1');
+		\$excel_sheet->setCellValue('A1', '{$table[CNAME]}列表');
+	
+		//表头名称";
+
+foreach ($excel_columns as $key => $val){
+	$name = $chr_columns[$key];
+	
+	$code .= "
+		\$excel_sheet->setCellValue('{$name}2', '{$val[name]}');";
+	
+	unset($name);
+}
+
+$tmp =
+<<<EOF
+	
+	
+		if(empty(\$dispatches['operations']['export'])){
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['DISTRICT']){
+	$code .= "
+		\$district_ids = array();";
+}
+
+if($table['CODE']['AUDITER']){
+	$code .= "
+		\$auditids = array();";
+}
+
+$tmp =
+<<<EOF
+
+			\${$table[IDENTITY]}_list = array();
+			\${$table[IDENTITY]}_rows = \$_{$table[IDENTITY]}->get_all(\$search['wheresql']);
+			foreach(\${$table[IDENTITY]}_rows as \$key => \$row){
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['BEGINTIME']){
+	$code .= "
+				\$row['BEGINTIME'] = \$row['BEGINTIME'] > 0 ? date('Y-m-d H:i', strtotime(\$row['BEGINTIME'])) : '';";
+}
+
+if($table['CODE']['ENDTIME']){
+	$code .= "
+				\$row['ENDTIME'] = \$row['ENDTIME'] > 0 ? date('Y-m-d H:i', strtotime(\$row['ENDTIME'])) : '';
+			";
+}
+
+if($table['CODE']['BEGINDATE']){
+	$code .= "
+				\$row['BEGINDATE'] = \$row['BEGINDATE'] > 0 ? date('Y-m-d', strtotime(\$row['BEGINDATE'])) : '';
+			";
+}
+
+if($table['CODE']['ENDDATE']){
+	$code .= "
+				\$row['ENDDATE'] = \$row['ENDDATE'] > 0 ? date('Y-m-d', strtotime(\$row['ENDDATE'])) : '';
+			";
+}
+
+if($table['CODE']['STATUS']){
+	$code .= "
+				\$row['_STATUS'] = \$row['STATUS'];
+				\$row['STATUS'] = \${$table[IDENTITY]}_status[\$row['STATUS']];
+			";
+}
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	$name = strtoupper($key);
+	$column = $key == 'group' ? 'CNAME' : 'TITLE';
+	
+	$code .= "
+			
+				\$row['{$name}'] = '';
+				foreach (\${$key}_list as \$key => \${$key}){
+					if(\${$key}['{$name}ID'] == \$row['{$name}ID']){
+						\$row['{$name}'] = \${$key}['{$column}'];
+						break;
+					}
+				}
+			";
+	
+	unset($name);
+	unset($column);
+}
+
+if($table['CODE']['DISTRICT']){
+	$code .= "
+				if(!in_array(\$row['PROVINCEID'], \$district_ids)) \$district_ids[] = \$row['PROVINCEID'];
+				if(!in_array(\$row['CITYID'], \$district_ids)) \$district_ids[] = \$row['CITYID'];
+				if(!in_array(\$row['COUNTYID'], \$district_ids)) \$district_ids[] = \$row['COUNTYID'];
+			";
+}
+
+if($table['CODE']['AUDITER']){
+	$code .= "
+				if(\$row['AUDITID']) \$auditids[] = \$row['AUDITID'];";
+}
+
+$tmp =
+<<<EOF
+
+				\${$table[IDENTITY]}_list[] = \$row;
+			}
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['DISTRICT']){
+	$tmp = 
+<<<EOF
+
+		
+			if(count(\$district_ids) > 0){
+				\$district_list = array();
+				\$districts = \$_district->get_list("AND DISTRICTID IN(".eimplode(\$district_ids).")");
+				foreach(\$districts as \$key => \$row){
+					\$district_list[\$row['DISTRICTID']] = \$row;
+				}
+
+				foreach (\${$table[IDENTITY]}_list as \$key => \$row){
+					if(\$district_list[\$row['COUNTYID']]) \$row['PLACE'] = \$district_list[\$row['COUNTYID']]['CNAME'].'-'.\$row['PLACE'];
+					if(\$district_list[\$row['CITYID']]) \$row['PLACE'] = \$district_list[\$row['CITYID']]['CNAME'].'-'.\$row['PLACE'];
+					if(\$district_list[\$row['PROVINCEID']]) \$row['PLACE'] = \$district_list[\$row['PROVINCEID']]['CNAME'].'-'.\$row['PLACE'];
+
+					\${$table[IDENTITY]}_list[\$key] = \$row;
+				}
+			}
+EOF;
+	$code .= $tmp;
+}
+
+if($table['CODE']['AUDITER']){
+	$tmp = 
+<<<EOF
+
+		
+			if(count(\$auditids) > 0){
+				\$user_list = \$_user->get_list(0, 0, "a.USERID IN(".eimplode(\$auditids).")");
+				foreach(\$user_list as \$key => \$row){
+					foreach (\${$table[IDENTITY]}_list as \$key => \$item){
+						if(\$item['USERID'] == \$row['USERID']){
+							\${$table[IDENTITY]}_list[\$key]['AUDITER'] = "{\$row[USERNAME]}({\$row[REALNAME]})";
+							break;
+						}
+					}
+				}
+			}
+EOF;
+
+	$code .= $tmp;
+}
+
+$tmp = 
+<<<EOF
+
+
+			\$loop = 3;
+			foreach (\${$table[IDENTITY]}_list as \$key => \$row){
+EOF;
+
+$code .= $tmp;
+
+foreach ($excel_columns as $key => $val){
+	$name = $chr_columns[$key];
+	
+	if($val['type'] == 'int' || $val['identity'] == 'SERIAL' || $val['identity'] == 'MOBILE'){
+		if($val['identity'] == 'STATUS'){
+			$code .= "
+				\$excel_sheet->setCellValue('{$name}'.\$loop, \$row['{$val[identity]}']);";
+		}else{
+			$code .= "
+				\$excel_sheet->setCellValueExplicit('{$name}'.\$loop, \$row['{$val[identity]}'], PHPExcel_Cell_DataType::TYPE_STRING);";
+		}
+	}elseif($val['identity'] == 'ISAUDIT'){
+		$code .= "
+				\$excel_sheet->setCellValue('{$name}'.\$loop, \$row['ISAUDIT'] == 1 ? '未审核' : '已审核');";
+	}else{
+		$code .= "
+				\$excel_sheet->setCellValue('{$name}'.\$loop, \$row['{$val[identity]}']);";
+	}
+	
+	unset($name);
+}
+
+
+$tmp = 
+<<<EOF
+
+				\$loop++;
+			}
+		}
+
+		ob_end_clean();
+		header('Content-Type: application/vnd.ms-excel');
+		header('Content-Disposition: attachment;filename="{$table[CNAME]}.xls"');
+
+		\$excel_writer = PHPExcel_IOFactory::createWriter(\$excel, 'Excel5');
+		\$excel_writer->save('php://output');
+
+		exit;
+EOF;
+
+$code .= $tmp;
+
+if(count($table['FILES']) == 0){
+	$code .= "
+	}
+}
+	";
+}else{
+	$tmp = 
+<<<EOF
+
+	}
+
+	public function _upload(){
+		global \$_var;
+
+		if(!\$_var['current']) exit_echo(\$GLOBALS['lang']['admin.validate.swfupload.echo.login']);
+
+		\$file_limit = \$_var['gp_limit'] + 0;
+		\$file_uploaded = \$_var['gp_uploaded'] + 0;
+
+		if(\$file_limit > 0 && \$file_limit < \$file_uploaded + 1) exit_echo(\$GLOBALS['lang']['admin.validate.swfupload.echo.limit']."{\$file_limit}".\$GLOBALS['lang']['admin.validate.swfupload.echo.limit.pic']);
+
+		if(\$_FILES['Filedata']['name']){
+			\$upload = new \\ilinei\\upload();
+
+			\$upload->init(\$_FILES['Filedata'], 'mutual');
+
+			if(\$upload->error()) exit_echo(\$GLOBALS['lang']['admin.validate.swfupload.echo.error']);
+			if(!\$upload->attach['isimage']) exit_echo(\$GLOBALS['lang']['admin.validate.swfupload.echo.image']);
+
+			\$upload->save();
+			if(\$upload->error()) exit_echo(\$GLOBALS['lang']['admin.validate.swfupload.echo.move']);
+
+			if(\$upload->attach){
+				\$temp_imgsize = getimagesize('attachment/'.\$upload->attach['target']);
+				exit_echo('FILEID:'.\$upload->attach['target'].'|'.\$upload->attach['name'].'|0|'.\$temp_imgsize[0].'|'.\$temp_imgsize[1].'|'.\$_var['gp_file']);
+			}
+		}
+
+		exit_echo(\$GLOBALS['lang']['admin.validate.swfupload.echo.fail']);
+	}
+}
+
+EOF;
+
+	$code .= $tmp;
+}
+?>

@@ -1,0 +1,168 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin;
+
+#info
+function amh_module_info()
+{
+		echo 'AMH-ModuleName: Qiniu-1.1';
+		echo 'AMH-ModuleDescription: ALiOSS - AMH面板阿里云OSS远程备份模块。本模块可设置添加OSS为远程备份，使用阿里云开放存储服务，面板数据快速安全备份存储至OSS云端与实现数据快速迁移、下载一键还原恢复等。OSS（Open Storage Service）是支持任意数据类型的存储服务，支持任意时间、地点的数据上传和下载。(aliyun.com)';
+		echo 'AMH-ModuleButton: 安装/卸载';
+		echo 'AMH-ModuleDate: 2013-09-05';
+		echo 'AMH-ModuleAdmin: /index.php?c=ALiOSS';
+		echo 'AMH-ModuleWebSite: http://amysql.com';
+		echo 'AMH-ModuleIco: http://server835.qiniudn.com/qiniu-logo.png';
+		echo 'AMH-ModuleScriptBy: Amysql';
+}
+
+#install
+function amh_module_install()
+{
+	if amh_module_status ; then
+		exit;
+	else
+		for module_name in `ls /root/amh/modules/ | grep 'Qiniu' | grep -v 'Qiniu-1.1'`; do
+			rm -rf /root/amh/modules/$module_name;
+		done;
+		python_version=`python -V 2>/tmp/python_version && cat /tmp/python_version`;
+		if ! echo $python_version | egrep '2.5.|2.6.|2.7.' > /dev/null; then 
+			if [ ! -d /usr/local/python2 ]; then
+				mkdir /usr/local/python2;
+				cd /usr/local;
+				wget http://code.amysql.com/files/Python-2.7.5.tgz;
+				tar -xvf Python-2.7.5.tgz;
+				cd Python-2.7.5;
+				./configure --prefix=/usr/local/python2;
+				make && make install;
+			fi;
+		else
+			mkdir -p /usr/local/python2/bin/;
+			ln -s /usr/bin/python /usr/local/python2/bin/python;
+		fi;
+
+		mkdir /usr/local/qiniu;
+		cp -r /root/amh/modules/Qiniu-1.1/shell/* /usr/local/qiniu/;
+
+		cd /root/amh/modules/Qiniu-1.1;
+		\cp web/Controller/ALiOSS.php /home/wwwroot/index/web/Controller/ALiOSS.php;
+		\cp web/Model/ALiOSSs.php /home/wwwroot/index/web/Model/ALiOSSs.php;
+		\cp web/View/{ALiOSS_category.php,ALiOSS_list.php,Bucket_list.php,Object_list.php,backup_now.php} /home/wwwroot/index/web/View/;
+
+		# AMH 3.1&3.2
+		if grep -q 'AMH 3\.' /home/wwwroot/index/web/View/index.php; then
+			\cp web/View/backup_remote.php /home/wwwroot/index/web/View/;
+			sed -i "/amh BRssh post/a\ \tamh module ALiOSS-1.1 admin post,\$\{DoneBackup\},y >\/dev\/null;" /root/amh/backup;
+		else
+			#sed -i "/amh BRssh post/a\ \tamh module ALiOSS-1.1 admin post,\$\{DoneBackup\},y;" /root/amh/backup;
+			sed -i "/amh BRssh post/a\ \tphp /usr/local/qiniu/upload.php \$\{DoneBackup\} /home/backup/\$\{DoneBackup\};" /root/amh/backup;
+			#sed -i "php /usr/local/qiniu/upload.php ${DoneBackup} /home/backup/${DoneBackup};" /root/amh/backup;
+		fi;
+
+		mkdir -p /home/www;
+		touch /root/amh/modules/Qiniu-1.1/InstallComplete;
+		amh_module_status;
+	fi;
+}
+
+#admin
+function amh_module_admin()
+{
+	if amh_module_status ; then
+		param_list=${1//,/ };
+		set -- $param_list;
+		action=$1;
+		alioss_id=$2;
+		alioss_file=$3;
+		amh_file=$2;
+		amh_web=$3;
+		python='/usr/local/python2/bin/python';
+		osscmd='/usr/local/alioss/osscmd';
+		[ "$amh_web" == 'y' ] && osscmd='/usr/local/alioss/osscmd-amh';
+
+		[ "$action" == '' ] && echo "[Notice] ALiOSS management, please select: (1~4)" && \
+		select action in 'gs' 'gs-acl' 'ls' 'url' 'get' 'post' 'rm' 'rm-all' 'eixt'; do break; done;
+		[ "$action" == 'exit' ] && exit;
+
+		MysqlPass=`cat /home/wwwroot/index/web/Amysql/Config.php | awk '{ FS="\047Password\047] = \047"; RS="\047;" } { print $2}' | sed '/^$/d'`;
+		if [ "$action" == 'post' ]; then
+			[ "$amh_file" == '' ] && read -p "[Notice] please input AMH-Backup name:" amh_file;
+			sql="SELECT remote_id , remote_ip , remote_user , remote_password , remote_path FROM amh.amh_backup_remote WHERE remote_type = 'AliOSS' AND remote_status = '1' ORDER BY remote_id ASC";
+			mysql -uroot -p${MysqlPass} -B -N -e "${sql}"  | while read result; do
+				set -- $result;
+				oss_host=$2;
+				oss_id=$3;
+				oss_key=$4;
+				oss_bucket=$5;
+
+				[ "$oss_host" == '' ] && echo '[Error] Empty oss host.' && exit 1;
+				$python $osscmd config --id=${oss_id} --key=${oss_key} --host=${oss_host};
+				if $python $osscmd put /home/backup/${amh_file} oss://${oss_bucket}/; then
+					echo "[OK] oss-put ${amh_file} successfully.";
+					exit 0;
+				fi;
+				echo "[Error] oss-put ${amh_file} failed." && exit 1;
+			done;
+			exit;
+		fi;
+		
+		[ "$alioss_id" == '' ] && read -p "[Notice] please input ALiOSS-ID:" alioss_id
+		sql="SELECT remote_id , remote_ip , remote_user , remote_password , remote_path FROM amh.amh_backup_remote WHERE remote_type = 'AliOSS' AND remote_id = '${alioss_id}'";
+		set -- `mysql -uroot -p${MysqlPass} -B -N -e "${sql}"`;
+		oss_host=$2;
+		oss_id=$3;
+		oss_key=$4;
+		oss_bucket=$5;
+		[ "$oss_host" == '' ] && echo '[Error] Empty oss host.' && exit 1;
+		$python $osscmd config --id=${oss_id} --key=${oss_key} --host=${oss_host};
+		[ "$action" == 'gs' ] && ( $python $osscmd gs || true) && exit;
+		[ "$action" == 'gs-acl' ] && ( $python $osscmd getacl ${oss_bucket} || true) && exit;
+		[ "$action" == 'ls' ] && ( $python $osscmd ls oss://${oss_bucket}/ || true ) && exit;
+		[ "$action" == 'rm-all' ] && ( $python $osscmd deletewholebucket ${oss_bucket} || true ) && exit;
+
+		[ "$alioss_file" == '' ] && read -p "[Notice] please input ALiOSS-File(eg. amh_dir/myfile.amh):" alioss_file
+		if [ "$action" == 'url' ]; then
+			$python $osscmd config --id=${oss_id} --key=${oss_key} --host='oss.aliyuncs.com'
+			$python $osscmd signurl oss://${oss_bucket}/$alioss_file
+			exit;
+		fi;
+		[ "$action" == 'rm' ] && ( $python $osscmd rm oss://${oss_bucket}/$alioss_file || true ) && exit;
+		file_basename=`basename $alioss_file`;
+		[ "$action" == 'get' ] && $python $osscmd get oss://${oss_bucket}/$alioss_file /home/backup/${file_basename};
+		exit;
+	else
+		exit;
+	fi;
+}
+
+#uninstall
+function amh_module_uninstall()
+{
+	if amh_module_status ; then
+		cd /usr/local;
+		rm -rf python2 Python-2.7.5 Python-2.7.5.tgz osscmd.tar.gz alioss;
+		rm -f /home/wwwroot/index/web/Controller/ALiOSS.php /home/wwwroot/index/web/Model/ALiOSSs.php;
+		rm -f /home/wwwroot/index/web/View/{ALiOSS_category.php,ALiOSS_list.php,Bucket_list.php,Object_list.php};
+		rm -rf /home/wwwroot/index/web/View/images/ALiOSS/;
+		MysqlPass=`cat /home/wwwroot/index/web/Amysql/Config.php | awk '{ FS="\047Password\047] = \047"; RS="\047;" } { print $2}' | sed '/^$/d'`;
+		mysql -uroot -p${MysqlPass} -B -N -e "use amh;DELETE FROM amh_backup_remote WHERE remote_type = 'AliOSS'";
+		#sed -i "/ALiOSS-1.1/d" /root/amh/backup;
+		sed -i "/qiniu/d" /root/amh/backup;
+		rm -f /root/amh/modules/Qiniu-1.1/InstallComplete;
+		echo '[OK] Qiniu-1.1 Uninstall successful.';
+	else
+		exit;
+	fi;
+}
+
+#status
+function amh_module_status()
+{
+	if [ -f "/root/amh/modules/Qiniu-1.1/InstallComplete" ]; then
+		echo '[OK] Qiniu-1.1 is already installed.';
+		return 0;
+	else
+		echo '[Notice] Qiniu-1.1 is not installed.';
+		return 1;
+	fi;
+}
+
+

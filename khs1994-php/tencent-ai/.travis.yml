@@ -1,0 +1,50 @@
+language: php
+
+cache:
+  directories:
+    - vendor
+    - cache
+
+php:
+  # - 5.6
+  # - 7.0
+  # - 7.1
+  - 7.2
+  - 7.3
+  - nightly
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - php: nightly
+
+install:
+  - composer self-update
+  - composer install -q
+  # - composer update -q
+  - curl -fsSL http://get.sensiolabs.org/sami.phar -o sami
+  - chmod +x sami
+
+script:
+  # - vendor/bin/phpunit --no-configuration --filter "/::testDeleteForce( .*)?$/" TencentAI\Tests\FaceTest $PWD/tests/TencentAI/FaceTest.php
+  - composer test:coverage || composer test
+  - php -r 'echo file_put_contents(sys_get_temp_dir()."/tencent_ai.log","test end",FILE_APPEND);'
+  - php -r 'echo file_get_contents(sys_get_temp_dir()."/tencent_ai.log");'
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - ./sami update .sami.php
+
+branches:
+  only:
+    - master
+    - dev
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  local-dir: build
+  github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  keep-history: true
+  on:
+    branch: master

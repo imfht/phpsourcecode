@@ -1,0 +1,44 @@
+sudo: true
+language: php
+dist: trusty
+php:
+  - '7.0'
+  - '7.2'
+  - '7.3'
+
+services:
+  - mysql
+  - redis-server
+  - memcached
+
+notifications:
+  email: false
+
+cache:
+  directories:
+    - $HOME/.composer/cache/files
+
+before_install:
+  - bash ci/sync-gitee.sh
+  - mkdir build
+  - bash ci/install.sh
+
+install:
+  - composer install
+
+before_script:
+  - bash ci/init-mysql.sh
+
+script:
+  - composer test
+
+after_success:
+  - composer require --dev php-coveralls/php-coveralls
+  - travis_retry php vendor/bin/php-coveralls
+  - bash ci/deploy-www.sh
+
+env:
+  global:
+    - secure: "YJ0EadEc+FOgDr1RCQZ4cMhIdS+VBaQaVinH11U8A1AMGygEEO2fdGgFHhHD9EOsWLDX28DCxd1PqkYl5QlfBfOGpZSxGornpzA6ZWVoIWjqnOXQvB4x9HDkzWWqOLvolEHv/XJuDB3vQV6zftXK3zNtRyPCdzxtzuAGCHDa4FjngZr29dj3/SBagnHUN8c2aiSnIflZRFxB6L5tAPFJZF+eVS0PtRG7MmAG+UzBviBZXZ7uiPjW2aqdEdj8lINQpIuXwq38IQenFwCzBrsBk/ibBV6tbsgre/M4/ChEJld4Y7rP0dFjuZGl5gp0sQrCQPxY7/zgOAX8rBu028vBeSvPJfb48oBbwZ+0BbjbNb5pKt2lycN1FLkgLv/DggJg8rO3NcUCMMv/AzML9ZIfuteIhftTWHcZEeSMNhTzJBCIlA0hc6/Yfv/BguyxbMcz68GugxbdMb6ZNL/GSVgDR9H6flFIMhmMWwgeSmPgEH2nRsCPg3AjOqLOwxVcREDdvs1PqbWv4RX0Rum3Awg5zUSWMYLyxhNfd5zzWhAlNiTZbCnHG8NQI3kjmAIxWlyQu2RhEBTPAnPT38529xm4ONeAnLRlMdBMtBfhNlF9/U/d7bKIVc1Vf1S7qQYGlNEeVwNwuhqLXdk7JHYrZeMCp4S2cx3mOowlhO+y+fc+Wj8="
+    - secure: "sO2JbTw1pj9MLnovuGlVpnOE7WGCp6DV3H+7XBBhnVaouhLd+fZD6tAj6NEB78qYkzib7hvsyeNUk/G23tA0r7kyHzk7QAXRF/8I2bwxv5VgVTWEynUH2ag5ifhJ8QtnYa/d0gXBy25qZl1CQVhe1+64OvI1F7TsBzqX6WGPEO3NajDxG8QoTwxlmXupwcdYIM0r8uextt46EvN9LaQKUu/opTsLwjnbeIM9eRBnS3LgRDTgiHMSFJQl/164yyMna/BJKhIm5Sfc4a3F91bWMKNPjZ6kCZ6fHmLaesbnWd5eQUzI7b+LrLfBPN7Tg/RdshR4P6hRfIDA/uAV6mFpV3yqcRJI0merfa31oPzJaPGkcz6xWEfnbs9xxtyrNwjFRstileeVXkg3mV5/GT5Mrsa0CAV/bMbQVzxlwzJQQON4ZKeTF33T04n0BRbbuxjr+r6S0vrNao/Xi6OamQZA5TiBj6Ne176Et69ymGcamcU2+1V5N8stUput+M7LxrbJCh0cHJRco2TZH82dha2udYHxNBqVQ+tpF5a1keU5dZeshhXZMkfISvTxp2yuCB3HMtNafO75NIbWJ8+4waKJaurVhixhKCWxczTFu5C9Hi6CGbZaeC6NHjeW5lb9ryn2Ramcsz+9xH5i7e0oYo5U/ow2+PvoR3O1GhO6W1aOS9U="
+    - secure: "Ech2uAN1GublsdTlgk87jalJDSxLqSXXLnH4Azb0XNSrrQkLpbhUG7vu8Z32Ntaue/kSVZKC0aG+NfPNotG4tVhxbk367K9JN4OMFUgOf/xSD+/pUEdZwKQrdXlMelaIy0X7LbgrrCLcGayzPzreC6yYC6riVQ6PjaWJ1zE6SbhuvrMeY2Q9xM8AL3bLtEuaFf9ITBawlEq39JFCNiz9ze9C7CKWFGuuQhQpwu+yCmcV4Za82l35b9ibGiMh8I7bk6ZKb6ITDTcb4WtcAahklSFAQw8lkl6BOq7FhT5pEKo7PUmFlfcJc6lONsFVHDanj7ABQCkHeWK18N3EyqLrXzDx5XyGMqLDPQHcBDGFzA/DM5XyH/WqbeaYqmHYplGK/hfWDsDX+0RII7cX5dfuP/HMawL0nZNJQXvI6MdQj0N6naFpWWIl0KqYVdQFXToeediN/Ljdo8BwLoLXdFmndODKmSzoePyptBpByrRgZIcWcu2i47vd0qNlHmrasrfjBGdfkVNzeZeM7nNvU3M0zL+WvA0b7vbWPGqBFzNfItFfT+PNGa431nTIVrHxJ/MIlwGCcuLMlwr55KAu23vr5M464bE7cyeNoBm1gX80QTuNSe3jFKpRQeiBQ8AnD2uiycPMuSKeSKx1D5A04iO79JsW8ClISptTd6pTmX78itA="

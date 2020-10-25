@@ -1,0 +1,131 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<h3 class="title">{lang admin.role.view.header}</h3>
+				</div>
+				<div class="widget-content">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="javascript:void(null);" id="btn_submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</a>
+							<a href="javascript:void(null);" id="btn_delete_list" class="btn btn-small" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+							<a href="{$ADMIN_SCRIPT}/admin/role/_add" {$dispatches[operations][add]} class="btn btn-small">{lang admin.role.view.operation.add}</a>
+						</div>
+					</div>
+					
+					<hr/>
+					<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/admin/role" method="post">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="30"><input type="checkbox" class="fancy" name="cbxAll"/></th>
+								<th width="60">{lang admin.role.view.th.no}</th>
+					            <th width="200">{lang admin.role.view.th.name}</th>
+					            <th>{lang admin.role.view.th.remark}</th>
+					            <th width="90">{lang admin.role.view.th.username}</th>
+					            <th width="120">{lang admin.role.view.th.edittime}</th>
+					            <th width="90">{lang admin.role.view.th.operate}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!--{loop $roles $_loop $role}-->
+							<tr class="item-row">
+							<td>
+				                <input type="checkbox" class="fancy" name="cbxItem[]" cname="{$role[CNAME]}" value="{$role[ROLEID]}"/>
+				            </td>
+				            <td>
+				             	<input type="text" class="input-mini" size="4" name="displayorder[{$role[ROLEID]}]" value="{$role[DISPLAYORDER]}" />
+				            </td>
+				            <td>
+				            	<input type="text" class="input" maxlength="30" name="cname[{$role[ROLEID]}]" value="{$role[CNAME]}" />
+				            </td>
+				            <td>
+				            	{$role[COMMENT]}
+				            </td>
+				            <td class="f12">
+				                {$role[EDITER]}
+				            </td>
+				            <td class="f12">
+				            	{echo $role['EDITTIME']? date('Y-m-d H:i', strtotime($role[EDITTIME])) : '';}
+				            </td>
+				            <td>
+				            	<a class="btn btn-mini btn-primary" href="{$ADMIN_SCRIPT}/admin/role/_update&id={$role[ROLEID]}" {$dispatches[operations][edit]}>{lang admin.operation.edit}</a>
+				                <a class="btn btn-mini btn-delete" cname="{$role[CNAME]}" data="{$role[ROLEID]}" href="javascript:void(null);" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+				            </td>
+				            </tr>
+				            <!--{/loop}-->
+				            
+				            <!--{if count($roles) == 0}-->
+					        <tr>
+					            <td colspan="7">
+					                * {lang admin.operation.empty}
+					            </td>
+					        </tr>
+					        <!--{/if}-->
+						</tbody>
+					</table>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	$('.fancy').uniform();
+	
+	$('#btn_submit').click(function(){
+		$('#frm_grid').submit();
+	});
+	
+	$('#btn_delete_list').click(function(){
+		if($("#frm_grid input[name='cbxItem[]']:checked").length > 0){
+			var tempHTML = '<p>';
+			$("#frm_grid input[name='cbxItem[]']:checked").each(function(){
+				tempHTML += $(this).attr('cname') + '； ';
+			});
+			
+			tempHTML += '</p>';
+			
+			$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang admin.role.view.operation.delete.message}</p>' + tempHTML, callback:function(){
+				$('#modal_dialog .btn-primary').click(function(){
+					$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/admin/role&do=delete_list');
+					$('#frm_grid').submit();
+				});
+			}});
+		}else $.dialog({message:'{lang admin.role.view.operation.empty}'});
+	});
+	
+	$("#frm_grid input[name='cbxAll']").click(function(){
+		if(this.checked){
+			$('#frm_grid .item-row').addClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', true).parent().addClass('checked');
+		}else{
+			$('#frm_grid .item-row').removeClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', false).parent().removeAttr('class');
+		}
+	});
+	
+	$("#frm_grid input[name='cbxItem[]']").click(function(){
+		if(this.checked) $(this).parent().parent().parent().parent().addClass('warning');
+		else $(this).parent().parent().parent().parent().removeClass('warning');
+	});
+	
+	$('#frm_grid .btn-delete').click(function(){
+		var roleid = $(this).attr('data');
+		var tempHTML = '<p>' + $(this).attr('cname') + '； </p>';
+		$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang admin.role.view.operation.delete.one}</p>' + tempHTML, callback:function(){
+			$('#modal_dialog .btn-primary').click(function(){
+				$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/admin/role&do=delete&id=' + roleid + '');
+				$('#frm_grid').submit();
+			});
+		}});
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

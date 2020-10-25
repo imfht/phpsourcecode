@@ -1,0 +1,40 @@
+{%- macro book_list(data) %}
+    {% for item in data %}
+        {% if loop.first %}
+            <ul class="book-toc toc">
+        {% endif %}
+        <li id="book-node-id-{{ item.nid }}">
+            <a href="{{ url(['for':'node','id':item.nid]) }}">{{ item.title }}</a>
+            {% if item.nodeNode.body is defined AND is_array(item.nodeNode.body.toc) %}
+            {% for toc in item.nodeNode.body.toc %}
+                {% if loop.first %}
+                    <ul class="book-node-toc">
+                {% endif %}
+                <li class="margin-left-{{ getVar(toc,'level') }}">
+                    <a href="{{ url(['for':'node','id':item.nid]) }}#toc{{ getVar(toc,'tocIndex') }}">{{ getVar(toc,'title') }}</a>
+                </li>
+                {% if loop.last %}
+                    </ul>
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% set children = item.getChildren() %}
+            {% if children %}
+                {{ book_list(children) }}
+            {% endif %}
+        </li>
+        {% if loop.last %}
+            </ul>
+        {% endif %}
+    {% endfor %}
+{%- endmacro %}
+{% cache "booktoc"~bookNode.id 7200 %}
+<h2 class="book-toc-title">
+    <a href="{{ url(['for':'node','id':bookNode.id]) }}">
+        <i aria-hidden="true" class="fa fa-book"></i>{{ bookNode.title }}
+    </a>
+</h2>
+{% if data %}
+    {{ book_list(data) }}
+{% endif %}
+{% endcache %}

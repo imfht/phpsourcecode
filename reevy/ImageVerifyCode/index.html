@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head> 
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+        <title>PHP生成图片验证码</title>
+        <style type="text/css">
+            html,body,div,span,h1,h2,h3,h4,h5,h6,p,pre,a,code,em,img,small,strong,sub,sup,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}
+            a{color:#007bc4; text-decoration:none;}
+            a:hover{text-decoration:underline}
+            ol,ul{list-style:none}
+            table{border-collapse:collapse;border-spacing:0}
+            html{background:url(./images/demo_bg.png);}
+            body{height:100%;color:#51555c;font:12px/18px "Microsoft Yahei",Tahoma,Helvetica,Arial,Verdana,"\5b8b\4f53",sans-serif;}
+            img{border:0;}
+            .clearfix:after{clear:both;display:block;visibility:hidden;height:0;content:" ";font-size:0;}
+            .head{padding:30px;border-bottom:1px solid #dadada; font-size: 16px;}
+            .container{margin:30px auto 0 auto;width:980px;min-height:600px;border:1px solid #d3d3d3;-webkit-border-radius:5px;-khtml-border-radius:5px;-moz-border-radius:5px;border-radius:5px;background:#fff;}
+            h2.title{margin:4px 0 30px;padding:15px 0 10px 20px;border-bottom:1px solid #d3d3d3;background:url(./images/arrow.jpg) no-repeat 2px 14px;color:#a84c10;font-size:18px;}
+            .foot{padding:10px 2px;height:60px;text-align:center;line-height:24px;}
+            .foot a:hover{color:#51555c;}
+            .btn{display:inline-block;width:72px;height:28px;border:0;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;background-color:#ff8400;color:#fff;text-align:center;line-height:28px;cursor:pointer;transition:background-color .2s linear 0;-ms-border-radius:3px;-o-border-radius:3px;}
+            .demo{margin:0 auto;width:700px;}
+            .btn:hover{background-color:#e95a00;text-decoration:none;}
+            ul.ul_demo li{padding-left:20px;background:url("../images/demo_icon.gif") no-repeat scroll 0 6px;line-height:28px;}
+            .input{padding:0 5px;width:220px;height:26px;border:1px solid #ccc;line-height:26px;}
+            #nav{float:right;margin:30px 0 0;}
+            #nav li{float:left;margin-right:20px;font-size:16px;}
+
+            .demo{width:500px; margin:20px auto}
+            h3{height:28px; line-height:28px;font-size:14px}
+            .demo p{height:32px; line-height:32px; position:relative}
+            .demo p img{position:absolute; top:4px; left:125px; cursor:pointer}
+            .demo p img#getcode_zh{width:150px; height:50px; z-index:1001}
+            .input{width:68px; height:20px; line-height:20px; padding:1px; border:1px solid #d3d3d3}
+        </style>
+    </head>
+    <body>
+        <div class="head">
+            实例演示5种验证码，并介绍生成验证码的函数。PHP生成验证码的原理：<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            通过GD库，生成一张带验证码的图片，并将验证码保存在Session中
+        </div>
+        <div class="container">
+            <div class="demo">
+                <h3>1、数字验证码</h3>
+                <p>验证码：<input type="text" class="input" id="code_num" name="code_num" maxlength="4" /> <img src="code_num.php" id="getcode_num" title="看不清，点击换一张" align="absmiddle"></p>
+                <p><input type="button" class="btn" id="chk_num" value="提交" /></p>
+            </div>
+            <div class="demo">
+                <h3>2、数字+字母验证码</h3>
+                <p>验证码：<input type="text" class="input" id="code_char" maxlength="4" /> <img src="code_char.php" id="getcode_char" title="看不清，点击换一张" align="absmiddle"></p>
+                <p><input type="button" class="btn" id="chk_char" value="提交" /></p>
+            </div>
+            <div class="demo">
+                <h3>3、中文验证码</h3>
+                <p>验证码：<input type="text" class="input" id="code_zh" maxlength="4" /> <img src="code_zh.php" id="getcode_zh" title="看不清，点击换一张" align="absmiddle"></p>
+                <p><input type="button" class="btn" id="chk_zh" value="提交" /></p>
+            </div>
+            <div class="demo">
+                <h3>4、仿google验证码</h3>
+                <p>验证码：<input type="text" class="input" id="code_gg" maxlength="4" /> <img src="code_gg.php" id="getcode_gg" title="看不清，点击换一张" align="absmiddle"></p>
+                <p><input type="button" class="btn" id="chk_gg" value="提交" /></p>
+            </div>
+            <div class="demo">
+                <h3>5、算术验证码</h3>
+                <p>验证码：<input type="text" class="input" id="code_math" maxlength="4" /> <img src="code_math.php" id="getcode_math" title="看不清，点击换一张" align="absmiddle"></p>
+                <p><input type="button" class="btn" id="chk_math" value="提交" /></p>
+            </div>
+        </div>
+        <script type="text/javascript" src="http://libs.useso.com/js/jquery/1.7.2/jquery.min.js"></script> 
+        <script type="text/javascript">
+            $(function() {
+                //数字验证
+                $("#getcode_num").click(function() {
+                    $(this).attr("src", 'code_num.php?' + Math.random());
+                });
+                $("#chk_num").click(function() {
+                    var code_num = $("#code_num").val();
+                    $.post("chk_code.php?act=num", {code: code_num}, function(msg) {
+                        if (msg == 1) {
+                            alert("验证码正确！");
+                        } else {
+                            alert("验证码错误！");
+                        }
+                    });
+                });
+                //数字+字母验证
+                $("#getcode_char").click(function() {
+                    $(this).attr("src", 'code_char.php?' + Math.random());
+                });
+                $("#chk_char").click(function() {
+                    var code_char = $("#code_char").val();
+                    $.post("chk_code.php?act=char", {code: code_char}, function(msg) {
+                        if (msg == 1) {
+                            alert("验证码正确！");
+                        } else {
+                            alert("验证码错误！");
+                        }
+                    });
+                });
+                //中文验证码
+                $("#getcode_zh").click(function() {
+                    $(this).attr("src", 'code_zh.php?' + Math.random());
+                });
+                $("#chk_zh").click(function() {
+                    var code_zh = escape($("#code_zh").val());
+                    $.post("chk_code.php?act=zh", {code: code_zh}, function(msg) {
+                        if (msg == 1) {
+                            alert("验证码正确！");
+                        } else {
+                            alert("验证码错误！");
+                        }
+                    });
+                });
+                //google验证
+                $("#getcode_gg").click(function() {
+                    $(this).attr("src", 'code_gg.php?' + Math.random());
+                });
+                $("#chk_gg").click(function() {
+                    var code_gg = $("#code_gg").val();
+                    $.post("chk_code.php?act=gg", {code: code_gg}, function(msg) {
+                        if (msg == 1) {
+                            alert("验证码正确！");
+                        } else {
+                            alert("验证码错误！");
+                        }
+                    });
+                });
+                //算术验证
+                $("#getcode_math").click(function() {
+                    $(this).attr("src", 'code_math.php?' + Math.random());
+                });
+                $("#chk_math").click(function() {
+                    var code_math = $("#code_math").val();
+                    $.post("chk_code.php?act=math", {code: code_math}, function(msg) {
+                        if (msg == 1) {
+                            alert("验证码正确！");
+                        } else {
+                            alert("验证码错误！");
+                        }
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
+

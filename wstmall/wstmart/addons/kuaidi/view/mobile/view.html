@@ -1,0 +1,79 @@
+<link href="__ROOT__/addons/kuaidi/view/mobile/express.css" rel="stylesheet">
+<link rel="stylesheet" href="__STATIC__/plugins/layui/css/layui.css"/>
+<script type="text/html" id="expressBox">
+	<div id="expressBox">
+		{{# if(d.expressData){ }}
+        <div>
+            <div class="ui_tab">
+                <ul class="tab_nav" style="height:auto;">
+                    {{# for(var i=0;i<d.expressData.length;i++){ }}
+                    <li class="tab_item {{# if(i == 0){ }}tab_curr{{# } }}" data="{{i}}" onclick="changeTab(this)">包裹{{ i+1 }}</li>
+                    {{# } }}
+                </ul>
+            </div>
+            <div class="tab_content">
+                {{# for(var i=0;i<d.expressData.length;i++){ }}
+                        <div id="item_content{{i}}" class="item_content {{i == 0?'tab_show':'tab_hide'  }}" >
+                            <div class="express_info">
+                                <p class="o-gName ui-nowrap-multi">物流状态&nbsp;<span style="font-weight:bold;color:red;">{{ d.express[i]['stateText'] }}</span></p>
+                                <p class="o-gName ui-nowrap-multi">运单号：{{ (d.express && d.express[i]['expressNo'])?d.express[i]['expressNo']:'--' }}</p>
+                                <p class="o-gName ui-nowrap-multi">信息来源：{{ (d.express && d.express[i]['expressName'])?d.express[i]['expressName']:'--' }}</p>
+                            </div>
+                            {{# if( d.expressData[i].logs &&  d.expressData[i].logs.data){ }}
+                            <section id="cd-timeline" class="cd-container">
+                                {{# var express = d.expressData[i].logs.data;}}
+                                {{# for(var j=0;j<express.length;j++){ }}
+                                <div class="cd-timeline-block">
+                                    <div class="cd-timeline-img cd-picture">
+                                        {{# if(j==0){ }}
+                                        <i class="ui-icon-checked" style=" color: #75ce66;position: absolute;left: -2px;top: -2px;font-size:24px;line-height:25px;"></i>
+                                        {{# }else{ }}
+                                        <i class="ui-icon-checked" style="color: rgba(0, 0, 0, 0.2);position: absolute;left: -2px;top: -2px;font-size:24px;line-height:25px;"></i>
+                                        {{# } }}
+                                    </div>
+                                    <div class="cd-timeline-content">
+                                        <p class="o-gName ui-nowrap-multi">{{ express[j].context }}</p>
+                                        <p style='color:#d2d2d2'>{{ express[j].time }}</p>
+                                    </div>
+                                </div>
+                                {{# } }}
+                            </section>
+                            {{# } }}
+                        </div>
+                {{# } }}
+            </div>
+        </div>
+        {{# } }}
+	</div> 
+</script>
+
+<script>
+function changeTab(obj){
+    var id = $(obj).attr("data");
+    $(".tab_item").removeClass("tab_curr");
+    $(obj).addClass("tab_curr");
+    $(".item_content").removeClass("tab_show").addClass("tab_hide");
+    $("#item_content"+id).addClass("tab_show").removeClass("tab_hide");
+}
+function checkExpress(oid){
+  $.post(WST.U('addon/kuaidi-kuaidi-checkExpress'),{orderId:oid},function(data){
+      var json = WST.toJson(data);
+      if(json.status!=-1){
+        var gettpl1 = document.getElementById('expressBox').innerHTML;
+          laytpl(gettpl1).render(json.data, function(html){
+            $('#content').html(html);
+            // 弹出层滚动条
+            var clientH = WST.pageHeight();// 屏幕高度
+            var boxheadH = $('#boxTitle').height();// 弹出层标题高度
+            var contentH = $('#content').height(); // 弹出层内容高度
+            if((clientH-boxheadH) < contentH){
+              $('#content').css('height',clientH-boxheadH+'px');
+            }
+            dataShow('物流信息');
+          });
+      }else{
+        WST.msg(json.msg,'info');
+      }
+  });
+}
+</script>

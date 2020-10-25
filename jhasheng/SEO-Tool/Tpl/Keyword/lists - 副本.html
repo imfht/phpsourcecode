@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="__JS__/jquery-1.8.0.js"></script>
+<script type="text/javascript">
+	$(function() {
+		$('table tr').each(function(i, obj) {
+			$(obj).find('td').eq(0).attr("align", "right");
+		});
+		$('input[name=seid]').eq(0).attr('checked', true);
+		
+		
+	})
+	
+
+	function getSort(keyname,id) {
+		var seid = $('input[name=seid]:checked').val();
+		var webid = $('#webid').val();
+		var weburl = $('#weburl').val();
+		var keyid = $(':input[name=keyid_'+id+']').val();
+		var keyname = keyname;
+		var loading = "<img src='__IMG__/loading.gif'>";
+		
+		var obj_sort = $('#kl_'+id).find('td').eq(2);
+		var obj_index = $('#kl_'+id).find('td').eq(3);
+		var obj_about = $('#kl_'+id).find('td').eq(4);
+
+		obj_sort.children('span').html("");
+		$.ajax({
+			type:"POST",
+			url:"{:U('Keyword/ajax')}",
+			cache:false,
+			data:{
+				action : "getsort",
+				keyname : keyname,
+				webid : webid,
+				seid : seid,
+				keyid :keyid,
+				weburl : weburl
+			},
+			dataType:"text",
+			beforeSend:function(){
+				$('#l_'+id).show();
+			},
+			success:function(data) {
+				//alert($('#kl_'+id).find('td').eq(2).children('span').html());
+				obj_sort.children('span').html(data);
+				obj_sort.children(':input[name=keysort]').val(data);
+			},
+			complete:function(){
+				$('#l_'+id).hide();
+			}
+			
+		});
+		
+	}
+</script>
+<style type="text/css">
+input,textarea {
+	border: 1px solid #CDCDCD;
+	padding: 4px;
+}
+
+.checked {
+	border: 1px solid red !important;
+}
+
+.abnt {
+	border: 1px solid black;
+	padding: 3px;
+	font-size: 12px;
+}
+
+* {
+	font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+	font-size: 12px;
+}
+.hide{
+	display:none;
+}
+</style>
+</head>
+
+<body>
+	<table cellpadding="8" cellspacing="1" bgcolor="#CDCDCD" width="600">
+		<tr bgcolor="white">
+			<td width="120">网站地址：</td>
+			<td><input title="__CURRENT__" name="weburl" type="text"
+				id="weburl" value="{$weburl}" style="width: 200px;"><input
+				name="webid" id="webid" type="hidden" value="{$webid}"></td>
+		</tr>
+		<tr bgcolor="white">
+			<td width="120">搜索引擎：</td>
+			<td><volist name="selist" id="list"> <input
+					type="radio" name="seid" value="{$list.seid}" />{$list.cnname}&nbsp;&nbsp;
+				</volist></td>
+		</tr>
+		<tr bgcolor="white">
+			<td>网站关键词：</td>
+			<td id="ktd">
+				<div class="key">
+					<table cellpadding="8" cellspacing="1" bgcolor="#CDCDCD"
+						width="450">
+						<tr bgcolor="white">
+							<td>关键词名称</td>
+							<td>搜索引擎</td>
+							<td>排名(100以内)</td>
+							<td>指数</td>
+							<td>相关数</td>
+							<td>操作</td>
+						</tr>
+						<volist name="keylist" id="list">
+						<tr bgcolor="white" id="kl_{$i}">
+							<td><span>{$list.keyname}</span> <input type="hidden"
+								name="keyid_{$i}" value="{$list.keyid}"></td>
+							<td><span>{$list.cnname}</span><input type="hidden"
+								name="seid" value="{$list.seid}"></td>
+							<td><span>{$list.keysort|default=0}</span><img id="l_{$i}" class="hide" src='__IMG__/loading.gif'><input
+								type="hidden" name="keysort" value="{$list.keysort|default=0}"></td>
+							<td><span>{$list.keyindex|default=0}</span><input
+								type="hidden" name="keyindex" value="{$list.keyindex|default=0}"></td>
+							<td><span>{$list.keyabout|default=0}</span><input
+								type="hidden" name="keyabout" value="{$list.keyabout|default=0}"></td>
+							<td><a class="abnt" onclick="getSort('{$list.keyname}',{$i})">查询并更新</a></td>
+						</volist>
+					</table>
+				</div>
+			</td>
+		</tr>
+		<tr bgcolor="white">
+			<td><input type="reset" value="重新填写"></td>
+			<td><input type="submit" name="submit" value="添加关键词"></td>
+		</tr>
+	</table>
+</body>
+</html>

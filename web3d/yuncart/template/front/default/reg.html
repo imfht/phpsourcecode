@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta content="IE=EmulateIE7" http-equiv="X-UA-Compatible">
+<title>用户注册--<!--{$mallname}--></title>
+<!--{include(file='static.html')}-->
+</head>
+<body>
+<!--{include(file='head.html')}-->
+	<div class="container" style="padding:50px 0 30px;">
+	<div class="reg_box">
+    	<h1><span>用户注册</span></h1>
+		<!--{if $hint}-->
+			<p class="userhint<!--{$hint.type}-->">
+				<!--{$hint.hint}-->
+			</p>
+		<!--{/if}-->
+        <!--注册-->
+    	<div class="login_twobox">
+			<form name="theform" id="theform" action="<!--{url('index','user','doreg')}-->" method="post" onsubmit="return checkreg()">
+        	<ul>
+				<li>
+					<div class="login_left"><span class="text_red">*</span>用户名：</div>
+					<input name="uname" id="uname" type="text" class="login_butt"	/> 
+					<span class="text_red"></span>
+				</li>
+				<li>
+					<div class="login_left"><span class="text_red">*</span>密码：</div>
+					<input name="pass" id="pass" type="password" class="login_butt"  /> 
+					<span class="text_red"></span>
+				</li>
+				<li>
+					<div class="login_left"><span class="text_red">*</span>确认密码：</div>
+					<input name="pass2" id="pass2" type="password" class="login_butt"/> 
+					<span class="text_red"></span>
+				</li>
+				<li>
+					<div class="login_left"><span class="text_red">*</span>E-Mail：</div>
+					<input name="email" id="email" type="text" class="login_butt"/> 
+					<span class="text_red"></span>
+				</li>
+				<li>
+					<div class="login_left"><span class="text_red">*</span>验证码：</div>
+					<input name="seccode" id="seccode" type="text" class="login_butt"/>
+					<span class="none">
+						<img src="util.php?action=seccode" id="seccodeimg" class="mid"/>
+						<a href="javascript:void(0)" class="fl" onclick="chgimg();return false;">换一张</a>
+					</span>
+					<span class="text_red"></span>
+				</li>
+				<li class="li_xieyi">
+					<input name="agree" id="agree" type="checkbox" value="" checked/> 
+					<label for="agree">我已看过并接受《<a href="<!--{url('index','front','agree')}-->" class="text_orange" target="_blank">用户协议</a>》</label>
+					<span class="text_red"></span>
+				</li>
+				<li>
+					<div class="login_but">
+						<input type="submit" class="o_button" value="注 册"/>
+					</div>
+				</li>
+			</ul>
+			</form>
+            <div>我已有账号，我要<a href="<!--{url('index','user','login')}-->" class="text_orange">登录</a></div>
+        </div>
+        <!--注册 end-->
+    </div>
+</div>
+<!--{include(file='foot.html')}-->
+</body>
+</html>
+<script type="text/javascript">
+function checkreg() {
+	var $agree		= $("#agree"),
+		$uname		= $("#uname"),
+		$pass		= $("#pass"),
+		$pass2		= $("#pass2"),
+		$email		= $("#email"),
+		$seccode	= $("#seccode");
+	var agreecheck = $agree.prop("checked"),
+		uname	= $uname.val(),
+		ulength = uname.replace(/[^\x00-\xff]/g,"**").length,
+		pass  = $pass.val(),
+		pass2 = $pass2.val(),
+		email = $email.val(),
+		seccode = $seccode.val(),
+		canreg = true;
+	if(!agreecheck) {
+		$agree.parent().find("span").text("选择此项");
+		canreg = false;
+	}
+	if(ulength <4 || ulength > 20) {
+		canreg = false;
+		$uname.addClass('hintborder');
+	}
+	if(pass.length < 4 || pass.length > 20) {
+		canreg = false;
+		$pass.addClass('hintborder');
+	}
+	if(!pass2 || pass2 != pass) {
+		canreg = false;
+		$pass2.addClass('hintborder');
+	}
+	if(!$.util.isemail(email)) {
+		canreg = false;
+		$email.addClass('hintborder');
+	}
+	if(seccode == "") {
+		canreg = false;
+		$seccode.addClass('hintborder');
+	}
+	if(!canreg) chgimg();
+	return canreg;
+}
+$(function(){
+	$("#uname").blur(function(){
+		var $this	= $(this),
+			val		= $.trim($this.val()),
+			len		= val.replace(/[^\x00-\xff]/g,"xx").length,
+			$hint	= $this.next();
+		if(val == "") return ;
+		if(len < 4) {
+			$hint.text("用户名较短！");
+			return false;
+		}
+		if(len > 20) {
+			$hint.text("用户名较长！");
+			return false;
+		}
+		$.post("<!--{url('index','user','checkname','',false)}-->",{uname:val},function(data) {
+			if(data == "success") {
+				$hint.html("<font color='#618605'>可以使用！</font>");
+			} else {
+				$hint.text("用户名重复！");
+			}
+		});
+	});
+	$("#seccode").focus(function(){
+		$(this).next("span").show();
+	});
+	$("#pass,#pass2").blur(function(){
+		var $this = $(this),
+			val = $this.val(),
+			len = val.length,
+			$hint = $this.next();
+		if(val == "") return false;
+		if(len < 4) {
+			$hint.text("密码较短");
+			return false;
+		}
+		if(len > 20) {
+			$hint.text("密码较长");
+			return false;
+		}
+		$hint.text('');
+	});
+	$("#email").blur(function(){
+		var $this = $(this),
+			email = $this.val(),
+			$hint = $this.next();
+		if(email == "") return false;
+		if(!$.util.isemail(email)) {
+			$hint.text("格式错误");
+			return false;
+		}
+		$hint.text('');
+	});
+	$("#uname,#pass,#pass2,#email,#seccode,#agree").focus(function(){
+		var $this = $(this);
+		$this.removeClass("hintborder");
+		$this.nextAll(".text_red").text('');
+	});
+});
+</script>
+

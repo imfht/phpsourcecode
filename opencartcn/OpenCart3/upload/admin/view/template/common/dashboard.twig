@@ -1,0 +1,139 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="button" id="button-setting" data-toggle="tooltip" title="{{ button_developer }}" data-loading-text="{{ text_loading }}" class="btn btn-info"><i class="fa fa-cog"></i></button>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="help-wrapper">
+      <div class="message-box">
+        <i class="fa fa-volume-up" aria-hidden="true"></i>
+        <ul class="message-inner"></ul>
+      </div>
+    </div>
+    <div class="footer-message"><div class="title"></div><div class="img"><a href="" class="link"><img src="" class="img-responsive" target="_blank"></div></a><div class="url"><a class="btn btn-default close-footer" href="">{{ footer_btn_close }}</a><a class="btn btn-primary link" href="" target="_blank">{{ footer_btn_link }}</a></div></div>
+    {% if error_install %}
+      <div class="alert alert-danger alert-dismissible">
+        <button type="button" class="close pull-right" data-dismiss="alert">&times;</button>
+        <i class="fa fa-exclamation-circle"></i> {{ error_install }}</div>
+    {% endif %}
+    {% for row in rows %}
+      <div class="row">{% for dashboard_1 in row %}
+          {% set class = 'col-lg-%s %s'|format(dashboard_1.width, 'col-md-3 col-sm-6') %}
+          {% for dashboard_2 in row %}
+            {% if dashboard_2.width > 3 %}
+              {% set class = 'col-lg-%s %s'|format(dashboard_1.width, 'col-md-12 col-sm-12') %}
+            {% endif %}
+          {% endfor %}
+          <div class="{{ class }}">{{ dashboard_1.output }}</div>
+        {% endfor %}</div>
+    {% endfor %}</div>
+  {{ security }}</div>
+<script type="text/javascript"><!--
+$.ajax({
+  url: 'index.php?route=common/dashboard/getOpencartNews&user_token={{ user_token }}',
+  dataType: 'json',
+  type : 'get',
+  success: function(data) {
+    var index = Math.floor(Math.random() * data.footer.length), html = '';
+
+    if (data.header.length) {
+      $('.help-wrapper').show();
+      for (var i=0; i < data.header.length; i++) {
+        html += '<li><a href="' + data.header[i].url + '" title="' + data.header[i].title + '" target="_blank">' + data.header[i].title + '</a></li>'
+      }
+
+      $('.message-inner').html(html);
+    }
+
+    if (typeof($.cookie('footer_message')) == "undefined") {
+      $('.footer-message').find('.title').html(data.footer[index]['title']);
+      $('.footer-message').find('img').prop('src', data.footer[index]['image']);
+      $('.footer-message').find('.link').prop('href', data.footer[index]['url']);
+      $('.footer-message').addClass('active');
+    }
+  },
+  error: function(xhr, ajaxOptions, thrownError) {
+    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+  }
+});
+
+$('.close-footer').click(function(event) {
+  event.preventDefault();
+  $('.footer-message').remove();
+  $.cookie('footer_message', 'true');
+});
+
+function messageLiLength() {
+  var messageWidth = $('.message-inner').width(), list = 0;
+  $('.message-inner li').each(function(index, el) {
+    messageWidth = messageWidth - $(this).width();
+    if (messageWidth > 0) {
+      list++;
+    }
+  });
+  return list;
+}
+
+function messageTop(obj, ul_bz) {
+  var news_height = $(".help-wrapper").height(), color = color16();
+  $(obj).find(ul_bz).animate({
+    marginTop : - news_height
+
+  }, 500, function() {
+    $(this).css({marginTop : "0px"}).find("li:lt("+ messageLiLength() +")").appendTo(this);
+  });
+
+  $('.help-wrapper').css('border-left-color', color);
+  $('.help-wrapper').find('i.fa').css('color', color);
+}
+
+function color16() {
+  var r = Math.floor(Math.random()*256);
+  var g = Math.floor(Math.random()*256);
+  var b = Math.floor(Math.random()*256);
+  var color = '#'+r.toString(16)+g.toString(16)+b.toString(16);
+  return color;
+}
+
+var ti = setInterval('messageTop(".message-box", ".message-inner")', 4000);
+
+$('.help-wrapper').hover(function() {
+  clearInterval(ti);
+}, function() {
+   ti = setInterval('messageTop(".message-box", ".message-inner")', 4000);
+});
+
+$('#button-setting').on('click', function() {
+  $.ajax({
+    url: 'index.php?route=common/developer&user_token={{ user_token }}',
+    dataType: 'html',
+    beforeSend: function() {
+      $('#button-setting').button('loading');
+    },
+    complete: function() {
+      $('#button-setting').button('reset');
+    },
+    success: function(html) {
+      $('#modal-developer').remove();
+
+      $('body').prepend('<div id="modal-developer" class="modal">' + html + '</div>');
+
+      $('#modal-developer').modal('show');
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+    }
+  });
+});
+//--></script>
+{{ footer }}

@@ -1,0 +1,115 @@
+<include file="Public:header" />
+<style>
+table tbody tr{cursor:move;}
+</style>
+<div class="container">
+	<div class="page-header">
+		<h4>{:L('SEND_BOX_SET')}</h4>
+	</div>
+	<include file="Public:alert" />
+	<div class="row">
+		<form action="{:U('email/smtpdelete')}" id="form1" method="post">
+			<div class="span12">
+				<p><div class="bulk-actions align-left">
+					<a class="btn" href="javascript:void(0);" id="btn_delete"/><i class="icon-remove"></i> {:L('DELETE')}</a>
+					<div class="pull-right">
+						<a href="javascript:void(0);" id="add" class="btn btn-primary"><i class="icon-plus"></i> {:L('ADD_SEND_BOX')}</a>
+					</div>
+				</div></p>
+			</div>
+			<div class="span12">
+				<table class="table table-hover table-striped table_thead_fixed" width="95%" border="0" cellspacing="1" cellpadding="0">
+					<notempty name="smtplist">
+						<thead>
+							<tr>
+								<th width="10%"><input type="checkbox" name="check_all" id="check_all" class="check_all"/> &nbsp;</th>
+								<th width="20%">{:L('SEND_BOX')}</th>
+								<th width="20%">{:L('EMAIL_ADDRESS')}</th>
+								<th width="20%">{:L('SMTP_SERVER_ADDRESS')}</th>
+								<th width="20%">{:L('OPERATING')}</th>
+							</tr>
+						</thead>
+						<tfoot>
+							<tr>
+								<td colspan="6">
+									<div class="span8"><span style="color: rgb(243, 40, 12);">{:L('HINT')}</span></div>
+								</td>
+							</tr>
+						</tfoot>
+						<tbody>
+							<volist name="smtplist" id="vo">
+								<tr>
+									<td><input type="checkbox" class="list" name="smtp_id[]" value="{$vo.smtp_id}"/>
+									</td>
+									<td>{$vo.name}</td>
+									<td>{$vo.smtp.MAIL_ADDRESS}</td>
+									<td>{$vo.smtp.MAIL_SMTP}</td>
+									<td><a href="javascript:void(0);" rel="{$vo['smtp_id']}" class="edit">编辑</a></td>
+								</tr>
+							</volist>
+						</tbody>
+					<else />
+						<tr>
+							<td>{:L('EMPTY_TPL_DATA')}</td>
+						</tr>
+					</notempty>
+				</table>
+			</div> 
+		</form>
+	</div>
+<div class="hide" id="dialog-add" title="{:L('ADD_STATE')}">loading...</div>
+<div class="hide" id="dialog-edit" title="{:L('MODIFY_STATE')}">loading...</div>
+<div class="hide" id="dialog-delete" title="{:L('DELETE_STATE')}">loading...</div>
+</div>
+<script type="text/javascript">	
+$("#dialog-add").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-edit").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+
+$("table tbody").sortable({connectWith: "table tbody"});
+
+$(function(){
+	$("#btn_delete").click(function(){
+		if(confirm("{:L('COMFIRM_DELETE')}")){
+			$('#form1').submit();
+		}
+	});
+	$("#check_all").click(function(){
+		$("input[class='list']").prop('checked', $(this).prop("checked"));
+	});
+	$("#add").click(function(){
+		$('#dialog-add').dialog('open');
+		$('#dialog-add').load('{:U("email/smtpadd")}');
+	});
+	$(".edit").click(function(){
+		var id = $(this).attr('rel');
+		$('#dialog-edit').dialog('open');
+		$('#dialog-edit').load('{:U("email/smtpedit","id")}'+id);
+	});
+	$("#sort_btn").click(
+		function() {
+			position = [];
+			$.each($(".list"), function(i, item){position.push(item.value)});
+			$.get('{:U("email/ordersort")}',{postion:position.join(',')}, function(data){
+				if (data.status == 1) {
+					$(".page-header").after('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+				} else {
+					$(".page-header").after('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+				}
+			}, 'json');
+		}	
+	);
+})
+</script>
+<include file="Public:footer" />

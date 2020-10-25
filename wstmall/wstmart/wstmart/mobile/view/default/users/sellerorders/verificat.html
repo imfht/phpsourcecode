@@ -1,0 +1,112 @@
+{extend name="default/base" /}
+{block name="title"}订单验证核销 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/orders.css?v={$v}">
+{/block}
+{block name="header"}
+	<div id="info_list">
+    <header style="background:#ffffff;" class="ui-header ui-header-positive wst-header wst-headero">
+        <i class="ui-icon-return" onclick="location.href='{:url('mobile/users/index')}'"></i><h1>订单验证核销</h1>
+    </header>
+{/block}
+{block name="main"}
+<div class="verificat-head">
+  <div  class="term">
+      <input type='text' id='verificationCode'  placeholder='请输入订单核验码' maxlength="30" onkeyup="javascript:WST.isChinese(this,1)"  autocomplete="off" style="border:0;height: 0.4rem;">
+      <button onclick="getVerificatOrder()" class="searchbtn">查询</button>
+      <div class="wst-clear"></div>
+  </div>
+</div>
+<div id="orderInfo" style="margin-bottom: 0.6rem;"></div>
+
+<script type="text/html" id="detailBox">
+    <div id="detailBox" style="position: relative;">
+	    <div class="verificat has-verificat" style="{{(d.orderStatus>0)?'':'display: none'}}">已核验</div>
+
+       <div class="detail-head ">
+          <div class="ui-row-flex">
+              <div class="ui-col ui-col wst-or-term wst-flex-row wst-ac"><i class="icon-address"></i><span class="wst-or-username">收货人信息</span></div>
+          </div>
+          <div class="ui-row-flex">
+              <div class="ui-col ui-col wst-or-term">下单用户：<span class="d-uaddr" style="padding-left: 0">{{d.userName}}</span></div>
+          </div>
+          <div class="ui-row-flex">
+              <div class="ui-col ui-col wst-or-term">手机号码：<span class="d-uaddr" style="padding-left: 0">{{d.userPhone}}</span></div>
+          </div>
+          <div class="ui-row-flex" style="{{(d.orderStatus>0)?'':'display: none'}}">
+              <div class="ui-col ui-col wst-or-term">核验时间：<span class="d-uaddr" style="padding-left: 0">{{d.verificationTime}}</span></div>
+          </div>
+      </div>
+      <div class="detail-head">
+        <div class="ui-row-flex">
+            <div class="ui-col ui-col wst-or-term"><span class="wst-or-describe">订单编号：</span><span class="wst-or-describe">{{d.orderNo}}</span></div>
+        </div>
+        <div class="ui-row-flex">
+            <div class="ui-col ui-col wst-or-term"><span class="wst-or-describe">下单时间：</span>{{d.createTime}}</div>
+        </div>
+        <div class="ui-row-flex">
+            <div class="ui-col ui-col wst-or-term"><span class="wst-or-describe">支付状态：</span><span style="color:{{d.isPay?'':'red'}}">{{d.isPay?'已支付':'货到付款'}}</span></div>
+        </div>
+        {{# if(d.isInvoice==1) { }}
+          <div class="ui-col ui-col wst-or-term"><span class="wst-or-describe">发票状态：</span>{{# if(d.isMakeInvoice==1) { }}已开{{# } else{ }}<span style="color: red;">未开</span>{{# } }}</div>
+        {{# } }}
+      </div>
+      <div class="detail-head" style="padding:0;">
+         <div class="ui-row-flex item-head" style="padding-left:0.13rem;">
+         <div class="ui-col ui-col-2" style="font-size: 0.15rem;">订单清单</div>
+          </div>
+         {{# for(var i=0;i<d.goods.length;i++){ }}
+         <div class="ui-row-flex ui-whitespace border-b d-goodsitme" style="padding:0 0.12rem;" onclick="javascript:WST.intoGoods({{d.goods[i].goodsId}})">
+             <div class="">
+                 <img src="__RESOURCE_PATH__/{{d.goods[i].goodsImg}}" class="o-Img">
+             </div>
+             <div class="o-gInfo-container">
+                 <div class="o-gInfo">
+                     <p class="o-gName ui-nowrap-multi">{{d.goods[i].goodsName}}</p>
+                     {{# if(d.goods[i].goodsSpecNames){ }}
+                     <p class="o-gSpec ui-nowrap-multi ">{{d.goods[i].goodsSpecNames.replace(/@@_@@/g,' ')}}</p>
+                     {{# } }}
+                 </div>
+                 <div class="o-gInfo2 wst-flex-row wst-ac wst-jsb">
+                     {{# if(d.goods[i].goodsCode=='gift'){ }}
+                     <p style="font-size:0.14rem;color:#666;font-weight: 600;">【赠品】</p>
+                     {{# }else{ }}
+                     <p class="o-gPrice">¥ {{d.goods[i].goodsPrice}}</p><p class="o-gNum">x {{d.goods[i].goodsNum}}</p>
+                     {{# } }}
+                 </div>
+             </div>
+         </div>
+         {{# } }}
+
+         <div class="o-gInfo3 wst-flex-row wst-jsb wst-ac" style="padding:0 0.12rem 0.12rem 0.12rem;">
+             <div class="o-oListMoney">
+                 订单总价：<span>¥ {{d.realTotalMoney}}</span>
+             </div>
+         </div>
+      </div>
+
+      <div class="detail-head">
+       	<div class="ui-row-flex">
+          	<div class="ui-col ui-col wst-or-term"><span class="wst-or-describe2">商品总额</span><span class="o-status2">¥ {{d.goodsMoney}}</span></div>
+      	</div>
+       	<div class="ui-row-flex">
+          	<div class="ui-col ui-col wst-or-term"><span class="wst-or-describe2">积分抵扣金额</span><span class="o-status2">¥ -{{d.scoreMoney}}</span></div>
+      	</div>
+	      {{ d['hook']?d['hook']:"" }}
+       	<div class="ui-row-flex wst-or-term2 wst-flex-row wst-jfe wst-ac">
+          	<span class="wst-or-describe2">实付款：</span><span class="o-status2"><span style="font-size:0.13rem;">¥ </span>{{d.realTotalMoney}}</span>
+      	</div>
+      </div>
+    </div>
+    <div class="post-btn" style="{{(d.orderStatus==0)?'':'display: none'}}">
+      <button class="ui-btn-lg ui-btn-danger" onclick="javascript:WST.dialog('您确定核销发货吗？','orderVerificat()');">确认核消并发货</button>
+    </div>
+</script>
+   
+{/block}
+{block name="footer"}{/block}
+{block name="include"}{include file="default/dialog" /}{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__MOBILE__/users/sellerorders/verificat.js?v={$v}'></script>
+{/block}

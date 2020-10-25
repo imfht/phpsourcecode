@@ -1,0 +1,139 @@
+<div class="menu" style="margin-top: 120px;">
+    <span>修改</span>
+    <a href="javascript:;" id="category_move_up">上移</a>
+    <a href="javascript:;" id="category_move_down">下移</a>
+    <!--{if(!$category['is_default'])}-->
+    <a href="javascript:;" id="category_delete"">删除</a>
+    <!--{/if}-->
+</div>
+<div class="form">
+    <div class="line">
+        <span>分类：</span>
+        <input id="category_name" type="text" value="<!--{:H($category['name'])}-->" />
+        <!--{if($category['is_private'])}-->
+        <span id="category_is_private" class="tag" data-val="1">私有</span>
+        <!--{else}-->
+        <span id="category_is_private" class="tag" data-val="0">公开</span>
+        <!--{/if}-->
+    </div>
+    <div class="line">
+        <span>&nbsp;</span>
+        <a href="javascript:;" id="category_edit_save">保存</a>
+        <a href="javascript:;" onclick="hideAction()">取消</a>
+    </div>
+</div>
+<script type="text/javascript">
+$("#category_is_private").click(function() {
+    var $this = $(this);
+    if($this.data("val")) {
+        $this.data("val", 0);
+        $this.html("公开");
+    } else {
+        $this.data("val", 1);
+        $this.html("私有");
+    }
+});
+
+$("#category_edit_save").click(function() {
+    el = $(this);
+    if(el.data("lock")) return;
+    el.data("lock", 1);
+
+    var url = "<!--{:Router::buildUrl('Category_Edit')}-->";
+    var data = {};
+    data.id = <!--{$cid}-->;
+    data.name = $("#category_name").val();
+    data.is_private = $("#category_is_private").data("val");
+    data._token = get_token();
+    $.post(url, data, function(r) {
+        alert(r.msg);
+        if(r.status) {
+            location.reload();
+        }
+        el.data("lock", 0);
+    }, "json");
+});
+
+$("#category_delete").click(function() {
+    el = $(this);
+    if(el.data("lock")) return;
+    if(!confirm("确定要删除此分类？这将删除分类下所有网址！")) return;
+    el.data("lock", 1);
+
+    var url = "<!--{:Router::buildUrl('Category_Delete')}-->";
+    var data = {};
+    data.id = <!--{$cid}-->;
+    data._token = get_token();
+    $.post(url, data, function(r) {
+        alert(r.msg);
+        if(r.status) {
+            location.href = "<!--{:Router::buildUrl('User_Index', array('uid' => $mid))}-->";
+        }
+        el.data("lock", 0);
+    }, "json");
+});
+
+$("#category_move_up,#category_move_down").click(function() {
+    el = $(this);
+    if(el.data("lock")) return;
+    el.data("lock", 1);
+
+    if($(this).attr("id") == "category_move_up") {
+        var di = "up";
+    } else {
+        var di = "down";
+    }
+
+    var cid = <!--{$cid}-->;
+
+    var cur  = null;
+    var prev = null;
+    var next = null;
+    var is_find = 0;
+    var list = $("#category li");
+    for(var i=0; i<list.length; i++) {
+        prev = cur;
+        cur = $(list[i]);
+        next = i<list.length-1 ? $(list[i+1]) : null;
+        if(cur.attr("id") == "cid_"+cid) {
+            is_find = 1;
+            break;
+        }
+    }
+
+    if(!is_find) {
+        el.data("lock", 0);
+        return;
+    }
+
+    var cid_prev = cid_next = 0;
+    var m;
+    if(prev && (m = prev.attr("id").match(/^cid_(\d+)$/))) {
+        cid_prev = m[1];
+    }
+    if(next && (m = next.attr("id").match(/^cid_(\d+)$/))) {
+        cid_next = m[1];
+    }
+    if(di == "up") cid2 = cid_prev;
+    else if(di == "down") cid2 = cid_next;
+
+    if(!cid2) {
+        el.data("lock", 0);
+        return;
+    }
+
+    var url = "<!--{:Router::buildUrl('Category_Exchange')}-->";
+    var data = {};
+    data.id1 = cid;
+    data.id2 = cid2;
+    data._token = get_token();
+    $.post(url, data, function(r) {
+        if(r.status) {
+            if(di == "up") prev.insertAfter(cur);
+            else if(di == "down") next.insertBefore(cur);
+            cpage(getCpage(cid));
+        }
+        el.data("lock", 0);
+    }, "json");
+});
+</script>

@@ -1,0 +1,54 @@
+{if $layout_arr neq null}
+	{volist name="layout_arr" id="vo"}
+	<div class="layui-input-inline">
+		<select name="{$vo.code}_id" id="{$vo.code}" lay-filter="{$vo.code}" lay-verify="required">
+			<option value="">【请选择{$vo.tname}】</option>
+			{$vo['list']|make_option=$vo['selected'],'name','id'}
+		</select>
+	</div>
+	{/volist}
+{/if}
+
+<script type="text/javascript">
+layui.use(['form','layer'],function(){
+
+	//声明变量
+	var layer = layui.layer,
+		form = layui.form,
+		$ = layui.$;
+
+	//选择节点
+	form.on('select(page)',function(data){
+		var id = data.value;
+		console.log("站点ID:"+id);
+		var select = data.othis;
+		if (select[0]) {
+			if (id > 0) {
+				$.post("/layoutdesc/getChilds", { 'item_id':id }, function(data){
+					if (data.success) {
+						var str = "";
+						$.each(data.data, function(i,item){
+							str += "<option value=\"" + item.loc_id + "\" >" + item.loc_desc + "</option>";
+						});
+						$("#loc").html('<option value="">【请选择页面位置】</option>' + str);
+						form.render('select');
+					}else{
+						$("#loc").html('<option value="">【请选择页面位置】</option>');
+						layer.msg(data.msg,{ icon: 5 });
+						return false;
+					}
+				}, 'json');
+			} else {
+				
+			}
+		}
+	});
+	
+	//选择节点
+	form.on("select(loc)",function(data){
+		var id = data.value;
+		console.log("节点ID:"+id);
+	});
+	
+});
+</script>

@@ -1,0 +1,74 @@
+{layout name="passport:login:layout" /}
+<div class="login_wrap">
+  <div class="title">帐号登录</div>
+  <form id="form" action="{:url('system/passport.login/index')}">
+      <input type="hidden" name="__token__" value="{$Request.token}" />
+      <div class="row fn-clear"><input datatype="m" class="input" type="text" name="login_id" placeholder="您的手机号" x-webkit-speech /></div>
+      <div class="row fn-clear"><input datatype="*" class="input" type="password" name="login_password" placeholder="登录密码" autocomplete="off" /></div>
+      <div class="row  fn-clear captcha">
+          <div class="col-60"><input autocomplete="off" datatype="*" class="input" type="text" name="captcha" placeholder="验证码" /></div>
+          <div class="col-40"><img id="captcha" src="{:captcha_src()}" onclick="reimg()"/></div>
+      </div>
+      <div class="row"><button class="btn" type="submit">登 录</button></div>
+    </form>
+  <div class="bottom">
+    <a href="{:url('system/passport.login/getpassword')}" class="button"><i class="iconfont icon-xiugaidenglumima"></i> 找回密码</a>
+    <a href="{:url('system/passport.login/reg')}" class="button button-green"><i class="iconfont icon-add_icon"></i> 创建账户</a>
+  </div>
+  {if $wechataccount}
+  <div class="login_type">
+    <div id="account" class="scan-icon"><i></i><div class="tooltip-content">扫码登录</div></div>
+  </div>
+  <div id="scan" class="fn-hide">
+    <div class="title">微信扫码</div>
+    <div class="qrcode">
+        <div id="show_qrcode"></div>
+        <p><span class="blue">微信扫码</span>「关注公众号」登录注册</p>
+    </div>
+  </div>
+  {/if}
+</div>
+<script type = "text/javascript">
+  Do('layer','form','qrcode',function(){
+    $("#form").Validform({btnSubmit:".btn",ajaxPost:true,tiptype:function(){},postonce:true,callback:function(data){
+          if(data.code == 200){
+              window.location.href = data.url;
+          }else{
+              layer.alert(data.message,{icon:5},function(index){
+                layer.close(index);
+                location.reload();
+              });
+          }
+        }
+    });
+    {if $wechataccount}
+    var isQrcode;
+    $(".login_type").click(function(){
+      $("#account").toggleClass('account-icon');
+      $("#scan").toggle(function(){
+        $("#show_qrcode").empty(); 
+        if ($(this).css("display") == 'block'){
+          $.getJSON("{:url('system/event.wechatAccount/createcodes')}",function(rel){
+              new QRCode(parent.document.getElementById("show_qrcode"),rel.data);
+          })
+          isQrcode = setInterval(function(){
+            $.getJSON("{:url('system/event.wechatAccount/qrcodes')}",function(data){
+              if(data.code == 200){
+                clearInterval(isQrcode);
+                window.location.href = data.url;
+              }
+            })
+          },1000)
+        }else{
+          clearInterval(isQrcode);
+        }
+      });
+    })
+    {/if}
+  })
+  //刷新验证码
+  function reimg(){
+    var img = document.getElementById("captcha");
+    img.src = "{:captcha_src()}?rnd=" + Math.random();
+  }
+</script>

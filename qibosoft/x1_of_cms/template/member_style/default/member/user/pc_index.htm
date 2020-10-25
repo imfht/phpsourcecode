@@ -1,0 +1,291 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>个人中心</title>
+<meta http-equiv="X-UA-Compatible" content="IE=8"><!-- 强制ie8,for 360 -->
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="__STATIC__/css/pc_reset.css">
+<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+<script type="text/javascript" src="__STATIC__/js/core/jquery.min.js"></script>
+<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+</head>
+<body>
+<link rel="stylesheet" href="__STATIC__/member/pcuser.css?d">
+<div class="TopContainer">
+	<div class="TopBox">
+		<div class="logo"><a href="/"><img src="{:tempdir($webdb.logo)}" onerror="this.src='__STATIC__/index/default/logo.png'"></a></div>
+		<div class="MoreAct">
+			<a href="/" class="home">网站首页</a>			
+			{notempty name="userdb.uid"}
+			<a href="{:get_url('member')}" class='member'>会员中心</a> 
+			<a href="{:get_url('quit')}" class='quit'>退出</a>
+			{else /}
+			<a href="{:get_url('login')}" class='login'>登录</a> 
+			<a href="{:get_url('reg')}" class='reg'>注册</a>
+			{/notempty}
+		</div>
+	</div>
+</div>
+<div class="SideContainer">
+	<div class="BaseInfos">
+		<ul>
+			<ol>
+				<dl>
+					<dt>
+						<div><img src="{$info.icon|tempdir}" onerror="this.src='__STATIC__/images/nobody.gif'"/></div>
+						<p>{$info.username}</p>
+						<button onclick="send_msg()"><i class="fa fa-child"></i> {$info.groupid|getGroupByid}</button>
+					</dt>
+					<dd>
+						<h3>个人基本信息</h3>
+						<div>昵称：{$info.nickname}</div>
+						<div>级别：{$info.groupid|getGroupByid}</div>
+						<div>UID：{$info.uid}</div>
+						<div>性别：{switch $info.sex}{case 1}男{/case}{case 2}女{/case}{default /}保密{/switch}</div>
+						{if $info.bday}<div>生日：{$info.bday|format_time="Y-m-d"}</div>{/if}
+						<div>注册日期：{:date("Y-m-d H:i:s",$info.regdate)}</div>
+						<div>最后登录：{:date("Y-m-d H:i:s",$info.lastvist)}</div>
+
+					</dd>
+				</dl>
+			</ol>
+			<li>
+				<dl class="morebtn">
+					<dt><span>与Ta互动</span></dt>
+					<dd>
+						<div onclick="KF.chat_win({uid:'{$info.uid}',username:'{$info.uid|get_user_name}',icon:'{$info.uid|get_user_icon}'});"><i class="fa fa-twitch"></i>私信他 </div>
+						<div class="gzfans"><i class="glyphicon glyphicon-heart-empty"></i><font>关注他</font>(<em class="num" style="color:yellow;">{:fun('Count@Info','friend',['suid'=>$info['uid']])}</em>) </div>
+						{if modules_config('qun')}<div class="myqunzi"><i class="fa fa-connectdevelop"></i>他的圈子</div>{/if}
+					</dd>
+				</dl>				
+				<br>
+				<dl>
+					<dt><span>用户组扩展信息</span></dt>
+					<dd>
+<!-- field过滤显示的字段,多个用逗号隔开,$f_array跟form表单一样的数组 -->
+{if $f_array}
+{qb:showpage field="money,regdate,lastvist,bday" f_array="$f_array"}
+		<div>{$rs.title}：{$rs.value}</div>
+{/qb:showpage}
+{/if}		 
+					</dd>
+				</dl>
+
+			</li>			
+		</ul>
+	</div>
+</div>
+
+{:fun('kefu@init')}<!--客服会话接口-->
+<script type="text/javascript">
+$(function(){
+	var that = $(".gzfans");
+	//检查是否已关注
+	$.get("{:murl('member/wxapp.friend/ckgz',['uid'=>$uid])}",function(res){
+		if(res.code==1){	//还没关注
+			that.click(function(){	//添加关注点击事件
+				$.get("{:murl('member/wxapp.friend/add',['uid'=>$uid])}",function(res){
+					if(res.code==0){	//关注成功
+						that.find('.num').html( parseInt(that.find('.num').html())+1);
+						that.addClass('gz');
+						layer.msg('关注成功');
+						that.unbind("click");
+					}else{	//关注失败
+						layer.alert(res.msg);
+					} 
+				});						
+			});
+		}else if(res.code==0){	//已关注
+			that.addClass('gz');
+			that.find('font').html('取消关注');
+			that.click(function(){
+				$.get("{:murl('member/wxapp.friend/del',['uid'=>$uid])}",function(res){
+					if(res.code==0){	//取消关注
+						that.find('.num').html( parseInt(that.find('.num').html())-1);
+						that.removeClass('gz');
+						layer.msg('成功取消关注');
+						that.unbind("click");
+					}else{	//取消失败
+						layer.alert(res.msg);
+					} 
+				});
+			})
+		}
+	});
+
+
+	var obj = $(".myqunzi");
+	$.get("{:iurl('qun/wxapp.qun/mycreate')}?uid={$info.uid}",function(res){
+		if(res.code==0){
+			var qunurl = "{:iurl('qun/content/show')}?id=";
+			if(res.data.length==1){
+				//obj.attr("target","_blank");
+				//obj.attr("href",qunurl+res.data[0].id);
+				obj.click(function(){
+					window.location.href = qunurl+res.data[0].id;
+				});	
+				return ;
+			}else{
+				if(res.data.length>0){					
+					obj.click(function(){
+						var qun = [];
+						$.each(res.data,function(i,rs){
+							qun.push("<div class='morelink'><a target='_blank' href='" + qunurl + rs.id + "'>"+rs.title+"</a></div>");
+						});
+						layer.tips( qun.join(''), obj , {tips: [3, '#0FA6D8'],tipsMore: false,time:5000 });
+					});
+					return ;
+				}
+			}
+		}
+		obj.click(function(){
+			layer.alert('TA还没有创建任何圈子!');
+		});
+	});
+})
+</script>
+
+
+<script type="text/javascript">
+function send_msg(){
+	layer.open({
+	  type: 2,
+	  title: '给他发消息',
+	  shadeClose: true,
+	  shade: false,
+	  maxmin: true, //开启最大化最小化按钮
+	  area: ["850px", "650px"],
+	  content: "{:url('member/msg/add',['uid'=>$info['uid']])}",
+	});
+}
+</script>
+<div class="SideContainer">
+	<div class="head"><i class="fa fa-fw fa-book"></i>{$uid==$userdb.uid?'我':'Ta'}发的文章</div>
+	<div class="MoreCnt">
+	{qb:tag name="pc_member_homepage_001" union="uid" type="cms" rows="6" mid="1" order="id" by="desc"}
+		<div class="list1">{$i}、<a href="{$rs.url}" target="_blank">{$rs.title|get_word=85}</a> <span style="float:right;margin-right:10px;">[{:date("y-m-d",$rs.create_time)}]</span></div>
+	{/qb:tag}
+	</div>
+</div>
+
+<style type="text/css">
+.member_showbbs_title .head{
+	padding-left:0;
+	height:45px;
+}
+.member_showbbs_title .head span{
+	display:block;
+	float:left;
+	background:#eee;
+	height:45px;
+	font-size:18px;
+	padding:0 13px 0 13px;
+}
+.member_showbbs_title .head span.ck{
+	background:orange;
+	color:#fff;
+}
+
+</style>
+{if modules_config('bbs')}
+<div class="SideContainer member_showbbs_title">
+	<div class="head"><span class="ck">{$uid==$userdb.uid?'我':'Ta'}发表的主题</span><span>{$uid==$userdb.uid?'我':'Ta'}回复的主题</span></div>
+	<div class="MoreCnt show_content">
+	{qb:tag name="pc_member_homepage_002" union="uid" type="bbs" rows="10" mid="1" order="id" by="desc"}
+		<div class="list1"><span class="gi">{$i}</span>、<a href="{$rs.url}" target="_blank">{$rs.title|get_word=85}</a> <span style="float:right;margin-right:10px;">[{:date("y-m-d",$rs.create_time)}]</span></div>
+	{/qb:tag}
+	</div>
+	<div class="MoreCnt show_content bbs_content_reply" style="display:none;">
+	{qb:tag name="pc_member_homepage_reply_002" js="bbs_content_reply" class="app\bbs\model\Content@get_reply_label" rows="10" union="uid"}
+		<div class="list1"><span class="gi">{$i}</span>、<a href="{$rs.url}" target="_blank">{$rs.title|get_word=85}</a> <span style="float:right;margin-right:10px;">[{:date("y-m-d",$rs.create_time)}]</span></div>
+	{/qb:tag}
+	</div>
+</div>
+{/if}
+<script type="text/javascript">
+var type_num = 0; //默认是第一项
+$(document).ready(function () {
+	$(".member_showbbs_title .head span").click(function(){
+		$(".member_showbbs_title .head span").removeClass('ck');
+		$(this).addClass('ck');
+		type_num = $(this).index();
+		$(".member_showbbs_title .show_content").hide();
+		$(".member_showbbs_title .show_content").eq(type_num).show();
+		scroll_get = true;	//避免其它加载完了,这里却无法加载
+	});
+});
+
+var Mpage = new Array();	//页码数组
+var urldb = new Array('{qb:url name="pc_member_homepage_002" /}','{qb:url name="pc_member_homepage_reply_002" /}'); //不同的URL
+function ShowMoreBBs(){
+	if( typeof Mpage[type_num]=='undefined' ){
+		Mpage[type_num] = 1;
+	}
+	Mpage[type_num]++;
+	var url = urldb[type_num] + Mpage[type_num];
+	
+	$.get(url,function(res){
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("已经显示完了！",{time:500});
+			}else{
+				$(".member_showbbs_title .show_content").eq(type_num).append(res.data);
+				set_i_num();
+				scroll_get = true;
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+
+//滚动显示更多
+var scroll_get = true;	//做个标志,不要反反复复的加载
+$(document).ready(function () {
+	$(window).scroll(function () {
+		if (scroll_get==true &&  (400 + $(window).scrollTop())>($(document).height() - $(window).height())) {
+			scroll_get = false;
+			layer.msg('内容加截中,请稍候',{time:1000});
+			ShowMoreBBs();
+		}
+	});
+});
+
+//设置标题序号
+function set_i_num(){
+	var j = 0;
+	$(".member_showbbs_title .show_content").eq(type_num).find('.list1 .gi').each(function(){
+		j++;
+		$(this).html(j);
+	});
+}
+
+</script>
+
+{if ($userdb.uid==$info.uid||$userdb.groupid==3)}
+<div class="SideContainer">
+	<div class="head"><i class="si si-lock"></i>{$uid==$userdb.uid?'我':'Ta'}的私密资料</div>
+	<div class="MoreCnt">
+		<div class="list1">可用{$webdb.MoneyName}：{$info.money} 个</div>
+		<div class="list1">可用余额：{$info.rmb} 元</div>
+		<div class="list1">冻结余额：{$info.rmb_freeze} 元</div>
+
+		<div class="list1">注册IP：{$info.regip}</div>
+		<div class="list1">真实姓名：{$info.truename}</div>
+		<div class="list1">身份证号码：{$info.idcard}</div>
+		<div class="list1">联系电话：{$info.mobphone}</div>
+		<div class="list1">联系地址：{$info.address}</div>
+		<div class="note">说明：以上私密资料只有本人与管理员才可查看,其它人无法查看!</div>
+	</div>
+</div>
+{/if}
+
+<div class="FootContainer">
+	Copyright@www.php168.com all rights reserved {$webdb.miibeian_gov_cn}<br/>
+	Powered by qibosoft Code © 2003-2018
+</div>
+<script>
+
+</script>
+</body>
+</html>

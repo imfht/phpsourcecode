@@ -1,0 +1,134 @@
+{include file="common/head"/}
+<link rel="stylesheet" href="/static/plugins/spectrum/spectrum.css">
+<style>
+    .edui-editor{z-index: 1!important;}
+</style>
+<script>
+    var ADMIN = '/static/admin';
+    var UPURL = "{:url('UpFiles/upImages')}";
+    var PUBLIC = "__PUBLIC__";
+    var imgClassName,fileClassName;
+</script>
+{include file="common/foot"/}
+<script src="/static/common/js/jquery.2.1.1.min.js"></script>
+<script>
+    var edittext=new Array();
+</script>
+{js href='/static/kindeditor/NKeditor-all-min.js' /}
+{js href='/static/kindeditor/libs/JDialog/JDialog.min.js' /}
+<link rel="stylesheet" href="/static/wangEditor/css/wangEditor.min.css">
+<script type="text/javascript" src="/static/wangEditor/js/wangEditor.min.js"></script>
+
+<script src="/static/ueditor/ueditor.config.js" type="text/javascript"></script>
+<script src="/static/ueditor/ueditor.all.min.js" type="text/javascript"></script>
+<div class="admin-main layui-anim layui-anim-upbit">
+    <fieldset class="layui-elem-field layui-field-title">
+        <legend>{$title}</legend>
+    </fieldset>
+    <form class="layui-form" method="post">
+        {if (isset($info['id']))}
+        <input TYPE="hidden" name="id" value="{$info.id}">
+        {/if}
+        {volist name="fields" id="r"}
+            {if condition="!empty($r['status'])"}
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{$r.name}</label>
+                    <div class="layui-input-4" id="box_{$r['field']}">
+                        {$r,input($r['field'])|getform=$form,###|raw}
+                    </div>
+                </div>
+            {/if}
+        {/volist}
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="submit">{:lang('submit')}</button>
+                {if condition="MODULE_NAME eq 'page'"}
+                <a href="{:url('category/index')}" class="layui-btn layui-btn-primary">{:lang('back')}</a>
+                {else /}
+                <a href="{:url('index',['catid'=>input('catid')])}" class="layui-btn layui-btn-primary">{:lang('back')}</a>
+                {/if}
+            </div>
+        </div>
+    </form>
+</div>
+<script src='/static/plugins/spectrum/spectrum.js'></script>
+<script src='/static/admin/js/edit.js'></script>
+<script src='/static/common/js/layui-mz-min.js'></script>
+<script>
+    var thumb,pic,file;
+    {if condition="ACTION_NAME=='add'"}
+    var url= "{:url('insert')}";
+    {else /}
+        var url= "{:url('update')}";
+    {/if}
+
+    layui.use(['form','upload','layedit','laydate','jquery'], function () {
+		
+        var form = layui.form,upload = layui.upload,layedit = layui.layedit,laydate = layui.laydate,$ = layui.jquery;
+
+        form.on('select(province)', function(data) {
+            var pid = data.value;
+            var loading = layer.load(1, {shade: [0.1, '#fff']});
+            $.get("{:url('getRegion')}?pid=" + pid, function (data) {
+                layer.close(loading);
+                var html='<option value="">请选择市</option>';
+                $.each(data, function (i, value) {
+                    html += '<option value="'+value.id+'">'+value.name+'</option>';
+                });
+                $('#city').html(html);
+                $('#district').html('<option value="">请选择县/区</option>');
+                form.render()
+            });
+        });
+        form.on('select(city)', function(data) {
+            var pid = data.value;
+            var loading = layer.load(1, {shade: [0.1, '#fff']});
+            $.get("{:url('getRegion')}?pid=" + pid, function (data) {
+                layer.close(loading);
+                var html='<option value="">请选择县/区</option>';
+                $.each(data, function (i, value) {
+                    html += '<option value="'+value.id+'">'+value.name+'</option>';
+                });
+                $('#district').html(html);
+
+                form.render()
+            });
+        });
+		layui.selMeltiple($);
+        //缩略图上传
+        upload.render({
+            elem: '#thumbBtn'
+            ,url: '{:url("UpFiles/upload")}'
+            ,accept: 'images' //普通文件
+            ,exts: 'jpg|png|gif' //只允许上传压缩文件
+            ,done: function(res){
+                console.log(res);
+                $('#cltThumb').attr('src',res.url);
+                $('#thumb').val(res.url);
+            }
+        });
+        //日期
+
+        form.on('submit(submit)', function (data) {
+
+            $.post(url, data.field, function (res) {
+                if (res.code > 0) {
+                    layer.msg(res.msg, {time: 1800, icon: 1}, function () {
+                        location.href = res.url;
+                    });
+                } else {
+                    layer.msg(res.msg, {time: 1800, icon: 2});
+                }
+            });
+        });
+        $('.layui-row').on('click','.delimg',function(){
+            var thisimg = $(this);
+
+            layer.confirm('你确定要删除该图片吗？', function(index){
+                thisimg.parents('.layui-col-md3').remove();
+                layer.close(index);
+            })
+        })
+    });
+
+</script>

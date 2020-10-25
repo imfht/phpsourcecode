@@ -1,0 +1,159 @@
+<?php
+/**
+ * MILEBIZ 米乐商城
+ * ============================================================================
+ * 版权所有 2011-20__ 米乐网。
+ * 网站地址: http://www.milebiz.com
+ * ============================================================================
+ * $Author: zhourh $
+ */
+
+class AdminOrderPreferencesControllerCore extends AdminController
+{
+	public function __construct()
+	{
+		$this->className = 'Configuration';
+		$this->table = 'configuration';
+
+		parent::__construct();
+
+		// List of CMS tabs
+		$cms_tab = array(0 => array(
+			'id' => 0,
+			'name' => $this->l('None')
+		));
+		foreach (CMS::listCms($this->context->language->id) as $cms_file)
+			$cms_tab[] = array('id' => $cms_file['id_cms'], 'name' => $cms_file['meta_title']);
+
+		// List of order process types
+		$order_process_type = array(
+			array(
+				'value' => PS_ORDER_PROCESS_STANDARD,
+				'name' => $this->l('Standard (5 steps)')
+			),
+			array(
+				'value' => PS_ORDER_PROCESS_OPC,
+				'name' => $this->l('One page checkout')
+			)
+		);
+
+		// Tax list
+		$taxes[] = array('id' => 0, 'name' => $this->l('None'));
+		foreach (Tax::getTaxes($this->context->language->id) as $tax)
+			$taxes[] = array('id' => $tax['id_tax'], 'name' => $tax['name']);
+
+		$this->fields_options = array(
+			'general' => array(
+				'title' =>	$this->l('General'),
+				'icon' =>	'tab-preferences',
+				'fields' =>	array(
+					'PS_ORDER_PROCESS_TYPE' => array(
+						'title' => $this->l('Order process type'),
+						'desc' => $this->l('You can choose the order process type as either standard (5 steps) or One Page Checkout'),
+						'validation' => 'isInt',
+						'cast' => 'intval',
+						'type' => 'select',
+						'list' => $order_process_type,
+						'identifier' => 'value'
+					),
+					'PS_GUEST_CHECKOUT_ENABLED' => array(
+						'title' => $this->l('Enable guest checkout'),
+						'desc' => $this->l('Guests can place an order without registering'),
+						'validation' => 'isBool',
+						'cast' => 'intval',
+						'type' => 'bool'
+					),
+					'PS_PURCHASE_MINIMUM' => array(
+						'title' => $this->l('Minimum purchase total required in order to validate order'),
+						'desc' => $this->l('Set to 0 to disable this feature'),
+						'validation' => 'isFloat',
+						'cast' => 'floatval',
+						'type' => 'price'
+					),
+					'PS_ALLOW_MULTISHIPPING' => array(
+						'title' => $this->l('Allow multi-shipping'),
+						'desc' => $this->l('Allow the customer to ship his order to multiple addresses. This option will convert the customer\'s cart into one or more orders.'),
+						'validation' => 'isBool',
+						'cast' => 'intval',
+						'type' => 'bool'
+					),
+					'PS_SHIP_WHEN_AVAILABLE' => array(
+						'title' => $this->l('Delayed shipping'),
+						'desc' => $this->l('Allow the customer to split his order: one with the products currently "in stock", and another with the other products. This option will convert the customer\'s cart into two orders.'),
+						'validation' => 'isBool',
+						'cast' => 'intval',
+						'type' => 'bool'
+					),
+					'PS_CONDITIONS' => array(
+						'title' => $this->l('Terms of service'),
+						'desc' => $this->l('Require customers to accept or decline terms of service before processing the order'),
+						'validation' => 'isBool',
+						'cast' => 'intval',
+						'type' => 'bool',
+						'js' => array(
+							'on' => 'onchange="changeCMSActivationAuthorization()"',
+							'off' => 'onchange="changeCMSActivationAuthorization()"'
+						)
+					),
+					'PS_CONDITIONS_CMS_ID' => array(
+						'title' => $this->l('Conditions of use CMS page'),
+						'desc' => $this->l('Choose the Conditions of use CMS page'),
+						'validation' => 'isInt',
+						'type' => 'select',
+						'list' => $cms_tab,
+						'identifier' => 'id',
+						'cast' => 'intval'
+					)
+				)
+			),
+			'gift' => array(
+				'title' =>	$this->l('Gift options'),
+				'icon' =>	'tab-preferences',
+				'fields' =>	array(
+					'PS_GIFT_WRAPPING' => array(
+						'title' => $this->l('Offer gift-wrapping'),
+						'desc' => $this->l('Suggest gift-wrapping to customer and possibility of leaving a message'),
+						'validation' => 'isBool',
+						'cast' => 'intval',
+						'type' => 'bool'
+					),
+					'PS_GIFT_WRAPPING_PRICE' => array(
+						'title' => $this->l('Gift-wrapping price'),
+						'desc' => $this->l('Set a price for gift-wrapping'),
+						'validation' => 'isPrice',
+						'cast' => 'floatval',
+						'type' => 'price'
+					),
+					'PS_GIFT_WRAPPING_TAX' => array(
+						'title' => $this->l('Gift-wrapping tax'),
+						'desc' => $this->l('Set a tax for gift-wrapping'),
+						'validation' => 'isInt',
+						'cast' => 'intval',
+						'type' => 'select',
+						'list' => $taxes,
+						'identifier' => 'id'
+					),
+					'PS_RECYCLABLE_PACK' => array(
+						'title' => $this->l('Offer recycled packaging'),
+						'desc' => $this->l('Suggest recycled packaging to customer'),
+						'validation' => 'isBool',
+						'cast' => 'intval',
+						'type' => 'bool'
+					),
+				),
+				'submit' => array('title' => $this->l('Save'), 'class' => 'button'),
+			),
+		);
+	}
+
+	/**
+	 * This method is called before we start to update options configuration
+	 */
+	public function beforeUpdateOptions()
+	{
+		$sql = 'SELECT `id_cms` FROM `'._DB_PREFIX_.'cms`
+				WHERE id_cms = '.(int)Tools::getValue('PS_CONDITIONS_CMS_ID');
+		if (Tools::getValue('PS_CONDITIONS') && (Tools::getValue('PS_CONDITIONS_CMS_ID') == 0 || !Db::getInstance()->getValue($sql)))
+			$this->errors[] = Tools::displayError('Assign a valid CMS page if you want it to be read.');
+	}
+}

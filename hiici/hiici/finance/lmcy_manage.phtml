@@ -1,0 +1,104 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+global $config;
+if (!in_array($auth['id'], $config['manager'])) die('用户权限不够!');
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+$kind_filter = @intval($_COOKIE['lmcy_manage_kind_filter']);
+
+$cond = '';
+
+switch ($kind_filter) {
+case 2:
+	$cond = "WHERE kind = 'TZ'";
+	break;
+case 3:
+	$cond = "WHERE kind = 'DB'";
+	break;
+}
+
+if (empty($page)) { $page = 1; }
+$limit = 20;
+
+$lmcys = dt_query("SELECT id, name, kind, c_at FROM finance_lmcy $cond ORDER BY c_at LIMIT ".$limit * ($page - 1).",$limit");
+if (!$lmcys) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/nav_sub_im.html') ?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column" style="margin-top:20px">
+			<div class="finance-filter-well">
+				<ul id="kind_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">成员类型</a> </li>
+					<li class=""><a href="javascript:do_kind_filter(1)">全部</a></li>
+					<li class=""><a href="javascript:do_kind_filter(2)">投资公司</a></li>                       
+					<li class=""><a href="javascript:do_kind_filter(3)">担保公司</a></li>                       
+					<a class="btn btn-default" href="?c=finance&a=lmcy_add">添加成员</a>
+				</ul>
+			</div>
+
+			<table class="table">
+				<thead>
+					<tr>
+						<th>成员名称</th>
+						<th>类型</th>
+						<th>加入时间</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php while($lmcy = mysql_fetch_array($lmcys)) { ?>
+				<tr id="<?php echo $lmcy['id']; ?>">
+					<td><a href="?c=finance&a=item_list_cond&lmcy_id=<?php echo $lmcy['id'] ?>"><?php echo $lmcy['name']; ?></a></td>
+					<td><?php echo $lmcy['kind']; ?></td>
+					<td><?php echo date('Y-m-d', $lmcy['c_at']) ?></td>
+					<td>
+						<a class="btn btn-default btn-sm" href="?c=finance&a=lmcy_edit&lmcy_id=<?php echo $lmcy['id'] ?>">设置</a>
+						<a class="btn btn-default btn-sm" href="javascript:do_lmcy_del(<?php echo $lmcy['id'] ?>)">删除</a>
+					</td>
+				</tr>
+				<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('finance_lmcy', $cond, $page, $limit, '?c=finance&a=lmcy_manage&page=') ?>
+		</div>
+
+
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#finance_im').addClass('active');
+	$('li#im_cygl').addClass('active');
+	var kind_filter = ('' == getCookie('lmcy_manage_kind_filter')) ? 1 : getCookie('lmcy_manage_kind_filter');
+	$('ul#kind_filter').find('li:eq('+kind_filter+')').addClass('active');
+});
+
+function do_kind_filter(mark) {
+	setCookie('lmcy_manage_kind_filter', mark, 365, '/');
+	location = '?c=finance&a=lmcy_manage';
+}
+function do_lmcy_del(lmcy_id) {
+	if (!confirm (" O_O 确定要删除吗！")) return;
+
+	$.get('?c=finance&a=do_lmcy_opr&opr=1&lmcy_id='+lmcy_id, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('tr#'+lmcy_id).remove();
+	});
+}
+</script>

@@ -1,0 +1,266 @@
+{extend name="public:base" /}
+{block name="javascript"}
+<script src="__PUBLIC__/ztree/jquery.ztree.all-3.5.min.js"></script>
+<link  rel="stylesheet" type="text/css" href="__PUBLIC__/ztree/zTreeStyle.css" />
+<link  rel="stylesheet" type="text/css" href="__PUBLIC__/ztree/tree.css" />
+<script>
+		var setting = {
+			view: {
+				addHoverDom: false,
+				removeHoverDom: false,
+				selectedMulti: false
+			},
+			edit: {
+				enable: true,
+				editNameSelectAll: true,
+				showRemoveBtn: false,
+				showRenameBtn: false
+			},
+			data: {
+				simpleData: {
+					enable: true
+				}
+			}
+		};
+
+	
+	
+	var zNodes ={$list};
+
+
+function save(type){
+		var zTree = $.fn.zTree.getZTreeObj("category_tree"),
+
+		nodes = zTree.getSelectedNodes(),
+		treeNode = nodes[0];
+
+		if(treeNode!=undefined){
+			var isp= nodes[0].isParent;
+		}else{
+			var isp= true;
+		}			
+		var id=(treeNode==undefined?0:treeNode.id);
+
+		if(type=='add'){
+			url='{:url("Menu/add")}';
+		}else if(type=='edit'){
+			url='{:url("Menu/edit")}';
+		}
+
+		$.post(
+			url,
+			{					
+				'id':id,
+				'title':$("input[name='title']").val(),
+				'url':$("input[name='url']").val(),
+				'sort_order':$("input[name='sort_order']").val(),		
+				'module':$("input[name='module']").val(),	
+				'icon':$("input[name='icon']").val(),	
+				'type':$("input[name='type']:checked").val(),			
+				
+				
+			},
+			function(d){	
+				
+			    if(type=='add'){						
+						if(d.error){
+							alert(d.error);
+						
+						}else if(d.status=='success'){											
+							//有父节点
+					    	if(treeNode){
+					    		treeNode = zTree.addNodes(treeNode, {id:d.id, pId:id, isParent:isp, name:d.name});
+					    	}else{
+					    		treeNode = zTree.addNodes(treeNode, {id:d.id, pId:0, isParent:isp, name:d.name});
+					    	}
+					    	
+					    	close_artDialog();
+					    }	
+					}else if(type=='edit'){
+						
+						if(d.success){
+							nodes[0].name = d.name;
+							zTree.updateNode(nodes[0]);
+							
+							close_artDialog();
+						}
+						if(d.error){
+							alert(d.error);
+						}
+						
+						
+					}
+			}
+		);	
+}
+
+function add(e) {
+	
+	var dialog=$('#dialog').html();
+	
+	var title='新增菜单';
+	
+	art.dialog({
+		title: title,
+		content:dialog,
+		lock: true,
+		ok: function () {	 		
+	 	  save('add');	    	
+	      return false;
+	    },
+	    cancelVal: '关闭',
+		cancel: true 
+	});	
+}
+function edit() {
+	
+	var zTree = $.fn.zTree.getZTreeObj("category_tree"),
+		nodes = zTree.getSelectedNodes(),
+		treeNode = nodes[0];
+		if (nodes.length == 0) {
+			alert("请先选择一个节点");
+			return;
+		}else{
+			var id=treeNode.id;
+			$.post(
+				'{:url("Menu/get_info")}',
+				{					
+					'id':id,
+					
+				},
+				function(d){			
+					$("input[name='title']").val(d.title);
+					$("input[name='url']").val(d.url);
+					$("input[name='sort_order']").val(d.sort_order);
+					$("input[name='module']").val(d.module);
+					$("input[name='icon']").val(d.icon);
+					
+					
+					if(d.type=='nav'){
+						$("#nav").attr("checked","checked");
+					}else if(d.type=='auth'){
+						$("#auth").attr("checked","checked");
+					}
+				}
+			);				
+		}
+			
+	var dialog=$('#dialog').html();
+
+	var title='修改菜单';
+	
+	art.dialog({
+		title: title,
+			content:dialog,
+			lock: true,
+			ok: function () {
+				save('edit');
+				return false;
+			},
+		    cancelVal: '关闭',
+			cancel: true 
+	});	
+				
+	
+}
+function remove(e) {
+	
+			if(!confirm('确认要删除吗！！')){
+				return false;
+			}
+			
+			var zTree = $.fn.zTree.getZTreeObj("category_tree"),
+			nodes = zTree.getSelectedNodes(),
+			treeNode = nodes[0];
+			if (nodes.length == 0) {
+				alert("请先选择一个节点");
+				return;
+			}
+			$.post(
+				'{:url("Menu/del")}',
+				{					
+					'id':treeNode.id,					
+				},
+				function(d){			
+					if(d.error){
+						alert(d.error);
+					}else{						
+						zTree.removeNode(treeNode);
+					}
+					
+					
+				}
+			);
+}
+
+
+$(document).ready(function(){
+	$.fn.zTree.init($("#category_tree"), setting, zNodes);
+	$("#addParent").bind("click", {isParent:true}, add);
+	$("#edit").bind("click", edit);
+	$("#remove").bind("click", remove);
+});
+	
+</script>
+{/block}
+
+{block name="content"}
+<div class="page-header">
+	<h1>	
+		{$breadcrumb1}
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$breadcrumb2}
+		</small>
+	</h1>
+</div>
+<div class="page-header">
+	<a id="addParent" class="btn btn-primary">新增</a>
+	<a id="edit" class="btn btn-primary">编辑</a>
+	<a id="remove" class="btn btn-primary">删除</a>
+</div>
+
+<div class="row">
+	<div id="category_tree" class="ztree"></div>
+</div>
+
+	
+	<div id="dialog" class="dialog" style="display:none">
+    <div class="dialog_content">
+    
+        <dl>
+        	<dt>菜单名称</dt>
+        	<dd><input type="text" name="title" class="text" /></dd>
+        	<dt>URL</dt>
+    		<dd><input name="url" type="text" value="" size="50"  /></dd>    	
+    		
+    		<dt>模块</dt>
+    		<dd><input name="module" type="text" value=""  /></dd>  
+    		
+    		<dt>图标</dt>
+    		<dd><input name="icon" type="text" value=""  /></dd> 
+    		
+    		<dt>类型</dt>
+    		<dd>
+    			<label>
+    				<input id="nav" name="type" type="radio" value="nav" checked="checked" /> 显示 
+    			</label>
+    			<label>
+    				<input id="auth" name="type" type="radio" value="auth"  /> 不显示 
+    			</label>
+    		</dd>   
+    			
+    		<dt>排序</dt>
+    		<dd>
+    			<input name="sort_order" type="text" value="" />
+    		</dd>
+    		
+    		
+        </dl>       
+   
+      
+    </div>
+  </div> 
+	
+{/block}
+

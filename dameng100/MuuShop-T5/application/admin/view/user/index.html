@@ -1,0 +1,216 @@
+{extend name="common/main"/}
+{block name="style"}
+    <style>
+        .user-table .role {
+            padding:5px;
+            margin:5px auto;
+            background:#f1f1f1;
+            border-radius: 5px;
+
+        }
+        .user-table .role::last-child {
+            border-bottom: 0;
+        }
+    </style>
+{/block}
+{block name="body"}
+    <!-- 标题栏 -->
+    <div class="main-title">
+        <h2>{:lang('_USER_LIST_')}</h2>
+    </div>
+    <div class="button-box clearfix">
+
+        <div class="col-md-6">
+            <button class="btn btn-success ajax-post confirm" url="{:Url('User/changeStatus',array('method'=>'resumeUser'))}" target-form="ids">
+                {:lang('_ENABLED_')}
+            </button>
+            <button class="btn btn-warning ajax-post confirm" url="{:Url('User/changeStatus',array('method'=>'forbidUser'))}" target-form="ids">
+                {:lang('_DISABLE_')}
+            </button>
+            <button class="btn btn-danger ajax-post confirm" url="{:Url('User/changeStatus',array('method'=>'deleteUser'))}"
+                    target-form="ids">
+                    {:lang('_DELETE_')}
+            </button>
+            <button class="btn ajax-post btn-danger confirm" data-confirm="{:lang('_PW_RESET_CONFIRM_')}" url="{:Url('User/initPass')}" target-form="ids">
+                {:lang('_PW_RESET_')}
+            </button>
+            <a class="btn btn-info confirm" href="{:Url('User/auditRole')}">
+                {:lang('审核身份')} 
+                <span class="label label-badge">{$audit_user_num}</span>
+            </a>
+            <span style="font-size: 14px;color: #999898;margin-left: 11px;">{:lang('_PW_RESET_TIP_')}</span>
+        </div>
+
+        <!-- 高级搜索 -->
+        <div class="search-form col-md-6">
+            <div class="pull-right">
+                <div class="" style="display: inline-block;line-height: 32px;">
+                    <div class="title pull-left">排序方式：</div>
+                    <div class="select_box pull-left" style="width:120px">
+                    {php}
+                        $sort = input('order');
+                    {/php}
+                    <select name="order" data-role="select_text" class="form-control">
+                        <option value="uid" {eq name="sort" value="uid"} selected {/eq}>UID</option>
+                        <option value="login_time" {eq name="sort" value="login_time"} selected {/eq}>登陆时间</option>
+                        <option value="reg_time" {eq name="sort" value="reg_time"} selected {/eq}>注册时间</option>
+                        <option value="login_num" {eq name="sort" value="login_num"} selected {/eq}>登陆次数</option>
+                    </select>
+                    </div>
+                </div>
+
+                <div class="pull-right" style="display: inline-block;line-height: 32px;width:200px;margin-left:10px;">
+                    <div class="input-group">
+                        <input type="text" name="search" class="search-input form-control" value="{:input('search')}"
+                                   placeholder="{:lang('_USERNAME_NICKNAME_EMAIL_MOBILE_UID_')}">
+                        <span class="input-group-btn">
+                            <a class="btn btn-default" href="javascript:;" id="search" url="{:Url('index')}">
+                                <i class="icon-search"></i>
+                            </a>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 数据列表 -->
+    <div class="data-table with-padding">
+        <table class="table table-bordered table-striped user-table">
+            <thead>
+            <tr>
+                <th class="row-selected row-selected"><input class="check-all" type="checkbox"/></th>
+                <th class="">{:lang('_UID_')}</th>
+                <th class="">{:lang('_NICKNAME_')}</th>
+                <th class="">{:lang('_USERNAME_')}</th>
+                <th class="">{:lang('_MAILBOX_')}</th>
+                <th class="">{:lang('_CELL_PHONE_NUMBER_')}</th>
+                <th class="">{:lang('_USER_GROUP_')}</th>
+                <th class="">{:lang('_ROLE_NAME_')}</th>
+                <th class="">{:lang('_LOGIN_COUNT_')}</th>
+                <th class="">{:lang('_LAST_LOGIN_TIME_')}</th>
+                <th class="">{:lang('_LOGIN_IP_LAST_TIME_')}</th>
+                <th class="">{:lang('_STATUS_')}</th>
+                <th class="">{:lang('_EDIT_')}</th>
+
+            </tr>
+            </thead>
+            <tbody>
+            {notempty name="_list"}
+                {volist name="_list" id="vo"}
+                    <tr>
+                        <td><input class="ids" type="checkbox" name="id[]" value="{$vo.uid}"/></td>
+                        <td>{$vo.uid}</td>
+                        <td><a href="{:Url('Admin/User/expandinfo_details',array('uid'=>$vo['uid']))}" >{$vo.nickname|text}</a></td>
+                        <td>{$vo.username}</td>
+                        <td>{$vo.email}</td>
+                        <td>{$vo.mobile}</td>
+                        <td>
+                            {notempty name="vo.auth_group"}
+                            {volist name="vo.auth_group" id="role"}
+                            <div class="auth_group">
+                                <span>{$role.title}</span> 
+                            </div>  
+                            {/volist}
+                            {/notempty}
+                        </td>
+                        <td>
+                            {volist name="vo.role" id="role"}
+                            <div class="role">
+                                <span>{$role.title}</span>
+                                {switch name="role.status" }
+                                {case value="1"}
+                                <span class="label label-success pull-right">{$role.status_text}</span>
+                                {/case}
+                                {case value="2"}
+                                <span class="label label-warning pull-right">{$role.status_text}</span>
+                                {/case}
+                                {case value="-1"}
+                                <span class="label label-danger pull-right">{$role.status_text}</span>
+                                {/case}
+                                {case value="0"}
+                                <span class="label label-info pull-right">{$role.status_text}</span>
+                                {/case}
+                                {/switch}
+                            </div>  
+                            {/volist}
+                        </td>
+
+                        <td>{$vo.login}</td>
+                        <td><span>{$vo.last_login_time|time_format}</span></td>
+                        <td><a href="http://ip138.com/ips138.asp?ip={$vo['last_login_ip']|long2ip}">{$vo['last_login_ip']|long2ip}</a>
+                        </td>
+                        <td>{$vo.status_text}</td>
+                        <td><a href="{:Url('Admin/User/expandinfo_details',array('uid'=>$vo['uid']))}" >{:lang('_EDIT_')}</a></td>
+                    </tr>
+                {/volist}
+            {else/}
+                <td colspan="13" class="text-center">{:lang('_ADMIN_USER_EMPTY_')}</td>
+            {/notempty}
+            </tbody>
+        </table>
+
+        <div class="page text-center">
+            {$page}
+        </div>
+    </div>
+{/block}
+
+{block name="script"}
+    <script>
+    $(function(){
+    //排序
+        $('[data-role="select_text"]').change(function(){
+            var url = window.location.href;
+            var query = $('.select_box').find('select').val();
+            if (url.indexOf('?') > 0) {
+                if(url.indexOf('order') > 0){    
+                    url = changeURLArg(url,'order',query);
+                }else{
+                    url += '&' + 'order='+query;
+                }
+            } else {
+                url += '?' + 'order='+query;
+            }
+            window.location.href = url;
+        });
+
+        //设置url中参数值
+        function changeURLArg(url,arg,arg_val){
+            var pattern=arg+'=([^&]*)';
+            var replaceText=arg+'='+arg_val; 
+            if(url.match(pattern)){
+                var tmp='/('+ arg+'=)([^&]*)/gi';
+                tmp=url.replace(eval(tmp),replaceText);
+                return tmp;
+            }else{ 
+                if(url.match('[\?]')){ 
+                    return url+'&'+replaceText; 
+                }else{ 
+                    return url+'?'+replaceText; 
+                } 
+            }
+        }
+
+        //搜索功能
+        $("#search").click(function () {
+            var url = $(this).attr('url');
+            var query = $('.search-form').find('input').serialize();
+            query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g, '');
+            query = query.replace(/^&/g, '');
+            if (url.indexOf('?') > 0) {
+                url += '&' + query;
+            } else {
+                url += '?' + query;
+            }
+            window.location.href = url;
+        });
+        //回车搜索
+        $(".search-input").keyup(function (e) {
+            if (e.keyCode === 13) {
+                $("#search").click();
+                return false;
+            }
+        });
+    });
+    </script>
+{/block}

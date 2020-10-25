@@ -1,0 +1,57 @@
+<?php
+/** 中文(繁體)語言包 */
+return array(
+    'name'=>'中文(繁體)',
+    'mod'=>array(
+        'installed'=>'系統已安裝。',
+        'notInstalled'=>'系統未安裝。',
+        'uninstalled'=>'系統已卸載。',
+        'updated'=>'系統已更新。',
+        'missingArguments'=>'缺少必要的參數。',
+        'permissionDenied'=>'訪問受限。',
+        'databaseUpdated'=>'數據庫已更新。',
+        'noDatabasePrefix'=>'缺少數據表前綴。',
+        'directoryUnwritable'=>'{path} 目錄不可寫。',
+        'linkUnavailable'=>'鏈接不可用。',
+        'notExists'=>'所請求的{module}不存在。',
+        'noSearchKeys'=>'尚未配置{module}搜索字段。',
+        'noData'=>'無{module}數據。',
+        'countDelete'=>'{count} 條記錄被清除。',
+        'methodDenied'=>'{method}() 方法不能被當前對象調用。',
+        'invalidSessionId'=>'會話 ID 不可用。',
+        'addFailed'=>'{module}添加失敗。',
+        'updateFailed'=>'{module}更新失敗。',
+        'deleteFailed'=>'{module}刪除失敗。',
+        'deleted'=>'{module}已刪除。',
+        'socketOnTip'=>'Socket 服務器正在運行中...',
+        'socketFastCGIWarning'=>'Socket 服務器不能運行於 Fast-CGI 模式。',
+        ),
+    'user'=>array(
+        'label'=>'用戶',
+        'notLoggedIn'=>'用戶未登錄。',
+        'loggedIn'=>'用戶已登錄。',
+        'loggedOut'=>'用戶已登出。',
+        'wrongPassword'=>'錯誤的密碼。',
+        'nameTooShort'=>'用戶名太短。',
+        'nameTooLong'=>'用戶名太長。',
+        'usernameUnavailable'=>'用戶名不可用。',
+        'passwordTooShort'=>'密碼太短。',
+        'passwordTooLong'=>'密碼太長。',
+        ),
+    'file'=>array(
+        'label'=>'文件',
+        'invalidType'=>'無效的文件類型。',
+        'sizeTooLarge'=>'文件體積超出限制。',
+        'uploadFailed'=>'文件上傳失敗。',
+        ),
+    'category'=>array(
+        'label'=>'分類目錄',
+        'invalidName'=>'分類目錄名不可用。',
+        ),
+    'post'=>array(
+        'label'=>'文章',
+        ),
+    'comment'=>array(
+        'label'=>'評論',
+        ),
+    );

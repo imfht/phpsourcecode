@@ -1,0 +1,85 @@
+<form class="layui-form" lay-filter="select_category-form" id="select_category-form" style="padding: 20px 30px 0 0;">
+    <div class="layui-form-item" id="category1">
+        <label class="layui-form-label">商品分类</label>
+        <div class="layui-input-inline">
+            <select name="category1" lay-filter="category1">
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item layui-hide" id="category2">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <select name="category2" lay-filter="category2">
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item layui-hide" id="category3">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <select name="category3" lay-filter="category3">
+            </select>
+        </div>
+    </div>
+    <script id="category_tpl" type="text/html">
+        <option value=""></option>
+        {{# layui.each(d, function(index, item){ }}
+        <option value="{{ item.id }}">{{ item.title }}</option>
+        {{# }); }}
+    </script>
+    <div class="layui-form-item">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="category_id" value="">
+            <input type="button" lay-submit lay-filter="select_category-submit" value="确认" class="layui-btn">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+    layui.use(['admin', 'form', 'laytpl'], function () {
+        var admin = layui.admin,
+            form = layui.form,
+            laytpl = layui.laytpl,
+            $ = layui.jquery;
+
+
+        //获取分类
+        function get_category(type, parent_id = 0) {
+            if (!parent_id) parent_id = 0;
+            admin.req({
+                url: layui.setter.apiHost + '/goods/category/select',
+                data: {parent_id: parent_id},
+                success: function (result) {
+                    if (result.code == 0 && result.data.length > 0) {
+                        laytpl($('#category_tpl').html()).render(result.data, function (html) {
+                            $('#' + type).removeClass('layui-hide');
+                            $('#' + type + ' select').html(html);
+                        });
+                        form.render('select');
+                    } else {
+                        $('[name="category_id"]').val(parent_id);
+                    }
+                },
+                error: function () {
+                    layer.msg('操作失败，请刷新页面重试！');
+                }
+            });
+        }
+
+        get_category('category1');
+
+        //监听分类选择
+        form.on('select(category1)', function (data) {
+            $('#category2').addClass('layui-hide');
+            $('#category3').addClass('layui-hide');
+            get_category('category2', data.value);
+        });
+        form.on('select(category2)', function (data) {
+            $('#category3').addClass('layui-hide');
+            get_category('category3', data.value);
+        });
+        form.on('select(category3)', function (data) {
+            get_category('category4', data.value);
+        });
+    })
+</script>

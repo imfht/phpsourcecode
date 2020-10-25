@@ -1,0 +1,248 @@
+{# templates/form/custom_types.html.twig #}
+
+{% block params_field_row %}
+    <div class="nav-tabs-custom">
+        <ul class="nav nav-tabs">
+            {% for key,_params in params %}
+                <li {% if loop.index == 1 %}class="active"{% endif %}>
+                    <a href="#tab_{{ loop.index }}" data-toggle="tab" aria-expanded="true">
+                        {% if _params|length > 0 %}
+                            <code>{{ key|capitalize }}</code>
+                        {% else %}
+                            {{ key|capitalize }}
+                        {% endif %}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="tab-content">
+            {% for key,_params in params %}
+                <div class="tab-pane {% if loop.index == 1 %}active{% endif %}" id="tab_{{ loop.index }}">
+                    <div class="params_field_row_{{ key }}_widget">
+                        <table class="table table-bordered">
+                            <tbody>
+                            <tr>
+                                <th width="25%">Key</th>
+                                <th width="40%">Description</th>
+                                <th style="width: 35px;">Format</th>
+                                <th style="width: 10px;">Required</th>
+                                <th style="width: 10px">Action</th>
+                            </tr>
+                            {% for param in _params %}
+                                <tr>
+                                    <td><input type="text" name="params_data[{{ key }}][{{ loop.index }}][key]" class="form-control" value="{{ param.key }}"></td>
+                                    <td><input type="text" name="params_data[{{ key }}][{{ loop.index }}][description]" class="form-control" value="{{ param.description }}"></td>
+                                    <td>
+                                        <select name="params_data[{{ key }}][{{ loop.index }}][format]" class="form-control">
+                                            {% for format in formats %}
+                                                <option value="{{ loop.index }}" {% if loop.index == param.format %} selected {% endif %}>{{ format }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td><input type="checkbox" name="params_data[{{ key }}][{{ loop.index }}][required]" {% if param.required %} checked {% endif %} class="form-control params_field_row_checkbox" value="true"></td>
+                                    <td><button type="button" class="btn-sm btn-block btn-default btn-flat"onclick="$(this).parents('tr').remove();"><span class="glyphicon glyphicon-trash box-tools"></span></button></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td><input type="text" name="params_data[{{ key }}][0][key]" class="form-control" value=""></td>
+                                    <td><input type="text" name="params_data[{{ key }}][0][description]" class="form-control" value=""></td>
+                                    <td>
+                                        <select class="form-control" name="params_data[{{ key }}][0][format]">
+                                            {% for format in formats %}
+                                                <option value="{{ loop.index }}">{{ format }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td><input type="checkbox" name="params_data[{{ key }}][0][required]" class="form-control params_field_row_checkbox" value="true"></td>
+                                    <td><button type="button" class="btn-sm btn-block btn-default btn-flat" onclick="$(this).parents('tr').remove();"><span class="glyphicon glyphicon-trash box-tools"></span></button></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-block btn-default btn-flat" onclick="addParamsFieldRow{{ key|capitalize }}Item()" name="btn_update_and_edit"><i class="fa fa-plus" aria-hidden="true"></i> 添加字段 </button>
+                    </div>
+                    <script>
+                        let item_{{ key }} = {{ _params|length }};
+                        function addParamsFieldRow{{ key|capitalize }}Item() {
+                            item_{{ key }}++;
+                            $(".params_field_row_{{ key }}_widget table tbody").append('<tr>' +
+                                '<td><input type="text" name="params_data[{{ key }}][' + item_{{ key }} + '][key]" class="form-control" value=""></td>' +
+                                '<td><input type="text" name="params_data[{{ key }}][' + item_{{ key }} + '][description]" class="form-control" value=""></td>' +
+                                '<td><select class="form-control" name="params_data[{{ key }}][' + item_{{ key }} + '][format]">{% for format in formats %}<option value="{{ loop.index }}">{{ format }}</option>{% endfor %}</select></td>' +
+                                '<td><input type="checkbox" name="params_data[{{ key }}][' + item_{{ key }} + '][required]" class="form-control params_field_row_checkbox" value="true"></td>' +
+                                '<td><button type="button" class="btn-sm btn-block btn-default btn-flat"onclick="$(this).parents(\'tr\').remove();"><span class="glyphicon glyphicon-trash box-tools"></span></button></td>' +
+                                '</tr>');
+                            $('input.params_field_row_checkbox').iCheck({
+                                checkboxClass: 'icheckbox_square-blue',
+                            });
+                        }
+                    </script>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block module_field_row %}
+    <div class="form-group" id="sonata-ba-field-container-module">
+        <label class="control-label" for="module">
+            Admin Module
+        </label>
+        <div class="sonata-ba-field sonata-ba-field-standard-natural">
+            {% for module in admin_modules %}
+                <div class="module-group box-body" style="padding: 10px 0px;">
+                    <div class="group-info" style="background: #f7f7f7;padding: 10px">
+                        <div class="icheckbox_minimal-blue" aria-checked="true" aria-disabled="false">
+                            <input type="checkbox" class="minimal module-all" module_id="{{ module.id }}">
+                            <label style="margin-left: 10px">{{ module.name }}</label>
+                        </div>
+                    </div>
+                    {% if module.children|length > 0 %}
+                        <div class="row" style="padding: 15px 0px 15px 46px;">
+                            {% for item in module.children %}
+                                <div class="col-sm-4 col-md-2" style="padding-bottom: 10px">
+                                    <div class="icheckbox_minimal-blue" aria-checked="true" aria-disabled="false">
+                                        <input type="checkbox" class="minimal module-item" name="module_idx[{{ module.id }}][]" value="{{ item.id }}">
+                                        <span style="margin-left: 10px">{{ item.name }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            {# 初始赋值 #}
+            let module_ids = {% if module_ids is null %}[]{% else %}{{ module_ids }}{% endif %};
+            $('input.module-item').each(function (index, item) {
+                if ($.inArray(parseInt(item.value), module_ids) != -1) {
+                    $(this).iCheck('check');
+                }
+            });
+            {# 全选/反选 #}
+            $('input.module-all').on('ifClicked', function (event) {
+                let module_id = $(this).attr('module_id');
+                if (event.target.checked) {
+                    $("input[name='module_idx[" + module_id + "][]']").iCheck('uncheck');
+                } else {
+                    $("input[name='module_idx[" + module_id + "][]']").iCheck('check');
+                }
+            });
+        </script>
+    </div>
+{% endblock %}
+
+{% block text_errors %}
+    {% if errors|length > 0 %}
+        <div class="help-block sonata-ba-field-error-messages">
+            <ul class="list-unstyled">
+                {% for error in errors %}
+                    <li><i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                        {{ error.message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block image_widget %}
+    {% spaceless %}
+        <div class="cropper" data-cropper-options="{{ form.vars.cropper_options }}" data-max-width="{{ max_width }}" data-max-height="{{ max_height }}" data-mimetype="{{ upload_mimetype }}" data-quality="{{ upload_quality }}">
+
+            <div class="row">
+                {% if enable_locale %}
+                    <div class="col-md-4 cropper-local">
+                        <input type="file" name="file" class="d-none" style="display: none"/>
+                        <button type="button" class="{{ upload_button_class }}">
+                            <span class="{{ upload_button_icon }}"></span>
+                            上传本地图片
+                        </button>
+                    </div>
+                {% endif %}
+                {% if enable_remote %}
+                    <div class="col-md-8 cropper-remote">
+                        <div class="input-group">
+                            <input type="url" class="image-url-input form-control form-control-sm" placeholder="{{ 'image_dist_placeholder'|trans }}" />
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-sm btn-primary btn-upload-dist" disabled="disabled" data-url="{{ path('presta_image_url_to_base64') }}">
+                                    <span class="fa fa-upload"></span>
+                                    {{ 'btn_import_image_remote'|trans }}
+                                </button>
+                                <div class="remote-loader spinner d-none">
+                                    <div class="rect1"></div>
+                                    <div class="rect2"></div>
+                                    <div class="rect3"></div>
+                                    <div class="rect4"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if form.delete is defined %}
+                    <div class="col-md-12">
+                        {{ form_row(form.delete) }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="cropper-canvas-container mt-2{% if form.delete is defined %} cropper-canvas-has-delete{% endif %}" data-preview-width="{{ preview_width }}" data-preview-height="{{ preview_height }}" style="max-width: {{ preview_width }}; max-height: {{ preview_height }}">
+                {% if form.vars.download_uri is defined and form.vars.download_uri %}
+                    <img src="{{ asset(form.vars.download_uri) }}" style="max-width: {{ preview_width }}; max-height: {{ preview_height }};">
+                {% endif %}
+            </div>
+            {{ form_row(form.base64) }}
+
+            {% set show_aspect_ratios = aspect_ratios|length > 1 %}
+            <div class="modal fade">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <span class="modal-title">裁剪图片</span>
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="cropper-preview"></div>
+                                </div>
+                            </div>
+                            {% if enable_rotation %}
+                                <div class="row">
+                                    <div class="toolbar {% if show_aspect_ratios %}col-md-10{% else %}col-md-12{% endif %}">
+                                        <button class="btn btn-default rotate" data-rotate="90"></button>
+                                        <button class="btn btn-default rotate anti-rotate" data-rotate="-90"></button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <div class="col-md-9">
+                                {% if show_aspect_ratios %}
+                                    <div class="btn-group" style="float: left">
+                                        {% for aspect_ratio in aspect_ratios %}
+                                            <label class="btn btn-primary mb-0">
+                                                <input type="radio" style="display: none" class="btn btn-primary" name="cropperAspectRatio" class="d-none" value="{{ aspect_ratio.value }}"{% if aspect_ratio.checked %} checked="checked"{% endif %}>{{ aspect_ratio.label }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {% for aspect_ratio in aspect_ratios %}
+                                        <input type="hidden" name="cropperAspectRatio" value="{{ aspect_ratio.value }}">
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="{{ cancel_button_class }}" data-dismiss="modal">取消</button>
+                                <button type="button" class="{{ save_button_class }}" data-method="getCroppedCanvas">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endspaceless %}
+{% endblock %}
+
+{# ... here you will add the Twig code ... #}

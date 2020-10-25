@@ -1,0 +1,64 @@
+<!--{json width:"400",height:"200",title:"用户退出"}-->
+
+<!--{hook user_logout_start.htm}-->
+
+<h2 style="text-align: center; margin: 32px;"> 您确定退出吗？</h2>
+<div style="text-align: center">
+	<form action="?user-logout-ajax-1.htm" method="post" id="logout_form">
+		<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+		<!--{hook user_logout_submit_before.htm}-->
+		<input type="submit" class="button bigblue" id="logout_submit" value="退出" />
+		<input type="button" class="button biggrey" value="关闭" id="logout_cancel"/>
+		<!--{hook user_logout_submit_after.htm}-->
+	</form>
+</div>
+
+<!--{hook user_logout_end.htm}-->
+
+<script type="text/javascript">
+
+// 延迟执行的脚本，约定名字为：delay_execute()
+function delay_execute(dialog, recall) {
+	var ajaxhandle = null;
+	$('#logout_submit').click(function() {
+		
+		// 终止短消息循环
+		if(newpm_instance) newpm_instance.stop();
+		
+		$('#logout_submit').disable();
+		
+		var postdata = $("#logout_form").serialize();
+		$.post($('#logout_form').attr('action'), postdata,  function(s){
+			
+			$('#logout_submit').enable();
+			
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			
+			json = json.message;
+			
+			// hook user_logout_success_js.htm
+			g_uid = 0;
+			$('#user').html('<a href="?user-login-ajax-1.htm" class="ajaxdialog" onclick="return false">登录</a> <a href="?user-create-ajax-1.htm" class="ajaxdialog" onclick="return false">注册</a>');
+			dialog.set_body('<div class="ok">退出成功。</div>');
+			if(recall) {
+	 			dialog.close();
+				recall();
+			} else {
+				setTimeout(function(){
+		 			dialog.close();
+		 			window.location.reload();
+		 		}, 1000);
+			}
+			
+		});
+		return false;
+	});
+	
+	$('#logout_cancel').click(function() {
+		dialog.close();
+	});
+	
+	// hook user_logout_delay_execute_js.htm
+}
+</script>

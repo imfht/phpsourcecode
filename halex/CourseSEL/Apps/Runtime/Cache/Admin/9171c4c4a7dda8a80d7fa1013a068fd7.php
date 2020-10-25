@@ -1,0 +1,327 @@
+<?php if (!defined('THINK_PATH')) exit();?><!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="/web/CourseSEL/Public/layui/css/layui.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/web/CourseSEL/Public/css/font-awesome.min.css">
+    <style>
+        .info-box {
+            height: 85px;
+            background-color: white;
+            background-color: #ecf0f5;
+        }
+        
+        .info-box .info-box-icon {
+            border-top-left-radius: 2px;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 2px;
+            display: block;
+            float: left;
+            height: 85px;
+            width: 85px;
+            text-align: center;
+            font-size: 45px;
+            line-height: 85px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-box .info-box-content {
+            padding: 5px 10px;
+            margin-left: 85px;
+        }
+        
+        .info-box .info-box-content .info-box-text {
+            display: block;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+        }
+        
+        .info-box .info-box-content .info-box-number {
+            display: block;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .major {
+            font-weight: 10px;
+            color: #01AAED;
+        }
+        
+        .main {
+            margin-top: 25px;
+        }
+        
+        .main .layui-row {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layui-fluid main">
+        <div class="layui-row layui-col-space12">
+            <div class="layui-col-md4">
+                <div class="info-box">
+                    <span class="info-box-icon" style="background-color:#00c0ef !important;color:white;"><i class="fa fa-flag" aria-hidden="true"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">选课项目</span>
+                        <span class="info-box-number"><?php echo ($num["sel"]); ?></span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="info-box">
+                    <span class="info-box-icon" style="background-color:#dd4b39 !important;color:white;"><i class="fa fa-user-secret" aria-hidden="true"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">管理员</span>
+                        <span class="info-box-number"><?php echo ($num["te"]); ?></span>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="info-box">
+                    <span class="info-box-icon" style="background-color:#00a65a !important;color:white;"><i class="fa fa-users" aria-hidden="true"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">学生</span>
+                        <span class="info-box-number"><?php echo ($num["stu"]); ?></span>
+                    </div>
+                </div>
+            </div>
+            <!-- <div class="layui-col-md3">
+                <div class="info-box">
+                    <span class="info-box-icon" style="background-color:#f39c12 !important;color:white;"><i class="fa fa-users" aria-hidden="true"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">New Members</span>
+                        <span class="info-box-number">85</span>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+        <div class="layui-row">
+            <div class="layui-col-md12">
+                <ul class="layui-timeline">
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">置顶的说明文档</h3>
+                            <blockquote class="layui-elem-quote">
+                            <h3>想说的话</h3>
+                            <ul>
+                                <li>取名：名字叫CourseSEL，其实是Coursel Selection System，我就冒昧的简写了一下所以这个名字就出来了。</li>
+                                <li>初衷：只是为了减轻工作上的负担，抱着试一试的态度就完成了这个小程序，至于好不好用，还有待验证。
+                                </li>
+                                <li>想法：如果可行的话将来还想继续开发一个<span class="layui-bg-green" >&nbsp;区域版&nbsp;</span>和学校<span class="layui-bg-green" >&nbsp;独立版&nbsp;</span>以区别不同环境使用功能。现在这个版本是区域和独立的混合版，既可以区域使用也可以学校独立使用。</li>
+                                <li>计划：过段时间想搭建一个社区，以供讨论。有共同想法的人可以联系！</li>
+                            </ul>
+                            </blockquote>
+                            <h3>#联系：</h3>
+                            <ul>
+                                <li>Email:hxb0810@163.com</li>
+                                <li>如需要联系，可发邮件到上述邮箱
+                                </li>
+                            </ul>
+                            <h3>#鸣谢：</h3>
+                            <ul>
+                                <li><a href="http://www.thinkphp.cn/">ThinkPHP</a>  &nbsp; &nbsp;<a href="http://www.layui.com/">LayUI(贤心)</a></li>
+                                <!-- <li><a href="index.1.html" target="_blank">点击查看一级菜单的加载</a></li> -->
+                            </ul>
+                            <h3>#建议浏览器：</h3>
+                            <ul>
+                                <li>firefox&nbsp;<i class="fa fa-firefox" aria-hidden="true" style="color: #FF571C;" ></i></li>
+                                <li>chrome&nbsp;<i class="fa fa-chrome" aria-hidden="true" style="color: #4183B7;" ></i></li>
+                                <li>360极速模式</li>
+                                <li style="color:  #FF571C;">请尽量不要使用IE浏览器&nbsp;<i class="fa fa-internet-explorer" aria-hidden="true"></i></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <!-- <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">9月1日(v1.0.3)</h3>
+                            <p>
+                                <h3>#添加两个主题(欢迎你们去配很好看的色彩，反馈给我，然后我分享给大家/xyx)</h3>
+                                <ul>
+                                    <li><a href="index.2.html" target="_blank">点击我(灰色)</a></li>
+                                    <li><a href="index.3.html" target="_blank">点击我(蓝色)</a></li>
+                                    <li><a href="page.html" target="_blank">模板的另一种加载方式(page)</a></li>
+                                    <li>更新到 layui 2.1.1 <a href="http://www.layui.com/doc/base/changelog.html" target="_blank">#更新文档</a></li>
+                                </ul>
+                            </p>
+                        </div>
+                    </li> -->
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">11月7日(v1.1.0)</h3>
+                            <p>
+                                <h3>#基本完成</h3>
+                                <p>项目从10月7日开始，至今正好一个月，到今天所有计划中的模块已经基本完成。</p>
+                                <h3>#模块目录</h3> 
+                                <ul >
+                                <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief" style="margin-top: -15px;">
+                                  <ul class="layui-tab-title">
+                                    <li class="layui-this">前台模块</li>
+                                    <li>后台模块</li>
+                                    <li>用户权限</li>
+                                    <li>数据处理</li>
+                                  </ul>
+                                  <div class="layui-tab-content">
+                                    <div class="layui-tab-item layui-show">
+                                        <li>登陆，登出模块</li>
+                                        <li>选课及修改模块</li>
+                                        <li>选课记录模块</li>
+                                        <li>密码修改模块</li>
+                                    </div>
+                                    <div class="layui-tab-item">
+                                        <li>管理员模块</li>
+                                        <li>学生管理模块</li>
+                                        <li>选课项目模块</li>
+                                        <li>数据处理检索模块</li>
+                                    </div>
+                                    <div class="layui-tab-item">
+                                        <li>超级管理员-全部数据操作</li>
+                                        <li>学校管理员-本校数据操作</li>
+                                        <li>管理员-班主任</li>
+                                        <!-- <li>数据处理检索模块</li> -->
+                                    </div>
+                                    <div class="layui-tab-item">
+                                        <li>选课数据检索-预览-排序-下载</li>
+                                        <li>组合数据图表</li>
+                                        <li>科目数据图表</li>
+                                        <!-- <li>数据处理检索模块</li> -->
+                                    </div>        
+                                  </div>
+                                </div>     
+                                </ul>
+                            </p>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">10月14日(v1.0.2)</h3>
+                            <p>
+                                <h3>#登录模块</h3>
+                                <ul>
+                                    <li><a href="#">教师端</a></li>
+                                    <li><a href="#">学生端</a></li>
+                                </ul>
+                                <h3>#验证模块</h3>
+                                <ul>
+                                    <li>ajax验证</li>
+                                </ul>
+                                <h3>#其他更新</h3>
+                                <ul>
+                                    <li>优化验证方法</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">10月8日(v1.0.1)</h3>
+                            <p>
+                                <h3>#后台控制器</h3>
+                                <ul>
+                                    <li>添加后台各模块<a href="#">控制器</a>）</li>
+                                </ul>
+                                <h3>#前台控制器</h3>
+                                <ul>
+                                    <li>添加 前台</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">10月5日</h3>
+                            <p>
+                                <ul>
+                                    <li>更新<a href="#">左侧导航</a>和<a href="#">顶部菜单</a></li>
+                                    <li>新增左侧菜单可缩进.</li>
+                                    <li>调整头部导航栏的高度，让她看起来更协调.</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <h3 class="layui-timeline-title">10月2日</h3>
+                            <p>
+                                <h3>确定后台admin</h3>
+                                <ul>
+                                    <li>项目重构，基于Thinkphp3.2.3</li>
+                                    <li>添加navbar模块
+                                        <a href="#">navbar文档</a>
+                                    </li>
+                                    <li>添加tab模块
+                                        <a href="#">tab文档</a>
+                                    </li>
+                                    <li>还有不想写了....</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <div class="layui-timeline-title">2017年10月开启</div>
+                        </div>
+                    </li>
+                    <li class="layui-timeline-item">
+                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                        <div class="layui-timeline-content layui-text">
+                            <div class="layui-timeline-title">更新日志</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script src="/web/CourseSEL/Public/layui/layui.js"></script>
+    <script>
+        // var message;
+        // layui.config({
+        //     base: '/web/CourseSEL/Public/build/js/'
+        // }).use(['app', 'message'], function() {
+        //     var app = layui.app,
+        //         $ = layui.jquery,
+        //         layer = layui.layer;
+        //     //将message设置为全局以便子页面调用
+        //     message = layui.message;
+        //     $('#test').on('click', function() {
+        //          // parent.message.show({
+        //          //     skin: 'cyan'  
+        //         layer.msg('jjj');
+        //         });
+           
+        // });
+
+
+
+        layui.use(['element','jquery','layer'], function() {
+            var $ = layui.jquery;
+            var layer = layui.layer,element = layui.element;;
+            $('#test').on('click', function() {
+                // parent.message.show({
+                //     skin: 'cyan'  
+                layer.msg('jjj');
+                });
+            });
+
+        
+    </script>
+</body>
+
+</html>

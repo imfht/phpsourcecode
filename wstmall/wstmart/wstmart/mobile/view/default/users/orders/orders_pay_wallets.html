@@ -1,0 +1,96 @@
+{extend name="default/base" /}
+{block name="title"}支付订单 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/orders.css?v={$v}">
+{/block}
+{block name="header"}
+    <header class="ui-header ui-header-positive wst-header">
+        <a class="ui-icon-return" href='{:Url('mobile/orders/index')}'></a><h1>支付订单</h1>
+    </header>
+{/block}
+{block name="main"}
+	<input type="hidden" value="{:WSTConf('CONF.pwdModulusKey')}" id="key" autocomplete="off">
+   	{/* 大加载 */}
+	<div class="ui-loading-block" id="Loadl">
+	    <div class="ui-loading-cnt">
+	        <i class="ui-loading-bright"></i>
+	        <p id="j-Loadl">正在加载中...</p>
+	    </div>
+	</div>
+	<section class="ui-container">
+	{if(empty($message))}
+		<input type="hidden" name="" value="{$data['orderNo']}" id="orderNo" autocomplete="off">
+		<input type="hidden" name="" value="{$data['isBatch']}" id="isBatch" autocomplete="off">
+	   	{volist name="$rs['list']" id="order"}
+	  	<div class="order-item">
+	  		<div class="ui-row-flex item-head">
+	   			<div class="ui-col ui-col-2 ui-nowrap-flex" style="font-size: 0.14rem;color:#333;">订单号：{$order['orderNo']}<span style="float : right;">邮费：{$order['deliverMoney']}</span></div>
+	 		</div>
+	     	{volist name="$rs['goods'][$order['orderId']]" id="vo"}
+			<div class="ui-row-flex ui-whitespace border-b" style="border-bottom:1px solid #f2f2f2;">
+				<div class="">
+					<img src="__RESOURCE_PATH__/{$vo['goodsImg']}" class="o-Img">
+				</div>
+				<div class="o-gInfo-container">
+					<div class="o-gInfo">
+						<p class="o-gName ui-nowrap-multi ">{$vo['goodsName']}</p>
+						{if condition="count($vo['goodsSpecNames']) gt 0"}
+						<p class="o-gSpec ui-nowrap-flex">
+							{volist name="$vo['goodsSpecNames']" id="spec"}
+								{$spec}
+							{/volist}
+						</p>
+						{/if}
+					</div>
+					<div class="o-gInfo2 wst-flex-row wst-ac wst-jsb">
+						<p class="o-gPrice">¥ {$vo['goodsPrice']}</p><p class="o-gNum">x {$vo['goodsNum']}</p>
+					</div>
+				</div>
+			</div>
+	       	{/volist}
+	      	<div class="ui-btn-wrap" style="text-align: right;padding:10px 0">
+	        	<span class="wst-orders_pricet">总金额：<span class="wst-orders_prices">¥ <?php echo sprintf("%.2f", $order['needPay']);?></span></span>
+	      	</div>
+	      	<div class="wst-clear"></div>
+		</div>
+	    {/volist}
+	    <div class="wst-wa-info">
+	    	<p class="info">钱包余额：<span>¥ {$userMoney}</span>，待支付订单总额：<span>¥ {$needPay}</span></p>
+	    	{if($userMoney>=$rs['totalMoney'])}
+	    	{if($payPwd==0)}
+	    		<p class="pay-info">您尚未设置支付密码，请设置支付密码</p>
+	    		<div class="pay">设置密码：<input type="password" id="payPwd" maxlength="6" autocomplete="off"></div>
+	    		<div class="pay">确认密码：<input type="password" id="payPwd2" maxlength="6" autocomplete="off"></div>
+	    	{else}
+	    		<div class="pay">支付密码：<input type="password" id="payPwd" maxlength="6" autocomplete="off"></div>
+	    	{/if}
+	    	{/if}
+	    </div>
+	    {if($payPwd==1 && $userMoney>=$rs['totalMoney'])}<div class="wst-wa-forget ui-whitespace"><a href="{:url('mobile/users/backPayPass')}">忘记密码？</a></div>{/if}
+		<div style="text-align: center;padding:0 0.12rem;">
+			{if($userMoney>=$rs['totalMoney'])}
+			<button type="button" class="wst-btn-dangerlo" onclick="javascript:walletPay({$payPwd});" style="width: 100%;  display: inline-block;">确认支付</button>
+			{else}
+			<button type="button" class="wst-btn-dangerlo" style="width: 80%;  display: inline-block;" disabled>余额不足</button>
+			{/if}
+		</div>
+	{else}
+		<ul class="ui-row-flex wst-flexslp">
+			<li class="ui-col ui-flex ui-flex-pack-center">
+			<p>{$message}</p>
+			</li>
+		</ul>
+	{/if}
+	</section>
+{/block}
+{block name="footer"}{/block}
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/js/rsa.js"></script>
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__MOBILE__/users/orders/orders_list.js?v={$v}'></script>
+<script>
+$(document).ready(function(){
+	backPrevPage(WST.U('mobile/orders/index'));
+});
+</script>
+{/block}

@@ -1,0 +1,107 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>登陆日志列表</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>登陆日志</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> 登陆日志</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"></h3>
+                    <div class="pull-left">
+                        {:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-sm delete-all','fa-trash','data-url="'.url(C_NAME.'/delete').'"')}
+                    </div>
+                    {include file="public/search" /}
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover table-sort">
+                        <tr>
+                            <th width="35"><input type="checkbox" class="minimal checkbox-toggle"></th>
+                            <th>ID{:table_sort('id')}</th>
+                            <th>IP{:table_sort('ip')}</th>
+                            <th>登录用户{:table_sort('uid')}</th>
+                            <th>国家{:table_sort('country')}</th>
+                            <th>省{:table_sort('province')}</th>
+                            <th>城市{:table_sort('city')}</th>
+                            <th>区{:table_sort('district')}</th>
+                            <th>创建时间</th>
+                            <th width="66">操作</th>
+                        </tr>
+                        {volist name="dataList" id="vo"}
+                        <tr>
+                            <td><input type="checkbox" name="id[]" value="{$vo.id}" class="minimal"></td>
+                            <td>{$vo.id}</td>
+                            <td><span class="label label-success">{$vo.ip}</span></td>
+                            <td>{$vo['user']['username']} / {$vo['user']['name']}</td>
+                            <td>{$vo.country}</td>
+                            <td>{$vo.province}</td>
+                            <td>{$vo.city}</td>
+                            <td>{$vo.district}</td>
+                            <td>{$vo.create_time}</td>
+                            <td>
+                                {:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+                <div class="box-footer clearfix">
+                    {$dataList->render()|raw}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+        checkboxClass: 'icheckbox_minimal-blue',
+        radioClass: 'iradio_minimal-blue'
+    });
+
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $(".select2").select2({language:"zh-CN"});
+
+    /*全选-反选*/
+    $('.checkbox-toggle').on('ifChecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("check");
+    });
+    $('.checkbox-toggle').on('ifUnchecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("uncheck");
+    });
+
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

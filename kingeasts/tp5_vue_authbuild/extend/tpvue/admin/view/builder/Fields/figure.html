@@ -1,0 +1,108 @@
+{case value="figure"}
+<link rel="stylesheet" href="__LIBS__/layui/css/global.css">
+{php}
+    $webuploader=1;
+      if (strpos($field['name'],'[')) {
+        $field['id'] = str_replace(']','',str_replace('[','',$field['name']));
+      }else{
+        $field['id'] = $field['name'];
+      }
+{/php}
+
+<dl class="">
+	<dt class="">{$field.title}</dt>
+	<dd class="">
+		<div id="wrapper">
+			<div id="container">
+				<div class="upload_photo">
+					<ul class="left">
+						{present name="field.value"} {foreach $field.value as $img}
+						<li>
+							<div class="img_div">
+								<img src="{:cdn_img_url($img,'',1)}" alt="" />
+							</div>
+							<div class="sort_div">
+								 <span class="jt_left">< </span><span class="jt_right">></span>
+							</div>
+							<input type="hidden" name="photos[]" value="{$img}" />
+							<div class="upload_delete">X</div>
+						</li>
+						{/foreach} {/present}
+					</ul>
+					<div class="uploader_add left" id="uploader_photos_add">
+						<img src="__BASE__/images/bg.jpg" alt="" />
+					</div>
+				</div>
+				<div style="padding: 5px 10px;">
+					<p class="color_wran">
+						{notempty name="field.tip"}{$field.tip}{/notempty}
+					</p>
+				</div>
+			</div>
+		</div>
+	</dd>
+</dl>
+
+
+
+
+ <script>
+		
+		$(function() {
+			var uploader_photos = WebUploader.create({
+			// 选完文件后，是否自动上传。
+			auto: true,
+			duplicate: true, // 同一文件是否可以重复上传
+			// swf文件路径
+			swf: '__STATIC__/webuploader/Uploader.swf',
+			// 文件接收服务端。
+			server: "{:url('admin/File/upload',['uploadtype'=>'picture','setpath'=>'goods'])}",
+			//验证文件总数量, 超出则不允许加入队列
+			fileNumLimit: 5,
+			// 如果此选项为false, 则图片在上传前不进行压缩
+			compress: false,
+			// 验证单个文件大小是否超出限制, 超出则不允许加入队列 
+			fileSingleSizeLimit: {php} echo intval(config('picture_upload.maxSize')) ? : 2; {/php}*1024*1024,  
+				// 内部根据当前运行是创建，可能是input元素，也可能是flash.
+
+				//选择文件的按钮
+				pick: '#uploader_photos_add',
+					// 只允许选择图片文件
+					accept: { title: 'Images', extensions: '{:config("picture_upload.exts")}', mimeTypes: 'image/image/gif,image/jpeg,image/png,image/pjpeg' }
+			}); 
+			uploader_photos.on('fileQueued', function(file) {
+				uploader_photos.upload();
+			});
+			/*上传成功**/
+			uploader_photos.on('uploadSuccess', function(file, data) {
+				if(data.status == 1) {
+					data = data.info;
+					var upload_add = '<li><div class="img_div"><img src="' + data.url + '" alt=""></div><div class="sort_div"><span class="jt_left">< </span><span class="jt_right">></span><input type="hidden" name="photos[]" value="' + data.path + '"/></div><div class="upload_delete">X</div></li>';
+					$(".upload_photo ul").append(upload_add);
+
+					uploader_photos.reset();
+				} else {
+					alert(data.info);
+					setTimeout(function() {
+						$(this).removeClass('disabled').prop('disabled', false);
+					}, 1500);
+				}
+			});
+			//多图上传点击<>左右移动图片
+			$("body").on("click",".upload_photo ul li .jt_left",function(){
+				var li_index=$(this).closest("li").index();
+				if(li_index>=1){
+					$(this).closest("li").insertBefore($(this).closest("ul").find("li").eq(Number(li_index)-1));
+				}
+			})
+			$("body").on("click",".upload_photo ul li .jt_right",function(){
+				var li_index=$(this).closest("li").index();
+				$(this).closest("li").insertAfter($(this).closest("ul").find("li").eq(Number(li_index)+1));
+			})
+			//点击多图上传的X,删除当前的图片
+			$("body").on("click",".upload_delete",function(){
+				$(this).closest("li").remove();
+			})
+		})
+ </script>
+{/case}

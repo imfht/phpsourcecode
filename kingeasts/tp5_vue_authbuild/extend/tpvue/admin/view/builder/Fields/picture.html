@@ -1,0 +1,73 @@
+{case value="picture"}
+{php}
+    $webuploader=1;
+      if (strpos($field['name'],'[')) {
+        $field['id'] = str_replace(']','',str_replace('[','',$field['name']));
+      }else{
+        $field['id'] = $field['name'];
+      }
+{/php}
+<dl class="item_{$field.name} {$field.extra_class}">
+    <dt>{$field.title}</dt>
+    <dd>
+        <div id="preview">
+    <!-- <dd id="uploader-demo" style="margin-left: 0;">
+        <input style="width: 288px;padding: 5px 4px;border: 1px solid #eee;float: left;height: 22px;margin-left: 20px;" class="uploader-list" name="{$field.name}" type="text" id="{$field.id}" value="{present name="field.value"}{$field.value}{/present}" class="input normal" {$field.extra_attr}/>
+        {notempty name="field.tip"}<span class="Validform_checktip">{present name="field.confirm"}{eq name="field.confirm" value="required"}<span class="red">*</span> {/eq}{/present}{$field.tip}</span>{/notempty}
+    </dd> -->
+        <span id="field_uploader_picture_{$field.id}">
+        <img id="uploader_{$field.id}" border="0" src="{present name="field.value"}{$field.value|cdn_img_url=###,'',1|default='/public/static/mall/images/photo_icon.png'}{else/}/static/admin/images/photo_icon.png{/present}" width="150" height="150"></span>
+        <!-- <input type="file" onChange="previewImage(this)" id="previewImg" style="display:none"> -->
+        <input class="attach" type="hidden" id="{$field.id}" name="{$field.name}" value="{$field.value|default=''}"/>
+        <span class="Validform_checktip"><span style="color:red">*</span> 文件格式GIF、JPG、JPEG、PNG文件大小80k以内，建议尺寸80*80像素</span>
+        </div>
+        
+    </dd>
+</dl>
+<script>
+
+    //本地上传
+    $(function () {
+        var uploader_{$field.id} = WebUploader.create({
+            // 选完文件后，是否自动上传。
+            auto: true,
+            duplicate: true,// 同一文件是否可以重复上传
+            // swf文件路径
+            swf: '__STATIC__/webuploader/Uploader.swf',
+            // 文件接收服务端。
+            server: "{:url('admin/file/upload',['uploadtype'=>'picture','setpath'=>'product'])}",
+            //验证文件总数量, 超出则不允许加入队列
+            fileNumLimit: 5,
+            // 如果此选项为false, 则图片在上传前不进行压缩
+            compress: false, 
+            // 验证单个文件大小是否超出限制, 超出则不允许加入队列 
+            fileSingleSizeLimit:{php}echo intval(config('picture_upload.maxSize')) ? : 2;{/php}*1024*1024,  
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+
+            //选择文件的按钮
+            pick: '#field_uploader_picture_{$field.id}',
+            // 只允许选择图片文件
+            accept:{title:'Images',extensions:'{:config("picture_upload.exts")}',mimeTypes:'image/image/gif,image/jpeg,image/png,image/pjpeg'}
+        });
+        uploader_{$field.id}.on('fileQueued', function (file) {
+            uploader_{$field.id}.upload();
+        });
+        /*上传成功**/
+        uploader_{$field.id}.on('uploadSuccess', function (file, data) {
+            if (data.status==1) {
+                data = data.info;
+                $("#{$field.id}").val(data.path);
+                $("#uploader_{$field.id}").attr('src',data.url);
+
+                uploader_{$field.id}.reset();
+            } else {
+                alert(data.info);
+                setTimeout(function () {
+                    $(this).removeClass('disabled').prop('disabled', false);
+                }, 1500);
+            }
+        });
+
+  })
+</script>
+{/case}

@@ -1,0 +1,193 @@
+{extend name="public/base" /}
+
+{block name="title"}
+<title>{$archive.title} - {:confv('title')}</title>
+<meta name="keywords" content="{$archive.keywords}">
+<meta name="description" content="{$archive.description}">
+{/block}
+
+{block name="pjax_container"}
+<div class="content">
+    <div class="row">
+        <div class="col-sm-8" >
+        	<div class="box box-solid">
+	            <div class="box-body text-muted">
+	            	<a class="text-muted" href="{$Think.H_NAME}">首页</a>&nbsp; > &nbsp;<a class="text-muted" href="/category/{$parent.dirs}">{$parent['typename']}</a>&nbsp; > &nbsp;<span class="text-muted">{$arctype.typename}</span>
+        	    </div>
+          	</div>
+			<!--文章分类-->
+			<div class="box box-solid">
+	            <div class="box-body x-pt-0">
+	            	<div class="row  x-mlr-0">
+	            		<div class="col-sm-3 col-xs-4 x-plr-5 x-mt-10">
+							<a href="/category/{$parent.dirs}" class="btn btn-block btn-default">{$parent['typename']}</a>
+						</div>
+	            		{volist name="typelist" id="vo"}
+						<div class="col-sm-3 col-xs-4 x-plr-5 x-mt-10">
+							<a href="/category/{$vo.dirs}" class="btn btn-block btn-default">{$vo['typename']}</a>
+						</div>
+						{/volist}
+	            	</div>
+	            </div>
+          	</div>
+			<!--文章内容-->
+            <div class="box box-solid">
+            	<div class="box-header with-border">
+            		<h4 class="x-lh-24 x-mtb-0 archive-title">{$archive.title}</h4>
+            	</div>
+                <div id="liulan-img" class="box-body archive-content-img">
+					<div class="x-tc-hui x-mb-5">
+				        <span>
+				            <a href="/category/{$archive['arctype']['dirs']}" class="text-muted">
+				            <i class="fa fa-tags"></i> {$arctype.typename}</a>
+				        </span>
+				        <span class="pull-right">
+				            <i class="fa fa-clock-o x-pr-5"> {$archive.create_time}</i>
+				            <i class="fa fa-eye x-pr-5"> {$archive.click}</i>
+				            <i class="fa fa-commenting-o x-pr-5"> {$archive['reply_num']}</i>
+				            <i class="zannum fa fa-thumbs-o-up"> {$archive['zan_num']}</i>
+				        </span>
+					</div>
+					<div class="text-center">
+						{volist name="$archive['imgurl']" id="vo"}
+						<img src="{$vo}" />
+						{/volist}
+					</div>
+					<div class="x-ptb-5">
+                        {$archive.content|raw}
+                    </div>
+                    <div class="x-x-t x-x-b">
+                    	<div class="x-ptb-5">
+							{:prenext($archive)}
+                    	</div>
+                    </div>
+                    <div class="text-right x-mt-10">
+                		<div class="">
+						    <form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+						    	<input type="hidden" name="id" value="{$archive['id']}" />
+							    <input type="hidden" name="type" value="archive" />
+              					<button type="button" class="submits btn btn-primary">
+              						<i class="fa zannum fa-thumbs-o-up"> {$archive['zan_num']}</i>  赞
+              					</button>
+							</form>
+                		</div>
+                    </div>
+                    {:click($archive)}
+                </div>
+            </div>
+			<!--文章回复-->
+			<div class="box box-primary box-solid">
+	            <div class="box-header with-border">
+	            	<button type="button" data-toggle="collapse" data-target="#huifu{$archive['id']}" class="box-title btn btn-box-tool">
+	            		<i class="fa fa-commenting-o"> {$archive.reply_num} 条回复</i>
+	            	</button>
+	            </div>
+				<div id="reply_list" class="box-body " id="huifu{$archive['id']}"></div>
+				<div class="x-mb-15 x-mlr-15">
+					<button class="btn btn-block btn-primary" id="new-arc-btn" data-page="1" data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt; 加载中...">点击加载</button>
+				</div>
+	            <div class="box-footer">
+	              	<form action="{:url('arc_reply')}" method="post" onsubmit="return false">
+			            <input type="hidden" name="pid" value="0" />
+			            <input type="hidden" name="aid" value="{$archive['id']}" />
+		                <img class="img-responsive img-circle img-sm" src="{$user['userinfo']['avatar']|default='/static/common/img/default.png'}">
+		                <div class="img-push">
+			                <div class="input-group input-group-sm">
+			                	<input type="text" name="contents" class="form-control" {notempty name="$user"} placeholder="回复内容" {else /} placeholder="登录回复"{/notempty}>
+			                    <span class="input-group-btn">
+			                    	{notempty name="$user"}
+			                      	<button type="button" class="submits btn btn-info btn-flat">回复</button>
+			                      	{else /}
+			                      	<a onclick="poplogin()" class="btn btn-info btn-flat">登录回复</a>
+			                      	{/notempty}
+			                    </span>
+			              	</div>
+		                </div>
+	              	</form>
+	            </div>
+          	</div>
+
+        </div>
+
+        <div class="col-sm-4" >
+            {include file="inc/right" /}
+        </div>
+
+    </div>
+</div>
+
+<script>
+$(function() {
+	var viewer = new Viewer(document.getElementById('liulan-img'), {	//浏览图片
+		title:false,	//显示当前图片的标题（现实 alt 属性及图片尺寸）默认 true
+		fullscreen:false,	//播放时是否全屏,默认 true
+		interval:3000,	//播放间隔，单位为毫秒 默认 5000
+	});
+	$('body').off('click', '#new-arc-btn');
+	$('body').on("click", '#new-arc-btn', function (event) {
+		var _this = $(this);
+		var page = _this.data('page');
+		_this.button('loading');
+		$.ajax({
+			type: "get",
+			data:{
+				aid: "{$archive['id']}",
+				page: page
+			},
+			url: "/index/detail/replylist",
+			success: function (html) {
+				// console.log(html);
+				if (html != '') {
+					$('#reply_list').append(html);
+					_this.data("page", page + 1); //分页数+1
+					_this.button('reset');
+				} else {
+					_this.html('没有回复了');
+				}
+			}
+		});
+	});
+	$('#new-arc-btn').trigger("click");
+    //提交
+    $('body').off('click', '.huifu_btn');
+    $('body').on("click", '.huifu_btn', function(event){
+        var _this = $(this);
+        _this.button('loading');
+        var form = _this.closest('form');
+        if(form.length){
+            var ajax_option={
+                dataType:'json',
+                success:function(data){
+//              	console.log(data);
+                    if(data.status == '1'){
+                        layer.msg(data.info,function(){
+                        	_this.button('reset');
+							// $('#reply_list').x_open_dh('fadeOut');
+							$('#reply_list').empty();
+							$('#new-arc-btn').data('page',1);
+							$('#new-arc-btn').trigger("click");
+                        });
+                    }else if(data.status == '2'){	//要登录
+                        layer.msg(data.info,function(){
+                        	_this.button('reset');
+                        	poplogin(type='login');
+                        });
+                    }else if(data.status == '3'){	//要刷新页面
+                        layer.msg(data.info,function(){
+                        	_this.button('reset');
+                        	location.reload();
+                        });
+                    }else{
+                        _this.button('reset');
+                        layer.msg(data.info);
+                    }
+                }
+            }
+            form.ajaxSubmit(ajax_option);
+        }
+    });
+
+})
+</script>
+
+{/block}

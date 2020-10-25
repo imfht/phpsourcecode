@@ -1,0 +1,80 @@
+<!-- 财务年度对比 -->
+<div class="span6 sort-item" rel="{$id}">
+	<div class="dash-border">
+		<div class="dash-title">
+			<img src="__PUBLIC__/img/chart.png" style="width:17.5px;" />&nbsp;&nbsp;{$title}&nbsp;
+			<small>
+				<a rel="{$id}" class="update" href="javascript:void(0)" id="update_widget"><i class="icon-pencil"></i></a> &nbsp;
+				<a href="{:U('index/widget_delete', 'id='.$id)}" id="delete_widget"><i class="icon-remove"></i></a> &nbsp; 
+			</small>
+			<a href="{:U('finance/analytics')}" class="dash-swtich">切换到财务统计 >></a>
+		</div>
+		<div class="cut-line"></div>
+		<div class="content-chart" id="finance_year_{$id}">拼命加载中...</div>
+	</div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/js/mychart/macarons.js"></script>
+<script src="__PUBLIC__/js/mychart/echarts-plain.js"></script>
+<script type="text/javascript">
+	var myChart = echarts.init(document.getElementById('finance_year_{$id}'),macarons);
+	option = {
+		tooltip : {
+			trigger: 'axis'
+		},
+		legend: {
+			data:['今年','去年']
+		},
+		calculable : true,
+		xAxis : [
+			{
+				type : 'category',
+				data : ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+			}
+		],
+		yAxis : [
+			{
+				type : 'value'
+			}
+		],
+		series : [
+			{
+				name:'今年',
+				type:'bar',
+				data:[],
+				markPoint : {
+					data : [
+						{type : 'max', name: '最大值'},
+					]
+				}
+			},
+			{
+				name:'去年',
+				type:'bar',
+				data:[],
+				markPoint : {
+					data : [
+						{type : 'max', name: '最大值'}
+					]
+				}
+			}
+		]
+	};
+
+	$.ajax({
+		type: "get",
+		url: "{:U('finance/getYearReceiveComparison')}",
+		dataType: "json", //返回数据形式为json
+		async: false, //同步执行
+		success: function (result) {
+			if (result) {
+				option.series[0].data = result.data.this_year;
+				option.series[1].data = result.data.prev_year;
+				myChart.setOption(option);
+			}
+		},
+		error: function (errorMsg) {
+			$('#finance_year').html('<span class="error_msg">获取信息失败...</span>');
+		}
+	});
+</script>
+<!-- 财务年度对比 END-->

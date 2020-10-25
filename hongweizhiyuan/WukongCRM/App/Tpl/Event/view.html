@@ -1,0 +1,229 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header">
+		<h4><a name="tab">{:L('THE_SCHEDULE_FOR_DETAILS')}</a></h4>
+	</div>
+	<div class="row">
+		<div  class="tabbable span12">
+			<include file="Public:alert" />
+			<ul class="nav nav-tabs">
+				<li><a href="#tab1" data-toggle="tab">{:L('BASIC_INFO')}</a></li>
+				<li><a href="#tab2">{:L('LOG')}({$event['log_count']})</a></li>
+				<li><a href="#tab3">{:L('Attachment')}({$event['file_count']})</a></li>
+			</ul>
+			<div class="tab-content">
+				
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<td <if condition="C('ismobile') eq 1">colspan="2"<else />colspan="4"</if>>
+									<span style="font-size: 14px;">
+										<a href="javascript:void(0)" class="add_log">{:L('ADD_LOG')}</a>&nbsp;|
+										<a href="javascript:void(0)" class="add_file">{:L('DIALOG_ADD_ATTACHMENTS')}</a>&nbsp;|
+										<a href="{:U('event/edit', 'id='.$event['event_id'])}"/>{:L('EDITING')}</a>&nbsp;|
+										<a href="{:U('event/delete', 'redirect=1&id='.$event['event_id'])}" class="del_confirm"/>{:L('DELETE')}</a>&nbsp;|
+										<a href="javascript:void(0)" onclick="javascript:history.go(-1)">{:L('RETURN')}</a>
+									</span>
+								</td>
+							</tr>
+						</thead>
+						<tbody>
+							<th <if condition="C('ismobile') eq 1">colspan="2"<else />colspan="4"</if>>{:L('BASIC_INFO')}</th>
+							<tr>								
+								<td class="tdleft" width="15%">{:L('THEME')}:</td>
+								<td width="35%">{$event.subject}</td>
+								<if condition="C('ismobile') eq 1"></tr><tr></if>
+								<td class="tdleft" width="15%">{:L('OWNER_ROLE')}:</td>
+								<td width="35%"><notempty name="event.owner.user_name"><a class="role_info" rel="{$event.owner.role_id}" href="javascript:void(0)">{$event.owner.user_name}</a></notempty></td>
+							</tr>
+							<tr>
+								<td class="tdleft" >{:L('START_DATE')}:</td>
+								<td><notempty name="event.start_date">{$event.start_date|date="Y-m-d",###}</notempty></td>
+								<if condition="C('ismobile') eq 1"></tr><tr></if>
+								<td class="tdleft" >{:L('END_TIME')}:</td>
+								<td><notempty name="event.end_date">{$event.end_date|date="Y-m-d",###}</notempty></td>
+								
+							</tr>
+							<tr>
+								<td class="tdleft" >{:L('PLACE')}:</td>
+								<td>{$event.venue}</td>
+								<if condition="C('ismobile') eq 1"></tr><tr></if>
+								<td class="tdleft">{:L('SEND_A_NOTIFICATION_EMAIL')}:</td>
+								<td><if condition="$event.send_email eq 1">{:L('YES')}<else />{:L('NO')}</if></td>
+							</tr>
+							<notempty name="event.module.module_name">
+								<tr>
+									<td class="tdleft">{:L('CORRELATION')}{$event.module.module_name}</td>
+									<td ><a href="{:U($event['module']['module'].'/view','id='.$event['module']['module_id'])}">{$event.module.name}</a></td>
+									<!-- <td class="tdleft" >是否重复日程:</td>
+									<td><if condition="$event.recurring eq 1">是<else />否</if></td> -->
+									<if condition="C('ismobile') neq 1"><td colspan="2">&nbsp;</td></if>
+								</tr>
+							</notempty>
+							<tr>
+								<td class="tdleft" >{:L('DESCRIBE')}:</td>
+								<td <if condition="C('ismobile') neq 1">colspan="3"</if>><if condition="$event['description']"><pre>{$event.description}</pre></if></td>
+							</tr>
+						</tbody>
+					</table>
+                    <a name="tab2"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('CORRELATION_LOG')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$event.log eq null">
+							<tr>
+								<td>{:L('THERE_IS_NO_DATA')}</td>
+							</tr>
+						<else />
+							<volist name="event.log" id="vo">
+								<tr>
+									<td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty> &nbsp; 
+										{$vo.create_date|date="Y-m-d  g:i:s a",###} &nbsp; 
+										<notempty name="vo.create_date"> &nbsp; </notempty>
+										<if condition="C('ismobile') eq 1"><br/></if>
+										{$vo.subject}
+									</td>
+									<td>
+										<if condition="$event['is_deleted'] neq 1"><a href="javascript:void(0)" rel="{$vo.log_id}" class="edit_log">{:L('EDITING')}</a>&nbsp; <a href="{:U('log/delete','r=REventLog&id='.$vo['log_id'])}">{:L('DELETE')}</a></if>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2">
+										<if condition="strlen($vo['content']) gt 100">
+											<div id="slog_{$vo.log_id}">
+											<pre>{$vo.content|msubstr=###,0,100}
+											<a class="more" rel="{$vo.log_id}" href="javascript:void(0)">{:L('VIEW_FULL_INFO')}</a></pre>
+											</div>
+											<div id="llog_{$vo.log_id}" class="hide">
+												<pre>{$vo.content}</pre>
+											</div>
+										<else/>
+											<pre>{$vo.content}</pre>
+										</if>
+									</td>
+								</tr>
+							</volist>
+						</if>
+						<if condition="$event['is_deleted'] neq 1">
+							<tr>
+								<td colspan="2">
+									<a href="javascript:void(0);" class="add_log">{:L('ADD')}</a>
+								</td>
+							</tr>
+						</if>
+					</table>
+                    <a name="tab3"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('RELATED_FILE')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$event.file eq null">
+							<tr>
+								<td>{:L('FOUND_NO_RECORD')} </td>
+							</tr>
+						<else /> 
+							<tr>
+								<td>&nbsp;</td>
+								<td>{:L('FILE_NAME')}</td>
+								<td>{:L('SIZE')}</td>
+								<if condition="C('ismobile') neq 1"><td>{:L('ADDED_BY')}</td>
+								<td>{:L('ADD_TIME')}</td></if>
+							</tr>
+							<volist name="event.file" id="vo">
+								<tr>
+									<td class="tdleft">
+										<a href="{:U('file/delete', 'id='.$vo['file_id'].'&r=REventFile')}" class="del_confirm">{:L('DELETE')}</a>
+									</td>
+									<td>
+										<a href="{$vo.file_path}">{$vo.name}</a>
+									</td>
+									<td>
+										{$vo.size}{:L('BYTE')}
+									</td>
+									<if condition="C('ismobile') neq 1"><td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty></td>
+									</td>
+									<td>
+										<notempty name="vo.create_date">{$vo.create_date|date="Y-m-d g:i:s a",###}</notempty>
+									</td></if>
+								</tr>
+							</volist>
+						</if>
+						<tr>
+							<td <if condition="C('ismobile') neq 1">colspan="5"<else />colspan="3"</if>>
+								<a href="javascript:void(0);" id="add_file">{:L('ADD')}</a>
+							</td>
+						</tr>
+					</table>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-file" title="{:L('DIALOG_ADD_ATTACHMENTS')}">loading...</div>
+<div class="hide" id="dialog-log" title="{:L('ADD_LOG')}">loading...</div>
+<div class="hide" id="dialog-log-edit" title="{:L('DIALOG_EDIT_LOG')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+
+$("#dialog-file").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-log-edit").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-log").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$(function(){
+	$(".add_file").click(function(){
+		$('#dialog-file').dialog('open');
+		$('#dialog-file').load('{:U("file/add", "r=REventFile&module=event&id=".$event["event_id"])}');
+	});
+	$(".add_log").click(function(){
+		$('#dialog-log').dialog('open');
+		$('#dialog-log').load('{:U("log/add", "r=REventLog&module=event&id=".$event["event_id"])}');
+	});
+	$(".edit_log").click(function(){
+		$log_id = $(this).attr('rel');
+		$('#dialog-log-edit').dialog('open');
+		$('#dialog-log-edit').load('{:U("log/edit","id=")}'+$log_id);
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	$(".more").click(function(){
+		log_id = $(this).attr('rel');
+		$('#llog_'+log_id).attr('class','');
+		$('#slog_'+log_id).attr('class','hide');
+	});
+});
+</script>
+<include file="Public:footer" />

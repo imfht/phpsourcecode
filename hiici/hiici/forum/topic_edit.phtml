@@ -1,0 +1,153 @@
+<?php 
+
+$auth = @$_SESSION['auth'];
+if (empty($auth)) die('用户未登录！^_^');
+
+if (empty($_GET['topic_id'])) die;
+
+$topic_id = intval($_GET['topic_id']);
+
+global $config;
+if (1 > dt_count('forum_topic', "WHERE id = $topic_id AND user_id = ".$auth['id']) 
+	&& 1 > dt_count('forum', "WHERE id = (SELECT forum_id FROM forum_topic WHERE id = $topic_id) AND user_id = ".$auth['id']) 
+	&& !in_array($auth['id'], $config['manager'])
+	&& $city_info['user_id'] != $auth['id']) die('没有权限！^_^');
+
+$topic = dt_query_one("SELECT forum_id, title, icon_url, content, orders, start_t, start_t_s, order_l, order_l_n, out_s, out_s_u, pay FROM forum_topic WHERE id = $topic_id");
+if (!$topic) die('获取数据失败！');
+
+$forum = dt_query_one("SELECT id, name, kind, ext FROM forum WHERE id = ".$topic['forum_id']);
+if (!$forum) die('获取数据失败！');
+
+?>
+<?php require_once('inc/umediter_text.html'); ?> 
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<?php if (0 != $forum['kind']) { ?>
+			<li><a href="?c=forum&a=forum_list&m_falter=5&kind=<?php echo $forum['kind'] ?>"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> <?php echo dt_query_one("SELECT name FROM forum_kind WHERE id = ".$forum['kind'])['name'] ?></a></li>
+			<?php } ?>
+			<li><a href="?c=forum&a=topic_list&forum_id=<?php echo $forum['id'] ?>"><?php echo $forum['name'] ?></a></li>
+			<li><a href="?c=forum&a=topic_show&topic_id=<?php echo $topic_id ?>"><?php echo $topic['title'] ?></a></li>
+			<li class="active">编辑 </li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="forum-add">
+		<div class="row clearfix">
+			<div class="col-md-12 column">
+				<h3><span class="glyphicon glyphicon-edit"></span> 编辑 [<?php echo $topic['title'] ?>] </h3>
+				<hr class="solid">
+				<div class="col-md-11 column">
+					<form class="form-horizontal" id="do_topic_edit" action="javascript:do_topic_edit(<?php echo $topic_id ?>)" method="post">
+						<fieldset>
+							<!-- topic_id -->
+							<input type="hidden" name="topic_id" value="<?php echo $topic_id ?>"/>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">标题</label>  
+								<div class="col-md-9">
+									<input name="title" type="text" placeholder="某某话题" class="form-control input-md" required="" value="<?php echo $topic['title'] ?>">
+								</div>
+							</div>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">内容</label>  
+								<div class="col-md-9">
+									<textarea class="form-control input-lg" id="topic_content" name="content" style="width:105%;height:360px" required=""><?php echo $topic['content'] ?></textarea>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-md-2 control-label">图标URL</label>  
+								<div class="col-md-9">
+									<input name="icon_url" type="text" placeholder="http://xxx/xxx/xx.jpg" class="form-control input-md" value="<?php echo $topic['icon_url'] ?>">
+								</div>
+							</div>
+							<?php if (0 != $forum['ext']) { ?>
+							<?php require_once('forum_ext/ext_'.$forum['ext'].'/topic_edit.phtml') ?>
+							<?php } ?>
+							<div class="form-group">
+								<label class="col-md-2 control-label">经纬度</label>  
+								<div class="col-md-9">
+									<input name="geo" type="text" placeholder="26.892061, 112.633721" class="form-control input-md">
+								</div>
+							</div>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">功能选择</label>  
+								<div class="col-md-2">
+									<div class="checkbox"><label><input name="orders" type="checkbox" onclick="check_topic_orders()" <?php if (0 != $topic['orders']) echo 'checked="checkbox"' ?>> 下单功能 </label></div>
+								</div>
+								<div class="col-md-7" id="topic_orders_s" style="<?php if (0 == $topic['orders']) echo 'display:none' ?>">
+									<div class="row clearfix">
+										<label class="col-md-2 control-label">价格</label>  
+										<div class="col-md-10">
+											<input name="orders_p" type="text" placeholder="0.00" class="form-control input-md" value="<?php if (0 != $topic['orders']) echo $topic['orders'] ?>">
+										</div>
+									</div>
+									<?php if (0 < $topic['pay']) { ?>
+									<br>
+									<div class="row clearfix">
+										<label class="col-md-2 control-label">设置时间</label>  
+										<div class="col-md-5">
+											<label class="radio-inline"> <input type="radio" name="start_t" value="0" onclick="check_start_t(0)" <?php if (0 == $topic['start_t']) echo 'checked' ?> > 不设置 </label>
+											<label class="radio-inline"> <input type="radio" name="start_t" value="1" onclick="check_start_t(1)" <?php if (1 == $topic['start_t']) echo 'checked' ?> > 开始 </label>
+											<label class="radio-inline"> <input type="radio" name="start_t" value="2" onclick="check_start_t(2)" <?php if (2 == $topic['start_t']) echo 'checked' ?> > 结束 </label>
+										</div>
+										<div class="col-md-5">
+											<input id="start_t_s" name="start_t_s" type="text" placeholder="格式：0000-00-00 00:00:00" class="form-control input-md" style="<?php if (0 == $topic['start_t']) echo 'display:none' ?>" value="<?php echo date('Y-m-d H:i:s', $topic['start_t_s']) ?>" >
+										</div>
+									</div>
+									<br>
+									<div class="row clearfix">
+										<label class="col-md-2 control-label">最大订单</label>  
+										<div class="col-md-4">
+											<label class="radio-inline"> <input type="radio" name="order_l" value="0" onclick="check_order_l(0)" <?php if (0 == $topic['order_l']) echo 'checked' ?> > 不限制 </label>
+											<label class="radio-inline"> <input type="radio" name="order_l" value="1" onclick="check_order_l(1)" <?php if (1 == $topic['order_l']) echo 'checked' ?> > 限制 </label>
+										</div>
+										<div class="col-md-6">
+											<input id="order_l_n" name="order_l_n" type="text" placeholder="最大订单量" class="form-control input-md" style="<?php if (0 == $topic['order_l']) echo 'display:none' ?>" value="<?php echo $topic['order_l_n'] ?>" >
+										</div>
+									</div>
+									<br>
+									<div class="row clearfix">
+										<label class="col-md-2 control-label">跳转链接</label>  
+										<div class="col-md-4">
+											<label class="radio-inline"> <input type="radio" name="out_s" value="0" onclick="check_out_s(0)" <?php if (0 == $topic['out_s']) echo 'checked' ?> > 不设置 </label>
+											<label class="radio-inline"> <input type="radio" name="out_s" value="1" onclick="check_out_s(1)" <?php if (1 == $topic['out_s']) echo 'checked' ?> > 设置 </label>
+										</div>
+										<div class="col-md-6">
+											<input id="out_s_u" name="out_s_u" type="text" placeholder="http://hiici.com/" class="form-control input-md" style="<?php if (0 == $topic['out_s']) echo 'display:none' ?>" <?php if ('0' != $topic['out_s_u']) echo 'value="'.$topic['out_s_u'].'"' ?> >
+										</div>
+									</div>
+									<?php } ?>
+								</div>
+							</div>
+							<!-- token -->
+							<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+							<!-- Button -->
+							<div class="form-group">
+								<label class="col-md-2 control-label"></label>
+								<div class="col-md-2">
+									<button class="btn btn-primary btn-block <?php if (empty($_SESSION['auth'])) echo "disabled"; ?>">保存</button>
+								</div>
+							</div>
+						</fieldset>
+					</form>	
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+var topic_content = UM.getEditor("topic_content");  
+
+$(document).ready(function(){
+});
+
+</script>

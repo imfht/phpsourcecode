@@ -1,0 +1,171 @@
+{template "header.html", "/"}
+<script language="javascript">
+    // 这是加入收藏夹的ajax请求，我就随意写了一下提示信息，至于美化啊什么交给你们了
+    function dr_favorite() {
+        $.get("/index.php?s={MOD_DIR}&c=api&m=favorite&id={$id}", function(data){
+            if (data == 1) {
+                dr_tips("没有登录，不能收藏");
+            } else if (data == 2) {
+                dr_tips("文档不存在，无法收藏");
+            } else if (data == 3) {
+                dr_tips("更新收藏成功", 3, 1);
+            } else if (data == 4) {
+                dr_tips("收藏成功", 3, 1);
+            }
+        });
+    }
+</script>
+<div class="page-container">
+    <div class="page-content-wrapper">
+        <div class="page-content">
+            <div class="container">
+
+                <ul class="page-breadcrumb breadcrumb">
+                    <li>
+                        <a href="{SITE_URL}">首页</a>
+                        <i class="fa fa-circle"></i>
+                    </li>
+                    <li>
+                        <a href="{MODULE_URL}">{MODULE_NAME}</a>
+                        <i class="fa fa-circle"></i>
+                    </li>
+                    {dr_catpos($catid, '', true, '<li><a href="{url}">{name}</a><i class="fa fa-circle"></i></li>')}
+                    <li>
+                        <span>{$title}</span>
+                    </li>
+                </ul>
+
+                <div class="page-content-inner">
+                    <div class="search-page search-content-2">
+                        <div class="row">
+                            <div class="col-md-12">
+
+                                <div class="portlet light">
+                                    <div class="portlet-title">
+                                        <div class="caption">
+                                            <span class="caption-subject font-dark bold uppercase">{$title}</span>
+                                        </div>
+                                        <div class="actions">
+                                            <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;" data-original-title="" title="全屏查看"> </a>
+                                        </div>
+                                    </div>
+                                    <div class="search-post-foot" style="padding-top:0px;text-align:left;padding-bottom: 10px">
+                                        <div class="search-post-meta">
+                                            <i class="icon-user font-blue"></i>
+                                            <a href="javascript:;">{$author}</a>
+                                        </div>
+                                        <div class="search-post-meta">
+                                            <i class="icon-calendar font-blue"></i>
+                                            <a href="javascript:;">{$updatetime}</a>
+                                        </div>
+                                        <div class="search-post-meta">
+                                            <i class="icon-fire font-blue"></i>
+                                            <a href="javascript:;">{dr_show_hits($id)}次</a>
+                                        </div>
+                                        <div class="search-post-meta">
+                                            <i class="icon-bubble font-blue"></i>
+                                            <a href="javascript:;">{$comments}</a>
+                                        </div>
+                                        <div class="search-post-meta">
+                                            <i class="icon-flag font-blue"></i>
+                                            <a href="javascript:dr_favorite();">加入收藏</a>
+                                        </div>
+                                    </div>
+                                    <div class="portlet-body" style="height: auto;">
+                                        {$content}
+                                    </div>
+
+                                    <div class="blog-single-foot">
+                                        <ul class="blog-post-tags">
+                                            {loop $keyword_list $name $url}
+                                            <li class="uppercase">
+                                                <a href="{$url}" target="_blank">{$name}</a>
+                                            </li>
+                                            {/loop}
+                                        </ul>
+                                        <p class="f14" style="margin-bottom: ">
+                                            <strong>上一篇：</strong>{if $prev_page}<a href="{$prev_page.url}">{$prev_page.title}</a>{else}没有了{/if}<br>
+                                            <strong>下一篇：</strong>{if $next_page}<a href="{$next_page.url}">{$next_page.title}</a>{else}没有了{/if}
+                                        </p>
+                                    </div>
+
+                                    {dr_module_comment(MOD_DIR, $id)}
+
+                                </div>
+
+
+                            </div>
+                            <div class="col-md-12">
+                                <!-- BEGIN PORTLET-->
+                                <div class="portlet light ">
+                                    <div class="portlet-title">
+                                        <div class="caption">
+                                            <span class="caption-subject font-dark bold uppercase">栏目索引</span>
+                                        </div>
+
+                                    </div>
+                                    <div class="portlet-body">
+                                        <div class="todo-project-list">
+                                            <ul class="nav nav-stacked">
+                                                <!--循环输出当前栏目的同级栏目，定义返回值return=c-->
+                                                {php $a = array('badge-info', 'badge-success', 'badge-default', 'badge-danger');}
+                                                {list action=category pid=$cat.pid return=c}
+                                                <li {if $c.id==$catid} class="active"{/if}><a href="{$c.url}"><span class="badge {$a[array_rand($a)]}"> {$c.total} </span>{$c.name}</a></li>
+                                                {/list}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="portlet light ">
+                                    <div class="portlet-title">
+                                        <div class="caption">
+                                            <span class="caption-subject font-dark bold uppercase">相关内容</span>
+                                        </div>
+
+                                    </div>
+                                    <div class="portlet-body">
+                                        <div class="todo-project-list">
+                                            <ul class="nav nav-stacked">
+                                                <!--此标签用于调用相关文章，tag=关键词1,关键词2，多个关键词,分隔，num=显示条数，field=显示字段-->
+                                                {list action=related field=title,url,updatetime tag=$tag num=5}
+                                                <li><a href="{$t.url}" title="{$t.title}"><span class="badge {$a[array_rand($a)]}" style="float: left"> {$key+1} </span>
+                                                    &nbsp;{dr_strcut($t.title, 33)}</a></li>
+                                                {/list}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="portlet light ">
+                                    <div class="portlet-title">
+                                        <div class="caption">
+                                            <span class="caption-subject font-dark bold uppercase">相关Tag</span>
+                                        </div>
+
+                                    </div>
+                                    <div class="portlet-body">
+                                        <div class="todo-project-list">
+                                            <div class="nav nav-stacked" style="line-height: 25px">
+                                                <!--此标签用于调用tag标签，非当前模块需要加上model=模块名称,num=显示条数-->
+                                                {list action=tag order=rand num=30}
+                                                <a href="{$t.url}" title="点击量：{$t.hits}"><span class="badge {$a[array_rand($a)]}">{$t.name}</span></a>
+                                                {/list}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- END PORTLET-->
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{template "footer.html"}

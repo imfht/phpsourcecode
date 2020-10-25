@@ -1,0 +1,142 @@
+{% extends 'PHPDishWebBundle::layout.html.twig' %}
+
+{% block title %} {{ post.title }} {% endblock %}
+
+{% block content %}
+<div class="container narrow-layout">
+    <div class="row">
+        <div  class="col-md-12">
+            <article class="panel panel-u post-detail">
+                <header class="panel-heading">
+                    <h1 class="entry-title title">{{ post.title }}</h1>
+                    <div class="media author">
+                        {% set userHome = path('user_view', {username: post.user.username}) %}
+                        <div class="media-left"><a class="avatar" href="{{ userHome }}"><img src="{{ post.user.avatar|imagine_filter('middle_square') }}" class="img-responsive"/></a></div>
+                        <div class="media-body">
+                            <div class="media-heading">
+                                <span class="username"><a href="{{ userHome }}">{{ post.user.username }}</a></span>
+                                <span data-role="follow" data-username="{{ post.user.username }}">
+                                    {% if (is_granted('IS_AUTHENTICATED_REMEMBERED') and post.user.isFollowedBy(app.user)) %}
+                                        <button class="btn btn-sm btn-default" data-action="unfollow"><i class="if i-check"></i> {{ 'ui.have_follow'|trans }}</button>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-success" data-action="follow"><i class="if i-plus"></i> {{ 'ui.follow'|trans }}</button>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="meta">
+                                <span class="publish-date">{{ post.createdAt|time_diff }}</span>
+                                <span class="word-num">{{ 'post.words_count'|trans }} {{ post.wordCount }}</span>
+                                <span class="comment-num">{{ 'post.comments_count'|trans }}  {{ post.commentCount }}</span>
+                                <span class="view-num">{{ 'post.views_count'|trans }}  {{ post.viewCount }}</span>
+                            </div>
+                            <div class="meta action" data-role="post-action">
+                                {% if is_granted('edit', post) %}
+                                    <span><a href="javascript:void(0)" data-action="remove" title="{{ 'ui.remove'|trans }}"><i class="if i-trash"></i> {{ 'ui.remove'|trans }}</a></span>
+                                    <span><a href="{{ path('post_edit', {'id': post.id}) }}" title="{{ 'ui.edit'|trans }}"><i class="if i-edit"></i> {{ 'ui.edit'|trans }}</a></span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="panel-body">
+                    {% set isCanView = is_granted('view', post)%}
+                    <article class="markdown-body body">
+                        {{ isCanView ? post.body|image_process|raw : post.body|image_process|html_safe_chunk(0.5)|raw}}
+                    </article>
+                    {% if not isCanView %}
+                        <div class="payfor">
+                            <div class="mask"></div>
+                            <div class="action">
+                                <p class="meta"><i class="if i-tips"></i> {{ 'post.after_buy_read_full'|trans }}</p>
+                                <button class="btn u-btn-primary" data-slug="{{ post.category.slug }}" data-role="buy">{{ post.category.chargePrice|money }} {{ 'ui.buy'|trans }}</button>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="action">
+                        <a data-role="vote-post" class="btn btn-sm u-btn-outline-primary" href="javascript:void(0);">
+                            <i class="fa fa-thumbs-o-up"> {{ 'ui.vote'|trans }}</i> <span class="number">{{ post.voteCount }}</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="category media">
+                        <div class="media-left media-middle">
+                            {% set categoryUrl = path('category_view', {'slug': post.category.slug}) %}
+                            <a href="{{ categoryUrl }}" class="avatar">
+                                <img src="{{ post.category.cover|imagine_filter('middle_square') }}" class="media-object img-circle img-responsive"/>
+                            </a>
+                        </div>
+                        <div class="media-body">
+                            <div class="pull-right" data-role="follow-category" data-price="{{ post.category.chargePrice|money }}"  data-slug="{{ post.category.slug }}">
+                                {% if is_granted('IS_AUTHENTICATED_REMEMBERED') and post.category.isFollowedBy(app.user) %}
+                                    <button class="btn  btn-sm btn-default" data-action="unfollow"><i class="if i-plus"></i> {{ 'ui.have_follow'|trans }}</button>
+                                {% else %}
+                                    <button class="btn btn-sm u-btn-outline-primary" data-action="follow"><i class="if i-plus"></i> {{ 'ui.follow'|trans }}</button>
+                                {% endif %}
+                            </div>
+                            <h4 class="media-heading">
+                                <a href="{{ categoryUrl }}">{{ post.category.name }}</a>
+                            </h4>
+                            <ul class="list-unstyled list-inline meta">
+                                <li>{{ 'ui.article'|trans }} {{ post.category.postCount }}</li>
+                                <li>{{ 'ui.follower'|trans }} {{ post.category.followerCount }}</li>
+                            </ul>
+                            <div>{{ post.category.description }}</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <div class="panel panel-u">
+                <div class="panel-body comment-panel add-comment" id="add-comment">
+                    <div class="row">
+                        <div class="col-md-10">
+                            {% if not is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+                                <a href="{{ path('login') }}" class="avatar">
+                                    <img src="{{ asset('img/default_user.png') }}" class="img-responsive img-circle"/>
+                                </a>
+                                <textarea class="form-control" placeholder="点击头像登录后发表评论" disabled="disabled"></textarea>
+                            {% else %}
+                                {{ form_start(form, {'attr': {'id': 'add-comment-form'}}) }}
+                                    <div>
+                                        <a class="avatar">
+                                            <img src="{{ app.user.avatar|imagine_filter('middle_square')}}" class="img-responsive img-circle"/>
+                                        </a>
+                                        {{ form_widget(form.original_body, {'attr': {'class': 'form-control', 'placeholder': 'ui.write_your_comment'|trans}}) }}
+                                    </div>
+                                    <div class="tips"><i class="if i-markdown"></i> {{ 'ui.please_use_markdown_synax_write'|trans }}</div>
+                                    <div class="actions">
+                                        <button type="submit" data-role="submit" class="btn u-btn-primary" data-loading="{{ 'ui.replying'|trans }}">{{ 'ui.reply'|trans }}</button>
+                                        <span class="preview-action" data-action="preview"><i class="if i-view"></i> {{ 'ui.preview'|trans }}</span>
+                                    </div>
+                                {{ form_end(form) }}
+                                <div class="preview-panel markdown-body hidden" data-role="preview-panel">
+                                    {{ 'ui.preview_zone'|trans }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-heading"> {{ 'post.post_comments'|trans({'%count%': post.commentCount}) }}</div>
+                <ul class="list-group reply-list" id="reply-list">
+                   {% include 'PHPDishWebBundle:Topic:_reply_list.html.twig' with {
+                       replies: comments
+                   } %}
+                </ul>
+                {% if comments.haveToPaginate %}
+                    <footer class="panel-footer">
+                        {% from 'PHPDishWebBundle:Macros:paginator.html.twig' import paginator %}
+                        {{ paginator(comments) }}
+                    </footer>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{{ asset('build/js/post.js') }}"></script>
+    <script type="text/javascript">
+    window.postId = {{ post.id }};
+    </script>
+{% endblock %}

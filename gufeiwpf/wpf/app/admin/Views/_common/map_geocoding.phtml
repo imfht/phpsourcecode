@@ -1,0 +1,119 @@
+<script src="http://maps.google.cn/maps/api/js?sensor=false" type="text/javascript"></script>
+
+<div>
+    <div class="form-inline margin-bottom-10 gmap_geocoding_div">
+		<div class="input-group">
+            <input type="hidden" class="form-control lat" value="<?php echo $lat?>" name="<?php echo $inputlat?>" autocomplete="off" />
+            <input type="hidden" class="form-control lng" value="<?php echo $lng?>" name="<?php echo $inputlng?>" autocomplete="off" />
+            <input type="hidden" class="form-control zoom" value="<?php echo $zoom?>" name="<?php echo $inputzoom?>" autocomplete="off" />
+            
+			<input type="text" class="form-control gmap_geocoding_address" placeholder="请输入要查询的地址..." autocomplete="off" />
+			<span class="input-group-btn">
+			<button class="btn blue gmap_geocoding_btn"><i class="fa fa-search"></i>
+			</span>
+		</div>
+	</div>
+	<div id="<?php echo $divname?>" class="gmaps">
+	</div>
+</div>
+
+<script>
+
+jQuery(document).ready(function() {
+    
+    if(typeof WPF.map !== "object"){
+        WPF.map = {};        
+    }
+    
+       
+    
+    if(typeof WPF.map.mapGeocoding === "undefined"){
+        WPF.map.mapGeocoding = function (divname,lat,lng,zoom) {
+            
+            if(typeof divname === "undefined"){
+                return;
+            }
+            
+            var mapdiv = $("#"+divname);
+            
+            var map = new GMaps({
+                div: '#'+divname,
+                lat: 	lat ? lat : 39.904211,
+                lng:    lng ? lng : 116.40739499999995,
+                zoom:   zoom ? zoom : 12,
+                click:function(e){
+                    marker.setPosition(e.latLng);
+                    marker.setMap(map.map);
+                },
+                zoom_changed:function(e){
+                    mapdiv.siblings('.gmap_geocoding_div').find(".zoom").val(e.zoom);
+                }
+            });
+            
+            mapdiv.siblings('.gmap_geocoding_div').find(".zoom").val(map.getZoom());
+            mapdiv.siblings('.gmap_geocoding_div').find(".lat").val(map.getCenter().lat());
+            mapdiv.siblings('.gmap_geocoding_div').find(".lng").val(map.getCenter().lng());
+            
+            var marker = map.addMarker({
+                position:map.getCenter(),
+                title: '您可以拖动我去找点，也可以在地图上直接点',
+                draggable:true,
+                position_changed:function(e){
+                    if(typeof e !== "undefined"){
+                        mapdiv.siblings('.gmap_geocoding_div').find(".lat").val(e.getPosition().lat());
+                        mapdiv.siblings('.gmap_geocoding_div').find(".lng").val(e.getPosition().lng());
+                        //map.setCenter(e.getPosition().lat(),e.getPosition().lng());
+                    }
+                },
+                dragend:function(e){
+                    if(typeof e !== "undefined"){
+                        mapdiv.siblings('.gmap_geocoding_div').find(".lat").val(e.latLng.lat());
+                        mapdiv.siblings('.gmap_geocoding_div').find(".lng").val(e.latLng.lng());
+                        map.setCenter(e.latLng.lat(),e.latLng.lng());
+                    }
+                }
+            });
+            
+            var handleAction = function () {
+                var text = $.trim(mapdiv.siblings('.gmap_geocoding_div').find('.gmap_geocoding_address').val());
+                GMaps.geocode({
+                    address: text,
+                    callback: function (results, status) {
+                        if (status == 'OK') {
+                            var latlng = results[0].geometry.location;
+                            map.setCenter(latlng.lat(), latlng.lng());
+                            marker.setPosition(latlng);                            
+                            marker.setMap(map.map);                            
+                            mapdiv.siblings('.gmap_geocoding_div').find(".lat").val(latlng.lat());
+                            mapdiv.siblings('.gmap_geocoding_div').find(".lng").val(latlng.lng());
+                        }
+                    }
+                });
+            };
+    
+            mapdiv.siblings('.gmap_geocoding_div').find('.gmap_geocoding_btn').click(function (e) {
+                e.preventDefault();
+                handleAction();
+            });
+    
+            mapdiv.siblings('.gmap_geocoding_div').find(".gmap_geocoding_address").keypress(function (e) {
+                var keycode = (e.keyCode ? e.keyCode : e.which);
+                if (keycode == '13') {
+                    e.preventDefault();
+                    handleAction();
+                }
+            });
+
+        }
+    }
+    
+    if(typeof GMaps === "undefined"){            
+        $.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/gmaps/gmaps.min.js", function(){
+            WPF.map.mapGeocoding("<?php echo $divname?>",<?php echo $lat ?: "39.904211"?>,<?php echo $lng ?: "116.40739"?>,<?php echo $zoom ?: "6"?>);
+        });            
+    }else{
+        WPF.map.mapGeocoding("<?php echo $divname?>",<?php echo $lat ?: "39.904211"?>,<?php echo $lng ?: "116.40739"?>,<?php echo $zoom ?: "6"?>);
+    }
+    
+});
+</script>

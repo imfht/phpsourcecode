@@ -1,0 +1,114 @@
+{extend name="index:layout" /}
+
+{block name="menu"}{/block}
+{block name="content"}
+<script type="text/javascript">
+<!--
+if (navigator.userAgent.indexOf("MSIE") >= 0) {
+	alert("请使用谷歌或火狐访问.其它浏览器无法正常操作与使用");
+}
+//-->
+</script>
+<link rel="stylesheet" type="text/css" href="__STATIC__/admin/default/wlife/map.css">
+
+<link rel="stylesheet" type="text/css" href="/public/static/larry_layui/layui/css/layui.css" media="all">
+<link rel="stylesheet" type="text/css" href="/public/static/larry_layui/css/bootstrap.css" media="all">
+<link rel="stylesheet" type="text/css" href="/public/static/larry_layui/css/global.css">
+<link rel="stylesheet" type="text/css" href="/public/static/larry_layui/css/main.css" media="all">
+<style type="text/css">
+dt{font-weight:normal;}
+.OperationDeclaration {padding-top:0px;}
+.larry-wrapper{padding-bottom:0px;}
+h1, .h1 {font-size:25px;}
+.c_diypage .headle{
+	background:#f3edf2;
+}
+</style>
+
+<!--<div class="WelCome">欢迎来到后台系统管理</div>-->
+<div class="statisticsInfo">
+	<ul>
+		<li class="first">总共注册会员有：<span>{$user_num}</span> 位</li>
+		<!--<li>商品共有：<span>0</span>件</li>-->
+		<li>CMS信息共有：<span>{$cms_num}</span> 条</li>
+		<!--<li>礼品共有：<span></span>件</li>-->
+	</ul>
+</div>
+
+<section class="larry-wrapper">
+	<div class="row state-overview">
+		{qb:hy name="default_admin_index_top" where="admin_style/default/admin/index/count/a,b,c,d" val="datas" type="labelmodel" time="600"}
+			{$datas}
+		{/qb:hy}
+	</div>
+</section>
+
+{php}
+$id=$userdb['uid'];
+request()->get(['id'=>$id]);
+$info=$systemMsg;
+{/php}
+
+{qb:hy name="layui_admin_index_left" where="admin_style/default/admin/index/model/help,systeminfo,copyright" val="datas" type="labelmodel" time="600"}
+	{$datas}
+{/qb:hy}
+
+
+
+{php}
+$array = @include(config('client_upgrade_edition')?:RUNTIME_PATH.'/client_upgrade_edition.php');
+{/php}
+<script type="text/javascript">
+//检查版本更新
+function check_upgrade(){
+	var now_edition = "{$array.md5}";
+	$.post("https://x1.php168.com/appstore/upgrade/get_edition.html?typeid={$webdb.typeid}",{
+		app_edition:"{:fun('upgrade@local_edition')}",
+		sys_edition:now_edition,
+		domin:'{:request()->domain()}',
+		appkey:'{$webdb.mymd5}'
+	}).success(function(res){
+		if(res.code==0){
+			if(res.data.md5!=now_edition||typeof(res.data.upgrade_msg) != "undefined"){
+				if(typeof(res.data.time) == "undefined"){
+					return ;
+				}
+				//upgrade_edition = res.data.md5;
+				var msg = typeof(res.data.upgrade_msg) != "undefined" ? res.data.upgrade_msg : '你的系统需要升级<br>云端更新日期:'+res.data.time;
+				
+				layer.confirm(msg, {
+					title: '系统升级提醒!',
+					btn : [ '马上升级', '晚点再升级' ],
+					time: 6000,
+					offset: 'rb',
+					anim:2,
+					shade: 0 //不显示遮罩 
+				}, function(index) {
+					window.location.href="{:url('upgrade/index')}";
+				});
+			}
+		}
+	});
+}
+{if $userdb['groupid']==3&&empty(config('webdb.forbid_upgrade'))} check_upgrade(); {/if}
+
+
+{if count(plugins_config())<2 || time()-filemtime(APP_PATH.'install/install.lock')<60}
+layer.open({
+		type: 2,
+		title: '推荐安装应用',
+		shadeClose: true,
+		offset: 'lb',
+		shade:  [0.8, '#393D49'],
+		maxmin: false, //开启最大化最小化按钮
+		area: ['1100px', '600px'],
+		content: "{:urls('market/show')}",
+		end: function(){
+			//setup_app(id,keywords,price,1);
+		}
+});
+{/if}
+
+</script>
+
+{/block}

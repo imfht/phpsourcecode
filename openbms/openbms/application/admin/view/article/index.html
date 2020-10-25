@@ -1,0 +1,104 @@
+{extend name="base" /}
+{block name="body"}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <form action="{:url('admin/article/index')}" class="layui-form" method="get">
+            <div class="layui-form-item">
+                <div class="layui-input-inline">
+                    <input type="text" name="title" value="{:input('title')}" autocomplete="off" placeholder="请输入标题" class="layui-input"/>
+                </div>
+                <div class="layui-input-inline">
+                    <select name="cid">
+                        <option value="">全部分类</option>
+                        {foreach name="category" item="v"}
+                        <option value="{$v.id}" {if condition="input('cid') eq $v.id" }selected="selected"{/if}>{neq name="v.level" value="1"}|{for start="1" end="$v.level"} ----{/for}{/neq} {$v.category_name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <select name="is_top">
+                        <option value="">是否置顶</option>
+                        <option value="1" {if condition="input('?is_top') and (input('is_top') eq 1)"} selected="selected"{/if}>是</option>
+                        <option value="0" {if condition="input('?is_top') and (input('is_top') eq 0)"} selected="selected"{/if}>否</option>
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <select name="is_hot">
+                        <option value="">是否推荐</option>
+                        <option value="1" {if condition="input('?is_hot') and (input('is_hot') eq 1)"} selected="selected"{/if}>是</option>
+                        <option value="0" {if condition="input('?is_hot') and (input('is_hot') eq 0)"} selected="selected"{/if}>否</option>
+                    </select>
+                </div>
+                <div class="layui-input-inline">
+                    <select name="status">
+                        <option value="">是否发布</option>
+                        <option value="1" {if condition="input('?status') and (input('status') eq 1)"} selected="selected"{/if}>是</option>
+                        <option value="0" {if condition="input('?status') and (input('status') eq 0)"} selected="selected"{/if}>否</option>
+                    </select>
+                </div>
+                <div class="layui-input-inline" style="width: 50px;">
+                    <button class="layui-btn layui-btn-primary ajax-search"><i class="fa fa-search"></i></button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="layui-card-body">
+        <div class="layui-btn-group">
+            <a href="{:url('admin/article/add', ['cid' => input('cid')])}" class="layui-btn"><i class="fa fa-plus-circle"></i> 添加数据</a>
+            <a href="{:url('admin/article/del')}" class="layui-btn layui-btn-danger ajax-batch"><i class="fa fa-trash-o"></i> 批量删除</a>
+            <a href="{:url('admin/article/edit', ['name' => 'is_top', 'value' => '1'])}" class="layui-btn layui-btn-primary ajax-batch"><i class="fa fa-star"></i> 设置置顶</a>
+            <a href="{:url('admin/article/edit', ['name' => 'is_top', 'value' => '0'])}" class="layui-btn layui-btn-primary ajax-batch"><i class="fa fa-times-circle"></i> 取消置顶</a>
+            <a href="{:url('admin/article/edit', ['name' => 'is_hot', 'value' => '1'])}" class="layui-btn layui-btn-primary ajax-batch"><i class="fa fa-thumbs-up"></i> 设置推荐</a>
+            <a href="{:url('admin/article/edit', ['name' => 'is_hot', 'value' => '0'])}" class="layui-btn layui-btn-primary ajax-batch"><i class="fa fa-times-circle"></i> 取消推荐</a>
+            <a href="{:url('admin/article/edit', ['name' => 'status', 'value' => '1'])}" class="layui-btn layui-btn-primary ajax-batch"><i class="fa fa-send"></i> 设置发布</a>
+            <a href="{:url('admin/article/edit', ['name' => 'status', 'value' => '0'])}" class="layui-btn layui-btn-primary ajax-batch"><i class="fa fa-times-circle"></i> 取消发布</a>
+        </div>
+        <table class="layui-table layui-form">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" lay-skin="primary" lay-filter="*"></th>
+                    <th>ID</th>
+                    <th>所属分类</th>
+                    <th>标题</th>
+                    <th>点击量</th>
+                    <th>添加时间</th>
+                    <th>排序</th>
+                    <th>是否置顶</th>
+                    <th>是否推荐</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {foreach name="list" item="v" empty="$empty"}
+                <tr>
+                    <td><input type="checkbox" name="id" value="{$v.id}" lay-skin="primary"></td>
+                    <td>{$v.id}</td>
+                    <td>{$v.category_name}</td>
+                    <td>{$v.title}</td>
+                    <td>{$v.view}</td>
+                    <td>{$v.create_time}</td>
+                    <td>
+                        <input type="text" name="sort_order" value="{$v.sort_order}" autocomplete="off" class="layui-input ajax-update" data-url="{:url('admin/article/edit', ['id' => $v.id])}">
+                    </td>
+                    <td>
+                        <input type="checkbox" name="is_top" lay-skin="switch" lay-filter="*" lay-text="是|否" data-url="{:url('admin/article/edit', ['id' => $v.id])}" {if $v.is_top eq 1}checked="checked" {/if}>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="is_hot" lay-skin="switch" lay-filter="*" lay-text="是|否" data-url="{:url('admin/article/edit', ['id' => $v.id])}" {if $v.is_hot eq 1}checked="checked" {/if}>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="status" lay-skin="switch" lay-filter="*" lay-text="启用|禁用" data-url="{:url('admin/article/edit', ['id' => $v.id])}" {if $v.status eq 1}checked="checked" {/if}>
+                    </td>
+                    <td>
+                        <a href="{:url('admin/article/edit', ['id' => $v.id])}" class="layui-btn layui-btn-xs layui-btn-normal"><i class="fa fa-edit"></i> 编辑</a>
+                        <a href="{:url('admin/article/del', ['id' => $v.id])}" class="layui-btn layui-btn-xs layui-btn-danger ajax-delete"><i class="fa fa-trash-o"></i> 删除</a>
+                    </td>
+                </tr>
+                {/foreach}
+            </tbody>
+        </table>
+        <div class="page">{$list->render()}</div>
+    </div>
+</div>
+{/block}

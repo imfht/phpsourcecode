@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+    <meta charset="UTF-8">
+    <title>编辑器</title>
+    {{import html/js/jquery-3.1.1.min.js}}
+    {{import html/codeMirror-5.2/lib/codemirror.css}}
+    {{import html/codeMirror-5.2/lib/codemirror.js}}
+    {{import html/codeMirror-5.2/addon/edit/matchbrackets.js}}
+    {{import html/codeMirror-5.2/addon/hint/show-hint.js}}
+    {{import html/codeMirror-5.2/addon/hint/show-hint.css}}
+    {{import html/codeMirror-5.2/addon/hint/css-hint.js}}
+    {{import html/codeMirror-5.2/addon/hint/html-hint.js}}
+    {{import html/codeMirror-5.2/addon/hint/javascript-hint.js}}
+    {{import html/codeMirror-5.2/addon/hint/anyword-hint.js}}
+    {{import html/codeMirror-5.2/mode/php/php.js}}
+    {{import html/codeMirror-5.2/mode/clike/clike.js}}
+    {{import html/codeMirror-5.2/mode/xml/xml.js}}
+    {{import html/codeMirror-5.2/mode/javascript/javascript.js}}
+    {{import html/codeMirror-5.2/mode/vbscript/vbscript.js}}
+    {{import html/codeMirror-5.2/mode/htmlmixed/htmlmixed.js}}
+    {{import html/codeMirror-5.2/mode/css/css.js}}
+    {{import html/codeMirror-5.2/doc/docs.css}}
+    {{import html/codeMirror-5.2/theme/eclipse.css}}
+    <style>
+        .info{
+            width: 30%;
+            line-height: 10px;font-size: 8px;color: #1C005A;
+            display: block;
+            float: left;
+        }
+
+        .CodeMirror {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="form-group">
+    <label></label>
+    <textarea class="form-control" id="txt-code" placeholder="Hello world！" spellcheck="false" style="height:550px;resize: none">{{:code}}</textarea>
+</div>
+<div style="width:auto;padding-left: 42px;padding-top: 3px;">
+    <span class="info">自动提交倒计时 <span id="time-last">5</span> 秒</span>
+    <span class="info">上次提交于 <span id="time-up">0</span> 秒之前 </span>
+    <div style="clear: both"></div>
+</div>
+<script>
+    $(function () {
+        var myCodeMirror = CodeMirror.fromTextArea(document.getElementById('txt-code'),{
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "application/x-httpd-php",
+            indentUnit: 4,
+            indentWithTabs: true,
+            theme:'eclipse'
+        });
+        myCodeMirror.setSize('auto','510px');
+        myCodeMirror.on("change", function (Editor, changes) {
+            if (changes) {
+                if (upTimeLast<=0){
+                }else{
+                    upTimeLast=5
+                }
+            }
+        });
+        setInterval(function () {
+            if (upTimeLast>0){
+                upTimeLast--;
+            }else{
+                var code=myCodeMirror.getValue();
+                uplaodCode(code)
+            }
+            upTimeLog++;
+            $("#time-last").html(upTimeLast);
+            $("#time-up").html(upTimeLog);
+        },1000);
+
+        //屏蔽F5
+        document.onkeydown = function(e){
+            e = window.event || e;
+            var keycode = e.keyCode || e.which;
+            if(keycode==116){
+                if(window.event){// ie
+                    try{e.keyCode = 0;}catch(e){}
+                    e.returnValue = false;
+                }else{// ff
+                    e.preventDefault();
+                }
+                var code=myCodeMirror.getValue();
+                uplaodCode(code,true);
+            }
+        }
+    });
+    var upTimeLast=5;
+    var upTimeLog=0;
+    function uplaodCode(code,isNeedFlash) {
+        //ajax查询结果
+        $.ajax({
+            type: "POST",
+            url: "{{url fastEditSub based}}",
+            data: {
+                code:code
+            },
+            dataType: "json",
+            async:true,
+
+            success: function(data){
+                //刷新了
+                upTimeLast=300;
+                upTimeLog=0;
+                $('#time-up').html();
+                if (isNeedFlash){
+                    window.top.parent.flash()
+                }
+            },
+            error:function () {
+                alert('错误，远程服务器没有响应.')
+            }
+        });
+    }
+</script>
+</body>
+</html>

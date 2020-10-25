@@ -1,0 +1,119 @@
+{include file="common/head"/}
+<div class="admin-main layui-anim layui-anim-upbit" ng-app="hd" ng-controller="ctrl">
+    <fieldset class="layui-elem-field layui-field-title">
+        <legend>{$title}</legend>
+    </fieldset>
+    <form class="layui-form layui-form-pane" lay-filter="form">
+        <div class="layui-form-item">
+            <label class="layui-form-label">所属位置</label>
+            <div class="layui-input-4">
+                <select name="type_id" lay-verify="required" >
+                    <option value="">请选择所属碎片分类</option>
+                    {volist name="debrisTypeList" id="vo"}
+                    <option value="{$vo.id}">{$vo.title}</option>
+                    {/volist}
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">{:lang('title')}</label>
+            <div class="layui-input-4">
+                <input type="text" name="title" lay-verify="required" placeholder="{:lang('pleaseEnter')}碎片标题" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">{:lang('link')}</label>
+            <div class="layui-input-4">
+                <input type="text" name="url" lay-verify="required" placeholder="{:lang('pleaseEnter')}碎片标题" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">图片</label>
+            <input type="hidden" name="pic" id="pic">
+            <div class="layui-input-block">
+                <div class="layui-upload">
+                    <button type="button" class="layui-btn layui-btn-primary" id="picBtn"><i class="icon icon-upload3"></i>点击上传</button>
+                    <div class="layui-upload-list">
+                        <img class="layui-upload-img" id="picPic">
+                        <p id="demoText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">{:lang('content')}</label>
+            <div class="layui-input-block">
+                <textarea class="layui-textarea" name="content" lay-verify="content" id="content"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <input type="hidden" name="id">
+                <button type="button" class="layui-btn" lay-submit="" lay-filter="submit">{:lang('submit')}</button>
+                <a href="{:url('index')}" class="layui-btn layui-btn-primary">{:lang('back')}</a>
+            </div>
+        </div>
+    </form>
+</div>
+{include file="common/foot"/}
+<script>
+    layui.use(['form','upload','layer','layedit'], function () {
+        var form = layui.form, layer = layui.layer,$= layui.jquery,upload = layui.upload,layedit = layui.layedit;
+
+        var info = {$info|raw};
+        form.val("form", info);
+        if(info){
+            $('#picPic').attr('src',info.pic);
+        }
+        layedit.set({
+            uploadImage: {
+                url: "{:url('UpFiles/editUpload')}",
+                type: 'post'
+            }
+        });
+        var layeCon = layedit.build('content');
+
+        form.on('submit(submit)', function (data) {
+            // 提交到方法 默认为本身
+            var loading = layer.load(1, {shade: [0.1, '#fff']});
+            data.field.content = layedit.getContent(layeCon);
+            $.post("", data.field, function (res) {
+                layer.close(loading);
+                if (res.code > 0) {
+                    layer.msg(res.msg, {time: 1800, icon: 1}, function () {
+                        location.href = res.url;
+                    });
+                } else {
+                    layer.msg(res.msg, {time: 1800, icon: 2});
+                }
+            });
+        });
+        //普通图片上传
+        var uploadInst = upload.render({
+            elem: '#picBtn'
+            ,url: '{:url("UpFiles/upload")}'
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    $('#picPic').attr('src', result); //图片链接（base64）
+                });
+            },
+            done: function(res){
+                if(res.code>0){
+                    $('#pic').val(res.url);
+                }else{
+                    //如果上传失败
+                    return layer.msg('上传失败');
+                }
+            }
+            ,error: function(){
+                //演示失败状态，并实现重传
+                var demoText = $('#demoText');
+                demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-mini demo-reload">重试</a>');
+                demoText.find('.demo-reload').on('click', function(){
+                    uploadInst.upload();
+                });
+            }
+        });
+    });
+</script>

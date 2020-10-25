@@ -1,0 +1,178 @@
+<extend name="Layout/ins_popup" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'选择职称','search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<span class="left">双击可以添加和删除对应的节点</span>
+			<div class="pull-right">
+				<a  onclick="save();" class="btn btn-sm btn-primary">确定</a>
+				<a  onclick="myclose();" class="btn btn-sm btn-default">关闭</a>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-6">
+			<div class="row form-horizontal">
+				<div class="form-group">
+					<b>职称</b>
+				</div>
+			</div>
+			<div class="row popup_tree_menu"  style="height:403px;">
+				<div id="position" style="width:100%;height:100%;" class="dp position">
+					{$list_position}
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-6" >
+			<div class="row form-horizontal">
+				<div class="form-group">
+					<b>已选</b>
+					<span id="rc_count"></span>
+				</div>
+			</div>
+			<div class="row form-horizontal" >
+				<div class="form-group">
+					<div id="rc" style="width:100%;height:413px;overflow:hidden">
+						<select size="6" style="height:100%;width:100%;"></select>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function save() {
+			$("#position_wrap", parent.document).hide();
+			$("#position_wrap", parent.document).html("");
+
+			$("#rc select option").each(function(i) {
+				//email=($(this).html().split(";")[1].split("&")[0]);
+				$("#position_wrap", parent.document).append('<span  emp_no="' + $(this).val() + '">' + jQuery.trim($(this).text()) + ' </span>');
+			});
+
+			$("#position_wrap span b", parent.document).each(function() {
+				$(this).remove();
+			});
+
+			$("#position_wrap span", parent.document).each(function() {
+				$(this).append("<b>;</b>   ");
+			});
+
+			$("#position_wrap span", parent.document).last().find("b").remove();
+
+			$("#position_wrap", parent.document).show();
+
+			myclose();
+		}
+
+		// 显示AJAX 读取的数据
+
+		$(document).ready(function() {
+
+			$("#position .tree_menu a").click(function() {//点击节点时读取相应的数据
+				$("#position .tree_menu a").removeClass("active");
+				$(this).attr("class", "active");
+				return false;
+				//禁止连接生效
+			});
+
+			$("#position .tree_menu  a").dblclick(function() {//点击节点时读取相应的数据
+				$("#position .tree_menu a").removeClass("active");
+				$(this).attr("class", "active");
+				add_address('rc');
+				return false;
+				//禁止连接生效
+			});
+
+			$("#addr_list a").on("dblclick", function() {// 双击添加到收件人 因后添加的数据 所以需要用live函数
+				$text = $(this).text();
+				$val = $(this).parent().find("input").val();
+				if ($("#rc select option[value='" + $val + "']").val() == undefined) {
+					$option = $("<option></option>");
+					$option.val($val);
+					$option.text($text).appendTo("#rc select");
+					$("#rc_count").text("(" + $("#rc select option").length + ")");
+				};
+			});
+
+			$("#rc  select").on("dblclick", function() {// 双击添加到收件人 因后添加的数据 所以需要用live函数
+				$(this).find("option:selected").remove();
+				$("#rc_count").text("(" + $("#rc select option").length + ")");
+			});
+
+			$("#cc  select").on("dblclick", function() {// 双击添加到收件人 因后添加的数据 所以需要用live函数
+				$(this).find("option:selected").remove();
+				$("#cc_count").text("(" + $("#cc select option").length + ")");
+			});
+			$("#addr_list").on("mouseover", function() {//通过jquery_ui 添加 拖动功能
+				$("#addr_list label").draggable({
+					appendTo : "body",
+					helper : "clone"
+				});
+			});
+			$("#rc select").droppable({
+				activeClass : "ui-state-default",
+				hoverClass : "ui-state-hover",
+				accept : ":not(.ui-sortable-helper)",
+				drop : function(event, ui) {
+					$text = ui.draggable.text();
+					$val = ui.draggable.find("input").val();
+					if ($("#rc select option[value='" + $val + "']").val() == undefined) {
+						$option = $("<option></option>");
+						$option.val($val);
+						$option.text($text).appendTo(this);
+						$("#rc_count").text("(" + $("#rc select option").length + ")");
+					};
+				},
+			}).sortable({
+				items : "option:not(.placeholder)",
+				sort : function() {
+					// gets added unintentionally by droppable interacting with sortable
+					// using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+					$(this).removeClass("ui-state-default");
+				}
+			});
+			$("#cc select").droppable({
+				activeClass : "ui-state-default",
+				hoverClass : "ui-state-hover",
+				accept : ":not(.ui-sortable-helper)",
+				drop : function(event, ui) {
+					$text = ui.draggable.text();
+					$val = ui.draggable.find("input").val();
+					if ($("#cc select option[value='" + $val + "']").val() == undefined) {
+						$option = $("<option></option>");
+						$option.val($val);
+						$option.text($text).appendTo(this);
+						$("#cc_count").text("(" + $("#cc select option").length + ")");
+					};
+				},
+			}).sortable({
+				items : "li:not(.placeholder)",
+				sort : function() {
+					// gets added unintentionally by droppable interacting with sortable
+					// using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+					$(this).removeClass("ui-state-default");
+				}
+			});
+
+		});
+		//最终确认
+
+		function add_address(name) {
+			$position_id = $("#position a.active").attr("node");
+			$position_name = $("#position a.active span").text().trim();
+
+			$text = $position_name;
+			$val = "position_" + $position_id;
+			if ($("#" + name + " select option[value='" + $val + "']").val() == undefined) {
+				$option = $("<option></option>");
+				$option.val($val);
+				$option.text($text).appendTo("#" + name + " select");
+				$("#" + name + "_count").text("(" + $("#" + name + " select option").length + ")");
+			};
+		}
+
+		//-->
+	</script>
+</block>

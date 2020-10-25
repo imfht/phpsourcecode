@@ -1,0 +1,230 @@
+<?php 
+
+if (empty($_GET['topic_id'])) die;
+
+$auth = @$_SESSION['auth'];
+$topic_id = intval($_GET['topic_id']);
+$page = @intval($_GET['page']);
+
+$cond = "WHERE topic_id = ".$topic_id;
+if (empty($page)) { $page = 1; }
+$limit = require_once('inc/topic_show_limit.php');
+
+$forum = dt_query_one("SELECT id, name, b_url, user_id, ext, kind, pub_ads FROM forum WHERE id = (SELECT forum_id FROM forum_topic WHERE id = $topic_id)");
+if (!$forum) {
+	put_info('您访问的板块不存在了！^_^');
+	header('Location:?c=forum'); 
+	die();
+}
+
+if (1 == $page) {
+	$rs = dt_query("UPDATE forum_topic SET view_c = view_c + 1 WHERE id = $topic_id");
+	if (!$rs) die('更新数据失败！');
+
+	if (0 != $forum['ext']) {
+		$topic = dt_query_one("SELECT * FROM forum_topic INNER JOIN forum_topic_ext_".$forum['ext']." ON forum_topic.id = forum_topic_ext_".$forum['ext'].".id WHERE forum_topic.id = $topic_id");
+	} else {
+		$topic = dt_query_one("SELECT * FROM forum_topic WHERE id = $topic_id");
+	}
+	if (!$topic) die('获取topic数据失败！');
+	$topic_ups = dt_query("SELECT user_id FROM forum_topic_up WHERE topic_id = $topic_id ORDER BY c_at DESC LIMIT 12");
+	if (!$topic_ups) die('获取topic_up数据失败！');
+} else {
+	$topic = dt_query_one("SELECT forum_id, title FROM forum_topic WHERE id = $topic_id");
+	if (!$topic) die('获取数据失败！');
+}
+
+$replys = dt_query("SELECT * FROM forum_topic_reply $cond ORDER BY c_at LIMIT ".$limit * ($page - 1).",$limit");
+if (!$replys) die('获取数据失败！');
+
+reset_title($topic['title'].' - '.$city_info['name'].SYS_NAME);
+
+$has_order = (!empty($auth) && dt_query_one("SELECT id FROM forum_topic_order WHERE user_id = ".$auth['id']." AND topic_id = $topic_id AND complete = 0 LIMIT 1")) ? true : false;
+
+?>
+<?php require_once('inc/umediter_text.html') ?> 
+<?php require_once('inc/pub_topic_b.phtml') ?> 
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<?php if (0 != $forum['kind']) { ?>
+			<li><a href="?c=forum&a=forum_list&m_falter=5&kind=<?php echo $forum['kind'] ?>"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> <?php echo dt_query_one("SELECT name FROM forum_kind WHERE id = ".$forum['kind'])['name'] ?></a></li>
+			<?php } ?>
+			<li><a href="?c=forum&a=topic_list&forum_id=<?php echo $topic['forum_id'] ?>"><?php echo $forum['name'] ?></a></li>
+			<li class="active hidden-xs"><?php echo $topic['title'] ?></li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-pagination">
+	<div class="row clearfix">
+		<div class="col-sm-10 column hidden-xs">
+			<ul class="pagination"> <li><a href="<?php echo s_url('?c=forum&a=topic_list&forum_id='.$topic['forum_id']) ?>">&laquo; 返回列表</a></li> </ul>
+			<?php pagination('forum_topic_reply', $cond, $page, $limit, '?c=forum&a=topic_show&topic_id='.$topic_id.'&page=') ?>
+		</div>
+		<div class="col-sm-2 column hidden-xs">
+			<a class="btn btn-success pull-right" href="?c=forum&a=topic_show&topic_id=<?php echo $topic_id ?>#topic_reply"><span class="glyphicon glyphicon-edit"></span> 回复</a>
+		</div>
+	</div>
+</div>
+<div class="container">
+	<div class="col-md-12 column forum-topic-show">
+		<div class="row clearfix">
+			<?php if (1 == $page) { ?>
+			<div class="forum-topic-show-item">
+				<div class="row clearfix">
+					<?php if (0 != $forum['ext']) { ?>
+					<?php require_once('forum_ext/ext_'.$forum['ext'].'/topic_show.phtml') ?>
+					<?php } else { ?>
+					<div class="content">
+						<div class="num hidden-xs">
+							<span>回复 : <?php echo $topic['reply_c'] ?></span>
+							<span class="sha">|</span>
+							<span>浏览 : <?php echo $topic['view_c'] ?></span>
+						</div>
+						<h3 class="name">
+							<?php if (1 == $topic['digest']) { ?><span class="glyphicon glyphicon-fire"></span> <?php } ?><b><?php echo $topic['title'] ?></b>
+							<?php echo (time()-24*3600 < $topic['l_r_at']) ? '<span class="label label-default">热</span>' : null ?>
+							<?php echo (time()-24*3600 < $topic['c_at']) ? '<span class="label label-success">新</span>' : null ?>
+							<?php if (0 < $topic['pay']) { ?><span class="label label-danger">$ <?php echo intval($topic['pay']) ?></span><?php } ?>
+						</h3>
+						<hr class="dashed">
+						<div class="floor">
+							<span class="floor-lg">楼主</span><sup>#</sup>
+						</div>
+						<span class="time">发布于：<?php echo fmt_date($topic['c_at']) ?></span>
+						<div class="text-content">
+							<?php echo $topic['content'].$forum['pub_ads'].$city_info['pub_ads'] ?>
+						</div>
+						<center>
+						<?php require_once('inc/pub_user_opr.phtml') ?>
+						</center>
+						<div class="main-up-user-face">
+							<h5><b>最新喜欢：</b></h5>
+							<?php while($topic_up = mysql_fetch_array($topic_ups)) { ?>
+							<a target="_blank" href="<?php echo s_url('?c=center&a=index&user_id='.$topic_up['user_id']) ?>"><img src="<?php echo FACE_URL.$topic_up['user_id'] ?>_min.jpg"/></a>
+							<?php } ?>
+						</div>
+						<hr class="dashed">
+						<div class="row clearfix topic-reply">
+							<div class="col-md-12 column">
+									<form class="form-horizontal" id="topic_reply">
+											<input type="hidden" name="topic_id" value="<?php echo $topic_id ?>"/>
+											<div class="form-group">
+												<div class="col-md-12">                     
+													<textarea class="form-control input-lg" id="topic_r_content" name="content" style="width:104%;height:110px"></textarea>
+												</div>
+											</div>
+											<!-- token -->
+											<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+											<div class="form-group">
+												<label class="col-md-10 control-label"></label>
+												<div class="col-md-2">
+													<a href="javascript:do_topic_r_add()" class="btn btn-default btn-block"> 发布回复 </a>
+												</div>
+											</div>
+									</form>
+							</div>
+						</div>
+						<div class="topic-r-r hidden-xs">
+							<?php require_once('inc/baidu_share.html') ?>
+							<?php global $config ?>
+							<?php if ($forum['user_id'] == @$_SESSION['auth']['id'] || $topic['user_id'] == @$_SESSION['auth']['id'] || in_array(@$_SESSION['auth']['id'], $config['manager']) || $city_info['user_id'] == @$_SESSION['auth']['id']) { ?>
+							<a href="javascript:do_topic_digest(<?php echo $topic_id ?>)"><span class="glyphicon glyphicon-fire"></span>
+								<?php if (1 == $topic['digest']) { ?> 取消推荐 <?php } else { ?> 加推荐 <?php } ?>
+							</a>
+							<a href="?c=forum&a=topic_edit&topic_id=<?php echo $topic_id ?>"><span class="glyphicon glyphicon-edit"></span> 编辑</a>
+							<?php } ?>
+							<a href="?c=forum&a=pay_topic_top&topic_id=<?php echo $topic_id ?>"><span class="glyphicon glyphicon-usd"></span> 付费置顶</a>
+							<a class="del" href="javascript:do_topic_del(<?php echo $topic_id ?>, <?php echo $forum['id'] ?>)"><span class="glyphicon glyphicon-trash"></span> 删除(<span id="topic_del_c"><?php echo $topic['del_c'] ?></span>)</a>
+						</div>
+					</div>
+					<div class="user-face hidden-xs">
+						<center>
+							<a href="<?php echo s_url('?c=center&a=index&user_id='.$topic['user_id']) ?>"><img src="<?php echo FACE_URL.$topic['user_id'] ?>_min.jpg" class="img-circle" /></a>
+							<h4 class="text-content"><span class="glyphicon glyphicon-magnet"></span> <?php echo $topic['user_name'] ?> </h4>
+						</center>
+					</div>
+					<?php } ?>
+				</div>
+			</div>
+			<?php } ?>
+			<?php while($reply = mysql_fetch_array($replys)) { ?>
+			<div class="forum-topic-show-item index-hover" id="r_<?php echo $reply['id'] ?>">
+				<div class="row clearfix">
+					<div class="content">
+						<div class="floor">
+							<span class="floor-lg"><?php echo $reply['floor'] ?>楼</span><sup>#</sup>
+						</div>
+						<span class="time">发布于：<?php echo fmt_date($reply['c_at']) ?></span>
+						<div class="text-content">
+							<?php echo $reply['content'] ?>	
+						</div>
+						<div class="topic-r-r">
+							<a href="javascript:get_topic_r_r_form(<?php echo $reply['id'] ?>)" id="get_topic_r_r_form"><span class="glyphicon glyphicon-comment"></span> <h>回复</h>(<span id="topic_r_c"><?php echo $reply['reply_c'] ?></span>)</a>
+							<a href="javascript:do_topic_r_up(<?php echo $reply['id'] ?>)"><span class="glyphicon glyphicon-heart"></span> <h>喜欢</h>(<span id="topic_r_up_c"><?php echo $reply['up_c'] ?></span>)</a>
+							<?php if ($forum['user_id'] == @$_SESSION['auth']['id'] || $reply['user_id'] == @$_SESSION['auth']['id'] || in_array(@$_SESSION['auth']['id'], $config['manager']) || $city_info['user_id'] == @$_SESSION['auth']['id']) { ?>
+							<a href="?c=forum&a=topic_r_edit&reply_id=<?php echo $reply['id'] ?>"><span class="glyphicon glyphicon-edit"></span> 编辑</a>
+							<?php } ?>
+							<a class="del" href="javascript:do_topic_r_del(<?php echo $reply['id'] ?>)"><span class="glyphicon glyphicon-trash"></span> 删除(<span id="topic_r_del_c"><?php echo $reply['del_c'] ?></span>)</a>
+						</div>
+					</div>
+					<div class="user-face hidden-xs">
+						<center>
+							<a href="<?php echo s_url('?c=center&a=index&user_id='.$reply['user_id']) ?>"><img src="<?php echo FACE_URL.$reply['user_id'] ?>_min.jpg" class="img-circle" /></a>
+							<h4 class="text-content"><span class="glyphicon glyphicon-magnet"></span> <?php echo $reply['user_name'] ?> </h4>
+						</center>
+					</div>
+				</div>
+			</div>
+			<?php } ?>
+		</div>
+	</div>
+</div>
+<?php if (1 == $page) require_once('inc/pub_topic_link.phtml') ?>
+<div class="container forum-pagination">
+	<div class="row clearfix">
+		<div class="col-sm-10 column">
+			<ul class="pagination"> <li><a href="<?php echo s_url('?c=forum&a=topic_list&forum_id='.$topic['forum_id']) ?>">&laquo; 返回列表</a></li> </ul>
+			<?php pagination('forum_topic_reply', $cond, $page, $limit, '?c=forum&a=topic_show&topic_id='.$topic_id.'&page=') ?>
+		</div>
+		<div class="col-sm-2 column hidden-xs">
+			<a class="btn btn-success pull-right" href="?c=forum&a=topic_show&topic_id=<?php echo $topic_id ?>#topic_reply"><span class="glyphicon glyphicon-edit"></span> 回复</a>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	<?php if (0 != $topic['start_t'] && time() < $topic['start_t_s'] && !$has_order) { ?>
+	auto_run('to_start_t(<?php echo $topic['start_t'] ?>)', 100);
+	<?php } ?>
+});
+
+var topic_r_r_content = new Array();
+var topic_r_content = UM.getEditor("topic_r_content"); $('#topic_r_content').parent().parent().addClass('hidden-xs');
+var start_t_x = <?php echo ($topic['start_t_s'] - time()) ?>;
+var out_s_u = '<?php echo $topic['out_s_u'] ?>';
+var t_id = '<?php echo $topic_id ?>';
+var auth_id = '<?php echo @$_SESSION['auth']['id'] ?>';
+
+var m_x;
+$(window).on('touchstart', function(e){
+        m_x = e.originalEvent.touches[0].pageX;
+});
+$(window).on('touchend', function(e){
+        var m_abs = m_x-e.originalEvent.changedTouches[0].pageX;
+        if (150<Math.abs(m_abs)) {
+		lc_href_s(m_abs);
+	}
+});
+function onkey(e){  
+        if ('DIV' == e.srcElement.nodeName) return;
+	if (37 == e.keyCode) lc_href_s(-1);
+	if (39 == e.keyCode) lc_href_s(1);
+}  
+function lc_href_s(m_abs) {
+	var l_href = $('div.forum-topic-list p.title:eq('+Math.floor(Math.random()*($('div.forum-topic-list p.title a').length))+') a').attr('href');
+	if (undefined != l_href) (0 < m_abs) ? location = l_href : history.back();
+}
+</script>

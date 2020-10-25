@@ -1,0 +1,251 @@
+{extend name="Public:base" /}
+{block name="body"}
+        <div class="page page-current" id="mainhtml">
+
+  <header class="aui-bar aui-bar-nav  aui-bar-light ">
+
+  <a class="aui-pull-left aui-btn " id="youce" onclick="openuser()" data-url="" >
+        <span class="icon icon-wodezhanghao1 aui-text-default aui-font-size-18"></span>
+    </a>
+
+    <div class="aui-title">
+				{$Think.CONFIG.WEB_SITE_TITLE}
+			</div>
+      <a class="aui-pull-right aui-btn " id="youce" href="{:es_url('Wap/search')}" >
+        <span class="icon icon-sousuo aui-text-warning aui-font-size-18"></span>
+    </a>
+    
+  </header>
+
+
+  <div class="content infinite-scroll infinite-scroll-bottom infinite-scroll-mainhtml" data-distance="100" style="position:fixed;">
+  <section class=" aui-content-bg" >
+
+<div class="content-title">
+<div class="aui-pull-left">
+<span class="nomygshow g_active aui-font-size-14" onclick="showg('allg',this)">热门话题</span>
+ {if condition="session('member_info')"}
+ <em  class="mygshow" style="padding:0px 5px;">|</em>
+<span class="mygshow aui-font-size-14" onclick="showg('myg',this)">我的关注</span>
+
+{/if}
+
+
+</div>
+<a class="aui-pull-right aui-font-size-12" style="    color: #909090;" href="{:es_url('Wap/glist')}" >
+    全部话题
+        <span class="icon icon-xiangyoujiantou aui-font-size-12"></span>
+    </a>
+</div>
+
+
+  <div class="aui-content-list aui-row-padded aui-text-center aui-clearfix " style="margin:0px 10px;">
+      {if condition="$uid gt 0"}
+        <div id="myg"  class="mygshow aui-hide" >
+        {volist name="usergroup" id="vo"}
+        <div class="aui-col-xs-3 hrefa" data-url="{:es_url('Wap/groupinfo',array('id'=>$vo['id']))}">
+        
+            <img src="{$vo.imgpath}" style="width:100%" />
+            <div class="aui-grid-label" style="word-wrap: break-word; word-break: normal; ">{$vo.name}</div>
+            
+        </div>
+        {/volist}
+        </div>
+        {/if}
+                <div id="allg" >
+   {volist name="hotgroup" id="vo"}
+        <div class="aui-col-xs-3 hrefa" data-url="{:es_url('Wap/groupinfo',array('id'=>$vo['id']))}">
+        
+            <img src="{$vo.imgpath}" style="width:100%" />
+            <div class="aui-grid-label" style="word-wrap: break-word; word-break: normal; ">{$vo.name}</div>
+            
+        </div>
+        {/volist}
+        
+        </div>
+    
+  </div>
+
+
+    
+</section> 
+      
+ <script id="topiclisttpl" type="text/x-dot-template">
+ {{ for(var i=0; i< it.length; i++) { }}	
+ <div class="aui-card-list aui-border-b hrefa"   data-url="{:es_url('Wap/topicdetail')}&id={{=it[i]['id']}}">
+
+            <div class="aui-card-list-content-padded aui-padded-t-5 aui-padded-b-5 dataurla" >
+                <div class="aui-list-item-title aui-font-size-16">
+{{? it[i].settop==1}}               
+
+<span class="aui-label aui-label-info aui-margin-r-5">置顶</span>
+  {{?}}
+{{? it[i].choice==1}}      
+<span class="aui-label aui-label-warning aui-margin-r-5">精</span>
+  {{?}}
+                {{=it[i].title}}</div>
+                    <p class="aui-ellipsis-2 aui-margin-t-10 aui-font-size-12">{{=it[i].descontent}}</p>
+                    
+                <div class="aui-card-list-content">
+                <div class="aui-row aui-row-padded">
+               
+                    {{ for(var k=0; k< it[i].imagesarr.length; k++) { }}	
+                    <div class="aui-col-xs-4 listimg">    
+{{=it[i].imagesarr[k]}}
+   </div>
+                      {{ } }}
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="aui-info">
+                    <div class="aui-info-item aui-font-size-12">
+                      
+                    </div>
+                    <div class="aui-info-item aui-font-size-12">{{=it[i].reply}}回帖</div>
+                </div>
+                    </div>
+
+        </div>
+
+  {{ } }}
+    </script> 
+                 <div class="aui-content aui-margin-t-10">
+
+<div class=" aui-font-size-14 aui-padded-10" style="background:#fff">最新帖子</div>
+        <ul class="aui-list aui-media-list aui-padded-b-10 " id="hottopiclist" ></ul>
+    </div>   
+
+    </div>
+
+ <script>
+ function openuser(){
+	 
+	 var uid = "{$uid}";
+	 if(uid>0){
+			var url = "{:es_url('Wap/ucenter')}";
+			
+			
+			
+		}else{
+			var url = "{:es_url('Wap/login')}";
+			
+		}
+	
+	 $.router.loadPage(url);
+	 
+ }
+ function showg(name,obj){
+
+	 $(obj).addClass('g_active').siblings('span').removeClass('g_active');
+
+	 $('#'+name).removeClass('aui-hide').siblings().addClass('aui-hide')
+
+
+
+
+
+	 }
+ function gethottopiclist(page,isAppend){
+      var url = "{:es_url('Wap/gethottopiclist')}";
+     
+      var bodyParam = {
+	         
+	         page:page,
+	       //  access_token:SHA1('EasySNS' + _getNowFormatDate() + window.apikey),
+	     }
+
+	   
+	   
+	    $.post(url, bodyParam, function(ret){
+
+	  if (ret.code==0) {
+
+	 if(ret.data.status=='error'){
+	 if(page==1){
+
+	 $("#hottopiclist").html('');
+
+	 }
+	
+
+	 }else{
+
+
+	 				    var interText = doT.template($("#topiclisttpl").text());
+	 			    
+	 			  
+	 				if (!isAppend) {
+	 					$("#hottopiclist").html(interText(ret.data.info));
+	 				} else {
+	 					$("#hottopiclist").append(interText(ret.data.info));
+	 				}
+	 				
+	                $('.listimg img').css('height',$('.listimg img').width());
+	               	$('.hrefa').click(function(){
+	            		
+	            		var url = $(this).data('url');
+	            		$.router.loadPage(url);
+	            		
+	            	});	
+	 }
+
+
+
+
+
+	           
+	            
+	         
+	      }else{
+	    	  $.toast('数据出错');
+	    	  
+	      }
+
+
+	    
+	    
+	    });
+
+
+
+	 }
+
+
+	 var loading = false;
+	 
+	 
+		
+	   
+	
+
+	 var current_page=1;
+	
+	 	var oldTop = $('.infinite-scroll-mainhtml').scrollTop();
+
+		
+
+
+		
+		 	$('.infinite-scroll-mainhtml').on('infinite',debounce(function(){
+		 		
+		 	var newTop = $(this).scrollTop();
+		 
+		 	if(newTop-oldTop>0){
+		 		current_page = current_page+1;
+		 	
+		 		gethottopiclist(current_page, true);
+		 		
+		 		oldTop = newTop;
+			}
+		 	
+		 	
+		 },500));
+	 
+
+
+
+ </script>
+   </div>
+{/block}

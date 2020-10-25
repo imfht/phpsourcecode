@@ -1,0 +1,111 @@
+{extend name="default/base" /}
+{block name="title"}购物车 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/carts.css?v={$v}">
+{/block}
+{block name="header"}
+       <header style="background:#ffffff;" class="ui-header ui-header-positive wst-header">
+       	   <a href="{:url('mobile/index/index')}"><i class="ui-icon-return"></i></a><h1 style="font-size: 0.18rem;">购物车</h1>
+       	   {if(count($carts['carts'])>0)}
+       	   <span id="edit" class="edit" onclick="javascript:edit(0);">编辑</span><span id="complete" class="edit" onclick="javascript:edit(1);" style="display: none;">完成</span>
+       	   <div class="wst-ca-more" onclick="javascript:inMore();"></div>
+       	   {/if}
+       </header>
+         <div class="wst-go-more" id="arrow" style="display: none;"><i class="arrow"></i>
+	    	<ul class="ui-row ui-list-active more">
+			    <li class="ui-col"><div class="column line"><a href="{:url('mobile/index/index')}"><i class="home"></i><p>首页</p></a></div></li>
+			    <li class="ui-col"><div class="column line"><a href="{:url('mobile/goodscats/index')}"><i class="category"></i><p>分类</p></a></div></li>
+			    <li class="ui-col"><div class="column line"><a href="{:url('mobile/favorites/goods')}"><i class="follow"></i><p>关注</p></a></div></li>
+			    <li class="ui-col"><div class="column"><a href="{:url('mobile/users/index')}"><i class="user"></i><p>我的</p></a></div></li>
+			</ul>
+	    </div>
+	    <div class="wst-ca-layer" id="layer" onclick="javascript:inMore();"></div>
+{/block}
+{block name="footer"}
+{if(count($carts['carts'])>0)}
+        <footer class="ui-footer wst-footer-btns" style="height:0.49rem; border-top: 1px solid #e8e8e8;" id="footer">
+			<div class="wst-ca-se">
+			<div class="wst-ca-layout" >
+				<div class="wst-ca-10 totall"><i class="ui-icon-choose ui-icon-unchecked-s" cartId="0" mval="0"></i>&nbsp;</div>
+				<div class="wst-ca-90 totalr">
+					<span>全选</span>
+					<button id="settlement" class="button" type="button" onclick="javascript:toSettlement();">结算</button>
+					<button id="delete" class="del-button" type="button" onclick="javascript:deletes();" style="display: none;">删除</button>
+                    <button id="favorite" class="del-fav" type="button" onclick="javascript:toFavorites();" style="display: none;">移入关注</button>
+					<span id="total" class="total">合计：<span id="totalMoney" class="price"><span>¥ </span>{php}echo sprintf("%.2f", $carts['goodsTotalMoney']);{/php}</span></span>
+				</div>
+			</div>
+			</div>
+        </footer>
+{else}
+{include file="default/footer" /}
+{/if}
+{/block}
+{block name="main"}
+     <section class="ui-container" style='margin-bottom: 0.55rem'>
+     {if(count($carts['carts'])>0)}
+     <input type="hidden" name="" value="0" id="buyNum_0" autocomplete="off">
+     <input type="hidden" name="" value="{php}echo count($carts['carts'])+1;{/php}" id="totalshop" autocomplete="off">
+     {volist name="$carts['carts']" id="ca" key="k"}
+	     <div class="wst-ca-s">
+			<div class="wst-ca-layout shop">
+				<div class="wst-ca-10 shopl"><i class="ui-icon-chooses ui-icon-unchecked-s j-shop{$k}" shopId="{$ca['shopId']}" childrenId="clist{$k}" cartId="0" mval="0"></i>&nbsp;</div>
+				<div class="wst-ca-90 shopr wst-flex-row wst-ac" onclick="javascript:WST.intoShops({$ca['shopId']});"><p class="ui-nowrap" ><i class="shopicon"></i>{$ca['shopName']}</p><div class="wst-ca-arrow"></div></div>
+
+			</div>
+			{volist name="ca['list']" id="li"}
+			{:hook('mobileDocumentCartGoodsPromotion',['goods'=>$li])}
+			<div class="wst-ca-layout goods{if($li['goodsStock']==0)} nogoods{/if} j-g{$li["cartId"]}">
+				<div class="wst-ca-10 goodsl">
+					<i id="gchk_{$li["cartId"]}" class="ui-icon-chooseg {if($li['isCheck'])}ui-icon-success-block wst-active{else}ui-icon-unchecked-s{/if} clist{$k}" cartId="{$li['cartId']}" goodsId="{$li['goodsId']}" mval="{$li['shopPrice']}"></i>&nbsp;</div>
+				<div class="wst-ca-90">
+					<div class="wst-ca-24 goodsr">
+					<div class="img ">
+						<a href="javascript:void(0);" onclick="javascript:WST.intoGoods({$li['goodsId']});">
+						<img src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{:WSTImg($li['goodsImg'],3)}" title="{$li['goodsName']|WSTStripTags}">
+						</a>
+					</div>
+					</div>
+					<div class="wst-ca-76">
+						<div class="info">
+						<a href="javascript:void(0);" onclick="javascript:WST.intoGoods({$li['goodsId']});"><p class="name">{$li['goodsName']}</p></a>
+						{if($li['specNames'])}
+						<p class="spec">
+						{volist name="li['specNames']" id="sp"}
+							{$sp['itemName']}
+						{/volist}
+						</p>
+						{/if}
+						<div class="wst-buy_l wst-flex-row wst-ac wst-jsb">
+							<p class="price" id='gprice_{$li['cartId']}'>¥ {$li['shopPrice']}</p>
+							<div class="wst-flex-row wst-ac">
+								<div class="wst-buy-minus" onclick='javascript:WST.changeIptNum(-1,"#buyNum",{$li["cartId"]},"statCartMoney")'></div><input id="buyNum_{$li['cartId']}" class="wst-buy_l2" data-min='1' data-max='{$li["goodsStock"]}' type="number" value="{$li['cartNum']}" autocomplete="off" onkeyup='WST.changeIptNum(0,"#buyNum",{$li["cartId"]},"statCartMoney")'><div class="wst-buy-add"  onclick='javascript:WST.changeIptNum(1,"#buyNum",{$li["cartId"]},"statCartMoney")'></div>
+							</div>
+
+						</div>
+						</div>
+					</div>
+				</div>
+				<span id="noprompt{$li['cartId']}" class="noprompt" style="display: none;"></span>
+			</div>
+			{/volist}
+			<div class="wst-flex-row wst-jfe bottom">
+				<p class="tips">共 {php}echo count($ca['list']);{/php} 件商品 计：</p><p id="tprice_{$k}" class="price tprice{$li["cartId"]}"><span>¥ </span>{php}echo sprintf("%.2f", $ca['goodsMoney']);{/php}</p>
+			</div>
+		</div>
+		{/volist}
+		{else}
+		<div class="wst-prompt-icon" style="width: 1.40rem;height: 1.52rem;"><img src="__MOBILE__/img/no_data.png" style="width: 1.40rem;height: 1.52rem;"></div>
+		<div class="wst-prompt-info">
+			<p>购物车内还没商品哦，去逛逛吧~</p>
+			<button class="ui-btn-s" onclick="javascript:WST.intoIndex();">去逛逛</button>
+		</div>
+		{/if}
+     </section>
+{/block}
+{block name="include"}
+{include file="default/dialog" /}<!-- 对话框模板 -->
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/carts.js?v={$v}'></script>
+{/block}

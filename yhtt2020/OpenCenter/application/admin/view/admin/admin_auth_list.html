@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>管理员权限列表</title>
+    <link rel="stylesheet" href="__LAYUI__/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/admin.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/oc.css" media="all">
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-tab layui-tab-card">
+        <ul class="layui-tab-title">
+            <li class="layui-this">管理员权限列表</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div style="padding-bottom: 10px;">
+                    <button class="layui-btn layuiadmin-btn-useradmin" data-type="add">添加</button>
+                    <button class="layui-btn layuiadmin-btn-useradmin" data-type="del">删除</button>
+                </div>
+                <table id="list" lay-filter="list"></table>
+                <script type="text/html" id="barDemo">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div class="layui-tab-item">
+                <table id="data-list" lay-filter="list"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="__LAYUI__/layui/layui.js"></script>
+<script>
+    layui.use(['table', 'jquery'], function () {
+        var table = layui.table,
+            $ = layui.$;
+        table.render({
+            elem: '#list',
+            url: "{:url('admin/adminAuthList')}", //数据接口
+            title: '管理员权限列表',
+            toolbar: 'true',
+            defaultToolbar: ['filter', 'print', 'exports'],
+            page: true,
+            loading: true,
+            limit: 20,
+            limits: [10, 20, 50, 100],
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: 'ID', sort: true, fixed: 'left', width: 80},
+                {field: 'title', title: '名称', sort: true, fixed: 'left'},
+                {field: 'module', title: '模块名', sort: true, fixed: 'left', width: 100},
+                {field: 'name', title: 'URL', sort: true, fixed: 'left', width: 250},
+                {field: 'ptitle', title: '父级权限', sort: true, fixed: 'left', width: 150},
+                {field: 'icon', title: '图标', sort: true, width: 80},
+                {field: 'remark', title: '说明', sort: true},
+                {field: 'sort', title: '排序', sort: true},
+                {field: 'is_menu', title: '是否菜单', sort: true, width: 120},
+                {field: 'is_show', title: '是否显示', sort: true, width: 120},
+                {field: 'status', title: '状态', sort: true},
+                {fixed: 'right', width: 165, align: 'center', toolbar: '#barDemo'}
+            ]],
+        });
+
+        //事件
+        var active = {
+            del: function () {
+                var checkStatus = table.checkStatus('list')
+                    , checkData = checkStatus.data; //得到选中的数据
+                if (checkData.length === 0) {
+                    return layer.msg('请选择数据');
+                }
+                var ids = [];
+                for (var v in checkData) {
+                    ids.push(checkData[v].id);
+                }
+                layer.confirm('确定删除吗？', function (index) {
+                    $.post("{:url('delAdminAuth')}", {id: ids}, function (res) {
+                        if (res.code === 1) {
+                            layer.close(index);
+                            table.reload('list');
+                            layer.msg(res.msg);
+                        } else {
+                            layer.msg(res.msg);
+                        }
+                    }, 'json')
+                });
+            }
+            , add: function () {
+                layer.open({
+                    type: 2,
+                    title: "添加管理员权限",
+                    content: "{:url('adminAuthForm')}",
+                    maxmin: true,
+                    area: ['600px', '600px'],
+                    btn: ['确定', '取消'],
+                    yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submitID = 'LAY-user-front-submit'
+                            , submit = layero.find('iframe').contents().find('#' + submitID);
+
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(' + submitID + ')', function (data) {
+                            var field = data.field; //获取提交的字段
+                            //提交 Ajax 成功后，静态更新表格中的数据
+                            $.post("{:url('adminAuthForm')}", {
+                                id: field.id,
+                                is_menu: field.is_menu,
+                                is_show: field.is_show,
+                                module: field.module,
+                                name: field.name,
+                                pid: field.pid,
+                                remark: field.remark,
+                                status: field.status,
+                                title: field.title,
+                                icon: field.icon,
+                                sort: field.sort
+                            }, function (res) {
+                                if (res.code === 1) {
+                                    table.reload('list');   //数据刷新
+                                    layer.close(index);     //关闭弹层
+                                    layer.msg(res.msg);
+                                } else {
+                                    layer.msg(res.msg);
+                                }
+                            });
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        };
+        $('.layuiadmin-btn-useradmin').on('click', function () {
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+        //监听行工具事件
+        table.on('tool(list)', function (obj) {
+            var data = obj.data;
+            var layEvent = obj.event;
+            if (layEvent === 'del') {
+                layer.confirm('真的删除行么', function (index) {
+                    $.post('{:url("admin/delAdminAuth")}', {id: data.id}, function (res) {
+                        if (res.code === 1) {
+                            obj.del();
+                            layer.close(index);
+                            layer.msg(res.msg);
+                        } else {
+                            layer.msg(res.msg);
+                        }
+                    });
+                });
+            } else if (layEvent === 'edit') {
+                layer.open({
+                    type: 2
+                    , title: '编辑管理员权限'
+                    , content: "{:url('adminAuthForm')}?id=" + data.id
+                    , maxmin: true
+                    , area: ['600px', '600px']
+                    , btn: ['确定', '取消']
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submitID = 'LAY-user-front-submit'
+                            , submit = layero.find('iframe').contents().find('#' + submitID);
+
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(' + submitID + ')', function (data) {
+                            var field = data.field; //获取提交的字段
+                            //提交 Ajax 成功后，静态更新表格中的数据
+                            $.post("{:url('adminAuthForm')}", {
+                                id: field.id,
+                                is_menu: field.is_menu,
+                                is_show: field.is_show,
+                                module: field.module,
+                                name: field.name,
+                                pid: field.pid,
+                                remark: field.remark,
+                                status: field.status,
+                                title: field.title,
+                                icon: field.icon,
+                                sort: field.sort
+                            }, function (res) {
+                                if (res.code === 1) {
+                                    table.reload('list');   //数据刷新
+                                    layer.close(index);     //关闭弹层
+                                    layer.msg(res.msg);
+                                } else {
+                                    layer.msg(res.msg);
+                                }
+                            }, 'json');
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<style>
+/*添加*/
+table {
+	font-size:12px;
+	color:#333333;
+	font-family:"微软雅黑";
+}
+.col-sm-9 div {
+	margin:2px auto
+}
+</style>
+<div class="row">
+  <div class="col-xs-12">
+    <form method="post" class="form-horizontal" name="<{$controller}>_<{$action}>_form"
+			id="<{$controller}>_<{$action}>_form"
+			action="/Admin/rights/save/id/<{if isset($data)}><{$data->id}><{/if}>">
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right"
+					for="form-field-1">资源组名</label>
+        <div class="col-sm-9">
+          <input type="text" value="<{if isset($data)}><{$data->name}><{/if}>" id="form-field-2"
+						placeholder="eg. [组名]权限名称" name="rightName" class="col-xs-10 col-sm-5" />
+          <span
+						class="help-inline col-xs-12 col-sm-7"> </span> </div>
+      </div>
+      <div class="space-4"></div>
+      <div class="form-group ">
+        <label class="col-sm-3 control-label no-padding-right"
+					for="form-field-1">动作集合</label>
+        <div class="col-sm-9" id="rightsList"> <{if isset($allowList)}>
+          <{foreach from=$allowList item=item}>
+          <div>
+            <input type="text" readonly="true" class="add-input-text" name="actionList[]" value="<{$item}>" />
+            &nbsp;<i class="icon-unlock" onclick="$(this).parent().remove()"></i></div>
+          <{/foreach}>
+          <{/if}> </div>
+      </div>
+      <div class="space-4"></div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right"
+					for="form-field-1">添加资源</label>
+        <div class="col-sm-9">
+          <select class="add-input-select" id="controllerName">
+            <option value="">请选择控制器</option>
+            <{foreach from=$controllers item=action key=index}>
+            <option value="<{$index}>"><{$index}></option>
+            <{/foreach}>
+          </select>
+          @
+          <select class="add-input-select" id="actionList">
+            <option value="">请选择方法</option>
+          </select>
+          <input type="button" class="btn btn-minier" id="addButton" value="添加" />
+        </div>
+      </div>
+      <div class="space-4"></div>
+    </form>
+  </div>
+</div>
+<script>
+$("#controllerName").change(function(){
+	var selectController = $("#controllerName option:selected").val();
+	
+	if(selectController ==""){
+		$("#actionList").html('<option value="">请选择方法</option>');
+		return false;
+	}
+	
+	$.getJSON("/Admin/ajax/actlist",{isAjax:1,controller:selectController},function(json){
+		if(json.status == true){
+			var html = '';
+			$.each(json.data,function(k,v){
+				html = html + '<option value="'+v+'">'+v+'</option>';
+			});
+			$("#actionList").html(html);
+		}
+	})
+})
+
+$("#addButton").click(function(){
+	var selectController = $("#controllerName option:selected").val();
+	var selectAction = $("#actionList option:selected").val();
+	
+	if(selectController == ""){
+		art.dialog({time:1,content:'请选择控制器',icon:'warning'});
+		return false;
+	}
+	if(selectAction == ""){
+		art.dialog({time:1,content:'请选择方法',icon:'warning'});
+		return false;
+	}
+	
+	var rightValue = selectController + '@' + selectAction;
+	var html = '<div><input type="text" readonly="true" class="add-input-text" name="actionList[]" value="'+ rightValue +'" />&nbsp;<i class="icon-unlock" onclick="$(this).parent().remove()"></i></div>';
+	$("#rightsList").append(html);
+})
+</script> 

@@ -1,0 +1,116 @@
+<script type="text/javascript" charset="utf-8" src="__PUBLIC__/lib/webuploader/js/webuploader.js"></script>
+<link href="__PUBLIC__/lib/webuploader/css/webuploader.css" type="text/css" rel="stylesheet">
+
+
+    <!--用来存放item-->
+    <div id="fileList" class="uploader-list"></div>
+    
+
+    <div class="show_avatar">
+            <div class=" avatar_select">
+                <div  id="avatar_{$uid}_original" class="avatar_preview">
+                        <img class="img-circle"  src="{$user.avatar256}" />
+                </div>  
+            </div>
+    </div>
+
+    <div class="">
+    <div id="upload_avatar_{$uid}" class="avatar_upload_btn" style="margin-top:5px">{:L('_AVATAR_SELECT_')}</div>
+    <button class="btn btn-block btn-lg btn-warning avatar_btn" data-role="avatar_btn"  type="button" style="margin-top:5px">{:L('_AVATAR_SAVE_')}</button>
+    </div>
+          
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/lib/jcrop/jquery.Jcrop.css"/>
+<script src="__PUBLIC__/lib/jcrop/jquery.Jcrop.js"></script>
+
+<script>
+    $(function () {
+        var crop;
+        var jcrop_api;
+        var ext;
+        var boundx, boundy;
+        var path;
+        var $pcnt = $('.avatar_preview');
+        var uploader_{$uid}= WebUploader.create({
+            // 选完文件后，是否自动上传。
+            auto: true,
+            // swf文件路径
+            swf: 'Uploader.swf',
+            // 文件接收服务端。
+            server: "{:U('Home/File/uploadAvatar',array('uid'=>$uid))}",
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#upload_avatar_{$uid}',
+            // 只允许选择图片文件。
+            accept: {
+                title: 'Images',
+                extensions: 'gif,jpg,jpeg,bmp,png',
+                mimeTypes: 'image/*'
+            }
+        });
+        uploader_{$uid}.on('fileQueued', function (file) {
+            uploader_{$uid}.upload();
+            toast.showLoading();
+        });
+        /*上传成功*/
+        uploader_{$uid}.on('uploadSuccess', function (file, ret) {
+            toast.hideLoading();
+            if (ret.status == 0) {
+                toast.error(ret.info);
+            } else {
+                ext = ret.data.file.ext;
+                path = ret.data.file.path;
+                var src = ret.data.file.src+'?time='+ret.data.file.time;
+
+                $("#avatar_" + "{$uid}" + "_original").html('');
+                $("#avatar_" + "{$uid}" + "_original").html('<img src="'+src+'" style="width:100%">');
+
+                $("#avatar_" + "{$uid}" + "_original img").load(function () {
+                    $("#avatar_" + "{$uid}" + "_original >img").Jcrop({
+                        aspectRatio: 1,
+                        onChange: updateCoordinate,
+                        onSelect: updateCoordinate,
+                        minSize: [10, 10],
+                        setSelect: [0, 0, 256, 256],
+                        bgOpacity: .5
+                    }, function () {
+                        var bounds = this.getBounds();
+                        boundx = bounds[0];
+                        boundy = bounds[1];
+                        jcrop_api = this;
+                        crop = jcrop_api.tellScaled();
+                        updateCoordinate(crop);
+                    });
+                })
+                //重置队列
+                uploader_{$uid}.reset();
+            }
+        });
+        function updateCoordinate(c) {
+            crop = c;
+            if (parseInt(c.w) > 0) {
+                var xsize = $pcnt.width();
+                var ysize = $pcnt.height();
+                var rx = xsize / c.w ;
+                var ry = ysize / c.h ;  
+            }
+        }
+        $('[data-role=avatar_btn]').click(function(){
+            //检查是否已经裁剪过
+            if (typeof (crop) == 'undefined') {
+                toast.error("{:L('_AVATAR_UPLOAD_AND_CROP_')}");
+                return;
+            }
+            else{
+                var crop2 = crop.x / boundx + ',' + crop.y / boundy + ',' + crop.w / boundx + ',' + crop.h / boundy;
+            }
+            var uid ='{$uid}';
+            //提交到服务器
+            var url = "{:U('ucenter/member/saveAvatar')}";
+
+            $.post(url, {uid: uid, crop: crop2, path:path}, function (res) {
+                handleAjax(res);
+            });
+        })
+    })
+</script>
+

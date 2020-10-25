@@ -1,0 +1,189 @@
+  {extend name="Public:base" /}
+  
+        {block name="seo"}
+        <title>我的信息页|{$Think.CONFIG.WEB_SITE_TITLE} - Powered by EasySNS!</title>
+  
+  
+  <meta name="keywords" content="{$Think.CONFIG.WEB_SITE_KEYWORD}">
+  <meta name="description" content="{$Think.CONFIG.WEB_SITE_DESCRIPTION}">
+      {/block}
+  
+  {block name="body"}
+   <link rel="stylesheet" type="text/css" href="__CSS__/setting.css" />
+  <div class="aw-container-wrap">
+	<div class="container" style="background:#fff">
+		<div class="row">
+			<div class="aw-content-wraps clearfix">
+				<div class="aw-user-setting">
+					<div class="tabbable">
+						<ul class="nav nav-tabs aw-nav-tabs active">
+<li ><a href="{:es_url('user/setverify')}">申请认证</a></li>
+							<li><a href="{:es_url('user/setpass')}">安全设置</a></li>
+							<li><a href="{:es_url('user/setavatar')}">设置头像</a></li>
+							<li class="active"><a href="#">基本资料</a></li>
+							
+							<h2><i class="iconfont icon-shezhi"></i> 用户设置</h2>
+						</ul>
+					</div>
+					
+					<div class="tab-content clearfix">
+<form class="form-horizontal" id="userinfoform">
+  <div class="form-group">
+    <label for="usermail" class="col-sm-1 control-label">邮箱</label>
+    <div class="col-sm-4">
+      <input type="text" class="form-control" id="usermail" name="usermail" value="{$nowuserinfo['usermail']}" placeholder="请输入邮箱地址" {if condition="($nowuserinfo.status eq 2) OR ($nowuserinfo.status eq 5)"}disabled{/if}>
+    </div>
+                  
+              {if condition="($nowuserinfo.status eq 2) OR ($nowuserinfo.status eq 5)"}
+              
+              <a href="javascript:;" class="btn btn-danger"  id="rejhemail">更改邮箱</a>
+              
+              {else /}
+            
+              <a href="javascript:;" class="btn btn-success" id="jhemail">激活邮箱</a>
+             
+              {/if}
+  </div>
+  <div class="form-group">
+    <label for="nickname" class="col-sm-1 control-label">昵称</label>
+    <div class="col-sm-4">
+      <input type="text" class="form-control" id="nickname" name="nickname" value="{$nowuserinfo['nickname']}" placeholder="设置个性昵称">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="userhome" class="col-sm-1 control-label">城市</label>
+    <div class="col-sm-4">
+      <input type="text" class="form-control" id="userhome" name="userhome"  value="{$nowuserinfo['userhome']}" placeholder="设置您所在的城市">
+    </div>
+  </div>
+    <div class="form-group">
+    <label for="description" class="col-sm-1 control-label">签名</label>
+    <div class="col-sm-7">
+      <textarea rows="3" class="form-control" placeholder="说点什么刷一下存在感"  id="description" name="description" >{$nowuserinfo['description']}</textarea>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="col-sm-offset-1 col-sm-5">
+      <button type="button" data-name="userinfoform"  data-url="{:es_url('user/setinfoHandle')}" class="btn btn-success changeinfo"><i class="fa fa-save"></i> 保存</button>
+    </div>
+  </div>
+</form>
+
+	
+	</div>
+
+</div>
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+    {/block}
+   
+    {block name="script"}
+    <script>
+    
+    $(function(){
+    	
+    	$('.changeinfo').click(function(){
+    		var formname=$(this).data('name');
+		    $.post($(this).data('url'),$('form#'+formname).serialize(),function(data){
+			    
+		    	
+		    	
+		    	
+			      if(data.code == 1){
+				        
+				        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+				          location.reload();
+				        });
+				      }else{
+				        
+				        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+				        
+				        
+				        
+				   }
+			
+	    	
+
+	    });
+	    return false;
+    		
+    		
+    		
+    		
+    		
+    	});
+    	var emailold='';
+    	 $('#jhemail').click(function(){
+    		  //激活邮箱直接变成disable，然后发送邮件。邮件验证成功后，该status变为2或者5
+    		   var email=$('#usermail').val();
+    			 var url="{:es_url('index/yzemail')}"; 
+    			
+    			  if(email==''){
+    				  layer.msg('邮箱不能为空', {icon: 2, anim: 6, time: 1000});
+    				  return false;
+    			  }
+    			  
+    			  
+    			   $.post(url,{'email':email},function(data){
+    				      if(data.code == 1){
+    				      
+    				        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+    				         // 
+    				        
+    				        	$('#usermail').attr('disabled','disabled');
+    				      
+    				          
+    				        });
+    				      }else{
+    				      
+    				        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+    				      }
+    				    });
+    	 });
+    	 $('#rejhemail').click(function(){
+    		  //重新激活邮箱后，去掉disable,然后传送email的参数
+    			
+    		  	var url="{:es_url('index/reyzemail')}"; 
+    		  
+    		  if($(this).html()=='立即激活'){
+    			  var reemail=$('#usermail').val();
+    			  if(reemail==emailold){
+    				  layer.msg('请更改邮箱进行验证', {icon: 2, anim: 6, time: 1000});
+    			  }else{
+    				 $.post(url,{'email':reemail},function(data){
+    				      if(data.code == 1){
+    				      
+    				        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+    				         // 
+    				        	
+    				        	$('#usermail').attr('disabled','disabled');
+    						      
+    				      
+    				          
+    				        });
+    				      }else{
+    				      
+    				        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+    				      }
+    				    });
+    			  }
+    			  
+    			  
+    		  }else{
+    				emailold=$('#usermail').val();
+    				$('#usermail').removeAttr('disabled');
+    				$(this).html('立即激活');
+    			  
+    		  }
+    		  
+    	 });
+    })
+    </script>
+    {/block}

@@ -1,0 +1,154 @@
+{extend name="default/base" /}
+{block name="title"}售后申请页 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/osapply.css?v={$v}">
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+{/block}
+{block name="header"}
+	<div id="info_list">
+    <header style="background:#ffffff;position: relative;" class="ui-header ui-header-positive wst-header wst-headero">
+        <i class="ui-icon-return" onclick="javascript:history.go(-1)"></i><h1>售后申请页</h1>
+    </header>
+{/block}
+{block name="main"}
+<style>
+.webuploader-pick,.webuploader-pick-hover{width:0.8rem;height:0.9rem;background: url(__MOBILE__/img/upload-btn.png) center center no-repeat;background-size:100%;}
+#filePicker div:nth-child(2){top:0!important;left:0!important;width:100%!important;height:100%!important;}
+</style>
+    {volist name="goods" id="li"}
+        {if($li.goodsNum>0)}
+        <div class="wst-ca-s wst-ca-layout goods j-g{$li["id"]}">
+            <div class="wst-ca-10 goodsl" onclick="switchChk(this)">
+                <i id="gchk_{$li["id"]}" class="ui-icon-chooseg ui-icon-unchecked-s clist os-chk"
+                    gid="{$li["id"]}" mval="{$li['goodsPrice']}"></i>&nbsp;</div>
+            <div class="wst-ca-90">
+                <div class="wst-ca-24 goodsr">
+                    <div class="img j-imgAdapt">
+                        <a href="javascript:void(0);" onclick="javascript:WST.intoGoods({$li['goodsId']});">
+                            <img src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{:WSTImg($li['goodsImg'],3)}"
+                                title="{$li['goodsName']|WSTStripTags}">
+                        </a>
+                    </div>
+                </div>
+                <div class="wst-ca-76">
+                    <div class="info">
+                        <a href="javascript:void(0);" onclick="javascript:WST.intoGoods({$li['goodsId']});">
+                            <p class="name">{$li['goodsName']}</p>
+                        </a>
+                        <p class="price" id='gprice_{$li['id']}'>¥ {$li['goodsPrice']}</p>
+                        {if($li['goodsSpecNames'])}
+                        <p class="spec">规格：{php} echo implode(' ',explode('@@_@@',$li['goodsSpecNames'])){/php}
+                        </p>
+                        {/if}
+                        <div class="wst-buy_l">
+                            <input class="wst-buy_l1" type="button" value="-" onclick='javascript:changeNum(-1,"#goodsNum",{$li["id"]})'><input
+                                id="goodsNum_{$li['id']}" class="wst-buy_l2" data-min='1' data-max='{$li["goodsNum"]}' type="number"
+                                value="1" autocomplete="off" onkeyup='changeNum(0,"#goodsNum",{$li["id"]})'><input
+                                class="wst-buy_l3" type="button" value="+" onclick='javascript:changeNum(1,"#goodsNum",{$li["id"]})'>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {/if}
+    {/volist}
+    {/* 遮盖层  */}
+    <div class="wst-cover" id="cover"></div>
+    <div class="opa-item opa-flex-item" onclick="dataShow('stTypeBox')">
+        售后类型
+        <span style="color:#999"> <span id="sTypeText">退货退款</span>  <i class="icon-right-arrow"></i> </span>
+    </div>
+    <div class="opa-item opa-flex-item" onclick="dataShow('stBox')">
+        申请原因
+        <span style="color:#999"> <span id="sTText">请选择</span>  <i class="icon-right-arrow"></i> </span>
+    </div>
+    <div id="refundBox">
+        <div class="opa-item opa-flex-item">
+            退款金额不能超过
+            <span id="maxRefundMoney" style="font-size: 14px;color:#ea4341;font-weight: bold">￥0</span>
+        </div>
+        <div class="opa-item opa-flex-item">
+            退款金额
+            <input type="text" id="refundMoney" placeholder="请输入退款金额" onkeyup="javascript:WST.isChinese(this,1)" onkeypress="return isNumberdoteKey(event,true)" onblur='javascript:WST.limitDecimal(this,2)' />
+        </div>
+    </div>
+    <div class="opa-item">
+        <textarea class="service-remark" placeholder="请输入问题描述" name="" id="serviceRemark"></textarea>
+    </div>
+    <div class="c-item">
+        <div class="wst-oc-describe">上传附件(最多5张)</div>
+    </div>
+    <div class="ui-col uploadfile-box">
+        <div class="complainFileBox wst-flex-row wst-fw">
+            <div id="filePicker" class="upload-btn"></div>
+        </div>
+    </div>
+
+
+
+    <div class="wst-clear"></div>
+    <div class="btn-box" onclick="commitOrderService()">提交</div>
+
+{/* 售后类型 */}
+<div class="wst-fr-box frame" id="stTypeBox">
+    <div class="title" id="boxTitle"><span>售后类型</span><div class="wst-clear"></div></div>
+    <div class="content" id="content">
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">退货退款</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='0' >
+            </label>
+        </div>
+
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">退款</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='1' >
+            </label>
+        </div>
+
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">换货</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='2' >
+            </label>
+        </div>
+    </div>
+    <div class="bottom-two-btn-box wst-flex-row wst-center">
+        <button type="button" class="wst-dialog-b1" onclick="dataHide('stTypeBox');" >取消</button>
+        <button type="button" class="wst-dialog-b2" onclick="choseType('stTypeBox')">确定</button>
+    </div>
+
+
+</div>
+
+{/* 申请原因 */}
+<div class="wst-fr-box frame" id="stBox">
+    <div class="title" id="boxTitle"><span>申请原因</span><div class="wst-clear"></div></div>
+    <div class="content" id="content">
+        {volist name="reasons" id="item" key="k"}
+            <div class="wst-flex-row wst-jsb wst-ac item">
+                <div class="name">{$item.dataName}</div>
+                <label class="ui-checkbox">
+                    <input class="active" {if($k==1)} checked {/if} type="radio" name="data" value='{$item.dataVal}' >
+                </label>
+            </div>
+        {/volist}
+    </div>
+    <div class="bottom-two-btn-box wst-flex-row wst-center">
+        <button type="button" class="wst-dialog-b1" onclick="dataHide('stBox');" >取消</button>
+        <button type="button" class="wst-dialog-b2" onclick="choseReason('stBox')">确定</button>
+    </div>
+
+</div>
+
+<input type="hidden" name="" value="-1" id="serviceType">
+<input type="hidden" name="" id="orderId" value="{$orderId}">
+{/block}
+{block name="footer"}
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__MOBILE__/users/orderservices/apply.js?v={$v}'></script>
+<script type='text/javascript' src='__STATIC__/plugins/webuploader/webuploader.js?v={$v}'></script>
+{/block}

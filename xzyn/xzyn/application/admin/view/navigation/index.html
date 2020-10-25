@@ -1,0 +1,162 @@
+{extend name="public/base" /}
+{block name="title"}<title>网站导航列表</title>{/block}
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>网站导航列表</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> 导航列表</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border x-t-no x-gd-x">
+                    {:BTN(C_NAME.'/create','','新增导航','btn btn-sm btn-primary','fa-save')}
+                    <a href="{:url(C_NAME.'/index')}" class="btn btn-sm btn-warning"><i class="fa fa-list-ul"></i>&nbsp;全部</a>
+                    {volist name="fenlei" id="vvo" key="k"}
+                    	<a href="{:url('Navigation/index',['type'=>$k])}" class="btn btn-sm btn-success">{$vvo}</a>
+                    {/volist}
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover table-sort">
+                        <tr>
+                            <th width="35">ID</th>
+                            <th>名称</th>
+                            <th>别名</th>
+                            <th>URL</th>
+                            <th>分类</th>
+                            <th>icon图标</th>
+                            <th>图标颜色</th>
+                            <th>是否显示</th>
+                            <th>打开窗口</th>
+                            <th>角标信息</th>
+                            <th>角标颜色</th>
+                            <th>排序</th>
+                            <th width="124">操作</th>
+                        </tr>
+
+						{volist name="dataList" id="vo"}
+                        <tr>
+                            <td>{$vo.id}</td>
+                            <td>
+                            	{for start="1" end="$vo['h_layer']"}├─{/for}
+                            	<span class="editable" data-pk="{$vo.id}" data-name="name" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">{$vo.name}</span>
+
+                            </td>
+                            <td class="x-tc">
+                            	<span class="editable" data-pk="{$vo.id}" data-name="title" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">{$vo.title}</span>
+
+                            </td>
+                            <td>
+                            	<span class="editable" data-pk="{$vo.id}" data-name="url" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">{$vo.url}</span>
+                            </td>
+                            <td>
+                            	<span>{$fenlei[$vo.type]}</span>
+                            </td>
+                            <td>
+                            	<i class="fa fa-lg {$vo.icon}"></i>&nbsp;
+                            	<span class="editable" data-pk="{$vo.id}" data-name="icon" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">
+                            		{$vo.icon}
+                            	</span>
+
+                            </td>
+                            <td>
+                            	<span class="editable" data-pk="{$vo.id}" data-name="iconcolor" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >
+                            		{$vo.iconcolor}
+                            	</span>
+                            </td>
+                            <td class="x-tc">
+                            	<a href="javascript:void(0);" data-id="{$vo.id}" data-field="closed"
+                                data-value="{$vo.closed}" data-url="{:url('edit', 'id='.$vo['id'])}"
+                                class='editimg fa {if condition=" $vo.closed == 1 "}fa-check-circle text-green{else /}fa-times-circle text-red{/if}'></a>
+                            </td>
+                            <td class="x-tc">
+                            	<button data-type="select"  data-pk="{$vo.id}"data-value="{$vo.target}" data-name="target" data-source="[ {value: 0, text: '当前'}, {value: 1, text: '新'} ]" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" class="lists btn btn-xs {eq name='$vo.target' value='0'}btn-success{else/}btn-danger{/eq}">
+                            		{eq name="$vo.target" value="0"}当前{else/}新{/eq}
+                            	</button>
+                            </td>
+                            <td class="x-tc">
+                            	<span class="editable" data-pk="{$vo.id}" data-name="news" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">
+                            		{$vo.news}
+                            	</span>
+                            </td>
+                            <td class="x-tc">
+                            	<span class="editable" data-pk="{$vo.id}" data-name="bgcolor" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">
+                            		{$vo.bgcolor}
+                            	</span>
+                            </td>
+                            <td class="x-tc">
+                            	<span class="editable" data-pk="{$vo.id}" data-name="orderby" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}">
+                            		{$vo.orderby}
+                            	</span>
+                            </td>
+                            <td>
+                            	{:BTN(C_NAME.'/edit','id='.$vo.id,'编辑','btn btn-primary btn-xs','fa-edit')}
+                            	{:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+
+
+                    </table>
+                </div>
+                <div class="box-footer clearfix">
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function() {
+
+    $('.editable').editable({
+        emptytext: "",
+        params: function(params) { //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON(response);
+            if(res.status == 1) {
+                layer.msg(res.info,{offset:'100px'});
+            } else {
+                return res.info;
+            }
+        }
+    });
+    $('.lists').editable({
+        params: function(params) { //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+        	if( newValue == 0){
+        		$(this).removeClass('btn-danger');
+        		$(this).addClass('btn-success');
+        	}else{
+        		$(this).removeClass('btn-success');
+        		$(this).addClass('btn-danger');
+        	}
+            var res = $.parseJSON(response);
+            if(res.status == 1) {
+                layer.msg(res.info,{offset:'100px'});
+            } else {
+                return res.info;
+            }
+        }
+
+    });
+
+	{if condition= " $rest_login == 1 "}
+    	restlogin('{$rest_login_info}'); //登录超时
+    {/if}
+
+})
+</script>
+{/block}

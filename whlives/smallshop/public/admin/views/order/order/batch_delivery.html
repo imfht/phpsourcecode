@@ -1,0 +1,77 @@
+<div class="layui-fluid">
+    <div class="layui-card">
+        <blockquote class="layui-elem-quote">注意：未支付或者是已经发货的不能批量发货</blockquote>
+        <div class="layui-card-body">
+            <table id="batch_delivery" lay-filter="batch_delivery"></table>
+            <script type="text/html" id="seller-seller-index-address_tmp">
+                {{ d.prov }}{{ d.city }}{{ d.area }}{{ d.address }}
+            </script>
+        </div>
+        <form class="layui-form" method="post">
+            <div class="layui-form-item">
+                <label class="layui-form-label">物流公司</label>
+                <div class="layui-input-inline">
+                    <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/system/express_company/select" lay-done="layui.form.render();">
+                        <select name="company_id">
+                            <option value=""></option>
+                            {{# layui.each(d.data, function(index, item){ }}
+                            <option value="{{ index }}">{{ item }}</option>
+                            {{# }); }}
+                        </select>
+                    </script>
+                </div>
+                <label class="layui-form-label">发货地址</label>
+                <div class="layui-input-inline">
+                    <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/seller/address/select" lay-done="layui.form.render();">
+                        <select name="address_id">
+                            <option value=""></option>
+                            {{# layui.each(d.data, function(index, item){ }}
+                            <option value="{{ index }}">{{ item }}</option>
+                            {{# }); }}
+                        </select>
+                    </script>
+                </div>
+                <div class="layui-input-inline">
+                    <input type="button" lay-submit lay-filter="batch_delivery-delivery" value="发货" class="layui-btn">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="text/html" template lay-done="layui.data.sendParams(d.params)"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['helper', 'table'], function () {
+            var helper = layui.helper,
+                table = layui.table,
+                form = layui.form,
+                api_action_url = layui.setter.apiHost + '/order/order';
+
+            //表格操作
+            table.render({
+                elem: '#batch_delivery',
+                url: api_action_url + '/batch_delivery_list',
+                where: {id: params.id},
+                defaultToolbar: [],
+                cols: [[
+                    {field: 'id', title: 'ID', width: 80},
+                    {field: 'order_no', title: '订单号', Width: 200},
+                    {field: 'full_name', title: '收货人', width: 80},
+                    {field: 'tel', title: '电话', width: 120},
+                    {field: 'address', title: '地址', templet: '#address_tmp'},
+                    {field: 'status_text', title: '状态', width: 120},
+                ]],
+                page: false
+            });
+
+            form.on('submit(batch_delivery-delivery)', function (data) {
+                var form_data = data.field;
+                form_data.id = params.id;
+                if (helper.ajax(api_action_url + '/batch_delivery_submit', form_data, false)) {
+                    table.reload('batch_delivery', {});
+                }
+                return false;
+            })
+        });
+    }
+</script>

@@ -1,0 +1,261 @@
+<!DOCTYPE>
+{extend name="default/base" /}
+{block name="title"}{$data['supplier']['supplierName']} - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="meta"}
+<meta name="description" content="{$data['supplier']['supplierDesc']}">
+<meta name="keywords" content="{$data['supplier']['supplierKeywords']}">
+{/block}
+{block name="commoncss"}{/block}
+{block name="css"}
+<link href="__SHOP__/supplier/css/common.css?v={$v}" rel="stylesheet">
+<link href="__STATIC__/plugins/lazyload/skin/laypage.css?v={$v}" rel="stylesheet">
+<link href="__STATIC__/plugins/slide/css/slide.css?v={$v}" rel="stylesheet">
+<link href="__SHOP__/supplier/css/supplierhome.css?v={$v}" rel="stylesheet">
+<style type="text/css">
+</style>
+{/block}
+
+{block name="main"}
+	{php}
+		$g = model('SupplierGoods');
+		$supplierId = $data['supplier']['supplierId'];
+	{/php}
+    <input type="hidden" id="longitude" value="{$data['supplier']['longitude']}" >
+    <input type="hidden" id="latitude" value="{$data['supplier']['latitude']}" >
+	<div class="wst-container">
+		<div class="wst-supplier-h">
+		<div class="wst-supplier-img"><a href="{:url('shop/suppliers/index',array('supplierId'=>$data['supplier']['supplierId']))}"><img class="suppliersImg" src="__RESOURCE_PATH__/{$data['supplier']['supplierImg']}" title="{$data['supplier']['supplierName']|WSTStripTags}"></a></div>
+		<div class="wst-supplier-info">
+			<p>{$data['supplier']['supplierName']}
+			</p>
+			<div class="wst-supplier-info2">
+			
+			{if($data['supplier']['supplierQQ'])}
+			<a href="tencent://message/?uin={$data['supplier']['supplierQQ']}&Site=QQ交谈&Menu=yes">
+		        <img border="0" style="width:65px;height:24px;" src="{:WSTProtocol()}wpa.qq.com/pa?p=1:{$data['supplier']['supplierQQ']}:7">
+		    </a>
+			{/if}
+			{if($data['supplier']['supplierWangWang'])}
+			<a href="{:WSTProtocol()}www.taobao.com/webww/ww.php?ver=3&touid={$data['supplier']['supplierWangWang']}&siteid=cntaobao&status=1&charset=utf-8" target="_blank">
+			<img border="0" src="{:WSTProtocol()}amos.alicdn.com/realonline.aw?v=2&uid={$data['supplier']['supplierWangWang']}&site=cntaobao&s=1&charset=utf-8" alt="和我联系" class='wangwang'/>
+			</a>
+			{/if}
+			</div>
+			<div class="wst-supplier-info3">
+				<span class="wst-supplier-eva">商品：<span class="wst-supplier-red">{$data['supplier']['scores']['goodsScore']}</span></span>
+				<span class="wst-supplier-eva">时效：<span class="wst-supplier-red">{$data['supplier']['scores']['timeScore']}</span></span>
+				<span class="wst-supplier-eva">服务：<span class="wst-supplier-red">{$data['supplier']['scores']['serviceScore']}</span></span>
+				
+                {if($data['supplier']['longitude'] && $data['supplier']['latitude'])}
+				<a href='javascript:void(0);' onclick='javascript:init();' class="wst-supplier-evaa  wst-supplier-location j-fav3">店铺位置</a>
+                {/if}
+                {if isset($data['supplier']['businessLicenceImg']) && $data['supplier']['businessLicenceImg']!=''}
+                <a class='wst-supplier-gs' href="{:WSTUserPhoto($data['supplier']['businessLicenceImg'])}" target='_blank'>工商执照</a>
+                {/if}
+    
+			</div>
+		</div>
+		<div class="wst-supplier-sea">
+			<input type="text" id="goodsName" value="{$goodsName}" placeholder="输入商品名称">
+			<a class="search" href="javascript:void(0);" onclick="javascript:mallGoodsSearch($('#goodsName').val());">搜全站</a>
+			<a class="search" href="javascript:void(0);" onclick="javascript:searchSuppliersGoods(0);">搜本店</a>
+			<div class="wst-supplier-word">
+			{volist name="data['supplier']['supplierHotWords']" id="shw"}
+			<a href='{:Url("shop/suppliers/index",array('supplierId'=>$data['supplier']['supplierId'],'goodsName'=>$shw))}'>{$shw}</a>{if $i< count($data['supplier']['supplierHotWords'])}&nbsp;|&nbsp;{/if}
+			{/volist}
+			</div>
+			<div style="clear: both;"></div>
+		</div>
+		<div class="wst-clear"></div>
+		</div>
+	</div>
+    <div class="supplier-home-top-container">
+       
+        <div class='wst-header'>
+            <div class="wst-supplier-nav">
+                <div class="wst-nav-box">
+                    <a href="{:url('shop/suppliers/index',array('supplierId'=>$data['supplier']['supplierId']))}"><li class="liselect wst-lfloat">全部商品</li></a>
+                    {volist name="supplierCats" id="sc"}
+                    <a href="{:url('shop/suppliers/index',array('supplierId'=>$sc['supplierId'],'ct1'=>$sc['catId']))}"><li class="liselect wst-lfloat">{$sc['catName']}</li></a>
+                    {/volist}
+                    <a class="homepage" href="{:url('shop/supplierindex/index')}">返回首页</a>
+                    <div class="wst-clear"></div>
+                </div>
+            </div>
+            <div class="wst-clear"></div>
+        </div>
+        {if($data['supplier']['supplierAds'])}
+        <div class="ck-slide">
+            <ul class="ck-slide-wrapper">
+                {volist name="$data['supplier']['supplierAds']" id="ads"}
+                <li>
+                    <a {if ($ads['isOpen'])}target='_blank'{/if}  href="{$ads['adUrl']}" ><img class='goodsImg' data-original="__RESOURCE_PATH__/{$ads['adImg']}" width="100%" height="400"/></a>
+                </li>
+                {/volist}
+            </ul>
+            <div class="ck-slidebox">
+                <div class="slideWrap">
+                    <ul class="dot-wrap">
+                        {volist name="$data['supplier']['supplierAds']" id="ads" key="i"}
+                        {if condition="$i eq 1"}
+                        <li class="current"><em>{$i}</em></li>
+                        {else}
+                        <li><em>{$i}</em></li>
+                        {/if}
+                        {/volist}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {/if}
+    </div>
+<div class="supplier-home-container" >
+<input type="hidden" id="msort" value="{$msort}" autocomplete="off"/>
+<input type="hidden" id="mdesc" value="{$mdesc}" autocomplete="off"/>
+<input type="hidden" id="supplierId" value="{$data['supplier']['supplierId']}" autocomplete="off"/>
+<input type="hidden" id="ct1" value="{$ct1}" autocomplete="off"/>
+<input type="hidden" id="ct2" value="{$ct2}" autocomplete="off"/>
+<div class="wst-container">
+	<div class="wst-supplier-contl">
+		
+		<div class="wst-supplier-cat">
+			<p class="wst-supplier-conlp">店铺分类</p>
+			<div class="wst-supplier-catt">
+			{php}
+				$g = model('SupplierGoods');
+		        $supplierCats1= $g->listSupplierCats(0,0,$supplierId);
+			{/php}
+			{volist name="supplierCats1" id="sc1"}
+				<li onclick="javascript:dropDown(this,{$sc1['catId']});" class="js-supplier-plus">{:WSTMSubstr($sc1['catName'],0,15)}</li>
+				<div class="wst-supplier-catts tree_{$sc1['catId']}">
+				{php}
+			        $supplierCats2= $g->listSupplierCats($sc1['catId'],0,$supplierId);
+				{/php}
+				{volist name="supplierCats2" id="sc2"}
+					<a href="{:url('shop/suppliers/index',array('supplierId'=>$sc1['supplierId'],'ct1'=>$sc1['catId'],'ct2'=>$sc2['catId']))}"><li>{:WSTMSubstr($sc2['catName'],0,15)}</li></a>
+				{/volist}
+				</div>
+			{/volist}
+			</div>
+		</div>
+		
+		<div class="wst-supplier-best">
+			<p class="wst-supplier-conlp">热卖商品</p>
+			{php}
+				$g = model('SupplierGoods');
+		        $hotSupplierGoods= $g->listSupplierGoods('hot',$supplierId,0,5);
+			{/php}
+			{volist name="hotSupplierGoods" id="ho"}
+			<a href="{:url('shop/suppliergoods/detail',array('goodsId'=>$ho['goodsId']))}" target="_blank">
+			<div class="wst-supplier-bestg">
+				<div class="wst-supplier-besti"><img class="goodsImg" data-original="__RESOURCE_PATH__/{$ho['goodsImg']}" title="{$ho['goodsName']|WSTStripTags}" src="{:WSTConf('CONF.goodsLogo')}" alt="{$ho['goodsName']|WSTStripTags}"></div>
+				<a href="{:url('shop/suppliergoods/detail',array('goodsId'=>$ho['goodsId']))}"><p class="wst-supplier-bestgp1">{:WSTMSubstr($ho['goodsName'],0,20)}</p></a>
+				<p class="wst-supplier-bestgp2">已售出<span class="wst-supplier-bestpi">{$ho['saleNum']}</span>件</p>
+				<p class="wst-supplier-bestgp2"><span class="wst-supplier-bestpr">￥{$ho['supplierPrice']}</span><span class="wst-supplier-bestpr2">￥{$ho['marketPrice']}</span></p>
+			</div>
+			</a>
+			{/volist}
+			<div class="wst-clear"></div>
+		</div>
+	</div>
+	<div class="wst-supplier-contr">
+		<div class="wst-supplier-rec">
+			<p class="wst-supplier-conrp">店长推荐</p>
+			<div class="wst-supplier-recb">
+				{php}
+			        $recomSupplierGoods= $g->listSupplierGoods('recom',$supplierId,0,4);
+				{/php}
+			    {volist name="recomSupplierGoods" id="re"}
+				<div class="wst-supplier-rgoods">
+					<div class="wst-supplier-goimg"><a href="{:url('shop/suppliergoods/detail',array('goodsId'=>$re['goodsId']))}" target="_blank"><img class="goodsImg" data-original="__RESOURCE_PATH__/{$re['goodsImg']}" src="{:WSTConf('CONF.goodsLogo')}" title="{$re['goodsName']|WSTStripTags}"></a></div>
+					<p class="wst-supplier-gonam"><a href="{:url('shop/suppliergoods/detail',array('goodsId'=>$re['goodsId']))}" target="_blank">{:WSTMSubstr($re['goodsName'],0,28)}</a></p>
+					<div class="wst-supplier-rect">
+					<span>￥{$re['supplierPrice']}</span>
+					{if($re['goodsStock'])}
+					<a class="wst-supplier-recta" href="javascript:addCart({$re['goodsId']})">加入进货单</a>
+					{else}
+					<a class="wst-supplier-recta2" href="javascript:void(0);">暂无商品</a>
+					{/if}
+					</div>
+				</div>
+			    {/volist}
+				<div class="wst-clear"></div>
+			</div>
+		</div><div class="wst-supplier-list">
+		<div class="wst-supplier-listh">
+			<a href="javascript:void(0);" class="{if condition="$msort eq 0"}wst-supplier-a{/if}" onclick="searchSuppliersGoods(0);">综合排序</a>
+			<a href="javascript:void(0);" class="{if condition="$msort eq 1"}wst-supplier-a{/if}" onclick="searchSuppliersGoods(1);">人气<span class="{if condition="$msort neq 1"}wst-supplier-store{/if}{if condition="$msort eq 1 and $mdesc eq 1"}wst-supplier-store2{/if}{if condition="$msort eq 1 and $mdesc eq 0"}wst-supplier-store3{/if}"></span></a>
+			<a href="javascript:void(0);" class="{if condition="$msort eq 2"}wst-supplier-a{/if}" onclick="searchSuppliersGoods(2);">销量<span class="{if condition="$msort neq 2"}wst-supplier-store{/if}{if condition="$msort eq 2 and $mdesc eq 1"}wst-supplier-store2{/if}{if condition="$msort eq 2 and $mdesc eq 0"}wst-supplier-store3{/if}"></span></a>
+			<a href="javascript:void(0);" class="{if condition="$msort eq 3"}wst-supplier-a{/if}" onclick="searchSuppliersGoods(3);">价格<span class="{if condition="$msort neq 3"}wst-supplier-store{/if}{if condition="$msort eq 3 and $mdesc eq 1"}wst-supplier-store2{/if}{if condition="$msort eq 3 and $mdesc eq 0"}wst-supplier-store3{/if}"></span></a>
+			<a href="javascript:void(0);" class="{if condition="$msort eq 5"}wst-supplier-a{/if}" onclick="searchSuppliersGoods(5);">好评度<span class="{if condition="$msort neq 5"}wst-supplier-store{/if}{if condition="$msort eq 5 and $mdesc eq 1"}wst-supplier-store2{/if}{if condition="$msort eq 5 and $mdesc eq 0"}wst-supplier-store3{/if}"></span></a>
+			<a href="javascript:void(0);" class="{if condition="$msort eq 6"}wst-supplier-a{/if}" onclick="searchSuppliersGoods(6);">上架时间<span class="{if condition="$msort neq 6"}wst-supplier-store{/if}{if condition="$msort eq 6 and $mdesc eq 1"}wst-supplier-store2{/if}{if condition="$msort eq 6 and $mdesc eq 0"}wst-supplier-store3{/if}"></span></a>
+			<div class="wst-price-ipts">
+			<span class="wst-price-ipt1">￥</span><span class="wst-price-ipt2">￥</span>
+			<input type="text" class="wst-price-ipt" id="sprice" value="{$sprice}" style="margin-left:8px;" onkeypress='return WST.isNumberdoteKey(event);' onkeyup="javascript:WST.isChinese(this,1)">
+			- <input type="text" class="wst-price-ipt" id="eprice" value="{$eprice}" onkeypress='return WST.isNumberKey(event);' onkeyup="javascript:WST.isChinese(this,1)">
+			</div>
+			<button class="wst-supplier-but" type="submit" style="width:60px;height: 33px;" onclick="searchSuppliersGoods(0);">确定</button>
+		</div>
+		<div class="wst-clear"></div>
+		<div class="wst-supplier-listg">
+			{volist name="$data['list']['data']" id="li"}
+			<div class="wst-supplier-goods">
+				<div class="wst-supplier-goimg"><a href="{:url('shop/suppliergoods/detail',array('goodsId'=>$li['goodsId']))}" target="_blank"><img class="goodsImg" data-original="__RESOURCE_PATH__/{$li['goodsImg']}" src="{:WSTConf('CONF.goodsLogo')}" title="{$li['goodsName']|WSTStripTags}"></a><a href="javascript:addCart({$li['goodsId']});"><span class="js-cart">加入进货单</span></a></div>
+				<p class="wst-supplier-gonam"><a href="{:url('shop/suppliergoods/detail',array('goodsId'=>$li['goodsId']))}" target="_blank">{:WSTMSubstr($li['goodsName'],0,15)}</a></p>
+				<p class="wst-supplier-goodp1"><span class="wst-supplier-goodpr">￥{$li['supplierPrice']}</span><span class="wst-rfloat">成交数：<span class="wst-supplier-goodpr2">{$li['saleNum']}</span></span></p>
+				<p class="wst-supplier-goodp2"><span class="wst-supplier-goodpr3">市场价:￥{$li['marketPrice']}</span><span class="wst-rfloat">已有<span class="wst-supplier-goodpr4">{$li['appraiseNum']}</span>人评价</span></p>
+			</div>
+			{/volist}
+			<div class="wst-clear"></div>
+		</div>
+		<div class="wst-supplier-pa">
+			<div id="supplierPage"></div>
+		</div>
+	</div>
+    <div id="container" class="container" style='display:none'></div>
+</div>
+	</div>
+
+</div>
+
+{/block}
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/plugins/slide/js/slide.js?v={$v}"></script>
+<script type='text/javascript' src='__SHOP__/supplier/js/supplierhome.js?v={$v}'></script>
+<script type="text/javascript" src="{:WSTProtocol()}map.qq.com/api/js?v=2.exp&key={:WSTConf('CONF.mapKey')}"></script>
+<script>
+$(function(){
+	$(document).keypress(function(e) { 
+          if(e.which == 13) {  
+            searchsuppliersGoods();  
+          }
+    }); 
+	if({$data['list']['last_page']}>1){
+	laypage({
+	    cont: 'supplierPage',
+	    pages: {$data['list']['last_page']}, //总页数
+	    curr: {$data['list']['current_page']},
+	    skip: true, //是否开启跳页
+	    skin: '#fd6148',
+	    groups: 3, //连续显示分页数
+	   	prev: '<<',
+		next: '>>',
+	    jump: function(e, first){ //触发分页后的回调
+	        if(!first){ //一定要加此判断，否则初始时会无限刷新
+	        	var nuewurl = WST.splitURL("page");
+	        	var ulist = nuewurl.split("?");
+	        	if(ulist.length>1){
+	        		location.href = nuewurl+'&page='+e.curr;
+	        	}else{
+	        		location.href = '?page='+e.curr;
+	        	}
+	            
+	        }
+	    }
+	});
+	}
+	
+});
+</script>
+{/block}
+{block name="footer"}{/block}

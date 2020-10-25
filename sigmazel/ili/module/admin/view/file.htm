@@ -1,0 +1,236 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<a href="{$ADMIN_SCRIPT}/admin/file">{lang admin.file.view.header}</a>
+		            <!--{loop $path_crubms $crumb}-->
+		            / <a href="{$ADMIN_SCRIPT}/admin/file&path=/{$crumb[path]}">{$crumb[name]}</a>
+		            <!--{/loop}-->
+				</div>
+				<div class="widget-content">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<!--{if count($pages) == 0}-->
+							<form id="frm_upload" name="frmUpload" action="{$ADMIN_SCRIPT}/admin/file/_upload&path={$_var[gp_path]}" method="post" onsubmit="javascript:return check_form(this);" enctype="multipart/form-data">
+							<input type="hidden" name="formsubmit" value="yes" />
+							<input type="file" name="flePath" class="span6 fancy" />
+							&nbsp;
+							<button type="submit" class="btn btn-small" {$dispatches[operations][import]}>{lang admin.operation.submit}</button>
+							</form>
+							<!--{else}-->
+							<button type="button" class="btn btn-small btn-page" {$dispatches[operations][add]}>{lang admin.file.view.page}</button>
+							<!--{/if}-->
+						</div>
+						<div class="pull-right">
+							<!--{if count($pages) == 0 && count($tpls) > 1 && !strexists($_var['gp_path'], '_BLOCK')}-->
+							<button type="button" class="btn btn-small btn-tpls">{lang admin.file.view.tpl}</button>
+							<!--{/if}-->
+						</div>
+					</div>
+					
+					<hr/>
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="50">{lang admin.file.view.th.no}</th>
+					            <th>{lang admin.file.view.th.name}</th>
+					            <th width="140">{lang admin.file.view.th.atime}</th>
+					            <th width="60">{lang admin.file.view.th.size}</th>
+					            <th width="85">{lang admin.file.view.th.operate}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!--{loop $file_list $_loop $file}-->
+							<tr class="item-row">
+							<td class="center">{echo $_loop + 1;}、</td>
+				            <td>
+				            	<!--{if $file['type'] == 'dir'}-->
+				            	<i class="micon-folder"></i>
+				            	<!--{else}-->
+				            	<i class="micon-paper"></i>
+				            	<!--{/if}-->
+				            	<!--{if $file['type'] == 'dir'}-->
+				            		<a href="{$ADMIN_SCRIPT}/admin/file&path={$_var[gp_path]}/{$file[name]}">{$file[name]}</a>
+				            	<!--{else}-->
+					            	<!--{if $file['update'] && empty($dispatches['operations']['edit'])}-->
+										<!--{if $file['page'] || $file['block']}-->
+										<a href="{$ADMIN_SCRIPT}/admin/file/_ilinei&file={$file[name]}&path={$_var[gp_path]}">{$file[name]}</a> <span class="f10 muted">{$file[desc]}</span>
+										<!--{else}-->
+					            		<a href="{$ADMIN_SCRIPT}/admin/file/_update&file={$file[name]}&path={$_var[gp_path]}">{$file[name]}</a> <span class="f10 muted">{$file[desc]}</span>
+										<!--{/if}-->
+					            	<!--{elseif $file['config'] && empty($dispatches['operations']['edit'])}-->
+					            		<a href="{$ADMIN_SCRIPT}/admin/file/_config&file={$file[name]}">{$file[name]}</a> <span class="f10 muted">{$file[desc]}</span>
+					            	<!--{elseif $file['rewrite'] && empty($dispatches['operations']['edit'])}-->
+					            		<a href="{$ADMIN_SCRIPT}/admin/file/_rewrite&file={$file[name]}">{$file[name]}</a> <span class="f10 muted">{$file[desc]}</span>
+					            	<!--{else}-->
+					            		{$file[name]} <span class="f10 muted">{$file[desc]}</span>
+										<!--{if $_var['gp_path'] && ($file['ext'] == 'png' || $file['ext'] == 'jpg' || $file['ext'] == 'gif' || $file['ext'] == 'bmp')}-->
+										<!--{if strexists($_var['gp_path'], '_BLOCK')}-->
+										<img src="tpl/_res/{echo str_replace('_BLOCK', 'block', $_var['gp_path']);}/{$file[name]}"/>
+										<!--{else}-->
+										<img src="{$setting[SiteTheme]}{$_var[gp_path]}/{$file[name]}"/>
+										<!--{/if}-->
+										<!--{/if}-->
+					            	<!--{/if}-->
+				            	<!--{/if}-->
+				            </td>
+				            <td class="center">
+				            	<!--{if $file['type'] == 'file'}-->{echo date('Y-m-d H:i:s', $file[info][mtime]); }<!--{/if}-->
+				            </td>
+				            <td class="center">
+				            	<!--{if $file['type'] == 'file'}-->{echo sprintf('%0.2f', $file[info][size] / 1024);}KB<!--{/if}-->
+				            </td>
+				            <td class="center">
+				            	<!--{if $file['type'] == 'file' && !$file['rewrite'] && !$file['config']}-->
+				            	<a class="btn btn-mini btn-delete" file="{$file[name]}" data="{$_var[gp_path]}" href="javascript:void(null);" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+				                <!--{/if}-->
+				            </td>
+				            </tr>
+				            <!--{/loop}-->
+				            
+				            <!--{if count($file_list) == 0}-->
+					        <tr>
+					            <td colspan="5">
+					                * {lang admin.operation.empty}
+					            </td>
+					        </tr>
+					        <!--{/if}-->
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<textarea class="txtPage" style="display:none;">
+	<form id="frm_page" name="frmPage" action="{$ADMIN_SCRIPT}/admin/file/_page&path={$_var[gp_path]}" method="post">
+		<input type="hidden" name="formsubmit" value="yes" />
+		<table>
+			<tr>
+				<td><label>{lang admin.file.view.page.type.label} *</label></td>
+				<td>
+					<label class="checkbox inline">
+						<input class="fancy" name="rdoType" type="radio" value="page" checked="checked"/> {lang admin.file.view.page.type.radio.0}
+					</label>
+					<label class="checkbox inline">
+						<input class="fancy" name="rdoType" type="radio" value="block"/> {lang admin.file.view.page.type.radio.1}
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<td><label>{lang admin.file.view.page.file.label} *</label></td>
+				<td>
+					<input type="text" class="input" name="txtFile" placeholder="{lang admin.file.view.page.file.placeholder}..." maxlength="20" value="" />
+				</td>
+			</tr>
+			<tr>
+				<td><label id="lbl_name">{lang admin.file.view.page.name.label} *</label></td>
+				<td>
+					<input type="text" class="input" name="txtName" placeholder="{lang admin.file.view.page.name.placeholder}..." maxlength="20" value="" />
+				</td>
+			</tr>
+			<tr>
+				<td><label>{lang admin.file.view.page.description.label}</label></td>
+				<td>
+					<input type="text" class="input" name="txtDescription" placeholder="{lang admin.file.view.page.type.label}..."/>
+				</td>
+			</tr>
+		</table>
+	</form>
+</textarea>
+
+<textarea class="txtTpls" style="display:none;">
+<!--{if count($tpls) > 1}-->
+	<div id="div_tpl_list">
+		<!--{loop $tpls $loop $tpl}-->
+		<div class="tpl {echo $tpl['theme'] == $setting['SiteTheme'] ? 'tpl-active' : '';}" rel="{$tpl[rel]}">
+			<p class="thumb">
+				<!--{if $tpl['thumb']}-->
+				<img src="{$tpl[thumb]}" border="0"/>
+				<!--{else}-->
+				<img src="static/images/no-picture.jpg" border="0"/>
+				<!--{/if}-->
+			</p>
+			<p class="name">
+				{$tpl[name]} {$tpl[version]}
+			</p>
+			<p class="author">
+				Author：{$tpl[author]}
+			</p>
+			<!--{if $tpl['site']}-->
+			<p class="site">
+				{$tpl[site]}
+			</p>
+			<!--{/if}-->
+		</div>
+		<!--{/loop}-->
+		<br class="clear"/>
+	</div>
+<!--{/if}-->
+</textarea>
+
+<script>
+function check_form(frm){
+	if(!$('#frm_upload :file').val()) {
+		$.dialog({message:'{lang admin.operation.empty.file}'});
+		return false;
+	}
+	
+	return true;
+}
+
+$(function(){
+	$('.fancy').uniform();
+
+    $('.btn-page').click(function(){
+        $.dialog({title:'{lang admin.file.view.operation.page.title}', width:400, submit:'{lang admin.operation.submit}', message:$('.txtPage').val(), callback:function(){
+            $('#modal_dialog .fancy').uniform();
+
+            $('#modal_dialog .btn-primary').click(function(){
+                if(!$("#modal_dialog input[name='txtFile']").val()){
+                    $("#modal_dialog input[name='txtFile']").focus();
+                    return false;
+				}
+
+                if(!$("#modal_dialog input[name='txtName']").val()){
+                    $("#modal_dialog input[name='txtName']").focus();
+                    return false;
+                }
+
+                $('#frm_page').submit();
+            });
+        }});
+    });
+
+	$('.btn-tpls').click(function(){
+		$.dialog({title:'{lang admin.file.view.operation.tpl.title}', width:650, submit:'{lang admin.operation.submit}', message:$('.txtTpls').val(), callback:function(){
+			$('#modal_dialog .tpl').click(function(){
+				$('#modal_dialog .tpl').removeClass('tpl-active');
+				$(this).addClass('tpl-active');
+			});
+
+			$('#modal_dialog .btn-primary').click(function(){
+				location.href = '{$ADMIN_SCRIPT}/admin/file/_setup&tpl=' + $('#modal_dialog .tpl-active').attr('rel');
+			});
+		}});
+	});
+	
+	$('.table .btn-delete').click(function(){
+		var path = $(this).attr('data');
+		var file = $(this).attr('file');
+		
+		var tempHTML = '<p>' + path + '/' + file + '； </p>';
+		$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang admin.file.view.operation.delete.one}</p>' + tempHTML, callback:function(){
+			$('#modal_dialog .btn-primary').click(function(){
+				location.href = '{$ADMIN_SCRIPT}/admin/file/_delete&file=' + file + '&path=' + path;
+			});
+		}});
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

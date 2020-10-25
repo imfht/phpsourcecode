@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta content="IE=EmulateIE7" http-equiv="X-UA-Compatible">
+<title>购物车--<!--{$mallname}--></title>
+<!--{include(file='static.html')}-->
+</head>
+<body>
+<!--{include(file='head.html')}-->
+<!--主体内容-->
+<div class="container">
+	<div class="gwc_content">
+		<div class="gwc_top"><img src="template/front/<!--{$tpl}-->/images/gwc_top.gif" /></div>
+		<div id="forcart">
+		</div>
+		<div class="fordelitem none">
+			<div class="tab_title">您删除的商品，您可以 <span>重新购买</span> 或 <span>关注</span></div>
+			<table width="100%" border="0" cellspacing="0" cellpadding="0"></table>
+		</div>
+	</div>
+</div>
+<div class="loading"><span></span><b>请稍候...</b></div>
+
+<!--{include(file='foot.html')}-->
+</body>
+</html>
+<script type="text/javascript">
+//购物车
+var Cart = {
+	loading : $(".loading"),
+	forcart : $("#forcart"),
+	delitem	: $(".fordelitem"),
+	key	:'',
+	type : '',
+	id:	'',
+	show:function() {
+		this.loading.show();
+	},
+	hide:function() {
+		this.loading.hide();
+	},
+	load:function(){
+		var url = "<!--{url('index','cart','getcart')}-->&t="+new Date().getTime();
+		this.request(url,"get",null);
+	},
+	request:function(url,method,data,callback) {
+		this.show();
+		!callback && (callback = $.proxy(this.callback,this));
+		if(method == "post") {
+			$.post(url,data,callback);
+		} else if(method == "get") {
+			$.get(url,data,callback);
+		}
+	},
+	callback:function(responseData) {//回调
+		this.hide();
+		this.forcart.html(responseData);
+	},
+	setObj:function(obj,key) {//设置
+		var $obj  = $(obj);
+		this.key  = key;
+		var temp  = this.key.split("_");
+		this.type = temp[0];
+		this.id   = temp[1];
+	},
+	addNum:function(obj,key) {//增加数量
+		this.setObj(obj,key)
+		this.opernum('add');
+	},
+	minusNum:function(obj,key) {//减少数量
+		this.setObj(obj,key);
+		this.opernum('minus');
+	},
+	setNum:function(obj,key) {//设置数量
+		this.setObj(obj,key);
+		this.opernum("set");
+	},
+	opernum:function(oper) {//操作数量
+		var url = "<!--{url('index','cart','opernum')}-->";
+		var postdata = {type:this.type,id:this.id,oper:oper};
+		if(oper == "set") postdata['num'] = parseInt($('#num_'+this.key).val()) || 1;
+		this.request(url,"post",postdata);
+	},
+	clearcart:function() {//清空购物车
+		var url = "<!--{url('index','cart','clearcart')}-->";
+		this.request(url,"post");
+	},
+	del:function(obj,key) {
+		this.setObj(obj,key);
+		var $html = $("#tr_"+this.key).clone();
+		$html.attr("id",$html.attr("id").replace(/tr_/,'del_'));
+		
+		var num = $("#num_"+this.key).val(),
+			url = "<!--{url('index','cart','todel')}-->",
+			postdata = {type:this.type,id:this.id};
+		
+		var _this = this;
+		this.request(url,"post",postdata,function(data){
+			if(_this.type != "meal") { //搭配套餐直接删除
+				$html.find("td").eq(4).text(num);
+				$html.find("td").eq(-1).html("<a href=\"javascript:void(0)\" onclick=\"Cart.rebuy(this,'"+_this.key+"','"+num+"');return false;\">重新购买</a><br /><a href=\"javascript:void(0)\" onclick=\"Cart.favor(this,'"+_this.key+"');return false;\">关注</a>");
+				_this.delitem.removeClass("none");
+				$("table",_this.delitem).append($html);
+			}
+			_this.callback(data);
+		});
+	},
+	rebuy:function(obj,key,num) {//重新购买
+		this.setObj(obj,key);
+
+		var url = "<!--{url('index','cart','rebuy')}-->";
+		var _this = this;
+		var postdata = {num:num};
+			postdata[this.type + "id"] = this.id;
+		
+		this.request(url,"post",postdata,function(data){
+			_this.callback(data);
+			$("#del_"+_this.key).remove();
+			if(_this.delitem.find("tr").length == 0) {
+				_this.delitem.addClass("none");
+			}
+		});
+	},
+	favor:function(obj,key) {//关注,检查用户是否登录
+		this.setObj(obj,key);
+		//检查当前用户是否登录
+		var url = "<!--{url('index','user','islogined')}-->",
+			_this = this;
+		this.request(url,"get",{},function(data){
+			_this.hide();
+			if(data=="true") {//如果尚未登录
+				var url = "<!--{url('index','cart','addfavor')}-->";
+				var postdata = {type:_this.type,id:_this.id};
+				_this.request(url,"post",postdata,function(data){
+					_this.hide();
+					if(data=="success") {
+						jAlert("关注成功");
+					} else {
+						jAlert("出错了");
+					}
+				})
+			} else {
+				jAlert("需要登录！");
+			}
+		});
+	}
+};
+$(function(){
+	Cart.load();
+});
+</script>
+

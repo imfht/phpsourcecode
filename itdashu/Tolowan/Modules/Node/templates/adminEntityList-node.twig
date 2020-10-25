@@ -1,0 +1,73 @@
+<div class="col-xs-12 dataTables_wrapper">
+    {% if handleForm is defined AND handleForm %}
+    <form class="form-inline" ajax-submit="#main" accept-charset="utf-8" method="post"
+          action="{{ url }}">
+        {% endif %}
+        <table class="table table-striped table-bordered table-hover" id="sample-table-1">
+            <thead>
+            <tr>
+                <th class="center">
+                    <input type="checkbox" class="checkAll" name="checkAll"> <span class="lbl"></span>
+                </th>
+                <th class="center">ID</th>
+                <th class="center">内容</th>
+                <th class="center hidden-sm hidden-xs">类型</th>
+                <th class="center hidden-sm hidden-xs">用户</th>
+                <th class="center hidden-sm hidden-xs">创建时间</th>
+                <th class="center hidden-sm hidden-xs">最近更改</th>
+                <th class="center">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in data.items %}
+                <tr class="tr-{{ item.id }}">
+                    <td class="center">
+                        <input type="checkbox" class="checkAll" name="checkAll[{{ item.id }}]"> <span
+                                class="lbl"></span>
+                    </td>
+                    <td class="center">{{ item.id }}</td>
+                    <td>
+                        <a href="{{ url(['for':'node','id':item.id]) }}" data-toggle="tooltip" target="_blank" data-placement="right" title="访问{{ item.title }}">{{ subString(item.title,20,true) }}...</a>
+                    </td>
+                    <td class="center hidden-sm hidden-xs">
+                        <a data-target="#main" href="{{ staticUrl(['adminNodeFilterForm':'adminNodeFilterForm','contentModel':item.contentModel]) }}" data-toggle="tooltip" target="_blank" data-placement="right" title="只查看{{ getVar(item,'contentModel') }}内容">{{ contentModelList[item.contentModel]['modelName'] }}</a>
+                    </td>
+                    <td class="center hidden-sm hidden-xs">
+                        {% if item.uid %}
+                            <a data-target="#main" href="{{ staticUrl(['adminNodeFilterForm':'adminNodeFilterForm','uid':item.uid]) }}" data-toggle="tooltip" target="_blank" data-placement="right" title="只查看{{ item.user.name }}的文章">{{ item.user.name }}</a>
+                        {% else %}
+                            匿名用户
+                        {% endif %}
+                    </td>
+                    <td class="center hidden-sm hidden-xs">{{ timeTran(item.created) }}</td>
+                    <td class="center hidden-sm hidden-xs">{{ timeTran(item.changed) }}</td>
+                    <td>
+                        {% for key,link in item.links() %}
+                            <a href="{{ url(link['href']) }}" class="btn btn-xs btn-{{ link['icon'] }}" data-target="#main">{{ link['name'] }}</a>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7">没有数据</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="space-4"></div>
+        {% if handleForm is defined AND handleForm %}
+        <i>选中文章：</i>
+        {% for key,value in handleForm.getElements() %} {{ view.r(handleForm.renderElement(key)) }} {% endfor %}
+        {{ handleForm.csrf() }}
+        <input type="hidden" name="{{ handleForm.formId }}" value="{{ handleForm.formId }}">
+        <button type="submit" class="btn btn-xs btn-success" value="recycle">提交</button>
+    </form>
+    {% endif %}
+    <div class="space-8"></div>
+    {{ partial("Themes/AdminLTE/templates/paginator") }}
+</div>
+<script type="text/javascript">
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>

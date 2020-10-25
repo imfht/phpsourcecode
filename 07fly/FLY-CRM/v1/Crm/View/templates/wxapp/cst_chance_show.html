@@ -1,0 +1,119 @@
+#{include file="wxapp/head.html"}#
+<!-- page 容器 -->
+<div id="customer_show_list" class="page"> 
+  <!-- 标题栏 -->
+  <header class="bar bar-nav"> 
+	  <a href="#{$smarty.const.ACT}#/wxapp/WxIndex/crm/" class="button button-link button-nav pull-left back"><span class="icon icon-left"></span>返回</a>
+    <h1 class="title">销售机会</h1>
+  </header>
+  <!-- 工具栏 -->
+  <nav class="bar bar-tab"> <a class="tab-item active  no-transition" href="#{$smarty.const.ACT}#/wxapp/Api/crm/"> <span class="icon icon-edit"></span><span class="tab-label no-transition">增加</span> </a> </nav>
+   
+  <!-- 这里是页面内容区 -->
+  <div class="content infinite-scroll infinite-scroll-bottom" data-distance="50">
+     <!--获取页面参数-->
+    <div class="content-padded">
+      <div class="searchbar row">
+        <div class="search-input col-80">
+          <label class="icon icon-search" for="search"></label>
+          <input type="search" id="searchkey" placeholder="输入销售机会主题"/>
+        </div>
+        <a class="button button-fill button-primary col-20" id="searchsubmit">搜索</a></div>
+    </div>
+    <div class="list-block media-list">
+      <ul class="list-container">      
+      </ul>
+    </div>
+    <input type="hidden" name="data-currentPage" id="data-currentPage">
+    <input type="hidden" name="data-totalCount" id="data-totalCount">
+    <input type="hidden" name="data-numPerPage" id="data-numPerPage">
+    <!-- 加载提示符 -->
+		<div class="infinite-scroll-preloader">
+			<div class="preloader"></div>
+		</div>
+  </div>
+</div>
+<!-- page 容器结束 --> 
+#{include file="wxapp/foot.html"}#
+<script>
+ $(document).ready(function(){//关键
+	 var ACT='#{$smarty.const.ACT}#';
+	// 加载flag
+	var loading = false;
+	// 最多可加载的条目
+	$("#searchsubmit").click(function(){
+		 $('.infinite-scroll .list-container').empty();
+		addItems(1, 10);
+	});
+	function addItems(pageNum, numPerPage) {
+	  var searchkey=$('#searchkey').val();
+	  $.ajax({
+		  type: "POST",//方法类型
+		  dataType: "json",//预期服务器返回的数据类型
+		  data: {pageNum: pageNum, numPerPage: numPerPage, name: searchkey},  //异步返回给data
+		  url: ACT+'/wxapp/WxCstChance/cst_chance/',  //接口地址
+		  timeout: 300,
+		  success: function (data) {
+		  console.log(data);
+		   var datalist=data.list;
+			var html = '';
+		  for(var i=0;i<datalist.length;i++){
+				 html += '<li> <a href='+ACT+'"/wxapp/WxCustomer/customer_show_one/" class="item-link item-content">';
+				 html += ' <div class="item-inner">';
+				 html += '   <div class="item-title-row">';
+				 html += '     <div class="item-title">'+datalist[i].cst_name+'</div>';
+				 html += '     <div class="item-after">'+datalist[i].salestage_name+'('+datalist[i].chance+'%)</div>';
+				 html += '   </div>';
+				 html += '   <div class="item-subtitle">';
+				 html += '   	<div class="item-title-row">';
+				 html += '     	 <div class="item-title">预计签单时间：'+datalist[i].billdt+'</div>';
+				 html += '     	 <div class="item-after"><i class="iconfont icon-dingdankuozhan3"></i>预计金额：'+datalist[i].money+'</div>';
+				 html += '   	</div>';						  
+				 html += '   </div>';
+			  	 html += '   <div class="item-text">主题：'+datalist[i].title+'</div>';
+				 html += ' </div>';
+				 html += ' </a> ';
+				 html += '</li>';
+		  }
+		  // 添加新条目
+			   $('.infinite-scroll .list-container').append(html);
+			   $("#data-currentPage").val(parseInt(data.currentPage));
+			   $("#data-totalCount").val(parseInt(data.totalCount));
+			   $("#data-numPerPage").val(parseInt(data.numPerPage));
+		  }
+		});
+	 }
+	  //预先加载第一页内容
+	  addItems(1, 10);
+	  // 注册'infinite'事件处理函数
+	  $(document).on('infinite', '.infinite-scroll',function() {
+		// 如果正在加载，则退出
+		if (loading) return;
+		 // 设置flag
+		 loading = true;
+		 // 模拟1s的加载过程
+		 setTimeout(function() {
+			  // 重置加载flag
+			loading = false;
+			var currentPage	= Number($("#data-currentPage").val());
+			var totalCount	 = Number($("#data-totalCount").val());
+			var numPerPage	 = Number($("#data-numPerPage").val());
+			var maxPage = Math.ceil(totalCount/numPerPage);
+			if (currentPage >= maxPage) {
+			  // 加载完毕，则注销无限加载事件，以防不必要的加载
+			  $.detachInfiniteScroll($('.infinite-scroll'));
+			  // 删除加载提示符
+			  $('.infinite-scroll-preloader').remove();
+			  return;
+			}
+			// 添加新条目
+			addItems(currentPage+1, numPerPage);
+			// 更新最后加载的序号
+			//lastIndex = $('.list-container li').length;
+			 //容器发生改变,如果是js滚动，需要刷新滚动
+			//$.refreshScroller();
+		  }, 1000);
+	  });//end infinite  
+ $.init();//关键
+ });
+</script>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>拓展Sr核心类</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>拓展Sr核心类</legend>
+			<ol>
+				<li><h2 class="title_h2">介绍</h2>
+					使用框架的时候我们发现所有的操作都是通过Sr::xxx()进行操作的。xxx是系统提供的一些方法。
+					<br>Soter允许我们拓展Sr的方法，打造一个我们自己框架。
+					<br>比如：
+					<br>我们调用Sr::logger($arg1,$arg2,$argn...)，同时传递了一系列参数。
+					<br>其实Sr不存在方法logger()，但是我们可以通过配置让Sr拥有logger方法。
+				</li>
+				<li><h2 class="title_h2">配置</h2>
+					在入口文件里面我们会发现下面的配置：
+					<pre class="brush:php">
+						->setSrMethods(array())
+					</pre>
+					我们看到setSrMethods参数是一个数组，数组的结构和意义，我们下面进行介绍：
+					<br>1.参数数组是关联数组。
+					<br>2.数组的<code>键</code>是要拓展Sr方法的名称。
+					<br>3.数组的<code>值</code>可以是下面两个情况：
+					<br>a.字符串，此时字符串值作为类前缀，这个时候<code>键</code>名称的方法的功能是方便的加载classes目录下的类
+					<br>b.匿名函数，此时匿名函数就对应<code>键</code>名称的方法。
+					<br><b class="text_strong">下面结合实例进行理解：</b>
+					<h3 class="title_h3">1.注册</h3>
+					首先我们修改入口文件里面的配置注册我们的拓展的方法，如下：
+					<pre class="brush:php">
+						->setSrMethods(array(
+							'task' => 'Task',
+							'testMethod' => function($test=null) {
+									return $test;
+								}
+						    ))
+					</pre>
+					我们会看到数组<code>键</code>拓展了两个Sr的方法：Sr::<b>task</b>($className)和Sr::<b>testMethod</b>($test)
+					<h3 class="title_h3">2.调用</h3>
+					1.我们调用：Sr::task('TestTask')
+					<br>加载的类文件是application/classes/<code>Task</code>/TestTask.php
+					<br>其实等价于调用：Sr::factory('<code>Task</code>_TestTask')。
+					<br><b>这样做的好处：</b>
+					<br>如果Task目录下面是我们经常用的一些功能类，我们可以通过Sr::task($className)方便的
+					<br>加载Task目录下面的类库，而不用加上Task前缀，而且逻辑更加清晰。
+					<br>2.我们调用：Sr::testMethod('testValue')
+					<br>其实我们调用的就是我们注册的下面的匿名函数：
+					<pre class="brush:php">
+						function($test=null) {
+							return $test;
+						}
+					</pre>
+					我们传递给Sr::testMethod('testValue')的参数会依次传递给上面的匿名函数。
+					<br>比如上面我们传递了传递给Sr::testMethod('testValue')一个<code>testValue</code>，
+					<br>那么上面的匿名函数的第一个参数$test值就是<code>testValue</code>，
+					<br>上面的匿名函数返回值就是Sr::testMethod()的返回值。
+					<br>比如：Sr::testMethod('testValue')返回值就是<code>testValue</code>，
+					<br>因为上面注册的testMethod对应的匿名函数里面直接返回了传入的参数$test。
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

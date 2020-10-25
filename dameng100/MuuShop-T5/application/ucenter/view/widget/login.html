@@ -1,0 +1,178 @@
+<div data-role="login_info"></div>
+<div class="login-main">
+
+        <div class="clearfix"></div>
+        <form action="{:Url('login')}" method="post" class="lg_lf_form ">
+            <div class="row">
+                <div class="form-group">
+                    <label for="inputEmail" class=".sr-only col-xs-12"></label>
+
+                    <div class="col-xs-12">
+
+                        <input type="text" id="inputEmail" class="form-control input-lg new-input" placeholder="{:lang('_INPUT_PLEASE_')}{$ph}"
+                               ajaxurl="/member/checkUserNameUnique.html" errormsg="{:lang('_MI_USERNAME_ERROR_')}"
+                               nullmsg="{:lang('_MI_USERNAME_')}"
+                               datatype="*4-32" value="" name="username" autocomplete="off">
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword" class=".sr-only col-xs-12"></label>
+
+                    <div class="col-xs-12">
+                        <div id="password_block" class="input-group">
+                            <input type="password" id="inputPassword" class="form-control input-lg new-input"
+                                   placeholder="{:lang('_NEW_PW_INPUT_')}" name="password">
+
+                            <div class="input-group-addon"><a class="change_show" href="javascript:void(0);">show</a></div>
+                        </div>
+                    </div>
+
+                    <div class="clearfix"></div>
+                </div>
+                {if condition="check_verify_open('login')"}
+                    <div class="form-group">
+                        <label for="verifyCode" class=".sr-only col-xs-12"
+                               style="display: none"></label>
+
+                        <div class="col-xs-4">
+                            <input type="text" id="verifyCode" class="form-control input-lg new-input" placeholder="{:lang('_VERIFY_CODE_')}"
+                                   errormsg="{:lang('_MI_CODE_NULL_')}" nullmsg="{:lang('_MI_CODE_NULL_')}" datatype="*5-5" name="verify">
+                        </div>
+                        <div class="col-xs-8 lg_lf_fm_verify">
+                            <img class="verifyimg reloadverify" alt="{:lang('_MI_ALT_')}" src="{:captcha_src(1)}"
+                                 style="cursor:pointer;height:43px;max-width: 100%">
+                        </div>
+                        <div class="col-xs-11 Validform_checktip text-warning lg_lf_fm_tip col-sm-offset-1"></div>
+                        <div class="clearfix"></div>
+                    </div>
+                {/if}
+                <div class="clearfix form-group">
+                    <div class="col-xs-6">
+                        <label>
+                            <input type="checkbox" name="remember" value="1" style="cursor:pointer;">
+                            {:lang('_REMEMBER_LOGIN_')}
+                        </label>
+                    </div>
+                    <div class="col-xs-6 text-right">
+                        <div class="with-padding"><a class="" href="{:Url('Member/mi')}"
+                                                     style="color: #848484;font-size: 12px;">{:lang('_FORGET_PW_')}{:lang('_QUESTION_')}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {php}
+                if(!empty($_SERVER['HTTP_REFERER'])){
+                    $referer = $_SERVER['HTTP_REFERER'];
+                }else{
+                    $referer = Url('index/index/index');
+                }
+                session('login_http_referer',$referer);
+            {/php}
+            <input name="from" type="hidden" value="{$referer}">
+            <div class="form-group">
+                <button type="submit" class="btn btn-block btn-warning btn-lg">{:lang('_LOGIN_SPACE_')}</button>
+            </div>
+        </form>  
+</div>
+
+<div class="">
+
+    <div class="">
+
+        <h2>{:lang('_ACCOUNT_LOST_')}{:lang('_QUESTION_')} 
+        <small>	
+	        <a href="{:Url('ucenter/member/register',array('type'=>'mobile'))}" class="">
+				{:lang('_REGISTER_NEWUSER_')}
+	        </a>
+        </small>
+        </h2>
+
+    </div>
+
+    <div style="margin-top: 20px;">
+        {:hook('syncLogin')}
+    </div>
+</div>
+
+<div class="clearfix"></div>
+
+{block name="script"}
+
+<script type="text/javascript">
+
+    $(function(){
+        var quickLogin = "{$login_type}";
+        $(document)
+                .ajaxStart(function () {
+                    $("button:submit").addClass("log-in").attr("disabled", true);
+                })
+                .ajaxStop(function () {
+                    $("button:submit").removeClass("log-in").attr("disabled", false);
+                });
+
+        $('.login-main').on("click",'.change_show',function(){
+            change_show($(this));
+        });
+
+        function change_show(obj) {
+            if ($(obj).text().trim() == 'show') {
+                var value = $('#inputPassword').val().trim();
+                var html = '<input type="text" value="' + value + '" id="inputPassword" class="form-control input-lg new-input" placeholder="'+"{:lang('_NEW_PW_INPUT_')}"+'" name="password">' +
+                        '<div class="input-group-addon"><a class="change_show" href="javascript:void(0);">hide</a></div>';
+                $('#password_block').html(html);
+            } else {
+                var value = $('#inputPassword').val().trim();
+                var html = '<input type="password" value="' + value + '" id="inputPassword" class="form-control input-lg new-input" placeholder="'+"{:lang('_NEW_PW_INPUT_')}"+'" name="password">' +
+                        '<div class="input-group-addon"><a class="change_show" href="javascript:void(0);">show</a></div>';
+                $('#password_block').html(html);
+            }
+        }
+
+    });
+    
+
+    $(function () {
+        $("form").submit(function (e) {
+            e.preventDefault();
+            toast.showLoading();
+            var self = $(this);
+            $.post(self.attr("action"), self.serialize(), success, "json");
+            return false;
+
+            function success(data) {
+                if (data.code) {
+                    if (data.url==undefined&&quickLogin == "quickLogin") {
+                        $('[data-role="login_info"]').append(data.msg);
+                        toast.success("{:lang('_WELCOME_RETURN_')}{:lang('_PERIOD_')}", "{:lang('_TIP_GENTLE_')}");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        toast.success("{:lang('_WELCOME_RETURN_REDIRECTING_')}", "{:lang('_TIP_GENTLE_')}");
+                        setTimeout(function () {
+                            window.location.href = data.url;
+                        }, 1500);
+                    }
+                } else {
+                    toast.error(data.msg, "{:lang('_TIP_GENTLE_')}");
+                    //self.find(".Validform_checktip").text(data.msg);
+                    //刷新验证码
+                    $(".reloadverify").click();
+                }
+                toast.hideLoading();
+            }
+        });
+
+        var verifyimg = $(".verifyimg").attr("src");
+        $(".reloadverify").click(function () {
+            if (verifyimg.indexOf('?') > 0) {
+                $(".verifyimg").attr("src", verifyimg + '&random=' + Math.random());
+            } else {
+                $(".verifyimg").attr("src", verifyimg.replace(/\?.*$/, '') + '?' + Math.random());
+            }
+        });
+    });
+</script>
+{/block}

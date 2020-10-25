@@ -1,0 +1,261 @@
+<!--{template /module/admin/view/head}-->
+<script src="static/plugins/jquery.imgload.js"></script>
+
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<form method="post" action="{$ADMIN_SCRIPT}/album/{$dispatches[method]}&id={$_var[gp_id]}&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}" onsubmit="javascript:return check_form(this);">
+			<input type="hidden" name="formsubmit" value="yes" />
+				<div class="well widget">
+					<div class="widget-header">
+						<p class="text">* {lang admin.validate.require}</p>
+					</div>
+					<div class="widget-content">
+						<fieldset>
+							<label>{lang album.index_edit.view.name.label} *</label>
+							<input type="text" class="input-large"  name="txtTitle" placeholder="{lang album.index_edit.view.name.placeholder}..."  maxlength="50"  value="{$album[TITLE]}"/> 
+							<span class="help-inline">{lang album.index_edit.view.name.tips}</span>
+							
+							<label>{lang album.index_edit.view.identity.label}</label>
+							<input type="text"  class="input-large" name="txtIdentity" maxlength="50"  value="{$album[IDENTITY]}" /> 
+							<span class="help-inline">{lang album.index_edit.view.identity.tips}</span>
+							
+							<label>{lang album.index_edit.view.remark.label}</label>
+							<textarea class="span6" rows="2" cols="45"  name="txtRemark">{$album[REMARK]}</textarea>
+							<span class="help-inline">{lang album.index_edit.view.remark.tips}</span>
+						</fieldset>
+					        
+						<h5>{lang admin.validate.swfupload} ({lang album.index_edit.view.file.tips})</h5>
+						<div id="divFileUploadButton" class="upload-button"><span id="spnButtonPlaceholder"></span></div>
+						<div id="divFileProgressContainer" class="upload-progress"></div>
+						
+		            	<div id="div_thumb_list">
+		            		<!--{loop $photo_list $key $photo}-->
+		            		<div class="thumb">
+		            			<input type="hidden" class="input-focus" name="hdnPhotoFocus[{$photo[ALBUM_PHOTOID]}]" value="{$photo[FOCUS]}" />
+		            			<input type="hidden" name="hdnPhotoPath[{$photo[ALBUM_PHOTOID]}]" value="{$photo[FILE01][4]}"/>
+		            			
+		            			<p class="img">
+		            				<a class="btn btn-mini btn-delete" href="javascript:void(null);" onclick="removePhoto(this)">{lang admin.operation.delete}</a>
+		            				<!--{if $photo[FOCUS]}-->
+				            		<img class="photo_focus" onclick="photoFocus(this)" src="{$photo[FILE01][0]}" border="0"/>
+				            		<!--{else}-->
+				            		<img class="photo" onclick="photoFocus(this)" src="{$photo[FILE01][0]}" border="0"/>
+				            		<!--{/if}-->
+		            			</p>
+		            			
+		            			<div class="form">
+			            			<p class="displayorder">
+					            		<input class="input-mini span12" type="text" name="txtPhotoDisplayOrder[{$photo[ALBUM_PHOTOID]}]" value="{$photo[DISPLAYORDER]}" placeholder="{lang album.index_edit.view.photo.displayorder.placeholder}…"/>
+					            	</p>
+			            			
+					            	<p class="title">
+					            		<input type="text" class="span12" name="txtPhotoTitle[{$photo[ALBUM_PHOTOID]}]" value="{$photo[TITLE]}" placeholder="{lang album.index_edit.view.photo.title.placeholder}…"/>
+					            	</p>
+					            	
+					            	<p class="remark">
+					            		<textarea class="span12" name="txtPhotoRemark[{$photo[ALBUM_PHOTOID]}]" rows="2" cols="45" placeholder="{lang album.index_edit.view.photo.remark.placeholder}…">{$photo[REMARK]}</textarea>
+					            	</p>
+				            	</div>
+		            		</div>
+		            		<!--{/loop}-->
+		            		
+		            		<div class="thumb" id="div_no_record"{if count($photo_list) > 0} style="display:none;"{/if}>
+		            			{lang admin.validate.swfupload.empty}
+		            		</div>
+		            	</div>
+		            	
+		            	<br class="clear"/>
+		            	
+		            	<hr/>
+				        <fieldset>
+							<!--{if $dispatches['method'] == '_pub'}-->
+							<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+							<!--{else}-->
+							<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</button>
+							<!--{/if}-->
+							<button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+							<button type="button" class="btn btn-small" onclick="javascript:location.href='{$ADMIN_SCRIPT}/album&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}';">{lang admin.operation.go.back}</button>
+						</fieldset>
+						</div>
+					</div>
+				</div>	
+			</form>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="static/plugins/swfupload.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_handlers.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_images.js"></script>
+
+<script>
+var swfu;
+var $container;
+
+function check_form(frm){
+	if(frm.txtTitle.value.trim().length == 0){
+		$(frm.txtTitle).next('.help-inline').css('color', 'red');
+		frm.txtTitle.focus();
+		return false;
+	}
+	
+	return true;
+}
+ 
+function uploadSuccess(file, serverData){
+	try {
+		var progress = new FileProgress(file,  this.customSettings.upload_target);
+		var maxdisplayorder = 0;
+		$('#div_thumb_list input').each(function(index, item){
+			if(item.name.indexOf('PhotoDisplayOrder') != -1 && item.value) {
+				maxdisplayorder = item.value.isInt() ? item.value - 0 : 1;
+			}
+		});
+		
+		maxdisplayorder++;
+		
+		if (serverData.substring(0, 7) === "FILEID:") {
+			addImage(formatFilePath(serverData.substring(7)), serverData, maxdisplayorder < 1 ? $('#div_thumb_list textarea').length : maxdisplayorder);
+			progress.setStatus("{lang admin.validate.swfupload.lang.end}");
+			progress.toggleCancel(false);
+		} else {
+			addImage("static/images/swfupload/error.gif");
+			progress.setStatus("{lang admin.validate.swfupload.lang.error}");
+			progress.toggleCancel(false);
+			alert(serverData);
+		}
+	} catch (ex) {}
+}
+
+
+function removePhoto(link){
+	$(link).parent().parent().remove();
+	checkPhotos();
+}
+
+function checkPhotos(){
+	var photo_areas = $('#div_thumb_list textarea').length;
+	if(photo_areas < 1) $('#div_no_record').show();
+	else $('#div_no_record').hide();
+	
+	if($("#div_thumb_list .photo_focus").length == 0){
+		var photo = $("#div_thumb_list .photo").get(0);
+		$(photo).addClass('photo_focus');
+		$(photo).parent().parent().find('.input-focus').val('1');
+	}
+}
+
+function photoFocus(photo){
+	$("#div_thumb_list input").each(function(index, item){
+		if(item.name.indexOf('PhotoFocus') != -1) $(item).val('0');
+	});
+	
+	$("#div_thumb_list .photo_focus").removeClass('photo_focus').addClass('photo');
+	$(photo).removeClass('photo').addClass('photo_focus');
+	$(photo).parent().parent().find('.input-focus').val('1');
+}
+
+function addImage(src){
+	var filepaths = arguments.length > 1 ? arguments[1] : '';
+	var photocount = arguments.length > 2 ? arguments[2] : 0;
+	var tmparr = filepaths.split('|');
+	
+	var html = '';
+	html += '<div class="thumb">';
+	html += '<input type="hidden" class="input-focus" name="hdnNewPhotoFocus[]" value="0" />';
+	html += '<input type="hidden" name="hdnNewPhotoPath[]"/>';
+	html += '<p class="img">';
+	html += '<a class="btn btn-mini btn-delete" href="javascript:void(null);" onclick="removePhoto(this)">{lang admin.operation.delete}</a>';
+	html += '<img class="photo" onclick="photoFocus(this)" src="" border="0"/>';
+	html += '</p>';
+	html += '<div class="form">';
+	html += '<p class="displayorder">';
+	html += '<input type="text" class="input-mini span12" name="txtNewPhotoDisplayOrder[]" placeholder="{lang album.index_edit.view.photo.displayorder.placeholder}…"/>';
+	html += '</p>';
+	html += '<p class="title">';
+	html += '<input type="text" class="input-mini span12" name="txtNewPhotoTitle[]" placeholder="{lang album.index_edit.view.photo.title.placeholder}…"/>';
+	html += '</p>';
+	html += '<p class="remark">';
+	html += '<textarea class="span12" name="txtNewPhotoRemark[]" rows="2" cols="45" placeholder="{lang album.index_edit.view.photo.remark.placeholder}…"></textarea>';
+	html += '</p>';
+	html += '</div>';
+	html += '</div>';
+	
+	var $html = $(html);
+	
+	$('img', $html).attr('src', src);
+	$('input', $html).val('');
+	$("input[name='hdnNewPhotoPath[]']", $html).val(filepaths);
+	$("input[name='txtNewPhotoTitle[]']", $html).val(tmparr.length > 1 ? tmparr[1] : '');
+	$("input[name='txtNewPhotoDisplayOrder[]']", $html).val(photocount);
+	
+	$container.append($html);
+	
+	$container.imagesLoaded(function(){
+		$('#div_thumb_list img').each(function(){
+			var img = new Image();
+			img.src = this.src;
+			
+			if(img.width <= img.height) $(this).css({width:'auto', height:'100%'});
+		});
+    });
+    
+	checkPhotos();
+}
+
+swfupload_params.limit = 0;
+swfupload_params.uploaded = 0;
+
+$(function(){
+	$('fieldset input,textarea,select').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+	$container = $('#div_thumb_list').imagesLoaded(function(){
+		$('#div_thumb_list img').each(function(){
+			var img = new Image();
+			img.src = this.src;
+			
+			if(img.width < img.height) $(this).css({width:'auto', height:'100%'});
+		});
+	});
+	
+   	swfu = new SWFUpload({
+		upload_url: "{$ADMIN_SCRIPT}/album/_upload&_SALT={$_var[current][SALT]}",
+		
+		file_size_limit : "4MB", 
+		file_types : "*.jpg;*.bmp;*.gif;*.png",
+		file_types_description : "JPG Images",
+		file_upload_limit : "0",
+		
+		file_queue_error_handler : fileQueueError,
+		file_dialog_complete_handler : fileDialogComplete,
+		upload_progress_handler : uploadProgress,
+		upload_error_handler : uploadError,
+		upload_success_handler : uploadSuccess,
+		upload_complete_handler : uploadComplete,
+		
+		button_image_url : "static/images/swfupload/swfupload.png",
+		button_placeholder_id : "spnButtonPlaceholder",
+		button_width: 120,
+		button_height: 18,
+		button_text : '{lang admin.validate.swfupload.lang.button}({lang admin.validate.swfupload.lang.button.limit}4M)',
+		button_text_style : '',
+		button_text_top_padding: 0,
+		button_text_left_padding: 18,
+		button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,
+		button_cursor: SWFUpload.CURSOR.HAND,
+		
+		flash_url : "static/swfupload.swf",
+		
+		custom_settings : {
+			upload_target : "divFileProgressContainer"
+		},
+		
+		debug: false
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

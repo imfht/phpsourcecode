@@ -1,0 +1,96 @@
+<include file="Public:header" />
+<script type="text/javascript" src="__PUBLIC__/js/chart/highcharts.js"></script>
+<div class="container">
+	<div class="page-header">
+		<p class="wel_h4"><img style="height:30px;" src="__PUBLIC__/img/working_platform.png"/> &nbsp;<span>{$Think.session.name}{:L('THE_WORKBENCH')} <a id="add" class="btn btn-primary pull-right" ><i class="icon-plus"></i>&nbsp; {:L('ADD_THE_COMPONENT')}</a></span></p>	
+	</div>
+	<include file="Public:alert" />	
+	
+	<div class="row" id="widgets">
+        <div class="span12">
+			<h3 style="color:#029BE2">{:L('WELCOME_WUKONG_CRM')}!</h3>
+		</div>
+		<div class="wall">
+			{:W('Common',array('redirect'=>'Dashboard'))}
+			{:W('Common',array('redirect'=>'Announcement'))}
+			<div style="clear:both;"></div>
+			<div class="sort-list">
+			<volist name="widget" id="vo">
+				<?php $vo['redirect'] = $vo['widget']; ?>
+				{:W('Common', $vo)}
+			</volist>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="dialog-message" class="hide" title="{:L('ADD_A_PANEL_COMPONENT')}">loading...</div>
+<div id="dialog-message2" class="hide" title="{:L('MODIFY_THE_PANEL_COMPONENT')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+//排序
+$(".sort-list").sortable({
+	stop:function() {
+		var chart_arr = new Array();
+		$(".sort-item").each(function(key, val){
+			chart_arr.push($(val).attr('rel'));
+			console.log($(val).attr('rel'));
+		});
+		$.post('{:U("index/sortCharts")}',{chart_arr:chart_arr.join(',')},'json');
+	}
+});
+
+$('#dialog-message').dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position :["center",100]
+});
+
+$('#dialog-message2').dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position :["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+function show(id){
+	$("#detail"+id).show();
+	$("#show"+id).hide();
+	$("#unshow"+id).show();
+}
+function unshow(id){
+	$("#detail"+id).hide();
+	$("#unshow"+id).hide();
+	$("#show"+id).show();
+}
+$(function(){
+	$("#add").click(
+		function(){
+			$('#dialog-message').dialog('open');
+			$('#dialog-message').load('{:U("index/widget_add")}');
+		}
+	);
+	$(".update").click(
+		function(){
+			id = $(this).attr('rel');
+			$('#dialog-message2').dialog('open');
+			$('#dialog-message2').load("{:U('index/widget_edit','id=')}"+id);
+		}
+	);
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	
+});
+</script>
+<include file="Public:footer" />

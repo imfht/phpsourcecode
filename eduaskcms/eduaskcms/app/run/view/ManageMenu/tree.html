@@ -1,0 +1,82 @@
+{extends file="../base.html"}
+{block name=function}
+
+{/block}
+{block name=base}
+{function menu level=1}
+{foreach $data as $self_id=>$children}
+<div class="menu_level menu_level_{$level} {if !$children}no_child{/if} {if $level>1&&$children}isOpen{/if}">
+    <div class="self clearfix">
+        <i class="lline"></i>
+        {$child_count = count($children)}
+        <span class="menu_action">
+            <a href="{url('ManageMenu/create',['parent_id'=>$self_id])}"><i class="fa fa-plus"></i>添加子栏目</a>
+            {if $child_count>1}<a href="{url('ManageMenu/sort',['parent_id'=>$self_id])}"><i class="fa fa-sort"></i>排序子栏目</a>{/if}            
+            <a href="{url('ManageMenu/modify',['id'=>$self_id])}"><i class="fa fa-edit"></i>编辑</a>
+            <a href="{url('ManageMenu/delete',['id'=>$self_id])}" class="item-action-delete"><i class="fa fa-close"></i>删除</a>
+            {if managemenu($self_id,'url')}
+            <a href="{url(managemenu($self_id,'url'))}"><i class="fa fa-eye"></i>访问</a>
+            {/if}
+        </span>
+        <span class="menu_info clearfix">            
+            <i class="fa  {if $children}{if $level==1}fa-plus-circle{else}fa-minus-circle{/if}{else}fa-minus-circle{/if}  fa-lg left fa-icon"></i>
+            <span class="menu_title left">
+                {if managemenu($self_id,'icon')}<i class="fa {managemenu($self_id,'icon')}"></i>{/if} 
+                <a href="{url('ManageMenu/modify',['id'=>$self_id])}">{managemenu($self_id,'title')}</a>
+            </span>
+            <span class="menu_id left">〖ID：{$self_id}〗</span>                       
+            {if $child_count>0}<span class="menu_child_count left">〖子栏目数：{$child_count}〗</span>{/if}
+            {$controller = trim(managemenu($self_id,'controller'))}
+            {$action = trim(managemenu($self_id,'action'))}
+            {if $controller && $action}
+            {$module = trim(managemenu($self_id,'module'))}
+            {if !$module}{$module='manage'}{/if}
+            {$args=[]}
+            {if managemenu($self_id,'args')}
+            {$args=json_decode(managemenu($self_id,'args'))}
+            {/if}
+            <span class="link left">〖链接：<a href="{url($module|cat:'/'|cat:$controller|cat:'/'|cat:$action,$args)}" target="_blank">{url($module|cat:'/'|cat:$controller|cat:'/'|cat:$action,$args)}</a>〗</span>
+            {/if}
+        </span>
+    </div>
+    {if $children}
+    <div class="menu_children">
+        {call menu data=$children level=$level+1}
+    </div>
+    {/if}
+</div>
+{/foreach}
+{/function}
+<div id="menu_tree">
+    {if managemenu('threaded')}{$threaded = reset(managemenu('threaded'))}{else}{$threaded = []}{/if}   
+    {if $threaded}
+        {call menu data=$threaded level=1}
+    {/if}
+</div>
+{/block}
+{block name=script}
+<script>
+
+$('#menu_tree .self').click(function(){
+    var parent = $(this).parent('.menu_level') ;
+    $('#menu_tree').find('.isClick').removeClass('isClick');
+    parent.addClass('isClick');
+    if(parent.hasClass('no_child')) return false ;
+    if(parent.hasClass('isOpen'))
+        parent.removeClass('isOpen').children('.menu_children').hide().end().children('.self').find('.fa-icon').removeClass('fa-minus-circle').addClass('fa-plus-circle')
+    else
+        parent.addClass('isOpen').children('.menu_children').show().end().children('.self').find('.fa-icon').removeClass('fa-plus-circle').addClass('fa-minus-circle')
+}).find('a').click(function(e){
+    e.stopPropagation();
+    if($(this).hasClass('item-action-delete')){
+        var href  = $(this).attr('href') ;
+        layer.confirm('该操作不可逆，请确认删除该栏目及其子栏目？',function(){
+            layer.closeAll();
+            location.href  = href; 
+        })
+        return false ;
+    }
+})
+
+</script>
+{/block}

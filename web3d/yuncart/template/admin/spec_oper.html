@@ -1,0 +1,183 @@
+<!--{include(file='head.html')}-->
+<script type="text/javascript" src="template/jslib/tbox/tbox.js"></script>
+<link rel="stylesheet" href="template/jslib/tbox/tbox.css" type="text/css" />
+<script type="text/javascript" src="template/jslib/upload/ajaxupload.js"></script>
+<script type="text/javascript">
+function onSpecComplete(id, fileName, data) {
+	if(data.err){
+		jAlert(data.err,"警告");
+	} else {
+		var buttonid  = data.buttonid,
+			img		  = data.msg,
+			specvalid = buttonid.replace('upload','');
+		$("#img" + specvalid).html("<img src='"+img+"_50x50.jpg'/>");
+		$("#valimg"	+ specvalid).val(img);
+	}	
+}
+function createupload(buttonid) {
+	var uploader = new qq.FileUploader({ //申明一个upload
+		 element: document.getElementById(buttonid),
+		 action: "<!--{url('admin','uploadfile','spec')}-->"+"&buttonid="+buttonid,
+		 onComplete:onSpecComplete
+	});
+}
+</script>
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<form action="<!--{url('admin','spec','specsave')}-->" method="post" name="submitform" id="submitform">
+		<div id="main_c">
+		<!--{if $opertype == "edit"}-->
+			<ul class="bk">
+				<li>
+					<label><em>*</em>规格名称：</label>
+					<p>
+						<input class="input_tx" value="<!--{$spec.name}-->" name="name" id="name" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>规格备注：</label>
+					<p>
+						<input class="input_tx" value="<!--{$spec.memo}-->" name="memo" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>类型：</label>
+					<p>
+						<input value="text" name="type" type="radio" id="type_text" onclick="totype('text')"
+								<!--{if $spec.type == "text"}-->checked<!--{/if}--> /> 文字
+						<input value="pic" name="type" type="radio" id="type_pic" onclick="totype('pic')"
+								<!--{if $spec.type == "pic"}-->checked<!--{/if}-->/> 图片
+					</p>
+				</li>
+			</ul>
+
+			<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center" style="background-color:#EBF0F4">
+						<th width="10%">操作</th>
+						<th width="45%">规格值名称</th>
+						<th width="45%" class="forpic" colspan="2" <!--{if $spec.type == 'text'}-->style='visibility: hidden;'<!--{/if}-->	>规格值图片</th>
+					</tr>
+				</thead>
+				<tbody id="seltbody">
+					<!--{foreach $specvalues val}-->
+						<tr align="center">
+							<td>
+								<a href="javascript:void(0);" onclick="$.oper.up(this);return false;" class="up"></a>
+								<a href="javascript:void(0);" onclick="$.oper.down(this);return false;" class="down"></a>
+								<a href="javascript:void(0);" onclick="$.oper.del(this);return false;" class="del"></a>
+							</td>
+							<td><input type="text" class="short-input" value="<!--{$val.name}-->" name="valnames[key_<!--{$val.specvalid}-->]"/></td>
+							<td class="forpic" width="25%" align="right" <!--{if $spec.type == 'text'}-->style='visibility: hidden;'<!--{/if}-->>
+								<span id="upload_<!--{$val.specvalid}-->"></span>
+							<script type="text/javascript">
+								createupload('upload_<!--{$val.specvalid}-->');
+							</script>
+							</td>
+							<td class="forpic" width="20%" align="left">
+								<span id="img_<!--{$val.specvalid}-->">
+									<!--{if $val.img}-->
+										<img src="<!--{$val.img}-->" width="30" height="30" class="mid"/>
+									<!--{/if}-->
+								</span>
+								<input type="hidden" value="<!--{$val.img}-->" id="valimg_<!--{$val.specvalid}-->" name="valimgs[key_<!--{$val.specvalid}-->]"/>
+							</td>
+						</tr>
+					<!--{/foreach}-->
+				</tbody>
+			</table>
+			
+		<!--{elseif $opertype=="add"}-->
+			<ul class="bk">
+				<li>
+					<label><em>*</em>规格名称：</label>
+					<p>
+						<input class="input_tx" value="" name="name" id="name" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>规格备注：</label>
+					<p>
+						<input class="input_tx" value="" name="memo" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>类型：</label>
+					<p>
+						<input value="text" name="type" type="radio" id="type_text" checked onclick="totype('text')"/> 文字
+						<input value="pic" name="type" type="radio" id="type_pic"	onclick="totype('pic')"/> 图片
+					</p>
+				</li>
+			</ul>
+
+			<table class="tableStyle" style="background-color:#EBF0F4" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center">
+						<th width="10%">操作</th>
+						<th width="45%">规格值名称</th>
+						<th width="45%" class="forpic" colspan="2">规格值图片</th>
+					</tr>
+				</thead>
+				<tbody id="seltbody">
+				</tbody>
+			</table>
+		<!--{/if}-->
+			
+			<ul class="bk">
+				<li>
+					<label></label>
+					<p>
+						<a href="javascript:void(0);" onclick="addSpec();return false;" class="bt_style2">添加规格值</a>
+					</p>
+				</li>
+			</ul>
+			<div class="bt_bk2">
+				<input type="hidden" value="<!--{$opertype}-->"		name="opertype" />
+				<input type="hidden" value="<!--{def($specid)}-->"	name="specid" />
+				<a href="javascript:void(0);" class="btn" onclick="jssubmit('spec');return false;"><span>保存</span></a>
+			</div>
+		</div>
+		</form>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+
+<table class="none" cellspacing="0" cellpadding="0" border="0">
+	<tbody id="fordp">
+		<tr align="center">
+			<td>
+				<a href="javascript:void(0);" onclick="$.oper.up(this);return false;" class="up"></a>
+				<a href="javascript:void(0);" onclick="$.oper.down(this);return false;" class="down"></a>
+				<a href="javascript:void(0);" onclick="$.oper.del(this);return false;" class="del"></a>
+			</td>
+			<td><input type="text" class="short-input" value="" name="valnames[]"/></td>
+			<td class="forpic" align="right" width="25%">
+				<span id="uploadadd_{n}"></span>
+			</td>
+			<td class="forpic" align="left"  width="20%">
+				<span id="imgadd_{n}"></span>
+				<input type="hidden" value="" id="valimgadd_{n}" name="valimgs[]"/>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!--{include(file='foot.html')}-->
+<script type="text/javascript">
+function addSpec() {
+	var $html = $("#fordp").clone(),
+		n     = $(document).data("n");
+	$("input:checked").val() == "text" && $html.find(".forpic").css("visibility","hidden");
+	if(!n) {
+		n = parseInt(n) || 0;
+	}
+	n++;
+	$(document).data("n",n);
+	$("#seltbody").append($html.html().replace(/{n}/g,n));
+	createupload("uploadadd_"+n);
+}
+function totype(type) {
+	type == "text" && $(".forpic").css("visibility","hidden") || $(".forpic").css("visibility","visible");
+}
+</script>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>增加银行卡</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body style="background:#F4F5F6;">
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>增加银行卡</h1>
+  <a class="hui-header-sreach-txt" href="#{$smarty.const.ACT}#/home/WxMemberCard/member_card_show/">卡管理</a>
+</header>
+<div class="hui-wrap">
+  <div style="margin:20px 10px; margin-bottom:15px;" class="hui-form" id="form1">
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">开户银行</div>
+      <input type="text" name="name" id="name" class="hui-input hui-input-clear" placeholder="输入开户银行名称" checkType="string" checkData="2,32" checkMsg="输入开户银行名称" />
+    </div>
+	  <div class="hui-form-items">
+      <div class="hui-form-items-title">持卡人姓名</div>
+      <input type="text" name="cardname" id="cardname" class="hui-input hui-input-clear" placeholder="请输入持卡人姓名" checkType="string" checkData="2,16" checkMsg="请输持卡人姓名2-16字符" />
+    </div>
+	  <div class="hui-form-items">
+      <div class="hui-form-items-title">银行卡号</div>
+      <input type="text" name="cardnumber" id="cardnumber" class="hui-input hui-input-clear" placeholder="请输入银行卡号" checkType="int" checkData="2,32" checkMsg="请输入银行卡号" />
+    </div>
+	  <div class="hui-form-items">
+      <div class="hui-form-items-title">开户支行</div>
+      <input type="text" name="cardaddress" id="cardaddress" class="hui-input hui-input-clear" placeholder="输入开户支行" checkType="string" checkData="2,128" checkMsg="输入开户支行" />
+    </div>
+  </div>
+</div>
+<div style="padding:10px; padding-top:10px;">
+  <button type="button" class="hui-button hui-button-large hui-primary" id="submit">确认增加</button>
+</div>
+<input type="hidden" id="rtn_path" value="#{$rtn_path}#">
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-form.js" charset="utf-8"></script> 
+<script type="text/javascript">
+//初始化表单
+hui.formInit();
+//点击提交操作
+hui('#submit').click(function(){
+	//验证
+	var res = huiFormCheck('#form1');
+	var name 	 = hui('#name').val();
+	var cardname = hui('#cardname').val();
+	var cardnumber= hui('#cardnumber').val();
+	var cardaddress= hui('#cardaddress').val();
+	var rtn_path= hui('#rtn_path').val();
+	//提交
+	if(res){
+		hui.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/WxMemberCard/member_card_add/',
+			data : {name:name,cardname:cardname,cardnumber:cardnumber,cardaddress:cardaddress},
+			backType:'json',
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.code=='sucess'){
+					hui.upToast(data.message);
+					if(rtn_path=='buy'){
+					   var url='#{$smarty.const.ACT}#/home/WxBalanceBuy/balance_buy_add/';
+					}else if(rtn_path=='sell'){
+						var url='#{$smarty.const.ACT}#/home/WxBalanceSell/balance_sell_add/';
+					}else{
+						var url='#{$smarty.const.ACT}#/home/WxMemberCard/member_card_show/';
+					}
+					
+					window.location.href=url;
+				}else{
+					hui.upToast(data.message);
+				}
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});
+	}
+});
+</script>
+</body>
+</html>

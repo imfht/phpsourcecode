@@ -1,0 +1,259 @@
+ {include file="public/header" /}
+
+ <main class="thinkask-main">
+     <style type="text/css">
+       .answer-content img,.article-detail-content img{max-width:600px ; }
+    </style>
+    <div class="container">
+      <div class="row">
+        <section class="col-lg-9">
+            <article class="page page-default  article-detail">
+                <header class="page-heading">
+                  <h1 class="title"><span style="border: 1px solid #00AAEE;border-radius:3px;padding: 1px 4px;font-size: 16px;color: #00AAEE;">问</span> {$question_content}</h1>
+                  <div class="info clearfix">
+                    <ul>
+                      <li><i class="user"></i><span>{$user_name}</span></li>
+                      <li><i class="time"></i><time>{:date_friendly($add_time,604800,'Y-m-d')} </time></li>
+                      <li><i cite="views"></i><span class="views"></span></li>
+                      <li><i cite="comment-count"></i><span class="comment-count"></span></li>
+                    </ul>
+                    <ul class="tags">
+                    	{volist name="topic" id="v"}
+                        <li><a href="topic/{$v.topic_id}" class="text">{$v.topic_title}</a></li>
+                      {/volist}
+                    </ul>
+                    <?php if ($permission ){ ?>
+                    <div class="pull-right" style="margin-top: -5px;margin-left: 10px;">
+                         <button href="" data-toggle="dropdown" aria-expanded="false" data-hover="dropdown" class="btn btn-danger btn-sm dropdown-toggle">管理<span class="caret"></span></button>
+                    
+                        <ul class="dropdown-menu" role="menu">
+                             <li class="hidden-xs"><a href="/question/post/edit/id/{$question_id}.html"><i class="icon icon-job"></i> 修改</a></li>
+                             <li class="hidden-xs"><a href="/admin/index/index.html"><i class="icon icon-job"></i> 删除</a></li>
+                             <!-- <li class="hidden-xs"><a href="/admin/index/index.html"><i class="icon icon-job"></i> 编辑</a></li> -->
+                        </ul>
+                    </div>
+                      <?php }?>
+				    	 <?php if($focus){?>
+                    <div class="btn-group pull-right" style="margin-top: -5px;">
+                        <button href="javascript:void(0)" id="focusBtn" class="btn btn-info btn-sm">
+                        <?php if($focus==1){?>
+                            已关注
+                            <?php }else{?>
+                            关注
+                            <?php }?>
+                        </button>
+                      <button  class="btn btn-success btn-sm t-collect" id="{$question_id}" type="question"><?php if($collected==1){ echo "已收藏";}else{ echo "收藏";} ?></button>
+                    </div>
+				    	<?php }?>
+                  </div>
+                </header>
+            
+                <div class="page-body space">
+                   <div class="article-detail-content">
+                    {:e($question_detail)}
+                   </div>
+                </div>
+            </article>
+              <section class="thinkask-answer">
+                <div class="answer-heading">
+                  <h3 class="title">回复 <span class="num badge">{:count($answer)}</span></h3>
+                </div>
+                <div class="answer-body">
+                {if condition="empty(!$answer)"}
+                  {volist name="answer" id="v"}
+                  <div class="answer-list" >
+                    <div class="answer-user">
+                      <a href="javascript:;" class="avatar">
+                        <img src="{:get_file_path($v['avatar_file'])}"/>
+                      </a>
+                    </div>
+                    <div class="answer-content">
+                        <p class="answer-info"><a href="">{$v.user_name}</a>  {:date_friendly($v['add_time'])}</p>
+                        <div class="content">
+                        {:e($v.answer_content)}
+                        </div>
+                          <div class="col-md-12" style="">
+                         {if condition="$userinfo['uid']>0"}
+                             <div class="pull-right">
+                             <?php if(getset('open_good')=='Y'){ ?>
+                              <a class="btn btn-xs btn-default {if condition='voteed'}tChecked{else /}tPost {/if}" url="{:url('question/api/zhan')}" form='anser{$v.answer_id}' style='<?php if($v['zhan']==1){echo "background-color:#e6e6e6;";} ?>' id="{$v.answer_id}" vote_value="1"><i class="fa fa-thumbs-up" ></i> 赞 </a>
+                              <?php } ?>
+
+
+                              <?php if(getset('open_thanks')=='Y'){ ?>
+                              <a  class="btn btn-xs btn-default {if condition='thanksed'}tChecked{else /}tPost {/if}" url="{:url('question/api/thank')}" form='anser{$v.answer_id}' style='<?php if($v['thank']==1){echo "background-color:#e6e6e6;";} ?>' id="{$v.answer_id}"><i class="fa fa-heartbeat"></i> 感谢</a>
+                              <?php   } ?>
+
+
+                              <?php if(getset('open_comment')=='Y'){ ?>
+                              <a onclick="$('.social-comment{$v.answer_id}').stop().toggle(400)" class="btn btn-xs btn-default ans_comment{$v.answer_id}" static="off"> <i class="fa fa-pencil "></i> 评论</a>
+                              <?php } ?>
+
+                              <?php if(getset('open_accusation')=='Y'){ ?>
+                              <a {if condition="!$v.reported"}onclick="$('.social-report{$v.answer_id}').stop().toggle(400)"{/if} class="btn btn-xs btn-default t_accusation {if condition='$v.reported'}tChecked{/if}" id="{$v.answer_id}"  form='anser{$v.answer_id}' static="off"><i class="fa fa-expeditedssl " ></i> 举报</a>
+                              <?php } ?>
+
+                          </div>
+
+                          {/if}
+                            
+                        <div style="clear:both;height:10px;"></div>
+                        <!-- //评论 -->
+                        <div class="social-comment{$v.answer_id}" style="display:none;overflow:hidden;margin-bottom:10px;">
+                          <form action=""  method="post"  class="anser{$v.answer_id}">
+
+                          <input type="hidden" value="{$v.uid}" name="uid">
+                            <input type="hidden" value="{$v.answer_id}" name="answer_id">
+
+                              <div class="media-body">
+                                  <textarea class="form-control " name="message" placeholder="填写评论..."></textarea>
+                              </div>
+
+                              <a class="btn btn-xs btn-success pull-right cmt{$v.answer_id} tPost" url="{:url('question/api/comment')}" form='anser{$v.answer_id}' style="margin-top:10px;"> 提交评论</a>
+                           </form>
+                      <!-- //评论 -->
+                        </div>
+                      
+                        <div class="social-report{$v.answer_id}" style="display:none;overflow:hidden;">
+   
+                      <!-- //举报 -->
+                          <form action=""  method="post"  class="report{$v.answer_id}">
+                          <input type="hidden" value="{$v.uid}" name="uid">
+                            <input type="hidden" value="{$v.answer_id}" name="answer_id">
+
+                              <div class="media-body">
+                                  <textarea class="form-control " name="reason" placeholder="填写举报理由..."></textarea>
+                              </div>
+
+                              <a class="btn btn-xs btn-danger pull-right cmt{$v.answer_id} tPost" url="{:url('question/api/report')}" form='report{$v.answer_id}' style="margin-top:10px;"> 我要举报</a>
+                           </form>
+                        </div>
+                         <!-- //举报 -->
+                        <div style="clear:both;height:10px;"></div>
+                        <?php foreach ($v['answer_comments'] as $ki => $vi): ?>
+                           <section class="answer-list sub-list"  style="margin:0px;">
+                              <div class="answer-user">
+                                <a href="" class="avatar">
+                                  <img src="{$Think.__STATIC__}{$vi.avatar_file}"/>
+                                </a>
+                              </div>
+                              <div class="answer-content">
+                                  <p class="answer-info"><a href="/people/{$vi.uid}.html">{$vi.user_name}</a>  {:date_friendly($vi['time'])} 评论</p>
+                                  
+                                  <div class="content" >
+                                   {$vi.message}
+                                  </div>
+                              </div>
+                            </section>
+                        <?php endforeach ?>
+                          
+                        </div>
+                     
+                    </div>
+                  </div>
+                  {/volist}
+                  
+                {/if}
+                </div>
+              </section>
+			{if condition="$userinfo['uid']>0"} 
+            <section style="margin-top:20px;">
+	     <form  class="form-horizontal comment_form tForm" method="post">
+          
+              <div class="col-md-10" style="padding-left:0px;">
+                  <script type="text/javascript" src="/public/static/template/asset/ueditor/ueditor.config.js"></script>
+                  <script type="text/javascript" src="/public/static/template/asset/ueditor/ueditor.all.js"></script>
+                  <script type="text/javascript" src="/public/static/template/asset/ueditor/ueditor.parse.js"></script>
+                  <textarea name="message" class="message-baiduedit"  style="display:none;"></textarea>
+                  <input type="hidden"  name="question_id" value="{$question_id}" />
+                   <script id="message" type="text/plain" style="height:100px;width:765px;"></script>
+                  <script type="text/javascript">
+                      var ue = UE.getEditor('message', {
+                              toolbars: [
+                                            // ['fullscreen', 'source', 'undo', 'redo'],
+                                            [
+
+                                            // 'bold', //加粗
+                                             // 'italic', //斜
+                                             // 'underline', //下划线
+                                             // 'fontborder', 
+                                             // 'strikethrough',  //删除线
+                                              // 'customstyle', //插入标题
+                                              'blockquote',//引用
+                                              // 'insertorderedlist', //有序列表
+                                              // 'insertunorderedlist', //无序列表
+                                              'link', //超链接
+                                              'simpleupload', //单图上传
+                                              'insertimage', //多图上传
+                                              'insertvideo', //视频
+                                              'removeformat', //清除格式
+
+                                            ]
+                                        ],
+                              theme:'thinkask',
+                              themePath:'{$Think.__STATIC__}/static/system/ueditorPlug/',
+                              focus:true,//初始化时，是否让编辑器获得焦点true或false
+                              // initialFrameHeight:100,
+                              
+                            });
+                      ue.addListener( "selectionchange", function () {
+                          $(".message-baiduedit").val(ue.getContent())
+                         
+                      } );
+                      
+                 </script>
+              </div>
+              <div class="col-lg-10">
+                <a onclick="javascript:void(0)" encode="true" table="{:encode('answer')}" url="{:url('question/api/answer')}"  class="btn btn-primary pull-left tPost">回答</a>
+              </div>
+          
+        </form>  
+		</section>
+		{else /}
+		<div class="alert alert-info" role="alert">
+			您需要登陆才能回复 <a href="/ucenter/user/login.html">登录</a> 
+		</div>
+		{/if}
+        </section>
+        <aside class="col-lg-3">
+          <section class="box">    
+          <div class="col-lg-12" style="padding:0px;">{adv tagname='detail_right_top' /}</div>
+              <div class="box-heading">
+                <h3>相关问题</h3>
+              </div>
+              <div class="box-body">
+                <ul class="list-unstyled">
+               {question order="answer_count asc"}
+                  <li class="li-box-list"><a target="_blank" href="/question/detail/{:encode($v['question_id'])}" title="{$v.question_content}">{$v.question_content}</a>
+                  <p>浏览 <span>{$v.view_count}</span>  回复 <span>{$v.answer_count}</span> </p>
+                  </li>
+               {/question}
+
+                
+                   
+                </ul>
+              </div>
+            </section>
+        </aside>
+        
+
+      </div>
+    </div>
+</main>
+<!-- 代码高亮 -->
+ <script type="text/javascript" src="/public/static/system/Tmake/core/highlightjs/highlight.pack.js"></script>
+ <link rel="stylesheet" href="/public/static/system/Tmake/core/highlightjs/github-gist.min.css">
+ <script >hljs.initHighlightingOnLoad();</script>  
+ <!-- 代码高亮 -->
+<!-- //浏览量 -->
+<script type="text/javascript">
+layui.use(['jquery','layer','flow','thinkask','layedit'], function(){
+  var $ = layui.jquery
+  ,thinkask=layui.thinkask
+  thinkask.tajax('/question/api/views.html',{question_id: "{$question_id}"},'false')//浏览数
+
+
+});
+ 
+</script>
+{include file="public/footer" /}

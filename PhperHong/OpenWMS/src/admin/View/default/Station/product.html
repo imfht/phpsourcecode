@@ -1,0 +1,104 @@
+
+
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+	
+			<div id="alert_box_table"></div>
+			<div class="row">
+
+				<div class="action-buttons" style="float:right;">
+					<button id="add_product" class="btn btn-sm btn-success" >
+						<i class="icon-plus bigger-130"></i>
+						<span class="bigger-110 no-text-shadow">新增</span>
+					</button>
+					<button ng-click="del_product()" class="btn btn-sm btn-danger" id="btn_del" data-loading-text="正在提交,请稍候...">
+						<i class="icon-trash bigger-130"></i>
+						<span class="bigger-110 no-text-shadow">删除</span>
+					</button>
+
+				</div>
+			</div>
+
+			<div class="space-4"></div>
+			<div class="table-responsive">
+				{:NW('Table',array(
+						'columns'=>array(
+							array('name'=>'title','text'=>'名称','width'=>'22%'),
+							array('name'=>'thumb','text'=>'图片','width'=>'10%','sortable'=>false),
+							array('name'=>'subcontent','text'=>'内容','width'=>'38%','sortable'=>false),
+							array('name'=>'create_datetime','text'=>'创建时间','width'=>'18%','sortable'=>false),
+						), 
+						'default'	=> '空',
+						'rows'		=> !is_array($list) ? array() : $list ,
+						'checkbox'	=> array('name'=>'ckb', 'id'=>'allckb', 'field'=>'id'),
+						'button_width'	=>'15%',
+						'button' 	=> array(
+							0	=> array('class'=>'green', 'icon'=>'pencil', 'name'=>'edit_product', 'title'=>'编辑', 'field'=>array('id')),
+							
+							
+						)
+					), 'Product'
+				)}
+				
+			</div>
+			
+
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+	$(document).ready(function(){
+		$('#allckb').click(function(){
+			var ischecked = $(this).attr('checked') ? true : false;
+			$("input[name='ckb']").attr('checked', ischecked);
+		});
+		$('#add_product').click(function(){
+			window.location.href = "{:U('Station/add_product')}";
+		});
+		$("a[name='edit_product']").click(function(){
+			var id = $(this).attr('value');
+			if (id == ''){
+				$("#alert_box_table").jk_alert({msg: '没有获取到要编辑的数据，请刷新后重试', type:'danger', show_time:12000});
+				return false;
+			}
+			
+			
+			window.location.href = "{:U('Station/add_product')}?id="+id;
+		});
+		$('#btn_del').click(function(){
+			//获取要删除的项
+			var id = '';
+			$("input[name='ckb']").each(function(){
+				if ($(this).attr('checked')){
+					id += $(this).attr('value')+',';
+				}
+			})
+			id = id.substring(0, id.length-1);
+			if (id == ''){
+				$("#alert_box_table").jk_alert({msg: '请选择要删除的数据', type:'danger', show_time:12000});
+				return false;
+			}
+			showdialog({
+				'title':'提示',
+				'message':'您确定要删除这些产品吗？',
+				'okfunction':function(){
+					$.ajax({ 
+			            url: "{:U('Station/del_product')}",  
+			            data:{'id': id},
+			            dataType:'json',
+			            type:'POST',
+			            success: function(data){
+			                if (data.ret == 1){
+			                    $("#alert_box_table").jk_alert({ msg: data.msg, type: 'success', show_time: 3500 });
+			                    location.reload();
+			                }else{
+			                    $("#alert_box_table").jk_alert({ msg: data.msg, type: 'danger', show_time: 3500 });
+			                }
+			            }
+			        });
+				}
+			})
+		});
+	});
+</script>

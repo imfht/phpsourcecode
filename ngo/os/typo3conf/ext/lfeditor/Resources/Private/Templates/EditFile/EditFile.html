@@ -1,0 +1,134 @@
+{namespace lfe=SGalinski\Lfeditor\ViewHelpers}
+{namespace core=TYPO3\CMS\Core\ViewHelpers}
+
+<f:layout name="Default" />
+
+<f:section name="selectItems">
+	<f:render partial="SelectExtensionAndLanguageFile" arguments="{_all}" />
+	<f:form id="mainMenuForm" action="changeSelection">
+		<div class="row">
+			<f:render partial="SelectReferenceLanguage" arguments="{_all}" />
+			<f:render partial="SelectLanguageAndReference" arguments="{_all}" />
+			<f:if condition="{constantTypeOptions}">
+				<div class="col col-md-3 col-sm-6">
+					<label>
+						<strong>
+							<f:translate key="select.constantType" />
+						</strong>
+					</label>
+					<f:form.select name="constantTypeSelection"
+					               value="{constantTypeSelection}"
+					               options="{constantTypeOptions}"
+					               additionalAttributes="{onchange: 'TYPO3.lfEditor.changeForm(\'mainMenuForm\')', class: 'form-control'}" />
+				</div>
+			</f:if>
+			<f:render partial="SelectNumConstants" arguments="{_all}"/>
+		</div>
+	</f:form>
+</f:section>
+
+<f:section name="main">
+	<f:if condition="{constValues}">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<f:translate key="function.langfile.edit" />
+			</div>
+			<div class="panel-body">
+				<p>
+					<span id="tx-lfeditor-numberCur">{curConsts}</span> /
+					<span id="tx-lfeditor-numberOf">{totalConsts}</span>
+				</p>
+
+				<f:form id="contentForm" action="editFileSave">
+					<f:form.hidden name="buttonType" value="0" />
+
+					<f:for each="{constValues}" key="constKey" as="constValue" iteration="iterator">
+						<fieldset class="tx-lfeditor-fieldset bgColor5 {f:if(condition: '{iterator.isOdd} || {parallelEdit}', then: 'tx-lfeditor-fleft', else: 'tx-lfeditor-fright')}">
+							<legend class="bgColor3 tx-lfeditor-constantMaxWidth400" title="{languageSelection}:{constKey}">
+								{f:if(condition: '{languageSelection} == \'default\'', then: 'en', else: '{languageSelection}')}:{constKey}
+							</legend>
+							<f:if condition="{languageSelection} == {defaultLanguage} && {defaultLanguagePermission} != 1">
+								<f:then>
+									<f:form.textarea
+										cols="80" rows="{numTextAreaRows}"
+										value="{constValue.edit}"
+										name="editFileTextArea[{languageSelection}][{constKey}]"
+										lang="{f:if(condition: '{languageSelection} == \'default\'', then: 'en', else: '{languageSelection}')}"
+										additionalAttributes="{readonly: ''}"
+										class="tx-lfeditor-textarea" />
+								</f:then>
+								<f:else>
+									<f:form.textarea
+										cols="80" rows="{numTextAreaRows}"
+										value="{constValue.edit}"
+										name="editFileTextArea[{languageSelection}][{constKey}]"
+										lang="{f:if(condition: '{languageSelection} == \'default\'', then: 'en', else: '{languageSelection}')}"
+										class="tx-lfeditor-textarea" />
+								</f:else>
+							</f:if>
+							<f:if condition="{constValue.default}">
+								<p class="tx-lfeditor-defaultTranslation bgColor3">
+									{constValue.default}
+								</p>
+							</f:if>
+						</fieldset>
+						<f:if condition="{parallelEdit}">
+							<fieldset class="tx-lfeditor-fieldset bgColor5 tx-lfeditor-fright">
+								<legend class="bgColor3 tx-lfeditor-constantMaxWidth400" title="{referenceLanguageSelection}:{constKey}">
+									{f:if(condition: '{referenceLanguageSelection} == \'default\'', then: 'en', else: '{referenceLanguageSelection}')}:{constKey}
+								</legend>
+								<f:if condition="{referenceLanguageSelection} == {defaultLanguage} && {defaultLanguagePermission} != 1">
+									<f:then>
+										<f:form.textarea
+											cols="80" rows="{numTextAreaRows}"
+											value="{constValue.pattern}"
+											name="editFileTextArea[{referenceLanguageSelection}][{constKey}]"
+											lang="{f:if(condition: '{referenceLanguageSelection} == \'default\'', then: 'en', else: '{referenceLanguageSelection}')}"
+											additionalAttributes="{readonly: ''}"
+											class="tx-lfeditor-textarea" />
+									</f:then>
+									<f:else>
+										<f:form.textarea
+											cols="80" rows="{numTextAreaRows}"
+											value="{constValue.pattern}"
+											name="editFileTextArea[{referenceLanguageSelection}][{constKey}]"
+											lang="{f:if(condition: '{referenceLanguageSelection} == \'default\'', then: 'en', else: '{referenceLanguageSelection}')}"
+											class="tx-lfeditor-textarea" />
+									</f:else>
+								</f:if>
+								<f:if condition="{constValue.default}">
+									<p class="tx-lfeditor-defaultTranslation bgColor3">
+										{constValue.default}
+									</p>
+								</f:if>
+							</fieldset>
+						</f:if>
+					</f:for>
+				</f:form>
+			</div>
+		</div>
+	</f:if>
+</f:section>
+
+<f:section name="ButtonBarLeft">
+	<f:if condition="{displayBackButton}">
+		<button class="btn btn-default btn-sm" onclick="TYPO3.lfEditor.submitLanguageFileEdit(1)">
+			<core:icon identifier="actions-move-left" />
+			<f:translate key="button.session.back" />
+		</button>
+	</f:if>
+	<f:if condition="{displayNextButton}">
+		<button class="btn btn-default btn-sm" onclick="TYPO3.lfEditor.submitLanguageFileEdit(2)">
+			<core:icon identifier="actions-move-right" />
+			<f:translate key="button.session.next" />
+		</button>
+	</f:if>
+	<button class="btn btn-default btn-sm" onclick="TYPO3.lfEditor.submitLanguageFileEdit(3)">
+		<core:icon identifier="actions-save" />
+		<f:translate key="button.save" />
+	</button>
+	<button class="btn btn-default btn-sm" onclick="return TYPO3.lfEditor.confirmCancelFileEdit()">
+		<core:icon identifier="actions-close" />
+		<f:translate key="button.cancel" />
+	</button>
+</f:section>

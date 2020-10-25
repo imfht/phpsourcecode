@@ -1,0 +1,100 @@
+<div class="menu" style="margin-top: 80px;">
+    <span>修改</span>
+    <a href="javascript:;" id="qrcode">二维码</a>
+    <a href="javascript:;" id="link_delete">删除</a>
+</div>
+<div id="form1" class="form">
+    <div class="line">
+        <span>分类：</span>
+        <select id="link_cid">
+            <!--{foreach($categoryList as $v)}-->
+            <option value="<!--{$v['id']}-->" <!--{if($v['id'] == $link["cid"])}-->selected="true"<!--{/if}-->><!--{:H($v['name'])}--></option>
+            <!--{/foreach}-->
+        </select>
+    </div>
+    <div class="line">
+        <span>网址：</span>
+        <input id="link_url" type="text" value="<!--{:H($link['url'])}-->" />
+    </div>
+    <div class="line">
+        <span>标题：</span>
+        <input id="link_title" type="text" value="<!--{:H($link['title'])}-->" />
+    </div>
+    <div class="line">
+        <span>&nbsp;</span>
+        <a href="javascript:;" id="link_edit_save">保存</a>
+        <a href="javascript:;" onclick="hideAction()">取消</a>
+    </div>
+</div>
+<div id="form2" class="form">
+    <div id="qr"></div>
+    <div class="weixin">
+        <img src="<!--{BASE_URL}-->/static/img/weixin.png" />
+        <span>微信扫描分享到朋友圈</span>
+    </div>
+</div>
+<script type="text/javascript" src="<!--{BASE_URL}-->/static/js/jquery.qrcode.min.js"></script>
+<script type="text/javascript">
+$("#link_edit_save").click(function() {
+    el = $(this);
+    if(el.data("lock")) return;
+    el.data("lock", 1);
+
+    var url = "<!--{:Router::buildUrl('Link_Edit')}-->";
+    var data = {};
+    data.cid = $("#link_cid").val();
+    data.url = $("#link_url").val();
+    data.title = $("#link_title").val();
+    data.id = <!--{$link['id']}-->;
+    data._token = get_token();
+    $.post(url, data, function(r) {
+        alert(r.msg);
+        if(r.status) {
+            location.reload();
+        }
+        el.data("lock", 0);
+    }, "json");
+});
+
+$("#link_delete").click(function() {
+    el = $(this);
+    if(el.data("lock")) return;
+    if(!confirm("确定要删除此网址？")) return;
+    el.data("lock", 1);
+
+    var url = "<!--{:Router::buildUrl('Link_Delete')}-->";
+    var data = {};
+    data.id = <!--{$link['id']}-->;
+    data._token = get_token();
+    $.post(url, data, function(r) {
+        alert(r.msg);
+        if(r.status) {
+            location.reload();
+        }
+        el.data("lock", 0);
+    }, "json");
+});
+
+$("#qrcode").click(function() {
+    var $this = $(this);
+    if($this.data("is_show")) {
+        $this.data("is_show", 0);
+        $("#form2").hide();
+        $("#form1").show();
+    } else {
+        $this.data("is_show", 1);
+        $("#form1").hide();
+        $("#form2").show();
+        var url = $.trim($("#link_url").val());
+        if(url.match(/^https?:\/\/.+/i)) {
+            $("#qr").qrcode({
+                width: 240,
+                height: 240,
+                text: url
+            });
+        }
+    }
+});
+
+</script>
+

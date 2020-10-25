@@ -1,0 +1,199 @@
+<?php if (!defined('THINK_PATH')) exit(); /*a:1:{s:68:"E:\wamp\www\1kbcms\public/../application/admin\view\index\index.html";i:1496973075;}*/ ?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>网站后台管理</title>
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <link rel="icon" type="image/png" href="__ADMIN__/i/favicon.png">
+    <link rel="stylesheet" href="__ADMIN__/css/amazeui.min.css" />
+    <link rel="stylesheet" href="__ADMIN__/css/app.css">
+    <script src="__ADMIN__/js/jquery.min.js"></script>
+    <style>
+        .tpl-header-logo a,.tpl-header-logo a:hover{ text-decoration:none; color:#5D95C7}
+    </style>
+    <script type="text/javascript" language="javascript">
+        function iFrameHeight() {
+            var ifm= document.getElementById("kb-iframe");
+            var subWeb = document.frames ? document.frames["kb-iframe"].document :
+                    ifm.contentDocument;
+            if(ifm != null && subWeb != null) {
+                //var iframe_height=subWeb.body.scrollHeight;
+                var iframe_height = $("#kb-iframe").contents().find("body").height();
+                //alert(iframe_height);
+                min_height=570;
+                if (iframe_height>500){
+                    return ifm.height = iframe_height;
+                }else{
+                    return ifm.height = min_height;
+                }
+            }
+        }
+    </script>
+</head>
+
+<body data-type="index">
+<script src="__ADMIN__/js/theme.js"></script>
+<div class="am-g tpl-g">
+    <!-- 头部 -->
+    <header>
+        <!-- logo -->
+        <div class="am-fl tpl-header-logo">
+            <a href="<?php echo url('admin/index/index'); ?>">
+                <div class="am-topbar-brand">
+                    &nbsp;&nbsp;&nbsp;&nbsp;<strong>网站后台管理</strong> <small>v1.0.0</small>
+                </div>
+            </a>
+        </div>
+        <!-- 右侧内容 -->
+        <div class="tpl-header-fluid">
+            <!-- 侧边切换 -->
+            <div class="am-fl tpl-header-switch-button am-icon-list">
+                    <span>
+
+                </span>
+            </div>
+
+            <div class="am-fl tpl-header-navbar">
+                <ul id="nav">
+                    <li class="am-text-sm"><a href="javascript:;"><span class="am-icon-sign-out"></span>首页</a></li>
+                </ul>
+            </div>
+            <!-- 其它功能-->
+            <div class="am-fr tpl-header-navbar">
+                <ul>
+                    <!--主页-->
+                    <li class="am-text-sm">
+                        <a href="<?php echo url('home/Index/index'); ?>" target="_blank">
+                            <span class="am-icon-home"></span> 前台
+                        </a>
+                    </li>
+                    <!-- 清除缓存 -->
+                    <li class="am-text-sm">
+                        <a href="<?php echo url('admin/Admin/delcache'); ?>">
+                            <span class="am-icon-refresh"></span> 清除缓存
+                        </a>
+                    </li>
+                    <!-- 退出 -->
+                    <li class="am-text-sm">
+                        <a href="<?php echo url('admin/Login/logout'); ?>">
+                            <span class="am-icon-sign-out"></span> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <!-- 风格切换 -->
+    <div class="tpl-skiner">
+        <div class="tpl-skiner-toggle am-icon-cog">
+        </div>
+        <div class="tpl-skiner-content">
+            <div class="tpl-skiner-content-title">
+                选择主题
+            </div>
+            <div class="tpl-skiner-content-bar">
+                <span class="skiner-color skiner-white" data-color="theme-white"></span>
+                <span class="skiner-color skiner-black" data-color="theme-black"></span>
+            </div>
+        </div>
+    </div>
+    <!-- 侧边导航栏 -->
+    <div class="left-sidebar">
+        <!-- 菜单 -->
+        <ul class="sidebar-nav" id="menu">
+            <li class="sidebar-nav-link">
+                <a href="index.html" class="active">
+                    <i class="am-icon-home sidebar-nav-link-logo"></i> 首页
+                </a>
+            </li>
+            <li class="sidebar-nav-link">
+                <a href="tables.html">
+                    <i class="am-icon-table sidebar-nav-link-logo"></i> 表格
+                </a>
+            </li>
+        </ul>
+    </div>
+    <script type="text/javascript">
+        function load()
+        {
+            window.status="Page is loaded"
+        }
+    </script>
+    <!-- 内容区域 -->
+    <div class="tpl-content-wrapper">
+        <iframe id="kb-iframe" name="kb-iframe" width="100%" marginheight="0" marginwidth="0" frameborder="0" scrolling="no"  class="kb-iframe" name="iframepage"  onLoad="iFrameHeight()" src="" frameborder="0"></iframe>
+    </div>
+</div>
+<script src="__ADMIN__/js/amazeui.min.js"></script>
+<script src="__ADMIN__/js/app.js"></script>
+<script>
+    //生成主菜单
+    var data = <?php echo $menuList; ?>;
+    var topNav = '';
+    for(var i in data){
+        if(data[i]['menu'] != ''){
+            topNav += '<li class="am-text-sm"><a href="javascript:;" data="'+i+'" url=""> <span class="am-icon-'+data[i].icon+'"></span> '+data[i].name+'</a></li>';
+        }
+    }
+    $('#nav').html(topNav);
+    //绑定导航连接
+    $('#nav').on('click','a',function(){
+        $('#nav-head').text($(this).text());
+        var n = $(this).attr('data');
+        var menu = data[n]['menu'];
+        var menuHtml =  '';
+        if(menu != ''){
+            for(var i in menu){
+                if (menu[i].menu==undefined){
+                    menuHtml += '<li class="am-panel sidebar-nav-link"><a href="javascript:;" url="'+menu[i].url+'" class="icon-'+menu[i].icon+'"> <i class="am-icon-'+menu[i].icon+' sidebar-nav-link-logo"></i>'+menu[i].name+'</a></li>';
+                }else{
+                    menuHtml += '<li class="am-panel sidebar-nav-link">' +
+                            '<a href="javascript:;" class="sidebar-nav-sub-title am-collapsed" data-am-collapse="{parent: \'#menu\', target: \'#'+menu[i].name+'\'}"}">' +
+                            '<i class="am-icon-'+menu[i].icon+' sidebar-nav-link-logo"></i> '+menu[i].name +
+                            '<span class="am-icon-chevron-down am-fr am-margin-right-sm sidebar-nav-sub-ico"></span>' +
+                            '</a>' +
+                            '<ul class="sidebar-nav sidebar-nav-sub am-collapse" id="'+menu[i].name+'">';
+                    for(var j in menu[i].menu){
+                        menuHtml += '<li class="sidebar-nav-link">' +
+                                '<a href="javascript:;" parent="'+i+'" url="'+menu[i].menu[j].url+'">' +
+                                '<span class="am-icon-angle-right sidebar-nav-link-logo"></span> '+menu[i].menu[j].name +
+                                '</a>' +
+                                '</li>';
+                    }
+                    menuHtml += '</ul></li>';
+                }
+            }
+        }
+        //console.log(menu[1].menu);
+        $('#menu').html(menuHtml);
+        //设置样式
+        $('#nav li a').removeClass('active');
+        $(this).addClass('active');
+        //打开菜单
+        $('#menu a:first').click();
+        if (menu[1].menu!=undefined){
+            $('#menu li ul li a:first').click();
+        }
+    });
+    //绑定菜单连接
+    $('#menu').on('click','a',function(){
+        var url = $(this).attr('url');
+        var p = $(this).attr('parent');
+        $('.kb-iframe').attr('src',url);
+        //设置样式
+        if (p==undefined){
+            $('#menu li a').removeClass('active');
+            $(this).addClass('active');
+        }else{
+            $('#menu li ul li a').removeClass('sub-active');
+            $(this).addClass('sub-active');
+        }
+    });
+    $('#nav a:first').click();
+</script>
+</body>
+</html>

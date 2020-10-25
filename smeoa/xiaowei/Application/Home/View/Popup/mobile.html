@@ -1,0 +1,151 @@
+<extend name="Layout/ins_base" />
+<block name="content">
+	<style>
+		ul.tree_menu li {
+			cursor: pointer;
+		}
+		ul.tree_menu a {
+			display: inline
+		}
+		ul.tree_menu a:hover {
+			display: inline
+		}
+		ul.tree_menu i {
+			font-weight: normal;
+		}
+		ul.tree_menu i.check {
+			display: block position : relative;
+			float: right;
+			padding-top: 7px;
+			padding-right: 15px;
+			z-index: 10;
+			font-weight: normal;
+		}
+		ul.tree_menu i.check:before {
+			content: "\f096";
+		}
+
+		ul.tree_menu i.check.selected:before {
+			content: "\f046";
+		}
+	</style>
+	<div class="page-header clearfix">
+		<h3 class="col-xs-4">选择人员</h3>
+		<div class="col-xs-8 text-right">
+			<a onclick="select_all();" class="btn btn-sm btn-primary">全选</a>
+			<a onclick="save();" class="btn btn-sm btn-primary">确定</a>
+			<a onclick="myclose();" class="btn btn-sm btn-default">关闭</a>
+		</div>
+	</div>
+	<div>
+		<div class="col-sm-12 sub_left_menu">
+			<div class="row">
+				<div class="col-xs-3">
+					<a onclick="go_back()" class="btn btn-primary"><i class="fa fa-reply"></i></a>
+				</div>
+				<div class="col-xs-6 text-center">
+					<h4 id="dept_name"></h4>
+				</div>
+				<div class="col-xs-3 text-right">
+					已选：<span id="data_count">0</span>
+				</div>
+			</div>
+			<div class="well">
+				<?php echo $menu ?>
+			</div>
+		</div>
+		<select class="hidden" id="data"></select>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		var $return_dept_id;
+
+		function select_all() {
+			$(".emp").not('.hidden').find('a').click();
+		}
+
+		function save() {
+			$("#data option").each(function(i) {
+				emp_no = $(this).val();
+				name = jQuery.trim($(this).text());
+				name = name.replace(/<.*>/, '');
+				html_string = conv_inputbox_item(name, emp_no);
+				$("#actor_wrap .address_list", parent.document).append(html_string);
+			});
+			myclose();
+		}
+
+		function go_back() {
+			if ($dept_pid_id != undefined) {
+				$return_dept_id = $dept_pid_id;
+				$("ul.tree_menu li").addClass('hidden');
+				$("ul.tree_menu li.dept_pid_" + $return_dept_id).removeClass('hidden');
+				$dept_name = $("ul.tree_menu li.dept_" + $return_dept_id + "> a").text();
+				$dept_pid_id = $("ul.tree_menu li.dept_" + $return_dept_id).attr('dept_pid_id');
+				$("#dept_name").text($dept_name);
+			}
+		}
+
+
+		$(document).ready(function() {
+			$("ul.tree_menu li").addClass('hidden');
+			$("ul.tree_menu li.level_1").removeClass('hidden');
+
+			$("ul.tree_menu li.dept").click(function() {
+				$("ul.tree_menu li").addClass('hidden');
+				$dept_id = $(this).attr("dept_id");
+				$dept_name = $(this).text();
+				$dept_pid_id = $(this).attr("dept_pid_id");
+				$return_dept_id = $dept_pid_id;
+				$('#dept_name').text($dept_name);
+				$("ul.tree_menu li.dept_pid_" + $dept_id).removeClass('hidden');
+			});
+
+			$("ul.tree_menu li.dept i.check").click(function() {
+				if ($(this).hasClass('selected')) {
+					$(this).removeClass('selected');
+					$val = $(this).attr('user_id');
+					$("#data  option[value='" + $val + "']").remove();
+					$("#data_count").text($("#data option").length);
+				} else {
+					$(this).addClass('selected');
+					$text = $(this).text();
+					$val = $(this).attr('user_id');
+					if ($("#data  option[value='" + $val + "']").val() == undefined) {
+						$("<option></option>").val($val).text($text).appendTo("#data");
+						$("#data_count").text($("#data option").length);
+					};
+				}
+			});
+
+			$("ul.tree_menu li.dept").click(function() {
+				$("ul.tree_menu li").addClass('hidden');
+				$dept_id = $(this).attr("dept_id");
+				$dept_name = $(this).text();
+				$dept_pid_id = $(this).attr("dept_pid_id");
+				$return_dept_id = $dept_pid_id;
+				$('#dept_name').text($dept_name);
+				$("ul.tree_menu li.dept_pid_" + $dept_id).removeClass('hidden');
+			});
+
+			$("ul.tree_menu li.emp").click(function() {
+				if ($("i.check", this).hasClass('selected')) {
+					$("i.check", this).removeClass('selected');
+					$val = $(this).attr('user_id');
+					$("#data  option[value='" + $val + "']").remove();
+					$("#data_count").text($("#data option").length);
+				} else {
+					$("i.check", this).addClass('selected');
+					$text = $(this).text();
+					$val = $(this).attr('user_id');
+					if ($("#data  option[value='" + $val + "']").val() == undefined) {
+						$("<option></option>").val($val).text($text).appendTo("#data");
+						$("#data_count").text($("#data option").length);
+					};
+				}
+			});
+		});
+
+	</script>
+</block>

@@ -1,0 +1,136 @@
+<!--{include(file='head.html')}-->
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<form action="<!--{url('admin','message','messagesave')}-->" method="post" name="submitform" id="submitform">
+		<div id="main_c">
+			<div id="infotab">
+				<ul>
+					<li class="cur"><a href="javascript:void(0)" id="a_email" onclick="$.oper.jstab('a_email');return false;">邮件</a></li>
+					<li><a href="javascript:void(0)" id="a_sms" onclick="$.oper.jstab('a_sms');return false;">短信</a></li>
+				</ul>
+			</div>
+			<ul class="bk" id="foremail">
+				<li>
+					<label><em>*</em>服务器IP：</label>
+					<p>
+						<input class="input_tx" value="<!--{def($messageset.smtphost)}-->" name="smtphost" id="smtphost" type="text"/>
+					</p>
+				</li>
+				<li>
+					<label><em>*</em>服务器端口：</label>
+					<p>
+						<input class="input_tx" value="<!--{def($messageset.smtpport)}-->" name="smtpport" id="smtpport" type="text"/>
+					</p>
+				</li>
+
+				<li>
+					<label><em>*</em>发件人邮箱：</label>
+					<p>
+						<input class="input_tx" value="<!--{def($messageset.smtpuser)}-->" name="smtpuser" id="smtpuser" type="text"/>
+					</p>
+				</li>
+
+				<li>
+					<label><em>*</em>发件人密码：</label>
+					<p>
+						<input class="input_tx" value="<!--{def($messageset.smtppass)}-->" name="smtppass" id="smtppass" type="text"/>
+					</p>
+				</li>
+
+				<li>
+					<label>测试邮箱：</label>
+					<p>
+						<input class="input_tx" value="" name="testemail" id="testemail" type="text"/>
+						<a href="javascript:void(0);" onclick="jscheck('email');return false;" class="bt_style2">检测</a>
+					</p>
+				</li>
+
+			</ul>
+
+			<ul class="bk none" id="forsms">
+			 <li>
+					<label><em>*</em>手机号：</label>
+					<p>
+						<input class="input_tx" value="<!--{def($messageset.smsphone)}-->" name="smsphone"  id="smsphone" type="text" />
+						（<a href="http://sms.yuncart.com" target="_blank">立即申请</a>）
+					</p>
+				</li>
+				<li>
+					<label><em>*</em>密码：</label>
+					<p>
+						<input class="input_tx" value="<!--{def($messageset.smspass)}-->" name="smspass" id="smspass" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>测试手机：</label>
+					<p>
+						<input class="input_tx" value="" name="testsms" id="testsms" type="text"/>
+						<a href="javascript:void(0);" onclick="jscheck('sms');return false;" class="bt_style2">检测</a>
+					</p>
+				</li>
+				<!--{if $messageset.smsphone && $messageset.smspass && !$user}-->
+				<li>
+					<label>提示：</label>
+					<p>
+						该用户不合法,或短信服务器出错
+					</p>
+				</li>
+				<!--{/if}-->
+				<!--{if $user}-->
+				<li>
+					<label>统计：</label>
+					<p>共有短信：<!--{$user.smsnum}--> 条，已发送短信：<!--{$user.sendnum}--> 条，剩余短信：<!--{$user.smsnum - $user.sendnum}--> 条</p>
+				</li>
+				<!--{/if}-->
+			</ul>
+			<div class="bt_bk2">
+				<a href="javascript:void(0);" class="btn" onclick="jssubmit();return false;"><span>保存</span></a>
+			</div>
+		</div>
+		</form>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+<!--{include(file='foot.html')}-->
+<script type="text/javascript">
+$(function(){
+	<!--{if $refer == "sms"}-->
+	$("#a_sms").click();
+	<!--{/if}-->
+});
+function jscheck(type) {
+	var postdata = {};
+	if(type == 'sms') {
+		var smsphone	= $.trim($("#smsphone").val()),
+			smspass		= $.trim($("#smspass").val()),
+			testsms		= $.trim($("#testsms").val());
+		if(!smspass || !smspass || !testsms) {
+			jAlert("检测条件不合法");
+			return ;
+		}
+		postdata = {type:type,smsphone:smsphone,smspass:smspass,testsms:testsms};
+	} else if(type == "email") {
+		var smtphost = $.trim($("#smtphost").val()),
+			smtpport = $.trim($("#smtpport").val()),
+			smtpuser = $.trim($("#smtpuser").val()),
+			smtppass = $.trim($("#smtppass").val()),
+			testemail = $.trim($("#testemail").val());
+		if(!smtphost || !smtpport || !smtpuser || !smtppass || !testemail) {
+			jAlert("检测条件不合法");
+			return false;
+		}
+		postdata = {type:type,smtphost:smtphost,smtpport:smtpport,smtpuser:smtpuser,smtppass:smtppass,testemail:testemail};
+	}
+	$.util.show();
+	$.post("<!--{url('admin','message','check')}-->",postdata,function(data) {
+		$.util.hide();
+		if(data == "success") {
+			jAlert("已经发送");
+		} else {
+			jAlert(data);
+		}
+	});
+}
+</script>

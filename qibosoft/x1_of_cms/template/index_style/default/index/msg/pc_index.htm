@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>互动群聊</title>
+<link rel="stylesheet" href="__STATIC__/libs/amazeui/css/amazeui.min.css" />
+<link rel="stylesheet" href="__STATIC__/libs/amazeui/css/main.css?f" />
+<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+<SCRIPT LANGUAGE="JavaScript" src="__STATIC__/js/core/jquery.min.js"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" src="__STATIC__/layer/layer.js"></SCRIPT>
+<style type="text/css">
+.sidestrip,.middle,.window_icon,.extend{display:none;}
+.wechat,.talk_window{width:100%;}
+#remind_online {
+    position: static;
+	margin:auto;
+    left: 0;
+	width:100%;
+	text-align:center;
+	color:#d6450d;
+	background-color:transparent;
+}
+#send_user_name{
+	display:none;
+}
+#bigwin{
+	position: absolute;
+	right:10px;
+	top:10px;
+	font-size:18px;
+	display:block;
+	width:25px;
+	padding-top:5px;
+	height:27px;
+	text-align:center;
+	background:orange;
+	color:#fff;
+	border-radius:3px;
+	cursor:pointer;
+	display:none;
+}
+@media (max-width: 600px){
+	#bigwin{
+		display:inline;
+	}
+	.input_icon .set-chatmod-btn{
+		font-size: 18px;
+	}
+	.input_icon {
+		padding:0 6px;
+	}
+	.input_icon a {
+		height: 12px;
+		width: 18px;
+		margin-top: 11px;
+		margin-right: 7px;
+	}
+	.input_box textarea {
+		margin-left:10px;
+		width: calc(100% - 15px);
+	}
+	#send{
+	    margin-right:15px;
+	}
+}
+.wechat{
+	height:100%;
+}
+
+.windows_top{
+	height:50px;
+}
+.other {
+	padding-left:0px;
+}
+.other span {
+	max-width:77%;
+}
+.content{
+	padding: 10px 10px;
+}
+.other span{
+	background:#b4efe9;
+}
+.other span:before {
+    border-right-color:#b4efe9;
+}
+/*
+.talk_window{
+	background:#fff;
+}*/
+</style>
+<script type="text/javascript">
+var in_pc_qun = true;// typeof(in_pc_qun)=='boolean' && in_pc_qun==true 
+$(function(){
+	var now_status = false;
+	$("#bigwin").click(function(){
+		now_status = now_status?false:true;
+		$("#bigwin").removeClass("glyphicon-resize-full");
+		$("#bigwin").removeClass("glyphicon-resize-small");
+		if(now_status){
+			$("#bigwin").addClass("glyphicon-resize-small");
+		}else{
+			$("#bigwin").addClass("glyphicon-resize-full");			
+		}
+		if(typeof(window.parent.change_win)=='function'){
+			window.parent.change_win(now_status);
+		}
+	});
+	set_chatwin_height();
+	try{
+		if(typeof(window.parent.chat_init)=='function'){
+			window.parent.chat_init();
+		}
+	}catch(e){
+		console.error(e);
+	}	
+});
+
+function set_chatwin_height(){
+	var h = $("body").height()-$(".windows_input").height()-$(".windows_top").height()-10;
+	if(h>200){
+		$(".windows_body").height(h);
+	}
+}
+</script>
+</head>
+<body>
+<div class="box">
+	<div class="wechat">
+		<!--聊天窗口-->
+		<div class="talk_window">
+			<div class="windows_top">
+				<div class="windows_top_box">
+					<span id="send_user_name"><!--对方用户名--></span>
+					<div id="remind_online">对方正在输入中，请稍候...</div>
+				</div>
+				<i id="bigwin" title="点击进行缩放" class="glyphicon glyphicon-resize-full"></i>
+			</div>			
+			<!--聊天内容-->
+			<div class="windows_body">
+				<div id="hack_wrap"><!--表情等插件--></div>
+				<div class="welcome_user"><i class="fa fa-bullhorn"> 欢迎：</i>你回来</div>
+				<div class="office_text" style="height: 100%;">					
+					<ul class="content pc_show_all_msg" id="chatbox" style="display: flex;flex-flow: column-reverse;"><!--会话内容--></ul>
+				</div>
+			</div>
+			<div class="windows_input">
+				<div class="input_icon" id="chat_model_btn">
+					<a style="display:none;"></a>
+					<a style="display:none;"></a>
+					<a style="display:none;"></a>
+					<a style="display:none;"></a>
+					<a style="display:none;"></a>
+					<a style="display:none;"></a>
+				</div>
+				<div class="input_box">
+					<textarea id="input_box" class="msgcontent"></textarea>
+					<button id="send">发送（S）</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+var ListMsgUserUrl = "";			//获取分页的消息用户列表
+var getShowMsgUrl = "{:iurl('index/wxapp.msg/get_more')}?rows=10&page=";	//"{qb:url name='pc_show_all_msg' /}";			//获取更多分页的会话记录
+//var now_time = "{:time()}";											//当前时间点做个记录,之后的消息就当新消息处理
+var postMsgUrl = "{:murl('member/wxapp.msg/add')}";						//发送消息提交的地址
+var get_user_info_url = "{:urls('index/wxapp.member/getbyid')}";	//根据UID获取某个用户的相关资料
+var get_uid_by_name_url = "{:urls('index/wxapp.member/get_uid')}";	//根据帐户名获取用户uid,主要是给新用户发消息用
+
+var tongjiMsgUrl = "";		//获取分页的统计数据
+var tongjiCountUrl = "";			//获取各种统计的数量
+
+var my_uid = "{$userdb.uid?:input('my_uid')}";										//我的UID,当前用户的UID
+var userinfo = {:json_encode($userdb?fun('member@format',$userdb,$userdb.uid):['username'=>'','uid'=>0,'icon'=>'','groupid'=>0])}; //用户详细资料
+var MyFriendUrl = "";					//获取好友列表
+var FriendActUrl = "";			//添加,删除好友
+</script>
+
+<script type="text/javascript" src="__STATIC__/libs/amazeui/js/amazeui.min.js"></script>
+<script type="text/javascript" src="__STATIC__/libs/amazeui/js/zUI.js"></script>
+<script type="text/javascript" src="__STATIC__/libs/amazeui/js/wechat.js?"></script>
+<script type="text/javascript" src="__STATIC__/layui/laydate/laydate.js"></script> 
+<script type="text/javascript" src="__STATIC__/libs/swiper/jquery.liMarquee.js"></script>
+<link rel="stylesheet" href="__STATIC__/libs/swiper/jquery.liMarquee.css" />
+</body>
+</html>

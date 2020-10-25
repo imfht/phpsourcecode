@@ -1,0 +1,324 @@
+<!--{include(file='head.html')}-->
+<script type="text/javascript" src="template/jslib/tbox/tbox.js"></script>
+<link rel="stylesheet" href="template/jslib/tbox/tbox.css" type="text/css" />
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<form action="<!--{url('admin','type','typesave')}-->" method="post" name="submitform" id="submitform">
+		<div id="main_c">
+			<div id="infotab">
+				<ul>
+					<li class="cur"><a href="javascript:void(0);" id="a_base" onclick="$.oper.jstab('a_base');return false;">基本信息</a></li>
+					<li><a href="javascript:void(0);" id="a_property" onclick="$.oper.jstab('a_property');return false;">扩展属性</a></li>
+					<li><a href="javascript:void(0);" id="a_specval"  onclick="$.oper.jstab('a_specval');return false;">规格</a></li>
+				</ul>
+			</div>
+			<!--{if $opertype == "edit"}-->
+			<ul class="bk" id="forbase">
+				<li>
+					<label><em>*</em>类目名称：</label>
+					<p>
+						<input class="input_tx" value="<!--{$type.typename}-->" name="typename" id="typename" type="text"/>
+					</p>
+				</li>
+				<li>
+					<label>品牌：</label>
+					<div class="brand">
+						<!--{foreach $brands key brand}-->
+						<span>
+							<input type="checkbox" value="<!--{$key}-->" name="brand[]" id="brand_<!--{$key}-->" 
+								<!--{if in_array($key,$selbrands)}-->checked<!--{/if}--> /> 
+							<!--{$brand}-->
+						</span>
+						<!--{/foreach}-->
+						（<a href="<!--{url('admin','brand','brandadd')}-->">添加品牌</a>）
+					</div>
+				</li>
+			</ul>
+
+			<table class="tableStyle none bk" id="forproperty" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center">
+						<th width="20%">操作</th>
+						<th width="10%">属性名</th>
+						<th width="30%">录入方式</th>
+						<th width="30%">可选值(逗号,分割)</th>
+						<th width="10%">前台显示</th>
+					</tr>
+				</thead>
+				<tbody id="listproperty">
+					<!--{foreach $properties property}-->
+						<tr align="center">
+							<td>
+								<a href="javascript:void(0);" onclick="$.oper.up(this);return false;"	class="up"></a>
+								<a href="javascript:void(0);" onclick="$.oper.down(this);return false;"  class="down"></a>
+								<a href="javascript:void(0);" onclick="$.oper.del(this);return false;"   class="del"></a>
+								<a href="javascript:void(0);" onclick="property('<!--{$property.propertyid}-->');return false;"   class="edit" title="管理属性"></a>
+								<input type="hidden" value="<!--{$property.propertyid}-->" name="propertyids[key_<!--{$property.propertyid}-->]"/>
+							</td>
+							<td>
+								<!--{$property.propertyname}-->
+							</td>
+							<td>
+								<!--{if $property.dptype == 1}-->
+									从可选择值中选择，前台可过滤
+								<!--{elseif $property.dptype == 2}-->
+									从可选择值中选择，前台不可过滤
+								<!--{elseif $property.dptype == 3}-->
+									手动输入，前台不可过滤
+								<!--{/if}-->
+							</td>
+							<td align="left">
+								<div style="height:20px;overflow:hidden;"><!--{$property.selval}--></div>
+							</td>
+							<td>
+								<!--{if $property.isdp == 1}-->是<!--{else}-->否<!--{/if}-->
+							</td>
+						</tr>
+					<!--{/foreach}-->
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="5">
+							<p>
+								<a href="javascript:void(0);" onclick="addProperty();return false;" class="bt_style2">添加</a>
+							</p>
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+		
+			<div id="forspecval" class="none bk">
+				<p class="center red">一个商品类目，目前最多支持两个规格</p>
+				<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center">
+						<th width="30%">操作</th>
+						<th width="30%">规格</th>
+					</tr>
+				</thead>
+				<tbody id="listspec">
+					<!--{foreach $specs spec}-->
+					<tr align="center">
+						<td>
+							<a href="javascript:void(0);" onclick="$.oper.up(this);return false;" class="up"></a>
+							<a href="javascript:void(0);" onclick="$.oper.down(this);return false;" class="down"></a>
+							<a href="javascript:void(0);" onclick="$.oper.del(this);return false;" class="del"></a>
+						</td>
+						<td>
+							<span><!--{$allspecs[$spec[specid]][name]}-->[<!--{$allspecs[$spec[specid]][memo]}-->]</span>
+							<input type="hidden" value="<!--{$spec.specid}-->" name="specids[key_<!--{$spec.specid}-->]" />
+						</td>
+					</tr>
+					<!--{/foreach}-->
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="5">
+							<p>
+								<a href="javascript:void(0);" onclick="toggleSpec(this);return false;" class="bt_style2" id="btnspec">添加</a>
+							</p>
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+			<!--{elseif $opertype == "add"}-->
+			<ul class="bk" id="forbase">
+				<li>
+					<label><em>*</em>类目名称：</label>
+					<p>
+						<input class="input_tx" value="" name="typename" id="typename" type="text"/>
+					</p>
+				</li>
+				<li>
+					<label>品牌：</label>
+					<div class="brand">
+						<!--{foreach $brands key brand}-->
+						<span>
+							<input type="checkbox" value="<!--{$key}-->" name="brand[]" id="brand_<!--{$key}-->" /> 
+							<!--{$brand}-->
+						</span>
+						<!--{/foreach}-->
+						（<a href="<!--{url('admin','brand','brandadd')}-->">添加品牌</a>）
+					</div>
+				</li>
+			</ul>
+			<table class="tableStyle none bk" id="forproperty" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center">
+						<th width="20%">操作</th>
+						<th width="10%">属性名</th>
+						<th width="30%">录入方式</th>
+						<th width="30%">可选值(逗号,分割)</th>
+						<th width="10%">前台显示</th>
+					</tr>
+				</thead>
+				<tbody id="listproperty"></tbody>
+				<tfoot>
+					<tr>
+						<td colspan="5">
+							<p>
+								<a href="javascript:void(0);" onclick="addProperty();return false;" class="bt_style2">添加</a>
+							</p>
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+
+			<div id="forspecval" class="none bk">
+				<p class="center red">一个商品类目，目前最多支持两个规格</p>
+				<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+					<thead>
+						<tr align="center">
+							<th width="30%">操作</th>
+							<th width="30%">规格</th>
+						</tr>
+					</thead>
+					<tbody id="listspec">
+					</tbody>
+					<tfoot>
+						<tr>
+							<td colspan="5">
+								<p>
+									<a href="javascript:void(0);" onclick="toggleSpec(this);return false;" class="bt_style2" id="btnspec">添加</a>
+								</p>
+							</td>
+						</tr>
+					</tfoot>
+				</table>
+				<!--{/if}-->
+
+				<div id="foraddspec" class="none">
+						<h1>请选择规格  </h1>
+						<div class="leftdiv">
+							<ul>
+								<!--{foreach $allspecs spec}-->
+									<li>
+										<input type="radio" value="<!--{$spec.specid}-->" name="singlespec" onclick="getSpec('<!--{$spec.specid}-->')" />
+										<span><!--{$spec.name}-->[<!--{$spec.memo}-->]</span>
+									</li>
+								<!--{/foreach}-->
+							</ul>
+						</div>
+						<div id="specinfo">
+						</div>
+						<div class="clear"></div>
+						<div style="margin:10px;">
+							<a href="javascript:void(0)" onclick="jssure();return false;" class="bt_style2">确定</a>
+						</div>
+				</div>
+			</div>
+
+			<div class="bt_bk2">
+					<input type="hidden" value="<!--{def($typeid)}-->" name="typeid" />
+					<input type="hidden" value="<!--{$opertype}-->" name="opertype" />
+					<a href="javascript:void(0);" class="btn" onclick="jssubmit('type');return false;"><span>保存</span></a>
+			</div>
+		</div>
+		</form>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+<table class="none" border="0" cellspacing="0" cellpadding="0">
+	<tbody id="forpropertytb">
+		<tr align="center">
+			<td>
+				<a href="javascript:void(0);" onclick="$.oper.up(this);return false;" class="up"></a>
+				<a href="javascript:void(0);" onclick="$.oper.down(this);return false;"  class="down"></a>
+				<a href="javascript:void(0);" onclick="$.oper.del(this);return false;"  class="del"></a>
+				<input type="hidden" class="input_tx short" value="" name="propertyids[]" />
+			</td>
+			<td><input type="text" class="input_tx short" value="" name="propertynames[]" /></td>
+			<td>
+				<select name="dptypes[]" onchange="chg(this)">
+					<option value="1">从可选择值中选择，前台可过滤</option>
+					<option value="2">从可选择值中选择，前台不可过滤</option>
+					<option value="3">手动输入，前台不可过滤</option>
+				</select>
+			</td>
+			<td>
+				<input class="input_tx" value="" name="selvals[]" type="text"/>
+			</td>
+			<td>
+				<input value="1" name="isdps[]" type="checkbox" checked/>
+			</td>
+		</tr>
+	</tbody>
+	<tbody id="forspectb">
+		<tr align="center">
+			<td>
+				<a href="javascript:void(0);" onclick="$.oper.up(this);return false;" class="up"></a>
+				<a href="javascript:void(0);" onclick="$.oper.down(this);return false;"  class="down"></a>
+				<a href="javascript:void(0);" onclick="$.oper.del(this);return false;"  class="del"></a>
+			</td>
+			<td>
+				<span></span>
+				<input type="hidden" value="" name="specids[]" />
+			</td>
+		</tr>
+	</tbody>
+	<tbody id="forvalue">
+		<tr align="center">
+			<td>
+				<a href="javascript:void(0);" onclick="$.oper.up(this);return false;" class="up"></a>
+				<a href="javascript:void(0);" onclick="$.oper.down(this);return false;"  class="down"></a>
+				<a href="javascript:void(0);" onclick="$.oper.del(this);return false;"  class="del"></a>
+			</td>
+			<td>
+				<input type="text" value="" name="values[]" size="40"/>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!--{include(file='foot.html')}-->
+<script type="text/javascript">
+$(function(){
+	<!--{if $refer == "property"}-->
+	$("#a_property").click();
+	<!--{/if}-->
+});
+
+function property(propertyid) {
+	$.tbox.popup("<!--{url('admin','type','property')}-->&propertyid="+propertyid);
+}
+function chg(obj) {
+	var $parent = $(obj).parent().next();
+	if(obj.value == 1 || obj.value == 2) {
+		$parent.find("input").show();
+	} else {
+		$parent.find("input").hide();
+	}
+}
+function addProperty() {
+	$("#listproperty").append($("#forpropertytb").clone().html());
+}
+function toggleSpec() {
+	var $this = $("#foraddspec");
+	$this.toggle();
+	$("#btnspec").text($this.is(":hidden") ? "添加" : "关闭");
+}
+function jssure() {
+	//选中的
+	var $radio = $("input[name='singlespec']:checked",$("#foraddspec"));
+	if($radio.length == 0) {
+		jAlert("请选择规格");
+		return false;
+	}
+	$("#foraddspec").hide();
+	var $html  = $("#forspectb").clone();
+	$html.find("span").eq(0).text($radio.next("span").text());
+	$html.find("input[type='hidden']").eq(0).val($radio.val());
+	$("#listspec").append($html.html());
+	$("#btnspec").text("添加");
+}
+function getSpec(specid) {
+	$.get("<!--{url('admin','type','getSpec')}-->"+"&specid="+specid,{},function(data){
+		if(data == "error") {
+			jAlert("发生错误,请刷新页面后重新执行该操作","警告");
+		} else {
+			$("#specinfo").html(data).show();
+		}
+	});
+}
+</script>

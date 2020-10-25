@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>{echo admin_title()}</title>
+	{template _header}
+</head>
+<body>
+	<div class="weui-tab">
+		<div class="weui-tab__panel">
+			<div class="weui-cells"></div>
+			<div class="more">~没有更多了</div>
+		</div>
+		{template _main_nav}
+	</div>
+	<script>
+	//全局请求参数
+	var filter = {};
+	location.search && location.search.substr(1).split('&').map(param => {
+		param = param.split('=');
+		filter[param[0]] = param[1]
+	})
+
+	//自动加载
+	var isloading = 0;
+	var load_more = () => {
+		if(filter.page == 'last' || isloading) return false;
+		filter.page = filter.page ? filter.page + 1 : 1;
+		$('#more').text('加载中...');
+		isloading = 1;
+		$.post('/mo/store', filter, (result) => {
+			isloading = 0;
+			if(result.status == 0){
+				alert(result.message);
+				return false;
+			}
+			$('#more').text('加载更多');
+			if(result.contents.total == 0){
+				filter.page = 'last';
+				$('#more').text('暂无数据');
+			}
+			if(result.contents.last_page <= filter.page){
+				filter.page = 'last';
+				$('#more').text('~没有更多了');
+			}
+			let list = [];
+			result.contents.list.map((v, i) => {
+				list.push([
+					'<a class="weui-cell weui-cell_access weui-cell_store" href="/mo/store/detail?store_id=' + v['store_id'] + '">',
+					'<div class="weui-cell__hd"><i class="iconfont icon-shop"></i></div>',
+					'<div class="weui-cell__bd"><p>' + v['store_name'] + '</p></div>',
+					'<div class="weui-cell__ft" ' + ( v['store_status'] == '正常' ? 'style="color:#06AE56"' : '' ) + '>' + v['store_status'] + '</div>',
+					'</a>'
+				].join(''));
+			});
+			$('.weui-tab__panel').children('.weui-cells').append(list.join(''));
+			$('#datePickerBtn .sum').remove();
+			if(result.contents.sum !== undefined){
+				$('#datePickerBtn').append('<span class="sum" style="display: block; font-size: 13px; color: rgba(0,0,0,.5);">收入 ￥' + result.contents.sum + '</span>');
+			}
+		})
+	}
+
+	var reload = ()=>{
+		filter.page = 0;
+		$('.weui-tab__panel').children('.weui-cells').empty();
+		load_more();
+	}
+
+	$('.weui-tab__panel').scroll(function(e){
+		if( this.scrollHeight <= $(this).height() + $(this).scrollTop() + 1 ){//加一容错
+			load_more();
+		}
+	})
+	$('#more').click(load_more)
+	load_more();
+	</script>
+</body>
+</html>

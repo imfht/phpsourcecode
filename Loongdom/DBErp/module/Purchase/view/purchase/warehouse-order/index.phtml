@@ -1,0 +1,119 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?=$this->HelpUrl('warehouseOrderList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th width="10%"><?=$this->translate('入库单号')?>-<?=$this->translate('订单数：').$this->orderList->getTotalItemCount()?></th>
+                                <th width="15%"><?=$this->translate('供应商')?></th>
+                                <th width="10%"><?=$this->translate('联系人')?></th>
+                                <th width="10%"><?=$this->translate('联系电话')?></th>
+                                <th width="10%"><?=$this->translate('付款方式')?></th>
+                                <th width="10%"><?=$this->translate('采购金额')?></th>
+                                <th width="6%"><?=$this->translate('状态')?></th>
+                                <th width="12%"><?=$this->translate('操作')?></th>
+                            </tr>
+                            <?php
+                            $sForm = $this->searchForm;
+                            $sForm->prepare();
+                            $sForm->get('p_order_state')->setEmptyOption('选择');
+                            ?>
+                            <?= $this->form()->openTag($sForm); ?>
+                            <tr>
+                                <td>
+                                    <?= $this->formElement($sForm->get('warehouse_order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('warehouse_order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('supplier_id')); ?>
+                                    <?=$this->formElementErrors($sForm->get('supplier_id'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('supplier_contacts')); ?>
+                                    <?=$this->formElementErrors($sForm->get('supplier_contacts'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('supplier_phone')); ?>
+                                    <?=$this->formElementErrors($sForm->get('supplier_phone'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('payment_code')); ?>
+                                    <?=$this->formElementErrors($sForm->get('payment_code'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('p_order_state')); ?>
+                                    <?=$this->formElementErrors($sForm->get('p_order_state'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                    <?php if(!empty(array_filter($sForm->getData()))) { ?>
+                                        <a href="<?=$this->url('warehouse-order');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <?= $this->form()->closeTag(); ?>
+                            </thead>
+
+                            <?php if($this->orderList) foreach ($this->orderList as $order) {?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($order->getWarehouseOrderSn())?></td>
+                                    <td><?=$order->getOneOrder()->getOneSupplier()->getSupplierName()?></td>
+                                    <td><?=$this->escapeHtml($order->getOneOrder()->getSupplierContacts())?></td>
+                                    <td><?=$this->escapeHtml($order->getOneOrder()->getSupplierPhone())?></td>
+                                    <td><?=$this->PurchaseHelper()->orderPayment($order->getWarehouseOrderPaymentCode())?></td>
+                                    <td><?=$this->erpCurrencyFormat($order->getWarehouseOrderAmount())?></td>
+                                    <td><?=$this->PurchaseHelper()->orderState($order->getWarehouseOrderState(), 2)?></td>
+                                    <td>
+                                        <a href="<?= $this->url('warehouse-order',
+                                            ['action'=>'view', 'id'=>$order->getWarehouseOrderId()]); ?>"
+                                           class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('查看')?>
+                                        </a>
+                                        <?php if($order->getWarehouseOrderState() == 2) { ?>
+                                            <a href="<?= $this->url('warehouse-order',
+                                                ['action'=>'insertWarehouse', 'id'=>$order->getWarehouseOrderId()]); ?>" class="btn btn-xs btn-success"><i class="fa fa-check"></i> <?=$this->translate('入库')?></a>
+                                            <a href="javascript:;" onclick="deleteConfirm('<?=$this->translate('您确实要取消该待入库单吗？')?>', '<?= $this->url('warehouse-order', ['action'=>'delete', 'id'=>$order->getWarehouseOrderId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>', 'false');" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i> <?=$this->translate('取消')?></a>
+                                        <?php } ?>
+
+                                    </td>
+                                </tr>
+                            <?php } ?>
+
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->orderList, 'Sliding', 'layout/page', ['route' => 'warehouse-order']); ?>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

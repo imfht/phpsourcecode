@@ -1,0 +1,112 @@
+<style type="text/css">
+.list_item{
+	border-bottom:#DDD dotted 1px;
+	padding:10px 10px 50px 10px;
+	min-height:60px;
+	position:relative;
+}
+.list_item:hover{
+	background:#F8F8F8;
+}
+.list_item .img{
+	width:120px;
+	height:90px;
+	border:#DDD solid 1px;
+	margin-right:10px;
+	padding:1px;
+	overflow:hidden;
+	text-align:center;
+	line-height:85px;
+	float:left;
+}
+.list_item .img img{
+	max-width:120px;
+	max-height:90px;
+	vertical-align:middle;
+}
+.list_item .atcs{
+	width:500px;
+	height:32px;
+	position:absolute;
+	right:12px;
+	bottom:15px;
+	text-align:right;
+	line-height:30px;
+	word-spacing:10px;
+}
+.list_item .atcs a{
+	display:inline-block;
+	border:#ddd solid 1px;
+	border-radius:5px;
+	padding:0 15px;
+	background:#eee;
+}
+
+.list_item .title a{
+	display:block;
+	height:30px;
+	line-height:30px;
+	overflow:hidden;
+	font-size:16px;
+}
+.list_item .info{
+	height:20px;
+	line-height:25px;
+	overflow:hidden;
+	color:#888;
+	font-size:14px;
+}
+.list_item .info a{
+	color:#2BB8AA;
+}
+.list_item .info span{
+	color:#F60;
+}
+</style>
+
+{if $tab_ext.top_button}<!--菜单-->
+<hr>
+{/if}
+
+{volist name="listdb" id="rs"}
+	<div class="list_item" data-status="{$rs.status}" data-id="{$rs.id}">
+		{notempty name="$rs.picurl"}<!--图片单独显示-->
+			<div class="img"><a href="{:iurl('show',['id'=>$rs.id])}" target="_blank"><img src="{$rs.picurl|tempdir}" onerror="this.src='__STATIC__/images/nopic.png';"/></a></div>
+		{/notempty}
+		{notempty name="$rs.title"}<!--标题单独显示-->
+			<div class="title"><a href="{:iurl('show',['id'=>$rs.id])}" target="_blank">{$rs.id}、{$rs.title}</a></div>
+		{/notempty}
+		
+		{if $f_array}
+			<div class="info">
+			{volist name=":fun('field@fields_to_table',$f_array,$rs)" id="vs"}<!-- 自定义字段 -->
+				{if (!in_array($vs['name'],['title','picurl','create_time','view'])) /}<!--把图片\时间过滤掉-->
+				{$vs.title}：<span>{$vs.value}</span> 
+				{/if}
+			{/volist}
+			</div>
+		{elseif($rs.mid) /}
+			<div class="info">模型：<i>{:model_config($rs['mid'])['title']}</i> </div>
+		{/if}
+
+		{notempty name="$rs.create_time"}<!--日期单独显示-->
+			<div class="info">
+			{notempty name="$rs.fid"} 分类：<a href="{:iurl('index',['fid'=>$rs.fid])}" target="_blank">{$rs.fid|get_sort='name'}</a>{/notempty} 
+			日期：<span>{$rs.create_time|format_time="Y-m-d H:i"}</span> 
+			{notempty name="$rs.view"} 浏览：<span>{$rs.view}</span>{/notempty}
+			{if isset($rs.status) } 状态：<span>{if $rs.status==0} <i style="color:blue;">未审核</i> {elseif($rs.status>1) /} 推荐 {elseif($rs.status==1) /} 已审核 {elseif($rs.status==-1) /} <i style="color:green;">回收站</i> {/if}</span>{/if}
+			<i>{:get_status($rs.zhibo_status,['','直播预告','直播中','直播结束'])}</i>
+			</div>
+		{/notempty}
+
+			<div class="atcs">
+			{volist name=":fun('field@get_rbtn',$tab_ext['right_button'],$rs,true)" id="vs"} <!--自定义菜单-->
+			  {$vs.value}
+			{/volist}
+			{if !isset($tab_ext.right_button)}
+				<a href="{:urls('delete',['ids'=>$rs['id']])}" onclick="return confirm('你确认要删除吗?不可恢复');" class="dels">删除</a>
+				<a href="{:urls('edit',['id'=>$rs['id']])}" class="edits">修改</a>
+			{/if}
+			</div>
+	</div>
+{/volist}

@@ -1,0 +1,117 @@
+<style type="text/css">
+    .align-center {
+        text-align: center;
+    }
+
+    .none_border td {
+        border-left: none;
+        border-right: none;
+    }
+</style>
+<div class="layui-fluid">
+    <div class="layui-tab-item layui-show" id="print_goods-list"></div>
+    <script id="print_goods-tpl" type="text/html">
+        {{# layui.each(d.data, function(index, order){ }}
+        <div class="layui-text align-center"><h3>发货单</h3></div>
+        <table class="layui-table none_border">
+            <tbody>
+            <tr>
+                <td>
+                    订单号：{{ order.order_no }} 下单日期：{{ order.create_at }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th width="50%">商品名称</th>
+                <th width="15%">货号</th>
+                <th width="10%">价格</th>
+                <th width="10%">数量</th>
+                <th width="15%">售后</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{# layui.each(order.order_goods, function(i, item){ }}
+            <tr>
+                <td>
+                    {{ item.goods_title }}<br>
+                    {{ item.spec_value }}
+                </td>
+                <td>{{ item.sku_code }}</td>
+                <td>{{ item.sell_price }}</td>
+                <td>{{ item.buy_qty }}</td>
+                <td>{{ item.refund }}</td>
+            </tr>
+            {{# }); }}
+            </tbody>
+        </table>
+        <table class="layui-table none_border">
+            <tbody>
+            <tr>
+                <td align="right">
+                    商品金额：￥{{ order.sell_price_total }} + 邮费：￥{{ order.delivery_price_real }} - 优惠：￥{{ order.promotion_price }} + 改价：￥{{ order.discount_price }} = 支付金额：￥{{ order.subtotal }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    收货人：{{ order.full_name }} 电话：{{ order.tel }} 收货地址：{{ order.prov }}{{ order.city }}{{ order.area }}{{ order.address }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    订单备注：{{ order.note }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <br>
+        {{# }); }}
+    </script>
+    <div class="layui-text align-center">
+        <button type="button" class="layui-btn" lay-filter="print_goods-add">打印</button>
+    </div>
+</div>
+<script type="text/html" template lay-done="layui.data.sendParams(d.params)"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/print.js"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['admin', 'table', 'laytpl'], function () {
+            var admin = layui.admin,
+                laytpl = layui.laytpl,
+                $ = layui.jquery,
+                api_action_url = layui.setter.apiHost + '/order/order';
+
+            //详情
+            function print_goods() {
+                admin.req({
+                    url: api_action_url + "/print_goods",
+                    data: {id: params.id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            laytpl($('#print_goods-tpl').html()).render(result, function (html) {
+                                $('#print_goods-list').html(html);
+                            })
+                        } else {
+                            layer.msg(result.msg);
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败，请刷新页面重试！');
+                    }
+                });
+            }
+
+            print_goods();
+
+            //打印
+            $('body').on('click', '[type="button"]', function () {
+                var filter = $(this).attr('lay-filter');
+                if (filter == 'print_goods-add') {
+                    Print('#print_goods-list')
+                }
+            })
+        });
+    }
+</script>

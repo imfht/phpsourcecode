@@ -1,0 +1,89 @@
+<div class="layui-input-inline">
+	<select name="item_id" id="item_id" lay-verify="required" lay-search="" lay-filter="item_id">
+		<option value="">【请选择站点】</option>
+		{$itemList|make_option=$selectId,name,id}
+	</select>
+</div>
+<if condition="$limit eq 2">
+<style type="text/css">
+	.downpanel .layui-select-title span{
+		line-height: 38px;
+	}
+	.downpanel dl dd:hover{ background-color: inherit; }
+</style>
+<div class="layui-input-inline">
+	<div class="layui-unselect layui-form-select downpanel">
+		<div class="layui-select-title">
+			<span class="layui-input layui-unselect" id="treeclass"><if condition="$cate_id neq null">{$cate_name}<else/>【请选择栏目】</if></span>
+			<input type="hidden" id="cate_id" name="cate_id" value="{$cate_id}">
+			<i class="layui-edge"></i>
+		</div>
+		<dl class="layui-anim layui-anim-upbit">
+			<dd>
+				<ul id="classtree"></ul>
+			</dd>
+		</dl>						
+	</div>
+</div>
+
+<script type="text/javascript">
+	layui.use(['form','tree'],function() {
+		var form = layui.form,
+			tree = layui.tree,
+		    $ = layui.jquery;
+		
+		//选择站点
+		form.on('select(item_id)',function(data){
+			var id = data.value;
+			console.log("站点ID:"+id);
+			
+			//移除树状子级数据
+			$('#classtree li').remove();
+			$("#cate_id").val(0);
+			$("#treeclass").text("【请选择栏目】");
+			
+			var select = data.othis;
+			if (select[0]) {
+				if (id > 0) {
+					var url = "{:U('itemCate/getList')}";
+					$.post(url, { 'item_id':id }, function(data){
+						if (data.success) {
+							
+							//渲染树状结构
+							layui.tree({
+								elem:"#classtree",
+                                nodes:data.data,
+                                click: function (node, a) {
+                                    //console.log(a);
+                                	var $select=$($(this)[0].elem).parents(".layui-form-select");
+  								    $select.removeClass("layui-form-selected").find(".layui-select-title span").html(node.name).end().find("input:hidden[name='cate_id']").val(node.id);
+                                },
+                                success: function () {
+                                   //TODO...
+                                }
+                            });
+							
+						}else{
+							layer.msg(data.msg,{ icon: 5 });
+							return false;
+						}
+					}, 'json');
+				} else {
+					
+				}
+			}
+		});
+		
+		$(".downpanel").on("click",".layui-select-title",function(e) {
+			$(".layui-form-select").not($(this).parents(".layui-form-select")).removeClass("layui-form-selected");
+			$(this).parents(".downpanel").toggleClass("layui-form-selected");
+			layui.stope(e);
+		}).on("click","dl i",function(e) {
+			layui.stope(e);
+		});
+		/*$(document).on("click",function(e) {
+			$(".layui-form-select").removeClass("layui-form-selected");
+		});*/
+	});
+</script>
+</if>

@@ -1,0 +1,147 @@
+<h2 class="contentTitle">系统升级 - 当前版本 #{$ver.version}#-#{$ver.bdtime}#</h2>
+<div class="pageFormContent" layoutH="97">
+<div class="modify">
+			<fieldset>
+			<legend>本地升级：</legend>	
+			<div id="main">
+			   <div class="demo">
+					<div class="btn">
+						<span>添加附件文件</span><input id="fileupload_upgrade" type="file" name="mypic">
+					</div>
+					<div class="progress">
+						<span class="bar"></span><span class="percent">0%</span >
+					</div>
+					<div class="files"></div>
+					<div id="showimg_upgrade"></div>
+			   </div>
+			</div>
+			<table width="100%" cellspacing="0" class="table"> 
+			<thead class="thead"> 
+				<tr> 
+   					<th><input type="checkbox"  name="chkAll" onclick='CheckAll(this.form)' alt="全选" title="全选"/></td> 
+    				<th>文件名称</th> 
+    				<th>文件类型 </th>
+    				<th>文件大小</th> 
+    				<th>修改时间</th> 
+					<th>操作</th>
+				</tr> 
+			</thead> 
+			<tbody>			
+			#{foreach from=$list key=k item=v}#	
+				<tr> 
+   					<td align="center"><input type="checkbox"  name='id[]' value="#{$v.id}#" onclick='unselectall()' rel="del_chk"></td> 
+    				<td>#{$v.filename}#</td> 
+    				<td>#{$v.type}#</td>
+    				<td>#{$v.size}#</td> 
+					<td>#{$v.ctime}#</td> 
+   				  <td align="center">
+				   <a href="#{$smarty.const.ACT}#/Sys/sys_upgrade_local/filename/#{$v.filename}#/" target="dialog" title="本地升级">升级</a>
+				   <a href="#{$smarty.const.ACT}#/Sys/sys_upgrade_del/filename/#{$v.filename}#/" target="ajaxTodo" title="确定要删除吗?">删除</a>				 
+				 </td> 
+				</tr> 
+			#{/foreach}#
+			</tbody> 
+			<tbody>
+			</tbody>
+			</table>
+           </fieldset>
+
+			<fieldset>
+			<legend>在线升级：</legend>	
+            <table width="100%" cellspacing="0" class="table"> 
+			<thead class="thead"> 
+				<tr> 
+   					<th><input type="checkbox"  name="chkAll" onclick='CheckAll(this.form)' alt="全选" title="全选"/></td> 
+    				<th>文件名称</th> 
+    				<th>修改时间</th> 
+                    <th>文件大小</th> 
+					<th>操作</th>
+				</tr> 
+			</thead> 
+			<tbody>			
+			#{foreach from=$onlist key=k item=v}#	
+				<tr> 
+   					<td align="center"><input type="checkbox"  name='id[]' value="#{$v.id}#" onclick='unselectall()' rel="del_chk"></td> 
+    				<td>#{$v.version}#</td> 
+					<td>#{$v.buildtime}#</td> 
+                    <td>#{$v.fsize}#</td>
+   				  <td align="center">
+				   <a href="#{$smarty.const.ACT}#/Sys/sys_upgrade_online/version/#{$v.version}#/" target="dialog">在线升级</a>
+				   <a href="#{$smarty.const.ACT}#/Sys/sys_upgrade_online_to_local/version/#{$v.version}#/"  target="ajaxTodo"  title="下载到本地升级">手动下载</a>				 
+				 </td> 
+				</tr> 
+			#{/foreach}#
+			</tbody> 
+			<tbody>
+			</tbody>
+			</table>
+            </fieldset>           
+           
+		</div>
+</div>
+<style type="text/css">
+.demo{width:320px;margin-left:50px;margin-top:20px;}
+.btn{position: relative;overflow: hidden;margin-right: 4px;display:inline-block;*display:inline;padding:4px 10px 4px;font-size:14px;line-height:18px;*line-height:20px;color:#fff;text-align:center;vertical-align:middle;cursor:pointer;background-color:#5bb75b;border:1px solid #cccccc;border-color:#e6e6e6 #e6e6e6 #bfbfbf;border-bottom-color:#b3b3b3;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px;}
+.btn input {position: absolute;top: 0; right: 0;margin: 0;border: solid transparent;opacity: 0;filter:alpha(opacity=0); cursor: pointer;}
+.progress { position:relative; margin-left:100px; margin-top:-24px; width:200px;padding: 1px; border-radius:3px; display:none}
+.bar {background-color: green; display:block; width:0%; height:20px; border-radius: 3px; }
+.percent { position:absolute; height:20px; display:inline-block; top:3px; left:2%; color:#fff }
+.files{height:22px; line-height:22px; margin:10px 0}
+.delimg{margin-left:20px; color:#090; cursor:pointer}
+</style>
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/ui/js/jquery.form.js"></script>
+<script type="text/javascript">
+$(function () {
+	var bar = $('.bar');
+	var percent = $('.percent');
+	var showimg = $('#showimg_upgrade');
+	var progress = $(".progress");
+	var files = $(".files");
+	var btn = $(".btn span");
+	$("#fileupload_upgrade").wrap("<form id='myupload_upgrade' action='#{$smarty.const.ACT}#/Upload/sys_upgrade_upload' method='post' enctype='multipart/form-data'></form>");
+    $("#fileupload_upgrade").change(function(){
+		$("#myupload_upgrade").ajaxSubmit({
+			dataType:  'json',
+			beforeSend: function() {
+        		showimg.empty();
+				progress.show();
+        		var percentVal = '0%';
+        		bar.width(percentVal);
+        		percent.html(percentVal);
+				btn.html("上传中...");
+    		},
+    		uploadProgress: function(event, position, total, percentComplete) {
+        		var percentVal = percentComplete + '%';
+        		bar.width(percentVal);
+        		percent.html(percentVal);
+    		},
+			success: function(data) {
+				files.html("<b>"+data.name+"("+data.size+"k)</b> <span class='delimg' name='"+data.name+"' rel='"+data.pic+"'>删除</span>");
+				
+//				var img = "http://demo.helloweba.com/upload/files/"+data.pic;
+//				showimg.html("<img src='"+img+"'>");
+				btn.html("添加附件");
+			},
+			error:function(xhr){
+				btn.html("上传失败");
+				bar.width('0')
+				files.html(xhr.responseText);
+			}
+		});
+	});
+	
+	$(".delimg").live('click',function(){
+		var pic = $(this).attr("rel");
+		var name = $(this).attr("name");
+		$.post(" #{$smarty.const.ACT}#/Upload/sys_upgrade_del",{filename:pic},function(msg){
+			if(trim(msg)==1){
+				files.html("删除成功.");
+				showimg.empty();
+				progress.hide();
+			}else{
+				alert(msg);
+			}
+		});
+	});
+});
+</script>

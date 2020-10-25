@@ -1,0 +1,1 @@
+"use strict";$(function(){$('div[data-type="sort-box"] a').each(function(){var t=$(this);t.click(function(){alert("点了"+t.data("name"))})})});

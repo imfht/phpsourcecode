@@ -1,0 +1,82 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    # swagger-ui相关配置
+    app.swagger.openapi.dir: '/public/swagger-ui/config/'
+    app.swagger.openapi.path: '%kernel.project_dir%%app.swagger.openapi.dir%'
+    kernel.cache_path: '%kernel.project_dir%/var/cache'
+    kernel.public_dir: '%kernel.project_dir%/public'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller'
+        tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    App\Service\Redis:
+        arguments:
+            $client: '@snc_redis.default'
+
+    App\EventListener\AuthBackendListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.controller, method: onKernelController, priority: 20 }
+
+    admin.info:
+        class: App\Admin\InfoAdmin
+        arguments: [~, App\Entity\Info, App\Controller\Backend\InfoAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Swagger, label: Info, show_mosaic_button: true }
+        public: true
+
+    admin.tags:
+        class: App\Admin\TagsAdmin
+        arguments: [~, App\Entity\Tags, App\Controller\Backend\TagsAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Swagger, label: Tags }
+        public: true
+
+    admin.servers:
+        class: App\Admin\ServersAdmin
+        arguments: [~, App\Entity\Servers, App\Controller\Backend\ServersAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Swagger, label: Servers }
+        public: true
+
+    admin.paths:
+        class: App\Admin\PathsAdmin
+        arguments: [~, App\Entity\Paths, App\Controller\Backend\PathsAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Swagger, label: Paths, persist_filters: true }
+        public: true
+
+    admin.admin_user:
+        class: App\Admin\AdminUserAdmin
+        arguments: [~, App\Entity\AdminUser, App\Controller\Backend\AdminUserAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Admin User, label: User, show_mosaic_button: true }
+        public: true
+
+    admin.admin_user_group:
+        class: App\Admin\AdminUserGroupAdmin
+        arguments: [~, App\Entity\AdminUserGroup, App\Controller\Backend\AdminUserGroupAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Admin User, label: Group }
+        public: true

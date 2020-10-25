@@ -1,0 +1,90 @@
+<!-- 客户来源 -->
+<div class="span4 sort-item" rel="{$id}">
+	<div class="dash-border">
+		<div class="dash-title">
+			<img src="__PUBLIC__/img/chart.png" style="width:17.5px;" />&nbsp;&nbsp;{$title}&nbsp;
+			<small>
+				<a rel="{$id}" class="update" href="javascript:void(0)" id="update_widget"><i class="icon-pencil"></i></a> &nbsp;
+				<a href="{:U('index/widget_delete', 'id='.$id)}" id="delete_widget"><i class="icon-remove"></i></a> &nbsp; 
+			</small>
+			<a href="{:U('customer/analytics')}" class="dash-swtich"> 切换到客户统计>></a>
+		</div>
+		<div class="cut-line"></div>
+		<div class="content-chart" id="customer_original_{$id}">拼命加载中...</div>
+	</div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/js/mychart/macarons.js"></script>
+<script src="__PUBLIC__/js/mychart/echarts-plain.js"></script>
+<script type="text/javascript">
+	$(function () {
+		var myChart = echarts.init(document.getElementById('customer_original_{$id}'),macarons);
+		option = {
+			tooltip : {
+				trigger: 'item',
+				formatter: "{a} <br/>{b} : {c} ({d}%)"
+			},
+			legend: {
+				show:true,
+				orient : 'horizontal',
+				y : '85%',
+				data:[]
+			},
+			toolbox: {
+				feature : {
+					magicType : {
+						show: true, 
+						type: ['pie', 'funnel']
+					}
+				}
+			},
+			series : [
+				{
+					name:'客户来源',
+					type:'pie',
+					radius : '70%',
+					center: ['50%', '45%'],
+					itemStyle: {
+						normal: {
+							label: {
+								show: false
+							},
+							labelLine: {
+								show: false
+							}
+						},
+						emphasis: {
+							label: {
+								show: true,
+								position: 'outer'
+							},
+							labelLine: {
+								show: true,
+								lineStyle: {
+									color: 'red'
+								}
+							}
+						}
+					},
+					data:[]
+				}
+			]
+		};
+		//使用Ajax从后台获取JSON格式的数据赋值到图标
+		$.ajax({
+			type: "get",
+			url: "{:U('customer/getcustomeroriginal')}",
+			dataType: "json", //返回数据形式为json
+			success: function (result) {
+				if (result) {
+					option.legend.data = result.data.legend;
+					option.series[0].data = result.data.series;
+					myChart.setOption(option);
+				}
+			},
+			error: function (errorMsg) {
+				$("#customer_original_{$id}").html('<span class="error_msg">获取信息失败...</span>');
+			}
+		});
+	})
+</script>
+<!-- 客户来源 END-->

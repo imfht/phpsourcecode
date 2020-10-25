@@ -1,0 +1,1 @@
+document.writeln("<script language=\"javascript\" src=\"http:\/\/ads.west263.com\/vcp\/getJScode\/getJScode.asp?ReferenceID=204967&No=460x60\"><\/script>");

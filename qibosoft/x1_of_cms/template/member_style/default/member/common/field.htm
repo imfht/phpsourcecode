@@ -1,0 +1,265 @@
+<style type="text/css">
+.filed_box li{
+	line-height:30px;
+	width:49%;
+	float:left;
+}
+.filed_box{
+	width:100%;
+	height:10px;
+	padding:10px;
+	margin-bottom:18px;
+	display:table;
+}
+.ctitle{
+	margin:10px 0 0 10px;
+	color:blue;
+	font-weight:bold;
+
+}
+#form_group_order_filed{
+	display:none;
+}
+</style>
+<div id="choose_order_field" style="display:none;">
+	<div class="ctitle">以下是自定义</div>
+	<ul style="" class="filed_a filed_box">
+		<li data-type="text"><input type="radio">单行文本</li>
+		<li data-type="textarea"><input type="radio">多行文本</li>
+		<li data-type="number"><input type="radio">纯数字</li>
+		<li data-type="money"><input type="radio">金额</li>
+		<li data-type="select"><input type="radio">下拉框</li>
+		<li data-type="radio"><input type="radio">单选</li>
+		<li data-type="checkbox"><input type="radio">多选</li>
+		<li data-type="datetime"><input type="radio">日期+时间</li>
+		<li data-type="date"><input type="radio">纯日期</li>
+		<li data-type="time"><input type="radio">纯时间</li>
+		<li data-type="image"><input type="radio">单图</li>
+		<li data-type="images"><input type="radio">多图</li>
+		<li data-type="bmap"><input type="radio">地图</li>
+		<!--<li data-type="file"><input type="radio">自定义附件</li>-->
+	</ul>
+	<div class="ctitle">以下是快速选择</div>
+	<ul style="padding:10px;" class="filed_b filed_box">
+		<li><input type="radio">姓名</li>
+		<li data-type="number"><input type="radio">电话</li>
+		<li><input type="radio">微信号</li>
+		<li><input type="radio">公司</li>
+		<li><input type="radio">职位</li>
+		<li data-type="number"><input type="radio">年龄</li>
+		<li><input type="radio">邮箱</li>
+		<li><input type="radio">行业</li>
+	</ul>	
+</div>
+
+<script type="text/javascript">
+$(function(){
+
+	{if (IN_WAP!==true)}
+		//$("#form_group_order_filed").next().remove();
+	{/if}
+
+	{if (IN_WAP===true)}
+		var btn_str = '<dl class="add_field_btn"><dt><button class="layui-btn layui-btn-normal" id="add_order_field" type="button">新增用户填写表单项目</button></dt></dl>';
+	{else /}
+		var btn_str = ' <tr class="add_field_btn"><td class="tdL"><br></td><td class="tdR"><button class="layui-btn layui-btn-normal" id="add_order_field" type="button">新增用户填写表单项目</button></td></tr>';
+	{/if}
+
+	//$("#form_group_order_filed").hide().parent().prepend('<div><button class="layui-btn layui-btn-normal" id="add_order_field" type="button">新增表单项目</button></div>');
+	$("#form_group_order_filed").before(btn_str);
+
+	$("#add_order_field").click(function(){	
+		layer.open({
+			type: 1,
+			title:'表单项目',
+            closeBtn: false,
+            shift: 1,
+			area:[ {if (IN_WAP===true)} "90%","50%" {else /} "700px","550px"  {/if} ],
+            shadeClose: true,
+            content: $("#choose_order_field"),
+        });
+		set_filed_click();
+	});
+
+	jsonToHtml();
+});
+
+function set_filed_click(){
+	$(".filed_b li").off('click').click(function(){
+		var type = $(this).data("type")?$(this).data("type"):'text';
+		var title = $(this).text();
+		layer.alert("你确认要添加："+title+" 吗?",function(){
+			make_item_html(title,type);
+			add_fun();
+			check_item();
+		});		
+	});
+
+
+	$(".filed_a li").off('click').click(function(){
+		var title = $(this).text();
+		var filed_type = $(this).data("type");
+		layer.prompt({
+            title: '请给【'+title+'】设置一个标题名称，比如：姓名、手机号...',
+            formType: 0
+		}, function(value){
+		   make_item_html(value,filed_type);
+		   add_fun();
+		   check_item();
+		});
+	});
+}
+
+function make_item_html(title,filed_type,options_value,must,listshow){
+	layer.closeAll();
+	var str2 = '';
+	if(filed_type=='select'||filed_type=='radio'||filed_type=='checkbox'){
+		if(options_value==undefined)options_value='';
+		str2 = '<dd><textarea placeholder="请输入选项,每个选项换一行" class="layui-textarea" onblur="check_item()">'+options_value+'</textarea></dd>';
+	}
+	var ck = ['checked',''];
+	if(must==1){
+		ck = ['','checked'];
+	}
+	var is_listshow = listshow ? 'checked' : '';
+	var listshow_warp = `<input type="checkbox" lay-filter="order_listshow_choose" class="listshow" name="listshow[${title}]" ${is_listshow} value="1" title="列表显示">`;
+	if(filed_type=='textarea'||filed_type=='bmap'||filed_type=='images'||filed_type=='image'){
+		listshow_warp = '';
+	}
+
+	{if (IN_WAP===true)}
+			var str = `<dl class="field_item_box" data-title="${title}" data-type="${filed_type}">
+									<dt>
+									<i class="del_item fa fa-times-rectangle"></i>
+									<i class="down_item glyphicon glyphicon-arrow-down"></i> 
+									<i class="up_item glyphicon glyphicon-arrow-up"></i>
+									${title}</dt>
+									<dd>
+										<div>
+											<input type="radio" lay-filter="order_must_choose" name="ifmust[${title}]" value="0" title="选填" ${ck[0]} onclick="check_item()">
+											<input type="radio" lay-filter="order_must_choose" name="ifmust[${title}]" value="1" title="必填" ${ck[1]} onclick="check_item()">
+											${listshow_warp}
+										</div>
+									</dd>
+									${str2}
+								</dl>`;
+	{else /}
+			var str = `<tr class="field_item_box" data-title="${title}" data-type="${filed_type}"> 
+				<td class='tdL'>
+				<i class="del_item fa fa-times-rectangle"></i> 
+				<i class="down_item glyphicon glyphicon-arrow-down"></i> 
+				<i class="up_item glyphicon glyphicon-arrow-up"></i>
+				${title}: </td>
+				<td class="tdR layui-input-block"> 
+					<div>
+						<input type="radio" lay-filter="order_must_choose" name="ifmust[${title}]" value="0" title="选填" ${ck[0]}>
+						<input type="radio" lay-filter="order_must_choose" name="ifmust[${title}]" value="1" title="必填" ${ck[1]}>
+						${listshow_warp}
+					</div>
+					<div>${str2}</div>
+				</td>
+		</tr>`;
+	{/if}
+
+	$("#form_group_order_filed").after(str);	
+}
+
+//添加按钮事件
+function add_fun(){
+	del_item();
+	up_item();
+	down_item();
+	layui.use('form', function() {
+		var form = layui.form; 
+			form.render("radio");
+			form.on('radio(order_must_choose)', function(data){
+				check_item();
+		      //$(data.elem).trigger('click');
+			});
+
+			form.render("checkbox");
+			form.on('checkbox(order_listshow_choose)', function(data){
+				check_item();
+		      //$(data.elem).trigger('click');
+			});
+	});
+}
+
+//添加删除事件
+function del_item(){
+	$("#form_group_order_filed").parent().find(".del_item").off('click').click(function(){
+		var that = $(this).parent().parent();
+		layer.confirm("你确认要删除吗?",{btn:['删除','取消']},function(index){
+			layer.close(index);
+			that.remove();
+			check_item();
+		});
+	});
+}
+
+//添加上移事件
+function up_item(){
+	$("#form_group_order_filed").parent().find(".up_item").off('click').click(function(){
+		var that = $(this).parent().parent();
+		if(that.prev().find(".up_item").length<1){
+			layer.alert('已经到尽头了');
+		}else{
+			that.prev().before(that.clone(true));
+			that.remove();
+			check_item();
+			add_fun();
+		} 	
+	});
+}
+
+//添加下移事件
+function down_item(){
+	$("#form_group_order_filed").parent().find(".down_item").off('click').click(function(){
+		var that = $(this).parent().parent();
+		if(that.next().find(".down_item").length<1){
+			layer.alert('已经到尽头了');
+		}else{
+			that.next().after(that.clone(true));
+			that.remove();
+			check_item();
+			add_fun();
+		} 	
+	});
+}
+
+var items = [];
+//统计数据
+function check_item(){
+	items = [];
+	$(".field_item_box").each(function(){
+		var options_value = '';
+		var field_type = $(this).data('type');
+		if(field_type=='select'||field_type=='checkbox'||field_type=='radio'){
+			options_value = $(this).find("textarea").val();
+		}
+		items.push({
+			title:$(this).data('title'),
+			type:field_type,
+			options:options_value,
+			must:$(this).find("input[type=radio]:checked").val(),
+			listshow:$(this).find("input.listshow:checked").val()?1:0,
+		});
+	});
+	$("#atc_order_filed").val( JSON.stringify(items) );
+}
+
+function jsonToHtml(){
+	if($("#atc_order_filed").val()==''){
+		return ;
+	}
+	var array = JSON.parse($("#atc_order_filed").val());
+	for(var i=array.length;i--;i>=0){
+		var rs = array[i];
+		make_item_html(rs.title,rs.type,rs.options,rs.must,rs.listshow);
+	}
+	//array.forEach((rs)=>{
+		//make_item_html(rs.title,rs.type,rs.options,rs.must,rs.listshow);
+	//});
+	add_fun();
+}
+</script>

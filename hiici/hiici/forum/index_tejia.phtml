@@ -1,0 +1,137 @@
+<?php
+
+$wd = @filter_var($_GET['wd'], FILTER_SANITIZE_STRING);
+
+?>
+<style>
+	.index-forum.tejia img { width:100%; border-radius:4px; }
+	.index-forum.tejia .tejia_l {
+		-moz-column-count:3; /* Firefox */
+		-webkit-column-count:3; /* Safari 和 Chrome */
+		column-count:3;
+
+		-moz-column-gap:10px; /* Firefox */
+		-webkit-column-gap:10px; /* Safari 和 Chrome */
+		column-gap:10px;
+	}
+	@media (max-width: 970px) {
+		.index-forum.tejia .tejia_l {
+			-moz-column-count:2; /* Firefox */
+			-webkit-column-count:2; /* Safari 和 Chrome */
+			column-count:2;
+		}
+	}
+	.index-forum.tejia .tejia_l_i { padding:0 0 20px 0; }
+	.index-forum.tejia .tejia_l_i p { margin:0 0 5px 0; }
+	.index-forum.tejia .tejia_l_i b { color:#333; margin-right:2px; }
+	.index-forum.tejia .tejia_l_i:hover { opacity: 0.9; }
+	.index-forum.tejia .tejia_l_i b e { font-size:18px; }
+	.index-forum.tejia .tejia_l_i .ts { padding:10px 8px; color:#333; border-radius:4px; background-color:#fff; }
+</style>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 特卖汇 <small>>></small></li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-list-search">
+	<div class="row clearfix">
+		<div class="col-md-4 col-xs-2 column">
+		</div>
+		<div class="col-md-4 col-xs-8 column">
+			<form id="search" action="javascript:get_s_list(1)">	
+				<div class="input-group">
+				<input id="bd_search" class="form-control" type="text" placeholder="特卖汇" value="<?php echo $wd ?>">
+					<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+				</div>
+			</form>	
+		</div>
+	</div>
+</div>
+<div class="container index-forum">
+	<h3 class="hidden-xs"><a href="#"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 特卖汇 <small>>></small></a></h3>
+</div>
+<div class="container index-forum tejia"> </div>
+<script>
+
+var tejia = [{'k':'index_hot','pg':0},{'k':'nvzhuang','pg':0},{'k':'free9','pg':0},{'k':'xiebao','pg':0},{'k':'jujia','pg':0},{'k':'nanzhuang','pg':0},{'k':'shipin','pg':0},{'k':'muying','pg':0},{'k':'huazhuangpin','pg':0},{'k':'pinpai','pg':0},{'k':'fengding','pg':0},{'k':'shuma','pg':0}]; 
+var jus = [{'k':'0','pg':1},{'k':'1','pg':1}];
+var wd = '<?php echo $wd ?>', pn = 0;
+
+get_list();
+$(window).scroll(function(){ if (700 > $('div.tejia').height() - $('body').scrollTop()) { get_list(); } }); 
+$('li#index_tejia').addClass('active');
+
+function get_list() {
+	if ('' == wd) {
+		get_ju_list(); //(1 == Math.floor(Math.random()*2)) ? get_tejia_list() : get_ju_list();
+	} else {
+		get_s_list();
+	}
+	tejia_l();
+}
+function get_tejia_list() {
+	tj = tejia[Math.floor(Math.random()*(tejia.length))];
+	$.ajax({
+		type : 'get',
+			url : 'http://tejia.hao123.com/rsync?type='+tj.k+'&where=default&order=desc&page='+(tj.pg++)*40+'&pagesize=40',
+			dataType : 'jsonp',
+			success : function(rs){
+				for (r in rs) {
+					tejia_l_append('<div class="tejia_l_i"><a target="_blank" href="'+rs[r].url+'"><img src="'+rs[r].img_url+'"/><div class="ts"><p>'+rs[r].short_title+'</p><b>¥ <e>'+rs[r].price+'</e></b> <b>已售 '+rs[r].deal_sale+'</b></div></a></div>', r);
+				}
+			}
+	});
+}
+function get_ju_list() {
+	ju = jus[Math.floor(Math.random()*(jus.length))];
+	$.ajax({
+		type : 'get',
+			url : 'http://ju.taobao.com/json/tg/ajaxGetHomeItemsV2.json?type='+ju.k+'&page='+(ju.pg++),
+			dataType : 'jsonp',
+			success : function(rs){
+				var rb = rs.brandList, ri = rs.itemList;
+				for (r in rb) {
+					rpcp = (rb[r].price.coupon) ? rb[r].price.coupon.promotion : rb[r].remind.timeRemind;
+					tejia_l_append('<div class="tejia_l_i"><a target="_blank" href="'+rb[r].baseInfo.activityUrl+'"><img src="'+rb[r].materials.brandEnterImgUrl+'"/><div class="ts"><p>'+rb[r].materials.logoText+'</p><b><e>'+rb[r].price.discount+'</e> 折 </b> <b>'+rpcp+'</b></div></a></div>', r);
+				}
+				for (r in ri) {
+					tejia_l_append('<div class="tejia_l_i"><a target="_blank" href="'+ri[r].baseinfo.itemUrl+'"><img src="'+ri[r].baseinfo.picUrl+'_400x400Q90.jpg_.webp"/><div class="ts"><p>'+ri[r].name.title+'</p><b>¥ <e>'+ri[r].price.actPrice+'</e></b> <b>已售 '+ri[r].remind.soldCount+'</b></div></a></div>', r);
+				}
+			}
+	});
+}
+function get_s_list(s) {
+	if (1 == s) location = '?c=forum&a=index_tejia&wd='+$('input#bd_search').val();
+	$.ajax({
+		type : 'get',
+			url : 'http://s.taobao.com/search?ajax=true&sort=sale-desc&q='+wd+'&s='+(pn++)*44,
+			dataType : 'jsonp',
+			success : function(rs){
+				if (rs.mods.itemlist) {
+					var rb = rs.mods.itemlist.data.auctions;
+					for (r in rb) {
+						tejia_l_append('<div class="tejia_l_i"><a target="_blank" href="'+rb[r].detail_url+'"><img src="'+rb[r].pic_url+'_400x400.jpg_.webp"/><div class="ts"><p>'+rb[r].raw_title+'</p><b>¥ <e>'+rb[r].view_price+'</e></b> <b>'+rb[r].view_sales+'</b></div></a></div>', r);
+					}
+				} else {
+					var rb = rs.mods.grid.data.spus;
+					for (r in rb) {
+						tejia_l_append('<div class="tejia_l_i"><a target="_blank" href="'+rb[r].url+'"><img src="'+rb[r].pic_url+'_400x400.jpg_.webp"/><div class="ts"><b>¥ <e>'+rb[r].price+'</e></b> <b>月销 '+rb[r].month_sales+'</b></div></a></div>', r);
+					}
+				}
+			}
+	});
+}
+function tejia_l_append(html, r) {
+	$('div.tejia_l:last').append(html);
+	tejia_l_if(r);
+}
+function tejia_l_if(k) {
+	if (11 == k%12) tejia_l();
+}
+function tejia_l() {
+	$('div.tejia').append('<div class="tejia_l"></div>');
+}
+</script>

@@ -1,0 +1,95 @@
+
+<table class="mytable table table-striped table-bordered table-hover table-checkable dataTable">
+
+<thead>
+    <tr>
+        <th></th>
+        <th width="50" style="text-align:center">{fc_lang('排序')}</th>
+        <th class="{ns_sorting('title')}" name="title">{fc_lang('主题')}</th>
+        {if !IS_SHARE}<th class="{ns_sorting('catid')}" name="catid">{fc_lang('栏目分类')}</th>{/if}
+        <th class="{ns_sorting('author')}" name="author">{fc_lang('录入作者')}</th>
+        <th class="{ns_sorting('updatetime')}" name="updatetime">{fc_lang('更新时间')}</th>
+        <th width="80" class="{ns_sorting('status')}" name="status">{fc_lang('状态')}</th>
+        <th>{fc_lang('操作')}</th>
+    </tr>
+    </thead>
+    <tbody>
+    {loop $list $t}
+    <tr class="dr_row_hide" id="dr_row_{$t.id}">
+        <td><input name="ids[]" type="checkbox" class="dr_select toggle md-check" value="{$t.id}" /></td>
+        <td style="text-align:center"><input class="input-text displayorder" type="text" name="data[{$t.id}][displayorder]" value="{$t.displayorder}" /></td>
+        <td><a title="{dr_clearhtml($t.title)}" class="onloading" href="{if $t.status == 9}{$t.url}{else}{APP_DIR}/index.php?c=show&id={$t.id}{/if}" target="_blank" >{if $t.thumb}<img src="{THEME_PATH}admin/images/img.png" align="absmiddle" height="18" width="15">&nbsp;{/if}{dr_keyword_highlight(dr_strcut(dr_clearhtml($t.title), 40), $param.keyword)}{if $t.link_id >0}<img align="absmiddle" src="{THEME_PATH}admin/images/link2.png">{/if}</a></td>
+        {if !IS_SHARE}<td><a title="{dr_cat_value($t['catid'], 'name')}" href="{if $flag}{dr_url(APP_DIR.'/home/index', array('flag'=>$flag,'catid'=>$t.catid))}{else}{dr_url(APP_DIR.'/home/index', array('catid'=>$t.catid))}{/if}">{dr_strcut(dr_cat_value($t['catid'], 'name'), 12)}</a></td>{/if}
+        <td><a href="javascript:;" onclick="dr_dialog_member('{$t.uid}')">{dr_strcut($t.author, 10)}</a></td>
+        <td>{dr_date($t.updatetime, NULL, 'red')}</td>
+        <td >{if $t.status == 9}<a class="btn blue btn-xs" href="javascript:dr_status('{$t.id}', '{$t.status}');">{fc_lang('正常')}</a>{else}<a class="btn red btn-xs" href="javascript:dr_status({$t.id}, '{$t.status}');">{fc_lang('关闭')}</a>{/if}</td>
+        <td>
+            {if $this->ci->is_auth(APP_DIR.'/admin/home/edit')}
+            <label>
+                <a href="{dr_url(APP_DIR.'/home/edit',array('id'=>$t.id))}" class="btn btn-xs green onloading">
+                    <i class="fa fa-edit"></i> {fc_lang('修改')} </a></label>
+            {/if}
+            {if $form}
+            <label>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success btn-xs dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true"> <i class="fa fa-table"></i> {fc_lang('表单')}
+                    <i class="fa fa-angle-down"></i>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    {loop $form $a}
+                    <li><a class="onloading" href="{$a.url}&cid={$t.id}">{$a.name} <span class="badge badge-info"> {intval($t[$a['field']])} </span> </a></li>
+                    {/loop}
+                </ul>
+            </div>
+            </label>
+            {/if}
+            {if $app}
+            <label>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success btn-xs dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true"> <i class="fa fa-cloud"></i> {fc_lang('应用')}
+                    <i class="fa fa-angle-down"></i>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    {loop $app $a}
+                    <li><a class="onloading" href="{$a.url}&cid={$t.id}&catid={$t.catid}&module={APP_DIR}">{$a.name}{if $a.field!='null'} <span class="badge badge-info"> {intval($t[$a.field])} </span> {/if}</a></li>
+                    {/loop}
+                </ul>
+            </div>
+            </label>
+            {/if}
+            {if $extend}
+            <label>
+            <a class="btn btn-xs purple onloading" href="{dr_url(APP_DIR.'/extend/index',array('cid'=>$t.id,'catid'=>$get.catid))}"> <i class="fa fa-list"></i> {fc_lang('章节管理')}</a>
+            </label>
+            {/if}
+            {if $ci->get_cache('comment', 'comment-module-'.APP_DIR, 'value', 'use')}
+            <label>
+            <a class="btn btn-xs blue onloading" href="{dr_url(APP_DIR.'/comment/index',array('cid'=>$t.id))}"> <i class="fa fa-comments"></i> {fc_lang('评论(%s)', $t.comments)}</a>
+            </label>
+            {/if}
+        </td>
+    </tr>
+    {/loop}
+    <tr class="mtable_bottom">
+        <th width="20" ><input name="dr_select" class="toggle md-check" id="dr_select" type="checkbox" onClick="dr_selected()" /></th>
+        <td colspan="99" >
+            {if !$get.flag}
+            {if $this->ci->is_auth(APP_DIR.'/admin/home/del')}<label><button type="button" class="btn red btn-sm" name="option" onClick="$('#action').val('del');dr_confirm_set_all('{fc_lang('您确定要这样操作吗？')}')"> <i class="fa fa-trash"></i> {fc_lang('删除')}</button></label>{/if}
+            {else}
+            {if $this->ci->is_auth(APP_DIR.'/admin/home/edit')}<label><button type="button" class="btn red btn-sm" name="option" onClick="$('#action').val('flag');dr_confirm_set_all('{fc_lang('您确定要这样操作吗？')}')"> <i class="fa fa-flag"></i> {fc_lang('移出')}</button></label>{/if}
+            {/if}
+            {if $this->ci->is_auth(APP_DIR.'/admin/home/edit')}
+            <label><button type="button" class="btn green btn-sm" name="option" onClick="$('#action').val('order');dr_confirm_set_all('{fc_lang('您确定要这样操作吗？')}')"> <i class="fa fa-edit"></i>  {fc_lang('排序')}</button></label>
+            <label><button type="button" class="btn blue btn-sm" name="option" onClick="dr_confirm_move();"> <i class="fa fa-share"></i>  {fc_lang('移动至')}</button></label>
+            <label>{$select}</label>
+            <label><button type="button" class="btn yellow btn-sm" name="option" onClick="dr_ts()"> <i class="fa fa-send"></i> {fc_lang('推送')} </button></label>
+            {/if}
+            {if $this->ci->is_auth('html/index') && (($ci->get_cache('module-'.SITE_ID.'-'.APP_DIR, 'html')) || (IS_SHARE && $param.catid && $ci->get_cache('module-'.SITE_ID.'-share', 'category', $param.catid, 'setting', 'html')))}
+            <label><button type="submit" class="btn green btn-sm" name="option" onClick="$('#action').val('html');"> <i class="fa fa-html5"></i>  {fc_lang('生成静态')}</button></label>
+            {/if}
+            <!--dayrui.com 测试有bug<label><button type="button" class="btn red btn-sm" name="option" onClick="$('#action').val('del');dr_confirm_set_all('{fc_lang('您确定要这样操作吗？')}')"> <i class="fa fa-trash"></i> {fc_lang('放入回收站')}</button></label>-->
+
+        </td>
+    </tr>
+    </tbody>
+</table>

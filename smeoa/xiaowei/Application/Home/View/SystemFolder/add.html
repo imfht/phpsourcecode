@@ -1,0 +1,159 @@
+<extend name="Layout/ins_popup" />
+<block name="content">	
+	{:W('PageHeader/popup',array('name'=>'添加'))}
+	<div class="row">
+		<div class="col-sm-12">
+			<form id="form_data" name="form_data" method="post" class="well form-horizontal clearfix">
+				<input type="hidden" name="ajax" id="ajax" value="1">
+				<input type="hidden" name="id" id="id" >
+				<input type="hidden" name="opmode" id="opmode" value="add">
+				<input type="hidden" name="admin" id="admin">
+				<input type="hidden" name="write" id="write">
+				<input type="hidden" name="read" id="read">
+				<input type="hidden" name="controller" value="{$controller}">
+				<div class="form-group">
+					<label class="col-xs-3 control-label" for="name">名称*：</label>
+					<div class="col-xs-9">
+						<input class="form-control" type="text" id="name" name="name" check="require" msg="请输入名称">
+					</div>
+				</div>
+				<if condition="$has_pid">
+					<div class="form-group">
+						<label class="col-xs-3 control-label" for="folder_name">父节点*：</label>
+						<div class="col-xs-9">
+							<div class="input-group">
+								<input type="hidden" name="pid" id="pid">
+								<input name="folder_name" class="form-control val" id="folder_name" type="text" msg="请选择父节点" check="require" />
+								<span class="input-group-btn">
+									<button class="btn btn-sm btn-primary" onclick="select_pid()" type="button">
+										选择
+									</button></span>
+							</div>
+						</div>
+					</div>
+				</if>
+				<div class="form-group">
+					<label class="col-xs-3 control-label" for="folder_name">管理：</label>
+					<div class="col-xs-9">
+						<div id="admin_list" class="inputbox">
+							<a class="pull-right btn btn-link text-center" onclick="select_auth();"> <i class="fa fa-user"></i> </a>
+							<div class="wrap" >
+								<span class="address_list"></span>
+								<span class="text" >
+									<input class="letter" type="text"  >
+								</span>
+							</div>
+							<div class="search dropdown ">
+								<ul class="dropdown-menu"></ul>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-xs-3 control-label" for="folder_name">写入 / 修改：</label>
+					<div class="col-xs-9">
+						<div id="write_list" class="inputbox">
+							<a class="pull-right btn btn-link text-center" onclick="select_auth();"> <i class="fa fa-user"></i> </a>
+							<div class="wrap" >
+								<span class="address_list"></span>
+								<span class="text" >
+									<input class="letter" type="text"  >
+								</span>
+							</div>
+							<div class="search dropdown ">
+								<ul class="dropdown-menu"></ul>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-xs-3 control-label" for="folder_name">读取：</label>
+					<div class="col-xs-9">
+						<div id="read_list" class="inputbox">
+							<a class="pull-right btn btn-link text-center" onclick="select_auth();"> <i class="fa fa-user"></i> </a>
+							<div class="wrap" >
+								<span class="address_list"></span>
+								<span class="text" >
+									<input class="letter" type="text"  >
+								</span>
+							</div>
+							<div class="search dropdown ">
+								<ul class="dropdown-menu"></ul>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-xs-3 control-label" for="sort">排序：</label>
+					<div class="col-xs-9">
+						<input class="form-control" type="text" id="sort" name="sort" >
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-xs-3 control-label" for="sort">状态：</label>
+					<div class="col-xs-9">
+						<select class="form-control"  name="is_del" id="is_del">
+							<option value="0">启用</option>
+							<option value="1">禁用</option>
+						</select>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+
+		function save() {
+			$("#admin").val("");
+			$("#admin_list span.address_list span").each(function() {
+				$("#admin").val($("#admin").val() + $(this).text().replace(';', '') + '|' + $(this).attr("data") + ";");
+			});
+
+			$("#write").val("");
+			$("#write_list span.address_list span").each(function() {
+				$("#write").val($("#write").val() + $(this).text().replace(';', '') + '|' + $(this).attr("data") + ";");
+			});
+
+			$("#read").val("");
+			$("#read_list span.address_list span").each(function() {
+				$("#read").val($("#read").val() + $(this).text().replace(';', '') + '|' + $(this).attr("data") + ";");
+			});
+
+			if (check_form("form_data")) {
+				var vars = $("#form_data").serialize();			
+				sendAjax("{:U('SystemFolder/save')}", vars, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							parent.location.reload(true);
+							myclose();
+						});
+					}else{
+						ui_error(data.info);
+					}
+				});			
+			}
+		};
+
+		function select_auth() {
+			winopen("{:U('popup/auth')}",560, 470);
+		}
+
+		function select_pid() {
+			winopen("{:U('SystemFolder/winpop','controller='.$controller)}",560, 470);
+		}
+
+		$(document).ready(function() {
+			$(document).on("click", ".inputbox .address_list a.del", function() {
+				$(this).parent().parent().remove();
+			});
+
+			// 双击添加到收件人 因后添加的数据 所以需要用live函数
+			$(".address_list span").on("dblclick", function() {
+				$(this).remove();
+			});
+		});
+	</script>
+</block>

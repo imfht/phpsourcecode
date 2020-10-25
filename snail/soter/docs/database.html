@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<title>数据库手册</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="js/inc.js"></script>
+    </head>
+    <body>
+	<fieldset>
+	    <legend>数据库手册</legend>
+	    <ol>
+		<li>
+		    <h2 class="title_h2">Soter数据库功能说明</h2>
+		    Soter数据库驱动主要特点：
+		    <br>1.支持多主多从，可以设置多个主数据库和多个从数据库,主数据库之间看用户自己情况保持数据一致即可。主之间数据保持一致可以配置主主之间相互主从，或者使用<b>MariaDB Galera Cluster</b>主集群。（原理：所有的读都在随机选取的一个从上面进行，所有的写都在随机选取的一个主上进行）
+		    <br>2.多主多从模式下也支持事务（原理：事务模式下，所有的读写操作都在一个固定的随机的主上进行）
+		    <br>3.非事务模式下，支持用户锁定数据库连接，锁定之后所有的读写都在一个固定的随机的主数据库连接上进行，直到用户释放锁定，这解决了有些业务逻辑是插入数据之后立即查询，避免了主从复制延迟的带来的问题。
+		    <br>4.支持慢查询记录，支持用户自定义处理类记录慢查询，是把查询语句写到数据库还是发到远程用户完全可以自定义。
+		    <br>5.支持查询索引分析，自动记录不满足设置的索引的查询。此功能只对MySQL有效。
+		    <br>原理是通过explain查询语句，检查结果中的type值，值从好到坏依次是:
+		    <br>system > const > eq_ref > ref > fulltext > ref_or_null > index_merge > unique_subquery > index_subquery > range > index > ALL，
+		    ALL意味着全表扫描了，Soter默认级别是index，意思就是如果explain查询type是index之后的时候会记录这个查询。
+		    <br>支持用户自定义处理类处理不满足索引条件的查询。
+		    <br>6.支持批量更新，批量插入，批量replace。大幅度提升程序性能。
+		    <br>7.支持便捷的ActiveRecord链式数据库查询。
+		    <br>8.支持数据库查询缓存，大幅度减少缓存数据库查询结果数据的编码，Soter里面只需要查询的时候加上一个<code>->cache($cacheTime,$cacheKey='')</code>,
+		    <br>那么这个查询就具有了缓存的功能，用户无需关心缓存的获取和存储。方法中用户可以省略缓存kye参数，Soter会自动使用md5(sql语句)作为缓存key。
+		    <br>另外支持自定义缓存处理类用来处理数据库缓存数据。
+		    <br>9.所有查询都是通过PDO预处理语句实现，完全杜绝SQL注入。
+		</li>
+
+		<li>
+		    <h2 class="title_h2">数据库配置信息说明</h2>
+		    连接数据库的配置信息文件默认是在：<code>application/config/default/database.php</code>
+		    打开这个文件我们可以看到一个数据库信息配置的数组，每部分的说明，会在下面继续详细说明。
+		    <br>完整配置如下：
+		    <pre class="brush:php">
+						&lt;?php
+						return array(
+						    //默认组
+						    'default_group' => 'mysql',
+						    //组名=>配置
+						    //mysql配置示例
+						    'mysql' => array(
+								'driverType' => 'mysql',
+								'debug' => true,
+								'pconnect' => false,
+								'charset' => 'utf8',
+								'collate' => 'utf8_general_ci',
+								'database' => '',
+								'tablePrefix' => '',
+								'tablePrefixSqlIdentifier' => '_tablePrefix_',
+								//是否开启慢查询记录
+								'slowQueryDebug' => false,
+								'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
+								'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default(),
+								/**
+								 * 是否开启没有满足设置的索引类型的查询记录
+								 */
+								'indexDebug' => false,
+								/**
+								 * 索引使用的最小情况，只有小于最小情况的时候才会记录sql到日志
+								 * minIndexType值从好到坏依次是:
+								 * system > const > eq_ref > ref > fulltext > ref_or_null 
+								 * > index_merge > unique_subquery > index_subquery > range 
+								 * > index > ALL 一般来说，得保证查询至少达到range级别，最好能达到ref
+								 * 避免ALL即全表扫描
+								 */
+								'minIndexType' => 'index',
+								'indexHandle' => new Soter_Database_Index_Handle_Default(),
+								'masters' => array(
+									'master01' => array(
+									    'hostname' => '127.0.0.1',
+									    'port' => 3306,
+									    'username' => 'root',
+									    'password' => '',
+									)
+								),
+								'slaves' => array(
+								//		    'slave01' => array(
+								//			'hostname' => '127.0.0.1',
+								//			'port' => 3306,
+								//			'username' => 'root',
+								//			'password' => '',
+								//		    )
+								)
+						    ),
+						    //sqlite3配置示例
+						    'sqlite3' => array(
+									'driverType' => 'sqlite',
+									'debug' => true,
+									'pconnect' => false,
+									'tablePrefix' => '',
+									'tablePrefixSqlIdentifier' => '_tablePrefix_',
+									'database'=>'test.sqlite3',
+									//是否开启慢查询记录
+									'slowQueryDebug' => true,
+									'slowQueryTime' => 3000, //单位毫秒，1秒=1000毫秒
+									'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default()
+								    )
+							)
+						;
+		    </pre>  
+		</li>
+		<li><h3 class="title_h2">数据库配置数组结构</h3>
+		    在database.php配置文件中我们看到的一个大数组，这个数组就是数据库信息，由几大模块组成。
+		    <br>下面进行详细说明：
+		    <h3 class="title_h3">1.默认数据库组说明</h3>
+		    首先是最重要的一个，默认使用的数据库组,对应的配置如下，已经省略无关的配置。
+		    <pre class="brush:php">
+						 //默认组
+						'default_group' => 'mysql',
+						//组名=>配置
+						//mysql配置示例
+						'mysql' => array(
+							...
+						),
+						//sqlite3配置示例
+						'sqlite' => array(
+							...
+						),
+		    </pre>
+		    可以看到有两个数据库组配置，一个是<b>mysql</b>，一个是<b>sqlite</b>，它们都作为配置数组的一个键名称。
+		    <br><code>default_group</code>就是告诉Stoer在我们使用Sr::db()不传递参数的时候，默认使用哪一组配置。
+		    <br><h3 class="title_h3">2.Mysql配置组说明</h3>
+		    在<b>mysql</b>配置组里面我们可以看到下面的一些公用配置。
+		    <pre class="brush:php">
+						'driverType' => 'mysql',
+						'debug' => true,
+						'pconnect' => false,
+						'charset' => 'utf8',
+						'collate' => 'utf8_general_ci',
+						'database' => '',
+						'tablePrefix' => '',
+						'tablePrefixSqlIdentifier' => '_tablePrefix_',
+						'masters' => array(
+							'master01' => array(
+							'hostname' => '127.0.0.1',
+							'port' => 3306,
+							'username' => 'root',
+							'password' => '',
+							)
+						),
+						'slaves' => array(
+						//          'slave01' => array(
+						//          'hostname' => '127.0.0.1',
+						//          'port' => 3306,
+						//          'username' => 'root',
+						//          'password' => '',
+						//          )
+						)
+		    </pre>
+		    下面对上面每一个配置进行说明：
+		    <br>1.<b>driverType</b>
+		    <br>作用：告诉Soter这是一个什么类型的数据库配置，以便Soter正确的初始化数据库连接。
+		    <br>值：mysql 固定不变。
+		    <br>2.<b>debug</b>
+		    <br>作用：告诉Soter发生数据库错误的时候，是否报告错误信息。
+		    <br>值：ture开启数据库错误报告，false关闭数据库错误报告。
+		    <br>提示：如果我们在代码中临时需要“有意的”进行一些错误查询，通过判断错误信息，达到一些目的时候。
+		    <br>我们可以通过Sr::db()->setDebug(false)关闭数据库错误报告，
+		    <br>然后进行“有意的”错误查询，可以通过Sr::db()->error()获取错误信息字符串。
+		    <br>最后再Sr::db()->setDebug(true)开启即可。
+		    <div style="color:red">
+			另外：debug为true的时候，只是报告错误给Soter，
+			<br>Soter是否显示这个错误是由入口文件里面设置的setShowError决定的，
+			<br>setShowError是true的时候才会显示错误信息。
+		    </div>
+		    使用场景之一：
+		    <br>需求：比如我们设计了一个SQL学习的网站，用户可以执行sql，返回数据库错误信息。
+		    <br>我们的程序应该大概是这个样子：
+		    <pre class="brush:php">
+						...
+						$sql=Sr::post('sql');
+						Sr::db()->setDebug(false);
+						if(!Sr::db()->execute($sql)){
+							echo Sr::db()->error();
+						}
+						Sr::db()->setDebug(true);
+						...
+		    </pre>
+		    <br>上面的代码接受了浏览器post过来的$sql语句，
+		    <br>然后关闭数据库错误报告，
+		    <br>执行sql如果出错就显示具体的错误信息。
+		    <br>最后开启数据库错误报告，继续下面的逻辑。
+		    <br>3.<b>pconnect</b>
+		    <br>作用：告诉Soter连接数据库的时候，是否采用持久连接。
+		    <br>值：ture采用持久连接，false不采用持久连接。
+		    <br>4.<b>charset</b>
+		    <br>作用：连接数据库使用的编码。
+		    <br>值：数据库支持的编码，常见的有utf8 , gbk。
+		    <br>5.<b>collate</b>
+		    <br>作用：连接数据库使用的collate编码。
+		    <br>值：数据库支持的collate编码，常见的有utf8_general_ci,utf8mb4_general_ci。
+		    <br>6.<b>database</b>
+		    <br>作用：告诉Soter连接到哪个数据库。
+		    <br>值：数据库名称。
+		    <br>7.<b>tablePrefix</b>
+		    <br>作用：告诉Soter数据库查询的时候，在表名称前面加上的前缀。
+		    <br>值：数据库表前缀，没有前缀留空即可。
+		    <br>8.<b>tablePrefixSqlIdentifier</b>
+		    <br>作用：当我们使用ActiveRecord模式链式查询数据库的时候，
+		    <br>Soter能够自动在表名称前面加上我们设置的表前缀。
+		    <br>但是当我们直接执行自定义的sql语句的时候，Soter是无法知道在sql语句字符串里面哪里需要加上表前缀。
+		    <br>为了避免我们自己手动加前缀，适应数据库表前缀变化，那么我们就可以在sql语句里面需要加上表前缀的地方
+		    <br>插入一个“占位字符串”这个占位字符串就是tablePrefixSqlIdentifier的值，这样一来，当我们执行自定义sql语句的时候，
+		    <br>Soter会把sql语句里面出现“占位字符串”替换成表前缀。
+		    <br>值：默认是_tablePrefix_，可以设置为用户想用的。
+		    <br>使用实例：
+		    <br>需求：数据库配置里面配置了表前缀“test_”，tablePrefixSqlIdentifier配置的是_tablePrefix_
+		    <br>现在自定义一个sql语句查询，不用ActiveRecord模式链式查询。又不想手动加表前缀在sql语句里面。
+		    <br>代码如下：
+		    <pre class="brush:php">
+						$sql="select * from _tablePrefix_user";
+						Sr::db()->execute($sql);
+		    </pre>
+		    上面代码中，Soter执行$sql之前，会把$sql里面的_tablePrefix_user替换成test_user，
+		    <br>这样我们就不用手动加上表前缀，保证了代码的通用性可移植性。
+		    <br>9.<b>masters</b>
+		    <br>masters是让我们设置我们有哪些主数据库要用，可以有一个或者多个。
+		    <br>设置的时候为每个数据库主机指定一个数组key就行，这样能够让Soter区分出不同的主机。
+		    <br>上面的<b>master01</b>就是一个key，我们也可以把它叫做master001。
+		    <br>有多个主数据库的时候，类比master01加在master01下面就行了。
+		    <br>有两个主数据库的时候，配置实例：
+		    <pre class="brush:php">
+							...
+						'masters' => array(
+								'master01' => array(
+								    'hostname' => '192.168.233.2',
+								    'port' => 3306,
+								    'username' => 'root',
+								    'password' => 'test',
+								),
+								'master02' => array(
+								    'hostname' => '192.168.233.3',
+								    'port' => 3306,
+								    'username' => 'root',
+								    'password' => 'test',
+								)
+						    ),
+							...
+		    </pre>
+		    <b style="color: red;">当我们只有一个数据库的时候，设置一个master就可以了。slaves保留空就行了。</b>
+		    <br>10.<b>slaves</b>
+		    <br>slaves是让我们设置我们有哪些从数据库要用，可以有一个或者多个。
+		    <br>设置的时候为每个数据库主机指定一个数组key就行，这样能够让Soter区分出不同的主机。
+		    <br>上面的<b>slave01</b>就是一个key，我们也可以把它叫做slave001。
+		    <br>有多个从数据库的时候，类比slave01加在slave01下面就行了。
+		    <br>有两个从数据库的时候，配置实例：
+		    <pre class="brush:php">
+							...
+						'slaves' => array(
+								'slave01' => array(
+								    'hostname' => '192.168.233.2',
+								    'port' => 3306,
+								    'username' => 'root',
+								    'password' => 'test',
+								),
+								'slave02' => array(
+								    'hostname' => '192.168.233.3',
+								    'port' => 3306,
+								    'username' => 'root',
+								    'password' => 'test',
+								)
+						    ),
+							...
+		    </pre>
+		    <h3 class="title_h3">2.SQLite配置组说明</h3>
+		    SQLite配置和Mysql基本相同，可以参考mysql配置部分的说明，这里不再重复说明。
+		    <br>不同的地方是：
+		    <br>1.数据库里使用databse指定数据库文件位置。
+		    <br>2.不支持记录不满足条件索引的查询。
+		    <br>2.不支持主从。
+		    <br>3.组名是sqlite
+		    <br>4.不支持pconnect，charset，collate设置
+		</li>
+		<li><h2 class="title_h2">连接数据库</h2>
+		    当我们配置好了数据库文件database.php后，需要在入口文件里面启用它。
+		    在入口文件里面我们可以看到：
+		    <pre class="brush:php">
+						/* 设置数据库连接信息，参数可以是配置文件名称；也可以是数据库配置信息数组，即配置文件返回的那个数组。 */
+						//->setDatabseConfig('database')
+		    </pre>
+		    我们要取消<code>//->setDatabseConfig</code>前面的注释,后面的参数database就是告诉Soter要使用的数据库配置文件名称，
+		    <br>默认是database，也就是使用配置文件database.php。
+		    <br><b>另外：</b>
+		    <br>我们还可以传入一个数据库配置数组，也就是database.php里返回的配置数组。
+		    <br>比如下面是用数据库配置数组作为参数：
+		    <pre class="brush:php">
+							->setDatabseConfig(array(
+									//默认组
+									'default_group' => 'mysql',
+									//组名=>配置
+									//mysql配置示例
+									'mysql' => array(
+										    'driverType' => 'mysql',
+										    'debug' => true,
+										    'pconnect' => false,
+										    'charset' => 'utf8',
+										    'collate' => 'utf8_general_ci',
+										    'database' => '',
+										    'tablePrefix' => '',
+										    'tablePrefixSqlIdentifier' => '_tablePrefix_',
+										    //是否开启慢查询记录
+										    'slowQueryDebug' => false,
+										    'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
+										    'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default(),
+										    /**
+										     * 是否开启没有满足设置的索引类型的查询记录
+										     */
+										    'indexDebug' => false,
+										    /**
+										     * 索引使用的最小情况，只有小于最小情况的时候才会记录sql到日志
+										     * minIndexType值从好到坏依次是:
+										     * system > const > eq_ref > ref > fulltext > ref_or_null 
+										     * > index_merge > unique_subquery > index_subquery > range 
+										     * > index > ALL 一般来说，得保证查询至少达到range级别，最好能达到ref
+										     * 避免ALL即全表扫描
+										     */
+										    'minIndexType' => 'index',
+										    'indexHandle' => new Soter_Database_Index_Handle_Default(),
+										    'masters' => array(
+											    'master01' => array(
+												'hostname' => '127.0.0.1',
+												'port' => 3306,
+												'username' => 'root',
+												'password' => '',
+											    )
+										    ),
+										    'slaves' => array(
+										    //		    'slave01' => array(
+										    //			'hostname' => '127.0.0.1',
+										    //			'port' => 3306,
+										    //			'username' => 'root',
+										    //			'password' => '',
+										    //		    )
+										    )
+									),
+									//sqlite3配置示例
+									'sqlite3' => array(
+											    'driverType' => 'sqlite',
+											    'debug' => true,
+											    'pconnect' => false,
+											    'tablePrefix' => '',
+											    'tablePrefixSqlIdentifier' => '_tablePrefix_',
+											    'database'=>'test.sqlite3',
+											    //是否开启慢查询记录
+											    'slowQueryDebug' => true,
+											    'slowQueryTime' => 3000, //单位毫秒，1秒=1000毫秒
+											    'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default()
+											)
+									    )
+						)
+		    </pre>
+		    <b>入口文件里面使用数据库配置文件名称和直接使用数据库配置数组的区别是：</b>
+		    <br>1.使用数据库配置文件名称，我们可以在不同环境下面自动切换数据库文件，
+		    <br>只需要在配置目录下每个环境下面的目录里面放上一个database.php即可。
+		    <br>关于配置目录的详细信息可以参考<a href="config.html">配置文件</a>手册部分。
+		    <br>2.直接使用数据库配置数组我们就不能自动的根据环境切换数据库连接了。
+		    <br>程序里面使用的数据库信息就是入口里面设置的固定的数据库配置数组。
+		    <br><b class="text_strong">有三种方式连接数据库：</b>
+		    <h3 class="title_h3">1.默认方式</h3>
+		    默认情况下使用Sr::db()操作数据库，Sr::db()连接的是默认数据库组，也就是上面<code>'default_group' => 'mysql',</code>设置的，
+		    <br>上面设置的默认组是mysql，那么Sr::db()操作数据库用的就是mysql配置组。
+		    <h3 class="title_h3">2.手动指定组方式</h3>
+		    有时候我们有多个不同的数据库，需要分别连接它们进行数据操作。
+		    <br>我们只要把它们的配置组信息配置在database.php配置文件里面即可，
+		    <br>赋予一个组名比如：mysql_site,mysql_forum,然后我们就可以用下面的代码使用它们。
+		    <pre class="brush:php">
+						$site=Sr::db('mysql_site');
+						$forum=Sr::db('mysql_forum');
+						//下面就可以用$site和$forum进行各种操作数据库了，比如查询数据：$site->from('user')->execute()->rows();
+		    </pre>
+		    配置例子(省略了细节配置)：
+		    <pre class="brush:php">
+						array(
+							//默认组
+							'default_group' => 'mysql',
+							//组名=>配置
+							//mysql配置示例
+							'mysql' => array(
+								'driverType' => 'mysql',
+								 ....
+							    ),
+							'mysql_site' => array(
+								'driverType' => 'mysql',
+								 ....
+							    ),
+							'mysql_forum' => array(
+								'driverType' => 'mysql',
+								 ....
+							    )
+						)
+		    </pre>
+		    <h3 class="title_h3">3.传递配置组信息方式</h3>
+		    我们还可以直接传递Sr::db()一个数据库配置组信息数组，
+		    <br>比如：
+		    <pre class="brush:php">
+						$dbConfig=array(
+							    'driverType' => 'mysql',
+							    'debug' => true,
+							    'pconnect' => false,
+							    'charset' => 'utf8',
+							    'collate' => 'utf8_general_ci',
+							    'database' => '',
+							    'tablePrefix' => '',
+							    'tablePrefixSqlIdentifier' => '_tablePrefix_',
+							    //是否开启慢查询记录
+							    'slowQueryDebug' => false,
+							    'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
+							    'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default(),
+							    /**
+							     * 是否开启没有满足设置的索引类型的查询记录
+							     */
+							    'indexDebug' => false,
+							    /**
+							     * 索引使用的最小情况，只有小于最小情况的时候才会记录sql到日志
+							     * minIndexType值从好到坏依次是:
+							     * system > const > eq_ref > ref > fulltext > ref_or_null 
+							     * > index_merge > unique_subquery > index_subquery > range 
+							     * > index > ALL 一般来说，得保证查询至少达到range级别，最好能达到ref
+							     * 避免ALL即全表扫描
+							     */
+							    'minIndexType' => 'index',
+							    'indexHandle' => new Soter_Database_Index_Handle_Default(),
+							    'masters' => array(
+								    'master01' => array(
+									'hostname' => '127.0.0.1',
+									'port' => 3306,
+									'username' => 'root',
+									'password' => '',
+								    )
+							    ),
+							    'slaves' => array(
+							    //		    'slave01' => array(
+							    //			'hostname' => '127.0.0.1',
+							    //			'port' => 3306,
+							    //			'username' => 'root',
+							    //			'password' => '',
+							    //		    )
+							    )
+						);
+						$db=Sr::db($dbConfig);
+						//...do something
+		    </pre>上面我们直接传递了一个数据库组配置数组$dbConfig给Sr::db()，
+		    <br>然后用返回的$db数据库操作对象操作$dbConfig连接的数据库。
+		    <br><b class="text_strong">Sr::db()第二个参数说明</b>
+		    <br>Sr::db($group = '', $isNewInstance = false)是db方法的完整参数，
+		    <br>可以看到有两个参数：
+		    <br>$group 数据库配置组名称，也就是上面提到的mysql，sqlite等
+		    <br>$isNewInstance 是否使用新的数据库操作对象重新连接数据库
+		    <br><b class="text_strong">$isNewInstance参数详细说明如下</b>
+		    <br>默认情况下，每个数据库配置组，为了节省资源Soter只会生成对应的唯一一个单例数据库操作对象。
+		    <br>通过第二个参数为true的时候，可以让Soter重新生成一个和配置组对应的单例对象。
+		    <br>第二个参数的意义：	
+		    <br>比如下面的操作：
+		    <br>a.Sr::db()->insert('a',$data)->execute();
+		    <br>b.//做了一个耗时的操作，时间比较长，导致上面a的数据库操作单例对象连接到数据库的链接超时。
+		    <br>c.Sr::db()->update('b',$data)->execute()//这里就会报错：mysql server has gone away
+		    <b><br>c之所以报错，因为a和c使用的都是一个对象，而且是执行a的时候连接一次数据库，以后不再连接。
+			<br>经过b耗时操作，导致a中建立的数据库连接超时，失去到数据库服务器的连接。然后下面的c执行的时候就会报错。
+			<br>为了避免这种情况，我们可以通过第二个参数，让Soter不在使用旧的单例，每次都使用新的数据库操作对象，
+			<br>这样c执行的时候就会使用新的对象去重新连接数据库就不会出现超时的问题。</b>
+		    <br>上面的问题可以进行下面的修改，可以避免超时：
+		    <br>a.Sr::db()->insert('a',$data)->execute();
+		    <br>b.//做了一个耗时的操作，时间比较长，导致上面a的数据库操作单例对象连接到数据库的链接超时。
+		    <br>c.Sr::db('',true)->update('b',$data)->execute()//这里不会报错：mysql has gone away，因为这里通过第二个参数true，
+		    <br>使用了新的数据库操作对象，会重新去连接数据库。
+		</li>
+		<li><h2 class="title_h2">配置中自定义处理类的使用说明</h2>
+		    上面介绍中说了，Soter支持：
+		    <br>1.自定义慢查询记录处理类。
+		    <br>2.自定义不满足设置的索引条件的查询处理类。
+		    <br>3.自定义数据库缓存数据的缓存处理类。
+		    <br>下面对这三个类的自定义过程进行说明：
+		    <h3 class="title_h3">1.自定义慢查询记录处理类</h3>
+		    配置中我们看到下面三行和慢查询有关的配置。
+		    <pre class="brush:php">
+						//是否开启慢查询记录
+						'slowQueryDebug' => false,
+						'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
+						'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default(),
+		    </pre>
+		    你会注意到，<code>slowQueryHandle</code>默认使用了<code>Soter_Database_SlowQuery_Handle_Default</code>类处理慢查询，
+		    <br>它会把慢查询都写入到文件<code>application/storage/slow-query-debug/slow-query-debug.php</code>以便我们分析，
+		    <br>这个类实现了<code>Soter_Database_SlowQuery_Handle</code>这个接口，然后就能在这里处理慢查询了，
+		    <br>接下来就是知道怎么实现<code>Soter_Database_SlowQuery_Handle</code>接口，我们就可以写自己的慢查询处理类处理慢查询了。
+		    <br>首先我们看一下接口的定义代码：
+		    <pre class="brush:php">
+						interface Soter_Database_SlowQuery_Handle {
+
+							public function handle($sql, $explainString, $time);
+						}
+		    </pre>
+		    可以看到接口就定义了一个handle()方法，有三个参数：
+		    <br>第一个是慢查询的sql语句字符串。
+		    <br>第二个是explain查询得到的字符串信息（只有是mysql的时候有效，是sqlite3的时候为空）。
+		    <br>第三个是这次查询使用的时间。
+		    <br>接下来就是写一个自己的类实现这个接口，把类文件放到合适的位置即可。
+		    <br>现在我们实现一个简单的显示出慢查询的自定义类。
+		    <br>步骤如下：
+		    <br>1.新建一个文件<code>application/classes/SlowQuery/Handle.php</code>
+		    <br>2.输入下面代码，其实就是定义了一个类，实现接口并简单的显示出慢查询。
+		    <pre class="brush:php">
+						class SlowQuery_Handle implements Soter_Database_SlowQuery_Handle {
+
+							public function handle($sql, $explainString, $time) {
+								$content = "\nSQL : " . $sql
+									. "\nExplain : " . $explainString
+									. "\nUsingTime : " . $time . " ms"
+									. "\nTime : " . date('Y-m-d H:i:s') . "\n";
+								echo $content;
+							}
+
+						}
+		    </pre>
+		    3.到此为止我们的自定义处理类搞定了，我们为了测试你可以:
+		    <br>把<b>slowQueryDebug</b>设置为<b>true</b>。
+		    <br>把慢查询时间<b>slowQueryTime</b>改成<b>1</b>。
+		    <br>把<b>slowQueryHandle</b>设置为<b>new SlowQuery_Handle()</b>。
+		    <br>然后在控制器里面执行一个查询，刷新几次我们会发现显示出自定义类输出的内容。
+		    <h3 class="title_h3">2.自定义不满足设置的索引条件的查询处理类</h3>
+		    配置中我们看到下面三行和不满足索引条件的查询处理类有关的配置。
+		    <pre class="brush:php">
+						'indexDebug' => false,
+						'minIndexType' => 'index',
+						'indexHandle' => new Soter_Database_Index_Handle_Default(),
+		    </pre>
+		    你会注意到，<code>indexHandle</code>默认使用了<code>Soter_Database_Index_Handle_Default</code>类处理不满足索引条件的查询，
+		    <br>它会把不满足设置的索引条件的查询都写入到文件<code>application/storage/index-debug/index-debug.php</code>以便我们分析，
+		    <br>这个类实现了<code>Soter_Database_Index_Handle</code>这个接口，然后就能在这里处理慢查询了，
+		    <br>接下来就是知道怎么实现<code>Soter_Database_Index_Handle</code>接口，我们就可以写自己的不满足设置的索引条件的查询处理类处理查询了。
+		    <br>首先我们看一下接口的定义代码：
+		    <pre class="brush:php">
+						interface Soter_Database_Index_Handle {
+
+							public function handle($sql, $explainString, $time);
+						}
+		    </pre>
+		    可以看到接口就定义了一个handle()方法，有三个参数：
+		    <br>第一个是慢查询的sql语句字符串。
+		    <br>第二个是explain查询得到的字符串信息（只有是mysql的时候有效，是sqlite3的时候为空）。
+		    <br>第三个是这次查询使用的时间。
+		    <br>接下来就是写一个自己的类实现这个接口，把类文件放到合适的位置即可。
+		    <br>现在我们实现一个简单的显示出不满足设置的索引条件的查询的自定义类。
+		    <br>步骤如下：
+		    <br>1.新建一个文件<code>application/classes/BadIndexQuery/Handle.php</code>
+		    <br>2.输入下面代码，其实就是定义了一个类，实现接口并简单的显示出慢查询。
+		    <pre class="brush:php">
+						class BadIndexQuery_Handle implements Soter_Database_Index_Handle {
+
+							public function handle($sql, $explainString, $time) {
+								$content = "\nSQL : " . $sql
+									. "\nExplain : " . $explainString
+									. "\nUsingTime : " . $time . " ms"
+									. "\nTime : " . date('Y-m-d H:i:s') . "\n";
+								echo $content;
+							}
+
+						}
+		    </pre>
+		    3.到此为止我们的自定义处理类搞定了，我们为了测试，可以自己手动建立一个表，然后不建立索引。
+		    <br>把<b>indexDebug</b>设置为<b>true</b>。
+		    <br>把<b>indexHandle</b>设置为<b>new BadIndexQuery_Handle()</b>。
+		    <br>然后在控制器里面执行搜索所有数据的查询，访问一下我们会发现显示出自定义类输出的内容。
+		    <h3 class="title_h3">3.自定义数据库缓存数据的缓存处理类</h3>
+		    数据库缓存操作使用的是入口文件里面配置的程序使用的缓存处理类，配置位于入口文件index.php里面，
+		    <br>在入口文件里面我们看到下面这个一行：
+		    <pre class="brush:php">
+						//设置缓存类型
+						->setCacheHandle(new Soter_Cache_File(SOTER_APP_PATH . 'storage/cache/'))
+		    </pre>
+		    这个就是配置程序中使用的缓存处理类，可以看到默认使用的是Soter提供的文件缓存处理类<code>Soter_Cache_File</code>,
+		    <br>它会把缓存数据写到<code>application/storage/cache/</code>目录下面。
+		    <br>关于如何自定义缓存处理类，可以参考手册<a href="cache.html">缓存部分</a>。
+		</li>
+
+		<li><h3 class="title_h2">查询数据</h3>
+		    查询数据，我可以通过Sr::db()获取数据库操作对象，然后进行查询。
+		    <br>为了简单明了的演示查询功能，请看下面的查询示例：
+		    <br>假设表前缀是空。
+		    <h3 class="title_h3">1.execute</h3>
+		    Soter的数据库查询无论是增删改查，最后都是通过调用<b>execute()</b>方法执行的。
+		    <br>execute()根据查询的类型不同返回的数据类型也不同，具体如下：
+		    <br><b>1.数据库中受到影响的行数</b>
+		    <br>当执行的是DELETE，REPLACE，UPDATE，INSERT的时候，execute()返回的是数据库中受到影响的行数；
+		    <br>INSERT，REPLACE操作的时候可以通过<b>Sr::db()->lastId()</b>获取最后插入的ID。
+		    <br><b>2.Soter_Database_ResultSet结果集对象</b>
+		    <br>当执行的是SELECT的时候，execute()返回的是Soter_Database_Resultset结果集对象。
+		    <br><b>3.true或false</b>
+		    <br>当执行的是上面1和2之外的查询的时候，execute()返回的是执行成功true或者失败false。
+		    <h3 class="title_h3">2.select</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('*')->from('user');
+						//将输出：SELECT * FROM `user`;
+						$rs=Sr::db()->execute()->rows();
+						//$rs是数据库结果集数组
+		    </pre>
+		    
+		       
+		    提示：<b style="color:red">上面第一句，并没有真正的连接数据库进行查询，只是编译sql语句，
+			<br>只有最后调用了execute()方法时才会真正的查询数据库。</b>
+			<br>select还有第二个参数，第二个参数意思是：是否用反引号保护字段。true：保护。false：不保护。默认：true。
+			<br>比如：
+			<br>1、Sr::db()->select(‘username’,true) 生成 ： select `username` 
+			<br>2、Sr::db()->select(‘username’,false) 生成 ： select username
+		    <h3 class="title_h3">2.from</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('c.id as cat_id , b.id as group_id, dd.id as user_id')
+								->from('a', 'dd');
+						//将输出： SELECT `c`.`id` AS `cat_id`,`b`.`id` AS `group_id`,`dd`.`id` AS `user_id`
+						//	   FROM  `a` AS `dd`
+		    </pre>
+		    <h3 class="title_h3">3.join</h3>
+		    第一个参数是数组的时候：array('原始表名称'=>'as别名')。
+		    <pre class="brush:php">
+						echo Sr::db()->select('x.id as cat_id , b.id as group_id, dd.id as user_id')
+								->from('a', 'dd')
+								->join('b', 'dd.gid=b.id', 'left')
+								->join(array('c'=>'x'), 'b.cid=x.id', 'left')
+								->where(array('dd.id <=' => 2));
+						//将输出： SELECT `x`.`id` AS `cat_id`,`b`.`id` AS `group_id`,`dd`.`id` AS `user_id`
+						//	   FROM  `a` AS `dd`   LEFT JOIN `b` ON  `dd`.`gid`  =  `b`.`id`   LEFT JOIN `c` as `x` ON  `b`.`cid`  =  `x`.`id`  
+						//	   WHERE `dd`.`id` <= ?
+		    </pre>
+		    <h3 class="title_h3">4.where</h3>
+		    我们可以通过一个键值对数组方便的作为查询条件
+		    <pre class="brush:php">
+						Sr::db()->from('user');
+						$where=array();
+						$where['id']=1;
+						$where['uid']=array(1,2,3);
+						Sr::db()->where($where);
+						$where=array();
+						$where['name']=NULL;
+						$where['man']=true;
+						Sr::db()->where($where);
+						$where=array();
+						$where['uid not']=array(4,5,6);
+						$where['id >']=0;
+						$where['id &lt;>']=-1;
+						$where['name like']='%test%';
+						echo Sr::db()->where($where);
+						//多次调用where都是可以的
+						//将输出：SELECT * FROM `user` WHERE `id` = ? AND `uid` IN (?,?,?) AND `name` IS NULL AND `man` = ? AND `uid` NOT IN (?,?,?) AND `id` > ? AND `id` &lt;> ? AND `name` like ?
+						//如果要执行这条语句，我们调用execute方法
+						 Sr::db()->execute();
+		    </pre>
+		    <h3 class="title_h3">5.高级where</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('cname')->from('user')
+							->where(array('id <=' => 2, 'id &lt;>' => 3), '(', ')')
+							->where(array('id >=' => 0));
+						//将输出：SELECT `cname` FROM `user` WHERE ( `id` <= ? AND `id` <> ? ) AND `id` >= ?
+		    </pre>
+		    WHERE条件之间默认是AND连接，我们可以通过第二个参数改变为OR，例子如下：
+		    <pre class="brush:php">
+						echo Sr::db()->select('cname')->from('user')
+							->where(array('id <=' => 2, 'id &lt;>' => 3), '(', ')')
+							->where(array('id >=' => 0),'OR');
+						//将输出：SELECT `cname` FROM `user` WHERE ( `id` <= ? AND `id` <> ? ) OR `id` >= ?
+		    </pre>
+		    <h3 class="title_h3">6.group by</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->groupBy('cname');
+						//将输出：SELECT count(`id`) as total,`id` FROM `c` GROUP BY `cname` 
+		    </pre>
+		    <h3 class="title_h3">7.having</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->groupBy('cname')
+								->having('total >= 1');
+						//将输出：SELECT count(`id`) as total,`id` FROM `c` GROUP BY `cname` HAVING total >= 1 
+		    </pre>
+		    <h3 class="title_h3">8.order by</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->groupBy('cname')
+								->having('total >= 1')
+								->orderBy('total', 'desc');
+						//将输出：SELECT count(`id`) as total,`id` FROM `c` GROUP BY `cname` HAVING total >= 1 ORDER BY `total` DESC
+		    </pre>
+		    <h3 class="title_h3">9.limit</h3>
+		    <pre class="brush:php">
+						echo Sr::db()->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->limit(0,1);
+						//将输出：SELECT count(`id`) as total,`id` FROM `c`  LIMIT 0 , 1
+		    </pre>
+		    <h3 class="title_h3">10.wrap</h3>
+		    上面我们看见好几处都使用了方法Sr::db()->wrap(),
+		    <br>当我们在查询的时候使用了函数的字段不会自动处理需要自己加上保护符号和表前缀,
+		    <br>需要使用方法Sr::db()->wrap()进行自动加上表前缀和字段保护符号。
+		    <br>使用示例：
+		    <pre class="brush:php">
+						echo Sr::db()->select('count('.Sr::db()->wrap('user.id').') as total,id')->from('c')
+								->limit(0,1);
+						//将输出：SELECT count(`user`.`id`) as total,`id` FROM `c`  LIMIT 0 , 1
+		    </pre>
+		    <pre class="brush:php">
+						echo Sr::db()->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->limit(0,1);
+						//将输出：SELECT count(`id`) as total,`id` FROM `c`  LIMIT 0 , 1
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">查询结果集的使用</h3>
+		    上面说到，当我们执行select查询的时候，execute方法返回的是一个Soter_Database_Reaultset对象。
+		    <br>这个对象提供了很多有用的方法处理结果集。
+		    <br>下面对它的所有方法一一介绍：
+		    <br>1.<b>rows</b>($isAssoc = true)
+		    <br>作用：得到查询结果数据数组
+		    <br>参数：$isAssoc 是否返回关联数组，true返回关联数组，false返回数字索引数组
+		    <br>2.<b>row</b>($index = null, $isAssoc = true) 
+		    <br>作用：得到查询结果数据数组中的第$index个记录的数据，默认取第一条
+		    <br>参数：$index   获取查询结果中的第几条，0开始的数字，0是第一条
+		    <br>      $isAssoc 是否返回关联数组
+		    <br>3.<b>values</b>($columnName)
+		    <br>作用：得到查询结果数据数组中的某一字段的一维数组
+		    <br>参数：$columnName   字段名称
+		    <br>4.<b>value</b>($columnName, $default = null, $index = null)
+		    <br>作用：得到查询结果数据数组中的第$index条记录的$columnName字段的值
+		    <br>参数：$columnName   字段名称
+		    <br>5.<b>key</b>($columnName)
+		    <br>作用：设置使用哪个字段的值作为返回的结果集数组的键
+		    <br>参数：$columnName   字段名称
+		    <br>比如我们查询用户信息，设置返回的二维数据，需要一维数组键值不是0开始的数字，而是用户id，
+		    <br>我们可以这样查询
+		    <pre class="brush:php">
+						$rows=Sr::db()->select('*')->from('user')->execute()->key('user_id')->rows();
+						//那么我们得到类似的下面的结果
+						$rows形如：array(
+								'223'=>array('user_id'=>223,'uname'=>'test'),
+								'224'=>array('user_id'=>224,'uname'=>'test'),
+								...
+							)
+		    </pre>
+		    <br>6.<b>total()</b> 
+		    <br>作用：返回查询结果中有多少条数据
+		    <br>7.<b>objects</b>($beanClassName)
+		    <br>作用：得到查询结果数据数组,数组元素是传入的bean对象。
+		    <br>参数：$beanClassName 数据库表的Soter_Bean类名称，Soter_Bean规范可以参考“<a href="bean.html">Bean实体</a>”
+		    <br>8.<b>object</b>($beanClassName, $index = null) 
+		    <br>作用：得到查询结果数据数组中的第$index个记录的数据的bean对象，默认取第一条
+		    <br>参数：$beanClassName 数据库表的Soter_Bean类名称，Soter_Bean规范可以参考“<a href="bean.html">Bean实体</a>”
+		    <br>参数：$index   获取查询结果中的第几条，0开始的数字，0是第一条
+		</li>
+		<li><h3 class="title_h2">查询缓存</h3>
+		    通过cache方法我们可以十分方便的把我们的查询结果缓存一定的时间。
+		    <br>需要对一个查询开启缓存效果我们只需要在查询前面调用cache方法即可。
+		    <br>示例如下：
+		    <pre class="brush:php">
+						//缓存查询结果60秒
+						$rows= Sr::db()->cache(60)->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->limit(0,1)
+								->execute()
+								->rows();
+						//缓存查询结果60秒,并指定缓存key是top_user
+						$rows= Sr::db()->cache(60,'top_user')->select('count('.Sr::db()->wrap('id').') as total,id')->from('c')
+								->limit(0,1)
+								->execute()
+								->rows();
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">插入数据</h3>
+		    我们可以通过insert方法方便的将键值对数组插入数据库，键是字段名，值是字段值
+		    <pre class="brush:php">
+						echo Sr::db()->insert('a', array('name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000)));
+						//将输出：INSERT INTO `a` (`name`,`gid`) VALUES (?,?)
+		    </pre>
+		    然后我们执行Sr::db()->execute()返回的是数据库中受到影响的行数。
+		    <br>可以通过<b>Sr::db()->lastId()</b>获取最后插入的ID。
+		</li>
+		<li><h3 class="title_h2">批量插入数据</h3>
+		    我们可以通过insertBatch方法方便的将二维数组插入数据库
+		    <pre class="brush:php">
+						$data[] = array('name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						$data[] = array('name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						$data[] = array('name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						echo Sr::db()->insertBatch('a', $data);
+						//将输出：INSERT INTO `a` (`name`,`gid`) VALUES (?,?) , (?,?) , (?,?)
+		    </pre>
+		    <b class="text_strong">提示：
+			<br>1.执行完批量插入之后，我们通过Sr::db()->lasstId()获取的是这次批量插入数据的第一条数据的ID，
+			<br>后面的ID依次加一，自己可以计算出所有的ID。
+			<br>2.关于sqlite批量插入功能，因为sqlite>= 3.7.11(PHP5.5)开始才支持一次insert多个values，
+			<br>所以sqlite批量插入功能，要求PHP>=5.5的版本，PHP>=5.5的版本的PDO SQLite 版本才>=3.7.11。
+		    </b>
+		</li>
+		<li><h3 class="title_h2">更新数据</h3>
+		    通过update方法我们可以方便的更新一条数据，第一个参数是表名称，第二个是数据，第三个是where条件。
+		    <pre class="brush:php">
+						echo Sr::db()->update('a', array('name' => '2222'), array('id' => 1));
+						//将输出：UPDATE `a` SET `name` = ? WHERE `id` = ?
+		    </pre>
+		    如果我们想设置字段值自增，可以使用set方法，示例如下：
+		    <pre class="brush:php">
+						echo Sr::db()->where(array('id' => 1))->set('gid', 'gid + 1', false)->update('a',array('name'=>'xxx'));
+						//将输出：UPDATE `a` SET `gid` = gid + 1 , `name` = ? WHERE `id` = ?
+		    </pre>
+		    set方法有三个参数：
+		    <br>第一个：字段名称， 比如 gid
+		    <br>第二个：字段值表达，比如 gid+1
+		    <br>第三个：是否把第二个参数值全部作为值，默认true
+		</li>
+		<li><h3 class="title_h2">批量更新数据</h3>
+		    通过updateBatch我们可以一次性更新多条数据，更新数据的格式如下$updata，$updata数组元素里面必须包含主键id，
+		    <br>这样Soter才知道哪一个数据应该被修改。
+		    <pre class="brush:php">
+						$updata[] = array('id' => 1, 'name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						$updata[] = array('id' => 2, 'name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						$updata[] = array('id' =>3, 'name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						echo Sr::db()->updateBatch('a', $updata, 'id');
+						//将输出：UPDATE `a` SET `name` = CASE WHEN `id` = 1 THEN ? WHEN `id` = 2 THEN ? WHEN `id` = 3 THEN ? ELSE `name` END, `gid` = CASE WHEN `id` = 1 THEN ? WHEN `id` = 2 THEN ? WHEN `id` = 3 THEN ? ELSE `gid` END WHERE `id` IN (?,?,?)
+		    </pre>
+		    如果我们想在把某个字段的值自增，怎么办呢。只要把字段的值按着数组的形式即可，比如array('num +'=>3),就会生成 `num` + 3
+		    <br>注意num后面要有空格，空格后面是数据库支持的计算操作符。
+		    <br>下面是完整的例子：
+		    <pre class="brush:php">
+						$updata[] = array('id' => 1, 'gid' =>array('gid +'=>1));
+						$updata[] = array('id' => 2,'gid' => array('gid +'=>2));
+						$updata[] = array('id' =>3,  'gid' => array('gid +'=>3));
+						echo Sr::db()->updateBatch('a', $updata, 'id');
+						//将输出：UPDATE `a` SET  `gid` = CASE WHEN `id` = 1 THEN `gid` + ? WHEN `id` = 2 THEN `gid` + ? WHEN `id` = 3 THEN `gid` + ? ELSE `gid` END WHERE `id` IN (?,?,?)
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">替换数据</h3>
+		    我们可以通过replace方法方便的替换数据，
+		    <br>数据是否替换，是根据数据里面的主键字段或者唯一索引字段进行判断的，不存在就插入，
+		    <br>存在就先删除后插入保持和原来删除的主键或唯一索引一样。
+		    <pre class="brush:php">
+						echo Sr::db()->replace('a', array('name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000)));
+						//将输出：REPLACE INTO `a` (`name`,`gid`) VALUES (?,?)
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">批量替换数据</h3>
+		    通过replaceBatch我们可以一次性替换多条数据，更新数据的格式如下$updata，
+		    <br>数据是否替换，是根据数据里面的主键字段或者唯一索引字段进行判断的，不存在就插入，
+		    <br>存在就先删除后插入保持和原来删除的主键或唯一索引一样。
+		    <pre class="brush:php">
+						$updata[] = array('id' => 1, 'name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						$updata[] = array('id' => 2, 'name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						$updata[] = array('id' =>3, 'name' => 'name' . rand(1000, 10000), 'gid' => rand(1000, 10000));
+						echo Sr::db()->replaceBatch('a', $updata);
+						//将输出：REPLACE INTO `a` (`id`,`name`,`gid`) VALUES (?,?,?) , (?,?,?) , (?,?,?)
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">删除数据</h3>
+		    通过delete方法我们可以方便的删除数据，第二个参数我们可以传入where条件。
+		    <pre class="brush:php">
+						$where=array('id >'=>100);
+						echo Sr::db()->delete('a',$where);
+						//将输出：DELETE FROM `a` WHERE `id` > ?
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">显式获取sql语句和值数组</h3>
+		    上的例子中我们都是直接这样直接 echo  Sr::db()->delete('a',$where)，echo一个数据库操作对象得到sql预处理语句。
+		    <br>我们还可以通过getSql方法显示获取sql预处理语句，使用getSqlValues方法获取我们在的预处理语句中使用的值。
+		    <br>比如下面：
+		    <pre class="brush:php">
+						$where=array('id >'=>100);
+						Sr::db()->delete('a',$where);
+						echo Sr::db()->getSql();
+						//将输出：DELETE FROM `a` WHERE `id` > ?
+						Sr::dump(Sr::db()->getSqlValues());
+						//将输出：array(1) {
+						//		[0]=>
+						//		int(100)
+						//	      }
+		    </pre>
+		    <b class="text_strong">提示：
+			<br>当调用getSql()方法之后，之后如果再进行sql的变化将不会起作用。
+			<br>execute使用的的还是调用getSql()时的sql。
+			<br>也就是说调用getSql()方法之后不应该再进行sql查询改变。
+		    </b>
+		</li>
+		<li><h3 class="title_h2">直接执行SQL语句</h3>
+		    通过Sr::db()->execute($sql,$values=array())方法我们可以直接执行一个sql语句，
+		    <br>第一个参数是sql语句，第二个参数是第一个参数中的问号?占位符对应的值。
+		    <br>写入型的sql返回bool或者影响的行数（insert,delete,replace,update），查询型的返回结果集。
+		    <br>示例：
+		    <pre class="brush:php">
+						Sr::db()->execute('select * from test');
+						Sr::db()->execute('select * from test where id&gt;? and uid&lt;?',array(21,33));
+						//执行的是：select * from test where id&gt;21 and uid&lt;33
+		    </pre>
+		    提示:
+		    <br>直接执行sql语句的时候，如果我们在数据库配置里面设置了表前缀，为了应对前缀的不断变化，
+		    <br>我们可以看到数据库配置里面有一个配置项“tablePrefixSqlIdentifier”，它的默认值是“_tablePrefix_”。
+		    <br>1.那么当我们设置的表前缀是“soter_”的时候，执行下面的sql：
+		    <pre class="brush:php">
+						Sr::db()->execute('select * from _tablePrefix_test');
+						//实际执行的是：select * from soter_test
+		    </pre>
+		    2.那么当我们设置的表前缀是“空”的时候，执行下面的sql：
+		    <pre class="brush:php">
+						Sr::db()->execute('select * from _tablePrefix_test');
+						//实际执行的是：select * from test
+		    </pre>
+		    通过1和2我们可以发现，配置项“tablePrefixSqlIdentifier”的值就是表前缀的占位符，
+		    <br>这样我们每次修改表前缀都不用修改sql语句，增加代码了灵活性。
+		</li>
+		<li><h3 class="title_h2">事务</h3>
+		    通过begin、commit、rollback三个方法的配合
+		    我们可以方便的处理事务，下面是一个完整的事务例子。
+		    <pre class="brush:php">
+						try {
+							//开始事务
+							Sr::db()->begin();
+							$datac = array();
+							$datac[] = array('cname' => 'cname' . rand(1000, 10000));
+							$datac[] = array('cname' => 'cname' . rand(1000, 10000));
+							$datac[] = array('cname' => 'cname' . rand(1000, 10000));
+							$this->db->insertBatch('c', $datac)->execute();
+							//....其它操作
+							Sr::db()->select('none')->from('a')->execute();
+							//提交事务							
+							Sr::db()->commit();
+						} catch (Exception $exc) {
+							//发生异常回滚事务
+							Sr::db()->rollback();
+						}
+		    </pre>
+		</li>
+		<li><h3 class="title_h2">关闭数据库连接</h3>
+		    关闭数据库连接可以通过Sr::db()返回的Soter_Database_ActiveRecord对象的close方法，
+		    <br>可以通过Sr::db()->close()手动关闭数据库连接，close方法会清除当前所有已经连接的数据库。
+		    <br>如果要重新连接数据库怎么办？
+		    <br>无需手动进行任何多余操作，直接Sr::db()继续使用就行！Soter会自己检查是否连接，没有连接然后会自动连接。
+		    <br>比如下面代码：
+		    <pre class="brush:php">
+						//查询
+						Sr::db()->select('none')->from('a')->execute();
+						//关闭连接						
+						Sr::db()->close();
+						//继续查询，不用担心上面关闭了连接，下面查询的时候Soter会自己检查是否连接
+						Sr::db()->select('none')->from('a')->execute();
+		    </pre>
+		    <b>提示：</b>
+		    我们一般是不需要手动调用close方法的，当php页面执行完毕数据库对象就会被销毁，数据库连接就会断开。
+		</li>
+	    </ol>
+
+	</fieldset>
+	<script src="js/inc.foot.js"></script>
+    </body>
+</html>

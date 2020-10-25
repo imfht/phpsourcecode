@@ -1,0 +1,96 @@
+<div class="opwindow">
+	<table class="layui-table">
+		<tbody>
+			<tr>
+				<td class="td_title">商户名称</td>
+				<td>{$value[merchant_name]}</td>
+			</tr>
+			<tr>
+				<td class="td_title">门店名称</td>
+				<td>{$value[store_name]}</td>
+			</tr>
+			<tr>
+				<td class="td_title">收款员工</td>
+				<td>{$value[per_name]}</td>
+			</tr>
+			<tr>
+				<td class="td_title">收款终端</td>
+				<td>{$value[SN]}</td>
+			</tr>
+			<tr>
+				<td class="td_title">支付通道</td>
+				<td>{echo model('Trade')->getGate($value['trade_gate'])}</td>
+			</tr>
+			<tr>
+				<td class="td_title">支付方式</td>
+				<td>{echo model('Trade')->get_type($value['trade_type'])}</td>
+			</tr>
+			<tr>
+				<td class="td_title">交易金额</td>
+				<td>{$value[total_amount]}</td>
+			</tr>
+			<tr>
+				<td class="td_title">交易时间</td>
+				<td>{echo gsdate('Y-m-d H:i:s', $value['time_create'])}</td>
+			</tr>
+			<tr>
+				<td class="td_title">商户交易号</td>
+				<td>{$value[out_trade_no]}</td>
+			</tr>
+			<tr>
+				<td class="td_title">第三方交易号</td>
+				<td>{$value[trade_no]}</td>
+			</tr>
+		</tbody>
+	</table>
+	<!--{if !$value['is_mch_bill'] && in_array($value['trade_status'], ['SUCCESS', 'TRADE_SUCCESS'])}-->
+	<button type="button" id="refund" class="layui-btn layui-btn-fluid layui-btn-danger">退款</button>
+	<!--{/if}-->
+</div>
+<style>
+.td_title { background-color:#f2f2f2; }
+.td_tbody { background-color:#ffffff; }
+</style>
+<script type="text/javascript">
+var out_trade_no = "{echo input('param.out_trade_no')}";
+$("#refund").click(function(){
+	init_Layer(function(){
+		layer.prompt({
+			title: "请输入密码",
+			value: "",
+			formType: 1,
+		}, function(value, index){
+			$.ajax({
+				type: "POST",
+				dataType: "json",
+				timeout: 50000,
+				url: "{echo url('trade/refund')}",
+				data: {
+					ajax: "json", 
+					password: value, 
+					out_trade_no: out_trade_no,
+				},
+				success: function(data){
+					console.log(data);
+					if(data.status == 1) {
+						showInfo('退款成功！', function(){
+							reload();
+						});
+					} else {
+						showAlert(data.message);
+					}
+				},
+				error: function(xhr, status){
+					console.log(xhr);
+				},
+				complete: () => {
+					hideLoader();
+				},
+				beforeSend: () => {
+					showLoader();
+				}
+			});
+		});
+	});
+});
+</script>

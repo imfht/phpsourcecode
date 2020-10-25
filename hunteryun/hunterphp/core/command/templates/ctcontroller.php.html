@@ -1,0 +1,346 @@
+<?php print "<?php"; ?>
+
+
+namespace Hunter\<?php print $module; ?>\Controller;
+
+use Zend\Diactoros\ServerRequest;
+use Psr\Http\Message\UploadedFileInterface;
+use Zend\Diactoros\Response\JsonResponse;
+
+/**
+ * Class <?php print $module; ?>.
+ *
+ * @package Hunter\<?php print $module; ?>\Controller
+ */
+class <?php print ucfirst($module); ?>Controller {
+  /**
+   * <?php print $module; ?>_list.
+   *
+   * @return string
+   *   Return <?php print $module; ?>_list string.
+   */
+  public function <?php print $module; ?>_list(ServerRequest $request) {
+    $parms = $request->getQueryParams();
+    if(!isset($parms['page'])){
+      $parms['page'] = 1;
+    }
+    $<?php print $module; ?>_result = get_all_<?php print $module; ?>($parms);
+
+    return view('/admin/<?php print $module; ?>-list.html', array('<?php print $module; ?>s' => $<?php print $module; ?>_result));
+  }
+
+  /**
+   * <?php print $module; ?>_add.
+   *
+   * @return string
+   *   Return <?php print $module; ?>_add string.
+   */
+  public function <?php print $module; ?>_add(ServerRequest $request) {
+    if ($parms = $request->getParsedBody()) {
+      $user = session()->get('admin');
+      <?php foreach($fields as $field): ?>
+      <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+
+      $photos = array();
+      if(isset($parms['up_photos']) || !empty($parms['up_photos'])){
+        foreach ($parms['up_photos'] as $img) {
+          $photos[] = array('image' => $img['img'], 'description' => $img['des']);
+        }
+      }
+      <?php endif; ?>
+      <?php endforeach; ?>
+
+      $<?php print substr($module, 0, 1 ); ?>id = db_insert('<?php print $module; ?>')
+        ->fields(array(
+        <?php foreach($fields as $field): ?>
+<?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+  '<?php print $field['name']; ?>' => json_encode($photos),
+<?php elseif($field['html_type'] == 'textarea' || $field['html_type'] == 'text'): ?>
+  '<?php print $field['name']; ?>' => clean($parms['<?php print $field['name']; ?>']),
+<?php else: ?>
+  '<?php print $field['name']; ?>' => $parms['<?php print $field['name']; ?>'],
+<?php endif; ?>
+<?php endforeach; ?>'uid' => $user->uid,
+          'created' => time(),
+          'updated' => time(),
+        ))
+        ->execute();
+
+      return hunter_form_submit($parms, '<?php print $module; ?>', $<?php print substr($module, 0, 1 ); ?>id);
+    }
+
+<?php foreach($fields as $field): ?>
+<?php if($field['html_type'] == 'textarea'): ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => 'textarea',
+      '#title' => '<?php print $field['lable']; ?>',
+      '#required' => TRUE,
+      '#attributes' => array('id' => '<?php print $field['name']; ?>', 'lay-verify' => '<?php print $field['name']; ?>_content'),
+    );
+<?php elseif($field['html_type'] == 'radio'): ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => 'radios',
+      '#title' => '<?php print $field['lable']; ?>',
+      '#default_value' => '<?php print $field['html_type_option'][0]['value']; ?>',
+      '#options' => array(
+      <?php foreach($field['html_type_option'] as $item): ?>
+  '<?php print $item['value']; ?>' => '<?php print $item['lable']; ?>',
+      <?php endforeach; ?>
+),
+    );
+<?php elseif($field['html_type'] == 'image' || $field['html_type'] == 'file'): ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => '<?php print $field['html_type']; ?>',
+      '#title' => '<?php print $field['lable']; ?>',
+<?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+      '#multiple' => TRUE,
+<?php endif; ?>
+      '#attributes' => array('id' => '<?php print $field['name']; ?>'),
+    );
+    <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'single'): ?>
+    $form['<?php print $field['name']; ?>_preview'] = array(
+      '#type' => 'markup',
+      '#title' => '预览',
+      '#hidden' => TRUE,
+      '#markup' => '<img src="" id="<?php print $field['name']; ?>-preview" width="200">',
+    );
+    <?php endif; ?>
+<?php elseif($field['html_type'] == 'select'): ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => 'select',
+      '#title' => '<?php print $field['lable']; ?>',
+      '#default_value' => '<?php print $field['type_setting']['default']; ?>',
+      '#options' => array(
+      <?php foreach($field['html_type_option'] as $item): ?>
+  '<?php print $item['value']; ?>' => '<?php print $item['lable']; ?>',
+      <?php endforeach; ?>
+),
+    );
+<?php elseif($field['html_type'] == 'checkbox'): ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => 'checkboxes',
+      '#title' => '<?php print $field['lable']; ?>',
+      '#options' => array(
+      <?php foreach($field['html_type_option'] as $item): ?>
+  '<?php print $item['value']; ?>' => '<?php print $item['lable']; ?>',
+      <?php endforeach; ?>
+),
+  <?php if($field['html_type_setting']['skin'] == 'switch'): ?>
+    '#attributes' => array('lay-skin' => 'switch', 'lay-text' => 'Yes|No', 'value' => 'yes'),
+  <?php elseif($field['html_type_setting']['skin'] == 'primary'): ?>
+    '#attributes' => array('lay-skin' => 'primary', 'value' => 'yes'),
+  <?php else: ?>
+  <?php endif; ?>
+    );
+<?php elseif($field['html_type'] == 'hidden'): ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => 'hidden',
+      '#value' => '<?php print $field['type_setting']['default']; ?>',
+    );
+<?php else: ?>
+    $form['<?php print $field['name']; ?>'] = array(
+      '#type' => 'textfield',
+      '#title' => '<?php print $field['lable']; ?>',
+      '#maxlength' => <?php print $field['type_setting']['length']; ?>,
+    );
+<?php endif; ?>
+<?php endforeach; ?>
+    $form['save'] = array(
+     '#type' => 'submit',
+     '#value' => t('Save'),
+     '#attributes' => array('lay-submit' => '', 'lay-filter' => '<?php print $module; ?>Add'),
+    );
+
+    return view('/admin/<?php print $module; ?>-add.html', array('form' => $form));
+  }
+
+  /**
+   * <?php print $module; ?>_edit.
+   *
+   * @return string
+   *   Return <?php print $module; ?>_edit string.
+   */
+  public function <?php print $module; ?>_edit($<?php print substr($module, 0, 1 ); ?>id) {
+      $<?php print $module; ?> = get_<?php print $module; ?>_byid($<?php print substr($module, 0, 1 ); ?>id);
+<?php foreach($fields as $field): ?>
+<?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+
+      if(!empty($<?php print $module; ?>)){
+        $temp = json_decode($<?php print $module; ?>-><?php print $field['name']; ?>);
+        $html = '<ul id="up_photos">';
+        foreach ($temp as $key => $v) {
+          $html .= '<li class="drag-handle" data-image="'.$v->image.'"><img src="'.$v->image.'" width="100"><p>'.$v->description.'</p><i class="js-remove">✖</i>
+          <input type="hidden" name="up_photos['.$key.'][img]" value="'.$v->image.'">
+          <input type="hidden" name="up_photos['.$key.'][des]" value="'.$v->description.'">
+          </li>';
+        }
+        $html .= '</ul>
+        <div id="addmore">添加更多</div>';
+      }
+
+      <?php endif; ?>
+      <?php endforeach; ?>
+
+    <?php foreach($fields as $field): ?>
+  <?php if($field['html_type'] == 'textarea'): ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => 'textarea',
+        '#title' => '<?php print $field['lable']; ?>',
+        '#default_value' => $<?php print $module; ?>-><?php print $field['name']; ?>,
+        '#required' => TRUE,
+        '#attributes' => array('id' => '<?php print $field['name']; ?>', 'lay-verify' => '<?php print $field['name']; ?>_content'),
+      );
+  <?php elseif($field['html_type'] == 'radio'): ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => 'radios',
+        '#title' => '<?php print $field['lable']; ?>',
+        '#default_value' => $<?php print $module; ?>-><?php print $field['name']; ?>,
+        '#options' => array(
+        <?php foreach($field['html_type_option'] as $item): ?>
+  '<?php print $item['value']; ?>' => '<?php print $item['lable']; ?>',
+        <?php endforeach; ?>
+),
+      );
+  <?php elseif($field['html_type'] == 'image' || $field['html_type'] == 'file'): ?>
+    <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+$form['up_photos'] = array(
+        '#type' => 'markup',
+        '#title' => '已上传图片',
+        '#markup' => $html,
+      );
+    <?php endif; ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => '<?php print $field['html_type']; ?>',
+        '#title' => '<?php print $field['lable']; ?>',
+        <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+'#multiple' => TRUE,
+'#prefix' => '<div id="show-upload-images" style="display:none">',
+'#suffix' => '</div>',
+        <?php endif; ?>
+'#default_value' => $<?php print $module; ?>-><?php print $field['name']; ?>,
+        '#attributes' => array('id' => '<?php print $field['name']; ?>'),
+      );
+      <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'single'): ?>
+      if(!empty($<?php print $module; ?>-><?php print $field['name']; ?>)){
+        $form['<?php print $field['name']; ?>_preview'] = array(
+          '#type' => 'img',
+          '#title' => '预览',
+          '#default_value' => $<?php print $module; ?>-><?php print $field['name']; ?> ? $<?php print $module; ?>-><?php print $field['name']; ?> : '',
+          '#attributes' => array('id' => '<?php print $field['name']; ?>-preview', 'width' => '200'),
+        );
+      }
+      <?php endif; ?>
+  <?php elseif($field['html_type'] == 'select'): ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => 'select',
+        '#title' => '<?php print $field['lable']; ?>',
+        '#default_value' => '<?php print $field['type_setting']['default']; ?>',
+        '#options' => array(
+        <?php foreach($field['html_type_option'] as $item): ?>
+  '<?php print $item['value']; ?>' => '<?php print $item['lable']; ?>',
+        <?php endforeach; ?>
+),
+      );
+  <?php elseif($field['html_type'] == 'checkbox'): ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => 'checkboxes',
+        '#title' => '<?php print $field['lable']; ?>',
+        '#default_value' => $<?php print $module; ?>-><?php print $field['name']; ?>,
+        '#options' => array(
+        <?php foreach($field['html_type_option'] as $item): ?>
+  '<?php print $item['value']; ?>' => '<?php print $item['lable']; ?>',
+        <?php endforeach; ?>
+),
+        '#attributes' => array('lay-skin' => 'switch', 'lay-text' => 'Yes|No', 'value' => 'yes'),
+      );
+  <?php elseif($field['html_type'] == 'hidden'): ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => 'hidden',
+        '#value' => $<?php print $module; ?>-><?php print $field['name']; ?>,
+      );
+  <?php else: ?>
+$form['<?php print $field['name']; ?>'] = array(
+        '#type' => 'textfield',
+        '#title' => '<?php print $field['lable']; ?>',
+        '#default_value' => $<?php print $module; ?>-><?php print $field['name']; ?>,
+        '#maxlength' => <?php print $field['type_setting']['length']; ?>,
+      );
+  <?php endif; ?>
+  <?php endforeach; ?>
+
+      $form['<?php print substr($module, 0, 1 ); ?>id'] = array(
+        '#type' => 'hidden',
+        '#value' => $<?php print substr($module, 0, 1 ); ?>id,
+      );
+      $form['save'] = array(
+       '#type' => 'submit',
+       '#value' => t('Save'),
+       '#attributes' => array('lay-submit' => '', 'lay-filter' => '<?php print $module; ?>Update'),
+      );
+
+      return view('/admin/<?php print $module; ?>-edit.html', array('form' => $form, '<?php print $module; ?>' => $<?php print $module; ?>, '<?php print substr($module, 0, 1 ); ?>id' => $<?php print substr($module, 0, 1 ); ?>id));
+  }
+
+  /**
+   * <?php print $module; ?>_update.
+   *
+   * @return string
+   *   Return <?php print $module; ?>_update string.
+   */
+  public function <?php print $module; ?>_update(ServerRequest $request) {
+    if ($parms = $request->getParsedBody()) {
+      $<?php print substr($module, 0, 1 ); ?>id = $parms['<?php print substr($module, 0, 1 ); ?>id'];
+      $user = session()->get('admin');
+
+      <?php foreach($fields as $field): ?>
+      <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+$photos = array();
+      if(isset($parms['up_photos']) || !empty($parms['up_photos'])){
+        foreach ($parms['up_photos'] as $img) {
+          $photos[] = array('image' => $img['img'], 'description' => $img['des']);
+        }
+      }
+      <?php endif; ?>
+      <?php endforeach; ?>
+
+       db_update('<?php print $module; ?>')
+         ->fields(array(
+           <?php foreach($fields as $field): ?>
+             <?php if($field['html_type'] == 'image' && $field['html_type_setting']['image_type'] == 'multiple'): ?>
+'<?php print $field['name']; ?>' => json_encode($photos),
+<?php elseif($field['html_type'] == 'textarea' || $field['html_type'] == 'text'): ?>
+          '<?php print $field['name']; ?>' => clean($parms['<?php print $field['name']; ?>']),
+             <?php else: ?>
+               '<?php print $field['name']; ?>' => $parms['<?php print $field['name']; ?>'],
+             <?php endif; ?>
+           <?php endforeach; ?>
+'uid' => $user->uid,
+           'updated' => time(),
+         ))
+         ->condition('<?php print substr($module, 0, 1 ); ?>id', $<?php print substr($module, 0, 1 ); ?>id)
+         ->execute();
+
+       return hunter_form_submit($parms, '<?php print $module; ?>', true);
+     }
+     return false;
+  }
+
+  /**
+   * <?php print $module; ?>_del.
+   *
+   * @return string
+   *   Return <?php print $module; ?>_del string.
+   */
+  public function <?php print $module; ?>_del($<?php print substr($module, 0, 1 ); ?>id) {
+    $result = db_delete('<?php print $module; ?>')
+            ->condition('<?php print substr($module, 0, 1 ); ?>id', $<?php print substr($module, 0, 1 ); ?>id)
+            ->execute();
+
+    if ($result) {
+      return true;
+    }
+
+    return false;
+  }
+
+}

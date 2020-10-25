@@ -1,0 +1,60 @@
+<script src="/themes/library/jquery-nestable/jquery.nestable.min.js"></script>
+<div id="{{ id }}" class="dd dd-draghandle">
+    {% if title_display is empty %} {% set title_display = false %} {% endif %} {% if title == null AND title_display == true %}
+    <h4 class="header smaller lighter grey">{{ title }}</h4>
+    <div class="space-8"></div>
+    {% endif %} {%- macro hierarchical_list(data,hierarchy) %}
+    <ol class="dd-list">
+        {%- for key, value in hierarchy %} {% if key != value %}
+        <li data-id="{{ key }}" class="dd-item dd2-item">
+            <div class="dd-handle dd2-handle">
+                <i class="normal-icon icon-move bigger-130"></i> <i class="drag-icon icon-move pink bigger-125"></i>
+            </div>
+            <div class="dd2-content">
+                {{ data[key]['name'] }} {%- for link in data[key]['nav'] %} <a class="pull-right ajax-load-link" hrefbox="#main-content" href="{{ link['href'] }}">{{ link['name'] }}&nbsp;|&nbsp;</a>{%- endfor %}
+            </div> {{ hierarchical_list(data,value) }}
+        </li> {% else %}
+        <li data-id="{{ key }}" class="dd-item dd2-item">
+            <div class="dd-handle dd2-handle">
+                <i class="normal-icon icon-move bigger-130"></i> <i class="drag-icon icon-move pink bigger-125"></i>
+            </div>
+            <div class="dd2-content">
+                {{ data[key]['name'] }} {% for link in data[key]['nav'] %} <a class="pull-right ajax-load-link" hrefbox="#main-content" href="{{ link['href'] }}">{{ link['name'] }}&nbsp;|&nbsp;</a> {% endfor %}
+            </div>
+        </li> {% endif %} {%- endfor %}
+    </ol>
+    {%- endmacro %}
+    <?php if (is_array($data) && is_array($hierarchy)) { ?>
+        {{ hierarchical_list(data,hierarchy) }}
+        <button type="submit" class="btn btn-success btn-block save_sort">保存排序</button>
+        <?php }else { ?>
+            程序提供的数据合法或为空。
+            <?php } ?>
+</div>
+<script type="text/javascript">
+(function($) {
+    $('#{{ id }}').nestable();
+    $('.dd-handle a').on('mousedown', function(e) {
+        e.stopPropagation();
+    });
+    //$('[data-rel="tooltip"]').tooltip();
+    $("#{{ id }} .save_sort").click(function() {
+        var e = $("#{{ id }}");
+        var list = e.length ? e : $(e.target),
+            output = list.data('output');
+        if (window.JSON) {
+            var postJson = window.JSON.stringify(list.nestable('serialize'));
+            $.post("{{ url }}", {
+                rh: postJson
+            }, function(data) {
+                $(".main-content").html(data);
+                $.notice('提交成功');
+            }, "html");
+        } else {
+            alert('您的浏览器不安全，不支持本系统.');
+        }
+    })
+
+
+})(jQuery);
+</script>

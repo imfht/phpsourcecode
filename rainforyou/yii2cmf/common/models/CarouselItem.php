@@ -1,0 +1,110 @@
+<?php
+
+namespace common\models;
+
+use common\behaviors\PositionBehavior;
+use common\behaviors\CacheInvalidateBehavior;
+use common\modules\attachment\behaviors\UploadBehavior;
+use Yii;
+use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveRecord;
+
+/**
+ * This is the model class for table "carousel_item".
+ *
+ * @property integer $id
+ * @property integer $carousel_id
+ * @property string $image
+ * @property string $url
+ * @property string $caption
+ * @property integer $status
+ * @property integer $sort
+ *
+ * @property Carousel $carousel
+ */
+class CarouselItem extends ActiveRecord
+{
+
+    /**
+     * @inheritdoc
+     */
+    public static function tableName()
+    {
+        return '{{%carousel_item}}';
+    }
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $key = array_search('carousel_id', $scenarios[self::SCENARIO_DEFAULT], true);
+        $scenarios[self::SCENARIO_DEFAULT][$key] = '!carousel_id';
+        return $scenarios;
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::className(),
+            [
+                'class' => PositionBehavior::className(),
+                'positionAttribute' => 'sort',
+                'groupAttributes' => ['carousel_id']
+            ],
+            'cacheInvalidate' => [
+                'class' => CacheInvalidateBehavior::className(),
+                'keys' => [
+                    function ($model) {
+                        return [
+                            Carousel::className(),
+                            $model->carousel->key
+                        ];
+                    }
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [['carousel_id'], 'required'],
+            [['carousel_id', 'status', 'sort'], 'integer'],
+            [['url', 'caption'], 'string', 'max' => 1024],
+            ['image', 'safe']
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'carousel_id' => Yii::t('app', 'Carousel ID'),
+            'image' => '图片',
+            'url' => '链接',
+            'caption' => '字幕',
+            'status' => '是否启用',
+            'sort' => '排序'
+        ];
+    }
+
+    public function attributeHints()
+    {
+        return [
+            'url' => '格式: /site/index a=1&b=2'
+        ];
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCarousel()
+    {
+        return $this->hasOne(Carousel::className(), ['id' => 'carousel_id']);
+    }
+}

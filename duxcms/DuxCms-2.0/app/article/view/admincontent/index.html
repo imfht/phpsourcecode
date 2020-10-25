@@ -1,0 +1,159 @@
+<div class="panel dux-box">
+   <div class="table-tools clearfix ">
+        <div class="float-left">
+            <form method="post" action="{url()}">
+                <div class="form-inline">
+                    <div class="form-group">
+                        <div class="field">
+                            <input type="text" class="input" id="keyword" name="keyword" size="20" value="{$pageMaps.keyword}" placeholder="关键词">
+                        </div>
+                    </div>
+                    <div class="form-button">
+                        <button class="button" type="submit">搜索</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="float-right">
+            <form method="post" action="{url()}">
+                <div class="form-inline">
+                    <div class="form-group">
+                        <div class="field">
+                            <select class="input" name="class_id" id="class_id">
+                              <option value="0">选择栏目</option>
+                               <!--loop{$categoryList as $vo}-->
+                               <option value="{$vo.class_id}" 
+                               <!--if{$pageMaps['class_id'] == $vo['class_id']}-->
+                               selected="selected"
+                               <!--{/if}-->
+                               <!--if{$vo['type'] == 0 || $vo['app'] != APP_NAME}-->
+                               style="background-color:#CCC" disabled="disabled"
+                               <!--{/if}-->
+                               >{$vo.cname}</option>
+                               <!--{/loop}-->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="field">
+                            <select class="input" name="position_id">
+                              <option value="0">选择推荐位</option>
+                               <!--loop{$positionList as $vo}-->
+                               <option value="{$vo.position_id}" 
+                               <!--if{$pageMaps['position_id'] == $vo['position_id']}-->
+                               selected="selected"
+                               <!--{/if}-->
+                               >{$vo.name}</option>
+                               <!--{/loop}-->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="field">
+                            <select class="input" name="status">
+                              <option value="0">选择状态</option>
+                               <option value="1" 
+                               <!--if{$pageMaps['status'] == 1}-->
+                               selected="selected"
+                               <!--{/if}-->
+                               >发布</option>
+                               <option value="2" 
+                               <!--if{$pageMaps['status'] == 2}-->
+                               selected="selected"
+                               <!--{/if}-->
+                               >未发布</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-button">
+                        <button class="button" type="submit">筛选</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table id="table" class="table table-hover ">
+            <tbody>
+                <tr>
+                    <th width="60">选择</th>
+                    <th width="100">编号</th>
+                    <th width="*">标题</th>
+                    <th width="*">栏目</th>
+                    <th width="*">状态</th>
+                    <th width="160">更新时间</th>
+                    <th width="100">操作</th>
+                </tr>
+                <!--loop{$list as $vo}-->
+                <tr>
+                    <td>
+                        <input type="checkbox" name="id[]" value="{$vo.content_id}" />
+                    </td>
+                    <td>{$vo.content_id}</td>
+                    <td><a href="{$vo.aurl}" target="_blank">{$vo.title}</a></td>
+                    <td><a href="{$vo.curl}" target="_blank">{$vo.class_name}</a></td>
+                    <td>
+                       <!--if{$vo['status']}-->
+                       <span class="tag bg-green">正常</span>
+                       <!--{else}-->
+                       <span class="tag bg-red">禁用</span>
+                       <!--{/if}-->
+                    </td>
+                    <td>{date('Y-m-d H:i:s',$vo['time'])}</td>
+                    <td>
+                        <a class="button bg-blue button-small icon-pencil" href="{url('edit',array('content_id'=>$vo['content_id']))}" title="修改"></a>
+                        <a class="button bg-red button-small icon-trash-o js-del" href="javascript:;" data="{$vo.content_id}" title="删除"></a>
+                    </td>
+                </tr>
+                <!--{/loop}-->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel-foot table-foot clearfix">
+        <div class="float-left">
+            <div class="form-inline">
+                <div class="form-group">
+                    <div class="field">
+                        <select class="input" id="selectAction">
+                            <option value="1">发布</option>
+                            <option value="2">草稿</option>
+                            <option value="3">移动</option>
+                            <option value="4">删除</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-button">
+                    <a class="button bg-blue button-small" id="selectAll" type="button">全选</a>
+                    <a class="button bg-blue button-small" id="selectSubmit" type="submit">执行</a>
+                </div>
+
+            </div>
+            <br>
+        </div>
+        <div class="float-right">
+            {$page}
+        </div>
+    </div>
+</div>
+<script type="text/javascript" charset="utf-8">
+	Do.ready('base',function() {
+		//移动操作
+		$('#selectAction').change(function() {
+			var type = $(this).val();
+			if(type == 3){
+				$(this).after($('#class_id').clone());
+			}else{
+				$(this).nextAll('select').remove();
+			}
+		});
+		//表格处理
+		$('#table').duxTable({
+			actionUrl : "{url('batchAction')}",
+			deleteUrl: "{url('del')}",
+			actionParameter : function(){
+				return {'class_id' : $('#selectAction').next('#class_id').val()};
+			}
+		});
+	});
+</script>

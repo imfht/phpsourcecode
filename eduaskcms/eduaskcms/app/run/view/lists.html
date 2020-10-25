@@ -1,0 +1,528 @@
+{extends file="base.html"}
+{block name=function}
+    {function name=list_elem_text mdl=null field=null val=null col=null sub_elem=null}
+		{$val}
+	{/function}
+    {function name=list_elem_filesize mdl=null field=null val=null col=null sub_elem=null}        
+		{return_size(floatval($val))}
+	{/function}
+    
+    {function name=list_elem_edit mdl=null field=null val=null col=null sub_elem=null}{strip}
+        {$sub_elem=$sub_elem|default:'text'}
+		{if $sub_elem=='text'}
+            <input  type="text" value="{$val}" data-url="{url('ajax_set_field', ['id'=>$item.id,'field'=>$field])}"  class="list_edit_item list_edit_{$sub_elem}"/>
+        {elseif $sub_elem == 'date'}
+            {$form->text("",['name' =>'','data-url'=> url('ajax_set_field', ['id'=>$item.id,'field'=>$field]),'value' => $val, 'class' => 'datepicker list_edit_item list_edit_'|cat:{$col.options.type|default:'date'}, 'data-lang' => $col.options.lang|default:'cn', 'data-trigger' => $col.options.trigger|default:'focus', 'data-type' => $col.options.type|default:'date', 'data-range' => $col.options.range|default:'', 'data-min' => $col.options.min|default:'', 'data-max' => $col.options.max|default:'', 'data-theme' => $col.options.theme|default:'default', 'data-calendar' => $col.options.calendar|default:''])}
+        {elseif $sub_elem == 'datetime'}
+            {$form->text("",['name' =>'','data-url'=> url('ajax_set_field', ['id'=>$item.id,'field'=>$field]),'value' => $val, 'class' => 'datetimepicker list_edit_item list_edit_'|cat:{$col.options.type|default:'datetime'}, 'data-lang' => $col.options.lang|default:'cn', 'data-trigger' => $col.options.trigger|default:'focus', 'data-type' => $col.options.type|default:'datetime', 'data-range' => $col.options.range|default:'', 'data-min' => $col.options.min|default:'', 'data-max' => $col.options.max|default:'', 'data-theme' => $col.options.theme|default:'default', 'data-calendar' => $col.options.calendar|default:''])}
+        {elseif $sub_elem == 'options'}
+            {$form->select("",$col.options,['name' =>'','data-url'=> url('ajax_set_field', ['id'=>$item.id,'field'=>$field]),'value' => $val,'class'=>'form_item list_edit_item list_edit_'|cat:$sub_elem,'lay-search'=>'','lay-filter'=>'list_edit_item','empty'=>"≡请选择{$col.name}≡"])}
+        {else}
+            <div class="form-error-tip">列表暂时不支持“{$sub_elem}”编辑</div>
+        {/if}
+	{/strip}{/function}
+    
+    {function name=list_elem_query_get mdl=null field=null val=null col=null sub_elem=null}
+        $query_data[{$item.menu_id}]
+	{/function}
+    
+    {function name=list_elem_show mdl=null field=null val=null col=null sub_elem=null}
+        <span title="{$val|strip_tags}">
+        {$local.length=$info.length|default:$mdls[$mdl]->form.$field.length}
+        {if $local.length}{$val=$val|cn_truncate:$local.length}{/if}
+        {$local.show=$info.show|default:$mdls[$mdl]->form.$field.show|default:$val}
+        {$local.temp=$item}
+        {if isset($col.options[$val])}{$local.show=$col.options[$val]}{/if}
+        {$local.temp.$field=$local.show}
+        {string_insert($local.show, $local.temp)}
+        </span>
+	{/function}
+    
+    {function name=list_elem_password mdl=null field=null val=null col=null sub_elem=null}
+		{$val|regex_replace:'/.{0,}/':'*'}
+	{/function}
+    
+    {function name=list_elem_tag mdl=null field=null val=null col=null sub_elem=null}
+		{$value=$val}
+        {if $value}
+        {$value_array = explode(',', $value)}
+        {foreach $value_array as $tag}{strip}       
+        <a class="tag_each" data-value="{$tag}">{$tag}</a>
+        {/strip}{/foreach}
+        {/if}
+	{/function}
+    
+    {function name=list_elem_date mdl=null field=null val=null col=null sub_elem=null}
+		{if preg_match('/^\d{4}\-\d{2}\-\d{2}$/',$val)}
+            {$val}
+        {else}
+            {$val|date_format:'Y-m-d':date}
+        {/if}
+	{/function}
+    
+    {function name=list_elem_datetime mdl=null field=null val=null col=null sub_elem=null}
+		{if preg_match('/^\d{4}\-\d{2}\-\d{2} \d{2}:\d{2}:\d{2}$/',$val)}
+            {$val}
+        {else}
+            {$val|date_format:'Y-m-d H:i:s':date}
+        {/if}
+	{/function}
+    
+    {function name=list_elem_year mdl=null field=null val=null col=null sub_elem=null}
+		{if preg_match('/^\d{4}$/',$val)}
+            {$val}
+        {else}
+            {$val|date_format:'Y':date}
+        {/if}
+	{/function}
+    
+    {function name=list_elem_month mdl=null field=null val=null col=null sub_elem=null}
+		{if preg_match('/^\d{4}\-\d{2}$/',$val)}
+            {$val}
+        {else}
+            {$val|date_format:'Y-m':date}
+        {/if}
+	{/function}
+    
+    {function name=list_elem_time mdl=null field=null val=null col=null sub_elem=null}
+		{if preg_match('/^\d{2}:\d{2}:\d{2}$/',$val)}
+            {$val}
+        {else}
+            {$val|date_format:'H:i:s':date}
+        {/if}
+	{/function}
+    
+    {function name=list_elem_color mdl=null field=null val=null col=null sub_elem=null}
+		<div class="color" style=" width: 30px;height: 30px;margin: 0 auto;border: 1px solid #ddd;border-radius: 2px; {if $val}background-color:{$val};{/if}"></div>    
+	{/function}
+    
+    {function name=list_elem_options mdl=null field=null val=null col=null sub_elem=null}
+		{$mdls[$col.foreign.model|default:$mdl]->form[$col.foreign.field|default:$col.field].options[$val]}
+	{/function}
+    {function name=list_elem_image mdl=null field=null val=null col=null sub_elem=null}
+        <div class="list_padding">
+		{if $val}<a {*href="{call furl url=$val}" target="_blank"*} href="javascript:void(0);" class="list_img"><img data-background="rgba(0,0,0,0.05)"  class="lightense" src="{call furl url=$item[$info.image.thumb.field|default:'thumb']|default:$val}" style="max-height:50px;"/></a>{else}无{/if}
+	    </div>
+    {/function}
+    
+    {function name=list_elem_file mdl=null field=null val=null col=null sub_elem=null}
+		{if $val}<a href="{call furl url=$val}" target="_blank">{$val}</a>{else}无{/if}
+	{/function}
+    {function name=list_elem_checker mdl=null field=null val=null col=null sub_elem=null}
+		{if $sub_elem=='show'}
+        	{if $val}<span class="yOK">√</span>{else}<span class="nOK">╳</span>{/if}
+        {else}
+        	<input type="checkbox" alt="{$col.name}" lay-filter="list" lay-skin="switch" lay-text="Y|N" class="general_switch" {if $val}checked="checked"{/if} value="{url('ajax_switch',['id'=>$item.id,'field'=>$field,'value'=>$val])}" />
+        {/if}
+	{/function}
+    
+    {function name=list_elem_counter mdl=null field=null val=null col=null sub_elem=null}
+		{$val} <a class="new_tab" href="{url($col.counter|cat:'/lists',['parent_id'=>$item.id])}" data-icon="fa-eye" data-title="{$mdls[$col.counter]->cname}列表"><i class="fa fa-eye"></i> 查看</a>
+	{/function}    
+	{function name=list_elem_call mdl=null field=null val=null col=null sub_elem=null}
+		{call name='list_call_'|cat:$sub_elem mdl=$mdl field=$field val=$val item=$item}
+	{/function} 
+       
+    {function name=list_elem_assoc mdl=null field=null val=null col=null sub_elem=null}
+    	{$local.foreign_val=$item[$info.foreign.model][$info.foreign.field]}
+    	{if $info.foreign.options}{$local.foreign_val=$info.foreign.options[$local.foreign_val]}{/if}
+        {if $field == $parent_field}
+        {$local.forign_url=url('lists',array_merge($args,['parent_id'=>$val,'page'=>null]))}
+        {else}           
+            {if strpos($field,'.')===false}
+            {$local.forign_url=url('lists',array_merge($args,[$field=>$val]))}
+            {else}
+            {$local.forign_url='javascript:;'}
+            {/if}
+        {/if}
+		<a href="{$local.forign_url}">
+        {$local.foreign_val}
+        </a>
+	{/function}
+    
+    {function name=list_elem_blob mdl=null field=null val=null col=null sub_elem=null}
+		[BLOB:{return_size(strlen($val))}]
+	{/function} 
+    
+    {function name=item_action_modify item=[] info=[]}{strip}
+		<a class="layui-btn layui-btn-primary layui-btn-sm " href="{url('modify',['id'=>$item.id])}"><i class="layui-icon">&#xe642;</i>编辑</a>
+    {/strip}{/function} 
+       
+    {function name=item_action_delete item=[] info=[]}{strip}
+		<a class="layui-btn item-action-delete layui-btn-primary layui-btn-sm " href="{url('delete',['id'=>$item.id])}"><i class="layui-icon">&#xe640;</i>删除</a>
+    {/strip}{/function}
+    
+    {function name=item_action_copy item=[] info=[]}{strip}
+		<a class="layui-btn layui-btn-primary layui-btn-sm " href="{url('create',['copy_id'=>$item.id])}"><i class="layui-icon">&#xe621;</i>复制</a>
+    {/strip}{/function}  
+      
+{$smarty.block.child}
+{/block}
+
+{block name=base}
+{block name=base_top}
+
+{if $list_search_fields}
+<div class="admin_module clearfix admin_module_search">
+    <i class="line"></i>
+    <a class="javascript" id="list_search_toggle" rel='list_search_switch'>{if !$filter}展开搜索{else}关闭搜索{/if}</a>
+    <div id="list_search" class="clearfix {if !$filter}hidden{/if}" >
+    	{$form->create(['type'=>'post','class'=>'layui-form layui-form-pane','novalidate'=>true])}
+        
+        {foreach $list_search_fields as $field=>$info}
+        {if $info.hide}{continue}{/if}
+        <div class="layui-form-item">
+            <label class="layui-form-label">{$info.name}</label>
+            <div class="layui-input-inline">
+                {if $info.elem == 'text'}
+                    {$form->text("Search.$field",['class' => 'layui-input','value' => $filter.$field])}
+                {elseif $info.elem == 'options'}
+                    {$form->select("Search.$field",$info.options,['class'=>'form_item','value' => $filter.$field, 'lay-search'=>'', 'lay-filter'=>$field, 'empty'=>"≡请选择{$info.name}≡"])}
+                {elseif $info.elem == 'date'}
+                    {$form->text("Search.$field",['class' => 'layui-input datepicker','value' => urldecode($filter.$field),'data-lang' => $info.options.lang|default:'cn', 'data-trigger' => $info.options.trigger|default:'focus', 'data-type' => $info.options.type|default:'date', 'data-range' => $info.options.range|default:'', 'data-min' => $info.options.min|default:'', 'data-max' => $info.options.max|default:'', 'data-theme' => $info.options.theme|default:'default', 'data-calendar' => $info.options.calendar|default:''])}
+                {elseif $info.elem == 'datetime'}
+                    {$form->text("Search.$field",['class' => 'layui-input datetimepicker','value' => urldecode($filter.$field),'data-lang' => $info.options.lang|default:'cn', 'data-trigger' => $info.options.trigger|default:'focus', 'data-type' => $info.options.type|default:'datetime', 'data-range' => $info.options.range|default:'', 'data-min' => $info.options.min|default:'', 'data-max' => $info.options.max|default:'', 'data-theme' => $info.options.theme|default:'default', 'data-calendar' => $info.options.calendar|default:''])}
+                {elseif $info.elem == 'date_range'}
+                    {$form->text("Search.$field",['class' => 'layui-input datepicker','value' => urldecode($filter.$field),'data-lang' => $info.options.lang|default:'cn', 'data-trigger' => $info.options.trigger|default:'focus', 'data-type' => $info.options.type|default:'date', 'data-range' => '~', 'data-min' => $info.options.min|default:'', 'data-max' => $info.options.max|default:'', 'data-theme' => $info.options.theme|default:'default', 'data-calendar' => $info.options.calendar|default:''])}
+                {elseif $info.elem == 'number_range'}
+                    <div class="number_range clearfix">
+                        {$form->hidden("Search.$field",['class' => 'layui-input','value' => urldecode($filter.$field)])}
+                        {$rangeVal=explode('~', urldecode($filter.$field))}                        
+                        <input class="layui-input min" value="{trim($rangeVal[0])}" min="{$info.options.min|default:0}" max="{$info.options.max|default:0}"  type="number"/><span>-</span><input value="{trim($rangeVal[1])}" min="{$info.options.min|default:0}" max="{$info.options.max|default:0}" class ="layui-input max"  type="number"/> 
+                    </div>               
+                {else}
+                    {$local.func='list_search_'|cat:$info.elem}
+                    {call name=$local.func  field=$field info=$info value=$filter.$field}                    
+                {/if}
+            </div>
+        </div>
+        {/foreach}
+        
+        <div class="search_action">
+            <button class="layui-btn" lay-submit>搜索</button>
+            <a href="{html_entity_decode(U(['parent_id'=>$args.parent_id]),true)}" class="layui-btn layui-btn-primary">清空</a>
+        </div>         
+                      
+    	{$form->end()}
+    </div>
+</div>
+{/if}
+{/block}
+
+<div class="box_list">
+    <div class="box_content">
+        {$form->create(['type'=>'post','class'=>'layui-form','id'=>'list_form','novalidate'=>true])}
+        {block name=list_content}            
+        <table class="layui-table list" lay-filter="list">
+            <colgroup>
+                {if !isset($no_check)}
+                <col width="59"/>
+                {/if}
+            </colgroup>            
+            <thead>
+                <tr>
+                    {$field_count=0}
+                    {if !isset($no_check)}
+                    {$field_count=$field_count+1}
+                    <th><input name="" lay-skin="primary" lay-filter="allChoose" type="checkbox"/></th>
+                    {/if}
+                    
+                    {foreach $list_fields as $field=>$info}
+                    {if $info.list}
+                    {$field_count=$field_count+1}
+                    <th {if $info.width} width="{$info.width}"{/if}> 
+                    {if $info.sortable}
+                    	{$local.sort_field=$field}
+                        
+                        {$local.sortmap=['asc'=>'desc','desc'=>'asc']}
+                        {$local.sorticon=['asc'=>'fa-sort-asc','desc'=>'fa-sort-desc']}
+        
+                        {if $args.sort==$local.sort_field}
+                        {$local.sort_dir=strtolower($args.direction)}
+                        {else}
+                        {$local.sort_dir=null}
+                        {/if}
+                        
+                        {if $local.sort_dir}
+                        <a href="{U(['direction'=>$local.sortmap[$local.sort_dir]]+$args)}">
+                        {else}
+                        <a href="{U(['sort'=>$local.sort_field,'direction'=>'desc']+$args)}">
+                        {/if}
+                    {/if}    
+                    
+                    {if $info.cname}
+    					{$info.cname}
+    				{else}
+    					{if $info.name}
+    						{$info.name}
+    					{else}
+    						{$mdls[$info.foreign.model]->cname}.{$mdls[$info.foreign.model]->form[$info.foreign.field].name}
+    					{/if}
+    				{/if}    
+                        
+                    {if $info.sortable}
+                        <i class="fa {$local.sorticon[$local.sort_dir]|default:'fa-sort'}"></i></a>
+                    {/if}
+                    </th>
+                    {/if}
+                    {/foreach}
+                    
+                    {if $item_actions}
+                    {$field_count=$field_count+1}
+                    <th class="item_action">操作</th>
+                    {/if}
+                </tr> 
+            </thead>
+            <tbody>
+                {foreach $list as $item}
+                <tr>
+                    {if !isset($no_check)}
+                    {if !isset($check_fields)}{$check_fields = 'id'}{/if}
+                    <td><input name="selected_id[]" value="{$item.$check_fields}" lay-skin="primary" class="batch_selected" type="checkbox"></td>
+                    {/if}
+                    {foreach $list_fields as $field=>$info}
+                        {if $info.list}
+                            <td>
+                            {$local.list_type=pluginSplit($info.list)}
+                            {if $local.list_type[0]===null}
+                            	{$local.list_type[0]=$local.list_type[1]}
+                                {$local.list_type[1]=null}
+                            {/if}                            
+                            {$local.func='list_elem_'|cat:$local.list_type[0]}
+                            {call name=$local.func mdl=$mdl field=$field val=$item[$info.field|default:$field] col=$info sub_elem=$local.list_type[1]}
+                            </td>
+                        {/if}
+                    {/foreach}
+                    {if $item_actions}
+                    <td class="item_action">
+                        <div class="layui-btn-group">
+                            {foreach $item_actions as $key => $info}
+                                {if !$info}{continue}{/if}
+                                {if is_array($info)}
+                                    <a class="layui-btn layui-btn-primary layui-btn-sm {$info.class}" href="{call url url=$info.url item=$item}">{if $info.icon}{if strpos($info.icon,'fa')!==false}<i class="fa {$info.icon}"></i>{else}<i class="layui-icon">{$info.icon}</i>{/if}{/if}{$info.title}</a>
+                                {else}
+        						{call name='item_action_'|cat:$info item=$item info=$info}
+                                {/if}
+        					{/foreach}
+                        </div>
+                    </td>
+                    {/if}
+                </tr>
+                {/foreach}
+                {if !$list}
+                <tr>
+                    <td colspan="{$field_count}" style="color: rgba(0,0,0,0.5);"><i class="fa fa-spinner"></i> 当前暂无数据...</td>
+                </tr>
+                {/if}
+            </tbody>
+        </table>
+        {/block}
+        {$form->end()}
+    </div>
+    {block name=page}
+    {if isset($page)}
+    <div class="page-box">
+        <div id="pageShow">
+            {include file="./Common/nice_pageination.html"}
+        </div>
+    </div>
+    {/if}
+    {/block}
+</div>
+{$smarty.block.child}
+{/block}
+
+{block name=script}
+<script type="text/javascript">
+var layForm;
+layui.use(['form','element','laydate'], function(){
+    layForm = layui.form;
+    var laydate = layui.laydate;
+    
+    $('.datepicker,.datetimepicker').each(function(){
+        var range = false;
+        if ($(this).data('range')) {
+            if ($(this).data('range') == '1') {
+                range = '~'
+            } else {
+                range = $(this).data('range');
+            }
+        }  
+        var that = this;      
+        laydate.render({ 
+          elem: this
+          ,type: $(this).data('type') ? $(this).data('type') : 'date'
+          ,trigger: $(this).data('trigger') ? $(this).data('trigger') : 'focus'
+          ,range : range
+          ,min : $(this).data('min') ? $(this).data('min') : {}
+          ,max : $(this).data('max') ? $(this).data('max') : {}
+          ,lang : $(this).data('lang') ? $(this).data('lang') : 'cn'
+          ,theme : $(this).data('theme') ? $(this).data('theme') : 'default'
+          ,calendar : !$(this).data('calendar') ? false : true
+          ,done : function(value, date, endDate) {
+            if ($(that).hasClass('list_edit_item')) {
+                $(that).val(value)
+                list_edit(that);
+            }
+          }
+        });
+    })
+    
+    $('.number_range').find('input').change(function(){
+        var min = parseFloat($(this).attr('min')) ? parseFloat($(this).attr('min')) : 0;
+        var max = parseFloat($(this).attr('max')) ? parseFloat($(this).attr('max')) : 0;
+        var min_val = parseFloat($(this).parent().find('.min').val());
+        var max_val = parseFloat($(this).parent().find('.max').val());
+        var that = $(this);
+        if (!min_val) {
+            min_val =  0;
+        }
+        if (!max_val) {
+            max_val =  0;
+        }
+        if (min_val < min && min != 0) {
+            min_val = min;
+            var index = layer.msg('不能小于' + min, {
+                offset: [that.parent().find('.min').offset().top - 10 + 'px', (that.parent().find('.min').offset().left) + 'px']
+                ,time : 800
+            });
+        }
+        if (max_val > max && max != 0) {
+            max_val = max;
+            layer.msg('不能大于' + max, {
+                offset: [that.parent().find('.max').offset().top - 10 + 'px', (that.parent().find('.max').offset().left) + 'px']
+                ,time : 800
+            });
+        }
+        if (max_val < min_val) {
+            max_val = min_val;
+            layer.msg('不能小于' + min_val, {
+                offset: [that.parent().find('.max').offset().top - 10 + 'px', (that.parent().find('.max').offset().left) + 'px']
+                ,time : 800
+            });
+        }        
+        $(this).parent().find('.min').val(min_val).end().find('.max').val(max_val);
+        $(this).parent().find('input[type="hidden"]').val(min_val + '~' + max_val);
+    })
+    
+    layForm.on('select(list_edit_item)', function(data){
+      list_edit(data.elem, data.value);
+    }); 
+    
+    //全选
+    layForm.on('checkbox(allChoose)', function(data){
+        var child = $(data.elem).parents('table').find('tbody .batch_selected');
+        child.each(function(index, item){
+            item.checked = data.elem.checked;
+        });
+        layForm.render('checkbox');
+    });
+     
+     
+     layForm.on('switch(list)', function(data){
+        var $this=$(data.elem);
+        var $switch = $(data.othis);
+        var url=data.value;
+        
+        layer.confirm('请确认是否执行该操作？',function(){
+            layer.closeAll();
+            layer.msg('数据提交中');
+            HKUC.ajax_request.call(this,url,null,
+				{
+					'success':function(msg,data){
+						$this.prop('checked',data.result).attr('value',data.url);
+						layer.closeAll();
+						layer.alert('数据修改成功');
+					},
+					'error':function(msg,data){
+		                  layer.closeAll();
+		                  layer.alert(msg)
+					}
+				}
+			);
+        },function(){
+            //取消 -- 还原
+            $this.prop('checked',!$this.prop('checked'));
+            var text = $switch.find('em').text() =='Y' ? 'N':'Y';
+            $switch.toggleClass('layui-form-onswitch').find('em').text(text);
+        })
+    });
+});
+
+function list_search_switch(){
+	var $this=$(this);
+	var $list_search = $this.siblings('#list_search');
+	
+	if($list_search.is(':animated')) return;
+	
+	if($list_search.is(':hidden')){
+		$list_search.slideDown(0,function(){
+			$this.html('关闭搜索');
+		})
+	} else {
+		$list_search.slideUp(0,function(){
+			$this.html('展开搜索');
+		})
+	}
+}
+
+$('.list_edit_item').change(function(){
+    list_edit(this);
+})
+
+function list_edit(object, value) {
+    var val  = $(object).val();
+    if (value) {
+        val = value;
+    }
+    var url  = $(object).attr('data-url') +'?value='+val;
+    var that = $(object);
+    HKUC.ajax_request.call(object,url,null,
+		{
+			'success':function(msg,data){
+			
+			},
+			'error':function(msg,data){
+                  layer.closeAll();
+                  layer.alert(msg)
+			}
+		}
+	);
+}
+
+
+
+$('.item-action-delete').click(function(){
+    var href  = $(this).attr('href') ;
+    layer.confirm('该操作不可逆，请确认是否删除？',function(){
+        layer.closeAll();
+        location.href  = href; 
+    })
+    return false ;
+})
+
+
+$(document).ready(function(){
+    $('.admin_header .action .batch_delete').click(function(){
+        var selected_length  = $('#list_form').find('input.batch_selected:checked').length;
+        if(selected_length == 0) {
+            layer.msg('您还没有选择任何项目');
+            return false ;
+        }
+        layer.confirm('该操作不可逆，请确认是否删除该['+selected_length+']条数据？',function(){
+            layer.closeAll();
+            $('#list_form').attr('action',"{url('batch_delete',$args)}").submit();
+        })
+    })
+    $("table.list").tableresize({ resizeTable: false});
+    
+    if ($('.lightense').length) {
+        window.addEventListener('load', function () {
+          var el = document.querySelectorAll('.lightense');
+          Lightense(el);
+        }, false); 
+    }
+});
+</script>
+{$smarty.block.child}
+{/block}

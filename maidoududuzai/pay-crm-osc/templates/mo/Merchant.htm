@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>{echo admin_title()}</title>
+	{template _header}
+	<style>
+	.weui-cell { font-size: small;}
+	.weui-cell .weui-cell__bd p span{ color:rgba(0,0,0,.3)}
+	.weui-cell .weui-cell__ft span{ color:rgba(0,0,0,.3)}
+	</style>
+</head>
+<body>
+	<div class="weui-tab">
+		<div class="weui-tab__panel">
+			<div class="filter">
+				<div class="weui-search-bar" id="searchBar">
+					<form class="weui-search-bar__form" method="GET" action="{echo \befen\get_url()}">
+						<div class="weui-search-bar__box">
+							<i class="weui-icon-search"></i>
+							<input type="search" class="weui-search-bar__input" id="searchInput" name="wd" placeholder="搜索" />
+							<a href="javascript:" class="weui-icon-clear" id="searchClear"></a>
+						</div>
+						<label class="weui-search-bar__label" id="searchText">
+							<i class="weui-icon-search"></i>
+							<span>搜索</span>
+						</label>
+					</form>
+					<a href="javascript:" class="weui-search-bar__cancel-btn" id="searchCancel">取消</a>
+				</div>
+			</div>
+			<div class="weui-cells" style="margin-top: 0;"></div>
+			<div class="more">~没有更多了</div>
+		</div>
+		{template _main_nav}
+	</div>
+	<script src="/public/m/qrcode.min.js"></script>
+	<script>
+	//全局请求参数
+	var filter = {};
+	location.search && location.search.substr(1).split('&').map(param => {
+		param = param.split('=');
+		filter[param[0]] = param[1]
+	});
+	//当前选中商户
+	var merchant_id = '', merchant_name = '';
+	$(".weui-cells").on("click", '.weui-cell', (e) => {
+		let target = $(e.target).hasClass('weui-cell') ? e.target : $(e.target).parents('.weui-cell')[0];
+		merchant_id = $(target).data('merchant_id'),
+		merchant_name = $(target).data('merchant_name');
+	});
+
+	//自动加载
+	var isloading = 0;
+	var load_more = () => {
+		if(filter.page == 'last' || isloading) return false;
+		filter.page = filter.page ? filter.page + 1 : 1;
+		$('#more').text('加载中...');
+		isloading = 1;
+		$.post('/mo/merchant', filter, (result) => {
+			isloading = 0;
+			if(result.status == 0){
+				alert(result.message);
+				return false;
+			}
+			$('#more').text('加载更多');
+			if(result.contents.total == 0){
+				filter.page = 'last';
+				$('#more').text('暂无数据');
+			}
+			if(result.contents.last_page <= filter.page){
+				filter.page = 'last';
+				$('#more').text('~没有更多了');
+			}
+			let list = [];
+			result.contents.list.map((v, i) => {
+				list.push([
+					'<div class="weui-cell weui-cell_access weui-cell_store" data-merchant_id="' + v['merchant_id'] + '" data-merchant_name="' + v['merchant_name'] + '">',
+					'<div class="weui-cell__bd"><p>' + v['merchant_name'] + '<br><span>申请时间 ' + v['time_create'] + '</span></p></div>',
+					'<div class="weui-cell__ft" ' + ( v['status'] == '正常' ? 'style="color:#06AE56"' : '' ) + '>' + v['status'],
+						'<br><span>费率 ' + v['trade_rates'] + '%</span>',
+					'</div>',
+					'</div>'
+				].join(''));
+			});
+			$('.weui-tab__panel').children('.weui-cells').append(list.join(''));
+			$('#datePickerBtn .sum').remove();
+			if(result.contents.sum !== undefined){
+				$('#datePickerBtn').append('<span class="sum" style="display: block; font-size: 13px; color: rgba(0,0,0,.5);">收入 ￥' + result.contents.sum + '</span>');
+			}
+		})
+	}
+
+	var reload = ()=>{
+		filter.page = 0;
+		$('.weui-tab__panel').children('.weui-cells').empty();
+		load_more();
+	}
+
+	$('.weui-tab__panel').scroll(function(e){
+		if( this.scrollHeight <= $(this).height() + $(this).scrollTop() + 1 ){//加一容错
+			load_more();
+		}
+	})
+	$('#more').click(load_more)
+	load_more();
+
+	//searchbar
+	var searchBar = $('#searchBar'),
+		searchText = $('#searchText'),
+		searchInput = $('#searchInput'),
+		searchClear = $('#searchClear'),
+		searchCancel = $('#searchCancel');
+	function cancelSearch(){
+		searchBar.removeClass('weui-search-bar_focusing');
+		searchText.show();
+	}
+	searchText.on('click', function(){
+		searchBar.addClass('weui-search-bar_focusing');
+		searchInput.focus();
+	});
+	searchInput
+		.on('blur', function () {
+			if(!this.value.length) cancelSearch();
+		})
+		.on('input', function(){
+		})
+	;
+	searchClear.on('click', function(){
+		searchInput.val('').focus();
+	});
+	searchCancel.on('click', function(){
+		cancelSearch();
+		searchInput.blur();
+	});
+	if(filter.wd){
+		searchInput.val(decodeURI(filter.wd));
+		searchText.click();
+	}
+
+	//操作菜单
+	$(".weui-cells").on("click", '.weui-cell', (e) => {
+		let actionSheet = weui.actionSheet([
+			{
+				label: '商户详情',
+				onClick: function () {
+					location.assign("/mo/merchant/detail?merchant_id=" + merchant_id);
+				}
+			}, {
+				label: '终端设备',
+				onClick: function () {
+					location.assign("/mo/device/index?merchant_id=" + merchant_id);
+				}
+			}, {
+				label: '商户授权',
+				onClick: function () {
+					actionSheet.hide();
+					showMerchantAuthQrcode();
+				}
+			}, {
+				label: '重置密码',
+				onClick: function () {
+					showResetPwdDialog(actionSheet);
+				}
+			}
+		], [
+			{
+				label: '取消',
+				onClick: function () {}
+			}
+		]);
+	});
+
+	//二维码
+	function showMerchantAuthQrcode(){
+		var loading = weui.loading('加载中');
+		$.ajax({
+			type: "POST",
+			url: "/mo/merchant/get_url_auth_token?merchant_id=" + merchant_id,
+			data: {},
+			success: function(res){
+				loading.hide();
+				let html = [
+					'请引导商户扫描此二维码进行授权',
+					'<div style="text-align:center">',
+						'<div id="qrcode" style="width:250px;height:250px;margin:0.5em auto 0"></div>',
+					'</div>'
+				].join('');
+				weui.confirm(html, {
+					title: '商户授权-' + merchant_name,
+					buttons: [{
+						label: '好的',
+						type: 'primary',
+					}]
+				});
+				var qrcode = new QRCode(document.getElementById("qrcode"), {
+					text: res,
+					colorDark : "#000000",
+					colorLight : "#ffffff",
+					correctLevel : QRCode.CorrectLevel.H
+				});
+			}
+		})
+	};
+
+	//重置密码
+	function showResetPwdDialog(actionSheet){
+		let html = '<input type="password" name="password" id="password" class="weui-input" style="border-bottom: 1px solid rgba(0,0,0,.2);padding: 10px 0;" placeholder="请输入密码" required>';
+		let confirmDom = weui.confirm( html, function(){
+				if(!$('#password').val()){
+					weui.topTips('密码不能为空');
+					return false;
+				}
+				actionSheet.hide();
+				var loading = weui.loading('加载中');
+				$.ajax({
+					type: "POST",
+					url: "/mo/merchant/passwd?merchant_id=" + merchant_id,
+					data: {
+						merchant_id: merchant_id,
+						password: $('#password').val()
+					},
+					success: function(res){
+						loading.hide();
+						weui.toast('操作成功');
+						confirmDom.hide();
+					}
+				});
+				return false;
+			},
+			{
+				title: '重置密码-' + merchant_name,
+			}
+		);
+	};
+	</script>
+</body>
+</html>

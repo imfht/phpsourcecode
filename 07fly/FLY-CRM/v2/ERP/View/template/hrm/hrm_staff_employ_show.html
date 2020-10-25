@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5><i class="fa fa-home"></i> 用工记录</h5>
+                    <div class="ibox-tools"><a href="javascript:void(0);" class="btn btn-xs btn-default btn-help-detail" data-type="hrm_staff"> <i class="fa fa-question-circle"> 操作说明</i></a>
+                    </div>
+                </div>
+                <div class="ibox-content table-responsive">
+                    <div class="row">
+                        <form id="pagerForm" method="post" class="form-inline">
+                            <div class="col-sm-3 m-b-xs">
+                                <a href="?" class="btn  btn-default"> <i class="fa fa-refresh"> 刷新</i></a>
+                                <a href="javascript:void(0)" class="btn btn-info ajax-open" data-url="#{$smarty.const.ACT}#/hrm/HrmStaffEmploy/hrm_staff_employ_add/" data-title="添加"><i class="fa fa-plus"></i> 添加</a>
+                            </div>
+                            <div class="col-sm-9 m-b-xs text-right">
+
+                                <div class="input-group pd-b-5">
+                                    <input type="text" name="keywords" placeholder="请输入关键词" class="form-control">
+                                </div>
+                                <div class="input-group"> <span class="input-group-btn">
+                  <button type="button" class="btn btn-primary ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                  </span></div>
+                            </div>
+                        </form>
+                    </div>
+                    <table class="table table-hover sorttable 07fly-table" width="100%">
+                        <thead>
+                        <tr>
+                            <th width="22"><input type="checkbox" group="ids" class="checkboxCtrl"></th>
+                            <th width="80"><span>员工编号</span></th>
+                            <th width="80"><span>员工姓名</span></th>
+                            <th width="100"><span>入职时间</span></th>
+                            <th width="100"><span>工作岗位</span></th>
+                            <th width="100"><span>工作内容</span></th>
+                            <th width="100"><span>备注</span></th>
+                            <th width="100"><span>创建人</span></th>
+                            <th width="100"><span>创建时间</span></th>
+                            <th width="80">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                    <table class="table 07fly-table">
+                        <tfoot class="ibox-content">
+                        <tr>
+                            <td align="center" class="pagestring"></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+<script id="tableListTpl" type="text/html">
+    <% for(var i=0;i <list.length;i++) { %>
+    <tr>
+        <td><input name="id" class="checkboxCtrlId" value="<%=list[i]['id']%>" type="checkbox" ></td>
+        <td><a href="#{$smarty.const.ACT}#/hrm/HrmStaff/hrm_staff_detail/id/<%=list[i]['staff_id']%>/"><%=list[i]['staff']['staff_no']%></a></td>
+        <td><%=list[i]['staff']['name']%></td>
+        <td><%=list[i]['work_date']%></td>
+        <td><%=list[i]['position']%></td>
+        <td class="overflow-td"><%=list[i]['content']%></td>
+        <td class="overflow-td"><%=list[i]['remark']%></td>
+        <td><%:=list[i]['create_user_text']%></td>
+        <td><%=list[i]['create_time']%></td>
+        <td>
+            <a href="javascript:void(0)"  class="ajax-open" data-url="#{$smarty.const.ACT}#/hrm/HrmStaffEmploy/hrm_staff_employ_modify/"  data-id="<%=list[i]['id']%>" data-title="修改">修改</a>
+            <a href="javascript:void(0)"  class="ajax-get" data-url="#{$smarty.const.ACT}#/hrm/HrmStaffEmploy/hrm_staff_employ_del/"  data-id="<%=list[i]['id']%>" data-title="删除">删除</a>
+        </td>
+    </tr>
+    <% } %>
+</script>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+<script type="text/javascript">
+    var ajaxUrl = '#{$smarty.const.ACT}#/hrm/HrmStaffEmploy/hrm_staff_employ_json/';
+
+    $(document).ready(function () {
+
+        turnPage(1);//页面加载时初始化分页
+        $('.chosen-select').chosen({search_contains: true});
+        $('.chosen-select').chosen().change(function () {
+            ajaxSearchFormData = $("form").serialize();
+            turnPage(1);
+        });
+
+        //单击操作
+        $("body").on("click", ".ajax-open", function () {
+            var target = $(this).attr("data-url");
+            var id = $(this).attr("data-id");
+            if (typeof (id) != "undefined" && id != 0) {
+                var target = target + "?id=" + id;
+            }
+            var title = $(this).attr("data-title");
+            log(target);
+            layer.open({
+                type: 2,
+                title: title,
+                shadeClose: true,
+                fixed: false, //不固定
+                area: ['90%', '90%'],
+                content: target,
+                end: function () {
+                    turnPage(1);//页面加载时初始化分页
+                }
+            });
+            return false;
+        });
+
+        //单击操作
+        $("body").on("click", ".ajax-get", function () {
+            var target = $(this).attr("data-url");
+            var id = $(this).attr("data-id");
+            if (typeof (id) != "undefined" && id != 0) {
+                var target = target + "?id=" + id;
+            }
+            $.ajax({
+                type: "POST",
+                url: target,
+                data:{"id":id},
+                dataType:"json",
+                success: function(data){
+                    if(data.statusCode=='200'){
+                        layer.msg('操作成功', {icon: 1});
+                        turnPage(1);
+                    }
+                },
+                complete: function () {//完成响应
+                }
+            });
+        });
+
+    });
+</script>

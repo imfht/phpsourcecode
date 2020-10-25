@@ -1,0 +1,370 @@
+<!--{include(file='head.html')}-->
+<script type="text/javascript" src="template/jslib/tbox/tbox.js"></script>
+<link rel="stylesheet" href="template/jslib/tbox/tbox.css" type="text/css" />
+<script type="text/javascript" src="template/jslib/xheditor/xheditor.js"></script>
+<script type="text/javascript" src="template/jslib/upload/ajaxupload.js"></script>
+
+<script type="text/javascript">
+function createupload(buttonid) {
+	var uploader = new qq.FileUploader({ //申明一个upload
+		 element: document.getElementById(buttonid),
+		 action: "<!--{url('admin','uploadfile','specselfpic')}-->"+"&buttonid="+buttonid
+	});
+}
+</script>
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<div id="main_c" >
+			<form action="<!--{url('admin','item','itemsave')}-->" method="post" name="submitform" id="submitform" onsubmit="return formcheck()">
+			<div id="infotab">
+				<ul>
+<li class="cur"><a href="javascript:void(0);" id="a_base" onclick="$.oper.jstab('a_base');return false;">基本信息</a></li>
+<li><a href="javascript:void(0);" id="a_desc" onclick="$.oper.jstab('a_desc');return false;">商品详情</a></li>
+<li><a href="javascript:void(0);" id="a_seo" onclick="$.oper.jstab('a_seo');return false;">SEO</a></li>
+<li><a href="javascript:void(0);" id="a_rel" onclick="$.oper.jstab('a_rel');return false;">相关商品</a></li>
+				</ul>
+			</div>
+			
+			<div id="forbase" class="bk">
+					<ul class="bk_2 clearfix">
+						<li>
+							<label><em>*</em>商品类目：</label>
+							<p>
+<select name="typeid" id="typeid" onchange="window.location.href='<!--{url('admin','item','itemadd')}-->&typeid='+this.value">
+	<option value="0">请选择</option>
+	<!--{$typeopt}-->
+</select>	（<a href="<!--{url('admin','type','typeadd')}-->">添加类目</a>）
+							</p>
+						</li>
+						<li>
+							<label><em>*</em>商品名称：</label>
+							<p>
+								<input class="input_tx long" name="itemname" id="itemname" type="text" />
+							</p>
+						</li>
+
+						<li>
+							<label>商品编号：</label>
+							<p>
+								<input class="input_tx" name="bn" type="text" />
+							</p>
+						</li>
+
+						<!--{foreach $properties property}-->
+						<li>
+							<label><!--{$property.propertyname}-->：</label>
+							<p>
+								<!--{if $property.dptype ==1 || $property.dptype == 2}-->
+									<select name="property[<!--{$property.propertyid}-->]">
+										<option value="0">请选择</option>
+										<!--{foreach $property[selvallist] key selval}-->
+										<option value="<!--{$key}-->"><!--{$selval}--></option>
+										<!--{/foreach}-->
+									</select>
+								<!--{else}-->
+									<input type="text" value="" class="input_tx"  name="property[self_<!--{$property.propertyid}-->]" />
+								<!--{/if}-->
+							</p>
+						</li>
+						<!--{/foreach}-->
+
+						<!--{if $brandopt}-->
+						<li>
+							<label>品牌：</label>
+							<p>
+								<select name="brandid" id="brandid">
+									<option value="0">请选择</option>
+									<!--{$brandopt}-->
+								</select>
+							</p>
+						</li>
+						<!--{/if}-->
+					</ul>
+
+					<!--{if $specs}-->
+					<ul class="bk_4">
+						<li>
+							<label>规格：</label>
+							<p>
+								<a href="javascript:void(0);" class="bt_style2" onclick="togglespec(this);return false;">开启规格</a>
+							</p>
+						</li>
+					</ul>
+					<table class="tableStyle none" id="forspec" border="0" cellspacing="0" cellpadding="0">
+						<tbody>
+							<!--{foreach $specs spec}-->
+								<tr>
+									<td width="20%">
+										<!--{$spec.name}-->
+									</td>
+									<td>
+<ul id="spec<!--{$spec.specid}-->">
+<!--{foreach $spec['specval'] specval}-->
+<li>
+	<input type="checkbox" onclick="check(this,'<!--{$spec.type}-->')" autocomplete="off" value="<!--{$spec.specid}-->_<!--{$specval.specvalid}-->"/>
+		<!--{if $spec.type == "pic"}-->
+			<img src="<!--{$specval.img}-->" width="16" height="16" class="mid"/>
+		<!--{/if}-->
+	<span><!--{$specval.name}--></span>
+</li>
+<!--{/foreach}-->
+</ul>
+									<!--{if $spec.type == "pic"}-->
+										<table class="tableStyle" style="width:100%" border="0" cellspacing="0" cellpadding="0">
+											<thead>
+												<tr align="center">
+													<th width="30%">图片</th>
+													<th width="30%">自定义（无图片可不传）</th>
+													<th width="40%">已上传图片</th>
+												</tr>
+											</thead>
+											<tbody>
+												<!--{foreach $spec['specval'] specval}-->
+<tr align="center" id="pic_<!--{$spec.specid}-->_<!--{$specval.specvalid}-->" class="none">
+	<td id="name_<!--{$specval.specvalid}-->"><!--{$specval.name}--></td>
+	<td>
+		<span id="upload_<!--{$spec.specid}-->_<!--{$specval.specvalid}-->"></span>
+	</td>
+	<td>
+		<span id="uploadpic_<!--{$specval.specvalid}-->"></span>
+		<input type="hidden" value="" name="selfpic[<!--{$spec.specid}-->][<!--{$specval.specvalid}-->]" id="uploadval_<!--{$specval.specvalid}-->"/>
+	</td>
+</tr>
+												<!--{/foreach}-->
+											</tbody>
+										</table>
+										<!--{/if}-->
+									</td>
+								</tr>
+							<!--{/foreach}-->
+							<tr>
+								<td colspan="2">
+									<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+										<thead>
+											<tr align="center">
+												<td width="10%">操作</td>
+											<!--{foreach $specs spec}-->
+													<td class="forspec_<!--{$spec.specid}-->" width="10%"><!--{$spec.name}--></td>
+											<!--{/foreach}-->
+												<td width="20%">价格</td>
+												<td width="20%">数量</td>
+												<td width="20%">商家编码</td>
+											</tr>
+										</thead>
+										<tbody id="products">
+										</tbody>
+									</table>
+									<p class="add">
+										<a class="bt_style2" onclick="addProduct();return false;" href="javascript:void(0);">添加货品</a>
+									</p>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<!--{/if}-->
+					<ul class="bk_4 clearfix">
+						<li>
+							<label><em>*</em>商品价格：</label>
+							<p>
+								<input class="input_tx mini" name="price" id="price" type="text" />
+								（开启规格后，价格必须在货品价格之间） 
+							</p>
+						</li>
+						<li>
+							<label>价格举报：</label>
+							<p>
+								<input value="1" name="comprice" id="comprice" type="checkbox" style="height:16px;"/>
+							</p>
+						</li>
+						<li>
+							<label>降价通知：</label>
+							<p>
+								<input value="1" name="pnotify" id="pnotify" type="checkbox"  style="height:16px;"/>
+							</p>
+						</li>
+						<li>
+							<label>市场价格：</label>
+							<p>
+								<input class="input_tx mini" name="mkprice" type="text" />
+							</p>
+						</li>
+						<li>
+							<label><em>*</em>商品库存：</label>
+							<p>
+								<input class="input_tx mini" name="inventory" id="inventory" type="text" />
+								（开启规格后，库存必须为所有货品库存之和）
+							</p>
+						</li>
+						<li>
+							<label>赠送积分：</label>
+							<p>
+								<input class="input_tx mini" name="point" type="text" />
+							</p>
+						</li>
+						<li>
+							<label>商品状态：</label>
+							<p>
+								<input name="status" type="radio" value="1"  id="sale" checked>出售中
+								<input name="status" type="radio" value="2" id="stock"/>放入仓库
+							</p>
+						</li>
+					</ul>
+					<ul class="bk_4 clearfix">
+						<li>
+							<label>分类及Tag：</label>
+							<div class="left">
+								<ul class="scrollul">
+									<h1>商品分类</h1>
+									<!--{foreach $cats cat}-->
+									<li>
+										<!--{str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;",$cat['level'])}-->
+										<!--{if !$cat["haschild"]}-->
+											<input type="checkbox" value="<!--{$cat.catid}-->" name="catid[]" id="cat_<!--{$cat.catid}-->" />
+										<!--{/if}-->
+										<!--{$cat.catname}-->
+									</li>
+									<!--{/foreach}-->
+								</ul>
+								<ul class="scrollul">
+									<h1>商品Tag</h1>
+									<!--{foreach $tags tag}-->
+									<li>
+										<input type="checkbox" value="<!--{$tag.tagid}-->" name="tagid[]" id="tag_<!--{$tag.tagid}-->" />
+										<!--{$tag.tagname}-->
+									</li>
+									<!--{/foreach}-->
+								</ul>
+							</div>
+						</li>
+					</ul>
+
+					<ul class="bk_4 clearfix">
+						<li>
+							<label><em>*</em>商品相册：</label>
+							<div id="buttonholder"></div>
+							<div class="clear"></div>
+						</li>
+						<li>
+							<label>商品图片：</label>
+							<div id="imgtd" class="left"></div>
+						</li>
+					</ul>
+			</div>
+
+			<ul class="bk none" id="fordesc">
+				<li>
+					<label>商品详情：</label>
+					<p>
+						<textarea name="itemdesc" id="itemdesc"></textarea>
+					</p>
+				</li>
+			 </ul>
+			
+			<ul class="bk none" id="forseo">
+				<li>
+					<label>页面标题：</label>
+					<p>
+						<input class="input_tx" name="pagetitle" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>页面关键词：</label>
+					<p>
+						<input class="input_tx" name="pagekeywords" type="text" />
+					</p>
+				</li>
+				<li>
+					<label>页面描述：</label>
+					<p>
+						<textarea name="pagedesc" class="text_tx"></textarea>
+					</p>
+				</li>
+			 </ul>
+			 <div id="forrel" class="bk none">
+				<ul class="bk_1">
+					<li>
+						<label><a href="javascript:void(0);" onclick="ItemSelect.popitem();return false;" class="bt_style2">相关商品</a></label>
+						<p></p>
+					</li>
+				 </ul>
+				<table class="tableStyle" id="reltb" border="0" cellspacing="0" cellpadding="0">
+				</table>
+			</div>
+
+			<div class="bt_bk2">
+				<input type="hidden" name="itemid"	 value="<!--{def($itemid)}-->" />
+				<input type="hidden" name="opertype" value="<!--{$opertype}-->" />
+				<a href="javascript:void(0);" class="btn" onclick="jssubmit('item');return false;"><span>保存</span></a>
+			</div>
+		</form>
+		</div>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+
+<div class="none" id="forimgnone">
+	<div class="itemupload">
+		<div class="forimg"></div>
+		<p>
+			<a href="javascript:void(0);" onclick="$.oper.up(this);return false;"	 class="left"  title="左移"></a>
+			<a href="javascript:void(0);" onclick="$.oper.del(this);return false;"  class="del"   title="删除"></a>
+			<a href="javascript:void(0);" onclick="$.oper.down(this);return false;" class="right" title="右移"></a>
+			<input type="hidden" value=""  name="img[]" class="forval"/>
+		</p>
+	</div>
+</div>
+
+<!--规格box-->
+<div id="specbox" class="none">
+	<p style="margin:5px 0;text-align:center;"><a href="javascript:void(0);" onclick="$('#specbox').hide();return false;">关闭</a></p>
+	<!--{foreach $specs spec}-->
+	<ul id="specbox_<!--{$spec.specid}-->" class="none"></ul>
+	<!--{/foreach}-->
+</div>
+
+<!--货品-->
+<table class="none" border="0" cellspacing="0" cellpadding="0">
+	<tbody id="forspecnone">
+		<tr align="center">
+			<td><a href="javascript:void(0);" class="del" onclick="$.oper.del(this);return false;"></a></td>
+		<!--{foreach $specs spec}-->
+			<td class="forspecnone_<!--{$spec.specid}-->">
+				<a href="javascript:void(0);" onclick="$.specval.select(this,<!--{$spec.specid}-->);return false;">请选择</a>
+				<input type="hidden" value="" name="spec[<!--{$spec.specid}-->][]"/>
+			</td>
+		<!--{/foreach}-->
+			<td><input type="text" value="" name="pprice[]"		class="input_tx mini calprice"		onblur="cal('price')"/></td>
+			<td><input type="text" value="" name="pinventory[]" class="input_tx mini calinventory"	onblur="cal('inventory')"/></td>
+			<td><input type="text" value="" name="pbn[]"		class="input_tx short"/></td>
+		</tr>
+	</tbody>
+	<tbody id="forrelnone">
+		<tr>
+			<td class="forimg"></td>
+			<td>
+				<input type="radio" name="linktype[{itemid}]" id="linktype_{itemid}_1" value="1" checked/> 单项相关
+				<input type="radio" name="linktype[{itemid}]" id="linktype_{itemid}_2" value="2"/>  双项相关
+				<input type="hidden" value="{itemid}" name="fitemid[{itemid}]" />
+			</td>
+			<td>
+				<a href="javascript:void(0);" onclick="$.oper.del(this);return false;"  class="del"  title="删除"></a>
+				<a href="javascript:void(0);" onclick="$.oper.up(this);return false;"   class="up"   title="上移"></a>
+				<a href="javascript:void(0);" onclick="$.oper.down(this);return false;" class="down" title="下移"></a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<!--{include(file='foot.html')}-->
+<script type="text/javascript" src="template/admin/js/item.js"></script>
+<script type="text/javascript">
+$(function(){
+	$("#a<!--{$cur}-->").click();
+	ItemSelect.setPopUrl("<!--{url('admin','select','selectitem','type=rel')}-->");
+
+	$("#itemdesc").xheditor({upImgUrl:"<!--{url('admin','uploadfile','pic')}-->"});
+
+	itemupload("<!--{url('admin','uploadfile','item')}-->");
+});
+</script>

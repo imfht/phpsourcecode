@@ -1,0 +1,77 @@
+<div class='editable-page-model'>
+    <form id="editable_model_form" action="{$Request.url}">
+        {:build_editor(['name'=>'editor','content'=>htmlspecialchars_decode($editor_content)])}
+        <textarea name="editor" id="editor" style="width:100%;"></textarea>
+        <div class="dssc-upload-btn mt10"> 
+            <a href="javascript:void(0);">
+                <span>
+                    <input type="file" hidefocus="true" size="1" class="input-file" id="file_0" name="file_0" onchange="ajaxFileUpload()">
+                </span>
+                <p><i class="iconfont">&#xe733;</i>{$Think.lang.image_upload}</p>
+            </a> 
+        </div>
+
+        <div class="dssc-form-goods-pic">
+            <div class="dssc-goodspic-list">
+
+                <ul>
+                    {foreach name='file_upload' item='v'}
+                    <li class="dssc-goodspic-upload" id="ds_row_{$v.upload_id}">
+                        <div class="upload-thumb"><img src="{$Think.UPLOAD_SITE_URL}/{$Think.ATTACH_EDITABLE_PAGE}/{$v.file_name}">
+                        </div>
+                        <div class='image-btn-list'>
+                            <a class='image-btn iconfont' href="javascript:insert_editor('{$Think.UPLOAD_SITE_URL}/{$Think.ATTACH_EDITABLE_PAGE}/{$v.file_name}');">&#xe6e8;</a>
+                            <a class='image-btn iconfont' href='javascript:dropFile({$v.upload_id})'>&#xe725;</a>
+                        </div>
+                    </li>
+                    {/foreach}
+                </ul>
+
+            </div>
+        </div>
+
+        <div class='tc pb20 pt20'><a class="dssc-btn" dstype="select-124" href="javascript:void(0)" onclick="submitEditableModelForm()">{$Think.lang.ds_submit}</a></div>
+    </form>
+</div>
+
+<script>
+    function ajaxFileUpload() {
+        $.ajaxFileUpload({
+            url: EDITABLE_PAGE_URL+'/image_upload',
+            secureuri: false,
+            fileElementId: 'file_0',
+            dataType: 'json',
+            data: {name: 'file_0', config_id: {$Request.param.config_id}},
+            success: function (data, status) {
+                if (data.code != 10000) {
+                    layer.msg(data.message);
+                } else {
+                    var html='<li class="dssc-goodspic-upload" id="ds_row_'+data.result.file_id+'">'
+                        html+='<div class="upload-thumb"><img src="'+data.result.file_path+'">'
+                        html+=    '</div>'
+                        html+=    "<div class='image-btn-list'>"
+                        html+=        "<a class='image-btn iconfont' href=\"javascript:insert_editor('"+data.result.file_path+"');\">&#xe6e8;</a>"
+                        html+=        "<a class='image-btn iconfont' href='javascript:dropFile("+data.result.file_id+")'>&#xe725;</a>"
+                        html+=    '</div>'
+                        html+='</li>'
+                    $('#editable_model_form .dssc-goodspic-list ul').append(html)
+                }
+
+            }
+        });
+        return false;
+
+    }
+    function dropFile(file_id) {
+        $.getJSON(EDITABLE_PAGE_URL+'/image_del?upload_id=' + file_id, function (data) {
+            if (data.code != 10000) {
+                layer.msg(data.message);
+            } else {
+                $('#ds_row_'+file_id).remove()
+            }
+        })
+    }
+    function insert_editor(file_path){
+        ue.execCommand('insertimage', {src:file_path});
+    }
+</script>

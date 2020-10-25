@@ -1,0 +1,250 @@
+<template>
+  <div class="c-container">
+    <div class="title">{{ title }}</div>
+    <el-input
+      :placeholder="placeholder"
+      v-model="inputContent"
+      class="sc-container"
+      @keyup.enter.native="searchInput">
+      <el-button
+        slot="append"
+        icon="el-icon-search"
+        @click.native="searchInput"/>
+    </el-input>
+    <div class="right-container">
+      <el-button
+        v-if="canSave"
+        type="primary"
+        @click="createClick">{{ mainTitle }}</el-button>
+      <el-dropdown
+        v-if="moreTypes.length > 0"
+        trigger="click"
+        @command="handleTypeDrop">
+        <flexbox class="right-more-item">
+          <div>更多</div>
+          <i
+            class="el-icon-arrow-down el-icon--right"
+            style="color:#777;"/>
+        </flexbox>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item
+            v-for="(item, index) in moreTypes"
+            :key="index"
+            :command="item.type">{{ item.name }}</el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+    </div>
+    <c-r-m-create-view
+      v-if="isCreate"
+      :crm-type="createCRMType"
+      :action="createActionInfo"
+      @save-success="createSaveSuccess"
+      @hiden-view="hideView"/>
+    <c-r-m-import
+      :show="showCRMImport"
+      :crm-type="crmType"
+      @listRefresh="listRefresh"
+      @close="showCRMImport=false"/>
+    <c-r-m-export
+      :show="showCRMExport"
+      :crm-type="crmType"
+      :search="search"
+      :scene_id="scene_id"
+      :filter-obj="filterObj"
+      :is-seas="isSeas"
+      :export-params="exportParams"
+      @close="showCRMExport=false"/>
+  </div>
+</template>
+
+<script type="text/javascript">
+import { mapGetters } from 'vuex'
+import CRMCreateView from './CRMCreateView'
+import CRMImport from './CRMImport'
+import CRMExport from './CRMExport'
+
+export default {
+  name: 'CRMListHead', // 客户管理下 重要提醒 回款计划提醒
+  components: {
+    CRMCreateView,
+    CRMImport,
+    CRMExport
+  },
+  props: {
+    title: {
+      type: String,
+      default: ''
+    },
+    placeholder: {
+      type: String,
+      default: '请输入内容'
+    },
+    mainTitle: {
+      type: String,
+      default: ''
+    },
+    // CRM类型
+    crmType: {
+      type: String,
+      default: ''
+    },
+    /** 是公海 */
+    isSeas: {
+      type: Boolean,
+      default: false
+    },
+    // 搜索条件
+    search: {
+      type: String,
+      default: ''
+    },
+    scene_id: {
+      type: [Number, String],
+      default: ''
+    },
+    filterObj: {
+      type: Object,
+      default: () => {
+        return {}
+      }
+    }
+  },
+  data() {
+    return {
+      inputContent: '',
+      /** 更多操作 */
+      moreTypes: [],
+      // 创建的相关信息
+      createActionInfo: { type: 'save' },
+      createCRMType: '',
+      isCreate: false, // 是创建
+      // 导入
+      showCRMImport: false,
+      // 导出
+      showCRMExport: false,
+      // 导出选中参数
+      exportParams: {}
+    }
+  },
+  computed: {
+    ...mapGetters(['crm']),
+    canSave() {
+      if (this.isSeas) {
+        return false
+      }
+      return this.crm[this.crmType].save
+    }
+  },
+  mounted() {
+    // 线索和客户判断更多操作
+    if (!this.isSeas) {
+      if (this.crm[this.crmType].excelimport) {
+        this.moreTypes.push({ type: 'enter', name: '导入' })
+      }
+      if (this.crm[this.crmType].excelexport) {
+        this.moreTypes.push({ type: 'out', name: '导出' })
+      }
+    } else {
+      // 客户池的导出关键字不同
+      if (this.crm[this.crmType].poolexcelexport) {
+        this.moreTypes.push({ type: 'out', name: '导出' })
+      }
+    }
+  },
+  methods: {
+    handleTypeDrop(command, params = {}) {
+      if (command == 'out') {
+        let paramsData = {}
+        if (params.__export) {
+          paramsData = params
+          delete paramsData.__export
+        } else {
+          paramsData = {}
+        }
+        this.exportParams = paramsData
+        this.showCRMExport = true
+      } else if (command == 'enter') {
+        this.showCRMImport = true
+      }
+    },
+    createClick() {
+      this.createCRMType = this.crmType
+      this.createActionInfo = { type: 'save' }
+      this.isCreate = !this.isCreate
+    },
+    // 进行搜索操作
+    searchInput() {
+      this.$emit('on-search', this.inputContent)
+    },
+    // 创建数据页面 保存成功
+    createSaveSuccess(data) {
+      if (data && data.saveAndCreate) {
+        if (data.type == 'customer') {
+          this.createCRMType = 'contacts'
+          this.createActionInfo = {
+            type: 'relative',
+            crmType: 'customer',
+            data: {}
+          }
+          this.createActionInfo.data['customer'] = data.data
+          this.isCreate = true
+        }
+      } else {
+        // 回到保存成功
+        this.$emit('on-handle', { type: 'save-success' })
+      }
+    },
+    hideView() {
+      this.isCreate = false
+    },
+    listRefresh() {
+      this.$emit('listRefresh')
+    }
+  }
+}
+</script>
+<style lang="scss" scoped>
+.c-container {
+  height: 60px;
+  position: relative;
+  z-index: 100;
+  .title {
+    float: left;
+    padding: 0 20px;
+    font-size: 18px;
+    line-height: 60px;
+  }
+  .sc-container {
+    width: 300px;
+    margin: -18px 0 0 -150px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+  }
+
+  .right-container {
+    margin-right: -10px;
+    float: right;
+    margin: 12px 20px 0 0;
+    position: relative;
+    .right-item {
+      float: left;
+      margin-right: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: 2px;
+    }
+
+    .right-more-item {
+      cursor: pointer;
+      border: 1px solid #dcdfe6;
+      background-color: white;
+      font-size: 13px;
+      color: #777;
+      padding: 0 12px;
+      border-radius: 2px;
+      height: 31px;
+    }
+  }
+}
+</style>

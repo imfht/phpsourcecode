@@ -1,0 +1,119 @@
+<extend name="Public/group"/>
+
+<block name="body">
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="fourm-top common_block_border" style="padding: 15px 20px;margin-top: 0;margin-bottom: 15px">
+
+                <div>
+                    <h4>
+                        群组管理
+
+                    </h4>
+                </div>
+
+                <div>
+                    <ul class="nav nav-tabs" role="tablist" style="font-size: 12px;">
+                        <li role="presentation"><a
+                                href="{:U('Group/Manage/index',array('group_id'=>$_GET['group_id']))}">基本信息</a></li>
+                        <li role="presentation"><a
+                                href="{:U('Group/Manage/member',array('group_id'=>$_GET['group_id']))}">成员管理</a></li>
+                        <li role="presentation"><a
+                                href="{:U('Group/Manage/notice',array('group_id'=>$_GET['group_id']))}">公告发布</a></li>
+                        <li role="presentation" class="active"><a
+                                href="{:U('Group/Manage/category',array('group_id'=>$_GET['group_id']))}">帖子分类管理</a>
+                        </li>
+
+                        <a href="{:U('group/index/group',array('id'=>$_GET['group_id']))}"
+                           class="btn btn-primary pull-right" style="margin-left: 10px;">返回群组</a>
+                        <button class="btn btn-primary pull-right dismiss">解散群组</button>
+                    </ul>
+
+
+                </div>
+
+                <hr style="border-top:0"/>
+                <div style="margin-bottom: 20px;">
+                    <input id="add_cate" placeholder="添加分类" class="form-control pull-left" style="width: 200px">
+                    <a class="btn btn-primary add_cate_btn" style="margin-left: 10px;">确定</a>
+
+                </div>
+
+                <volist name="cate" id="vo">
+                    <div class="category clearfix" data-id="{$vo.id}" style="height: 30px;line-height: 30px;">
+                        <span class="col-md-4 cate_title">
+                              {$vo.title}
+                        </span>
+                        <span class="cate_action">
+                             <a href="javascript:" class="edit_cate" data-title="{$vo.title}">编辑</a>&nbsp;|&nbsp;<a
+                                href="javascript:" class="del_cate">删除</a>
+                        </span>
+                    </div>
+
+                </volist>
+
+            </div>
+        </div>
+
+    </div>
+</block>
+
+<block name="script">
+    <script type="text/javascript" src="__PUBLIC__/Core/js/ext/atwho/atwho.js"></script>
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/Core/js/ext/atwho//atwho.css"/>
+
+
+    <script>
+        bindFunction();
+        function bindFunction() {
+            $(function () {
+                $('.edit_cate').unbind('click');
+                $('.edit_cate').click(function () {
+                    var obj = $(this);
+                    var title = obj.attr('data-title');
+                    var html = '<input class="cate_edit_input" value="' + title + '">'
+                    obj.parents('.category').find('.cate_title').html(html);
+                    bindFunction();
+                    obj.parents('.category').find('.cate_title').find('input').focus();
+
+                })
+                $('.cate_edit_input').unbind('keypress');
+                $('.cate_edit_input').keypress(function (e) {
+                    if (e.which == 13 || e.which == 10) {
+                        var group_id = "{$_GET['group_id']}";
+                        $.post(U('group/manage/editCate'), {group_id: group_id, cate_id: $(this).parents('.category').attr('data-id'), title: $(this).val()}, function (res) {
+                            handleAjax(res);
+                        })
+
+                    }
+                });
+                $('.cate_edit_input').unbind('blur');
+                $('.cate_edit_input').blur(function (e) {
+                    var html = $(this).parents('.category').find('.edit_cate').attr('data-title');
+                    $(this).parents('.cate_title').html(html);
+                });
+                $('.add_cate_btn').unbind('click');
+                $('.add_cate_btn').click(function () {
+                    var group_id = "{$_GET['group_id']}";
+                    $.post(U('group/manage/editCate'), {group_id: group_id, title: $('#add_cate').val()}, function (res) {
+                        handleAjax(res);
+                    })
+                })
+
+                $('.del_cate').unbind('click');
+                $('.del_cate').click(function () {
+                    var group_id = "{$_GET['group_id']}";
+                    $.post(U('group/manage/delCate'), {group_id: group_id, cate_id: $(this).parents('.category').attr('data-id')}, function (res) {
+                        handleAjax(res);
+                    })
+                })
+
+            })
+        }
+
+
+    </script>
+
+</block>

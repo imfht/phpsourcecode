@@ -1,0 +1,79 @@
+{extend name="base"}
+{block name="content"}
+<style type="text/css">
+	.checkutil label{float: left;margin-right: 10px;}
+</style>
+	<link rel="stylesheet" href="__THEMES__/jstree/dist/themes/default/style.min.css" />
+	<script src="__THEMES__/jstree/dist/jstree.min.js"></script>
+	<script type="text/javascript">
+	$(function(){
+		$('#role_wrap').jstree({
+			"core":{
+				"themes":{
+					"name" : "default",
+					"dots" : true,
+					"icons" : false
+				},
+				'data' : {
+			        "url" : '{empty name="list"}{:url("menu/role")}{else/}{:url("menu/role",["privs"=>$list[0]["privs"]])}{/empty}',
+			        "dataType" : "json"
+			      }
+			},
+		  	"plugins" : ["checkbox"],
+		});
+		$('#role_wrap').on("changed.jstree", function (e, data) {
+			$("#role").val(data.selected.join(","));
+		});
+		$("#checkall").click(function(){
+			$("#role_wrap").jstree($(this).prop("checked") ? "check_all" : "uncheck_all");
+		});
+		$("#openall").click(function(){
+			$("#role_wrap").jstree($(this).prop("checked") ? "open_all" : "close_all");
+		});
+	});
+	</script>
+	<div class="wrap">
+		<ul class="nav nav-tabs">
+			<li><a href="{:url('Role/index')}">角色管理</a></li>
+			{empty name="list"}
+			<li class="active"><a href="{:url('Role/add')}">添加角色</a></li>
+			{else/}
+			<li><a href="{:url('Role/add')}">添加角色</a></li>
+			<li class="active"><a href="{:url('Role/edit',['id'=>$id])}">编辑角色</a></li>
+			{/empty}
+		</ul>
+		<form method="post" class="form-horizontal js-ajax-form" action="{:url('Role/add')}">
+			{notempty name="list"}<input type="hidden" name="id" value="{$id}" />{/notempty}
+			<input type="hidden" name="privs" id="role" value="{$list[0]['privs']|default=''}" />
+			<fieldset>
+				<div class="control-group">
+					<label class="control-label">角色名称</label>
+					<div class="controls">
+						<input type="text" name="role_name" value="{$list[0]->role_name|default=''}">
+						<span class="form-required">*</span>
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">角色描述</label>
+					<div class="controls">
+						<textarea name="role_describe" rows="5" cols="57">{$list[0]->role_describe|default=''}</textarea>
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label"></label>
+					<div class="controls checkutil"><label><input type="checkbox" id="checkall"> 全部选中</label><label><input type="checkbox" id="openall"> 全部展开</label></div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">角色选择</label>
+					<div class="controls" id="role_wrap"></div>
+				</div>
+
+			</fieldset>
+			<div class="form-actions">
+				<button class="btn btn-primary js-ajax-submit" type="submit">确定操作</button>
+				<a class="btn" href="javascript:history.back(-1);">返回</a>
+			</div>
+		</form>
+	</div>
+	<script src="__THEMES__/js/common.js"></script>
+{/block}

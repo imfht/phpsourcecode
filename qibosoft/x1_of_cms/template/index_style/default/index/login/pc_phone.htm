@@ -1,0 +1,138 @@
+{extend name="index@layout" /}
+{block name="head_mui_css"}<!--不使用mui-->{/block}
+{block name="head_title"}手机快速登录或注册{/block}
+{block name="nav"}
+<div class="qb_ui_Site_nav">
+	<ul>
+		<ol><i class="si si-home"></i>当前位置：</ol>
+		<li>
+			<a href='/' class="home">网站首页</a> <a href='#'>手机快速登录或注册</a>
+		</li>
+	</ul>
+</div>
+{/block}
+{block name="body_content"}
+<link rel="stylesheet" href="__STATIC__/index/default/pclogin.css"> 
+<div class="UserLoginCont">
+	<div class="head"><i class="glyphicon glyphicon-phone"></i> 手机快速登录或注册</div>
+	<div class="LoginCont">
+		<div class="Left">
+			<form class="mui-input-group" action="{:urls('login/phone_reg')}" method="post">
+				<div class="LoginBox">
+					
+					<ul>
+						<li class="icon"><i class="glyphicon glyphicon-phone"></i></li>
+						<ol><input type="text" name="mobphone" placeholder="请输入手机号码" required/></ol>
+						<li>&nbsp;</li>
+					</ul>
+					<ul>
+						<li class="icon"><i class="glyphicon glyphicon-question-sign"></i></li>
+						<ol><input type="text" name="phone_code" placeholder="请点击右边文字获取验证码" id="phone_code" onBlur="" required/></ol>
+						<li><a href="#" onclick="get_code_num('mobphone')">获取验证码</a></li>
+					</ul>
+					 
+					<div class="butter check_btn"><button type="button" id="submit_btn" onclick="check_num($('#phone_code'))">确认登录</button></div>
+
+					<ul class="atc_username" style="display:none;">
+						<li class="icon"><i class="fa fa-fw fa-user-o"></i></li>
+						<ol><input type="text" name="username" minlength="3" maxlength="20" placeholder="请输入新的帐号名" onBlur="checkinput($(this),'username')" required/></ol>
+						<li>新帐号名</li>
+					</ul>
+						<input type="hidden" name="fromurl" value="{$fromurl}">
+					<div class="butter reg_btn" style="display:none;"><button type="submit">立即注册</button></div>
+				</div>
+</form>
+<script type="text/javascript">
+
+function get_code_num(type){
+	var to='';
+	var obj = $(".mui-input-group input[name='"+type+"']");
+
+	to = obj.val();
+	if(to==''){
+		obj.focus();
+		layer.msg('请先输入手机号码');
+		return false;
+	}
+
+	layer.msg('请稍候,系统正在发送手机验证码!',{time:3000});
+	$.get("{:urls('login/get_phone_num')}?phone=" + to + '&'+Math.random(),function(res){
+		layer.close();
+		if(res.code==0){
+			layer.alert('验证码已成功发出,请耐心等候,注意查收!');
+			//objs.removeClass('error');
+		}else{
+			layer.alert(res.msg);
+			//objs.addClass('error');
+		}			
+	});
+}
+
+function check_num(objs){
+	var vals = objs.val();
+	var index = layer.load(1,{shade: [0.7, '#393D49']}, {shadeClose: true}); //0代表加载的风格，支持0-2
+	$.get("{:urls('login/check_phone_num')}?num=" + vals + '&'+Math.random(),function(res){
+		layer.closeAll();
+		if(res.code==0){
+			//objs.removeClass('error');
+			if(res.data.type=='login'){
+				layer.msg('登录成功,欢迎' + res.data.username + '您回来');
+				window.location.href = "{:urldecode($fromurl)}";
+			}else if(res.data.type=='reg'){	//注册新帐号
+				$("#submit_btn").hide();
+				layer.alert('验证成功,请为新帐号设置一个登录名');
+				$(".atc_username").show();				
+				//$(".atc_username input").val(res.data.username);
+				$(".reg_btn").show();	
+			}else{
+				layer.alert(res.msg);
+			}
+		}else{
+			layer.msg(res.msg);
+			//objs.addClass('error');
+		}			
+	});
+}
+
+function checkinput(objs,type){
+	var vals=objs.val();
+	$.get("{:urls('reg/check')}?"+type+"="+vals+'&'+Math.random(),function(d){
+		if(d=='ok'){
+			objs.removeClass('error');
+		}else{
+			layer.msg(d);
+			//objs.focus();
+			objs.addClass('error');
+		}			
+	});
+}
+
+</script>
+		</div>
+		<div class="Right">
+			<h3>已有帐号？点击登录</h3>
+			<p>你也可以用微信扫描下面二维码自动注册或自动登录</p>
+			<dl>
+				<dt><a href="{:urls('login/index')}">点击登录</a></dt>
+				<dd>
+					<img src="{:purl('login/scan/qrcode',['type'=>'wx'])}"/>
+				</dd>
+			</dl>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+<!--
+function countSecond(){　
+	$.get("{:purl('login/scan/cklogin')}?"+Math.random(), function(data){
+		if(data=='ok')window.location.href="{:purl('login/scan/cklogin')}?type=success";
+	});
+	setTimeout("countSecond()",2000);
+}
+countSecond()
+//-->
+</script>
+
+
+{/block}

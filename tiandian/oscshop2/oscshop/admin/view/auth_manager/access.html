@@ -1,0 +1,151 @@
+{extend name="public:base" /}
+{block name="content"}
+<div class="page-header">
+	<h1>
+		{$breadcrumb1}
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$breadcrumb2}
+		</small>
+	</h1>
+</div>	
+<style>
+
+.checkmod {
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    padding: 0;
+}
+.checkmod dt label{
+    background-color: #ececec;
+    border-bottom: 1px solid #ebebeb;
+    font-weight: bold;
+    height: 30px;
+    line-height: 30px;
+    padding-left: 30px;
+}
+.checkmod dd label{
+    line-height: 30px;
+    padding-left: 20px;
+}
+</style>	
+<div class="row">
+	<div class="col-xs-12">	
+		<div>
+			
+			<form class="form-horizontal" id="validation-form" method="post" action="{:url('AuthManager/write_group')}">
+			
+			{if condition="$Request.param.id"}
+			<input name="id" type="hidden" value="{$Request.param.id}" />
+			{/if}		
+				
+			{volist name="access_menu" id="node" }
+				<dl class="checkmod">
+					<dt class="hd">
+						<label class="checkbox"><input class="auth_rules rules_all" type="checkbox" name="rules[]" value="<?php echo $node['id'] ?>">{$node.title}</label>
+					</dt>
+					
+					<dd class="bd">
+						{present name="node['child']"}
+						{volist name="node['child']" id="child" }
+	                        <div class="rule_check">
+	                            <div>
+	                                <label class="checkbox" {notempty name="child['tip']"} title='{$child.tip}'{/notempty} >
+	                               		<input class="auth_rules rules_row" type="checkbox" name="rules[]" value="<?php echo $child['id'] ?>"/>{$child.title}
+                                	</label>
+	                            
+		                            {notempty name="child['child']"}
+		                              
+		                                   {volist name="child['child']" id="op"}
+		                                   		<div style="margin-left:30px;">
+						                            <label class="checkbox">
+					                               		<input class="auth_rules" type="checkbox" name="rules[]"  value="<?php echo $op['id'] ?>" /> {$op.title}
+				                                	</label>	
+				                                	
+				                                	{notempty name="op['child']"}
+		                              
+					                                    <div style="margin-left:50px;">
+					                                   	<?php foreach ($op['child'] as $k1 => $op1){ ?>
+					                                   		<span class="child_row">
+									                            <label class="checkbox"  style="display: inline-block;">
+								                               		<input class="auth_rules" type="checkbox" name="rules[]"  value="<?php echo $op1['id'] ?>" /> {$op1.title}
+							                                	</label>		                                   			
+					                                   		</span>
+					                                    <?php } ?>   	                                      
+					                                   	</div>
+					                              
+					                            	{/notempty}
+				                                		                                   			
+		                                   		</div>
+		                                       	                                      
+		                                   {/volist}
+		                              
+		                            {/notempty}
+	                           </div>
+		                    </div>
+						{/volist}
+						{/present}
+					</dd>
+					
+				</dl>
+			{/volist}	
+			
+			<div class="form-group">
+				
+				<div class="col-sm-12">
+					<input  type="submit" value="提交" class="btn btn-primary" />
+				</div>
+			</div>
+			
+			</form>
+			
+		</div>
+	</div>
+</div>
+{/block}
+{block name="javascript"}
+<style>
+	.checkmod {
+		padding:0;
+	    border:1px solid #ccc;
+	    margin-bottom: 20px;
+	}
+
+.checkmod dt {
+    background-color: #ececec;
+    border-bottom: 1px solid #ebebeb;
+    font-weight: bold;
+    height: 30px;
+    line-height: 30px;
+    padding-left: 10px;
+}
+
+.checkmod dd {
+    line-height: 30px;
+    padding-left: 20px;
+}
+</style>
+
+<script>
+$(function(){
+		var rules = [{$rules.rules}];
+		
+ 		$('.auth_rules').each(function(){
+            if( $.inArray( parseInt(this.value,10),rules )>-1 ){
+                $(this).prop('checked',true);
+            }
+            if(this.value==''){
+                $(this).closest('span').remove();
+            }
+        });
+
+        //全选节点
+        $('.rules_all').on('change',function(){
+            $(this).closest('dl').find('dd').find('input').prop('checked',this.checked);
+        });
+        $('.rules_row').on('change',function(){
+            $(this).closest('.rule_check').find('input').prop('checked',this.checked);
+        });	
+});	
+</script>	
+{/block}

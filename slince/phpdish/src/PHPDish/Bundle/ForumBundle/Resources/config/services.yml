@@ -1,0 +1,70 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    phpdish_forum.manager.thread:
+       class: PHPDish\Bundle\ForumBundle\Service\ThreadManager
+       public: true
+       arguments: ['', "@doctrine.orm.entity_manager", "@phpdish_core.pinyin_translator"]
+
+    phpdish_forum.manager.topic:
+        class: PHPDish\Bundle\ForumBundle\Service\TopicManager
+        arguments: ['', '@doctrine.orm.entity_manager', '@event_dispatcher', '@phpdish_cms.body_processor']
+        public: true
+
+    phpdish_forum.manager.reply:
+        class: PHPDish\Bundle\ForumBundle\Service\ReplyManager
+        public: true
+        arguments: ['', "@doctrine.orm.entity_manager", '@event_dispatcher', "@phpdish_cms.body_processor"]
+
+    phpdish_forum.form.data_transformer.string_to_threads:
+        class: PHPDish\Bundle\ForumBundle\Form\DataTransformer\StringToThreadsTransformer
+        arguments: ["@phpdish_forum.manager.thread"]
+
+    phpdish_forum.form.topic_type:
+        class: PHPDish\Bundle\ForumBundle\Form\Type\TopicType
+        arguments: ["@phpdish_forum.form.data_transformer.string_to_threads"]
+        tags:
+           - {name: "form.type"}
+
+    phpdish_forum.security.topic_voter:
+        class: PHPDish\Bundle\ForumBundle\Security\TopicVoter
+        arguments:
+            - "@security.access.decision_manager"
+        tags:
+            - {name: "security.voter"}
+        public: false
+
+    phpdish_forum.security.topic_reply_voter:
+        class: PHPDish\Bundle\ForumBundle\Security\TopicReplyVoter
+        arguments:
+            - "@security.access.decision_manager"
+        tags:
+            - {name: "security.voter"}
+        public: false
+
+    phpdish_forum.security.thread_voter:
+        class: PHPDish\Bundle\ForumBundle\Security\ThreadVoter
+        arguments:
+            - "@security.access.decision_manager"
+        tags:
+            - {name: "security.voter"}
+        public: false
+
+    phpdish_forum.twig_extension.topic:
+        class: PHPDish\Bundle\ForumBundle\Twig\TopicExtension
+        public: false
+        arguments:
+            - "@phpdish_forum.manager.thread"
+            - "@phpdish_forum.manager.topic"
+            - "@phpdish_forum.manager.reply"
+        tags:
+            - {name: twig.extension}
+
+    PHPDish\Bundle\ForumBundle\Controller\:
+         resource: "../../Controller"
+         arguments:
+              $configuration: '@phpdish_resource.configuration.phpdish_forum'
+         tags: ['controller.service_arguments']

@@ -1,0 +1,63 @@
+{include file='common/header' /}
+<div class="col-md-12">
+    <h3>
+        <span>前台导航</span>
+        <a href="{:url('add')}"><span class="glyphicon glyphicon-plus"></span></a>
+    </h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-ebcms">
+            <tbody>
+                <tr>
+                    <th style="width:80px;">排序</th>
+                    <th style="width:130px;">操作</th>
+                    <th>标题</th>
+                    <th>路由</th>
+                    <th style="width:100px;">应用</th>
+                </tr>
+                {php}
+                    $data = \app\ebcms\model\Nav::order('sort desc,id asc') -> select();
+                    $data = \ebcms\Tree::group($data);
+                    $groups = [];
+                    foreach($data as $key => $value){
+                        \ebcms\Tree::leveltree(\ebcms\Tree::tree($value),$groups[$key]);
+                    }
+                {/php}
+                {foreach name='groups' item='items' key='group'}
+                    <tr>
+                        <th>{$group}</th>
+                        <th colspan="4">
+                            <a href="{:url('add?group='.$group)}" class="btn btn-primary btn-sm">添加</a>
+                        </th>
+                    </tr>
+                    {foreach name='items' item='vo'}
+                        <tr>
+                            <td>
+                                <input value="{$vo.sort}" class="form-control input-sm ebcms-change" url="{:url('resort')}" data-id="{$vo.id}">
+                            </td>
+                            <td>
+                                {if condition="check_auth('delete')"}
+                                <button type="button" class="btn btn-primary btn-sm ebcms-do" url="{:url('delete')}" data-ids='{$vo.id}' confirm="删除后不可恢复，确定删除？"><span class="glyphicon glyphicon-remove"></span></button>
+                                {/if}
+                                {eq name='vo.status' value='1'}
+                                <button type="button" class="btn btn-primary btn-sm ebcms-do" url="{:url('status')}" data-ids='{$vo.id}' data-value='0'><span class="glyphicon glyphicon-ok-sign"></span></button>
+                                {else/}
+                                <button type="button" class="btn btn-warning btn-sm ebcms-do" url="{:url('status')}" data-ids='{$vo.id}' data-value='1'><span class="glyphicon glyphicon-ban-circle"></span></button>
+                                {/eq}
+                                {if condition="check_auth('edit')"}
+                                <a href="{:url('edit?id='.$vo['id'])}" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-pencil"></span></a>
+                                {/if}
+                            </td>
+                            <td>
+                                <span>{$vo._level|str_repeat='&nbsp;&nbsp;&nbsp;',###}┣</span>
+                                <a href="{$vo.url}" target="_blank">{$vo.title}</a>
+                            </td>
+                            <td>{$vo.eb_url}</td>
+                            <td>{$vo.app}</td>
+                        </tr>
+                    {/foreach}
+                {/foreach}
+            </tbody>
+        </table>
+    </div>
+</div>
+{include file='common/footer' /}

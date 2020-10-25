@@ -1,0 +1,118 @@
+<extend name="Base/common"/>
+
+<block name="style">
+    <link href="__CSS__/people.css" rel="stylesheet" type="text/css"/>
+</block>
+
+<block name="body">
+    <div class="col-xs-12" style="padding-top: 10px;">
+        <php>
+            if(is_login()){
+                $tab_class="col-lg-10 col-md-9";
+        </php>
+        <div class="col-lg-2 col-md-3 col-xs-12 common_block_border" style="float: right;margin-top: 10px;padding: 0;">
+            <div class="clearfix" style="font-size: 14px;padding: 10px 0;line-height: 25px;">
+                <div style="margin-left:20px">
+                    <a href="{$user_info.space_url}" ucard="{$user_info.uid}">
+                        <img src="{$user_info.avatar64}" class="avatar-img" style="width: 45px;height: 45px"/>
+                    </a>
+                    <a ucard="{$user_info.uid}"
+                       href="{$user_info.space_url}" class="user_name" style="margin-left: 10px;">{$user_info.nickname|htmlspecialchars}
+                    </a>
+                </div>
+                <div>
+                    <div class="col-xs-8 pd_lr_5" style="text-align: right">签到排名：</div>
+                    <div class="col-xs-4 pd_lr_5">{$user_info.ranking}</div>
+                </div>
+                <div>
+                    <div class="col-xs-8 pd_lr_5" style="text-align: right">连续签到：</div>
+                    <div class="col-xs-4 pd_lr_5">{$user_info.con_num}</div>
+                </div>
+                <div>
+                    <div class="col-xs-8 pd_lr_5" style="text-align: right">累计签到：</div>
+                    <div class="col-xs-4 pd_lr_5">{$user_info.total_num}</div>
+                </div>
+                <div>
+                    <div class="col-xs-8 pd_lr_5" style="text-align: right">累计积分奖励：</div>
+                    <div class="col-xs-4 pd_lr_5">{$user_info.total_score}</div>
+                </div>
+                <div>
+                    <div class="col-xs-8 pd_lr_5" style="text-align: right">签到状态：</div>
+                    <if condition="$user_info.is_sign eq 1">
+                        <div class="col-xs-4 pd_lr_5">已签到</div>
+                        <else/>
+                        <div class="col-xs-4 pd_lr_5">未签到</div>
+                    </if>
+                </div>
+                <if condition="$user_info.is_sign eq 0">
+                    <div class="clearfix"></div>
+                    <div style="text-align: center;margin-top: 5px;">
+                        <a class="btn btn-primary" onclick="checkin();" style="padding: 5px 40px;">签到</a>
+                    </div>
+                    <script>
+                        function checkin() {
+                            $.post("{:addons_url('Checkin://Checkin/check_in')}", {}, function (res) {
+                                if (res.status) {
+                                    toast.success('签到成功');
+                                    setTimeout(function () {
+                                        location.href = location.href;
+                                    }, 1500);
+                                } else {
+                                    handleAjax(res);
+                                    setTimeout(function(){
+                                        location.reload();
+                                    },1500);
+                                }
+                            });
+                        }
+                    </script>
+                </if>
+            </div>
+        </div>
+        <php>
+            }
+        </php>
+        <div class="{$tab_class} col-xs-12" style="margin-top: 10px;">
+            <div class="common_block_border clearfix" style="padding-top: 15px;padding-bottom: 30px;">
+                <div class="col-xs-12">
+                    <div style="font-size: 20px;line-height: 30px;float: left;">签到排行榜</div>
+                    <div style="margin-left: 10px;line-height: 20px;margin-top: 10px;float: left;color: #EB7112;">
+                        欢迎 {:C('WEB_SITE')} 小伙伴，坚持签到！
+                    </div>
+                </div>
+                <div class="col-xs-12">
+                    <table class="ranking_table col-xs-12 pad_0" style="text-align: center;line-height: 35px;">
+                        <thead>
+                        <tr>
+                            <td class="col-xs-1">排名</td>
+                            <td class="col-xs-2">用户</td>
+                            <td class="col-xs-2">连续签到天数</td>
+                            <td class="col-xs-2">累计签到天数</td>
+                            <td class="col-xs-2">签到总奖励(积分)</td>
+                            <td class="col-xs-1 pd_lr_5">今日签到</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <volist name="user_list" id="vo">
+                            <tr>
+                                <td>{$vo.ranking}</td>
+                                <td><a ucard="{$vo['uid']}"
+                                       href="{:U('UserCenter/Index/index', array('uid' => $vo['uid']))}"
+                                       target="_blank">{$vo.nickname}</a>
+                                </td>
+                                <td>{$vo.con_num}</td>
+                                <td>{$vo.total_num}</td>
+                                <td>{$vo.total_score}</td>
+                                <td>{$vo.status}</td>
+                            </tr>
+                        </volist>
+                        </tbody>
+                    </table>
+                    <div class="pull-right">
+                        {:getPagination($totalCount,50)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</block>

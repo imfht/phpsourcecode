@@ -1,0 +1,1 @@
+<?php $this->display('system/site_sidebar'); ?>

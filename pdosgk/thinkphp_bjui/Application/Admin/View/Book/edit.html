@@ -1,0 +1,114 @@
+<script type="text/javascript">
+//缩略图
+var thumbUploader = KindEditor.editor({
+    allowFileManager : true,
+    uploadJson       : '/admin.php/Attachment/uploadJson',            //更改默认的上传控件
+    fileManagerJson  : '/admin.php/Attachment/fileManagerJson',  //更改默认的空间控件
+});
+KindEditor('#a_insertimage').click(function() {
+    thumbUploader.loadPlugin('image', function() {
+        thumbUploader.plugin.imageDialog({
+            imageUrl : KindEditor('#a_thumb').val(),
+            clickFn : function(url, title, width, height, border, align) {
+                KindEditor('#a_thumb').val(url);
+                $('#a_thumb_preview').html('<img src="'+ url +'" width="100" />')
+                $('#a_thumb_clear').show();
+                thumbUploader.hideDialog();
+            }
+
+        });
+    });
+});
+
+$("#a_thumb_clear").click(function(){
+    $('#a_thumb').val('');
+    $('#a_thumb_preview').html('')
+    $('#a_thumb_clear').hide();
+});
+
+//护照有效日期  = 签发日期 + 10年
+
+var charset = 'utf-8';
+function strlen_verify(obj, checklen, maxlen) {
+    var v = obj.value, charlen = 0, maxlen = !maxlen ? 200 : maxlen, curlen = maxlen, len = strlen(v);
+    for(var i = 0; i < v.length; i++) {
+        if(v.charCodeAt(i) < 0 || v.charCodeAt(i) > 255) {
+            curlen -= charset == 'utf-8' ? 2 : 1;
+        }
+    }
+    if(curlen >= len) {
+        $('#'+checklen).html(curlen - len);
+    } else {
+        obj.value = mb_cutstr(v, maxlen, true);
+    }
+}
+function strlen(str) {
+    return ($.browser.msie && str.indexOf('\n') != -1) ? str.replace(/\r?\n/g, '_').length : str.length;
+}
+function mb_cutstr(str, maxlen, dot) {
+    var len = 0;
+    var ret = '';
+    var dot = !dot ? '...' : '';
+    maxlen = maxlen - dot.length;
+    for(var i = 0; i < str.length; i++) {
+        len += str.charCodeAt(i) < 0 || str.charCodeAt(i) > 255 ? (charset == 'utf-8' ? 3 : 2) : 1;
+        if(len > maxlen) {
+            ret += dot;
+            break;
+        }
+        ret += str.substr(i, 1);
+    }
+    return ret;
+}
+</script>
+<div class="bjui-pageContent">
+    <form action="__SELF__" id="j_custom_form" data-toggle="validate" data-alertmsg="false">
+        <table class="table table-condensed table-hover" width="100%">
+            <tbody>
+                <tr>
+                    <td>
+                        <label for="j_custom_sale" class="control-label x85">分类：</label>
+                        <input type="text" name="info[category]" id="j_custom_name" value="{$Detail.category}" size="30">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="j_custom_name" class="control-label x85">标题：</label>
+                        <input type="text" name="info[title]" id="j_custom_name" value="{$Detail.title}" data-rule="required" size="30">
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td colspan="3">
+                        <label class="control-label x85">连载：</label>
+                        <input type="radio" name="info[status]" id="a_status1" data-toggle="icheck" value="1" data-rule="checked" data-label="是&nbsp;&nbsp;"  <eq name="Detail.status|default=1" value="1">checked</eq>>
+                        <input type="radio" name="info[status]" id="a_status2" data-toggle="icheck" value="0" data-label="否" <eq name="Detail.status" value="0">checked</eq>>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <label class="control-label x85">缩略图：</label>
+                        <input type="text" name="info[thumb]" id="a_thumb" value="{$Detail.thumb}" readonly/>
+                        <input type="button" id="a_insertimage" value="选择文件" />
+                        <label class="control-label x85">预览：</label>
+                        <span id="a_thumb_preview"><notempty name="Detail.thumb"><img src="{$Detail.thumb}" width="100" /></notempty></span>
+                        <a href="javascript:;" id="a_thumb_clear" <empty name="Detail.thumb">style="display:none;"</empty>>取消图片</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="j_custom_note" class="control-label x85">摘要：</label>
+                        <textarea name="info[summary]" id="j_custom_note" data-toggle="autoheight" cols="60" onkeyup="strlen_verify(this, 'description_len', 500)" rows="1">{$Detail.summary}</textarea>
+                        还可输入<b><span id="description_len">255</span></b> 个字符
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<div class="bjui-pageFooter">
+    <ul>
+        <li><button type="button" class="btn-close" data-icon="close">取消</button></li>
+        <li><button type="submit" class="btn-default" data-icon="save">保存</button></li>
+    </ul>
+</div>

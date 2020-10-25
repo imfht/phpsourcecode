@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Class wookteamLoader
+ */
+class wookteamLoader
+{
+    function modifyEnv(array $data)
+    {
+        if (empty($data) || !is_array($data)) {
+            return false;
+        }
+        $envPath = realpath(__DIR__ . '/../') . DIRECTORY_SEPARATOR . '.env';
+        if (!file_exists($envPath)) {
+            return false;
+        }
+        $envContent = file_get_contents($envPath);
+        foreach ($data as $key => $val) {
+            $envContent = preg_replace("/^" . $key . "\s*=\s*(.*?)$/m", $key . "=" . $val, $envContent);
+        }
+        file_put_contents($envPath, $envContent);
+        return true;
+    }
+}
+
+$array = getopt('', ['port:', 'ssl:']);
+$data = [];
+if (isset($array['port'])) {
+    $data['APP_PORT'] = $array['port'] ?: '8080';
+}
+if (isset($array['ssl'])) {
+    $data['APP_PORT_SSL'] = $array['ssl'] ?: '4433';
+}
+if ($data) {
+    $loader = new wookteamLoader();
+    $loader->modifyEnv($data);
+}
+

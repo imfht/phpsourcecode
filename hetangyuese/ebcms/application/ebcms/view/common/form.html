@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<title>易贝云系统</title>
+<script type="text/javascript" src="__ROOT__/system/js/jquery.min.js"></script>
+<!-- Bootstrap -->
+<link href="__ROOT__/third/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<!-- HTML5 Shim and Respond.js IE8 flowers of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]]
+<script src="__ROOT__/system/js/html5shiv.min.js"></script>
+<script src="__ROOT__/system/js/respond.min.js"></script>
+<![endif]-->
+<script src="__ROOT__/third/bootstrap/js/bootstrap.min.js"></script>
+<!-- artDialog -->
+<script type="text/javascript" src="__ROOT__/third/artDialog/jquery.artDialog.js"></script>
+<link rel="stylesheet" type="text/css" href="__ROOT__/third/artDialog/skins/default.css">
+<script type="text/javascript" src="__ROOT__/third/artDialog/artDialog.ext.js"></script>
+
+<!-- 引入百度编辑器 -->
+<script type="text/javascript" src="__ROOT__/third/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" src="__ROOT__/third/ueditor/ueditor.all.min.js"></script>
+<!-- 引入webuploader -->
+<link rel="stylesheet" type="text/css" href="__ROOT__/third/webuploader/webuploader.css">
+<script type="text/javascript" src="__ROOT__/third/webuploader/webuploader.nolog.min.js"></script>
+
+<!-- 引入后台样式表 -->
+<link rel="stylesheet" type="text/css" href="__ROOT__/system/css/admin.css">
+<script type="text/javascript" src="__ROOT__/system/js/admin.js"></script>
+</head>
+<body>
+<script>
+var _M = {};
+$(function(){
+
+// 注册一些常用的函数 百度编辑器 webuploader上传等。
+EBCMS.CORE.myfun('tabs',function(a,b){
+$(a).children().bind('click', function(event) {
+$(this).addClass('current').siblings().removeClass('current');
+var i = $(this).index();
+$(b).children().eq(i).show().siblings().hide();
+});
+$(a).children().eq(0).trigger('click');
+});
+
+EBCMS.CORE.myfun('renderUE',function(contain,option){
+window.UEDITOR_CONFIG.initialFrameHeight = '300';
+window.UEDITOR_CONFIG.zIndex = '1500';
+window.UEDITOR_CONFIG.initialFrameWidth = 'auto';
+window.UEDITOR_CONFIG.UEDITOR_HOME_URL = '__ROOT__/third/ueditor/';
+window.UEDITOR_CONFIG.serverUrl = '<?php echo url('ebcms/index/ueditor'); ?>';
+var options = {
+initialFrameWidth:"100%",
+scaleEnabled:true,
+};
+if (option && typeof option == 'object') {
+$.extend(options,option);
+};
+UE.getEditor(contain,options);
+});
+
+EBCMS.CORE.myfun('renderUploader',function(pick,success,extension,path){
+var extensions = extension?extension:'gif,jpg,jpeg,bmp,png,zip,rar';
+var uploader = WebUploader.create({
+auto: true,
+swf: '/webuploader/Uploader.swf',
+server: '<?php echo url('ebcms/index/upload'); ?>',
+pick: pick,
+duplicate:true,
+accept: {
+extensions: extensions,
+},
+formData:{
+path:path,
+}
+});
+$(pick).mouseover(function(){
+$(this).resize();
+});
+uploader.on('error', function(code) {
+switch(code){
+case 'Q_EXCEED_NUM_LIMIT':
+EBCMS.MSG.alert('文件数量超出限定值！');
+break;
+case 'Q_EXCEED_SIZE_LIMIT':
+EBCMS.MSG.alert('文件大小超出限制！');
+break;
+case 'Q_TYPE_DENIED':
+EBCMS.MSG.alert('禁止上传该类型的文件！');
+break;
+default:
+EBCMS.MSG.alert('上传文件重复！');
+}
+});
+uploader.on('uploadSuccess', function(file,res) {
+if (typeof success == 'function') {
+success(file,res);
+}
+});
+uploader.on('uploadError', function( file ) {
+EBCMS.MSG.alert('上传出错');
+});
+uploader.on('uploadComplete', function( file ) {
+// EBCMS.MSG.show('上传完成');
+});
+});
+
+EBCMS.MYFUN.tabs('#<?php echo $form['unique']; ?>_tabs','#<?php echo $form['unique']; ?>_tabboxs');
+
+_M.tijiao = function(){
+EBCMS.CORE.submit({
+url:'<?php echo $form['action']; ?>',
+form:'<?php echo $form['unique']; ?>Form',
+success:function(res){
+if (res.code) {
+artDialog.tips(res.msg||'处理完毕...',1);
+setTimeout(function() {
+history.go(-1);
+}, 300);
+}else{
+EBCMS.MSG.alert(res.msg);
+}
+}
+});
+};
+});
+</script>
+<div class="container-fluid">
+<div class="row">
+<div class="col-md-12">
+<div style="border: 1px solid #ddd;padding: 10px 10px 20px 10px;margin: 15px 0;">
+<h3 style="margin: 10px 0 20px 0;border-bottom: 1px solid #ddd;padding-bottom: 10px;"><?php echo $form['group']; ?>&nbsp;-&nbsp;<?php echo $form['title']; ?></h3>
+<form id="<?php echo $form['unique']; ?>Form" class="form-horizontal">
+<?php if(count($groups)>1): ?>
+<div class="form-group">
+<div class="col-sm-offset-2 col-sm-10 col-md-offset-1 col-md-11 col-lg-offset-1 col-lg-11">
+<div class="tabs" id="<?php echo $form['unique']; ?>_tabs">
+<?php foreach($groups as $key => $fields): ?> 
+<div class="tab-head"><?php echo $key; ?></div>
+<?php endforeach; ?>
+</div>
+</div>
+</div>
+<?php else: ?>
+<style>
+.tabboxs .tab-body{
+display: block;
+}
+</style>
+<?php endif; ?>
+<div class="tabboxs" id="<?php echo $form['unique']; ?>_tabboxs">
+<?php foreach($groups as $key => $fields): ?>
+<div class="tab-body">
+<?php foreach($fields as $key => $field): if($field['type'] == 'hidden'): ?>
+<input type="hidden" name="<?php echo $field['field']; ?>" value="<?php echo $field['value']; ?>" />
+<?php else: ?>
+<div class="form-group">
+<label class="col-sm-2 col-md-1 col-lg-1 control-label"><?php echo $field['title']; ?></label>
+<div class="col-sm-10 col-md-11 col-lg-11">
+<?php switch($field['type']): case "bool": ?>
+<label class="radio-inline" for="<?php echo $field['unique']; ?>_1">
+<input type="radio" id="<?php echo $field['unique']; ?>_1" name="<?php echo $field['field']; ?>" value="1" <?php if($field['value'] == '1'): ?>checked<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; if($field['config']['readonly'] == '1'): ?> readonly<?php endif; ?>> 是
+</label>
+<label class="radio-inline" for="<?php echo $field['unique']; ?>_0">
+<input type="radio" id="<?php echo $field['unique']; ?>_0" name="<?php echo $field['field']; ?>" value="0" <?php if($field['value'] == '0'): ?>checked<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; if($field['config']['readonly'] == '1'): ?> readonly<?php endif; ?>> 否
+</label>
+<?php break; case "select": 
+$_temps = explode(PHP_EOL,\ebcms\Func::streol($field['config']['values']));
+$field['config']['editable'] = isset($field['config']['editable'])?$field['config']['editable']:0;
+if($field['config']['editable'] == '1'): ?>
+<table class="table" style="margin-bottom: 0px;">
+<tr>
+<td style="padding: 0px !important;border-top: none;">
+<input type="text" class="form-control" id="<?php echo $field['unique']; ?>_obj" name="<?php echo $field['field']; ?>" value="<?php echo $field['value']; ?>" placeholder="<?php echo (isset($field['config']['prompt']) && ($field['config']['prompt'] !== '')?$field['config']['prompt']:''); ?>" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+</td>
+<td style="width: 150px;padding: 0px 0px 0px 10px !important;border-top: none;">
+<select class="form-control" id="<?php echo $field['unique']; ?>" onchange="$('#<?php echo $field['unique']; ?>_obj').val($(this).val());" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+<?php if(is_array($_temps) || $_temps instanceof \think\Collection || $_temps instanceof \think\Paginator): if( count($_temps)==0 ) : echo "" ;else: foreach($_temps as $key=>$_temp): $_temp = explode("|",$_temp); ?>
+<option value="<?php echo $_temp[1]; ?>" <?php if($field['value'] == $_temp[1]): ?>selected<?php endif; ?>><?php echo $_temp[0]; ?></option>
+<?php endforeach; endif; else: echo "" ;endif; ?>
+</select>
+</td>
+</tr>
+</table>
+<?php else: ?>
+<select class="form-control" id="<?php echo $field['unique']; ?>" name="<?php echo $field['field']; ?>" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+<?php if(is_array($_temps) || $_temps instanceof \think\Collection || $_temps instanceof \think\Paginator): if( count($_temps)==0 ) : echo "" ;else: foreach($_temps as $key=>$_temp): $_temp = explode("|",$_temp); ?>
+<option value="<?php echo $_temp[1]; ?>" <?php if($field['value'] == $_temp[1]): ?>selected<?php endif; ?>><?php echo $_temp[0]; ?></option>
+<?php endforeach; endif; else: echo "" ;endif; ?>
+</select>
+<?php endif; break; case "radio": $_temps = explode(PHP_EOL,\ebcms\Func::streol($field['config']['values'])); if(is_array($_temps) || $_temps instanceof \think\Collection || $_temps instanceof \think\Paginator): if( count($_temps)==0 ) : echo "" ;else: foreach($_temps as $key=>$_temp): $_temp = explode("|",$_temp); ?>
+<label class="radio-inline" for="<?php echo $field['unique']; ?>_<?php echo $key; ?>">
+<input type="radio" name="<?php echo $field['field']; ?>" id="<?php echo $field['unique']; ?>_<?php echo $key; ?>" value="<?php echo $_temp[1]; ?>" <?php if($field['value'] == $_temp[1]): ?>checked<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; if($field['config']['readonly'] == '1'): ?> readonly<?php endif; ?>> <?php echo $_temp[0]; ?>
+</label>
+<?php endforeach; endif; else: echo "" ;endif; break; case "checkbox": $_temps = explode(PHP_EOL,\ebcms\Func::streol($field['config']['values'])); if(is_array($_temps) || $_temps instanceof \think\Collection || $_temps instanceof \think\Paginator): if( count($_temps)==0 ) : echo "" ;else: foreach($_temps as $key=>$_temp): $_temp = explode("|",$_temp); ?>
+<label class="checkbox-inline" for="<?php echo $field['unique']; ?>_<?php echo $key; ?>">
+<input type="checkbox" id="<?php echo $field['unique']; ?>_<?php echo $key; ?>" name="<?php echo $field['field']; ?>[]" value="<?php echo $_temp[1]; ?>" <?php if(in_array($_temp['1'],(Array)$field['value'])): ?>checked<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; if($field['config']['readonly'] == '1'): ?> readonly<?php endif; ?>> <?php echo $_temp[0]; ?>
+</label>
+<?php endforeach; endif; else: echo "" ;endif; break; case "textbox": ?>
+<input type="text" class="form-control" id="<?php echo $field['unique']; ?>" name="<?php echo $field['field']; ?>" value="<?php echo $field['value']; ?>" placeholder="<?php echo (isset($field['config']['prompt']) && ($field['config']['prompt'] !== '')?$field['config']['prompt']:''); ?>" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+<?php break; case "multitextbox": ?>
+<textarea class="form-control" id="<?php echo $field['unique']; ?>" name="<?php echo $field['field']; ?>" rows="<?php echo (isset($field['config']['height']) && ($field['config']['height'] !== '')?$field['config']['height']:'5'); ?>" placeholder="<?php echo (isset($field['config']['prompt']) && ($field['config']['prompt'] !== '')?$field['config']['prompt']:''); ?>" <?php if($field['config']['disabled'] == '1'): ?> disabled<?php endif; if($field['config']['readonly'] == '1'): ?> readonly<?php endif; ?>><?php echo $field['value']; ?></textarea>
+<?php break; case "upload": ?>
+<script>
+$(function(){
+EBCMS.MYFUN.renderUploader('#<?php echo $field['unique']; ?>_pick',function(file,res){
+if (res.code) {
+$('#<?php echo $field['unique']; ?>').val(res.data.pathname);
+}else{
+EBCMS.MSG.alert(res.msg);
+};
+},'<?php echo (isset($field['config']['extensions']) && ($field['config']['extensions'] !== '')?$field['config']['extensions']:""); ?>','<?php echo (isset($field['config']['path']) && ($field['config']['path'] !== '')?$field['config']['path']:""); ?>');
+});
+</script>
+<table class="table" style="margin-bottom: 0px;">
+<tr>
+<td style="padding: 0px !important;border-top: none;">
+<input id="<?php echo $field['unique']; ?>" class="form-control" name="<?php echo $field['field']; ?>" value="<?php echo $field['value']; ?>" placeholder="<?php echo (isset($field['config']['prompt']) && ($field['config']['prompt'] !== '')?$field['config']['prompt']:''); ?>" <?php if($field['config']['disabled'] == '1'): ?> disabled<?php endif; if($field['config']['readonly'] == '1'): ?> readonly<?php endif; ?>/>
+</td>
+<td style="width: 100px;padding: 0px 0px 0px 10px !important;border-top: none;">
+<div id="<?php echo $field['unique']; ?>_pick">上传</div>
+</td>
+</tr>
+</table>
+<?php break; case "uploads": ?>
+<script>
+$(function(){
+EBCMS.MYFUN.renderUploader('#<?php echo $field['unique']; ?>_pick',function(file,res){
+if (res.code) {
+var str = '';
+str += '<tr>';
+str += '<td style="padding:0px 0px 8px 0px !important;border-top: none;">';
+str += '<input class="form-control" name="<?php echo $field['field']; ?>[]" value="'+res.data.pathname+'"/>';
+str += '</td>';
+str += '<td style="width: 50px;padding:0px 0px 8px 8px !important;border-top: none;">';
+str += '<button class="btn btn-sm btn-primary" onclick="$(this).parent().parent().remove();">删</button> ';
+str += '</td>';
+str += '</tr>';
+$('#<?php echo $field['unique']; ?>_container').append(str);
+}else{
+EBCMS.MSG.alert(res.msg);
+};
+},'<?php echo (isset($field['config']['extensions']) && ($field['config']['extensions'] !== '')?$field['config']['extensions']:""); ?>','<?php echo (isset($field['config']['path']) && ($field['config']['path'] !== '')?$field['config']['path']:""); ?>');
+});
+</script>
+<table class="table" style="margin-bottom: 0px;">
+<tr>
+<td style="padding: 0px !important;">
+<table class="table" id="<?php echo $field['unique']; ?>_container" style="margin-bottom: 0px;">
+<?php if(is_array($field['value']) || $field['value'] instanceof \think\Collection || $field['value'] instanceof \think\Paginator): if( count($field['value'])==0 ) : echo "" ;else: foreach($field['value'] as $key=>$vo): ?>
+<tr>
+<td style="padding:0px 0px 8px 0px !important;border-top: none;">
+<input class="form-control" name="<?php echo $field['field']; ?>[]" value="<?php echo $vo; ?>"/>
+</td>
+<td style="width: 50px;padding:0px 0px 8px 8px !important;border-top: none;">
+<button class="btn btn-sm btn-primary" onclick="$(this).parent().parent().remove();">删</button> 
+</td>
+</tr>
+<?php endforeach; endif; else: echo "" ;endif; ?>
+</table>
+</td>
+<td style="width: 100px;padding: 0px 0px 0px 10px !important;">
+<div id="<?php echo $field['unique']; ?>_pick">上传</div>
+</td>
+</tr>
+</table>
+<?php break; case "ueditor": ?>
+<script>
+$(function(){
+EBCMS.MYFUN.renderUE('<?php echo $field['unique']; ?>',{
+autoHeightEnabled:<?php echo (isset($field['config']['autoheightenabled']) && ($field['config']['autoheightenabled'] !== '')?$field['config']['autoheightenabled']:'false'); ?>,
+maximumWords:<?php echo (isset($field['config']['maximumwords']) && ($field['config']['maximumwords'] !== '')?$field['config']['maximumwords']:'10000'); ?>,
+wordCount:<?php echo (isset($field['config']['wordcount']) && ($field['config']['wordcount'] !== '')?$field['config']['wordcount']:'true'); ?>,
+elementPathEnabled:<?php echo (isset($field['config']['elementpathenabled']) && ($field['config']['elementpathenabled'] !== '')?$field['config']['elementpathenabled']:'true'); ?>,
+initialFrameHeight:<?php echo (isset($field['config']['initialframeheight']) && ($field['config']['initialframeheight'] !== '')?$field['config']['initialframeheight']:'420'); ?>,
+});
+});
+</script>
+<textarea name="<?php echo $field['field']; ?>" id="<?php echo $field['unique']; ?>"><?php echo $field['value']; ?></textarea>
+<?php break; case "database": 
+$field['config']['order'] = isset($field['config']['order'])?$field['config']['order']:'id asc';
+$field['config']['group'] = isset($field['config']['group'])?$field['config']['group']:0;
+$field['config']['tree'] = isset($field['config']['tree'])?$field['config']['tree']:0;
+$field['config']['rootitem'] = isset($field['config']['rootitem'])?$field['config']['rootitem']:0;
+$field['config']['editable'] = isset($field['config']['editable'])?$field['config']['editable']:0;
+$_where = [];
+if ($field['config']['queryparams']) {
+$_queryparams = explode(PHP_EOL,\ebcms\Func::streol($field['config']['queryparams']));
+foreach ($_queryparams as $key => $value) {
+$_tmp = explode('|',$value);
+if (stripos($_tmp[2],'(I)') === 0) {
+$_tmp[2] = input(substr($_tmp[2],3));
+}elseif(stripos($_tmp[2],'(@)') === 0){
+$_tmp[2] = $data[substr($_tmp[2],3)];
+}elseif(stripos($_tmp[2],'($)') === 0){
+$_tmp[2] = \ebcms\Func::get_point_value($data,substr($_tmp[2],3));
+};
+$_where[$_tmp[0]]= [$_tmp[1],$_tmp[2]];;
+}
+};
+$_m = \think\Loader::model($field['config']['model']);
+$_dat = $_m -> order($field['config']['order']) -> where($_where) -> select();
+$_str = \ebcms\Func::select($_dat,$field['config'],$field['value']);
+if($field['config']['editable'] == '1'): ?>
+<table class="table" style="margin-bottom: 0px;">
+<tr>
+<td style="padding: 0px !important;">
+<input type="text" class="form-control" id="<?php echo $field['unique']; ?>_obj" name="<?php echo $field['field']; ?>" value="<?php echo $field['value']; ?>" placeholder="<?php echo (isset($field['config']['prompt']) && ($field['config']['prompt'] !== '')?$field['config']['prompt']:''); ?>" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+</td>
+<td style="width: 150px;padding: 0px 0px 0px 10px !important;">
+<select class="form-control" id="<?php echo $field['unique']; ?>" onchange="$('#<?php echo $field['unique']; ?>_obj').val($(this).val());" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+<?php echo $_str; ?>
+</select>
+</td>
+</tr>
+</table>
+<?php else: ?>
+<select class="form-control" id="<?php echo $field['unique']; ?>" name="<?php echo $field['field']; ?>" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>>
+<?php echo $_str; ?>
+</select>
+<?php endif; break; case "numberbox": ?>
+<input type="number" id="<?php echo $field['unique']; ?>" class="form-control" name="<?php echo $field['field']; ?>" value="<?php echo $field['value']; ?>" <?php if($field['config']['readonly'] == '1'): ?> readonly<?php endif; if($field['config']['disabled'] == '1'): ?> disabled<?php endif; ?>/>
+<?php break; case "custom": 
+echo \ebcms\Func::render_tpl(htmlspecialchars_decode($field['config']['html']),[
+'field' => $field,
+'data' => $data,
+'groups' => $groups,
+'form' => $form,
+]);
+break; default: ?>
+<span style="color:red;"><?php echo $field['type']; ?>表单类型不存在 请联系专业人员</span>
+<?php endswitch; if(!(empty($field['remark']) || (($field['remark'] instanceof \think\Collection || $field['remark'] instanceof \think\Paginator ) && $field['remark']->isEmpty()))): ?>
+<p class="help-block"><?php echo $field['remark']; ?></p>
+<?php endif; ?>
+</div>
+</div>
+<?php endif; endforeach; ?>
+</div>
+<?php endforeach; ?>
+</div>
+<div class="form-group">
+<div class="col-sm-offset-2 col-sm-10 col-md-offset-1 col-md-11 col-lg-offset-1 col-lg-11">
+<button type="button" class="btn btn-primary" onclick="_M.tijiao();">提交</button>
+<button type="button" class="btn btn-default" onclick="history.go(-1);">返回</button>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Bean实体</title>
+		<meta charset="UTF-8"> 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>Bean实体</legend>
+			<ol>
+                                <li>
+                                        <h2 class="title_h2">什么是Bean</h2>
+                                        Bean我们可以想成数据表的一行数据在代码中的一个实体。
+                                        <br>Bean与Dao区别:
+                                        <br>Dao是处理表，而Bean是对表某一行数据进行处理和获取,一个Bean文件代表数据表的一行数据，一个Dao文件代表一个表。
+                                        <br>示例如下：
+                                        <br>比如：我们有个<code>users</code>表里面有<code>addtime</code>字段，类型是时间戳.
+                                        <h3 class="title_h3">1.在没有Bean情况下</h3>
+                                        在没有Bean情况我们是不是要在Dao文件读取<code>users</code>表里面的<code>addtime</code>字段将取出来在进行时间戳转换成时间。
+                                        <br>代码如下:
+                                        <br>1.新建Dao文件application/classes/Dao/Users.php
+                                        <pre class="brush:php">
+                                                class Dao_User extends Soter_Dao {
+                                                        
+                                                        public function getTable(){
+                                                                return 'users';                                                                
+                                                        }
+
+                                                        public function getPrimaryKey(){
+                                                                return 'id';
+                                                        }
+
+                                                        public function getColumns(){
+                                                                return array(
+                                                                                'id'//标识
+                                                                                ,'username'//用户名
+                                                                                ,'addtime'//添加时间
+                                                                                );
+                                                        }
+
+                                                        public function getAddTime(){
+                                                                $table = $this->getTable();
+                                                                $addtime = Sr::db()->select('addtime')
+                                                                                ->from($table)
+                                                                                ->limit(0,1)
+                                                                                ->execute()
+                                                                                ->value('addtime');
+                                                                $addtime = date('Y-m-d H:i:s', $addtime);
+                                                                return $addtime;
+                                                        }
+                                                }
+                                        </pre>
+                                        <h3 class="title_h3">2.在有Bean情况下</h3>
+                                        在有Bean情况现在我们创建Bean文件，在<code>getAddtime</code>函数里面进行时间戳转化，
+                                        <br>然后我们在Dao文件select查询调用<code>object</code>方法(详细可以查看<a href="database.html">数据库手册</a>的<b>查询结果集的使用</b>)来读取我们创建Bean文件。
+                                        <br>代码如下:
+                                        <br>1.新建Bean文件application/classes/Bean/Users.php
+                                        <pre class="brush:php">
+                                                class Bean_Users extends Soter_Bean {
+                                                        //标识
+                                                        private $id;
+
+                                                        //用户名
+                                                        private $username;
+
+                                                        //添加时间
+                                                        private $addtime;
+
+                                                        public function getId() {
+                                                                return $this->id;
+                                                        }
+
+                                                        public function setId($id) {
+                                                                $this->id = $id;
+                                                                return $this;
+                                                        }
+
+                                                        public function getUsername() {
+                                                                return $this->username;
+                                                        }
+
+                                                        public function setUsername($username) {
+                                                                $this->username = $username;
+                                                                return $this;
+                                                        }
+
+                                                        public function getAddtime() {
+                                                                return date('Y-m-d H:i:s', $this->addtime);
+                                                        }
+
+                                                        public function setAddtime($addtime) {
+                                                                $this->addtime = $addtime;
+                                                                return $this;
+                                                        }
+                                                }
+                                        </pre>
+                                        2.新建Dao文件application/classes/Dao/Users.php
+                                        <pre class="brush:php">
+                                                class Dao_User extends Soter_Dao {
+                                                        
+                                                        public function getTable(){
+                                                                return 'users';                                                                
+                                                        }
+
+                                                        public function getPrimaryKey(){
+                                                                return 'id';
+                                                        }
+
+                                                        public function getColumns(){
+                                                                return array(
+                                                                                'id'//标识
+                                                                                ,'username'//用户名
+                                                                                ,'addtime'//添加时间
+                                                                                );
+                                                        }
+
+                                                        public function getAddTime(){
+                                                                $table = $this->getTable();
+                                                                $users = Sr::db()->select('addtime')
+                                                                                ->from($table)
+                                                                                ->limit(0,1)
+                                                                                ->execute()
+                                                                                ->object('Users');
+                                                                return $users->getAddtime();
+                                                        }
+                                                }
+                                        </pre>
+                                        从上面代码可以看到使用bean+dao模式，降低了程序的复杂度和耦合度，增强了可维护性。 
+                                        <br><b class="text_strong">提示：</b>
+                                        <br>了解详细的Dao层,点击进入<a href="dao.html">Dao层</a>
+
+                                </li>
+				<li>
+					<h2 class="title_h2">Bean实体规范</h2>
+                                        1.Bean类文件都放在<code>application/classes/Bean</code>文件夹里面 
+                                        <br>2.Bean必须要继承<code>Soter_Bean</code>类，类名必须带<code>Bean_</code>前缀。
+                                        <br>3.Bean是表的一行记录绑定的，每个表字段都有对应Bean的set方法和get方法，<b>set方法和get方法都有规范</b>。
+                                        <br><b>set规范</b>是set+不含下划线单词首字母大写的表字段名称。
+					<br>比如：表字段名称是：account_id,那么Bean的set方法名称就应该是setAccountId;
+					<br>比如：表字段名称是：phone,那么Bean的set方法名称就应该是setPhone;
+                                        <br><b>get规范</b>是get+不含下划线单词首字母大写的表字段名称。
+					<br>比如：表字段名称是：account_id,那么Bean的get方法名称就应该是getAccountId;
+					<br>比如：表字段名称是：phone,那么Bean的get方法名称就应该是getPhone;
+                                        <br>比如我有以下这样表：
+                                        <pre class="brush:sql">
+                                                CREATE TABLE `user` (
+                                                        `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标识',
+                                                        `username` varchar(20) NOT NULL COMMENT '用户名',
+                                                        PRIMARY KEY (`id`)
+                                                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+                                        </pre>
+                                        示例如下：                                      
+                                        <br>1.新建Bean文件application/classes/Bean/User.php 
+                                        <br>2.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Bean_User extends Soter_Bean {
+                                                        //标识
+                                                        private $id;
+                                                        //用户名
+                                                        private $username;
+
+                                                        public function getId() {
+                                                                return $this->id;
+                                                        }
+
+                                                        public function setId($id) {
+                                                                $this->id = $id;
+                                                                return $this;
+                                                        }
+
+                                                        public function getUsername() {
+                                                                return $this->username;
+                                                        }
+
+                                                        public function setUsername($username) {
+                                                                $this->username = $username;
+                                                                return $this;
+                                                        }
+                                                }
+                                        </pre>
+
+				</li> 
+                                <li>
+					<h2 class="title_h2">使用Bean实体</h2>
+                                        我们可以在select查询结果集的<code>objects</code>和<code>object</code>方法进行读取Bean文件，详细介绍请看<a href="database.html">数据库手册</a>的"<b>查询结果集的使用</b>"。
+                                        <br>示例如下:
+                                        <br>1.新建Dao文件application/classes/Bean/Users.php
+                                        <pre class="brush:php">
+                                                &lt;?php
+                                        
+                                                class Bean_Users extends Soter_Bean {
+                                                        //标识
+                                                        private $id;
+
+                                                        //用户名
+                                                        private $username;
+
+                                                        //添加时间
+                                                        private $addtime;
+
+                                                        public function getId() {
+                                                                return $this->id;
+                                                        }
+
+                                                        public function setId($id) {
+                                                                $this->id = $id;
+                                                                return $this;
+                                                        }
+
+                                                        public function getUsername() {
+                                                                return $this->username;
+                                                        }
+
+                                                        public function setUsername($username) {
+                                                                $this->username = $username;
+                                                                return $this;
+                                                        }
+
+                                                        public function getAddtime() {
+                                                                return date('Y-m-d H:i:s', $this->addtime);
+                                                        }
+
+                                                        public function setAddtime($addtime) {
+                                                                $this->addtime = $addtime;
+                                                                return $this;
+                                                        }
+                                                }
+                                        </pre>
+                                        2.新建控制器文件application/classes/Controller/Welcome.php
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Controller_Welcome extends Soter_Controller {
+
+                                                        public function do_object() {
+                                                                echo Sr::db()->select('*')->from('users')->execute()->object('Users')->getAddtime();
+                                                        }
+                                                        
+                                                        public function do_objects() {
+                                                                $users = Sr::db()->select('*')->from('users')->execute()->objects('Users');
+                                                                Sr::dump($users);
+                                                        }
+                                                } 
+                                        </pre>
+                                        <b class="text_strong">提示：</b>
+                                        <br>了解详细的数据库手册,点击进入<a href="database.html">数据库手册</a>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">创建自己的Bean实体</h2>
+                                        下面我们自定义一个Bean实体
+                                        <br>1.创建test_bean数据库 
+                                        <br>2.执行以下sql:
+                                        <pre class="brush:sql">
+                                                create database test_bean CHARACTER SET utf8 COLLATE utf8_general_ci; 
+                                        </pre>
+                                        3.创建user数据表
+                                        <br>4.执行以下sql:
+                                        <pre class="brush:sql">
+                                                DROP TABLE IF EXISTS `user`;
+                                                CREATE TABLE `user` (
+                                                        `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标识',
+                                                        `username` varchar(20) NOT NULL COMMENT '用户名',
+                                                        `addtime` int(10) NOT NULL COMMENT '添加时间',
+                                                        PRIMARY KEY (`id`)
+                                                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+                                                INSERT INTO `user` VALUES ('1', '刘一', '1420041600');
+                                                INSERT INTO `user` VALUES ('2', '陈二', '1422806400');
+                                                INSERT INTO `user` VALUES ('3', '张三', '1425312000');
+                                                INSERT INTO `user` VALUES ('4', '李四', '1428076800');
+                                        </pre>
+                                        5.修改数据库配置文件application/config/default/database.php 
+                                        <br>6.修改一下代码
+                                        <pre class="brush:php">
+                                                'mysql' => array(
+                                                        'database' => 'test_bean',
+                                                        'masters' => array(
+                                                                'master01' => array(
+                                                                        'hostname' => '127.0.0.1',
+                                                                        'port' => 3306,
+                                                                        'username' => '用户名',
+                                                                        'password' => '密码',
+                                                                )
+                                                        ),
+                                                ),
+                                        </pre>
+                                        详细请看<a href="database.html">数据库手册</a>的“<b>数据库配置信息说明</b>” 
+                                        <br>7.新建Bean文件application/classes/Bean/User.php
+                                        <br>8.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Bean_User extends Soter_Bean {
+
+                                                        //标识
+                                                        private $id;
+
+                                                        //用户名
+                                                        private $username;
+
+                                                        //添加时间
+                                                        private $addtime;
+
+                                                        public function getId() {
+                                                                return $this->id;
+                                                        }
+
+                                                        public function setId($id) {
+                                                                $this->id = $id;
+                                                                return $this;
+                                                        }
+
+                                                        public function getUsername() {
+                                                                return $this->username;
+                                                        }
+
+                                                        public function setUsername($username) {
+                                                                $this->username = $username;
+                                                                return $this;
+                                                        }
+
+                                                        public function getAddtime() {
+                                                                date_default_timezone_set('Asia/Shanghai');
+                                                                return date('Y-m-d H:i:s', $this->addtime);
+                                                        }
+
+                                                        public function setAddtime($addtime) {
+                                                                $this->addtime = $addtime;
+                                                                return $this;
+                                                        }
+                                                }
+                                        </pre>
+                                        9.新建Dao文件application/classes/Dao/User.php 
+                                        <br>10.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Dao_User extends Soter_Dao {
+
+                                                        public function getColumns() {
+                                                                return array(
+                                                                                'id'//标识
+                                                                                ,'username'//用户名
+                                                                                ,'addtime'//添加时间
+                                                                                );
+                                                        }
+
+                                                        public function getPrimaryKey() {
+                                                                return 'id';
+                                                        }
+
+                                                        public function getTable() {
+                                                                return 'user';
+                                                        }
+
+                                                        //这里我们做一个简单查询，详细可以查看“数据库手册”的“查询数据”和“查询结果集的使用”
+                                                        public function getAddTime(){
+                                                                $table = $this->getTable();
+                                                                $user = Sr::db()->select('*')
+                                                                                ->from($table)
+                                                                                ->limit(0,1)
+                                                                                ->execute()
+                                                                                ->object('User');
+                                                                return $user->getAddtime();
+                                                        }
+
+                                                }
+                                        </pre>
+                                        11.新建控制器文件application/classes/Controller/Welcome.php 
+                                        <br>12.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Controller_Welcome extends Soter_Controller {
+
+                                                        public function do_dao() {
+                                                                $dao = Sr::dao('User');
+                                                                echo $dao->getAddTime();
+                                                        }
+                                                }  
+                                        </pre>
+                                        13.浏览器访问：http://127.0.0.1/index.php/Welcome/dao.do 
+                                        <br>//将输出：2015-01-01 00:00:00
+                                        <br>为什么会输出“<b>2015-01-01 00:00:00</b>”?
+                                        <br>我们可以从上面例子看Controller_Welcome控制器类，
+                                        <br>在do_dao方法里面做了加载Dao层中的<code>Dao_User</code>类赋值给<b>$dao</b>。
+                                        <br>通过<b>$dao</b>输出<code>Dao_User</code>类中的getAddTime方法,getAddTime方法做简单的查询。
+                                        <br>在去调用Bean实体中的<code>Bean_User</code>类赋值给<b>$user</b>.
+                                        <br>最后通过<b>$user</b>变量去调用<code>Bean_User</code>类中<code>getAddtime</code>方法,<code>getAddtime</code>方法把<code>$this->addtime</code>属性转成时间。
+                                        <br>所以浏览器才会显示“<b>2015-01-01 00:00:00</b>”。
+                                </li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

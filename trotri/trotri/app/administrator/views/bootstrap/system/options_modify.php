@@ -1,0 +1,45 @@
+<?php
+$this->widget('views\bootstrap\widgets\FormBuilder',
+	array(
+		'name' => 'modify',
+		'action' => $this->getUrlManager()->getUrl($this->action, '', ''),
+		'errors' => $this->errors,
+		'values' => $this->data,
+		'elements_object' => $this->elements,
+		'elements' => array(
+		),
+		'columns' => array(
+			'site_name',
+			'site_url',
+			// 'tpl_dir',
+			// 'html_dir',
+			'meta_title',
+			'meta_keywords',
+			'meta_description',
+			'powerby',
+			'stat_code',
+			'url_rewrite',
+			'close_register',
+			'close_register_reason',
+			'show_register_service_item',
+			'register_service_item',
+			'thumb_width',
+			'thumb_height',
+			'water_mark_type',
+			'water_mark_imgdir',
+			'water_mark_text',
+			'water_mark_position',
+			'water_mark_pct',
+			'smtp_host',
+			'smtp_port',
+			'smtp_username',
+			'smtp_password',
+			'smtp_frommail',
+			'list_rows_posts',
+			'list_rows_post_comments',
+			'list_rows_users',
+			'_button_save_',
+		)
+	)
+);
+?>

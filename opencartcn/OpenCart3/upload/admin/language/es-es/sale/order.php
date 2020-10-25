@@ -1,0 +1,132 @@
+<?php
+// Heading
+$_['heading_title']                           = 'Pedidos';
+//traduccion @r e i t i e r
+// Text
+$_['text_success']                            = 'Correcto: Ha modificado pedidos.';
+$_['text_list']        		  				  = 'Listado de pedidos';
+$_['text_add']         		  				  = 'A&ntilde;adir pedido';
+$_['text_edit']        		  				  = 'Editar pedido';
+$_['text_filter']                             = 'Filtro';
+$_['text_order_detail']                       = 'Detalles del pedido';
+$_['text_customer_detail']                    = 'Detalles del cliente';
+$_['text_option']                             = 'Opciones';
+$_['text_store']                              = 'Tienda';
+$_['text_date_added']                         = 'A&ntilde;adido el';
+$_['text_payment_method']                     = 'M&eacute;todo de pago:';
+$_['text_shipping_method']                    = 'M&eacute;todo de env&iacute;o:';
+$_['text_customer']                           = 'Cliente:';
+$_['text_customer_group']                     = 'Grupo de clientes:';
+$_['text_email']                              = 'E-Mail';
+$_['text_telephone']                          = 'Tel&eacute;fono:';
+$_['text_fax']                                = 'Fax';
+$_['text_invoice']                            = 'Factura';
+$_['text_reward']                             = 'Puntos fidelidad:';
+$_['text_affiliate']                          = 'Afiliado:';
+$_['text_order']                              = 'Pedido (#%s)';
+$_['text_payment_address']                    = 'Direcci&oacute;n facturaci&oacute;n';
+$_['text_shipping_address']                   = 'Direcci&oacute;n env&iacute;o';
+$_['text_comment']                            = 'Comentario:';
+$_['text_history']                            = 'Historial pedidos';
+$_['text_history_add']                        = 'A&ntilde;adir a historial';
+$_['text_account_custom_field']               = 'Campos personalizados cuenta';
+$_['text_payment_custom_field']               = 'Campos personalizados direcci&oacute;n facturaci&oacute;n';
+$_['text_shipping_custom_field']              = 'Campos personalizados direcci&oacute;n env&iacute;o';
+$_['text_browser']                            = 'Navegador';
+$_['text_ip']                                 = 'Direcci&oacute;n IP:';
+$_['text_forwarded_ip']                       = 'IP Remitente:';
+$_['text_user_agent']                         = 'User Agent:';
+$_['text_accept_language']                    = 'Acepta el idioma:';
+$_['text_order_id']                           = 'ID Pedido:';
+$_['text_website']                            = 'Sitio Web:';
+$_['text_invoice_no']                         = 'Factura No.';
+$_['text_invoice_date']                       = 'Fecha factura:';
+$_['text_sku']                                = 'SKU:';
+$_['text_upc']                                = 'UPC:';
+$_['text_ean']                                = 'EAN:';
+$_['text_jan']                                = 'JAN:';
+$_['text_isbn']                               = 'ISBN:';
+$_['text_mpn']                                = 'MPN:';
+$_['text_missing']                            = 'Pedidos perdidos';
+$_['text_default']                            = 'Por defecto';
+$_['text_product']                            = 'A&ntilde;adir producto(s)';
+$_['text_voucher']                            = 'A&ntilde;adir vale(s)';
+$_['text_shipping']                           = 'Env&iacute;o';
+$_['text_contact']                            = 'Contacto';
+$_['text_reward_added']                       = 'Correcto: Puntos Fidelidad a&ntilde;adidos.';
+$_['text_reward_removed']                     = 'Correcto: Puntos Fidelidad Eliminados.';
+$_['text_commission_added']                   = 'Correcto: Comisi&oacute;n a&ntilde;adida.';
+$_['text_commission_removed']                 = 'Correcto: Comisi&oacute;n eliminada.';
+$_['text_restock']                            = 'Correcto: Los productos se han repuesto.';
+$_['text_upload']                             = 'Su archivo fue subido correctamente.';
+$_['text_picklist']            				  = 'Nota Despacho';
+
+// Column
+$_['column_order_id']                         = 'ID Pedido';
+$_['column_customer']                         = 'Cliente';
+$_['column_status']                           = 'Estado';
+$_['column_date_added']                       = 'A&ntilde;adido el';
+$_['column_date_modified']                    = 'Modificado el';
+$_['column_total']                            = 'Total';
+$_['column_product']                          = 'Producto';
+$_['column_model']                            = 'Modelo';
+$_['column_quantity']                         = 'Cantidad';
+$_['column_price']                            = 'Precio Unitario';
+$_['column_comment']                          = 'Comentario';
+$_['column_notify']                           = 'Notificar al Cliente';
+$_['column_location']                         = 'Ubicacio&oacute;n';
+$_['column_reference']                        = 'Referencia';
+$_['column_action']                           = 'Acci&oacute;n';
+$_['column_weight']                           = 'Peso del Producto';
+
+// Entry
+$_['entry_store']                             = 'Tienda';
+$_['entry_customer']                          = 'Cliente';
+$_['entry_customer_group']                    = 'Grupo de Clientes';
+$_['entry_firstname']                         = 'Nombre';
+$_['entry_lastname']                          = 'Apellido';
+$_['entry_email']                             = 'E-Mail';
+$_['entry_telephone']                         = 'Tel&eacute;fono';
+$_['entry_address']                           = 'Escoger Direcci&oacute;n';
+$_['entry_company']                           = 'Empresa';
+$_['entry_address_1']                         = 'Direcci&oacute;n 1';
+$_['entry_address_2']                         = 'Direcci&oacute;n 2';
+$_['entry_city']                              = 'Ciudad';
+$_['entry_postcode']                          = 'C&oacute;digo Postal';
+$_['entry_country']                           = 'Pa&iacute;s';
+$_['entry_zone']                              = 'Provincia';
+$_['entry_zone_code']                         = 'C&oacute;digo Provincia';
+$_['entry_product']                           = 'Escoger Producto';
+$_['entry_option']                            = 'Escoger Opcion(es)';
+$_['entry_quantity']                          = 'Cantidad';
+$_['entry_to_name']                           = 'Destinatario\'s Nombre';
+$_['entry_to_email']                          = 'Destinatario\'s Email';
+$_['entry_from_name']                         = 'Nombre remitente';
+$_['entry_from_email']                        = 'Email remitente';
+$_['entry_theme']             				  = 'Tema Vale Regalo:';
+$_['entry_message']           				  = 'Mensaje:';
+$_['entry_amount']            			      = 'Importe:';
+$_['entry_affiliate']         				  = 'Afiliado:';
+$_['entry_order_status']      				  = 'Estado del pedido:';
+$_['entry_notify']            				  = 'Notificar al cliente:';
+$_['entry_override']                          = 'Anulaci&oacute;n';
+$_['entry_comment']           				  = 'Comentarios:';
+$_['entry_currency']                          = 'Moneda';
+$_['entry_shipping_method']                   = 'M&eacute;todo de env&iacute;o:';
+$_['entry_payment_method']                    = 'M&eacute;todo de Pago';
+$_['entry_coupon']            				  = 'C&oacute;digo Cup&oacute;n:';
+$_['entry_voucher']           				  = 'Vale Regalo:';
+$_['entry_reward']            				  = 'Puntos Fidelidad:';
+$_['entry_order_id']                          = 'ID Pedido';
+$_['entry_total']                             = 'Total';
+$_['entry_date_added']                        = 'A&ntilde;adido el';
+$_['entry_date_modified']                     = 'Modificado el';
+
+// Help
+$_['help_override']                           = 'Si el pedido del cliente esta siendo bloqueado y cambia el estado del pedido debido a la extension anti-fraude.';
+
+// Error
+$_['error_warning']                           = 'Aviso: &iexcl;Por favor revisa cuidadosamente el formulario errores!';
+$_['error_permission']                        = 'Aviso: &iexcl;No dispone de permisos para modificar pedidos!';
+$_['error_action']                            = 'Advertencia: &iexcl;No se pudo completar esta acci&oacute;n!';
+$_['error_filetype']			              = '&iexcl;Archivo no v&aacute;lido!';

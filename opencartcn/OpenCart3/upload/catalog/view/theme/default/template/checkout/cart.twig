@@ -1,0 +1,212 @@
+{{ header }}
+<div class="container">
+  {{ include(helper.template('_partial/breadcrumb')) }}
+  {% if attention %}
+  <div class="alert alert-info"><i class="fa fa-info-circle"></i> {{ attention }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+  {% endif %}
+  {% if success %}
+  <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+  </div>
+  {% endif %}
+
+  <div class="row">{{ column_left }}
+    {% if column_left and column_right %}
+    {% set class = 'col-sm-6' %}
+    {% elseif column_left or column_right %}
+    {% set class = 'col-sm-9' %}
+    {% else %}
+    {% set class = 'col-sm-12' %}
+    {% endif %}
+    <div id="content" class="{{ class }}">{{ content_top }}
+      {% set process = 'cart' %}
+      {{ include(helper.template('checkout/checkout/_checkout_process')) }}
+      <form class="cart-well" action="{{ action }}" method="post" enctype="multipart/form-data">
+        <div class="table-responsive">
+          <table class="table mb-2" id="product-table">
+            <thead>
+              <tr>
+                <td class="text-left">{{ column_image }}</td>
+                <td class="text-left">{{ column_name }}</td>
+                <td class="text-left">{{ column_price }}</td>
+                <td class="text-left">{{ column_model }}</td>
+                {% if helper.config('config_cart_weight') %}
+                <td class="text-left">{{ column_weight }}</td>
+                {% endif %}
+                <td class="text-left" width="150">{{ column_quantity }}</td>
+                <td class="text-left" width="120">{{ column_total }}</td>
+                <td class="text-right" width="70"></td>
+              </tr>
+            </thead>
+            <tbody>
+            {{ include(helper.template('checkout/cart/_product_list')) }}
+            </tbody>
+          </table>
+        </div>
+      </form>
+      <div class="cart-well">
+        <div class="row">
+          {% if modules %}
+          <div class="panel-group col-sm-8" id="accordion">
+            {{ include(helper.template('checkout/cart/_module')) }}
+          </div>
+          {% endif %}
+          <div class="col-sm-4 {{ not modules ? 'pull-right' : '' }}">
+            <table id="cart-totals" class="table table-bordered">
+              {{ include(helper.template('checkout/cart/_total')) }}
+            </table>
+            <div class="buttons clearfix">
+              <div class="pull-right"><a href="{{ checkout }}" class="btn btn-primary btn-lg cart-checkout">{{ button_checkout }}</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{ content_bottom }}</div>
+    {{ column_right }}</div>
+</div>
+{% if error_warning %}
+  <script>layer.msg('{{ error_warning }}', {anim: 6});</script>
+{% endif %}
+<script type="text/javascript"><!--
+  var initQuantity;
+
+  $(document).on('click', '.quantity-wrapper input', function(event) {
+    initQuantity = $(this).val();
+  });
+
+  $(document).on('blur', '.quantity-wrapper input', function(event) {
+    if ( initQuantity == $(this).val() ) return;
+    if ( $(this).val() < 1 ) $(this).val(1);
+    cart_update();
+  });
+
+  $(document).delegate('#product-table .quantity-wrapper span', 'click', function(e) {
+    var _quantity = $(this).siblings('.cart-quantity');
+
+    if( $(this).hasClass('quantity-up')) {
+      _quantity.val( parseInt(_quantity.val()) + 1 );
+    } else {
+      if ( _quantity.val() <=1 ) return;
+      _quantity.val( parseInt(_quantity.val()) - 1 );
+    }
+
+    cart_update();
+  });
+
+  var cart_update = function() {
+    $.ajax({
+      url: 'index.php?route=checkout/cart/update',
+      type: 'post',
+      dataType: 'json',
+      data: $('#product-table input[name^=\'quantity\']'),
+      beforeSend: function() {
+        ajax_before();
+      },
+      success: function (json) {
+        ajax_success(json);
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        ajax_error();
+      }
+    });
+  }
+
+  function cart_remove(cart_id) {
+    $.ajax({
+      url: 'index.php?route=checkout/cart/remove',
+      type: 'post',
+      dataType: 'json',
+      data: {key: cart_id},
+      beforeSend: function() {
+        ajax_before();
+      },
+      success: function (json) {
+        ajax_success(json);
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        ajax_error();
+      }
+    });
+  }
+
+function cart_select() {
+  $.ajax({
+    url: 'index.php?route=checkout/cart/select',
+    type: 'post',
+    dataType: 'json',
+    data: $('input[name^=\'selected\']:checked:enabled'),
+    beforeSend: function() {
+      ajax_before();
+    },
+    success: function(json) {
+      ajax_success(json);
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      ajax_error();
+    }
+  });
+}
+
+function ajax_before() {
+  toggle_check_all_state();
+  $('.alert-danger').remove();
+  layer.load(2, {shade: [0.4,'#fff']});
+}
+
+function ajax_error() {
+  layer.closeAll();
+  layer.msg('{{ error_network }}');
+}
+
+function ajax_success(json) {
+  if (json['redirect']) {
+    location = json['redirect'];
+    return;
+  }
+
+  layer.closeAll();
+
+  if (json['error']) {
+    $('.breadcrumb-wrapper').siblings('.container').prepend('<div class="alert alert-danger alert-dismissible mt-1"><i class="fa fa-exclamation-circle"></i>' + json['error'] + '<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+  }
+
+  if (json['error_flash']) {
+    var error_flash_html = '';
+    for (i = 0; i < json['error_flash'].length; i++) {
+      error_flash_html += '<div class="alert alert-danger alert-dismissible mt-1">';
+      error_flash_html += '<i class="fa fa-exclamation-circle"></i>' + json['error_flash'][i] + '<button type="button" class="close" data-dismiss="alert">&times;</button><br/>';
+      error_flash_html += '</div>';
+    }
+    $('#content').prepend(error_flash_html);
+  }
+
+  if (json['message']) {
+    layer.msg(json['message']);
+  }
+
+  $('#product-table > tbody').html(json['product_list_html']);
+  $('#accordion').html(json['module_html']);
+  $('#cart-totals').html(json['total_html']);
+  $('#cart').load('index.php?route=common/cart/info');
+  toggle_check_all_state();
+}
+//--></script>
+<script type="text/javascript"><!--
+$(document).ready(function () {
+  toggle_check_all_state();
+});
+
+function toggle_check_all_state() {
+  var all_products_checked = true;
+  $('input[name*=\'selected\']').each(function() {
+    if ($(this).prop('checked') == false) {
+      all_products_checked = false;
+    }
+  })
+
+  $('#checkbox-all').prop('checked', all_products_checked);
+}
+//--></script>
+{{ footer }}

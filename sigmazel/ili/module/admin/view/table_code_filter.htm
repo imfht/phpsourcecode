@@ -1,0 +1,47 @@
+<?php
+$tmp =
+<<<EOF
+//版权所有(C) 2014 www.ilinei.com
+
+namespace {$_namespace}\module;
+
+class filter{
+    public function execute(\$dispatches){
+        global \$setting;
+
+        \$modules = array();
+EOF;
+
+$code .= $tmp;
+
+foreach ($table_list as $key => $table){
+    $code .= "
+        \$modules[] = '{$table[IDENTITY]}';";
+}
+
+$tmp =
+<<<EOF
+
+
+        \$_namespace = strtr(\$setting['SiteTheme'], '/', '\\\\');
+
+        if(in_array(\$dispatches['module'], \$modules)){
+            \$class = \$_namespace.'\\\\module\\\\'.\$dispatches['module'].'\\\\control\\\\'.\$dispatches['control'];
+
+            if(!class_exists(\$class)) throw new \Exception(\$GLOBALS['lang']['class.action'].\$class);
+            if(!method_exists(\$class, \$dispatches['method'])) throw new \Exception(\$GLOBALS['lang']['class.method'].\$class.'->'.\$dispatches['method']);
+
+            \$method = \$dispatches['method'];
+
+            \$control = new \$class();
+            \$control->\$method();
+
+            exit(0);
+        }
+    }
+}
+
+EOF;
+
+$code .= $tmp;
+?>

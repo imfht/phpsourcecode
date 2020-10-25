@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<script src="__PUBLIC__/base/iconfont.js"></script>
+<title>{$web.name} - {$web.title}</title>
+{load href="__PUBLIC__/base/base.css,__PUBLIC__/manage/frame.css,__PUBLIC__/js/do.js,__PUBLIC__/admin/common.js,__PUBLIC__/js/package.js" /}
+</head>
+<body>
+{if $user->parent_id == 0}
+<div id="app-navbar">
+    <a id="homeLink" href="{:url('system/passport.index/index')}" target="_top"></a>
+    <ul>
+        <a href="javascript:;" class="apps"><li><svg class="icon" aria-hidden="true"><use xlink:href="#icon-classify_icon"></use></svg><p>应用</p></li></a>
+        {if !empty($apps) && !empty($member_miniapp_id)}
+            <a href="{:url('system/passport.user/index')}" target="iframe"><li><svg class="icon white" aria-hidden="true"><use xlink:href="#icon-my_icon"></use></svg><p>会员</p></li></a>
+            <a href="{:url('system/passport.member/staff')}" target="iframe"><li><svg class="icon white" aria-hidden="true"><use xlink:href="#icon-license"></use></svg><p>账号</p></li></a>
+            <a href="{:url('system/passport.message/index')}" target="iframe"><li id="message"><svg class="icon white" aria-hidden="true"><use xlink:href="#icon-wodefankui"></use></svg><p>消息</p></li></a>
+        {/if} 
+        <a href="{:url('system/passport.bank/bill')}" target="iframe"><li><svg class="icon white" aria-hidden="true"><use xlink:href="#icon-chuzhijine"></use></svg><p>财务</p></li></a>
+        <!-- <a href="{:url('system/passport.support/index')}" target="iframe"><li><svg class="icon white" aria-hidden="true"><use xlink:href="#icon-service_icon"></use></svg><p>工单</p></li></a> -->
+    </ul>
+    <div class="user">
+        <ul>
+        <a class="shortcut" href="{:url('system/passport.appshop/index')}" target="iframe"><li class="focus"><svg class="icon white" aria-hidden="true"><use xlink:href="#icon-store_icon"></use></svg><p>商店</p></li></a>
+        </ul>
+    </div>
+</div>
+{/if}
+<div id="app-title" style="left:{$user->parent_id?0:70}px">
+    <a href="{:url('system/passport.setting/index')}" target="iframe" class="appname">{$appname}</a>
+    <div class="breadcrumb">
+        <ul>
+            <li><a href="javascript:;"><i class="iconfont icon-home_icon"></i>{$web.name}</a></li>
+            {if !empty($member_miniapp_id)}<li><a href="javascript:;"> / <span class="blue">{$member_miniapp.appname}</span></a></li>{/if}
+        </ul>
+        <ul id="breadcrumb"></ul>
+    </div>
+    <div class="appuser" rel="layer" href="javascript:;"><i class="iconfont icon-setup_icon"></i><span>帐号</span><i class="iconfont icon-arrowdown"></i></div>
+</div>
+<div id="nav" style="left:{$user->parent_id?0:70}px"></div>
+<div id="main" style="left:{if $user->parent_id}140{else}{$member_miniapp_id?210:70}{/if}px"><iframe id="iframe" name="iframe" src="{$welcome}" frameborder="0"></iframe></div>
+<div id="layer">
+    {if !$user->parent_id}
+    <div class="item"><a href="{:url('system/passport.member/index')}" target="iframe"><i class="iconfont icon-my_icon"></i> 帐号设置</a></div>
+    <div class="item fn-cp password divider" url="{:url('system/passport.member/safepassword')}"><i class="iconfont icon-security"></i> 安全密码</div>
+    {/if}
+    <div class="item fn-cp password divider" url="{:url('system/passport.index/password')}"><i class="iconfont icon-xiugaidenglumima"></i> 登录密码</div>
+    <div class="item"><a href="{:url('system/passport.login/logout')}" target="main"><i class="iconfont icon-shutdown_icon"></i> 退出管理</a></div>
+</div>
+<div class="leftlayer" id="applayer" class="fn-hide">
+    <div class="title">
+        <span>我的应用</span>
+        <span class="iconfont icon-cuowu closeLayer"></span>
+    </div>
+    <div class="bodys">
+        {volist name="apps" id="rs"}
+        <a href="javascript:;" class="{$rs.is_lock?'manageLock':'manageApp'}" url="{:url('system/passport.index/changeApp',['id'=>$rs.id])}">
+            <img src="{$rs.logo}"><p>{$rs.appname}</p>
+        </a>
+        {/volist}
+    </div>
+</div>
+<div id="subnav" class="fn-hide"></div>
+{literal}
+<script id="navtpl" type="text/html">
+{{each list value keys}}
+<dl><dt><i class="iconfont icon-{{value.icon}}"></i><i class="iconfont right-icon icon-arrowright"></i>{{value.name}}</dt>
+    {{each value.nav rs}}
+    <dd>
+        <a href="{{if rs.url}}{{rs.url}}{{else}}javascript:;{{/if}}" target="iframe" class="{{if rs.menu}}submenu{{else}}closemenu{{/if}}" ckey="{{keys}}" skey="{{$index}}">
+            {{if rs.icon}}<i class="iconfont icon-{{rs.icon}}"></i>{{else}}<i class="iconfont icon-arrowright"></i>{{/if}}{{rs.name}}
+        </a>
+    </dd>
+    {{/each}}
+</dl>
+{{/each}}
+</script>
+<script id="subnavtpl" type="text/html">
+{{each list rs}}<a href="{{if rs.url}}{{rs.url}}{{else}}javascript:;{{/if}}" target="iframe">{{rs.name}}</a>{{/each}}
+</script>
+{/literal}
+<script type="text/javascript">
+Do('base','layer','tip','tpl',function(){
+    nav({$member_miniapp_id},"{:url('system/passport.index/appmenu')}")
+    $(".miniapp").click(function(){
+        nav($(this).attr("id"),"{:url('system/passport.index/appmenu')}");
+    });
+    $('.password').win({'area':['600px','350px']})
+    $(".apps").click(function(){
+        var index = layer.open({type: 1,content:$('#applayer'),title:false,closeBtn:false,shadeClose:true,area: ['320px','100%'],shade: 0.1,offset: ['0', '70px']});
+        $(".closeLayer").click(function(){
+            parent.layer.close(index);
+        });
+    });
+    //切换管理
+    $('.manageApp').click(function(){
+        var url = $(this).attr('url');
+        var index = parent.layer.load(0,{shade:[0.3,'#393D49']});
+        $.getJSON(url,function(data){
+            parent.layer.close(index);
+            if(data.code == 200){
+                window.parent.location.href = data.url;
+            }else{
+                parent.layer.alert(data.message,{icon:5})
+            };
+        }); 
+    });
+    //锁定提示
+    $('.manageLock').click(function(){
+        parent.layer.alert('当前应用已被锁定,禁止管理',{icon:5})
+    });
+    $(".appuser").powerFloat({eventType:"hover",targetMode:'common',targetAttr:"rel",position:"4-1"});
+    //定时访问
+    setInterval(function(){
+        $.getJSON("{:url('system/passport.message/count')}",function(req){
+            if(req.data > 0){layer.tips('您有一条新的信息','#message',{tips: [2,'#f4615c']});}
+        })
+    },10000);
+    {if !$user.phone_id}$('#navtpl').popup({area:['600px','350px'],reload:1,url:"{:url('system/passport.member/phone')}"}){/if}
+});
+// 管理菜单
+function nav(app,url) {
+    $.getJSON(url,{id: app},function (data) {
+        $("#nav").html(template('navtpl',{list:data}));
+        $("#nav dd").hide();
+        $("#nav dl:first").find('dd').show();
+        $("#nav dt").click(function(){
+            $("#nav dt").find('.right-icon').addClass('icon-arrowright');
+            $("#nav dd").hide("fast");
+            $(this).find('.right-icon').removeClass('icon-arrowright');
+            $(this).find('.right-icon').addClass('icon-arrowdown');
+            $(this).parent().find('dd').slideToggle('fast');
+        });
+        $("dd").click(function (){$("dd").removeClass("focus");$(this).addClass('focus')});
+        $('.closemenu').click(function(){$('#subnav').hide();$('#main').css("left","{$user->parent_id?140:210}px")})
+        $('.submenu').click(function(){
+            $('#subnav').show(); 
+            $('#main').css('left','{$user->parent_id?240:314}px');
+            $("#subnav").html(template('subnavtpl',{list:data[$(this).attr('ckey')].nav[$(this).attr('skey')].menu}));
+            $("#subnav > a").click(function (){
+                $("#subnav > a").removeClass("focus");
+                $(this).addClass('focus');
+            });
+        })
+    });
+}
+//面包屑
+function breadcrumb(data){
+    $("#breadcrumb").html(data);
+}
+</script>
+</body>
+</html>

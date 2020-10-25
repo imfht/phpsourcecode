@@ -1,0 +1,107 @@
+{extend name="default/base" /}
+{block name="title"}
+{$payObj=='recharge'?"在线充值":"支付订单"}
+- {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/orders.css?v={$v}">
+{/block}
+{block name="header"}
+	<div id="info_list">
+    <header class="ui-header ui-header-positive wst-header">
+    	{if($payObj=='recharge')}
+    		<a class="ui-icon-return" href='{:Url('mobile/logmoneys/usermoneys')}'></a><h1>在线充值</h1>
+    	{else}
+	    	<a class="ui-icon-return" href='{:Url('mobile/orders/index')}'></a><h1>支付订单</h1>
+	    {/if}
+    </header>
+{/block}
+{block name="main"}
+	<section class="ui-container" id="shopBox">
+	{if(empty($message))}
+		{if($payObj=='recharge')}
+			<div class="recharge-box">
+				<div>钱包充值</div>
+				<div class="paybox"><span class="wst-orders_prices">¥ {$needPay}</span></div>
+			</div>
+	    {else}
+		   	{volist name="$rs['list']" id="order"}
+			  	<div class="order-item">
+			  		<div class="ui-row-flex item-head" onclick="getOrderDetail({{d[i].orderId}})">
+			   			<div class="ui-col ui-col-2 ui-nowrap-flex" style="font-size: 0.14rem;color:#333;">订单号：{$order['orderNo']}<span style="float : right;">邮费：{$order['deliverMoney']}</span></div>
+			 		</div>
+			     	{volist name="$rs['goods'][$order['orderId']]" id="vo"}
+					<div class="ui-row-flex ui-whitespace border-b" style="border-bottom:1px solid #f2f2f2;">
+						<div class="">
+							<img src="__RESOURCE_PATH__/{$vo['goodsImg']}" class="o-Img">
+						</div>
+						<div class="o-gInfo-container">
+							<div class="o-gInfo">
+								<p class="o-gName ui-nowrap-multi ">{$vo['goodsName']}</p>
+								{if condition="count($vo['goodsSpecNames']) gt 0"}
+								<p class="o-gSpec ui-nowrap-flex">
+									{volist name="$vo['goodsSpecNames']" id="spec"}
+									{$spec}
+									{/volist}
+								</p>
+								{/if}
+							</div>
+							<div class="o-gInfo2 wst-flex-row wst-ac wst-jsb">
+								<p class="o-gPrice">¥ {$vo['goodsPrice']}</p><p class="o-gNum">x {$vo['goodsNum']}</p>
+							</div>
+						</div>
+					</div>
+			       	{/volist}
+
+					<div class="ui-btn-wrap" style="text-align: right;padding:10px 0">
+						<span class="wst-orders_pricet">总金额：<span class="wst-orders_prices">¥ <?php echo sprintf("%.2f", $order['needPay']);?></span></span>
+					</div>
+			      	<div class="wst-clear"></div>
+				</div>
+			{/volist}
+	    {/if}
+		<div style="text-align: center;padding:0.12rem;">
+			<button type="button" class="wst-btn-dangerlo" onclick="javascript:callpay();" style="width: 100%;  display: inline-block;">确认支付</button>
+		</div>
+	</section>
+	{else}
+		<ul class="ui-row-flex wst-flexslp">
+			<li class="ui-col ui-flex ui-flex-pack-center">
+			<p>{$message}</p>
+			</li>
+		</ul>
+	{/if}
+    </div>
+<div class="ui-dialog" id="wst-di-wxpay">
+    <div class="ui-dialog-cnt">
+      	<header class="ui-dialog-hd ui-border-b">
+          <h3>请确认微信支付已完成</h3>
+          <i class="ui-dialog-close" data-role="button"></i>
+    	</header>
+        <div class="ui-dialog-hd ui-border-b">
+           	<a href="{$returnUrl}"><div style="color:red;">已完成支付</div></a>
+        </div>
+        <div class="ui-dialog-hd ui-border-b">
+            <a href=""><div >支付遇到问题，重新支付</div></a>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="footer"}{/block}
+{block name="js"}
+
+{if(empty($message))}
+<script type="text/javascript">
+	function callpay(){
+		$("#wst-di-wxpay").dialog("show");
+		location.href = "{$mweb_url}";
+	}
+    $(document).ready(function(){
+    	{if($payObj=='recharge')}
+			backPrevPage(WST.U('mobile/logmoneys/usermoneys'));
+		{else}
+			backPrevPage(WST.U('mobile/orders/index'));
+	    {/if}
+    });
+	</script>
+{/if}
+{/block}

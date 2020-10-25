@@ -1,0 +1,322 @@
+{template nheader.html}
+<script type="text/javascript">
+$(function() {
+    {if $error}
+        dr_tips('{$error}',5);
+    {/if}
+     dr_remote({intval($data.type)});
+});
+
+function dr_remote(id) {
+    $(".r1").hide();
+    $(".r2").hide();
+    $(".r3").hide();
+    $(".r4").hide();
+    $(".r"+id).show();
+}
+function dr_aliyun_host(val) {
+    $('#rurl').val('http://'+$('#aliyun_bucket').val()+'.'+val);
+}
+function remote_test() {
+    var type = $('input:radio[name=type]:checked').val();;
+    if (type == '1') {
+        ftp_test();
+    } else if (type == '2') {
+        baidu_test();
+    } else if (type == '3') {
+        aliyun_test();
+    } else if (type == '4') {
+        qcloud_test();
+    }
+}
+function ftp_test() {
+    var host = $('#host').val();
+    var port = $('#port').val();
+    var username = $('#username').val();
+    var password = $('#password').val();
+    var rurl = $('#rurl').val();
+    var path = $("#path").val();
+    var pasv = $(".pasv:checked").val();
+    var mode = $(".mode:checked").val();
+    $("#ftptest").val('Loading');
+    $.get("{dr_url('api/testftp')}",{rurl:rurl,host:host,port:port,username:username,password:password,pasv:pasv,path:path,mode:mode}, function(data){
+        alert(data);
+        $("#ftptest").val('{fc_lang('测试')}');
+    })
+}
+function aliyun_test() {
+    var id = $('#aliyun_id').val();
+    var secret = $('#aliyun_secret').val();
+    var bucket = $('#aliyun_bucket').val();
+    var host = $('#aliyun_host').val();
+    var rurl = $('#rurl').val();
+    $("#ftptest").val('Loading');
+    $.get("{dr_url('api/aliyuntest')}",{rurl:rurl,id:id,secret:secret,bucket:bucket,host:host}, function(data){
+        alert(data);
+        $("#ftptest").val('{fc_lang('测试')}');
+    })
+}
+function baidu_test() {
+    var ak = $('#baidu_ak').val();
+    var sk = $('#baidu_sk').val();
+    var bucket = $('#baidu_bucket').val();
+    var host = $('#baidu_host').val();
+    $('#rurl').val('http://'+host+'/'+bucket);
+    var rurl = $('#rurl').val();
+    $("#ftptest").val('Loading');
+    $.get("{dr_url('api/baidutest')}",{rurl:rurl,ak:ak,sk:sk,bucket:bucket,host:host}, function(data){
+        alert(data);
+        $("#ftptest").val('{fc_lang('测试')}');
+    })
+}
+function qcloud_test() {
+    var id = $('#qcloud_id').val();
+    var app = $('#qcloud_app').val();
+    var key = $('#qcloud_key').val();
+    var bucket = $('#qcloud_bucket').val();
+    var rurl = $('#rurl').val();
+    $("#ftptest").val('Loading');
+    $.get("{dr_url('api/qcloudtest')}", {rurl:rurl,id:id, app:app, key:key, bucket:bucket }, function(data){
+        alert(data);
+        $("#ftptest").val('{fc_lang('测试')}');
+    })
+}
+</script>
+
+<div class="page-bar">
+    <ul class="page-breadcrumb mylink">
+        {$menu.link}
+
+    </ul>
+    <ul class="page-breadcrumb myname">
+        {$menu.name}
+    </ul>
+    <div class="page-toolbar">
+        <div class="btn-group pull-right">
+            <button type="button" class="btn green btn-sm btn-outline dropdown-toggle" data-toggle="dropdown" aria-expanded="false" data-hover="dropdown"> {fc_lang('操作菜单')}
+                <i class="fa fa-angle-down"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" role="menu">
+                {loop $menu.quick $t}
+                <li>
+                    <a href="{$t.url}">{$t.icon} {$t.name}</a>
+                </li>
+                {/loop}
+                <li class="divider"> </li>
+                <li>
+                    <a href="javascript:window.location.reload();">
+                        <i class="icon-refresh"></i> {fc_lang('刷新页面')}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<h3 class="page-title">
+    <small>{fc_lang('远程附件是将本地指定扩展名的附件存储到远程服务器中，由于网络原因，请不要远程存储大文件')}</small>
+</h3>
+
+<form class="form-horizontal" action="" method="post" id="myform" name="myform">
+    <div class="portlet light bordered myfbody">
+
+        <div class="portlet-title">
+            <div class="caption">
+                <span class="caption-subject font-green sbold uppercase">{fc_lang('远程附件')}</span>
+            </div>
+        </div>
+        <div class="portlet-body">
+
+            <div class="row">
+                <div class="portlet-body form">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-2 control-label" style="padding-top: 10px;">{fc_lang('类型')}：</label>
+                            <div class="col-md-9">
+                                <div class="radio-list">
+                                {loop $ci->type $i $n}
+                                <label class="radio-inline"><input type="radio" name="type" onclick="dr_remote('{$i}')" value="{$i}" {if (int)$data['type'] == $i}checked{/if} /> {$n}</label>
+                                {/loop}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{fc_lang('名称')}：</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" value="{htmlspecialchars($data.name)}" name="data[name]" />
+                                <span class="help-block">{fc_lang('给它一个描述名称')}</span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label">{fc_lang('服务器端口')}：</label>
+                            <div class="col-md-9">
+                                <input id="port" name="data[value][port]" value="{$data['value']['port']}" class="form-control" type="text" />
+                                <span class="help-block"> {fc_lang('例如常用端口21')} </span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label">{fc_lang('服务器地址')}：</label>
+                            <div class="col-md-9">
+                                <input id="host" class="form-control" type="text" name="data[value][host1]" value="{$data['value']['host']}" />
+                                <span class="help-block"> {fc_lang('可以是FTP服务器的IP地址或域名')} </span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label">{fc_lang('服务器帐号')}：</label>
+                            <div class="col-md-9">
+                                <input id="username" name="data[value][username]" value="{$data['value']['username']}" class="form-control" type="text" />
+                                <span class="help-block"> {fc_lang('该帐号必需具有以下权限：读取、写入、删除、创建目录、子目录继承')} </span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label">{fc_lang('服务器密码')}：</label>
+                            <div class="col-md-9">
+                                <input id="password" class="form-control" type="password" name="data[value][password]" value="{$data['value']['password']}" />
+                                <span class="help-block"> {fc_lang('FTP帐号验证的密码')} </span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label">{fc_lang('服务器目录')}：</label>
+                            <div class="col-md-9">
+                                <input id="path" class="form-control" type="text" name="data[value][path]" value="{$data['value']['path']}" />
+                                <span class="help-block"> {fc_lang('绝对路径或相对于FTP主目录的相对路径，留空表示FTP主目录')} </span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label" style="padding-top: 10px;">{fc_lang('被动模式(pasv)连接')}：</label>
+                            <div class="col-md-9">
+                                <div class="radio-list">
+                                    <label class="radio-inline"><input class="pasv" type="radio" name="data[value][pasv]" value="1" {if $data['value']['pasv']}checked{/if} /> {fc_lang('开启')}</label>
+                                    <label class="radio-inline"><input class="pasv" type="radio" name="data[value][pasv]" value="0" {if !$data['value']['pasv']}checked{/if} /> {fc_lang('关闭')}</label>
+
+                                </div>
+                                <span class="help-block"> {fc_lang('一般情况下非被动模式即可，如果存在上传失败问题，可尝试打开此设置')} </span>
+                            </div>
+                        </div>
+                        <div class="form-group r1">
+                            <label class="col-md-2 control-label" style="padding-top: 10px;">{fc_lang('传输模式')}：</label>
+                            <div class="col-md-9">
+                                <div class="radio-list">
+                                    <label class="radio-inline"><input class="mode" type="radio" name="data[value][mode]" value="auto" {if empty($data['value']['mode']) || $data['value']['mode'] == 'auto'}checked{/if} /> {fc_lang('自动模式')}</label>
+                                    <label class="radio-inline"><input class="mode" type="radio" name="data[value][mode]" value="ascii" {if $data['value']['mode']=='ascii'}checked{/if} /> {fc_lang('ASCII模式')}</label>
+                                    <label class="radio-inline"><input class="mode" type="radio" name="data[value][mode]" value="binary" {if $data['value']['mode']=='binary'}checked{/if} /> {fc_lang('二进制模式')}</label>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group r2">
+                            <label class="col-md-2 control-label">AK：</label>
+                            <div class="col-md-9">
+                                <input id="baidu_ak" name="data[value][ak]" value="{$data['value']['ak']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r2">
+                            <label class="col-md-2 control-label">SK：</label>
+                            <div class="col-md-9">
+                                <input id="baidu_sk" name="data[value][sk]" value="{$data['value']['sk']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r2">
+                            <label class="col-md-2 control-label">Bucket：</label>
+                            <div class="col-md-9">
+                                <input id="baidu_bucket" name="data[value][bucket]" value="{$data['value']['bucket']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r2">
+                            <label class="col-md-2 control-label">Host：</label>
+                            <div class="col-md-9">
+                                <input id="baidu_host" name="data[value][host2]" value="{$data['value']['host']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+
+                        <div class="form-group r3">
+                            <label class="col-md-2 control-label">Access Key ID：</label>
+                            <div class="col-md-9">
+                                <input id="aliyun_id" name="data[value][id]" value="{$data['value']['id']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r3">
+                            <label class="col-md-2 control-label">Access Key Secret：</label>
+                            <div class="col-md-9">
+                                <input id="aliyun_secret" name="data[value][secret]" value="{$data['value']['secret']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r3">
+                            <label class="col-md-2 control-label">Bucket：</label>
+                            <div class="col-md-9">
+                                <input id="aliyun_bucket" name="data[value][bucket]" value="{$data['value']['bucket']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r3">
+                            <label class="col-md-2 control-label">节点请求地址：</label>
+                            <div class="col-md-9">
+                                <input id="aliyun_host" name="data[value][host3]" value="{$data['value']['host3']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group r4">
+                            <label class="col-md-2 control-label">AppID：</label>
+                            <div class="col-md-9">
+                                <input id="qcloud_app" name="data[value][qcloud_app]" value="{$data['value']['qcloud_app']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r4">
+                            <label class="col-md-2 control-label">SecretID：</label>
+                            <div class="col-md-9">
+                                <input id="qcloud_id" name="data[value][qcloud_id]" value="{$data['value']['qcloud_id']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r4">
+                            <label class="col-md-2 control-label">SecretKey：</label>
+                            <div class="col-md-9">
+                                <input id="qcloud_key" name="data[value][qcloud_key]" value="{$data['value']['qcloud_key']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+                        <div class="form-group r4">
+                            <label class="col-md-2 control-label">Bucket：</label>
+                            <div class="col-md-9">
+                                <input id="qcloud_bucket" name="data[value][qcloud_bucket]" value="{$data['value']['qcloud_bucket']}" class="form-control" type="text" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{fc_lang('允许附件的扩展名')}：</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" value="{$data.exts}" name="data[exts]" />
+                                <span class="help-block">{fc_lang('多个扩展名用小写逗号“,”分隔')}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{fc_lang('附件远程访问URL')}：</label>
+                            <div class="col-md-9">
+                                <input type="text" id="rurl" class="form-control" value="{$data.url}" name="data[url]" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="myfooter">
+        <div class="row">
+            <div class="portlet-body form">
+                <div class="form-body">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn green"> <i class="fa fa-save"></i> {fc_lang('保存')}</button>
+                                <button class="btn blue" type="button" name="button" id="ftptest" onclick="remote_test()"> <i class="fa fa-stethoscope"></i> {fc_lang('测试')}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{template nfooter.html}

@@ -1,0 +1,157 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/adv_search',array('name'=>$folder_name,'search'=>'M'))}
+	<form method="post" name="form_adv_search" id="form_adv_search" class="form-horizontal">
+		<div class="adv_search panel panel-default hidden"  id="adv_search">
+			<div class="panel-heading">
+				<div class="row">
+					<h4 class="col-xs-6">高级搜索</h4>
+					<div class="col-xs-6 text-right">
+						<a  class="btn btn-sm btn-info" onclick="submit_adv_search();">搜索</a>
+						<a  class="btn btn-sm " onclick="close_adv_search();">关闭</a>
+					</div>
+				</div>
+			</div>
+			<div class="panel-body">
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="li_name">文件名：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="li_name" name="li_name" >
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="li_content">内容：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="li_content" name="li_content" >
+					</div>
+				</div>
+
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="eq_user_name">登录人：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="eq_user_name" name="eq_user_name" >
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="be_create_time">登录时间：</label>
+					<div class="col-sm-8">
+						<div class="input-daterange input-group" >
+							<input type="text" class="input-sm form-control text-center" name="be_create_time" readonly="readonly"/>
+							<span class="input-group-addon">-</span>
+							<input type="text" class="input-sm form-control text-center" name="en_create_time" readonly="readonly"/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div class="space-8"></div>
+	<if condition="$auth['write']">
+		<div class="operate panel panel-default">
+			<div class="panel-body">
+				<div class="pull-left">
+					<if condition="$auth['admin']">
+						<a class="btn btn-sm btn-danger" onclick="del();">删除</a>
+						<div class="btn-group" id="move_to">
+							<a class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" href="#" > 转移到 <span class="fa fa-caret-down"></span> </a>
+							<ul class="dropdown-menu">
+								{$folder_list}
+							</ul>
+						</div>
+					</if>
+				</div>
+				<div class="pull-right">
+					<a class="btn btn-sm btn-primary" onclick="add()">新建</a>
+				</div>
+			</div>
+		</div>
+	</if>
+	<div class="ul_table ul_table_responsive">
+		<ul>
+			<li class="thead">
+				<div class="pull-left">
+					<label class="inline pull-left col-3">
+						<input class="ace" type="checkbox" name="id-toggle-all" id="id-toggle-all" />
+						<span class="lbl"></span></label>
+					<span class="col-8">编号</span>
+				</div>
+				<div class="pull-right">
+					<span class="col-9">登录时间</span>
+					<span class="col-6">登录人</span>
+				</div>
+				<div class="auto autocut">
+					文件名
+				</div>
+			</li>
+			<empty name="list">
+				<li class="no-data">
+					没找到数据
+				</li>
+				<else/>
+				<form method="post" action="" id="form_data">
+					<foreach name="list" item="vo">
+						<li class="tbody">
+							<div class="pull-left">
+								<label class="inline pull-left col-3">
+									<input class="ace" type="checkbox" name="id[]" value="{$vo.id}" />
+									<span class="lbl"></span></label>
+								<span class="col-8">{$vo.doc_no}</span>
+							</div>
+							<div class="pull-right">
+								<span class="col-9">{$vo.create_time|to_date='Y-m-d'}</span>
+								<span class="col-6">{$vo.user_name}</span>
+							</div>
+							<div class="auto autocut">
+								<a href="{:U('read','id='.$vo['id'])}"> {$vo.name}
+								<eq name="vo.name|strlen" value="0">
+									无标题
+								</eq> </a>
+							</div>
+						</li>
+					</foreach>
+				</form>
+				<div class="pagination">
+					{$page}
+				</div>
+			</empty>
+		</ul>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function del() {
+			var vars = $("#form_data").serialize();
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('del')}", vars, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							location.reload(true);
+						});
+					}
+				});
+			});
+		}
+
+		function add() {
+			window.open("{:U('add','fid='.$folder)}", "_self");
+		}
+
+		function move_to(val) {
+			var vars = $("#form_data").serialize();
+			sendAjax("{:U('move_to')}", "val=" + val + "&" + vars, function(data) {
+				if (data.status) {
+					ui_alert(data.info, function() {
+						location.reload(true);
+					});
+				}
+			});
+		}
+
+		$(document).ready(function() {
+			set_return_url();
+			$("#move_to li").click(function() {
+				move_to($(this).attr("id"));
+			});
+		});
+	</script>
+</block>

@@ -1,0 +1,260 @@
+<extend name="Base/common"/>
+<block name="header">
+    <include file="Public/_nav"/>
+    <link type="text/css" rel="stylesheet" href="__CSS__/forum.css"/>
+    <link type="text/css" rel="stylesheet" href="//at.alicdn.com/t/font_9s07f7bgbwbchaor.css"/>
+    <script type="text/javascript" src="__JS__/common.js"></script>
+
+</block>
+<block name="body">
+    <p class="inLink">
+        <a href="{:U('forum/index/index')}">首页</a>
+        <i class="iconfont icon-icondayu"></i>
+        <a href="{:U('forum/index/lists')}">板块</a>
+        <i class="iconfont icon-icondayu"></i>
+        <a href="{:U('Forum/Index/forum',array('id'=>$post['forum_id']))}">{$post.forum.title}</a>
+    </p>
+    <if condition="$showMainPost">
+        <div class="dtWrap fmBox">
+            <div class="forum_left_operation">
+                <div class="text-right btn-toolbar " role="toolbar">
+                    <div class="btn-group btn-group-vertical">
+                        <if condition="check_auth('Forum/Index/editPost',get_expect_ids(0,0,$post['id'],0,1)) && $allow_publish">
+                            <a class="edBtn" title="{:L('_EDIT_')}" href="{:U('Index/edit',array('post_id'=>$post['id']))}">
+                                <i class="iconfont icon-iconfontcolor32"></i>
+                            </a>
+                        </if>
+                        <if condition="check_auth('Forum/Index/doReply',get_expect_ids(0,0,$post['id'],0,0))">
+                            <a class="edBtn" title="{:L('_COMMENT_')}" href="#reply_form">
+                                <i class="iconfont icon-huifu2"></i>
+                            </a>
+                        </if>
+                        <if condition="check_auth('Forum/Index/delPost',get_expect_ids(0,0,$post['id'],0,0))">
+                            <a href="javascript:" class="edBtn del_post_btn" args="post_id={$post['id']}" title="删除">
+                                <i class="iconfont icon-shanchu"></i>
+                            </a>
+                        </if>
+                        <php>
+                            $hideStyle = 'display: none;';
+                            $bookmarkStyle = $isBookmark ? $hideStyle : '';
+                            $unbookmarkStyle = $isBookmark ? '' : $hideStyle;
+                        </php>
+                        <a title="{:L('_FAVORITES_CANCEL_')}" id="unbookmark_button" class="edBtn" style="{$unbookmarkStyle}"
+                           href="{:U('Index/doBookmark?add=0',array('post_id'=>$post['id']))}">
+                            <i class="iconfont icon-shoucang-shoucang"></i></a>
+
+                        <a title="{:L('_FAVORITES_DO_')}" id="bookmark_button" class="edBtn" style="{$bookmarkStyle}"
+                           href="{:U('Index/doBookmark',array('post_id'=>$post['id']))}">
+                            <i class="iconfont icon-shoucang" ></i></a>
+
+                    </div>
+                </div>
+            </div>
+            <php>
+                $user = query_user(array('avatar128','uid','nickname','space_url','rank_link','space_link'),
+                $post['uid']);
+            </php>
+            <div class="people">
+                <div class="avt"><a href="{$user.space_url}" ucard="{$user.uid}"><img src="{$user.avatar128}"/></a></div>
+                <p class="text-center"><a href="{$user.space_url}" ucard="{$user.uid}">{$user.nickname|htmlspecialchars}</a></p>
+                <p class="text-center">{:W('Common/UserRank/render',array($user['uid']))}</p>
+            </div>
+            <div class="forum">
+                <div class="fmInfo">
+                    <p class="tit">{$post.title|op_t}</p>
+                    <div class="fmNumber">
+                        <div class="left">
+                            <span>发表于 {$post.create_time|time_format}</span>
+                            <a class="border" href="{:U('Forum/Index/forum',array('id'=>$post['forum_id']))}">{$post.forum.title}</a>
+                            {:Hook('support',array('app'=>'Forum',table=>'post','row'=>$post['id'],'uid'=>$post['uid'],'jump'=>'forum/index/detail'))}
+                            {:W('Weibo/Share/shareBtn',array('param'=>array('title'=>$post['title'],'content'=>msubstr($post['content'],0,200),'from'=>$MODULE_ALIAS,'site_link'=>U('Forum/Index/detail',array('id'=>$post['id']))),'text'=>"站内分享"))}
+                        </div>
+                        <a class="lab">{:L('_LZ_')}</a>
+                    </div>
+                </div>
+                <p>{$post.content|parse_popup|parse_at_users|render}</p>
+                <div class="share">
+                   <div>{:W('Common/Share/detailShare')}</div>
+                    <if condition="$post['create_time'] != $post['update_time']">
+                        <p class="text-muted">
+                            [{:L('_EDIT_LAST_TIME_IN_')} {$post['update_time']|time_format} ]
+                        </p>
+                    </if>
+                </div>
+            </div>
+        </div>
+    </if>
+    <volist name="replyList" id="reply" key="k">
+        <div class="dtWrap fmBox rpList">
+            <div class="people">
+                <div class="avt">  <a ucard="{$reply.uid}" href="{$reply.user.space_url}"><img src="{$reply.user.avatar128}"/></a></div>
+                <p class="text-center"><a ucard="{$reply.uid}" href="{$reply.user.space_url}">{$reply.user.nickname}</a></p>
+                <p class="text-center">{:W('Common/UserRank/render',array($reply['uid']))}</p>
+            </div>
+            <div class="forum">
+                <div class="fmNumber">
+                    <span>{:L('_PUBLISH_IN_')} {$reply.create_time|time_format}</span>
+                    <a class="lab">{:getLou( $limit*($page-1)+$k+1)}</a>
+                </div>
+                <p>{$reply.content|parse_popup|parse_at_users|render}</p>
+                <div class="fmOpt text-right">
+                    <if condition="check_auth('Forum/Index/delPostReply',get_expect_ids(0,$reply['id'],0,1))">
+                        <a href="javascript:" class="del_reply_btn" args="reply_id={$reply['id']}">{:L('_DELETE_')}</a>
+                    </if>
+                    <if condition="check_auth('Forum/Index/doReplyEdit',get_expect_ids(0,$reply['id'],0,1))">
+                        <a href="{:U('Index/editReply',array('reply_id'=>$reply['id']))}">{:L('_EDIT_')}</a>
+                    </if>
+                    <if condition="check_auth('Forum/Lzl/doSendLZLReply',get_expect_ids(0,$reply['id'],0,1))">
+                        <a href="javascript:" class="reply_btn" args="{$reply['id']}" id="reply_btn_{$reply['id']}">{:L('_REPLY_')}({$reply.lzl_count})</a>
+                        <else/>
+                        <a href="javascript:" onclick=" if(is_login()){toast.error({:L('_ERROR_PLEASE_LOGIN_')});}else{toast.error({:L('_ERROR_NO_AUTHORITY_')});}">{:L('_REPLY_')}({$reply.lzl_count})</a>
+                    </if>
+                </div>
+                <div id="lzl_reply_div_{$reply['id']}"<if condition="$reply['lzl_count'] eq 0">style="display:none"</if>>
+                {:W('LZLReply/LZLReply',array('to_f_reply_id'=>$reply['id'],'post_id'=>$post['id'],'reply_uid'=>$reply['uid'],'count'=>$reply['lzl_count']))}
+                </div>
+            </div>
+        </div>
+    </volist>
+    <div class="fmBox fmPage">
+        {:getPagination($replyTotalCount)}
+    </div>
+    <div class="fmBox sedBox dtWrap">
+        <if condition="is_login()">
+            <php>
+                $user = query_user(array('avatar128','nickname'));
+                $user['uid'] = get_uid();
+            </php>
+            <div class="people">
+                <div class="avt">  <a ucard="{$user.uid}" href="{$user.space_url}"><img src="{$user.avatar128}"/></a></div>
+                <p class="text-center"><a ucard="{$user.uid}" href="{$user.space_url}">{$user.nickname}</a></p>
+                <p class="text-center">{:W('Common/UserRank/render',array($user['uid']))}</p>
+            </div>
+            <div class="forum">
+                <if condition="check_auth('Forum/Index/doReply',get_expect_ids(0,0,$post['id'],0,0))">
+                    <div id="reply_block">
+                        <form id="reply_form" action="{:U('doReply',array('post_id'=>$post['id']))}" method="post" class="ajax-form">
+                            <p><php>$config=get_editor_config('FORUM_REPLY');</php></p>
+                            {:W('Common/Ueditor/editor',array('content','content','','100%','350px',$config))}
+
+                            <p class="pull-right" style="margin-top: 10px;">
+                                <input type="submit" id="reply_button" class="btn btn-primary" value="{:L('_PUBLISH_')} Ctrl+Enter"/>
+                            </p>
+                        </form>
+                    </div>
+                    <else/>
+                    <p class="text-center text-muted" style="font-size: 3em; padding-top: 2em; padding-bottom: 2em;">{:L('_ERROR_NO_COMMENT_AUTHORITY_')}~</p>
+                </if>
+            </div>
+        <else/>
+            <p class="tips">{:L('_PLEASE_')}<a href="{:U('Ucenter/Member/login')}">{:L('_LOGIN_')}</a>{:L('_TIP_COMMENT_AFTER_')}</p>
+        </if>
+    </div>
+<script>
+    var SUPPORT_URL = "{:addons_url('Support://Support/doSupport')}";
+    //点击收藏/取消收藏按钮
+    $(function () {
+        $.post(U('Core/Public/atWhoJson'),{},function(res){
+            atwho_config = {
+                at: "@",
+                data: res,
+                tpl: "<li data-value='[at:${id}]'><img class='avatar-img' style='width:2em;margin-right: 0.6em' src='${avatar32}'/>${nickname}</li>",
+                show_the_at: true,
+                search_key: 'search_key',
+                start_with_space: false
+            };
+            ue_content.addListener( 'ready', function( editor ) {
+                $(this.document.body).atwho(atwho_config);
+
+            } );
+
+        },'json')
+
+
+
+        ue_content.addListener("beforeSubmit",function(){
+            ue_content.sync();
+            $("#reply_form").submit();
+            return false;
+        })
+
+
+
+
+
+       /* var $inputor = $('#contentEditor').atwho(atwho_config);
+*/
+      /*  bindSupport();*/
+        $('#bookmark_button, #unbookmark_button').click(function (e) {
+
+            //取消默认操作
+            e.preventDefault();
+
+            //发送AJAX请求
+            var button = $(this);
+            var href = button.attr('href');
+            var originalClass = $(this).attr('class');
+            button.attr('class', 'btn');
+            $.post(href, {}, function (a) {
+                button.attr('class', originalClass);
+                if (a.status) {
+                    switchButtonVisibility();
+                }
+            });
+
+            return false;
+        });
+
+        function switchButtonVisibility() {
+            switchVisibility('#bookmark_button');
+            switchVisibility('#unbookmark_button');
+        }
+
+        function switchVisibility(css) {
+            var element = $(css);
+            if (element.is(':visible')) {
+                element.hide();
+            } else {
+                element.show();
+            }
+        }
+
+        if ("{$sr}" != "") {
+            $('#lzl_reply_list_{$sr}').load(U('Forum/Lzl/lzllist', ['to_f_reply_id', '{$sr}', 'page', '{$sp}'], true), function () {
+                ucard();
+            });
+        }
+    })
+
+
+    $(document).ready(function () {
+
+
+        $('.popup-gallery').each(function () { // the containers for all your galleries
+            $(this).magnificPopup({
+                delegate: '.popup',
+                type: 'image',
+                tLoading: 'Loading image #%curr%...',
+                mainClass: 'mfp-img-mobile',
+                gallery: {
+                    enabled: true,
+                    navigateByImgClick: true,
+                    preload: [0, 1] // Will preload 0 - before current, and 1 after the current image
+                },
+                image: {
+                    tError: '<a href="%url%">The image #%curr%</a> could not be loaded.',
+                    titleSrc: function (item) {
+                        /*           return item.el.attr('title') + '<small>by Marsel Van Oosten</small>';*/
+                        return '';
+                    }
+                }
+            });
+        });
+    });
+</script>
+<script type="text/javascript" charset="utf-8" src="__STATIC__/ueditor/third-party/SyntaxHighlighter/shCore.js"></script>
+<link rel="stylesheet" type="text/css" href="__STATIC__/ueditor/third-party/SyntaxHighlighter/shCoreDefault.css"/>
+<script type="text/javascript">
+    SyntaxHighlighter.all();
+</script>
+</block>

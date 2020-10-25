@@ -1,0 +1,90 @@
+<div class="opwindow update_window">
+	<div class="layui-form layui-row">
+	<div class="layui-form-item">
+			<div class="layui-col layui-col-md12">
+				<label>商户名称：</label> <span id="merchant_name">{$value[merchant_name]}</span>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md12">
+				<label>子商户号：</label> <span id="sub_mch_id">{echo isset($value['gates_detail']['sub_mch_id']) ? $value['gates_detail']['sub_mch_id'] : ''}</span>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md12">
+				<label>签约状态：</label> <span id="applyment_state">{echo isset($this->ApplymentState[$value[applyment_state]]) ? $this->ApplymentState[$value[applyment_state]] : '未知'}</span>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md12">
+				<label>更新时间：</label> <span id="time_update">{echo gsdate('Y-m-d H:i:s', $value['time_update'])}</span>
+			</div>
+		</div>
+		<div class="layui-form-item" id="reject_reason" style="<!--{if empty($value['reject_reason'])}-->display:none;<!--{/if}-->">
+			<div class="layui-col layui-col-md12">
+				<label>驳回原因：</label>
+				<div id="reject_reason_detail">
+				<!--{loop $value[reject_reason] $key $val}-->
+				{echo $key + 1}：{$val}<br />
+				<!--{/loop}-->
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item0">
+			<div class="layui-col layui-col-md12" style="text-align:right;">
+				<button type="button" id="cancel2" class="layui-btn">关闭</button>
+				<!--{if in_array($value['applyment_state'], ['APPLYMENT_STATE_AUDITING', 'APPLYMENT_STATE_SIGNING', 'APPLYMENT_STATE_TO_BE_SIGNED', 'APPLYMENT_STATE_TO_BE_CONFIRMED'])}-->
+				<button type="button" id="refresh" class="layui-btn layui-btn-normal">刷新</button>
+				<!--{/if}-->
+				<!--{if in_array($value['applyment_state'], ['APPLYMENT_STATE_FINISHED'])}-->
+				<button type="button" id="set_auth" class="layui-btn layui-btn-danger">同步授权</button>
+				<!--{/if}-->
+				<!--{if in_array($value['applyment_state'], ['APPLYMENT_STATE_TO_BE_SIGNED']) && !empty($value[gates_detail][sign_url])}-->
+				<button type="button" id="set_sign" class="layui-btn layui-btn-danger" lay-url="{$value[gates_detail][sign_url]}">商户签约</button>
+				<!--{/if}-->
+			</div>
+		</div>
+	</div>
+</div>
+<style>
+.update_window .layui-form-item #reject_reason_detail {padding-bottom:5px;}
+.update_window .layui-form-item {padding-bottom:5px;border-bottom:1px solid #CCC;}
+</style>
+<script type="text/javascript">
+var applyment_id = "{$value[applyment_id]}";
+var business_code = "{$value[business_code]}";
+var id = "{echo input('param.id')}";
+var merchant_id = "{echo input('param.merchant_id')}";
+var index_update;
+$(document).ready(function(){
+	index_update = layer.index;
+});
+$("#cancel2").click(function(){
+	layer.close(index_update);
+});
+$("#refresh").click(function(){
+	showWindow("查看详情", "{echo \befen\get_url()}", "660px", "update_window");
+});
+$("#set_auth").click(function(){
+	op("是否同步商户授权设置？", "{echo url('PayWeixin/set_sub_mch_id', ['id' => input('param.id'), 'merchant_id' => input('param.merchant_id')])}");
+});
+$("#set_sign").click(function(){
+	var sign_url = $(this).attr('lay-url');
+	init_Layer(function(){
+		layer.open({
+			title: '商户签约 - 微信 - {$value[merchant_name]}',
+			shade: 0.5,
+			isOutAnim: true,
+			content: '<div style="text-align:center"><div id="auth_qrcode" style="width:250px;height:250px;margin:0 auto"><img src="' + sign_url + '" style="width:250px;height:250px;"></div><br /><h3>请引导商户扫描此二维码进行签约</h3></div>',
+			btn: false
+		});
+		/*
+		var qrcode = new QRCode(document.getElementById("auth_qrcode"), {
+			width: 250,
+			height: 250
+		});
+		qrcode.makeCode(sign_url);
+		*/
+	});
+});
+</script>

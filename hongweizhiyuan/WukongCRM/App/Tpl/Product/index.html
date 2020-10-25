@@ -1,0 +1,248 @@
+<include file="Public:header" />
+<link href="__PUBLIC__/css/litebox.css" rel="stylesheet" type="text/css">
+<script src="__PUBLIC__/js/PCASClass.js" type="text/javascript"></script>
+	<div class="container">
+		<div class="page-header">
+			<h4>{:L('PRODUCT_LIST')}</h4>
+		</div>
+		<include file="Public:alert" />
+        <div class="row">
+			<div class="span2 knowledgecate">
+				<ul class="nav nav-list">
+					<li class="active">
+						<a href="javascript:void(0);">{:L('ACCORDING_TO_THE_PRODUCT_CATEGORY_TO_VIEW')}</a>
+					</li>
+					<li><a href="{:U('product/index')}" <if condition="$_GET['category_id'] eq null">class="active"</if>><i class="icon-white icon-chevron-right"></i>{:L('ALL')}</a></li>
+					<volist name="categoryList" id="vo">
+					<li><a href="{:U('product/index','category_id='.$vo['category_id'])}" <if condition="$_GET['category_id'] eq $vo['category_id']">class="active"</if>><i class="icon-chevron-right"></i>{$vo.name}</a></li>
+					</volist>
+				</ul>
+			</div>
+			<div class="span10">
+				<div class="pull-left">
+					<ul class="nav pull-left">		
+						<li class="pull-left">
+							<a id="delete"  class="btn" style="margin-right: 5px;"><i class="icon-remove"></i>{:L('DELETE')}</a>
+						</li>
+						<li class="pull-left">
+							<form class="form-inline" id="searchForm" action="index.php" method="get">
+								<ul class="nav pull-left">
+									<li class="pull-left">
+										&nbsp;&nbsp;
+										<select id="field" style="width:auto" onchange="changeCondition()" name="field">
+											<option class="text" value="all">{:L('ANY_FIELD')}</option>
+											<volist name="field_list" id="v">
+												<if condition="$v['field'] neq 'category_id'">
+													<option class="{$v['form_type']}" value="{$v[field]}" rel="product">{$v[name]}</option>
+												</if>
+											</volist>
+											<option class="role" value="creator_role_id">{:L('FOUNDER')}</option>
+											<option class="date" value="create_time">{:L('CREATION_TIME')}</option>
+											<option class="date" value="update_time">{:L('MODIFICATION_TIME')}</option>
+										</select>&nbsp;&nbsp;
+									</li>
+									<li id="conditionContent" class="pull-left">
+										<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">	
+											<option value="contains">{:L('INCLUDE')}</option>
+											<option value="is">{:L('YES')}</option>
+											<option value="start_with">{:L('BEGINNING_CHARACTER')}</option>
+											<option value="end_with">{:L('TERMINATION_CHARACTER')}</option>
+											<option value="is_empty">{:L('MANDATORY')}</option>
+										</select>&nbsp;&nbsp;
+									</li>
+									<li id="searchContent" class="pull-left">
+										<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+									</li>
+									<li class="pull-left">
+										<if condition="isset($_GET['category_id'])"><input name="category_id" type="hidden" value="{$_GET['category_id']}" /></if>
+										<input type="hidden" name="m" value="product"/>
+										<input type="hidden" name="act" id="act" value="search"/>
+										<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+										<button type="submit" id="dosearch" class="btn"> <img src="__PUBLIC__/img/search.png"/>  {:L('SEARCH')}</button>
+									</li>
+									<li class="pull-left">
+										<a href="http://5kcrm.com/index.php?m=doc&a=index&id=28" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);padding-left:10px;line-height: 25px;"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a>
+									</li>
+								</ul>
+							</form>
+						</li>
+					</ul>
+				</div>
+				<div class="pull-right">
+					<a class="btn btn-primary" href="{:U('product/add')}"><i class="icon-plus"></i>&nbsp; {:L('ADD_PRODUCT')}</a>&nbsp;
+					<div class="btn-group">
+						<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><i class="icon-wrench"></i>&nbsp; {:L('PRODUCT_TOOL')}<span class="caret"></span></button>
+						<ul class="dropdown-menu">
+							<li><a href="javascript:return(0);" id="import_excel"  class="link"><i class="icon-upload"></i>{:L('IMPORT_PRODUCTS')}</a></li>
+							<li><a href="javascript:void(0);" id="excelExport" class="link"><i class="icon-download"></i>{:L('EXPORT_PRODUCTS')}</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="span10">
+				<form id="form1" action="{:U('')}" method="Post">
+					<table class="table table-hover table-striped table_thead_fixed">
+						<if condition="$list eq null">
+							<tr><td>----{:L('TEMPORARILY_NO_DATA')}----</td></tr>
+						<else/>
+						<thead>
+							<tr id="childNodes_num">
+								<th style="width:5%;"><input class="check_all" id="check_all" type="checkbox" /> &nbsp;</th>
+								<th style="width:10%;">图片</th>
+								<volist name="field_array" id="vo">
+								<th>{$vo.name}</th>
+								</volist>
+							   <th>{:L('FOUNDER')}</th>
+							   <th>{:L('OPERATION')}</th>
+							</tr>
+						</thead>
+					 
+						<tfoot>
+							<tr>
+								<td id="td_colspan">				
+									{$page}
+								</td>
+							</tr>
+						</tfoot>
+						
+						<tbody>
+						<volist name="list" id="vo">
+							<tr>
+								<td>
+									<input name="product_id[]" class="check_list" type="checkbox" value="{$vo.product_id}"/>
+								</td>
+								<td>
+									<if condition="!empty($vo['path'])">
+										<a href="{$vo.path}" target="_self" class="litebox">
+											<img src="{$vo.path}" class="thumbnail thumb45">
+										</a>	
+									<else/>
+										<img src="__PUBLIC__/img/default_img.png" class="thumbnail thumb45">
+									</if>
+								</td>
+								<volist name="field_array" id="v">
+								<td>
+									<if condition="$v['field'] eq 'category_id'">
+									{$vo['category_name']|default=L('DEFAULT')}
+									<else />
+									<if condition="$v['field'] eq 'name'"><a href="{:U('product/view', 'id='.$vo['product_id'])}"></if>
+									<if condition="stristr('http://',$v['default_value']) && 'http://' != $vo[$v['field']] && '' != $vo[$v['field']]">
+										<a href="{$vo[$v['field']]}" target="_blank">
+									</if>
+										<span style="color:#{$v['color']}">
+										<if condition="$v['form_type'] eq 'datetime'">
+										{$vo[$v['field']] | date='Y-m-d',###}
+										<else />
+										{$vo[$v['field']]}
+										</if>
+										</span>
+									<if condition="$v['field'] eq 'name'"></a></if>
+									</if>
+								</td>
+								</volist>
+									<td>
+										<notempty name="vo.creator.user_name"><a class="role_info" rel="{$vo.creator.role_id}" href="javascript:void(0)">{$vo.creator.user_name}</a></notempty>
+									</td>
+								<td><a href="{:U('product/view', 'id='.$vo['product_id'])}">{:L('CHECK')}</a>&nbsp;
+									<if condition="$Think.get.by eq 'deleted'"><a href="{:U('product/revert', 'id=' . $vo['product_id'])}">{:L('REDUCTION')}</a>&nbsp;
+									<else /><a href="{:U('product/edit', 'id='.$vo['product_id'])}">{:L('COMPILE')}</a>
+									</if>
+								</td>
+							</tr>
+						</volist>
+						</tbody>
+						</if>
+					</table>
+				</form>
+			</div>
+			
+		</div>
+	</div>
+	<div class="hide" id="dialog-import" title="{:L('IMPORT_DATA')}">loading...</div>
+	<div class="hide" id="dialog-role-info" title="{:L('EMPLOYEE_INFORMATION')}">loading...</div>
+<script src="__PUBLIC__/js/images-loaded.min.js" type="text/javascript"></script>
+<script src="__PUBLIC__/js/litebox.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+//初始化图片查看插件
+$('.litebox').liteBox({
+  revealSpeed: 400,
+  background: 'rgba(0,0,0,.8)',
+  overlayClose: true,
+  escKey: true,
+  navKey: true,
+  errorMessage: '图片加载失败.'
+});
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=600;</if>
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-import").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+function changeContent(){
+	a = $("#select1  option:selected").val();
+	window.location.href="{:U('product/index', 'by=')}"+a;
+}
+$(function(){
+<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+	<if condition="$_GET['state'] and $_GET['city']">
+		new PCAS("state","city","{$Think.get.state}","{$Think.get.city}");
+	</if>
+	<else />
+	$("#field option[value='status_id']").prop("selected", true);changeCondition();
+</if>
+
+	$("#check_all").click(function(){
+		$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+	});
+	$('#delete').click(function(){
+		if(confirm('{:L('CONFIRM_TO_DELETE')}')){
+			<if condition="$Think.session.admin eq 1 and $Think.get.by eq 'deleted'">
+				$("#form1").attr('action', '{:U("product/completedelete")}');
+				$("#form1").submit();
+			<else />
+				$("#form1").attr('action', '{:U("product/delete")}');
+			$("#form1").submit();
+			</if>
+		}
+	});
+	
+	$("#excelExport").click(function(){
+		if(confirm("{:L('ARE_YOU_SURE_YOU_WANT_TO_EXPORT_THE_PRODUCTS')}")){
+			$("#act").val('excel');	
+			$("#searchForm").submit();
+		}
+	})	
+	
+	$("#dosearch").click(function(){
+		result = checkSearchForm();
+		if(result) $("#act").val('search');$("#searchForm").submit();
+	});
+	
+	$("#import_excel").click(function(){
+		$('#dialog-import').dialog('open');
+		$('#dialog-import').load('{:U("product/excelimport")}');
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+});
+<if condition="$list neq null">
+	$nodes_num = document.getElementById("childNodes_num").children.length;
+	$("#td_colspan").attr('colspan',$nodes_num);
+</if>
+</script>
+<include file="Public:footer" />	

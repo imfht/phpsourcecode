@@ -1,0 +1,268 @@
+<?php 
+
+if (!empty($_POST)) die;
+
+$auth = @$_SESSION['auth'];
+$m_falter = @intval($_GET['m_falter']);
+$digest_filter = @intval($_COOKIE['forum_topic_digest_filter']);
+$page = @intval($_GET['page']);
+$search = @filter_var($_GET['search'], FILTER_SANITIZE_STRING);
+
+if (empty($page)) { $page = 1; }
+$limit = require_once('inc/order_search_limit.php');
+$pg_lmt = " LIMIT ".$limit * ($page - 1).",$limit";
+
+//筛选器
+$cond = "AND city = $forum_city";
+$order_by = 'ORDER BY l_r_at DESC';
+$v_nav = 'topic_my_list'; //默认v_nav
+
+//筛选条件
+switch ($m_falter) {
+case 1: 			
+	if (empty($auth)) to_login();
+	$p_cond = "WHERE user_id = ".$auth['id']." AND complete = 0";
+	$t_ids_s = t_ids_s($p_cond, $page, $limit);
+	$pg_lmt = '';
+	$cond .= " AND id IN ($t_ids_s)";
+	$order_by = "ORDER BY field(id, $t_ids_s)";
+	$v_title = '['.$auth['name'].'] 的订单'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=1&page=';
+	$v_nav = 'drop_my';
+	break;
+case 2: 			
+	if (empty($auth)) to_login();
+	$user_id = intval($_GET['user_id']);
+	$p_cond = "WHERE user_id = $user_id AND complete = 0";
+	$t_ids_s = t_ids_s($p_cond, $page, $limit);
+	$t_orders = dt_query("SELECT topic_id, num FROM forum_topic_order WHERE topic_id IN ($t_ids_s)");
+	while($t_order = mysql_fetch_array($t_orders)) @$t_o_s[$t_order['topic_id']] = $t_order['num'];
+	$pg_lmt = '';
+	$cond .= " AND user_id = ".$auth['id']." AND id IN ($t_ids_s)";
+	$order_by = "ORDER BY field(id, $t_ids_s)";
+	$v_title = '['.dt_query_one("SELECT name FROM user_info WHERE id = $user_id")['name'].'] 的订单'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=2&user_id='.$user_id.'&page=';
+	$m_falter_e = '&user_id='.$user_id;
+	break;
+case 3: 			
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 新发布 <small>>></small>'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=3&page=';
+	break;
+case 4: 			
+	$order_by = 'ORDER BY today_up_c DESC';
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 最关注 <small>>></small>'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=4&page=';
+	break;
+case 5: 			
+	$order_by = 'ORDER BY order_c_s DESC';
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 最订单 <small>>></small>'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=5&page=';
+	break;
+case 6: 			
+	$date_t = mktime(0,0,0,intval($_GET['date_m']),intval($_GET['date_d']),intval($_GET['date_Y']));
+	$date_d = date('d', $date_t);
+	$date_m = date('m', $date_t);
+	$date_Y = date('Y', $date_t);
+	$cond .= " AND pay > 0 AND start_t > 0 AND start_t_s >= ".mktime(0,0,0,$date_m,$date_d,$date_Y)." AND start_t_s < ".mktime(0,0,0,$date_m,$date_d+1,$date_Y);
+	$order_by = 'ORDER BY pay DESC, l_r_at DESC';
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> '.$date_Y.'年'.$date_m.'月'.$date_d.'日 <small>>></small>'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=6&date_m='.$date_m.'&date_Y='.$date_Y.'&date_d='.$date_d.'&page=';
+	$m_falter_e = '&date_m='.$date_m.'&date_Y='.$date_Y.'&date_d='.$date_d;
+	$v_nav = 'forum_cal';
+	break;
+case 7: 			
+	if (empty($auth)) to_login();
+	$p_cond = "WHERE user_id = ".$auth['id']." AND complete = 1";
+	$t_ids_s = t_ids_s($p_cond, $page, $limit);
+	$pg_lmt = '';
+	$cond .= " AND id IN ($t_ids_s)";
+	$order_by = "ORDER BY field(id, $t_ids_s)";
+	$v_title = '['.$auth['name'].'] 结束的订单'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=7&page=';
+	$v_nav = 'drop_my';
+	break;
+case 8: 			
+	if (empty($auth)) to_login();
+	$p_cond = "WHERE user_id = ".$auth['id'];
+	$pg_lmt = '';
+	$t_ids = dt_query("SELECT topic_id FROM forum_topic_up $p_cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+	while($t_id = mysql_fetch_array($t_ids)) @$t_ids_s .= ($t_ids_s) ? ','.$t_id['topic_id'] : $t_id['topic_id'];
+	$cond .= " AND id IN ($t_ids_s)";
+	$order_by = "ORDER BY field(id, $t_ids_s)";
+	$v_title = '['.$auth['name'].'] 喜欢的信息'; 
+	$v_p_url = '?c=forum&a=topic_my_list&m_falter=8&page=';
+	$v_nav = 'drop_my';
+	break;
+default:
+	if (empty($auth)) to_login();
+	$cond .= " AND user_id = ".$auth['id'];
+	$order_by = 'ORDER BY order_c DESC, l_r_at DESC';
+	$v_title = '['.$auth['name'].'] 的信息'; 
+	$v_p_url = '?c=forum&a=topic_my_list&page=';
+	$v_nav = 'drop_my';
+	unset($_SESSION['user_has_order']);
+}
+
+switch ($digest_filter) {
+case 1:
+	$cond .= " AND digest = 1";
+	break;
+case 2:
+	$geo = @filter_var($_COOKIE['forum_topic_geolocation'], FILTER_SANITIZE_STRING);
+	if (!empty($geo)) $cond .= " AND geo = '$geo'";
+	break;
+}
+
+$v_p_search = '';
+if (!empty($search)) {
+	$cond .= " AND title LIKE '%$search%' AND l_r_at > ".(time()-90*24*3600);
+	$v_p_search = '&search='.$search;
+}
+
+if (!empty($cond)) $cond = preg_replace('/AND/', 'WHERE', $cond, 1);
+
+$topics = dt_query("SELECT id, title, icon_url, user_id, user_name, view_c, reply_c, today, today_up_c, l_r_user_id, l_r_user_name, l_r_at, digest, orders, order_c, pay, c_at FROM forum_topic $cond $order_by $pg_lmt");
+if (!$topics) die('获取数据失败！');
+
+function t_ids_s($p_cond, $page, $limit) {
+	$t_ids = dt_query("SELECT topic_id FROM forum_topic_order $p_cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+	while($t_id = mysql_fetch_array($t_ids)) @$t_ids_s .= ($t_ids_s) ? ','.$t_id['topic_id'] : $t_id['topic_id'];
+
+	return empty($t_ids_s) ? 0 : $t_ids_s;
+}
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<?php if (6 == $m_falter) { ?> <li><a href="?c=forum&a=forum_cal"><span class="glyphicon glyphicon-calendar"></span> 日历</a></li> <?php } ?>
+			<li class="active"><?php echo $v_title ?></li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-list-search">
+	<div class="row clearfix">
+		<div class="col-md-4 col-xs-2 column">
+		</div>
+		<div class="col-md-4 col-xs-8 column">
+			<form id="search" action="javascript:topic_my_list_search(<?php echo $digest_filter ?>, '<?php echo $m_falter.@$m_falter_e ?>')">	
+				<div class="input-group">
+					<input id="topic_my_list_search" class="form-control" type="text" placeholder="搜索" value="<?php echo $search ?>">
+					<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+				</div>
+			</form>	
+		</div>
+	</div>
+</div>
+<div class="container forum-topic-info">
+	<div class="name">
+		<?php if (6 == $m_falter) echo '<ul class="pagination pull-right" style="margin:0"><li><a href="?c=forum&a=topic_my_list&m_falter=6&date_m='.$date_m.'&date_Y='.$date_Y.'&date_d='.($date_d-1).'"><span class="glyphicon glyphicon-chevron-left"></span> 前一天</a></li><li><a href="?c=forum&a=topic_my_list&m_falter=6&date_m='.$date_m.'&date_Y='.$date_Y.'&date_d='.($date_d+1).'"><span class="glyphicon glyphicon-chevron-right"></span> 后一天</a></li></ul>' ?>
+		<h3 class="hidden-xs"><?php echo $v_title ?></h3>
+	</div>
+</div>
+<div class="container">
+	<div class="col-md-12 column forum-topic-list">
+		<ul id="order_filter" class="nav nav-pills nav-pills-sm pull-right">
+			<?php if (in_array($m_falter, array(3, 4, 5))) { ?>
+			<li id="3"><a href="javascript:do_order_filter(3)">时间</a></li>
+			<li class="hidden-xs" id="4"><a href="javascript:do_order_filter(4)">热度</a></li>                       
+			<li id="5"><a href="javascript:do_order_filter(5)">订单</a></li>                       
+			<?php } ?>
+		</ul>
+		<ul id="digest_filter" class="nav nav-pills nav-pills-sm">
+			<li><a href="javascript:do_digest_filter(0)">全部</a></li>
+			<li><a href="javascript:do_digest_filter(1)">推荐</a></li>                       
+			<li class="hidden-lg"><a href="javascript:do_digest_filter(2)">附近</a></li>                       
+		</ul>
+		<hr class="solid">
+		<?php while($topic = mysql_fetch_array($topics)) { ?>
+		<div class="forum-topic">
+			<div class="num">
+				<?php if (1 == $m_falter) { ?>
+				<a id="do_topic_<?php echo $topic['id'] ?>_order" class="btn btn-success main-up order-c-s" href="javascript:do_topic_order(<?php echo $topic['id'] ?>)"> 取消订单 </a>
+				<?php } else if (2 == $m_falter) { ?>
+				<a class="btn main-up hidden-xs"> <?php @$t_o_as[] = $topic['orders']*$t_o_s[$topic['id']]; echo $topic['orders'].' x '.$t_o_s[$topic['id']] ?> </a>
+				<a id="do_t_<?php echo $topic['id'] ?>_o_complete" class="btn btn-default main-up order-complete" href="javascript:do_t_o_complete(<?php echo $topic['id'] ?>, <?php echo $user_id ?>)"> 已经发货 </a>
+				<?php } else if (empty($m_falter)) { ?>
+				<?php if (0 != $topic['orders']) { ?>
+				<a target="_blank" class="btn btn-default order-v-s" href="?c=forum&a=topic_my_order&topic_id=<?php echo $topic['id'] ?>"> 查看订单 <?php if ($topic['order_c'] > 0) { ?><b class="label label-success"><?php echo $topic['order_c'] ?></b><?php } ?></a>
+				<?php } ?>
+				<?php } ?>
+				<span class="hidden-xs">回复<em><?php echo $topic['reply_c'] ?></em></span>
+				<span class="hidden-xs">浏览<em><?php echo $topic['view_c'] ?></em></span>
+			</div>
+				<?php if (!empty($topic['icon_url'])) { ?>
+				<div class="col-xs-5 col-sm-3 col-md-2 column"><a target="_blank" href="<?php echo s_url('?c=forum&a=topic_show&topic_id='.$topic['id']) ?>"><div class="forum-icon t_l_img" style="background-image:url('<?php echo $topic['icon_url'] ?>')"></div></a></div>
+				<div class="subject t_l_img_s">
+				<?php } else { ?>
+				<div class="subject">
+				<?php } ?>
+				<p class="title">
+				<?php if (1 == $topic['digest']) { ?><span class="glyphicon glyphicon-fire"></span> <?php } ?>
+				<?php $is_today = (date('Ymd', time()) == $topic['today']) ? true : false ?>
+				<a target="_blank" <?php echo ($is_today) ? 'style="color:#'.rand_color().'"' : null ?> href="?c=forum&a=topic_show&topic_id=<?php echo $topic['id'] ?>"><?php echo $topic['title'] ?></a>
+				<?php echo (time()-24*3600 < $topic['l_r_at']) ? '<span class="label label-default">热</span>' : null ?>
+				<?php echo (time()-24*3600 < $topic['c_at']) ? '<span class="label label-success">新</span>' : null ?>
+				<?php echo ($is_today) ? '<b class="label label-warning">'.$topic['today_up_c'].'</b>' : null ?>
+				<?php if (0 < $topic['pay']) { ?>
+				<span class="label label-danger">$ <?php echo intval($topic['pay']) ?></span>
+				<?php } ?>
+				</p>
+				<p class="info">
+				<a target="_blank" href="?c=center&user_id=<?php echo $topic['user_id'] ?>"><?php echo $topic['user_name'] ?></a><span><?php echo date("Y-m-d",$topic['c_at']) ?></span>
+				<span class="hidden-xs">最后回复：<a target="_blank" href="?c=center&user_id=<?php echo $topic['l_r_user_id'] ?>"><?php echo $topic['l_r_user_name'] ?></a><span><a target="_blank" href="?c=forum&a=to_topic_show_end&topic_id=<?php echo $topic['id'] ?>"><?php echo date("m-d H:i",$topic['l_r_at']) ?></a></span></span>
+				</p>
+			</div>
+		</div>
+		<?php } ?>
+	</div>
+</div>
+<div class="container forum-pagination">
+	<div class="row clearfix">
+		<div class="col-xs-9 column">
+<?php 
+switch ($m_falter) {
+case 1: 			
+case 2: 			
+case 7: 			
+	pagination('forum_topic_order', $p_cond, $page, $limit, $v_p_url, $v_p_search);
+	break;
+case 8: 			
+	pagination('forum_topic_up', $p_cond, $page, $limit, $v_p_url, $v_p_search);
+	break;
+default:
+	pagination('forum_topic', $cond, $page, $limit, $v_p_url, $v_p_search);
+}
+?>
+		</div>
+		<div class="col-xs-3 column">
+			<?php if (2 == $m_falter) { ?>
+			<a class="btn main-up hidden-xs"> $ <?php echo number_format(array_sum($t_o_as), 2) ?> </a>
+			<a class="btn btn-default pull-right order-complete" href="javascript:do_order_complete_user_all(<?php echo $user_id ?>)">全部已发</a>
+			<?php } ?>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#<?php echo $v_nav ?>').addClass('active');
+	var digest_filter = ('' == getCookie('forum_topic_digest_filter')) ? 0 : getCookie('forum_topic_digest_filter');
+	$('ul#digest_filter').find('li:eq('+digest_filter+')').addClass('active');
+	$('ul#order_filter').find('li#<?php echo $m_falter ?>').addClass('active');
+});
+
+function do_digest_filter(mark) {
+	setCookie('forum_topic_digest_filter', mark, 365, '/');
+	if (2 == mark) get_location(1);
+	else reload_topic_list();
+}
+function do_order_filter(m_falter) {
+	location = '?c=forum&a=topic_my_list&m_falter='+m_falter+'<?php echo $v_p_search ?>';
+}
+function reload_topic_list() {
+	location = '<?php echo $v_p_url.$v_p_search ?>';
+}
+
+</script>

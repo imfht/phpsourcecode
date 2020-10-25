@@ -1,0 +1,139 @@
+<include file="public:top" />
+<!--网站设置-->
+<body class="body">
+<style type="text/css">
+    .red {color: #FF5722!important;}
+    .green {color: #5FB878!important;}
+</style>
+<fieldset class="layui-elem-field layui-field-title" style="margin-top:0px;">
+    <legend>{$menuid|getmenuname}</legend>
+</fieldset>
+<form class="layui-form layui-form-pane" action="">
+    <input type="hidden" name="g" value="admin" />
+    <input type="hidden" name="m" value="doc_con" />
+    <input type="hidden" name="a" value="index" />
+    <input type="hidden" name="menuid" value="{$menuid}" />
+    <div class="my-btn-box">
+     <span class="fl">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+              <label class="layui-form-label">所属栏目</label>
+              <div class="layui-input-inline">
+                <select name="cate_id">
+                    <option value=""></option>
+                    <volist name="catelist" id="val" >
+                       <option value="{$val.id}">{$val.name}</option>
+                        <volist name="val['erji']" id="vo">
+                           <option value="{$vo.id}">&nbsp;&nbsp;&nbsp;├─ {$vo.name}</option>
+                        </volist>
+                    </volist>
+                </select>
+              </div>
+              
+              <label class="layui-form-label">状态</label>
+              <div class="layui-input-inline" style="width:100px">
+                 <select name="status" lay-filter="status" >
+                    <option value="">{:L('all')}</option>
+                    <option value="4" <if condition="$search.status eq '4'">selected="selected"</if>>精品推荐</option>
+                    <option value="3" <if condition="$search.status eq '3'">selected="selected"</if>>置顶</option>
+                    <option value="2" <if condition="$search.status eq '2'">selected="selected"</if>>已审核</option>
+                    <option value="1" <if condition="$search.status eq '1'">selected="selected"</if>>未审核</option>
+                    <option value="0" <if condition="$search.status eq '0'">selected="selected"</if>>关闭</option>
+                  </select>
+              </div>
+               <label class="layui-form-label">关键词</label>
+              <div class="layui-input-inline">
+                <input type="tel" name="keyword" placeholder="文档关键词" lay-verify="required|phone" value="{$search.keyword}" class="layui-input">
+              </div>
+              <div class="layui-input-inline">
+                 <button class="layui-btn mgl-20">搜索</button>
+                 
+              </div>
+            </div>
+        </div>
+     </span>
+     <span class="fr">
+       <a href="{:U('index', array('menuid'=>$menuid))}" class="layui-btn mgl-20">显示全部</a>
+       <a class="layui-btn layui-btn-danger" id="btn-alldel">批量删除</a>
+     </span>
+    </div> 
+</form>
+<form class="layui-form layui-form-pane" action="">
+    <table class="layui-table">
+        <colgroup>
+            <col width="60">
+            <col width="50">
+            <col width="">
+            <col width="120">
+            <col width="120">
+            <col width="120">
+            <col width="80">
+            <col width="150">
+            <col width="100">
+            <col width="80">
+            <col width="100">
+        </colgroup>
+        <thead>
+        <tr>
+            <th><input type="checkbox" id="checkall_t" lay-skin="primary" lay-filter="allChoose" ></th>
+            <th>ID</th>
+            <th>文档标题</th>
+            <th>所属专辑</th>
+            <th>{:L('article_cateid')}</th>
+            <th>{:L('author')}</th>
+            <th>所需积分</th>
+            <th>上传时间</th>
+            <th>{:L('status')}</th>
+            <th>是否转换</th>
+            <th>管理操作</th>
+        </tr>
+        </thead>
+         <tbody id="userList">
+            <volist name="list" id="val" >
+              <tr>
+                <td><input class="doc_checkbox" type="checkbox" value="{$val.id}" lay-skin="primary" lay-filter="itemChoose"></td>
+                <td>{$val.id}</td>
+                <td><a href="{:U('home/doc/doccon',array('id'=>$val['id']))}" target="_blank">{$val.title}</a></td>
+                <td>{$zjlist[$val['zhuanji']]|default='无'}</td>
+                <td>{$cate_list[$val['cateid']]}</td>
+                <td>{$val['uid']|getusername}</td>
+                <td>{$val.score}</td>
+                <td>{$val.add_time|date='Y-m-d H:i',###}</td>
+                <td> {$val.status|getstatusname}</td>
+
+                <td>
+                  <if condition="$val.convert_status == 2"> <a style="color: #1E9FFF;">已转换</a>
+                  <elseif condition="$val.convert_status == 1"/>转换中
+                  <else /><a style="color: #FF5722;">转换失败</a>
+                  </if>
+                </td>
+             
+                <td>
+                   <a href="javascript:;" class="J_showdialog" data-uri="{:U('doc_con/edit', array('id'=>$val['id']))}" data-title="{:L('edit')} - {$val.title}"  data-id="edit" data-acttype="ajax" id="edit">{:L('edit')}</a> | <a href="javascript:void(0);" class="J_confirmurl" data-acttype="ajax" data-uri="{:u('doc_con/delete', array('id'=>$val['id']))}" id="delete" data-msg="{:sprintf(L('confirm_delete_one'),$val['title'])}">{:L('delete')}</a>
+                </td>
+              </tr>
+            </volist>
+        </tbody>
+
+    </table>
+</form>
+<div id="test-laypage-demo0">
+  <div class="layui-box layui-laypage layui-laypage-default" id="layui-laypage-29">
+  {$page}
+  </div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+layui.use(['layer','jquery','form','element','table'], function () {
+
+    //编辑弹窗
+    Oper.config.edit.height = '300px';
+    Oper.config.edit.height = '520px';
+
+    //参数：layui、名称、模块名、主键（删除用）
+    Oper.initList(layui, '文档', 'doc_con', 'id');
+
+});
+</script>
+</body>
+</html>

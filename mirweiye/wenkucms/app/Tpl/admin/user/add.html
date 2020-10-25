@@ -1,0 +1,108 @@
+<include file="public:top" />
+<!--编辑菜单-->
+<form class="layui-form layui-form-pane" action="" style="padding:20px;">
+  <div class="layui-form-item">
+    <label class="layui-form-label">用户名</label>
+    <div class="layui-input-block">
+      <input type="text" id="username" name="username" lay-verify="username" placeholder="请输入" class="layui-input">
+    </div>
+  </div>
+ 
+  <div class="layui-form-item">
+    <label class="layui-form-label">会员邮箱</label>
+    <div class="layui-input-block">
+      <input type="text" name="email" id="email" lay-verify="email" placeholder="请输入" class="layui-input" >
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">登录密码</label>
+    <div class="layui-input-block">
+      <input type="password" name="password" id="password" lay-verify="password" placeholder="请输入" class="layui-input" >
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">重复密码</label>
+    <div class="layui-input-block">
+      <input type="password" name="repassword" id="repassword" placeholder="请输入" class="layui-input" >
+    </div>
+  </div>
+   
+  <div class="layui-form-item">
+    <label class="layui-form-label">用户组</label>
+    <div class="layui-input-block">
+      <select name="roleid" id="roleid">
+			<volist name="role" id="vo"><option value="{$vo.id}" >{$vo.name}</option></volist>
+	  </select>
+    </div>
+  </div>
+  <div class="layui-form-item"  pane="">
+    <label class="layui-form-label">{:L('enabled')}</label>
+    <div class="layui-input-block">
+      <input type="radio" title="{:L('yes')}" name="status" value="1"  checked="checked">
+      <input type="radio" title="{:L('no')}" name="status" value="0">
+    </div>
+  </div>
+  <div class="layui-form-item">
+        <label class=""></label>
+        <div class="layui-input-block">
+        <button class="layui-btn" lay-submit="" lay-filter="upbtn">提交保存</button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+layui.use(['layer','jquery','form','element'], function () {
+   // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form, element = layui.element;
+  	//验证表单
+  	form.verify({
+	  username: function(value, item){ //value：表单的值、item：表单的DOM对象
+	    if(!new RegExp("^[a-zA-Z0-9_\u4e00-\u9fa5\\s·]+$").test(value)){
+	      return '用户名不能有特殊字符';
+	    }
+	    if(/(^\_)|(\__)|(\_+$)/.test(value)){
+	      return '用户名首尾不能出现下划线\'_\'';
+	    }
+	    if(/^\d+\d+\d$/.test(value)){
+	      return '用户名不能全为数字';
+	    }
+	  }
+  	  ,password: [
+	    /^[\S]{4,12}$/
+	    ,'密码必须4到12位，且不能出现空格'
+	  ] 
+	});    
+    // 提交
+    form.on('submit(upbtn)', function (data) {
+    	var emailvalue = $("#email").val();
+    	//验证邮箱是否存在
+    	$.post("{:U('user/ajax_check_email')}",{email:emailvalue},function(res){
+            if(res.status ==  0){
+                layer.msg(res.msg,{time:1800},function(){
+                	return false;
+                });
+            }else{
+                // 提交添加
+		        $.post("{:U('user/add')}",data.field,function(res){
+		            if(res.status ==  1){
+		                layer.msg(res.msg,{time:1800},function(){
+		                    //关闭弹层后刷新父页面
+		                    window.parent.location.reload();
+		                    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引  
+		                    parent.layer.close(index); 
+		                });
+		            }else{
+		                layer.msg(res.msg,{time:1800},function(){
+		                    return false;
+		                });
+		            }
+		        });
+		        return false;
+		        // 添加END
+            }
+        });
+        return false;
+    });
+});
+</script>

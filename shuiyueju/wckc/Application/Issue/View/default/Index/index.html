@@ -1,0 +1,124 @@
+<extend name="Base/common"/>
+
+<block name="style">
+    <link href="__CSS__/issue.css" rel="stylesheet" type="text/css"/>
+</block>
+
+<block name="body">
+    <div class="col-md-12 app_head">
+        <div class="app_title">
+            <i class="app_ico_i glyphicon glyphicon-th-large"> </i>专辑
+        </div>
+        <div>
+            <div class="aline"></div>
+        </div>
+        <div class="sub_nav">
+            <ul id="top_nav" class="nav_list clearfix">
+                <li>
+                    <a href="{:U('index')}"
+                    <eq name="top_issue" value="">class="cur"</eq>
+                    >全部分类</a>
+                </li>
+                <volist name="tree" id="top">
+                    <if condition="$top['status'] eq 1">
+                        <li>
+                            <a
+                            <eq name="top_issue" value="$top['id']">class="cur"</eq>
+                            href="{:U('index',array('issue_id'=>$top['id']))}" data="{$top.id}">{$top.title}</a>
+                        </li>
+                    </if>
+
+                </volist>
+                <if condition="check_auth('addIssueContent')">
+                    <li class="pull-right btn-submit">
+
+                        <if condition="is_login() eq 0">
+                            <button class="btn btn-primary" onclick="toast.error('请登陆后再投稿。','温馨提示')"><i
+                                    class="glyphicon glyphicon-send"></i>&nbsp;投稿
+                            </button>
+                            <else/>
+                            <button class="btn btn-primary open-popup-link" href="#frm-post-popup"><i
+                                    class="glyphicon glyphicon-send"></i>&nbsp;投稿
+                            </button>
+
+                        </if>
+                    </li>
+                </if>
+            </ul>
+
+        </div>
+        <volist name="tree" id="top">
+            <if condition="$top['status'] eq 1">
+                <div
+                <eq name="top_issue" value="$top['id']">style="display:block;"</eq>
+                class="children_nav" id="children_{$top.id}">
+                <ul class="nav_list clearfix">
+                    <li><a href="{:U('index',array('issue_id'=>$top['id']))}"
+                        <eq name="issue_id" value="$top['id']">style="font-weight:bold;color:#000"</eq>
+                        class="cur">全部分类</a></li>
+                    <volist name="top._" id="children">
+                        <li><a
+                            <if condition="$issue_id eq $children['id']"> style='color:#000;font-weight:bold'</if>
+                            href="{:U('index',array('issue_id'=>$children['id']))}">{$children.title}</a></li>
+                    </volist>
+
+                </ul>
+    </div>
+    </if>
+    </volist>
+
+
+    </div>
+
+
+    <div class=" issue_list">
+        <volist name="contents" id="vo">
+            <div class="item_inner"
+            <if condition="$i % 4 eq 0">style="margin-right:0"</if>
+            >
+            <div class="item_core">
+                <div class="item_type">{$vo.issue.title}</div>
+                <a href="{:U('Issue/Index/issueContentDetail',array('id'=>$vo['id']))}"> <img class="cover"
+                                                                                              src="{$vo.cover_id|getThumbImageById=280,210}"/></a>
+
+                <div><h3><a href="{:U('Issue/Index/issueContentDetail',array('id'=>$vo['id']))}" class="text-more"
+                            style="width: 100%">{$vo.title}</a></h3></div>
+                <div class="spliter"></div>
+                <div>
+                    <ul class="operation clearfix">
+                        <li><i class="glyphicon glyphicon-stats"></i>{$vo.view_count}</li>
+                        <li>
+                            {:Hook('support',array('table'=>'issue_content','row'=>$vo['id'],'app'=>'Issue','uid'=>$vo['uid'],'jump'=>'no'))}
+                        </li>
+                        <li><i class="glyphicon glyphicon-comment"></i>{$vo.reply_count}</li>
+                    </ul>
+                </div>
+                <div class="spliter"></div>
+                <div><a class="author" href="{$vo.user.space_url}">
+                    <img src="{$vo.user.avatar128}"
+                         ucard="{$vo.uid}" class="avatar-img">{$vo.user.nickname}
+                </a>
+
+                    <div class="pull-right ctime">{$vo.create_time|friendlyDate}</div>
+                </div>
+            </div>
+
+    </div>
+    </volist>
+
+    <if condition="count($contents) eq 0">
+        <div style="font-size:3em;padding:2em 0;color: #ccc;text-align: center">此分类下暂无内容哦。O(∩_∩)O~</div>
+    </if>
+
+    </div>
+    <div>
+        <div class="pull-right">
+
+            {:getPagination($totalPageCount,16)}
+        </div>
+    </div>
+
+
+    <include file="_box"/>
+</block>
+

@@ -1,0 +1,135 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+	<f:layout name="Default" />
+
+	This Template is responsible for creating a table of domain objects.
+
+	If you modify this template, do not forget to change the overwrite settings
+	in /Configuration/ExtensionBuilder/settings.yaml:
+	  Resources:
+		Private:
+		  Templates:
+			List.html: keep
+
+	Otherwise your changes will be overwritten the next time you save the extension in the extension builder
+
+	<f:section name="content">
+		<f:flashMessages />
+		<div class="portlet light ">
+			<div class="portlet-title">
+				<div class="caption">
+					<f:if condition="{settings.enableImport}">
+						<f:then>
+							<f:form action="list" name="pay" class="form-inline" enctype="multipart/form-data" method="GET">
+								<div class="form-group">
+									<div class="file">
+										<div class="userdefined-file">
+											<input type="text" name="userdefinedFile" id="userdefinedFile" class="form-control" value="未选择任何文件">
+											<a class="btn btn-info">选择</a>
+										</div>
+										<input type="file" name="tx_donation_pi1[excelImport]" value="" class="input-sm" id="file">
+									</div>
+								</div>
+								<div class="form-group">
+									<f:form.submit value="导入" class="btn btn-default" />
+								</div>
+								<a href="{f:uri.resource(path:'example.xls')}" class="btn btn-default"
+									target="_blank">下载示例</a>
+							</f:form>
+						</f:then>
+						<f:else>
+							<f:link.action action="list" arguments="{excelExport: 1, keyword:keyword}"
+								class="btn btn-default">导出</f:link.action>
+						</f:else>
+					</f:if>
+				</div>
+				<div class="actions">
+					<div class="btn-group btn-group-devided">
+						<f:form action="list" name="pay" class="form-inline">
+							<div class="input-group">
+								<div class="input-icon">
+									<input type="hidden" name="id" value="{pageUid}" />
+									<f:form.hidden name="action" value="list" />
+									<i class="fa fa-search"></i>
+									<f:form.textfield name="keyword" value="{keyword}" class="form-control"
+										placeholder="请输入查询条件" />
+								</div>
+								<span class="input-group-btn">
+									<f:form.submit class="btn btn-success" value="搜" />
+								</span>
+							</div>
+						</f:form>
+					</div>
+				</div>
+			</div>
+			<f:widget.paginate objects="{pays}" as="paysItems" configuration="{settings.paginate}">
+				<div class="portlet-body">
+					<div class="table-scrollable">
+						<table class="table table-hover table-light">
+							<thead>
+								<tr class="uppercase">
+									<th></th>
+									<th>编号</th>
+									<th>名称</th>
+									<th>金额</th>
+									<th>时间</th>
+									<th>付款方式</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<f:for each="{paysItems}" as="pay" iteration="item">
+									<tr>
+										<td>
+											<label class="mt-checkbox mt-checkbox-outline">
+												<input type="checkbox" value="{pay.uid}" name="test"
+													class="normal sel" />
+												<span></span>
+											</label>
+										</td>
+										<td>
+											{f:cObject(typoscriptObjectPath:'lib.calc', data:'{item.cycle}+({page}-1)*{settings.paginate.itemsPerPage}')}
+										</td>
+										<td>{pay.name}</td>
+										<td>
+											<f:format.currency currencySign="￥" decimalSeparator="."
+												thousandsSeparator="," prependCurrency="true">{pay.money}
+											</f:format.currency>
+										</td>
+										<td>{pay.crdate -> f:format.date(format:'Y-m-d')}</td>
+										<td>{pay.payment}</td>
+										<td>
+											<f:link.action action="show" arguments="{pay : pay}" class="btn btn-primary btn-xs">详细</f:link.action>
+											<f:if condition="{pay.certnumber}"> <a href="uploads/certificate/{pay.certnumber}.jpg" class="btn btn-info btn-xs" target="_blank">证书</a></f:if>
+											<f:link.action action="delete" arguments="{pay : pay}" class="btn btn-danger btn-xs" onclick="return confirm('您确定要删除吗?');">删除</f:link.action>
+										</td>
+									</tr>
+								</f:for>
+								<tr>
+									<td>
+										<label class="mt-checkbox mt-checkbox-outline">
+											<input type="checkbox" name="test" class="normal selectall" />
+											<span></span>
+										</label>
+									</td>
+									<td colspan="6">
+										<f:form action="multidelete" name="datas">
+											<f:form.hidden id="multidelete-items" property="items" value="" />
+											<f:form.submit value="删除选中"
+												class="btn btn-danger btn-xs delete btn-del btn-delete-all" />
+										</f:form>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</f:widget.paginate>
+		</div>
+		<script>
+			$("#file").change(function(event) {
+				$("#userdefinedFile").val($("#file").val());
+			});
+			
+		</script>
+	</f:section>
+</html>

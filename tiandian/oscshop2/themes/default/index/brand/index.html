@@ -1,0 +1,170 @@
+{extend name="public:base" /}
+{block name="content"}
+
+{if condition="!empty($attribute)"}
+	<div id="attribute" class="allWrap">
+		<p>属性</p>
+		{volist name="attribute" id="value"}
+			<div class="clearfix attribute-value">
+				<span style="float:left;">{$key}:</span>
+				{if condition="isset($value)"}
+				<ul>					
+					{volist name="$value" id="v" key="k" }
+						<li class="attribute" id="a{$v.attribute_value_id}" aid="{$v.attribute_value_id}">{$v.value_name}</li>
+					{/volist}
+				</ul>
+				{/if}
+			</div>
+		{/volist}
+	</div>		
+{/if}
+
+{if condition="!empty($brand)"}
+	<div id="brand" class="allWrap">
+		<p>品牌</p>		
+			<div class="clearfix brand-value">
+				<ul>
+					{volist name="brand" id="v"}						
+							<li class="brand" id="b{$v.brand_id}" bid="{$v.brand_id}">{$v.name}</li>								
+					{/volist}
+				</ul>
+			</div>		
+	</div>		
+{/if}
+
+
+<div id="goods" class="allWrap">
+		<div class="clearfix">
+			{volist name="list" id="goods" empty="$empty"}
+			 <dl>
+			 	<dt><a href="{:url('/goods/'.$goods['goods_id'])}">
+			 		{if condition="!empty($goods['image'])"}
+				 		<img src="IMG_ROOT{$goods.image|resize=230,230}">
+				 		{else /}
+				 		<img src="__PUBLIC__/image/no_image_230x230.jpg">
+			 		{/if}
+			 		</a>
+			 		</dt>
+			 	<dd><a href="{:url('/goods/'.$goods['goods_id'])}">{$goods.name}</a></dd>
+			 	<dd><a class="red" href="{:url('/goods/'.$goods['goods_id'])}"> &yen; {$goods.price}</a></dd>
+			 </dl>
+			{/volist}			
+		</div>
+		<div id="page" class="clearfix">{$list->render()}</div>
+		<div id="total" class="clearfix">总计 {$list->total()|default="0"} </div>	
+		
+</div>			
+{/block}
+{block name="javascript"}
+<style>
+	.hover{ background:#aaa; }
+</style>
+<script>
+var attribute=get_url_attr('a');
+var brand=get_url_attr('b');	
+if(attribute){	 
+	 var ch = new Array;
+	 ch = attribute.split(",");
+	 if(ch.length==1){
+		 $('#a'+attribute).addClass('hover');
+	 }else if(ch.length>1){			 
+		 		 
+		 for(i=0;i<ch.length;i++){		  
+			$('#a'+ch[i]).addClass('hover');
+		}
+	 }
+}
+
+if(brand){	 
+	 var ch = new Array;
+	 ch = brand.split(",");
+	 if(ch.length==1){
+		 $('#b'+brand).addClass('hover');
+	 }else if(ch.length>1){			 
+		 		 
+		 for(i=0;i<ch.length;i++){		  
+			$('#b'+ch[i]).addClass('hover');
+		}
+	 }
+}
+
+$(function(){
+	$('.attribute').click(function(){
+
+		if(attribute){
+			if($(this).hasClass('hover')){
+				$(this).removeClass('hover');
+			}else{
+				$(this).siblings().removeClass('hover')
+				$(this).addClass('hover');
+			}
+		}else{
+				$(this).addClass('hover');
+		}
+		
+		var length=$('#attribute li.hover').size();	
+		
+		if(brand){
+			var url = "{:url('/category')}"+'/'+'{$Request.param.id}'+'?b='+brand;	
+			var param='&a=';
+		}else{
+			var url = "{:url('/category')}"+'/'+'{$Request.param.id}';	
+			var param='?a=';
+		}
+		
+		$('#attribute li.hover').each(function(i){
+			
+			if(i<length-1){
+				param+=$('#attribute li.hover').eq(i).attr('aid')+',';
+			}else{
+				param+=$('#attribute li.hover').eq(i).attr('aid');
+			}
+			
+		});
+		
+		url+=param;
+		
+		window.location.href = url;		
+	});
+	
+$('.brand').click(function(){
+
+		if(brand){
+			if($(this).hasClass('hover')){
+				$(this).removeClass('hover');
+			}else{
+				$(this).siblings().removeClass('hover')
+				$(this).addClass('hover');
+			}
+		}else{
+				$(this).addClass('hover');
+		}
+		
+		var length=$('#brand li.hover').size();			
+		
+		if(attribute){
+			var url = "{:url('/category')}"+'/'+'{$Request.param.id}'+'?a='+attribute;	
+			var param='&b=';
+		}else{
+			var url = "{:url('/category')}"+'/'+'{$Request.param.id}';	
+			var param='?b=';
+		}			
+		
+		$('#brand li.hover').each(function(i){
+			
+			if(i<length-1){
+				param+=$('#brand li.hover').eq(i).attr('bid')+',';
+			}else{
+				param+=$('#brand li.hover').eq(i).attr('bid');
+			}
+			
+		});
+		
+		url+=param;
+		
+		window.location.href = url;		
+	});	
+	
+});
+</script>
+{/block}

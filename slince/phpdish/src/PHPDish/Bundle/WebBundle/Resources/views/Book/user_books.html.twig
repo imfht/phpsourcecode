@@ -1,0 +1,57 @@
+{% extends 'PHPDishWebBundle:User:view_common.html.twig' %}
+
+{% set tab = 'book' %}
+{% set isMe = app.user is same as (user) %}
+
+{% if books|length %}
+    {% block entry_meta %}
+        <span>{{ 'book.total_publish_books'|trans({'%count%': books|length }) }}</span>
+    {% endblock %}
+{% endif %}
+
+{% block user_content %}
+    {% if books|length %}
+        <ul class="book-list list-inline">
+        {% for book in books %}
+            {% set bookViewUrl = path('book_view', {'slug': book.slug}) %}
+            <li>
+                <div class="book">
+                    <div class="cover">
+                        <a href="{{ bookViewUrl }}">
+                            <img src="{{ asset(book.cover|default('user.jpg'))|imagine_filter('middle_rectangle') }}" class="media-object"/>
+                        </a>
+                    </div>
+                    <div class="details">
+                        <a href="{{ bookViewUrl }}">
+                            <h4 class="title">
+                               {{ book.name }}
+                            </h4>
+                        </a>
+                        {% if is_granted('edit', book) %}
+                            <div class="edit"><a href="{{ path('book_edit', {'slug': book.slug}) }}" title="{{ 'ui.edit'|trans }}"><i class="if i-edit"></i></a></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+        {% if isMe and books|length < 5 %}
+            <li>
+                <div class="add-book">
+                    <a title="{{ 'book.write_book'|trans }}" href="{{ path('book_add') }}"><i class="if i-plus-bold"></i></a>
+                </div>
+            </li>
+        {% endif %}
+        </ul>
+    {% else %}
+            <div class="empty-data">
+                <p>
+                    {% if isMe %}
+                    <i class="if i-post-o"></i> {{ 'book.no_books_yet'|trans }}
+                   {{ 'book.go_write_book'|trans({'%link%': path('book_add')})|raw }}
+                    {% else %}
+                        <i class="if i-post-o"></i> {{ 'book.no_books_yet'|trans }}
+                    {% endif %}
+                </p>
+            </div>
+    {% endif %}
+{% endblock %}

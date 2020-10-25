@@ -1,0 +1,196 @@
+{extend name="Public/base"/}
+{block name="style"}
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/plugs/board/board.min.css">
+{/block}
+{block name="body"}
+<div class="main-box clearfix">
+	<header class="main-box-header clearfix">
+		<div class="pull-left">
+			<h2>{if condition="ACTION_NAME eq 'add'"}新增{else/}编辑{/if}模型</h2>
+		</div>
+		<div class="pull-right">
+		</div>
+	</header>
+	<div class="main-box-body clearfix">
+		<form id="form" action="{:U('update')}" method="post" class="form form-horizontal">
+			<div class="tabs-wrapper">
+				<ul class="nav nav-tabs">
+					<li class="active"><a href="#tab1" data-toggle="tab">基 础</a></li>
+					<li><a href="#tab2" data-toggle="tab">设 计</a></li>
+					<li><a href="#tab3" data-toggle="tab">高 级</a></li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane fade in active" id="tab1">
+						<!-- 基础 -->
+						<div class="form-group">
+							<label class="col-lg-2 control-label">模型标识</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control disabled" name="name" value="{$info.name}" disabled>
+								<span class="help-block">（请输入文档模型标识）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">模型名称</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control " name="title" value="{$info.title}">
+								<span class="help-block">（请输入模型的名称）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">模型类型</label>
+							<div class="col-lg-3 col-sm-10">
+								<select name="extend" class="form-control disabled" readonly disabled>
+									<option value="0" {if condition="$info['extend'] eq '0'"}selected{/if}>--请选择--</option>
+									<option value="1" {if condition="$info['extend'] eq '1'"}selected{/if}>文档模型</option>
+									<option value="2" {if condition="$info['extend'] eq '2'"}selected{/if}>独立模型</option>
+								</select>
+								<span class="help-block">（目前只支持独立模型和文档模型）</span>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="tab2">
+
+						<!-- <div class="form-group">
+							<label class="col-lg-2 control-label">字段管理</label>
+
+							<div class="col-lg-10 boards" id="field_sort">
+								<div class="board panel panel-info">
+									<div class="panel-heading">
+										字段列表 
+										[ <a href="{:U('Attribute/add?model_id='.$info['id'])}" target="_balnk">新增</a>
+										<a href="{:U('Attribute/index?model_id='.$info['id'])}" target="_balnk">管理</a> ]
+									</div>
+									<div class="panel-body">
+										<div class="board-list">
+										{foreach name="fields" item="field" key="k"}
+											<div class="board-item">
+												<em ><input class="ids" type="checkbox" name="attribute_list[]" value="{$field['id']}" {if condition="in_array($field['id'],$info['attribute_list'])"}checked="checked"{/if} /> {$field['title']} [{$field['name']}]</em>
+											</div>
+										{/foreach}
+										</div>
+									</div>
+								</div>
+								<span class="help-block">（只有新增了字段，该表才会真正建立）</span>
+							</div>
+						</div> -->
+	                    <div class="form-group">
+	                        <label class="col-lg-2 control-label">字段别名定义</label>
+	                        <div class="col-lg-6 col-sm-10">
+	                            <textarea name="attribute_alias" class="form-control">{$info.attribute_alias}</textarea>
+	                            <span class="help-block">（用于表单显示的名称）</span>
+	                        </div>
+	                    </div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">表单显示分组</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="field_group" value="{$info.field_group}">
+								<span class="help-block">（用于表单显示的分组，以及设置该模型表单排序的显示）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">表单显示排序</label>
+							<div class="col-lg-10 boards" id="field_group_sort">
+							{volist name=":parse_field_attr($info['field_group'])" id="vo"}
+								<div class="board panel panel-info">
+									<div class="panel-heading">{$vo}</div>
+									<div class="panel-body">
+										<div class="board-list" data-group="{$key}">
+										{foreach name="fields" item="field" key="k"}
+											{if condition="(($field['group'] eq $key) or($i eq 1 and !isset($field['group']))) and ($field['is_show'] eq 1)"}
+												<div class="board-item">
+													<span data="{$field['id']}">{$field['title']} [{$field['name']}]</span>
+													<input type="hidden" name="field_sort[{$key}][]" value="{$field['id']}"/>
+												</div>
+											{/if}
+										{/foreach}
+										</div>
+									</div>
+								</div>
+							{/volist}
+							<span class="help-block">（直接拖动进行排序）</span>
+							</div>
+						
+						</div>
+
+						<div class="form-group">
+							<label class="col-lg-2 control-label">列表定义</label>
+							<div class="col-lg-6 col-sm-10">
+									<textarea name="list_grid" class="form-control">{$info.list_grid}</textarea>
+								<span class="help-block">（默认列表模板的展示规则）</span>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="col-lg-2 control-label">默认搜索字段</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="search_key" value="{$info.search_key}">
+								<span class="help-block">（默认列表模板的默认搜索项）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">高级搜索字段</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="search_list" value="{$info.search_list}">
+								<span class="help-block">（默认列表模板的高级搜索项）</span>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="tab3">
+						<div class="form-group">
+							<label class="col-lg-2 control-label">列表模板</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="template_list" value="{$info.template_list}">
+								<span class="help-block">（自定义的列表模板，放在Application\Admin\View\Think下，不写则使用默认模板）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">新增模板</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="template_add" value="{$info.template_add}">
+								<span class="help-block">（自定义的新增模板，放在Application\Admin\View\Think下，不写则使用默认模板）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">编辑模板</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="template_edit" value="{$info.template_edit}">
+								<span class="help-block">（自定义的编辑模板，放在Application\Admin\View\Think下，不写则使用默认模板）</span>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-lg-2 control-label">列表数据大小</label>
+							<div class="col-lg-6 col-sm-10">
+								<input type="text" class="form-control" name="list_row" value="{$info.list_row}">
+								<span class="help-block">（默认列表模板的分页属性）</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-lg-offset-2 col-lg-10">
+					<input type="hidden" name="id" value="{$info['id']}">
+					<button type="submit" class="btn btn-success submit-btn ajax-post" target-form="form">确认提交</button>
+					<button class="btn btn-danger btn-return" onclick="javascript:history.back(-1);return false;">返 回</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+{/block}
+{block name="script"}
+<script type="text/javascript" src="__PUBLIC__/js/droppable.js"></script>
+<script type="text/javascript" src="__PUBLIC__/plugs/board/board.min.js"></script>
+<script type="text/javascript">
+$(function(){
+	$('.form-group #field_sort').boards();
+	$('.form-group #field_group_sort').boards({
+		drop: function(e){
+			var group = e.target.closest('.board').find('.board-list').attr('data-group');
+			e.element.find('input').attr('name','field_sort[' + group + '][]')
+		}
+	})
+})
+</script>
+{/block}
+

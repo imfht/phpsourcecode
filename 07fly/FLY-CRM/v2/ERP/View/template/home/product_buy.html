@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>商品购买</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body>
+<header class="hui-header">
+ <div id="hui-back"></div>
+ <h1>商品购买</h1>
+</header>
+<div class="hui-wrap" >
+ <div class="hui-list hui-row" style="margin-top:22px;">
+  <div class="hui-col-2"> <img src="#{$smarty.const.APP}#/View/template/home/img/list/dizhi.png" style="width:50px; margin:0px; border-radius:50%;" /> </div>
+  <div class="hui-col-9" style="height:75px; line-height:25px;">
+   <input type="hidden" id="address_id" value="#{$address.id}#">
+   收货姓名：#{$address.name}#<br>
+   收货电话：#{$address.mobile}#<br>
+   收货地址：#{$address.address}# </div>
+  <div class="hui-col-1" style="line-height:75px;" > <a href="#{$smarty.const.ACT}#/home/WxMemberAddress/member_address_add/retrun_shop/#{$one.id}#/" style="width: 44px;"><span class="hui-icons hui-icons-right"></span></a> </div>
+ </div>
+ <div class="hui-media-list" style="margin-top:20px;">
+  <ul>
+   <li> <a href="javascript:hui.toast('hi...');">
+    <div class="hui-media-list-img"><img src="#{$one.img1}#" /></div>
+    <div class="hui-media-content">
+     <h1>#{$one.name}#</h1>
+     <p>价格：#{$one.price}#</p>
+    </div>
+    </a> </li>
+  </ul>
+ </div>
+ <div class="hui-list" style="padding:10px;">
+  <input type="hidden" id="shop_id" value="#{$one.shop_id}#">
+  <input type="hidden" name="ids[]" id="id_product_1" value="#{$one.id}#">
+  <input type="hidden" name="price[]" id="id_price_1" value="#{$one.price}#">
+  <input type="hidden" name="money[]" id="id_money_1" value="#{$one.price}#">
+  <input type="hidden" name="member[]" id="id_member_1" value="#{$one.member_id}#">
+  <ul>
+   <li>
+    <button type="button" class="hui-button hui-button-small hui-primary hui-fl" onClick="javascript:minusCart(this, '#{$one.id}#','1')">-</button>
+    <input type="text" id="id_number_1" class="product_buy_card" value="1" >
+    <button type="button" class="hui-button hui-button-small hui-primary hui-fl" onClick="javascript:plusCart(this, '#{$one.id}#','1')">+</button>
+   </li>
+   <input type="hidden" name="all_money" value="#{$one.price}#" id="all_money_1">
+  </ul>
+ </div>
+</div>
+<div id="hui-footer">
+ <div style="width:50%;line-height: 44px; text-align:center;" class="hui-fl"> 合计：<span id="id_min_money_1">#{$one.price}# </div>
+ <div style="width:50%; text-align:center;" class="hui-fl"> <img src="#{$smarty.const.APP}#/View/template/home/img/list/1-2.png" height="34" id="submit" /> </div>
+</div>
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui.js" type="text/javascript" charset="utf-8"></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/plus/jquery1.42.min.js" type="text/javascript" charset="utf-8"></script> 
+<script type="text/javascript">
+	hui('#submit').click(function(){
+		var action    = 'save';
+		var all_money_1 = hui('#all_money_1').val();
+		var id_number_1 = hui('#id_number_1').val();
+		var id_price_1 = hui('#id_price_1').val();
+		var id_product_1 = hui('#id_product_1').val();
+		var id_member_1 = hui('#id_member_1').val();//产品所属会员
+		var address_id = hui('#address_id').val();
+		var shop_id = hui('#shop_id').val();
+		if(address_id==''){
+		  hui.upToast('请选择收货地址');
+		  return false;
+		}
+		//订单提交
+		hui.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/WxProductBuy/product_buy/id/#{$one.id}#/',
+			data : {all_money_1:all_money_1,id_number_1:id_number_1,id_price_1:id_price_1,id_product_1:id_product_1,id_member_1:id_member_1,address_id:address_id,shop_id:shop_id,action:action},
+			backType:'json',
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.code=='sucess'){
+					hui.upToast('下单成功');
+					var orderid=data.message;
+					var url="#{$smarty.const.ACT}#/home/WxProductBuy/product_buy_pay/id/"+orderid+"/";
+					window.location.href=url;
+					hui.upToast('下单成功');
+					//hui.upToast(data.message);
+				}else{
+					hui.upToast(data.message);
+				}
+
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});
+	});
+
+
+$("#id_number_1").keyup(function(){
+	var key=1;
+	var num_input=$("#id_number_"+key);  
+	var num 	 =$("#id_number_"+key).val();  
+	var money_input=$("#id_money_"+key);  
+	var price_input=$("#id_price_"+key);  
+	var min_money=price_input.val()*num;
+	money_input.val(min_money);
+	$("#id_min_money_"+key).html(min_money);
+	$("#all_money_"+key).val(min_money);
+});	
+	
+//减  
+function minusCart(_this, id,key){  
+	var num_input=$("#id_number_"+key);  
+	var num 	 =$("#id_number_"+key).val();  
+	num--;  
+	if(num <= 0){  
+		return false;  
+	} else {  
+		 num_input.val(num);  
+		var money_input=$("#id_money_"+key);  
+		var price_input=$("#id_price_"+key);  
+		var min_money=price_input.val()*num;
+		money_input.val(min_money);
+		$("#id_min_money_"+key).html(min_money);
+		$("#all_money_"+key).val(min_money);
+	}  
+}  
+//加  
+function plusCart(_this,id,key){ 
+	var num_input=$("#id_number_"+key);  
+	var num 	 =$("#id_number_"+key).val();  
+	num++;  
+	if(num <= 0){  
+		return false;  
+	} else {  
+		 num_input.val(num);  
+		var money_input=$("#id_money_"+key);  
+		var price_input=$("#id_price_"+key);  
+		var min_money=price_input.val()*num;
+		money_input.val(min_money);
+		$("#id_min_money_"+key).html(min_money);
+		$("#all_money_"+key).val(min_money);
+	}   
+}
+
+</script>
+</body>
+</html>

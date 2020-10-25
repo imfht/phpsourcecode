@@ -1,0 +1,215 @@
+<?php require_once('finance/inc/item_kind.php'); ?>
+<?php require_once('finance/inc/item_status.php'); ?>
+<?php 
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+$kind_filter = @intval($_COOKIE['item_kind_filter']);
+$term_filter = @intval($_COOKIE['item_term_filter']);
+$status_filter = @intval($_COOKIE['item_status_filter']);
+
+//筛选器
+$cond = '';
+
+switch ($kind_filter) {
+case 2:
+	$cond .= " AND kind = 2";
+	break;
+case 3:
+	$cond .= " AND kind = 3";
+	break;
+case 4:
+	$cond .= " AND kind = 4";
+	break;
+case 5:
+	$cond .= " AND kind = 5";
+	break;
+}
+
+switch ($term_filter) {
+case 2:
+	$cond .= " AND term <= 3 ";
+	break;
+case 3:
+	$cond .= " AND term > 3 AND term <= 6";
+	break;
+case 4:
+	$cond .= " AND term > 6 AND term <= 9";
+	break;
+case 5:
+	$cond .= " AND term > 9 AND term <= 12";
+	break;
+case 6:
+	$cond .= " AND term > 12";
+	break;
+}
+
+switch ($status_filter) {
+case 2:
+	$cond .= " AND status = ".FINANCE_ITEM_STATUS_TB;
+	break;
+case 3:
+	$cond .= " AND status = ".FINANCE_ITEM_STATUS_HK;
+	break;
+case 4:
+	$cond .= " AND status = ".FINANCE_ITEM_STATUS_JS;
+	break;
+}
+
+$cond .= " AND audited = 'Y'";
+
+if (!empty($cond)) $cond = preg_replace('/AND/', 'WHERE', $cond, 1);
+
+if (empty($page)) { $page = 1; }
+$limit = 15;
+
+$items = dt_query("SELECT id, kind, name, money, revenue, term, status, invest, lmcy_id, c_at FROM finance_item $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$items) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+//其他信息
+$issue_PTGGs = dt_query("SELECT id, title FROM finance_issue WHERE kind = 'PTGG'  ORDER BY c_at DESC LIMIT 5");
+$issue_HKGGs = dt_query("SELECT id, title FROM finance_issue WHERE kind = 'HKGG' ORDER BY c_at DESC LIMIT 5");
+$issue_MTBDs = dt_query("SELECT id, title FROM finance_issue WHERE kind = 'MTBD' ORDER BY c_at DESC LIMIT 5");
+if (!$issue_PTGGs || !$issue_HKGGs || !$issue_MTBDs) {
+	put_info('获取信息数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+
+?>
+<?php require_once('finance/inc/nav_sub_tz.html') ?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-9 column" style="border-right: 1px solid #ccc">
+			<div class="finance-filter-well">
+				<ul id="kind_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目类别</a> </li>
+					<li><a href="javascript:do_kind_filter(1)">全部</a></li>
+					<?php foreach ($item_kind as $key => $kind) { ?>
+					<li><a href="javascript:do_kind_filter(<?php echo $key; ?>)"><?php echo $kind['name']; ?></a></li>                       
+					<?php } ?>
+				</ul>
+				<ul id="term_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目期限</a> </li>
+					<li><a href="javascript:do_term_filter(1)">全部</a></li>
+					<li><a href="javascript:do_term_filter(2)">3 个月以下</a></li>
+					<li><a href="javascript:do_term_filter(3)">3-6 个月</a></li>
+					<li><a href="javascript:do_term_filter(4)">6-9 个月</a></li>
+					<li><a href="javascript:do_term_filter(5)">9-12 个月</a></li>
+					<li><a href="javascript:do_term_filter(6)">12 个月以上</a></li>
+				</ul>
+				<ul id="status_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目状态</a> </li>
+					<li><a href="javascript:do_status_filter(1)">全部</a></li>
+					<?php foreach ($item_status as $key => $status) { ?>
+					<li><a href="javascript:do_status_filter(<?php echo $key; ?>)"><?php echo $status['name']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</div>
+
+			<?php while($item = mysql_fetch_array($items)) { ?>
+			<div class="finance-item-well">
+				<div class="row clearfix">
+					<div class="col-md-8 column">
+						<h4 style="font-size:16px"> <a href="<?php echo s_url('?c=finance&a=item_show&item_id='.$item['id']) ?>"><?php echo $item['name'] ?></a> </h4>
+						<span class="label label-info"><?php echo $item_status[$item['status']]['name'] ?></span>
+						<span class="label label-default"><span class="glyphicon glyphicon-retweet"></span> <?php echo $item_kind[$item['kind']]['name'] ?></span>
+						<a href="<?php echo s_url('?c=finance&a=item_list_cond&lmcy_id='.$item['lmcy_id']) ?>"><span class="label label-success"><span class="glyphicon glyphicon-th-large"></span> <?php echo dt_query_one('SELECT name FROM finance_lmcy WHERE id = '.$item['lmcy_id'])['name'] ?></span></a>
+						<div class="row clearfix" style="margin-top:25px">
+							<div class="col-md-3 column">
+								<a class="btn btn-default btn-lg btn-block" href="<?php echo s_url('?c=finance&a=item_show&item_id='.$item['id']) ?>">查看详情</a>
+							</div>
+							<div class="col-md-9 column">
+								<div class="progress progress-striped active" style="margin-bottom:5px;height:16px;width:180px">
+									<div class="progress-bar progress-bar-success" style="width: <?php $p_b_w = (time() - $item['c_at'])/(31*24*3600); echo ($p_b_w < 1) ? $p_b_w * 100 : 100; ?>%">
+										<span class="sr-only"></span>
+									</div>
+								</div>
+								<p style="margin-top:5px"> 项目<?php echo $item_status[$item['status']]['name'] ?>，融资金额 <span class="important"><?php echo $item['money'] ?></span> 元 </p>
+
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 column">
+						<div class="finance-item-stamp status-<?php echo $item['status'] ?>"></div>
+						<ul class="list-unstyled">
+							<li> <span class="info-item">融资金额</span> <?php echo $item['money'] ?> </li>
+							<li> <span class="info-item">年化收益</span>  <span class="important"><?php echo $item['revenue'] ?>%</span> </li>
+							<li> <span class="info-item">融资期限</span>  <?php echo $item['term'] ?> 个月 </li>
+							<li> <span class="info-item">意向投资</span>  <span style="font-size:15px"><?php echo $item['invest'] ?> 人</span> </li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<?php } ?>
+
+			<?php pagination('finance_item', $cond, $page, $limit, '?c=finance&a=item_list&page=') ?>
+		</div>
+
+		<div class="col-md-3 column">
+			<section class="finance-issue-section">
+				<a href="<?php echo s_url('?c=finance&a=issue_list&kind=4') ?>" class="pull-right">更多</a>
+				<h3>媒体报道</h3>
+				<ul class="list-unstyled">
+					<?php while($issue_MTBD = mysql_fetch_array($issue_MTBDs)) { ?>
+					<li><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$issue_MTBD['id']) ?>"><?php echo $issue_MTBD['title']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</section>
+			<section class="finance-issue-section">
+				<a href="<?php echo s_url('?c=finance&a=issue_list&kind=3') ?>" class="pull-right">更多</a>
+				<h3>还款公告</h3>
+				<ul class="list-unstyled">
+					<?php while($issue_HKGG = mysql_fetch_array($issue_HKGGs)) { ?>
+					<li><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$issue_HKGG['id']) ?>"><?php echo $issue_HKGG['title']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</section>
+			<section class="finance-issue-section">
+				<a href="<?php echo s_url('?c=finance&a=issue_list&kind=2') ?>" class="pull-right">更多</a>
+				<h3>平台公告</h3>
+				<ul class="list-unstyled">
+					<?php while($issue_PTGG = mysql_fetch_array($issue_PTGGs)) { ?>
+					<li><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$issue_PTGG['id']) ?>"><?php echo $issue_PTGG['title']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</section>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$("li#finance_tz").addClass("active");
+	$("li#tz_xmlb").addClass("active");
+	var kind_filter = ('' == getCookie('item_kind_filter')) ? 1 : getCookie('item_kind_filter');
+	$('ul#kind_filter').find('li:eq('+kind_filter+')').addClass('active');
+	var term_filter = ('' == getCookie('item_term_filter')) ? 1 : getCookie('item_term_filter');
+	$('ul#term_filter').find('li:eq('+term_filter+')').addClass('active');
+	var status_filter = ('' == getCookie('item_status_filter')) ? 1 : getCookie('item_status_filter');
+	$('ul#status_filter').find('li:eq('+status_filter+')').addClass('active');
+});
+
+function do_kind_filter(mark) {
+	setCookie('item_kind_filter', mark, 365, '/');
+	location = '<?php echo s_url('?c=finance&a=item_list') ?>';
+}
+
+function do_term_filter(mark) {
+	setCookie('item_term_filter', mark, 365, '/');
+	location = '<?php echo s_url('?c=finance&a=item_list') ?>';
+}
+
+function do_status_filter(mark) {
+	setCookie('item_status_filter', mark, 365, '/');
+	location = '<?php echo s_url('?c=finance&a=item_list') ?>';
+}
+
+
+</script>

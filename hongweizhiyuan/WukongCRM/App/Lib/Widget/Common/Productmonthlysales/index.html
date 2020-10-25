@@ -1,0 +1,92 @@
+<!-- 销售月度统计 -->
+<div class="span6 sort-item" rel="{$id}">
+	<div class="dash-border">
+		<div class="dash-title">
+			<img src="__PUBLIC__/img/chart.png" style="width:17.5px;" />&nbsp;&nbsp;{$title}&nbsp;
+			<small>
+				<a rel="{$id}" class="update" href="javascript:void(0)" id="update_widget"><i class="icon-pencil"></i></a> &nbsp;
+				<a href="{:U('index/widget_delete', 'id='.$id)}" id="delete_widget"><i class="icon-remove"></i></a> &nbsp; 
+			</small>
+			<a href="{:U('product/analytics')}" class="dash-swtich">切换到销售统计 >></a>
+		</div>
+		<div class="cut-line"></div>
+		<div class="content-chart" id="sales_monthly_{$id}">拼命加载中...</div>
+	</div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/js/mychart/macarons.js"></script>
+<script src="__PUBLIC__/js/mychart/echarts-plain.js"></script>
+<script type="text/javascript">
+	var myChart = echarts.init(document.getElementById('sales_monthly_{$id}'),macarons);
+	option = {
+		tooltip : {
+			trigger: 'axis'
+		},
+		legend: {
+			data:['销售额','销售量']
+		},
+		calculable : true,
+		xAxis : [
+			{
+				type : 'category',
+				data : ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+			}
+		],
+		yAxis : [
+			{
+				type : 'value',
+				position: 'left',
+				axisLabel : {
+					show:true,
+					formatter: '{value} 元'
+				}
+			},
+			{
+				type : 'value',
+				axisLabel : {
+					formatter:  '{value} 个'
+				}
+			}
+		],
+		series : [
+			{
+				name: '销售额',
+				type: 'bar',
+				data:[],
+				markLine : {
+					data : [
+						{type : 'average', name: '平均值'}
+					]
+				}
+			},
+			{
+				name:'销售量',
+				type: 'line',
+				yAxisIndex: 1,
+				data: [],
+				markPoint : {
+					data : [
+						{type : 'max', name: '最大值'},
+					]
+				}
+			}
+		]
+	};
+	//使用Ajax从后台获取JSON格式的数据赋值到图表
+	$.ajax({
+		type: "get",
+		async: false,
+		url: "{:U('product/getmonthlysales')}",
+		dataType: "json", //返回数据形式为json
+		success: function (result) {
+			if (result) {
+				option.series[0].data = result.data.price;
+				option.series[1].data = result.data.amount;
+				myChart.setOption(option);
+			}
+		},
+		error: function (errorMsg) {
+			$('#sales_monthly_{$id}').html('<span class="error_msg">获取信息失败...</span>');
+		}
+	});
+</script>
+<!-- 销售月度统计 END-->

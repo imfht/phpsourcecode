@@ -1,0 +1,161 @@
+<script type="text/javascript">
+//缩略图
+var thumbUploader = KindEditor.editor({
+    allowFileManager : true,
+    uploadJson       : '{:U('Attachment/uploadJson')}',            //更改默认的上传控件
+    fileManagerJson  : '{:U('Attachment/fileManagerJson')}',  //更改默认的空间控件
+});
+function flashupload(uploadid, name, textareaid, funcName, args, module, catid, authkey){
+    thumbUploader.loadPlugin('image', function() {
+        thumbUploader.plugin.imageDialog({
+            imageUrl : KindEditor('#'+textareaid).val(),
+            clickFn : function(url, title, width, height, border, align) {
+                if(funcName){
+                    funcName(uploadid,textareaid,url);
+                }else{
+
+                }
+                // KindEditor('#thumb').val(url);
+                // $('#thumb_preview').attr("src", url); 
+                thumbUploader.hideDialog();
+            }
+
+        });
+    });
+}
+
+function thumb_images(uploadid,returnid,url){
+    if($('#'+returnid+'_preview').attr('src')) {
+        $('#'+returnid+'_preview').attr('src',url);
+    }
+    $('#'+returnid).val(url);
+}
+function remove_div(id) {
+    $('#'+id).remove();
+}
+function change_images(uploadid,returnid, url){
+    $('#'+returnid+'_tips').css('display','none');
+    var str = $('#'+returnid).html();
+    if(url == '') return true;
+    /*$.each( contents, function(i, n) {
+        var ids = parseInt(Math.random() * 10000 + 10*i); 
+        var filename = filenames[i].substr(0,filenames[i].indexOf('.'));
+        str += "<li id='image"+ids+"'><input type='text' name='"+returnid+"_url[]' value='"+n+"' style='width:310px;' ondblclick='image_priview(this.value);' class='input-text'> <input type='text' name='"+returnid+"_alt[]' value='"+filename+"' style='width:160px;' class='input-text' onfocus=\"if(this.value == this.defaultValue) this.value = ''\" onblur=\"if(this.value.replace(' ','') == '') this.value = this.defaultValue;\"> <a href=\"javascript:remove_div('image"+ids+"')\">移除</a> </li>";
+    });*/
+    var ids = parseInt(Math.random() * 10000); 
+    var filename = '';
+    str += "<li id='image"+ids+"'><input type='text' name='"+returnid+"_url[]' value='"+url+"' style='width:310px;' ondblclick='image_priview(this.value);' class='input-text form-control'> <input type='text' name='"+returnid+"_alt[]' value='"+filename+"' style='width:160px;' class='input-text form-control' onfocus=\"if(this.value == this.defaultValue) this.value = ''\" onblur=\"if(this.value.replace(' ','') == '') this.value = this.defaultValue;\"> <a href=\"javascript:remove_div('image"+ids+"')\">移除</a> </li>";
+    $('#'+returnid).html(str);
+}
+
+
+/*KindEditor('#a_insertimage').click(function() {
+    thumbUploader.loadPlugin('image', function() {
+        thumbUploader.plugin.imageDialog({
+            imageUrl : KindEditor('#thumb').val(),
+            clickFn : function(url, title, width, height, border, align) {
+                KindEditor('#thumb').val(url);
+                $('#thumb_preview').attr("src", url); 
+                thumbUploader.hideDialog();
+            }
+
+        });
+    });
+});*/
+
+$("#a_thumb_clear").click(function(){
+    $('#thumb').val('');
+    $('#thumb_preview').attr("src", '/Public/images/upload-pic.png'); 
+});
+
+//描述字数限制相关
+var charset = 'utf-8';
+function strlen_verify(obj, checklen, maxlen) {
+    var v = obj.value, charlen = 0, maxlen = !maxlen ? 200 : maxlen, curlen = maxlen, len = strlen(v);
+    for(var i = 0; i < v.length; i++) {
+        if(v.charCodeAt(i) < 0 || v.charCodeAt(i) > 255) {
+            curlen -= charset == 'utf-8' ? 2 : 1;
+        }
+    }
+    if(curlen >= len) {
+        $('#'+checklen).html(curlen - len);
+    } else {
+        obj.value = mb_cutstr(v, maxlen, true);
+    }
+}
+function strlen(str) {
+    return ($.browser.msie && str.indexOf('\n') != -1) ? str.replace(/\r?\n/g, '_').length : str.length;
+}
+function mb_cutstr(str, maxlen, dot) {
+    var len = 0;
+    var ret = '';
+    var dot = !dot ? '...' : '';
+    maxlen = maxlen - dot.length;
+    for(var i = 0; i < str.length; i++) {
+        len += str.charCodeAt(i) < 0 || str.charCodeAt(i) > 255 ? (charset == 'utf-8' ? 3 : 2) : 1;
+        if(len > maxlen) {
+            ret += dot;
+            break;
+        }
+        ret += str.substr(i, 1);
+    }
+    return ret;
+}
+</script>
+<style type="text/css">
+.col-right {
+    width: 204px;
+    overflow: hidden;
+    margin-left: 10px;
+    border-left: 1px solid #ecf1f5;
+    padding: 0 10px;
+}
+.upload-pic {
+    width: 180px;
+    height: 180px;
+    text-align: center;
+    overflow: hidden;
+}
+.upload-pic a {
+    display: table-cell;
+    vertical-align: middle;
+    width: 180px;
+    height: 145px;
+    text-align: center;
+}
+</style>
+<div class="bjui-pageContent">
+    <form action="<notempty name="id">{:U('Article/edit')}<else />{:U('Article/add')}</notempty>" id="j_custom_form" data-toggle="validate" data-alertmsg="false">
+        <notempty name="id"><input type="hidden" name="id" value="{$id}"></notempty>
+        <div class="pull-right col-right" style="">
+            <div class="col-1">
+                <div class="content pad-6">
+                    <foreach name="forminfos.senior" item="info">
+                        <h6><?php if($info['star']){ ?> <font color="red">*</font><?php } ?> <?php echo $info['name'];?></h6>
+                        <?php echo $info['form'];?><?php echo $info['tips'];?> 
+                    </foreach>
+                </div>
+            </div>
+        </div>
+        <div style="overflow: hidden;">
+            <table class="table table-condensed table-hover" width="100%">
+                <tbody>
+                    <foreach name="forminfos.base" item="info">
+                    <tr>
+                        <th><label class="control-label x85">{$info['name']}：</label></th>
+                        <td>
+                            {$info['form']} {$info['tips']}
+                        </td>
+                    </tr>
+                    </foreach>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+<div class="bjui-pageFooter">
+    <ul>
+        <li><button type="button" class="btn-close" data-icon="close">{:L('close')}</button></li>
+        <li><button type="submit" class="btn-default" data-icon="save">{:L('save')}</button></li>
+    </ul>
+</div>

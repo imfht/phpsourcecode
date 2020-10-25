@@ -1,0 +1,260 @@
+<extend name="CigoAdminLib@Common/pageContent"/>
+<block name="head-middle">
+    <script type="text/javascript" src="__CIGO_ADMIN__/cigoos/list.js"></script>
+</block>
+
+<block name="tool-bar-btns">
+    <a class="btn btn-primary addBtn">
+        <i class="fa fa-plus-square"></i>
+        添加数据
+    </a>
+</block>
+
+<block name="content">
+    <div class="input-group" style="width: 100%;min-width: 400px;">
+        <span class="input-group-addon">检索:</span>
+        <input class="form-control" placeholder="请输入检索词..." type="text" name="keyword" value="<<{$args['keyword']}>>"/>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false">
+                更多检索条件
+            </button>
+            <div id="searchPanel" class="dropdown-menu dropdown-menu-right" style="width: 680px;padding: 10px;">
+                <div class="panel panel-success" style="margin: 0px;">
+                    <div class="panel-heading">选择检索条件</div>
+                    <div class="panel-body">
+                        <div class="form-group pull-left">
+                            <div class="cigo-edit item-radio label_landscape"
+                                 cigo-edit-type="landscape"
+                                 cigo-edit-name="status"
+                                 cigo-edit-label="状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态"
+                                 cigo-edit-value="<<{$args['status']}>>"
+                                 cigo-edit-fun-value-changed="argsChange"
+                                 cigo-edit-data-radio-options='[{"id": "", "text": "所有"}, {"id":0, "text": "已禁用"}, {"id": 1, "text": "已启用"}]'
+                            ></div>
+                        </div>
+
+                        <div class="form-group pull-left" style="margin-left: 15px;">
+                            <div id="orderBy" class="cigo-edit item-select" cigo-edit-label="排序方式"
+                                 cigo-edit-name="orderBy"
+                                 cigo-edit-value="<<{$args['orderBy']}>>"
+                                 cigo-edit-data-select-options='[{"id": "id", "text": "编号"}, {"id": "create_time", "text": "创建时间"}]'
+                                 cigo-edit-fun-item-change="argsChange"
+                                 cigo-edit-select-width="150"></div>
+                        </div>
+
+                        <div class="form-group pull-left" style="clear: right;">
+                            <div id="order" class="cigo-edit item-select" cigo-edit-label=""
+                                 cigo-edit-name="order"
+                                 cigo-edit-value="<<{$args['order']}>>"
+                                 cigo-edit-select-no-search-for-result
+                                 cigo-edit-data-select-options='[{"id": "0", "text": "⬆️"}, {"id": "1", "text": "⬇️"}, ]'
+                                 cigo-edit-fun-item-change="argsChange"
+                                 cigo-edit-select-width="50"></div>
+                        </div>
+
+                        <div class="form-group pull-left">
+                            <div class="cigo-edit item-datetimepicker label_landscape" cigo-edit-label="创建日期"
+                                 cigo-edit-datetime-format="yyyy-mm-dd"
+                                 cigo-edit-class="form-control" cigo-edit-style="width: 260px;"
+                                 cigo-edit-name="startDate"
+                                 cigo-edit-value="<<{$args['startDate']}>>"
+                                 cigo-edit-change-date-func="argsChange"
+                                 cigo-edit-readonly="readonly" cigo-edit-datetime-minview="month"
+                                 cigo-edit-placeholder="请选择起始日期..."></div>
+                        </div>
+
+                        <div class="form-group pull-left">
+                            <div class="cigo-edit item-datetimepicker label_landscape" cigo-edit-label="~"
+                                 cigo-edit-datetime-format="yyyy-mm-dd"
+                                 cigo-edit-class="form-control" cigo-edit-style="width: 260px;"
+                                 cigo-edit-name="endDate"
+                                 cigo-edit-value="<<{$args['endDate']}>>"
+                                 cigo-edit-change-date-func="argsChange"
+                                 cigo-edit-readonly="readonly" cigo-edit-datetime-minview="month"
+                                 cigo-edit-placeholder="请选择结束日期..."></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            数据列表
+            <div class="show-page"></div>
+        </div>
+        <table id="data-list" class="cigo-data-list table table-striped table-hover" url="<<{:U('getDataList')}>>">
+            <tr>
+                <th width="5%">编号</th>
+                <th width="23%">标题</th>
+                <th width="10%">Label样式</th>
+                <th width="10%">创始日期</th>
+                <th width="10%">创建日期</th>
+                <th width="7%">排序</th>
+                <th width="35%">数据操作</th>
+            </tr>
+        </table>
+        <div class="panel-footer">
+            <div class="show-page"></div>
+        </div>
+    </div>
+</block>
+
+<block name="js-footer">
+    <script type="text/javascript">
+        function getStatusBtn(id, status) {
+            var btnCls = 'btn-default';
+            switch (status) {
+                case '0':
+                    btnCls = 'btn-warning';
+                    break;
+                case '1':
+                    btnCls = 'btn-success';
+                    break;
+                default:
+                    btnCls = 'btn-default';
+                    break;
+            }
+            return '' +
+                '<a class="btn ' + btnCls + ' ajax-get" style="min-width: 62px;text-align: center;" ' +
+                '   href=\'<<{:U("setStatus", false, false)}>>' +
+                Think.DEEP + 'id' + Think.DEEP + id + Think.DEEP + 'status' + Think.DEEP + Math.abs(1 - status) +
+                Think.DEEP + 'ctrlTip' + Think.DEEP + show_status_label(status, ['启用', '禁用']) + '\'>' +
+                '   ' + show_status_label(status, ['启 用', '已启用']) +
+                '</a>&nbsp;'
+        }
+
+        function createTr(dataListView, itemSubViewList, listKey, dataItem, level, hasSubFlag, hasSubCls) {
+            itemSubViewList.push(
+                '<tr class="list-item">' +
+                '   <td>' +
+                '       ' + dataItem['id'] +
+                '   </td>' +
+                '   <td>' +
+                '       <a href=\'<<{:U("edit", false, false)}>>' + Think.DEEP + 'id' + Think.DEEP + dataItem['id'] + '\' target="page_content">' +
+                '           <span>' + dataItem['title'] + '</span>' +
+                '       </a>' +
+                '   </td>' +
+                '   <td>' +
+                '       <span class="label ' + dataItem['label-class'] + '" title="' + dataItem['label-class'] + '">Label样式</span>' +
+                '   </td>' +
+                '   <td>' +
+                '       ' + dataItem['build-date'] +
+                '   </td>' +
+                '   <td>' +
+                '       ' + dataItem['create_time'] +
+                '   </td>' +
+                '   <td>' +
+                '       <input class="form-control cigo-edit quik-edit" cigo-edit-url=\'<<{:U("editValItem")}>>\' cigo-edit-val-item-key="sort" cigo-edit-val-item-val="' + dataItem['sort'] + '" cigo-edit-id="' + dataItem['id'] + '" type="text" value="' + dataItem['sort'] + '" />' +
+                '   </td>' +
+                '   <td>' +
+                '       ' + getStatusBtn(dataItem['id'], dataItem['status']) +
+                '       <a class="btn btn-info editbtn" href="#" data-id="' + dataItem['id'] + '">编辑</a>&nbsp;' +
+                '       <a class="btn btn-danger ajax-get confirm" href=\'<<{:U("setStatus", false, false)}>>' + Think.DEEP + 'id' + Think.DEEP + dataItem['id'] + Think.DEEP + 'status' + Think.DEEP + '-1' + Think.DEEP + 'ctrlTip' + Think.DEEP + '删除\' >删除</a>' +
+                '   </td>' +
+                '</tr>'
+            );
+        }
+
+        function initEvent() {
+            $('#searchPanel').click(function (e) {
+                e.stopPropagation();
+            });
+            $('input[name="keyword"]:first').keydown(function (event) {
+                if ((event.which || event.keyCode) === 13) {
+                    argsChange();
+                }
+            });
+            $('.addBtn').click(function () {
+                cigoLayer.open({
+                    title: ['演示添加', 'font-size: 16px;font-weight: bold;'],
+                    type: 2,
+                    area: ['75%', '450px'],
+                    fix: false,
+                    scrollbar: false,
+                    maxmin: true,
+                    shade: [0.5, '#ffffff'],
+                    shadeClose: false,
+                    skin: 'layui-layer-rim',
+                    content: "<<{:U('add', false, false)}>>",
+                    cancel: function (index, layero) {
+                        cigoLayer.close(index)
+                        return false;
+                    }
+                });
+                return false;
+            });
+            $('#data-list').on('click', '.editbtn', function () {
+                cigoLayer.open({
+                    title: ['演示编辑', 'font-size: 16px;font-weight: bold;'],
+                    type: 2,
+                    area: ['75%', '450px'],
+                    fix: false,
+                    scrollbar: false,
+                    maxmin: true,
+                    shade: [0.5, '#ffffff'],
+                    shadeClose: false,
+                    skin: 'layui-layer-rim',
+                    content: "<<{:U('edit', false, false)}>>" + Think.DEEP + 'id' + Think.DEEP + $(this).data('id'),
+                    cancel: function (index, layero) {
+                        cigoLayer.close(index)
+                        return false;
+                    }
+                });
+                return false;
+            });
+        }
+
+        function argsChange() {
+            if (pageInitFlag) {
+                doReqeustListData(false);
+            }
+        }
+
+        function refreshList() {
+            if (pageInitFlag) {
+                doReqeustListData(true);
+            }
+        }
+
+
+        function makeSearchArgs() {
+            var keyword = $('input[name="keyword"]:first').val();
+            var status = $('input[name="status"]:checked').val();
+            var startDate = $('input[name="startDate"]:first').val();
+            var endDate = $('input[name="endDate"]:first').val();
+            var orderBy = $('#orderBy select:first').select2('data');
+            orderBy = (orderBy.length > 0) ? orderBy[0].id : 'create_time';
+            var order = $('#order select:first').select2('data');
+            order = (order.length > 0) ? order[0].id : '1';
+
+            return {
+                'keyword': keyword,
+                'status': status,
+                'startDate': startDate,
+                'endDate': endDate,
+                'orderBy': orderBy,
+                'order': order
+            };
+        }
+
+        function doReqeustListData(refreshFlag) {
+            var dataList = $('#data-list');
+            refreshDataList(dataList, dataList.attr((refreshFlag ? 'url-curr' : 'url')), '', '.show-page', function () {
+                return makeSearchArgs();
+            }, createTr, !pageInitFlag);
+        }
+
+        var pageInitFlag = false;
+
+        $(function () {
+            initEvent();
+            doReqeustListData(false);
+            pageInitFlag = true;
+        });
+    </script>
+</block>

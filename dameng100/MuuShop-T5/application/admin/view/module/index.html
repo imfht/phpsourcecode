@@ -1,0 +1,109 @@
+{extend name="common/main"/}
+
+{block name="body"}
+    <div class="main-title">
+        <h2>{:lang("_MODULE_MANAGEMENT_")}</h2>
+    </div>
+
+    <div class="with-padding">
+
+        <div class="button-box tool-box clearfix">
+            <ul class="pull-left nav nav-primary nav-warning">
+                <li id="type_all"><a href="{:Url('Index',array('type'=>'all'))}">{:lang("_ALL_")}</a></li>
+                <li id="type_installed"><a href="{:Url('Index',array('type'=>'installed'))}">{:lang("_INSTALLED_")}</a></li>
+                <li id="type_uninstalled"><a href="{:Url('Index',array('type'=>'uninstalled'))}">{:lang("_NOT_INSTALLED_")}</a></li>
+                <li id="type_core"><a href="{:Url('Index',array('type'=>'core'))}">{:lang("_SYSTEM_MODULE_")}</a></li>
+                <script>
+                    $('#type_{$type}').addClass('active');
+                </script>
+            </ul>
+            <div class="pull-right">
+                <a href="{:Url('Module/Index',array_merge($_GET,array('refresh'=>2)))}" class="btn btn-success"><i
+                        class="icon-level-up"></i>{:lang("_CHECK_FOR_UPDATES_IMMEDIATELY_")}</a>
+             &nbsp;<a
+                    href="{:Url('Module/Index',array_merge($_GET,array('refresh'=>1)))}" class="btn btn-danger"><i class="icon-undo"></i>
+               {:lang("_RESET_ALL_MODULE_INFORMATION_IS_NOT_SYNCHRONIZED_TO_USE_")}</a>&nbsp;
+
+            </div>
+        </div>
+        <section class="module-list cards clearfix">
+            {volist name="modules" id="vo"}
+                <div class="col-lg-3 col-md-4">
+                    <div class="module-list-box">
+                        <div class="card">
+                            <div class="media-wrapper">
+                                <div class="cover-icon">
+                                    <img class="" src="{$vo.icon_photo}"/>
+                                </div>
+                            </div>
+                            <div class="content-wrapper-module">
+                                <div class="card-heading title">
+                                    <h3>{$vo.alias} <span class="text-muted">{$vo.name}</span></h3>
+                                </div>
+                                <div class="card-content text-muted">
+                                    <p class="text-muted text-ellipsis">{$vo.summary}</p>
+                                    <p class="text-muted text-ellipsis">{:lang("_DEVELOPER_")}{:lang('_COLON_')} <a style="color: #666">{$vo.developer}</a></p>
+                                </div>
+                                                  
+                                <div class="card-actions clearfix">
+                                        <a class="btn btn-default"
+                                           href="{:Url('edit?', array('name' => $vo['name']))}">{:lang("_EDIT_")}</a>
+
+
+                                        {notempty name="$vo['can_uninstall'] "}
+                                            {if condition="$vo['is_setup']"}
+                                                <a class="btn btn-danger"
+                                                   href="{:Url('uninstall', array('id' => $vo['id']))}">{:lang("_UNINSTALL_")}</a>
+                                            {else/}
+                                                <a class="btn btn-info"
+                                                   href="{:Url('install', array('name' => $vo['name']))}">{:lang("_INSTALL_")}</a>
+                                            {/if}
+                                        {/notempty}
+
+                                        {empty name="vo.update_list"}
+
+                                        {else/}
+                                            <a class="btn btn-success"
+                                               href="{:Url('Cloud/updateGoods',array('token'=>$vo['token']))}">{:lang("_TO_UPDATE_")}</a>
+                                        {/empty}
+                                </div>
+                                <div class="card-actions clearfix">
+                                    <div class="pull-left">
+                                        {empty name="vo.token"}
+                                            <span class="btn btn-xs btn-warning">{:lang("_LOCAL_MODULE_")}</span>
+                                        {else/}
+                                            <a target="_blank"
+                                               href="{:appstoreUrl('Appstore/Index/Info',array('token'=>$vo['token']))}"
+                                               class="btn btn-xs btn-info">{:lang("_GO_TO_THE_CLOUD_MARKET_VIEW_")}</a>
+                                        {/empty}
+                                    </div>
+                                    <div class="pull-right">
+                                        {empty name="vo.token"}
+                                            <span class="label label-info">{$vo.version}</span>
+                                        {else/}
+                                            <span class="label label-info">{$vo.version_info.title}</span>
+                                        {/empty}
+                                        {empty name="vo.update_list"}
+                                        
+                                        {else/}
+                                            <a style="text-decoration: none" href="javascript:void(0)" data-role="update_btn"
+                                               data-type="ajax"
+                                               data-url="{:Url('Cloud/getVersionList',array('token'=>$vo['token']))}"
+                                               data-toggle="modal" data-title={:lang("_A_NEW_VERSION_CAN_BE_UPDATED_WITH_DOUBLE_")}><span class=" label label-success ">{:lang("_THERE_IS_A_NEW_VERSION_")}{$vo.update_list.0.title}</span></a>
+                                                <script>$(function () {
+                                                    $('[data-role="update_btn"]').tooltip('show');
+                                                });
+                                                </script>
+                                        {/empty}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {/volist}
+        </section>
+    </div>
+
+{/block}
+

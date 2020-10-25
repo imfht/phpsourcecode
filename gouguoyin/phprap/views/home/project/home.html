@@ -1,0 +1,157 @@
+{{include_file name='home/public/header' title='项目主页'}}
+
+</head>
+
+<body>
+
+<div id="wrapper">
+
+    <!-- Navigation -->
+    {{include_file name='home/public/nav' sidebar='home/project/sidebar'}}
+    <div id="page-wrapper">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="page-header">
+                    <h1>项目主页 </h1>
+                    <div class="opt-btn">
+
+                        {{if $project->hasAuth(['project' => 'update'])}}
+                        <a href="javascript:void(0);" class="btn hidden-xs btn-sm btn-success" data-toggle="tooltip" data-placement="bottom" data-modal="#js_popModal" data-title="编辑项目" data-height="350" data-src="{{url('home/project/update', ['id' => $project->encode_id])}}"><i class="fa fa-fw fa-edit"></i>编辑</a>
+                        {{/if}}
+
+                        <a href="javascript:void(0);" class="btn hidden-xs btn-sm btn-info js_copyUrl" data-clipboard-text="{{$project->getUrl(true)}}"  data-toggle="tooltip" data-title="复制项目地址" data-placement="bottom"><i class="fa fa-fw fa-link"></i>复制</a>
+
+                        {{if $project->hasAuth(['project' => 'delete,export,transfer']) || $project->isJoiner()}}
+                        <div class="btn-group hidden-xs ml-1">
+                            <a href="javascript:void(0);" role="button" class="btn btn-default btn-sm dropdown-toggle ml-1" data-toggle="dropdown" data-original-title="" title="" aria-expanded="false">
+                                <i class="fa fa-th-large" aria-hidden="true"></i> 更多操作
+                                <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu">
+
+                                {{if $project->hasAuth(['project' => 'export'])}}
+                                <li>
+                                    <a href="{{url('export',['id' => $project->encode_id, 'format' => 'html'])}}" class="hidden-xs"><i class="fa fa-fw fa-html5"></i> 导出HTML</a>
+                                </li>
+                                <li>
+                                    <a href="{{url('export',['id' => $project->encode_id, 'format' => 'json'])}}" class="hidden-xs"><i class="fa fa-fw fa-file-code-o"></i> 导出JSON</a>
+                                </li>
+                                {{/if}}
+
+                                {{if $project->hasAuth(['project' => 'transfer'])}}
+                                <li>
+                                    <a href="javascript:;" class="hidden-xs" data-modal="#js_popModal" data-height="300" data-title="转让项目" data-src="{{url('transfer', ['id' => $project->encode_id])}}"><i class="fa fa-fw fa-sign-out"></i> 转让项目</a>
+                                </li>
+                                {{/if}}
+
+                                {{if $project->isJoiner()}}
+                                <li>
+                                    <a href="javascript:;" class="hidden-xs" data-modal="#js_popModal" data-height="270" data-title="退出项目" data-src="{{url('quit', ['id' => $project->encode_id])}}"><i class="fa fa-fw fa-sign-out"></i> 退出项目</a>
+                                </li>
+                                {{/if}}
+
+                                {{if $project->hasAuth(['project' => 'delete'])}}
+                                <li>
+                                    <a href="javascript:;" class="hidden-xs" data-modal="#js_popModal" data-height="290" data-title="删除项目" data-src="{{url('delete', ['id' => $project->encode_id])}}"><i class="fa fa-fw fa-trash-o"></i> 删除项目</a>
+                                </li>
+                                {{/if}}
+
+                            </ul>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+            <!-- /.col-lg-12 -->
+        </div>
+        <!-- /.row -->
+        <div class="row">
+
+            <div class="col-lg-12">
+
+                <div class="panel panel-default">
+
+                    {{include_file name='home/project/tab' tab='home'}}
+
+                    <div class="panel-body">
+                        <div class="row">
+
+                            <div class="col-lg-12">
+
+                                <!-- /.panel -->
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <i class="fa fa-bar-chart-o fa-fw"></i> 项目信息
+
+                                    </div>
+                                    <!-- /.panel-heading -->
+                                    <div class="panel-body">
+                                        <div class="row">
+                                            <div class="col-lg-7">
+                                                <p class="text-muted"><label>项目名称：</label>{{$project->title}}</p>
+                                                <p class="text-muted"><label>项目创建人：</label>{{$project->creater->fullName}}</p>
+                                                <p class="text-muted"><label>项目类型：</label>{{$project->typeLabel}}</p>
+                                                <p class="text-muted"><label>创建时间：</label>{{$project->created_at}}</p>
+                                                <p class="text-muted"><label>更新时间：</label>{{$project->updated_at}}</p>
+                                                <p class="text-muted"><label>项目描述：</label><span style="word-break:break-all">{{$project->remark}}</span></p>
+                                            </div>
+                                            <!-- /.col-lg-4 (nested) -->
+                                            <div class="col-lg-5">
+                                                <div id="project-statistics" style="height:290px;margin: -50px -30px -35px 0"></div>
+                                            </div>
+                                            <!-- /.col-lg-8 (nested) -->
+                                        </div>
+                                        <!-- /.row -->
+                                    </div>
+                                    <!-- /.panel-body -->
+                                </div>
+                                <!-- /.panel -->
+
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+            </div>
+            <!-- /.col-lg-12 -->
+        </div>
+
+        <!-- /.row -->
+
+    </div>
+    <!-- /#page-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+{{include_file name='home/public/copyright'}}
+
+<script src="{{STATIC_URL}}/plugins/bootstrap/js/clipboard.min.js"></script>
+
+<script>
+
+    $(function () {
+        // 复制链接
+        var clipboard = new Clipboard('.js_copyUrl');
+        clipboard.on('success', function(e) {
+            alert('地址复制成功', 'success');
+            e.clearSelection();
+        });
+        clipboard.on('error', function() {
+            alert('地址复制失败，请手动复制', 'error');
+        });
+
+        // 未设置环境弹框提示
+        {{if $project->getEnvs()->count() == 0}}
+        confirm('项目至少需要设置一个环境，请立即设置', function(){
+            window.location.href = "{{url('project/show', ['id' => $project->encode_id, 'tab' => 'env'])}}";
+        });
+        {{/if}}
+    });
+
+</script>
+
+{{include_file name='home/public/footer'}}

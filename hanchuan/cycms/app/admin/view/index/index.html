@@ -1,0 +1,116 @@
+{extend name="common:base" /}
+{block name="content"}
+<div class="row">
+<div id="accordion" class="accordion-style1 panel-group col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                            <i class="ace-icon fa fa-angle-down bigger-110" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                            &nbsp;官方消息
+                        </a>
+                    </h4>
+                </div>
+
+                <div class="panel-collapse collapse in" id="collapseOne">
+                    <div id="officialnews" class="panel-body">
+                        <ul>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+</div>
+<div id="accordion-sysinfo" class="accordion-style1 panel-group col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-sysinfo" href="#sysinfo">
+                            <i class="ace-icon fa fa-angle-down bigger-110" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                            &nbsp;站点信息
+                        </a>
+                    </h4>
+                </div>
+
+                <div class="panel-collapse collapse in" id="sysinfo">
+                    <div class="panel-body">
+                        <p>PHP版本：{$Think.PHP_VERSION}，MySQL版本：{$mysql}</p>
+                        <p>服务器：<?php echo php_uname('s');?></p>
+                        <p>PHP运行方式：<?php echo php_sapi_name();?></p>
+                        <p>服务器IP：<?php echo GetHostByName($_SERVER['SERVER_NAME']);?></p>
+                        <p>框架版本：{:App()->version()}&nbsp;&nbsp;</p>
+
+                    </div>
+                </div>
+            </div>
+</div>
+</div>
+<div class="row">
+<table class="table table-bordered table-hover">
+<thead>
+    <tr>
+        <th class="center">#</th>
+        <th class="">用户</th>
+        <th class="">时间</th>
+        <th class="hidden-sm hidden-xs">IP</th>
+        <th>日志内容</th>
+    </tr>
+</thead>
+<tbody>
+{volist name="list" id="val"}
+    <tr>
+        <td>{$val.id}</td>
+        <td>{$val.username}</td>
+        <td>{$val.t|date="Y-m-d H:i:s"}</td>
+        <td class="hidden-sm hidden-xs">{$val.ip}</td>
+        <td>
+        <div class="hidden-sm hidden-xs">{$val.log}</div>
+        <div class="hidden-md hidden-lg">
+            <div class="inline pos-rel">
+                <div class="action-buttons">
+                        <a href="javascript:;" class="green bigger-140 show-details-btn" title="Show Details">
+                            <i class="ace-icon fa fa-angle-double-down"></i>
+                            <span class="sr-only">Details</span>
+                        </a>
+                    </div>
+            </div>
+        </div>
+        </td>
+    </tr>
+    <tr class="detail-row">
+        <td colspan="4">{$val.log}</td>
+    </tr>
+{/volist}
+</tbody>
+</table>
+</div>
+<div class="row">
+{$list->render()|raw}
+</div>
+{/block}
+{block name="javascript"}
+<script type="text/javascript">
+$(function(){
+    $("#officialnews ul").html('<div class="ace-icon fa fa-spinner fa-spin orange"></div>');
+    $.ajax({
+        type: 'GET',
+        url: 'http://www.mychunyan.com/news/?callback=?',
+        success :function(data){
+            $("#officialnews ul").html("");
+            $.each(data.news, function(i,news){
+                $("#officialnews ul").append("<li>"+news.pre+"<a href=\""+news.url+"\" title=\""+news.title+"\" target=\"_blank\">"+news.title+"</a>"+news.time+"</li>");
+            });
+        },
+        error: function(){
+            $("#officialnews ul").html("服务器不可用，请稍后再试！");
+        },
+        dataType: 'json'
+    });
+    $('.show-details-btn').on('click', function(e) {
+        e.preventDefault();
+        $(this).closest('tr').next().toggleClass('open');
+        $(this).find(ace.vars['.icon']).toggleClass('fa-angle-double-down').toggleClass('fa-angle-double-up');
+    });
+
+})
+</script>
+{/block}

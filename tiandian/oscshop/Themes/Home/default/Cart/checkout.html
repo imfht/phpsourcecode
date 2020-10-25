@@ -1,0 +1,485 @@
+<extend name="Public:base" />
+<block name="content">
+<link href="__CSS__/checkout.css" rel="stylesheet" type="text/css">  
+<div id="checkout-box" class="container">
+<div class="container">
+	<div class="row">
+		<div class="col-sm-12">
+			<h1>商品结算</h1>
+		</div>
+		<div id="content" class="col-md-12 col-sm-12 col-xs-12">
+		  <div class="checkout">
+		    <div id="checkout">
+		      <div class="checkout-heading"><span>步骤1：结算选项</span></div>
+		      <div class="checkout-content row"></div>
+		    </div>
+		    <?php if(!is_login()){ ?>
+		    <div id="account">
+		      <div class="checkout-heading"><span>步骤2： 账户 &amp; 详细</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		    
+		     
+		     <?php }else{ ?>
+		    <div id="account">
+		      <div class="checkout-heading"><span>步骤2： 账户 &amp; 详细</span></div>
+		      <div class="checkout-content"></div>
+		    </div>    
+		    <?php } ?>
+		    
+		    <?php if ($shipping_required) { ?>
+		    <div id="shipping-address">
+		      <div class="checkout-heading"><span>步骤3：收货地址</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		    <div id="shipping-method">
+		      <div class="checkout-heading"><span>步骤4：货运方式</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		    <?php } ?>
+		    <div id="payment-method">
+		      <div class="checkout-heading"><span>步骤5：支付方式</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		    <div id="confirm">
+		      <div class="checkout-heading"><span>步骤6：完成订单</span></div>
+		      <div class="checkout-content"></div>
+		    </div>
+		  </div>		
+		</div>
+		</div>
+	</div>
+	</div>
+</block>
+<block name="foot_script">
+<script>
+//登录选项
+<?php if (!is_login()) { ?> 
+//未登录
+$(document).ready(function() {
+	
+		$.ajax({
+			url: '{:U("/c_login")}',
+			dataType: 'html',
+			success: function(html) {
+			//	alert(html);
+				$('#checkout .checkout-content').html(html);
+					
+				$('#checkout .checkout-content').slideDown('slow');
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+				alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			}
+		});	
+
+});		
+<?php } else { ?>
+//已经登录
+$(document).ready(function() {	
+		$.ajax({
+			url: '{:U("/shipping_address")}',
+			dataType: 'html',
+			success: function(html) {
+				$('#shipping-address .checkout-content').html(html);
+				
+			//	$('#payment-address .checkout-content').slideUp('slow');
+				
+				$('#shipping-address .checkout-content').slideDown('slow');
+				
+				$('#checkout .checkout-heading a').remove();
+			//$('#payment-address .checkout-heading a').remove();
+				$('#shipping-address .checkout-heading a').remove();
+				$('#shipping-method .checkout-heading a').remove();
+				$('#payment-method .checkout-heading a').remove();							
+
+			//$('#payment-address .checkout-heading').append('<a>修改</a>');	
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+				alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			}
+		});		
+});
+<?php } ?>	
+//div下滑效果
+$('.checkout-heading a').live('click', function() {
+	$('.checkout-content').slideUp('slow');
+	
+	$(this).parent().parent().find('.checkout-content').slideDown('slow');
+});
+//结算选择
+$('#button-account').live('click', function() {
+	
+	$.ajax({
+		url: "<?php echo U('/c_user','',''); ?>"+'/' + $('input[name=\'account\']:checked').attr('value'),
+		dataType: 'html',
+		beforeSend: function() {
+			$('#button-account').attr('disabled', true);
+			$('#button-account').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},		
+		complete: function() {
+			$('#button-account').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(html) {
+			$('.warning, .error').remove();
+			
+			$('#account .checkout-content').html(html);
+				
+			$('#checkout .checkout-content').slideUp('slow');
+				
+			$('#account .checkout-content').slideDown('slow');
+				
+			$('.checkout-heading a').remove();
+				
+			$('#checkout .checkout-heading').append('<a>更新 &raquo;</a>');
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});
+});
+
+// 登录
+$('#button-login').live('click', function() {
+	$.ajax({
+		url: '{:U("/validate_login")}',
+		type: 'post',
+		data: $('#checkout #login :input'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-login').attr('disabled', true);
+			$('#button-login').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-login').attr('disabled', false);
+			$('.wait').remove();
+		},				
+		success: function(json) {
+			$('.warning, .error').remove();
+			
+			if (json['redirect']) {
+				location = json['redirect'];
+			} else if (json['error']) {
+				$('#checkout .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '</div>');
+				
+				$('.warning').fadeIn('slow');
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+
+
+//注册
+$('#button-register').live('click', function() {
+	$.ajax({
+		url: '{:U("/c_register")}',
+		type: 'post',
+		data: $('#account input[type=\'text\'], #account input[type=\'password\'], #account input[type=\'checkbox\']:checked, #account input[type=\'radio\']:checked, #account input[type=\'hidden\'], #account select'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-register').attr('disabled', true);
+			$('#button-register').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-register').attr('disabled', false); 
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+						
+			if (json['redirect']) {
+				location = json['redirect'];				
+			} else if (json['error']) {
+				if (json['error']['warning']) {
+					$('#account .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '<img src="__IMG__/close.png" alt="" class="close" /></div>');
+					
+					$('.warning').fadeIn('slow');
+				}
+				
+				if (json['error']['uname']) {
+					$('#account input[name=\'uname\'] + br').after('<span class="error">' + json['error']['uname'] + '</span>');
+				}
+				if (json['error']['name']) {
+					$('#account input[name=\'name\'] + br').after('<span class="error">' + json['error']['name'] + '</span>');
+				}				
+				if (json['error']['email']) {
+					$('#account input[name=\'email\'] + br').after('<span class="error">' + json['error']['email'] + '</span>');
+				}
+				
+				if (json['error']['telephone']) {
+					$('#account input[name=\'telephone\'] + br').after('<span class="error">' + json['error']['telephone'] + '</span>');
+				}				
+																		
+				if (json['error']['address']) {
+					$('#account input[name=\'address\'] + br').after('<span class="error">' + json['error']['address'] + '</span>');
+				}	
+				
+			
+				if (json['error']['area']) {
+					$('#area + br').after('<span class="error">' + json['error']['area'] + '</span>');
+				}
+		
+				
+				if (json['error']['password']) {
+					$('#account input[name=\'password\'] + br').after('<span class="error">' + json['error']['password'] + '</span>');
+				}	
+				
+				if (json['error']['confirm']) {
+					$('#account input[name=\'confirm\'] + br').after('<span class="error">' + json['error']['confirm'] + '</span>');
+				}																																	
+			} else {
+				//需要送货的商品
+				<?php if ($shipping_required) { ?>				
+				//送货地址
+					$.ajax({
+						url: '{:U("/shipping_address")}',
+						dataType: 'html',
+						success: function(html) {
+							$('#shipping-address .checkout-content').html(html);
+							
+							$('#account .checkout-content').slideUp('slow');
+							
+							$('#shipping-address .checkout-content').slideDown('slow');
+							
+							$('#checkout .checkout-heading a').remove();
+							$('#account .checkout-heading a').remove();
+							$('#shipping-address .checkout-heading a').remove();
+							$('#shipping-method .checkout-heading a').remove();
+							$('#payment-method .checkout-heading a').remove();							
+
+						//$('#payment-address .checkout-heading').append('<a>修改</a>');	
+						},
+						error: function(xhr, ajaxOptions, thrownError) {
+							alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+						}
+					});			
+				
+				//不需要送货的商品
+				<?php } else { ?>
+				$.ajax({
+					url: "{:U('/payment_method')}",
+					dataType: 'html',
+					success: function(html) {
+						$('#payment-method .checkout-content').html(html);
+						
+						$('#account .checkout-content').slideUp('slow');
+						
+						$('#payment-method .checkout-content').slideDown('slow');
+						
+						$('#checkout .checkout-heading a').remove();
+						$('#account .checkout-heading a').remove();
+						$('#payment-method .checkout-heading a').remove();								
+						
+						$('#account .checkout-heading').append('<a>修改</a>');	
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});					
+				<?php } ?>
+
+			}	 
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+//收货地址
+$('#button-shipping-address').live('click', function() {
+	$.ajax({
+		url: '{:U("/validate_shipping_address")}',
+		type: 'post',
+		data: $('#shipping-address input[type=\'text\'],#shipping-address input[type=\'hidden\'], #shipping-address input[type=\'password\'], #shipping-address input[type=\'checkbox\']:checked, #shipping-address input[type=\'radio\']:checked, #shipping-address select'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-shipping-address').attr('disabled', true);
+			$('#button-shipping-address').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-shipping-address').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+		//	alert('444');
+			if (json['redirect']) {
+			//	alert('333');
+				location = json['redirect'];
+			} else if (json['error']) {
+			//	alert('222');
+				if (json['error']['warning']) {
+					$('#shipping-address .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '<img src="__IMG__/close.png" alt="" class="close" /></div>');
+					
+					$('.warning').fadeIn('slow');
+				}
+								
+				if (json['error']['name']) {
+					$('#shipping-address input[name=\'name\']').after('<span class="error">' + json['error']['name'] + '</span>');
+				}				
+				
+				if (json['error']['telephone']) {
+					$('#shipping-address input[name=\'telephone\']').after('<span class="error">' + json['error']['telephone'] + '</span>');
+				}		
+										
+				if (json['error']['address']) {
+					$('#shipping-address input[name=\'address\']').after('<span class="error">' + json['error']['address'] + '</span>');
+				}	
+				
+				if (json['error']['area']) {
+					$('#shipping-address #area').after('<span class="error">' + json['error']['area'] + '</span>');
+				}	
+				
+			
+				
+			} else {
+			//	alert('111');
+				$.ajax({
+					url: '{:U("/shipping_method")}',
+					dataType: 'html',
+					success: function(html) {
+						$('#shipping-method .checkout-content').html(html);
+						
+						$('#shipping-address .checkout-content').slideUp('slow');
+						
+						$('#shipping-method .checkout-content').slideDown('slow');
+						
+						$('#shipping-address .checkout-heading a').remove();
+						$('#shipping-method .checkout-heading a').remove();
+						$('#payment-method .checkout-heading a').remove();
+						
+						$('#shipping-address .checkout-heading').append('<a>修改</a>');							
+						
+						$.ajax({
+							url: '{:U("/shipping_address")}',
+							dataType: 'html',
+							success: function(html) {
+								$('#shipping-address .checkout-content').html(html);
+							},
+							error: function(xhr, ajaxOptions, thrownError) {
+								alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+							}
+						});
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});	
+					
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+//货运方式
+$('#button-shipping-method').live('click', function() {
+	$.ajax({
+		url: '{:U("/validate_shipping_method")}',
+		type: 'post',
+		data: $('#shipping-method input[type=\'radio\']:checked, #shipping-method textarea'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-shipping-method').attr('disabled', true);
+			$('#button-shipping-method').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-shipping-method').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+			
+			if (json['redirect']) {
+				location = json['redirect'];
+			} else if (json['error']) {
+				if (json['error']['warning']) {
+					$('#shipping-method .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '<img src="__IMG__/close.png" alt="" class="close" /></div>');
+					
+					$('.warning').fadeIn('slow');
+				}			
+			} else {
+				$.ajax({
+					url: '{:U("/payment_method")}',
+					dataType: 'html',
+					success: function(html) {
+						$('#payment-method .checkout-content').html(html);
+						
+						$('#shipping-method .checkout-content').slideUp('slow');
+						
+						$('#payment-method .checkout-content').slideDown('slow');
+
+						$('#shipping-method .checkout-heading a').remove();
+						$('#payment-method .checkout-heading a').remove();
+						
+						$('#shipping-method .checkout-heading').append('<a>修改</a>');	
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});					
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+//支付方式
+$('#button-payment-method').live('click', function() {
+	$.ajax({
+		url: '{:U("/validate_payment_method")}', 
+		type: 'post',
+		data: $('#payment-method input[type=\'radio\']:checked, #payment-method input[type=\'checkbox\']:checked'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-payment-method').attr('disabled', true);
+			$('#button-payment-method').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#button-payment-method').attr('disabled', false);
+			$('.wait').remove();
+		},			
+		success: function(json) {
+			$('.warning, .error').remove();
+			
+			if (json['redirect']) {
+				location = json['redirect'];
+			} else if (json['error']) {
+				if (json['error']['warning']) {
+					$('#payment-method .checkout-content').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '<img src="__IMG__/close.png" alt="" class="close" /></div>');
+					
+					$('.warning').fadeIn('slow');
+				}			
+			} else {
+				$.ajax({
+					url: '{:U("/confirm")}',
+					dataType: 'html',
+					success: function(html) {
+						$('#confirm .checkout-content').html(html);
+						
+						$('#payment-method .checkout-content').slideUp('slow');
+						
+						$('#confirm .checkout-content').slideDown('slow');
+						
+						$('#payment-method .checkout-heading a').remove();
+						
+						$('#payment-method .checkout-heading').append('<a>修改</a>');	
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});	
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+</script>
+</block>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF8">
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>{$page_title}_用户登录</title>
+    <meta name="description" content="{$keywords}_用户登录">
+    <meta name="keywords" content="{$description}_用户登录">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" href="/animated_favicon.gif" type="image/gif">
+    <link href="/themes/new/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="/themes/new/css/head_foot.css" rel="stylesheet" type="text/css">
+    <script src="/themes/new/js/jquery-1.11.3.js"></script>
+    <script src="/themes/new/js/bootstrap.min.js"></script>
+    <style>
+        *{
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+            box-sizing: content-box;
+        }
+    </style>
+</head>
+<body class="page-index">
+<!-- 头部start-->
+<style>
+    .wrap{width: 1210px;overflow: hidden;margin: 0 auto;}
+    .logo-text{font-size: 14px;color: #666;float: right;margin-top: 86px;}
+    .logo {padding: 30px 0px;}
+    .logo a img{height: 77px;}
+    .forpwd a{color:#555;text-decoration: none; }
+    .forpwd a:hover{color: #0089FD;}
+    .not{
+        width:300px;border-radius: 2px;-webkit-border-radius: 2px;
+    }
+    .jiakuang{border: 1px solid #ddd;box-shadow: 0px 0px  10px #aaa;padding:10px;}
+    #div_geetest_lib{width:300px;margin: 30px auto;}
+    .bg-img{background: url("/themes/new/images/banner4.jpg") center center no-repeat;}
+    #submit_button{ cursor: pointer;height:48px;line-height: 48px; width: 288px;border: 1px solid #FFFFF0;
+        background-color: #0089FD; border-radius: 4px;font-size: 20px;color: #FFFFF0;}
+    .glyphicon{left: 14px;top: 35px;font-size: 14px;}
+</style>
+
+<div class="">
+    <div class=" wrap">
+        <div class="logo">
+            <a hidefocus="true" href="/" title="{$config.shop_name}">
+                <img alt="{$config.shop_name}" src="/{$config.shop_logo}">
+            </a>
+        </div>
+        <div class="logo-text">欢迎来到{$config.shop_name}！&nbsp;</div>
+    </div>
+    <div class="bg-img">
+        <div class="wrap clearfix" style="padding: 125px 0px;">
+
+            <form method="post" action="/public/login" onsubmit="return false" class="jiakuang" style="width: 300px;padding: 40px 30px;float: right;background-color: white;">
+                <h2 style="font-weight:bold;font-family: '微软雅黑';padding-bottom: 30px;">用户登录</h2>
+                <div class="box not" id="notice" style="display: none">
+                    <div class="alert alert-danger notice_msg" role="alert"></div>
+                </div>
+                <div class=" box" style="width:300px;border-radius: 2px;-webkit-border-radius: 2px;margin-bottom: 30px;">
+                    <span class="glyphicon glyphicon-user"></span>
+                    <input type="text" class="form-control pname" name="name" placeholder="用户名/手机号" style="width: 237px;padding-left: 50px;" value="{$nickname}">
+                </div>
+                <div class=" box" style="width:300px;border-radius: 2px;-webkit-border-radius: 2px;margin-bottom: 30px;">
+                    <span class="glyphicon glyphicon-lock"></span>
+                    <input type="password" class="form-control password" name="password" placeholder="密码" style="width: 237px;padding-left: 50px;">
+                </div>
+
+                <div class="box" id="div_geetest_lib">
+                    <div id="captcha" style="display: none"></div>
+                    <script src="http://static.geetest.com/static/tools/gt.js"></script>
+                    <script>
+                        var check_code={$check_code};
+                        if(check_code==1){
+                            $('#captcha').removeAttr('style');
+                        }
+                        var handler = function (captchaObj) {
+                            // 将验证码加到id为captcha的元素里
+                            captchaObj.appendTo("#captcha");
+                        };
+                        $.ajax({
+                            // 获取id，challenge，success（是否启用failback）
+                            url: "/user.html?a=code&rand="+Math.round(Math.random()*100),
+                            type: "get",
+                            dataType: "json", // 使用jsonp格式
+                            success: function (data) {
+                                // 使用initGeetest接口
+                                // 参数1：配置参数，与创建Geetest实例时接受的参数一致
+                                // 参数2：回调，回调的第一个参数验证码对象，之后可以使用它做appendTo之类的事件
+                                　$('.change').val(data.challenge);
+                                initGeetest({
+                                    gt: data.gt,
+                                    challenge: data.challenge,
+                                    product: "float", // 产品形式
+                                    offline: !data.success
+                                }, handler);
+                            }
+                        });
+                        $(function(){
+                            $("#submit_button").click(function(){
+                                $('.notice_msg').html('');
+                                $('#notice').attr('style','display:none');
+                                var name=$('.pname').val();
+                                var password=$('.password').val();
+                                var change= $('.geetest_challenge').val();
+                                var validate= $('.geetest_validate').val();
+                                var seccode= $('.geetest_seccode').val();
+                                //$('#captcha').removeAttr('style');
+                                var type=$("#captcha").attr("style");
+                                if(typeof(type)==="undefined"){
+                                    if(!change||!validate||!seccode){
+                                        $('.notice_msg').html('请完成验证码');
+                                        $('#notice').removeAttr('style');
+                                        return;
+                                    }
+                                }
+
+                                if(!name&&!password){
+                                    $('.notice_msg').html('请填写完整登陆信息');
+                                    $('#notice').removeAttr('style');
+                                    return;
+                                }
+                                $.post('/user.html',{'name':name,'password':password,'change':change,'validate':validate,'seccode':seccode},function(data){
+                                         var redirect='{$redirect}';
+                                         if(data.code==1){
+                                             window.location.href=$(".redirect").val();
+                                         }else if(data.code==2){
+                                             $("#captcha").removeAttr("style");
+                                         }else{
+                                             $('.notice_msg').html(data.msg);
+                                             $('#notice').removeAttr('style');
+                                             return;
+                                         }
+                                });
+                            })
+                        })
+
+                    </script>
+                </div>
+
+                <div class="box"  style="width:300px;margin-bottom: 30px;">
+                    <button id="submit_button">确定</button>
+                    <input type="hidden" value="{$redirect}" class="redirect">
+                    <input type="hidden" value="" class="change">
+                    <input type="hidden" value="" class="validate">
+                    <input type="hidden" value="" class="seccode">
+                </div>
+                <div class="box forpwd"> <span><label style="font-weight: normal;color: #666;"><input name="save" type="checkbox" value="" checked="checked"  style="float: left;margin-top: 3px;"/> <span>&nbsp;&nbsp;&nbsp;自动登录</span> </label> </span> <span style="float: right;font-size: 14px;"><a href="http://new.toodudu.com/public/getpwd">忘记密码</a>&nbsp;<span style="color:#999;">|</span>&nbsp;<a href="http://new.toodudu.com/public/register" >免费注册</a></span></div>
+            </form>
+        </div>
+    </div>
+</div>
+{include file="/common/footer_min.html"}

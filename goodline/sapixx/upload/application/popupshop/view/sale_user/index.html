@@ -1,0 +1,105 @@
+<div class="titlebar">
+    <div class="fn-left"><i class="iconfont icon-text_icon"></i>客户商品</div>
+    <div class="fn-right">
+        <form class="input-group" id="form" action="{:url('sale_user/index')}">
+            <input placeholder="开始时间" class="input w100 ui-date" type="text" name="starttime" readonly autocomplete="false" value="{$starttime}"/>
+            <input placeholder="结束时间" class="input w100 ui-date" type="text" name="endtime" readonly autocomplete="false" value="{$endtime}"/>
+            <input id="uid" url="{:url('system/passport.user/selectUser')}" placeholder="用户ID" class="input w100 selectID" type="text" name="uid" value="{$uid}" />
+            <input type="submit" value="搜索" class="button button-blue" />
+        </form>
+    </div>
+    <div class="fn-right button-group">
+        <a href="{:url('sale_user/index',['time' => 1])}" class="button {$time==1?'button-violet':''}">今日</a>
+        <a href="{:url('sale_user/index',['time' => 2])}" class="button {$time==2?'button-violet':''}">昨日</a>
+        <a href="{:url('sale_user/index',['time' => 30])}" class="button {$time==30?'button-violet':''}">本月</a>
+        <a href="{:url('sale_user/index',['time' => 60])}" class="button {$time==60?'button-violet':''}">上月</a>
+    </div>
+
+</div>
+<div class="cards">
+    <div class="card green">
+        <div class="fn-left"><i class="iconfont icon-my_icon"></i></div>
+        <div class="fn-right fn-tar"><div class="num">{$count}</div><div class="text">总数量</div></div>
+    </div>
+    <div class="card yellow">
+        <div class="fn-left"><i class="iconfont icon-renminbi1688"></i></div>
+        <div class="fn-right fn-tar"><div class="num">{$money|money}</div><div class="text">总金额</div></div>
+    </div>
+</div>
+<table class="table table-border">
+    <thead>
+        <tr>
+            <th class="fn-tac w80">所属用户</th>
+            <th class="w200"></th>
+            <th class="fn-tac w80">商品名称</th>
+            <th></th>
+            <th class="w80 fn-tac">状态</th>
+            <th class="w100 fn-tar">成本价</th>
+            <th class="w100 fn-tar">销售价</th>
+            <th class="w140">更新时间</th>
+            <th class="fn-tac w90">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {foreach $lists as $vo}
+        <tr>
+            <td class="fn-tac"><img src="{$vo.user.face}?x-oss-process=style/80" class="w60" /></td>
+            <td><a class="selectID" href="javascript:;" url="{:url('system/passport.user/review',['uid' => $vo.user_id])}" title="预览">{$vo.user.nickname}</a></td>
+            <td class="fn-tac"><img src="{$vo.house.img}?x-oss-process=style/80" class="w60" /></td>
+            <td>
+                <span class="fn-fb">【{$vo.house.category.title}】</span>
+                <a href="{:url('popupshop/saleHouse/edit',['id' => $vo.house_id])}">{$vo.house.name}</a><br />
+                <span class="gray">{$vo.house.note}</span>
+            </td>
+            <td class="fn-tac">
+                {if $vo.is_out}
+                    <spam class="badge">退出</spam>
+                {else}
+                    {if $vo.is_sale}
+                        <spam class="badge bg-green">上架</spam>
+                    {else}
+                        <spam class="badge">下架</spam>
+                    {/if}
+                {/if}
+            </td>
+            <td class="fn-tar"><span class="red">￥{$vo.user_price}</span></td>
+            <td class="fn-tar">
+                {if $vo.is_out}
+                    ￥0.0
+                {else}
+                    {if $vo.is_rebate == 1}
+                        <span class="red">￥{$vo.rebate}</span>
+                    {else}
+                        <spam class="badge bg-blue">未成交</spam>
+                    {/if}
+                {/if}
+            </td>
+            <td>{$vo.update_time|date='Y-m-d H:i'}</td>
+            <td class="fn-tac">
+                <a class="button isDel" url="{:url('popupshop/saleUser/delete',['id'=>$vo.id])}" href="javascript:;" title="删除"><i class="iconfont icon-lajixiang"></i>删除</a>
+            </td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+{$lists|raw}
+<script type="text/javascript">
+Do('base', 'layer','form','tip','date',  function () {
+    $('#form').isForm({types:1});
+    $(".isDel").click(function () {
+        var index = parent.layer.getFrameIndex(window.name);
+        var url =  $(this).attr('url');
+        parent.layer.confirm('删除后不发货,用户已商家的活动套装也同步删除。确定要删除？',{icon:3},function(index){
+            $.post(url,function(rel) {
+                if(rel.code == 200){
+                    window.location.reload()
+                }else{
+                    parent.layer.alert(rel.msg);
+                }
+            },"json");
+            parent.layer.close(index);
+        });
+    })
+    $(".selectID").win();
+})
+</script>

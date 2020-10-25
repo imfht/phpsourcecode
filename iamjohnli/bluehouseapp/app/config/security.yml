@@ -1,0 +1,62 @@
+# app/config/security.yml
+security:
+    encoders:
+        FOS\UserBundle\Model\UserInterface: sha512
+
+    role_hierarchy:
+        ROLE_MANAGER:     ROLE_USER
+        ROLE_ADMIN:       [ROLE_USER,ROLE_MANAGER]
+
+
+    providers:
+        fos_userbundle:
+            id: fos_user.user_provider.username
+
+    firewalls:
+        oauth_token:
+              pattern:    ^/oauth/v2/token
+              security:   false
+        oauth_authorize:
+              pattern:    ^/oauth/v2/auth
+              form_login:
+                     provider: fos_userbundle
+                     check_path: /oauth/v2/auth_login_check
+                     login_path: /oauth/v2/auth_login
+              anonymous:  true
+        api:
+              pattern:    ^/api
+              fos_oauth:  true
+              stateless:  true
+              anonymous:  true
+        main:
+            pattern: ^/
+            form_login:
+                provider: fos_userbundle
+                csrf_provider: form.csrf_provider
+                default_target_path: /web/post
+                always_use_default_target_path: true
+                login_path: /login
+                check_path: /login_check
+                failure_path: /login
+                use_forward:  false
+                use_referer: true
+            remember_me:
+                key: %secret%
+                name: APP_REMEMBER_ME
+                lifetime: 31536000
+                always_remember_me: true
+                remember_me_parameter: _remember_me
+            logout:       true
+            anonymous:    true
+
+    access_control:
+        - { path: ^/login$,                      role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/register,                    role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/resetting,                   role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/web/manager,                     role: ROLE_MANAGER }
+        - { path: ^/web/admin,                       role: ROLE_ADMIN }
+        - { path: ^/web/member,                      role: ROLE_USER }
+        - { path: ^/,                            role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/oauth/v2/auth_login,         roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/oauth/v2/auth,               roles: ROLE_USER }
+

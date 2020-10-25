@@ -1,0 +1,60 @@
+{include file='common/header' /}
+<div class="col-md-12">
+    <h3>
+        <span>操作日志</span>
+    </h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-ebcms">
+            <tbody>
+                <tr>
+                    <th style="width:70px;">id</th>
+                    <th style="width:90px;">操作</th>
+                    <th>用户</th>
+                    <th>说明</th>
+                    <th>时间</th>
+                    <th>地址</th>
+                    <th>IP</th>
+                </tr>
+                {php}
+                    $where = [];
+                    $data = \app\ebcms\model\Oplog::with('manager') -> where($where) -> order('id desc') -> paginate(10,false,['query'=>input('get.')]);
+                {/php}
+                {foreach name='data' item='vo'}
+                    <tr>
+                        <td>
+                            <label>
+                                <input type="checkbox" class="ebcms-id" name="id" value="{$vo.id}">
+                                {$vo.id}
+                            </label>
+                        </td>
+                        <td>
+                            {if condition="check_auth('delete')"}
+                                <button type="button" class="btn btn-primary btn-sm ebcms-do" url="{:url('delete')}" data-ids='{$vo.id}' confirm="删除后不可恢复，确定删除？"><span class="glyphicon glyphicon-remove"></span></button>
+                            {/if}
+                            {if condition="check_auth('detail')"}
+                                <a href="{:url('detail',['id'=>$vo['id']])}" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-eye-open"></span></a>
+                            {/if}
+                        </td>
+                        <td>{$vo.manager.nickname}</td>
+                        <td>{$vo.title}</td>
+                        <td>{$vo.create_time|date='Y-m-d H:i:s',###}</td>
+                        <td>{$vo.url}</td>
+                        <td>{$vo.ip}</td>
+                    </tr>
+                {/foreach}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td style="cursor: pointer;" onclick="$('input.ebcms-id').trigger('click');">
+                        <span class="glyphicon glyphicon-check"></span> 选择
+                    </td>
+                    <td colspan="6">
+                        <button onclick="$(this).data('ids',EBCMS.FN.getCheckedId('input.ebcms-id:checkbox:checked'));" type="button" class="btn btn-danger btn-sm ebcms-do" url="{:url('delete')}" confirm="批量删除选中项吗？">删除</button>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {$data -> render()}
+</div>
+{include file='common/footer' /}

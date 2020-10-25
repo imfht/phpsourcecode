@@ -1,0 +1,127 @@
+<?php $topRegionName = isset($regionInfo) ? '<strong>' . $regionInfo->getRegionName() . '</strong> ' : ''; ?>
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?php if(isset($regionInfo)) { ?>
+                <a href="<?=$this->url('region');?>" class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i> <?=$this->translate('返回顶级列表')?></a>
+                <a href="<?=$this->url('region', ['action' => 'index', 'id' => $regionInfo->getRegionTopId()]);?>" class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i> <?=$this->translate('返回上一级列表')?></a>
+            <?php } ?>
+
+            <?php if((isset($regionInfo) && substr_count($regionInfo->getRegionPath(), ',') <= 2) || !isset($regionInfo)) { ?>
+                <?php $actionArray = isset($regionInfo) ? ['action'=> 'add', 'id' => $regionInfo->getRegionId()] : ['action' => 'add'] ; ?>
+                <a href="<?=$this->url('region', $actionArray);?>" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> <?=$this->translate('添加地区')?></a>
+            <?php } ?>
+
+            <?=$this->HelpUrl('regionList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                        <div class="box-body table-responsive no-padding">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr class="erp-bg-thead">
+                                    <th width="2%"><input type="checkbox" class="minimal select-all-checkbox"></th>
+                                    <th width="10%">ID</th>
+                                    <th><?=$this->translate('地区名称')?></th>
+                                    <th width="8%"><?=$this->translate('排序')?></th>
+                                    <th width="18%"><?=$this->translate('操作')?></th>
+                                </tr>
+                                <?php
+                                $sForm = $this->searchForm;
+                                $sForm->prepare();
+                                ?>
+                                <?= $this->form()->openTag($sForm); ?>
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <p>
+                                            <?= $this->formElement($sForm->get('start_id')); ?>
+                                        </p>
+                                        <div>
+                                            <?= $this->formElement($sForm->get('end_id')); ?>
+                                        </div>
+                                        <?=$this->formElementErrors($sForm->get('start_id'), ['class'=>'error-message']);?>
+                                        <?=$this->formElementErrors($sForm->get('end_id'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td>
+                                        <?= $this->formElement($sForm->get('region_name')); ?>
+                                        <?=$this->formElementErrors($sForm->get('region_name'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td></td>
+                                    <td>
+                                        <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                        <?php if(!empty(array_filter($sForm->getData()))) { ?>
+                                            <a href="<?=$this->url('region',
+                                                ['action' => 'index', 'id' => $this->regionTopId]);?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+                                <?= $this->form()->closeTag(); ?>
+                                </thead>
+                                <form method="post" action="<?=$this->url('region', ['action' => 'updateAll', 'id' => (isset($regionInfo) ? $regionInfo->getRegionId() : 0)]);?>" name="edit-all-form" id="edit-all-form">
+                                    <input type="hidden" name="region_top_id" value="<?=(isset($regionInfo) ? $regionInfo->getRegionTopId() : 0)?>">
+                                <tbody>
+                                <?php if($this->regionList) foreach ($this->regionList as $region) { ?>
+                                    <tr>
+                                        <td><input name="select_id[]" value="<?=$region->getRegionId()?>" type="checkbox" ></td>
+                                        <td>
+                                            <?= $region->getRegionId()?>
+                                        </td>
+                                        <td><?= $this->escapeHtml($region->getRegionName())?></td>
+                                        <td><input type="text" name="region_sort[<?=$region->getRegionId()?>]" value="<?= $region->getRegionSort()?>" class="form-control input-sm"></td>
+                                        <td>
+                                            <a href="<?= $this->url('region',
+                                                ['action'=>'edit', 'id'=>$region->getRegionId()]); ?>"
+                                               class="btn btn-xs btn-success"><i class="fa fa-pencil"></i> <?=$this->translate('编辑')?>
+                                            </a>
+
+                                            <?php if((isset($regionInfo) && substr_count($regionInfo->getRegionPath(), ',') < 2) || !isset($regionInfo)) { ?>
+                                                <a href="<?= $this->url('region',
+                                                    ['action'=>'index', 'id'=>$region->getRegionId()]); ?>" class="btn btn-xs btn-success">
+                                                    <i class="fa fa-ellipsis-v"></i> <?=$this->translate('查看下级')?>
+                                                </a>
+                                            <?php } ?>
+
+                                            <a href="javascript:;" onclick="deleteConfirm('<?php echo $this->translate('您确实要删除该地区吗？'); ?>', '<?= $this->url('region', ['action'=>'delete', 'id'=>$region->getRegionId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>');" class="btn btn-xs btn-danger">
+                                                <i class="fa fa-trash"></i> <?=$this->translate('删除')?>
+                                            </a>
+
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <input type="checkbox" class="minimal select-all-checkbox"> <?=$this->translate('全选')?>
+                                        <select name="editAllState">
+                                            <option value=""><?=$this->translate('选择状态')?></option>
+                                            <option value="sort"><?=$this->translate('更新排序')?></option>
+                                            <option value="del"><?=$this->translate('地区删除')?></option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-check"></i> <?=$this->translate('更新')?></button>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                                </form>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

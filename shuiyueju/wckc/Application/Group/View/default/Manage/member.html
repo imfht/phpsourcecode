@@ -1,0 +1,232 @@
+<extend name="Public/group"/>
+
+<block name="body">
+    <div class="row">
+
+        <div class="col-xs-12">
+
+            <div class="fourm-top common_block_border" style="padding: 15px 20px;margin-top: 0;margin-bottom: 15px">
+
+
+                <div>
+                <h4>
+                    群组管理
+
+                </h4>
+                  </div>
+
+                <div>
+                    <ul class="nav nav-tabs" role="tablist" style="font-size: 12px;">
+                        <li role="presentation"><a href="{:U('Group/Manage/index',array('group_id'=>$_GET['group_id']))}">基本信息</a></li>
+                        <li role="presentation" class="active"><a href="{:U('Group/Manage/member',array('group_id'=>$_GET['group_id']))}">成员管理</a></li>
+                        <li role="presentation"><a href="{:U('Group/Manage/notice',array('group_id'=>$_GET['group_id']))}">公告发布</a></li>
+                        <li role="presentation" ><a href="{:U('Group/Manage/category',array('group_id'=>$_GET['group_id']))}">帖子分类管理</a></li>
+                        <a href="{:U('group/index/group',array('id'=>$_GET['group_id']))}" class="btn btn-primary pull-right" style="margin-left: 10px;">返回群组</a>
+                        <button class="btn btn-primary pull-right dismiss">解散群组</button>
+                    </ul>
+                </div>
+
+
+                <hr style="border-top:0"/>
+
+
+                <div class="btn-group">
+                    <a href="{:U('member',array('group_id'=>$_GET['group_id'],'status'=>1))}" class="btn btn-default <if condition='$status eq 1'>active</if>">已审核<span class="badge" style="margin-left: 1px">{$sh_count}</span></a>
+                    <a href="{:U('member',array('group_id'=>$_GET['group_id'],'status'=>0))}"  class="btn btn-default  <if condition='$status eq 0'>active</if>">未审核<span class="badge" style="margin-left: 1px">{$wsh_count}</span></a>
+
+                </div>
+
+
+<volist name="member" id="people">
+    <div class="row feed" style="margin-top: 30px;">
+        <div class="col-xs-2">
+            <a href="{$people.user.space_url}" ucard="{$people.user.uid}"> <img class="avatar-img"
+                                                                  src="{$people.user.avatar64}"/></a>
+        </div>
+        <div class="col-xs-4">
+            <a href="{$people.user.space_url}">{$people.user.nickname}</a>
+            <php>if($status != 0){</php>
+            <div style="color: #ccc">加入时间：{$people.update_time|friendlyDate}</div>
+            <php>}</php>
+        </div>
+        <div class="col-xs-6">
+<if condition="$people['isCreator']">
+    创建者
+    <else/>
+
+
+    <a href="javascript:" onclick="remove_group('{$people.uid}','{$people.group_id}')">移出群组</a>
+    <php>if($status == 0){</php>
+<div>
+    <a href="javascript:" onclick="attend_group('{$people.uid}','{$people.group_id}')">审核通过</a>
+        </div>
+    <php>}</php>
+</if>
+
+
+
+        </div>
+    </div>
+
+</volist>
+
+
+            </div>
+        </div>
+
+    </div>
+</block>
+
+<block name="script">
+    <script type="text/javascript" src="__PUBLIC__/Core/js/ext/atwho/atwho.js"></script>
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/Core/js/ext/atwho//atwho.css"/>
+    <script type="text/javascript" src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>
+
+
+    <script>
+        $("#upload_picture_cover").uploadify({
+            "height": 30,
+            "swf": "__STATIC__/uploadify/uploadify.swf",
+            "fileObjName": "download",
+            "buttonText": "上传封面",
+            "buttonClass": "uploadcover",
+            "uploader": "{:U('Home/File/uploadPicture',array('session_id'=>session_id()))}",
+            "width": 350,
+            'removeTimeout': 1,
+            'fileTypeExts': '*.jpg; *.png; *.gif;',
+            "onUploadSuccess": uploadPicturecover,
+            'overrideEvents': ['onUploadProgress', 'onUploadComplete', 'onUploadStart', 'onSelect'],
+            'onFallback': function () {
+                alert('未检测到兼容版本的Flash.');
+            }, 'onUploadProgress': function (file, bytesUploaded, bytesTotal, totalBytesUploaded, totalBytesTotal) {
+                $("#cover_id_cover").parent().find('.upload-img-box').html(totalBytesUploaded + ' bytes uploaded of ' + totalBytesTotal + ' bytes.');
+            }, 'onUploadComplete': function (file) {
+                //alert('The file ' + file.name + ' finished processing.');
+            }, 'onUploadStart': function (file) {
+                $('.upload-img-box').html(
+                        '<div class="upload-pre-item">上传中...</div>'
+                );
+                //alert('Starting to upload ' + file.name);
+            }, 'onQueueComplete': function (queueData) {
+                // alert(queueData.uploadsSuccessful + ' files were successfully uploaded.');
+            }
+        });
+        function uploadPicturecover(file, data) {
+            var data = $.parseJSON(data);
+            var src = '';
+            if (data.status) {
+                $("#cover_id_cover").val(data.id);
+                src = data.url ||  data.path
+                $('.upload-img-box').html(
+                        '<div class="upload-pre-item"><img src="' + src + '"/></div>'
+                );
+            } else {
+                toast.error('封面上传失败。', '温馨提示');
+            }
+        }
+
+
+
+        $("#upload_picture_background").uploadify({
+            "height": 30,
+            "swf": "__STATIC__/uploadify/uploadify.swf",
+            "fileObjName": "download",
+            "buttonText": "上传背景",
+            "buttonClass": "uploadcover",
+            "uploader": "{:U('Home/File/uploadPicture',array('session_id'=>session_id()))}",
+            "width": 350,
+            'removeTimeout': 1,
+            'fileTypeExts': '*.jpg; *.png; *.gif;',
+            "onUploadSuccess": uploadbackground,
+            'overrideEvents': ['onUploadProgress', 'onUploadComplete', 'onUploadStart', 'onSelect'],
+            'onFallback': function () {
+                alert('未检测到兼容版本的Flash.');
+            }, 'onUploadProgress': function (file, bytesUploaded, bytesTotal, totalBytesUploaded, totalBytesTotal) {
+                $("#background").parent().find('.upload-background-box').html(totalBytesUploaded + ' bytes uploaded of ' + totalBytesTotal + ' bytes.');
+            }, 'onUploadComplete': function (file) {
+                //alert('The file ' + file.name + ' finished processing.');
+            }, 'onUploadStart': function (file) {
+                $('.upload-background-box').html(
+                        '<div class="upload-pre-item">上传中...</div>'
+                );
+                //alert('Starting to upload ' + file.name);
+            }, 'onQueueComplete': function (queueData) {
+                // alert(queueData.uploadsSuccessful + ' files were successfully uploaded.');
+            }
+        });
+        function uploadbackground(file, data) {
+            var data = $.parseJSON(data);
+            var src = '';
+            if (data.status) {
+                $("#background").val(data.id);
+                src = data.url ||  data.path
+                $('.upload-background-box').html(
+                        '<div class="upload-pre-item"><img src="' + src + '"/></div>'
+                );
+            } else {
+                toast.error('背景上传失败。', '温馨提示');
+            }
+        }
+
+
+    </script>
+
+    <script>
+        //点击编辑或发表按钮之后
+        $(function () {
+
+            var submitCount = 0;
+
+
+            function showSubmitError(message) {
+                $('#submit-button').removeClass('disabled');
+                var isEdit = $('#isEdit').val();
+                var text = '';
+                if (isEdit) {
+                    text = '编辑帖子';
+                } else {
+                    text = '发表帖子';
+                }
+                $('#submit-content').text(text);
+                toast.error(message, '错误');
+            }
+
+            function showSubmitSuccess(message, url) {
+                toast.success(message, '温馨提示');
+                setTimeout(function () {
+                    location.href = url;
+                }, 1500);
+            }
+
+            function showSubmitting() {
+                $('#submit-button').attr('class', 'btn btn-primary disabled');
+                $('#submit-content').text('正在提交');
+            }
+            $('.dismiss').click(function(){
+                if(confirm('确定要解散该群组么？')){
+                    var obj = $(this)
+                    var group_id = '{$group_id}';
+                    $.post("{:U('group/manage/dismiss')}",{group_id:group_id},function(res){
+                        handleAjax(res);
+
+                    })
+                }
+
+            })
+
+        })
+        function remove_group(uid,group_id){
+            if(confirm('确定要移除该成员么？')){
+            $.post("{:U('group/manage/remove_group')}",{uid:uid,group_id:group_id},function(res){
+                handleAjax(res);
+            })
+            }
+        }
+
+        function attend_group(uid,group_id){
+                $.post("{:U('group/manage/attend_group')}",{uid:uid,group_id:group_id},function(res){
+                    handleAjax(res);
+                })
+        }
+    </script>
+</block>

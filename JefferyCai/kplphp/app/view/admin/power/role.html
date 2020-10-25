@@ -1,0 +1,148 @@
+{include file="public/header-static"/}
+{include file="public/sidebar"/}
+
+
+<div id="main">
+
+    {include file="public/header"/}
+
+    <main class="main-content">
+        <div class="container">
+            {include file="public/page-header"/}
+            <!-- end::page-header -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="app-block">
+                                <div class="app-content">
+                                    <div class="app-action">
+                                        <div class="action-left">
+                                            <ul class="list-inline">
+                                                <li class="list-inline-item mb-0">
+                                                    <a href="#" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+                                                        <i data-feather="plus" class="mr-2"></i>
+                                                        添加
+                                                    </a>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{:url('/power/role_edit')}">角色组</a>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="action-right">
+                                            <form class="d-flex " method="get" action="">
+                                                <a href="#" class="app-sidebar-menu-button btn btn-outline-light">
+                                                    <i data-feather="menu"></i>
+                                                </a>
+                                                <div class="input-group">
+                                                    <input type="text" id="keyname" name="keyname" autofocus="autofocus" value="{$Request.get.keyname}" class="form-control" placeholder="搜索关键字[角色名称]" aria-describedby="button-addon1">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-outline-light" type="submit" id="button-addon1">
+                                                            <i data-feather="search"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <table id="kplphptable" lay-filter="kplphptable"></table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {include file="public/footer"/}
+</div>
+
+<script type="text/html" id="switchTpl">
+    <input type="checkbox" name="status" value="{{d.id}}" lay-skin="switch" lay-text="开启|关闭" lay-filter="switch_status" {{ d.status == 1 ? 'checked' : '' }}>
+</script>
+<script type="text/html" id="barDemo">
+    <button lay-event="set" class="btn btn-sm btn-outline-secondary">设置权限</button>
+    <button lay-event="edit" class="btn btn-sm btn-outline-secondary">编辑</button>
+    <button lay-event="del" class="btn btn-sm btn-outline-secondary">删除</button>
+</script>
+<script src="__STATIC__/assets/js/custom.js"></script>
+
+<script>
+
+    function role_edit(id) {
+        window.location.href = '{:url("/power/role_edit")}?id='+id;
+    }
+    function role_del(id,that) {
+        $.post("{:url('/power/role_del')}", {id:id}, function(data) {
+            if(data['code']!=1)
+            {
+                toastr.error(data['msg']);
+            }else{
+                $(that).parents('tr.even').remove();
+                toastr.success(data['msg']);
+                setInterval(function () {
+                    window.location.href = '';
+                },1000);
+            }
+        });
+    }
+
+    function role_set(id) {
+        window.location.href = '{:url("/power/role_set")}?id='+id;
+    }
+
+
+    // layui插件
+    layui.use('table', function(){
+        var table = layui.table
+            ,form = layui.form;
+        //第一个实例
+        table.render({
+            elem: '#kplphptable'
+            ,url: '{:url("/power/role")}'
+            ,method:'post'
+            // ,toolbar: '#toolbarDemo' //操作1:启用自定义模板表格头部工具栏
+            ,page: true //开启分页
+            ,limit: 20
+            ,cols: [[
+                {field:'id', title:'ID'}
+                ,{field:'name', title:'角色名称'}
+                ,{field:'pid', title:'上级角色'}
+                ,{field:'description', title:'描述'}
+                ,{field:'status', title:'状态', templet: '#switchTpl', unresize: true}
+                ,{field:'create_time', title:'创建时间'}
+                ,{field:'update_time', title:'更新时间'}
+                ,{field:'rigthbtn', title:'操作',width:230,toolbar: '#barDemo'}
+            ]],
+            parseData: function(res){
+                return {
+                    "code": res.data.code,
+                    "msg": res.data.msg,
+                    "count": res.data.count,
+                    "data": res.data.list
+                };
+            }
+        });
+        table.on('tool(kplphptable)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    obj.del();
+                    layer.close(index);
+                    role_del(data.id);
+                });
+            }else if(obj.event === 'edit'){
+                role_edit(data.id);
+            }else if(obj.event === 'set'){
+                role_set(data.id);
+            }
+        });
+        form.on('switch(switch_status)', function(obj){
+            $.post("{:url('/power/role_fieldchange')}",{id:obj.value,field:'status'},function(){});
+        });
+    });
+
+</script>

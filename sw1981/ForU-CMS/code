@@ -1,0 +1,67 @@
+CREATE DEFINER=`root`@`localhost` EVENT `detail_enable` ON SCHEDULE EVERY 24 HOUR STARTS '2018-02-01 02:00:00' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE `cn_detail` SET `d_enable` = 1, `d_sdate` = 0 WHERE `d_sdate` > 0 AND `d_sdate` <= UNIX_TIMESTAMP(CURRENT_DATE);
+
+CREATE DEFINER=`root`@`localhost` EVENT `detail_disable` ON SCHEDULE EVERY 24 HOUR STARTS '2018-02-01 02:00:00' ON COMPLETION NOT PRESERVE ENABLE DO UPDATE `cn_detail` SET `d_enable` = 0, `d_edate` = 0 WHERE `d_edate` > 0 AND `d_edate` <= UNIX_TIMESTAMP(CURRENT_DATE);
+
+/*
+有关事件
+
+(一)  查看当前是否已开启事件计划（调度器）有3种方法：
+1)     SHOW VARIABLES LIKE 'event_scheduler';
+2)     SELECT @@event_scheduler;
+3)     SHOW PROCESSLIST;
+
+
+(二)  开启事件计划（调度器）开关有4种方法：
+1)     SET GLOBAL event_scheduler = 1;
+2)     SET @@global.event_scheduler = 1;
+3)     SET GLOBAL event_scheduler = ON;
+4)     SET @@global.event_scheduler = ON;
+键值1或者ON表示开启；0或者OFF表示关闭；
+
+
+(三)  关于事件计划的权限：
+单独使用event调用SQL语句时，查看和创建需要用户具有event权限，调用该SQL语句时，需要用户具有执行该SQL的权限。Event权限的设置保
+存在mysql.user表和mysql.db表的Event_priv字段中。（FLUSH PRIVILEGES;）
+当event和procedure配合使用的时候，查看和创建存储过程需要用户具有create routine权限，调用存储过程执行时需要使用excute权限，存
+储过程调用具体的SQL语句时，需要用户具有执行该SQL的权限。
+SELECT HOST,USER,Event_priv FROM mysql.user;
+（Figure1：user表的Event_priv权限）
+获取当前登陆的用户和数据库：SELECT CURRENT_USER(), SCHEMA();
+从Figure1可以知道bfsql@%是没有Event_priv权限的，在该用户下创建事件的时候会出现下面的错误：
+Error Code: 1044
+Access denied for user 'bfsql'@'%' to database 'blog'
+如果出现上面的错误，执行下面的SQL就可以给bfsql@%赋予创建Event的权限：
+UPDATE mysql.user SET Event_priv = 'Y' WHERE HOST='%' AND USER='bfsql';
+如果你这个时候再次执行创建Event的SQL，还是会出现上面的错误，因为你需要执行：
+FLUSH PRIVILEGES;
+最后，你可以通过SHOW GRANTS FOR 'bfsql'@'%';查看所有权限；
+
+
+(四)  创建事件：
+1)     创建事件的语法如下：
+
+CREATE EVENT [IF NOT EXISTS] event_name
+ON SCHEDULE schedule
+[ON COMPLETION [NOT] PRESERVE]
+[ENABLE | DISABLE]
+[COMMENT 'comment']
+DO sql_statement
+
+2)     创建事件的示例如下：
+
+DELIMITER $$
+CREATE EVENT IF NOT EXISTS e_blog
+ON SCHEDULE EVERY 30 SECOND
+ON COMPLETION PRESERVE
+DO BEGIN
+CALL MoveBlogData();
+END$$
+DELIMITER ;
+
+DO sql_statement字段表示该event需要执行的SQL语句或存储过程。这里的SQL语句可以是复合语句，使用BEGIN和END标识符将复合SQL语句按照执行顺序放在之间。
+
+
+(五)  事件开启与关闭：
+开启某事件：ALTER EVENT e_test ON COMPLETION PRESERVE ENABLE;
+关闭某事件：ALTER EVENT e_test ON COMPLETION PRESERVE DISABLE;
+ */

@@ -1,0 +1,147 @@
+<?php 
+
+$auth = @$_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+if (empty($_GET['forum_id'])) die;
+
+$forum_id = intval($_GET['forum_id']);
+
+global $config;
+if (!dt_query_one("SELECT id FROM forum WHERE id = $forum_id AND user_id = ".$auth['id']." LIMIT 1") && !in_array($auth['id'], $config['manager']) && $city_info['user_id'] != $auth['id']) die('没有权限！^_^');
+
+$forum = dt_query_one("SELECT name, b_url, auto_bg_url, background_url, auto_intro, intro, pub_ads, topic_limit, url, kind FROM forum WHERE id = $forum_id");
+if (!$forum) die('获取数据失败！');
+
+if(in_array($auth['id'], $config['manager']) || $city_info['user_id'] == $auth['id']) {
+	$cond = "WHERE city = $forum_city";
+	$kinds = dt_query("SELECT id, name FROM forum_kind $cond ORDER BY today_up_c DESC");
+	if (!$kinds) die('获取kind数据失败！');
+}
+
+?>
+<?php require_once('inc/umediter_text.html'); ?> 
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li><a href="?c=forum&a=topic_list&forum_id=<?php echo $forum_id ?>"><?php echo $forum['name'] ?></a></li>
+			<li class="active"><span class="glyphicon glyphicon-edit"></span> 编辑 </li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="forum-add">
+		<div class="row clearfix">
+			<div class="col-md-12 column">
+				<h3><span class="glyphicon glyphicon-edit"></span> 编辑频道 [<?php echo $forum['name'] ?>] </h3>
+				<hr class="solid">
+				<div class="col-md-11 column">
+					<form class="form-horizontal" id="do_forum_edit" action="javascript:do_forum_edit(<?php echo $forum_id ?>)">
+						<fieldset>
+							<!-- forum_id -->
+							<input type="hidden" name="forum_id" value="<?php echo $forum_id ?>"/>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">名称</label>  
+								<div class="col-md-7">
+									<input name="name" type="text" class="form-control input-md" required="" 
+									<?php if(!in_array($auth['id'], $config['manager']) && $city_info['user_id'] != $auth['id']) { ?>
+									disabled="disabled" 
+									<?php } ?>
+									value="<?php echo $forum['name'] ?>">
+								</div>
+								<div class="col-md-3">
+									<a class="btn btn-default pull-right" href="javascript:do_forum_del(<?php echo $forum_id ?>)"><span class="glyphicon glyphicon-trash"></span> 删除</a>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-md-2 control-label">背景图片URL</label>  
+								<div class="col-md-7">
+									<input name="b_url" type="text" placeholder="背景图片URL" class="form-control input-md" value="<?php echo $forum['b_url'] ?>">
+								</div>
+							</div>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">发布控制</label>  
+								<div class="col-md-7">
+									<select name="topic_limit" class="form-control">
+										<?php require_once('inc/topic_limit.php') ?>
+										<?php foreach ($topic_limit as $key => $t_l) { ?>
+										<option value="<?php echo $key ?>" <?php if ($key == $forum['topic_limit']) echo 'selected="selected"' ?>><?php echo $t_l ?></option>
+										<?php } ?>
+									</select>
+								</div>
+							</div>
+							<!-- Text input-->
+							<?php if(in_array($auth['id'], $config['manager']) || $city_info['user_id'] == $auth['id']) { ?>
+							<div class="form-group">
+								<label class="col-md-2 control-label">分类</label>  
+								<div class="col-md-7">
+									<select name="kind" class="form-control">
+										<option value="0">无</option>
+										<?php while($kind = mysql_fetch_array($kinds)) { ?>
+										<option value="<?php echo $kind['id'] ?>" <?php if ($kind['id'] == $forum['kind']) echo 'selected="selected"' ?>><?php echo $kind['name'] ?></option>
+										<?php } ?>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-md-2 control-label">SEO URL</label>  
+								<div class="col-md-7">
+									<input name="url" type="text" placeholder="SEO URL" class="form-control input-md" value="<?php echo $forum['url'] ?>">
+								</div>
+							</div>
+							<?php } ?>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">SEO 描述</label>  
+								<div class="col-md-7">
+									<div class="checkbox"><label><input name="auto_intro" type="checkbox" onclick="check_auto_intro()" <?php if (1 == $forum['auto_intro']) echo 'checked="checked"' ?>> 自动更新 </label></div>
+									<textarea id="forum_intro" name="intro" type="text" rows="3" placeholder="简单的介绍" class="form-control input-md" style="margin-top:10px;<?php if (1 == $forum['auto_intro']) echo 'display:none' ?>"><?php echo $forum['intro'] ?></textarea>
+
+								</div>
+							</div>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">图标URL</label>  
+								<div class="col-md-2">
+								<div class="checkbox"><label><input name="auto_bg_url" type="checkbox" onclick="check_auto_bg_url()" <?php if (1 == $forum['auto_bg_url']) echo 'checked="checked"' ?>> 自动更新 </label></div>
+								</div>
+								<div class="col-md-5">
+									<input id="forum_bg_url" name="background_url" type="text" placeholder="http://xxx/xxx/xx.jpg" class="form-control input-md" value="<?php echo $forum['background_url'] ?>" <?php if (1 == $forum['auto_bg_url']) echo 'style="display:none"' ?>>
+								</div>
+							</div>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">公共内容</label>  
+								<div class="col-md-9">
+									<textarea class="form-control input-lg" id="pub_ads_content" name="pub_ads" style="width:105%;height:360px"><?php echo $forum['pub_ads'] ?></textarea>
+								</div>
+							</div>
+							<!-- token -->
+							<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+							<!-- Button -->
+							<div class="form-group">
+								<label class="col-md-2 control-label"></label>
+								<div class="col-md-2">
+									<button class="btn btn-primary btn-block <?php if (empty($_SESSION['auth'])) echo "disabled"; ?>">保存</button>
+								</div>
+							</div>
+						</fieldset>
+					</form>	
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+var pub_ads_content = UM.getEditor("pub_ads_content");  
+
+$(document).ready(function(){
+});
+
+</script>

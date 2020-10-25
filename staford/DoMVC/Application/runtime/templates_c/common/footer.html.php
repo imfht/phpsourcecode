@@ -1,0 +1,2 @@
+<?php defined('ROOT_DIR') or die('Access denied!');?>
+<footer style="width: 100%;background-color: #d1d1d1;height: 18px;font-size: 12px;position: fixed;left: 0;bottom: 0;text-align: center;">&copy;<a href="http://www.doubear.com">Doubear</a> Driven by <a href="http://www.domvc.com">DoMVC</a> framework</footer>

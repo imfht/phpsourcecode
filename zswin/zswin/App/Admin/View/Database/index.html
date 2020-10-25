@@ -1,0 +1,144 @@
+<extend name="Public:common" />
+
+
+
+<block name="main"> 
+<div class="example-code">
+
+    <a href="javascript:;" autocomplete="off" id="export" class="btn medium bg-orange"><span class="button-content">立即备份</span></a>
+    <a id="optimize" class="btn medium bg-green"  href="{:U('optimize')}"><span class="button-content">优化表</span></a>
+    <a id="repair" class="btn medium bg-green"  href="{:U('repair')}"><span class="button-content">修复表</span></a>
+<div class="divider"></div>
+</div>
+
+<div class="pageContent">
+<form id="export-form" method="post" action="{:U('export')}">
+     <table class="table text-left"  id="zstable">
+        <thead>
+            <tr>
+            <th class="nosort" width="30"></th>
+                <th>表名</th>
+                        <th>数据量</th>
+                        <th>数据大小</th>
+                        <th>创建时间</th>
+                        <th>备份状态</th>
+                       
+                <th class="nosort" width="40" ><input type="checkbox" class="checkboxCtrl j-icheck" group="tables[]"></th>
+                <th class="nosort text-center" width="130" >操作</th>
+            </tr>
+        </thead>
+        <tbody>
+
+          <volist name="list" id="table">
+            <tr>
+            
+               <td></td>
+                <td>{$table.name}</td>
+                            <td>{$table.rows}</td>
+                            <td>{$table.data_length|format_bytes}</td>
+                            <td>{$table.create_time}</td>
+                            <td class="info">未备份</td>
+                             <td><input type="checkbox" class="j-icheck" name="tables[]" value="{$table.name}"></td>
+                            <td class="action">
+                                <a  target="ajaxTodo" class="btn medium bg-green" href="{:U('optimize?tables='.$table['name'])}"><span class="button-content">优化表</span></a>&nbsp;
+                                <a  target="ajaxTodo" class="btn medium bg-green" href="{:U('repair?tables='.$table['name'])}"><span class="button-content">修复表</span></a>
+                            </td>
+            </tr>
+            
+          </volist>
+        </tbody>
+    </table>
+ </form>
+</div>
+
+
+    <script type="text/javascript">
+    (function($){
+        var $form = $("#export-form"), $export = $("#export"), tables
+            $optimize = $("#optimize"), $repair = $("#repair");
+
+        $optimize.add($repair).click(function(){
+            $.post(this.href, $form.serialize(), function(data){
+                if(data.status){
+                	alertmessage('success',data.info,'','',3);
+                	//alertMsg.correct(data.info);
+                   // updateAlert(data.info,'alert-success');
+                } else {
+                	alertmessage('error',data.info,'','',3);
+                	//alertMsg.error(data.info);
+                    //updateAlert(data.info,'alert-error');
+                }
+                setTimeout(function(){
+	                $('#top-alert').find('button').click();
+	                $(this).removeClass('disabled').prop('disabled',false);
+	            },1500);
+            }, "json");
+            return false;
+        });
+
+        $export.click(function(){
+            $export.parent().children().addClass("disabled");
+            $export.html('<span class="button-content">正在发送备份请求...</span>');
+            $.post(
+                $form.attr("action"),
+                $form.serialize(),
+                function(data){
+                   
+                    if(data.status){
+                        tables = data.tables;
+                        $export.html(data.info + "开始备份，请不要关闭本页面！");
+                        backup(data.tab);
+
+                        
+                        window.onbeforeunload = function(){ return "正在备份数据库，请不要关闭！" }
+                    } else {
+                    	alertmessage('error',data.info,'','',3);
+                    	//alertMsg.error(data.info);
+                        //updateAlert(data.info,'alert-error');
+                        $export.parent().children().removeClass("disabled");
+                        $export.html('<span class="button-content">立即备份</span>');
+                        setTimeout(function(){
+        	                $('#top-alert').find('button').click();
+        	                $(this).removeClass('disabled').prop('disabled',false);
+        	            },1500);
+                    }
+                },
+                "json"
+            );
+            return false;
+        });
+
+        function backup(tab, status){
+            status && showmsg(tab.id, "开始备份...(0%)");
+            $.get($form.attr("action"), tab, function(data){
+                if(data.status){
+                    showmsg(tab.id, data.info);
+                    
+                    if(!$.isPlainObject(data.tab)){
+                        $export.parent().children().removeClass("disabled");
+                        $export.html('<span class="button-content">备份完成，点击重新备份</span>');
+                        window.onbeforeunload = function(){ return null }
+                        return;
+                    }
+                    backup(data.tab, tab.id != data.tab.id);
+                } else {
+                	alertmessage('error',data.info,'','',3);
+                	//alertMsg.error(data.info);
+                    //updateAlert(data.info,'alert-error');
+                    $export.parent().children().removeClass("disabled");
+                    $export.html('<span class="button-content">立即备份</span>');
+                    setTimeout(function(){
+    	                $('#top-alert').find('button').click();
+    	                $(this).removeClass('disabled').prop('disabled',false);
+    	            },1500);
+                }
+            }, "json");
+
+        }
+
+        function showmsg(id, msg){
+            $form.find("input[value=" + tables[id] + "]").closest("tr").find(".info").html(msg);
+        }
+    })(jQuery);
+    </script>
+</block>

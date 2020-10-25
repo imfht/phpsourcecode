@@ -1,0 +1,117 @@
+{extend name="common/main"/}
+
+{block name="body"}
+    <!-- 标题栏 -->
+    <div class="main-title">
+        <h2>{:lang("_PLUGIN_LIST_")}</h2>
+    </div>
+    <div class="with-padding">
+    <div class="clearfix">
+        <ul class="nav nav-primary pull-left">
+            <li id="type_all"><a href="{:url('index',['type'=>'all'])}">{:lang("_ALL_")}</a></li>
+            <li id="type_yes"><a href="{:url('index',['type'=>'yes'])}">{:lang("_INSTALLED_")}</a></li>
+            <li id="type_no"><a href="{:url('index',['type'=>'no'])}">{:lang("_NOT_INSTALLED_")}</a></li>
+            <script>
+                $('#type_{$type}').addClass('active');
+            </script>
+        </ul>
+        <div class="btn-group pull-right">
+            <a class="btn btn-danger" href="{:Url('hooks')}">{:lang("_HOOK_MANAGEMENT_")}</a>
+        </div>
+        </div>
+        <div class="module-list cards">
+            {notempty name="_list"}
+                {volist name="_list" id="vo"}
+                <div class="col-lg-3 col-md-4">
+                    <div class="module-list-box">
+                        <div class="card">
+                            <div class="media-wrapper">
+                                {empty name="vo.id"}
+                                <a href="#">
+                                {else /}
+                                <a href="{:Url('config',['id'=>$vo['id']])}">
+                                {/empty}
+                                
+                                {empty name="vo.icon_photo"}
+                                    <div class="cover-icon">
+                                        <img src="__IMG__/plugin.png" alt=""> 
+                                    </div>
+                                {else/}
+                                    <div class="cover-icon">
+                                        <img src="{$vo.icon_photo}" alt=""> 
+                                    </div>
+                                {/empty}
+                                    
+                                </a>
+                            </div>
+
+
+                            <div class="">
+                                <div class="card-heading title">
+                                    <h3>{$vo.title} <span class="text-muted">{$vo.name}</span></h3>
+                                </div>
+
+                                <div class="card-content">
+                                    <p class="text-muted text-ellipsis">{$vo.description}</p>
+                                    <p class="text-muted text-ellipsis">{$vo.author}</p>
+                                </div>
+                                <div class="card-actions">
+                                    <div class="btn-group">
+                                        {empty name="vo.uninstall"}
+                                            <?php
+                								$class	= get_addon_class($vo['name']);
+                								if(!class_exists($class)){
+                									$has_config = 0;
+                								}else{
+                									$addon = new $class();
+                									$has_config = count($addon->getConfig());
+                                                }
+                                            ?>
+
+                                            <?php if ($has_config){ ?>
+                                            <a class="btn btn-primary" href="{:Url('config',array('id'=>$vo['id']))}">{:lang("_SET_UP_")}</a>
+                                            <?php } ?>
+
+                                            {php} if ($vo['status'] >=0){ {/php}
+                                            {eq name="vo.status" value="0"}
+                                                <a class="btn btn-primary ajax-get"
+                                                   href="{:Url('enable',array('id'=>$vo['id']))}">{:lang("_ENABLE_")}</a>
+                                            {else/}
+                                                <a class="btn btn-info ajax-get"
+                                                   href="{:Url('disable',array('id'=>$vo['id']))}">{:lang("_DISABLE_")}</a>
+                                            {/eq}
+                                            {php} } {/php}
+                                            
+                                            
+                                            <a class="btn btn-danger confirm ajax-get"
+                                                   href="{:Url('uninstall?id='.$vo['id'])}">{:lang("_UNINSTALL_")}</a>  
+                                            
+                                            
+                                        {else/}
+                                            <a class="btn btn-success ajax-get"
+                                               href="{:Url('install?addon_name='.$vo['name'])}">{:lang("_INSTALL_")}</a>
+                                        {/empty}
+                                    </div>
+                                    <span class="pull-right">
+                                        <span class="label label-success">{$vo.version}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                {/volist}
+                {else/}
+                <div class="text-center"> aOh!{:lang("_THERE_IS_NO_CONTENT_")}</div>
+            {/notempty}
+
+        </div>
+    </div>
+
+
+    <!-- 数据列表 -->
+    <!-- 分页 -->
+    <div class="page">
+        
+    </div>
+{/block}

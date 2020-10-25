@@ -1,0 +1,154 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+		            <a href="{$ADMIN_SCRIPT}/admin/district">{lang admin.district.view.header}</a>
+		            <!--{loop $crumbs $crumb}-->
+		            / <a href="{$ADMIN_SCRIPT}/admin/district&parentid={$crumb[DISTRICTID]}">{$crumb[CNAME]}</a>
+		            <!--{/loop}-->
+	            </div>
+				<div class="widget-content">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="javascript:void(null);" id="btn_submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</a>
+							<a href="javascript:void(null);" id="btn_delete_list" class="btn btn-small" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+						</div>
+					</div>
+					
+					<hr/>
+					<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/admin/district&parentid={$_var[gp_parentid]}" method="post">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="30"><input type="checkbox" class="fancy" name="cbxAll"/></th>
+								<th width="60">{lang admin.district.view.th.enable}</th>
+					            <th width="120">{lang admin.district.view.th.no}</th>
+					            <th>{lang admin.district.view.th.cname}</th>
+					            <th>{lang admin.district.view.th.identity}</th>
+					            <th width="60">{lang admin.district.view.th.child}</th>
+							</tr>
+						</thead>
+						<tbody id="tbl_body">
+					        <!--{loop $districts $_loop $district}-->
+					        <tr class="item-row">
+					        	<td>
+					                <!--{if $district['CHILDREN'] == 0}-->
+					                <input type="checkbox" class="fancy" name="cbxItem[]" cname="{$district[CNAME]}" value="{$district[DISTRICTID]}" />
+					                <!--{/if}-->
+					            </td>
+					            <td>
+					                <input type="checkbox" class="fancy" name="enabled[{$district[DISTRICTID]}]" value="1" {if $district[ENABLED]}checked="checked"{/if} />
+					            </td>
+					            <td>
+					                <input type="text" class="input-mini" size="8" name="displayorder[{$district[DISTRICTID]}]" value="{$district[DISPLAYORDER]}" />
+					            </td>
+					            <td>
+					            	<input type="text" class="input-xlarge" size="30" name="cname[{$district[DISTRICTID]}]" value="{$district[CNAME]}" />
+					            </td>
+					            <td>
+					            	<input type="text" class="input" size="20" name="identity[{$district[DISTRICTID]}]" value="{$district[IDENTITY]}" />
+					            </td>
+					            <td>
+					                <a href="{$ADMIN_SCRIPT}/admin/district&parentid={$district[DISTRICTID]}">{$district[CHILDREN]}</a>
+					            </td>
+					        </tr>
+					        <!--{/loop}-->
+					        
+					        <!--{if count($districts) == 0}-->
+					        <tr>
+					            <td colspan="6">
+					                * {lang admin.operation.empty}
+					            </td>
+					        </tr>
+					        <!--{/if}-->
+					        
+					        <tr>
+					        	<td colspan="2" style="text-align:center;">{lang admin.district.view.operation.add}</td>
+					            <td>
+					                <input type="text" class="input-mini" name="newdisplayorder[]" value=""/>
+					            </td>
+					            <td>
+					                <input type="text" class="input-xlarge" name="newcname[]" value=""/>
+					            </td>
+					            <td colspan="2">
+					                <input type="text" class="input" name="newidentity[]" value=""/>
+					            </td>
+					        </tr>
+					        <tr>
+					        	<td height="40" colspan="2"></td>
+					            <td colspan="4">
+					                <a href="javascript:void(null);" {$dispatches[operations][add]} class="btn btn-small" id="btn_add_district">{lang admin.district.view.operation.quick}</a>
+					            </td>
+					        </tr>
+					    </tbody>
+					</table>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	$('.fancy').uniform();
+	
+	$('#btn_submit').click(function(){
+		$('#frm_grid').submit();
+	});
+	
+	$('#btn_delete_list').click(function(){
+		if($("#frm_grid input[name='cbxItem[]']:checked").length > 0){
+			var tempHTML = '<p>';
+			$("#frm_grid input[name='cbxItem[]']:checked").each(function(){
+				tempHTML += $(this).attr('cname') + '； ';
+			});
+			
+			tempHTML += '</p>';
+			
+			$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang admin.district.view.operation.delete.message}</p>' + tempHTML, callback:function(){
+				$('#modal_dialog .btn-primary').click(function(){
+					$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/admin/district&do=delete_list&parentid={$_var[gp_parentid]}');
+					$('#frm_grid').submit();
+				});
+			}});
+		}else $.dialog({message:'{lang admin.district.view.operation.empty}'});
+	});
+	
+	$("#frm_grid input[name='cbxAll']").click(function(){
+		if(this.checked){
+			$('#frm_grid .item-row').addClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', true).parent().addClass('checked');
+		}else{
+			$('#frm_grid .item-row').removeClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', false).parent().removeAttr('class');
+		}
+	});
+	
+	$("#frm_grid input[name='cbxItem[]']").click(function(){
+		if(this.checked) $(this).parent().parent().parent().parent().addClass('warning');
+		else $(this).parent().parent().parent().parent().removeClass('warning');
+	});
+	
+	$('#btn_add_district').click(function(){
+    	var tbody = $('#tbl_body').get(0);
+    	var tempInsertRow = tbody.rows[tbody.rows.length - 2];
+    	var tempNewRow = tempInsertRow.cloneNode(true);
+    	tempNewRow.style.display = '';
+    	
+    	var inputs = tempNewRow.getElementsByTagName('input');
+    	for(var i = 0; i < inputs.length; i++){
+    		if(inputs[i].name.indexOf('newcname') != -1 
+    			|| inputs[i].name.indexOf('newdisplayorder') != -1 
+    			|| inputs[i].name.indexOf('newidentity') != -1) inputs[i].value = '';
+    	}
+    	
+    	tbody.insertBefore(tempNewRow, tbody.rows[tbody.rows.length - 1]);
+    });
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

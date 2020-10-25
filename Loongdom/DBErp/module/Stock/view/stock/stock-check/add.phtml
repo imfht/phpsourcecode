@@ -1,0 +1,277 @@
+<div class="content-wrapper">
+    <?php
+    $form = $this->form;
+    $form->prepare();
+
+    $stockGoodsForm = $this->stockGoodsForm;
+    $stockGoodsForm->prepare();
+
+    $form->get('stockCheckSn')->setAttributes([
+        'placeholder' => $this->translate('盘点单号')
+    ]);
+
+    $form->get('stockCheckInfo')->setAttributes([
+        'placeholder' => $this->translate('备注')
+    ]);
+
+    ?>
+    <?= $this->form()->openTag($form); ?>
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <a href="<?=$this->url('stock-check');?>" class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i> <?=$this->translate('返回盘点列表')?></a>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-check"></i> <?=$this->translate('库存盘点')?></button>
+            <?=(isset($this->stockCheckInfo) ? $this->HelpUrl('stockCheckEdit') : $this->HelpUrl('stockCheckAdd'))?>
+        </h1>
+    </section>
+
+    <section class="content">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><?=(isset($this->stockCheckInfo) ? $this->translate('编辑库存盘点') : $this->translate('添加库存盘点'))?></h3>
+                    </div>
+
+                    <div class="box-body">
+                        <?=$this->formElementErrors($form->get('dberp_csrf'), ['class'=>'error-message']); ?>
+                        <div class="row">
+                            <div class="col-xs-4 form-group">
+                                <div class="col-sm-12">
+                                    <?=$this->translate('盘点单号')?><span class="must_add_value">*</span>
+                                    <?= $this->formElement($form->get('stockCheckSn')); ?>
+                                    <?= $this->formElementErrors($form->get('stockCheckSn'), ['class'=>'error-message']); ?>
+                                </div>
+                            </div>
+
+                            <div class="col-xs-4 form-group">
+                                <div class="col-sm-12">
+                                    <?=$this->translate('仓库')?><span class="must_add_value">*</span>
+                                    <?= $this->formElement($form->get('warehouseId')); ?>
+                                    <?= $this->formElementErrors($form->get('warehouseId'), ['class'=>'error-message']); ?>
+                                </div>
+                            </div>
+
+                            <div class="col-xs-4 form-group">
+                                <div class="col-sm-12">
+                                    <?=$this->translate('盘点时间')?><span class="must_add_value">*</span>
+                                    <?= $this->formElement($form->get('stockCheckTime')); ?>
+                                    <?= $this->formElementErrors($form->get('stockCheckTime'), ['class'=>'error-message']); ?>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-xs-4 form-group">
+                                <div class="col-sm-12">
+                                    <?=$this->translate('盘点人')?><span class="must_add_value">*</span>
+                                    <?= $this->formElement($form->get('stockCheckUser')); ?>
+                                    <?= $this->formElementErrors($form->get('stockCheckUser'), ['class'=>'error-message']); ?>
+                                </div>
+                            </div>
+                            <div class="col-xs-8 form-group">
+                                <div class="col-sm-12">
+                                    <?=$this->translate('备注')?>
+                                    <?= $this->formElement($form->get('stockCheckInfo')); ?>
+                                    <?= $this->formElementErrors($form->get('stockCheckInfo'), ['class'=>'error-message']); ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <?php
+                        $goodsForm = $stockGoodsForm;
+                        ?>
+                        <div class="box-header">
+                            <h4 class="box-title"><?=$this->translate('盘点商品')?></h4>
+                            &nbsp;&nbsp;
+                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" onclick="addMoreGoods();"><i class="fa fa-plus"></i> <?=$this->translate('点击选择商品')?></button>
+                            <?= $this->formElementErrors($goodsForm->get('goodsId'), ['class'=>'error-message']); ?>
+                            <?= $this->formElementErrors($goodsForm->get('stockCheckAftGoodsNum'), ['class'=>'error-message']); ?>
+                            <?= $this->formElementErrors($goodsForm->get('stockCheckGoodsAmount'), ['class'=>'error-message']); ?>
+                        </div>
+                        <div class="box-body table-responsive no-padding">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th width="15%"><?=$this->translate('商品编号')?></th>
+                                    <th width="20%"><?=$this->translate('商品名称')?></th>
+                                    <th width="15%"><?=$this->translate('商品规格')?></th>
+                                    <th width="5%"><?=$this->translate('单位')?></th>
+                                    <th width="10%"><?=$this->translate('盘点前库存数量')?></th>
+                                    <th width="10%"><?=$this->translate('盘点后库存数量')?></th>
+                                    <th width="10%"><?=$this->translate('盘点后库存金额')?></th>
+                                    <th width="8%"><?=$this->translate('操作')?></th>
+                                </tr>
+                                </thead>
+
+                                <?php
+                                if(isset($this->stockCheckInfo)) {
+                                    foreach ($this->stockCheckGoods as $goodsValue) {
+                                        ?>
+                                        <tr id="tr_id_<?=$goodsValue->getGoodsId()?>">
+                                            <td>
+                                                <input type="hidden" name="goodsId[]" value="<?=$goodsValue->getGoodsId()?>">
+                                                <?=$this->escapeHtml($goodsValue->getGoodsNumber())?>
+                                            </td>
+                                            <td><?=$this->escapeHtml($goodsValue->getGoodsName())?></td>
+                                            <td><?=$this->escapeHtml($goodsValue->getGoodsSpec())?></td>
+                                            <td><?=$this->escapeHtml($goodsValue->getGoodsUnit())?></td>
+                                            <td id="stock_check_pre_goods_num_<?=$goodsValue->getGoodsId()?>"><?=$this->escapeHtml($goodsValue->getStockCheckPreGoodsNum())?></td>
+                                            <td><input type="number" min="1" id="stock_check_aft_goods_num_<?=$goodsValue->getGoodsId()?>" name="stockCheckAftGoodsNum[]" class="form-control" value="<?=$goodsValue->getStockCheckAftGoodsNum()?>"></td>
+                                            <td><input type="text" id="stock_check_goods_amount_<?=$goodsValue->getGoodsId()?>" name="stockCheckGoodsAmount[]" class="form-control" value="<?=$this->erpCurrencyFormat($goodsValue->getStockCheckGoodsAmount(), '')?>"></td>
+                                            <td>
+                                                <button type="button" onclick="deleteGoods(<?=$goodsValue->getGoodsId()?>);" class="btn btn-danger"><?=$this->translate('删除')?></button>
+                                            </td>
+                                        </tr>
+                                        <?php
+                                    }
+                                }
+                                ?>
+                                <tr id="tr-end"></tr>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div class="box-footer">
+                        <?=$this->formElement($form->get('dberp_csrf')); ?>
+                        <button type="submit" class="btn btn-primary col-md-offset-4"><i class="fa fa-check"></i> <?=$this->translate('库存盘点')?></button>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </section>
+    <?= $this->form()->closeTag(); ?>
+
+    <div class="modal fade" id="modalDefault">
+        <div class="modal-dialog" style="width: 800px;" id="addGoodsListBody">
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+    $(document).ready(function() {
+        $("#<?=$form->getName()?>").validate({
+            rules: {
+                stockCheckSn: {
+                    required: true
+                },
+                warehouseId: {
+                    required: true,
+                    min: 1
+                },
+                stockCheckUser: {
+                    required: true
+                }
+            },
+            messages: {
+                stockCheckSn: {
+                    required: "<?=$this->translate('盘点单号不能为空！')?>"
+                },
+                warehouseId: {
+                    required: "<?=$this->translate('请选择仓库！')?>",
+                    min: "<?=$this->translate('请选择仓库！')?>"
+                },
+                stockCheckUser: {
+                    required: "<?=$this->translate('请填写盘点人！')?>"
+                }
+            },
+            submitHandler: function(form) {
+                if(typeof($("input[name='goodsId[]']").val()) == "undefined") {
+                    layer.msg('<?=$this->translate('请添加盘点商品！')?>');
+                    return false;
+                }
+                form.submit();
+            }
+        });
+    });
+
+    function addSelectGoods(goodsId) {
+        if(goodsId == '') {
+            layer.msg('<?=$this->translate('请填写需要添加的商品名称！')?>');
+        } else {
+            var insertState = true;
+            $("input[name='goodsId[]']").each(function () {
+                if($(this).val() == goodsId) {
+                    insertState = false;
+                }
+            });
+            if(!insertState) {
+                layer.msg('<?= $this->translate('该商品已经添加！')?>');
+                return false;
+            }
+
+            $.post("<?= $this->url('goods', ['action' => 'goodsIdSearch']);?>", {goodsId: goodsId, warehouseId: $('#warehouseId').val()}, function (data) {
+                if(data.state == 'ok') {
+
+                    var htmlStr = '<tr id="tr_id_'+data.result.goodsId+'">';
+                    htmlStr += '<td><input type="hidden" name="goodsId[]" value="'+data.result.goodsId+'">'+data.result.goodsNumber+'</td>';
+                    htmlStr += '<td>'+data.result.goodsName+'</td>';
+                    htmlStr += '<td>'+data.result.goodsSpec+'</td>';
+                    htmlStr += '<td>'+data.result.unitName+'</td>';
+                    htmlStr += '<td id="stock_check_pre_goods_num_'+data.result.goodsId+'">'+data.result.warehouseGoodsNum+'</td>';
+                    htmlStr += '<td><input type="number" min="1" id="stock_check_aft_goods_num_'+data.result.goodsId+'" name="stockCheckAftGoodsNum[]" class="form-control col-sm-6" value="1"></td>';
+                    htmlStr += '<td><input type="text" id="stock_check_goods_amount_'+data.result.goodsId+'" name="stockCheckGoodsAmount[]" class="form-control" value="0"></td>';
+                    htmlStr += '<td><button type="button" onclick="deleteGoods('+data.result.goodsId+');" class="btn btn-danger"><?= $this->translate('删除')?></button></td>';
+                    htmlStr += '</tr>';
+
+                    $('#tr-end').before(htmlStr);
+
+                    $('#goodsSearch').val('');
+                    $('#selectedGoodsId').val('');
+                }
+            })
+        }
+    }
+
+    function deleteGoods(goodsId) {
+        <?php if(isset($this->stockCheckInfo)) { ?>
+        $.post("<?= $this->url('stock-check', ['action' => 'delStockCheckGoods']);?>", {stockCheckId: <?=$this->stockCheckInfo->getStockCheckId()?>, goodsId: goodsId}, function (data) {
+            if(data.state != 'ok') {
+                layer.msg('<?= $this->translate('商品删除失败！')?>');
+            }
+        });
+        <?php } ?>
+        $('#tr_id_'+goodsId).remove();
+    }
+
+    function addMoreGoods() {
+        $('#modalDefault').modal('show');
+        dberpAjaxList('<?= $this->url('goods', ['action' => 'ajaxGoodsSearch']);?>', 'addGoodsListBody');
+    }
+
+    function addMoreSelectGoods() {
+        $("input[name='selectGoodsId[]']").each(function () {
+            if(this.checked) {
+                addSelectGoods(this.value);
+            }
+        });
+        $('#modalDefault').modal('hide');
+    }
+
+    function searchGoods() {
+        dberpAjaxList('<?= $this->url('goods', ['action' => 'ajaxGoodsSearch']);?>?searchGoodsName='+$('#searchGoodsName').val(), 'addGoodsListBody');
+    }
+
+    $('#warehouseId').on('change', function(){
+        if($(this).val() > 0) {
+            var warehouseId = $(this).val();
+            $("input[name='goodsId[]']").each(function () {
+                var goodsId = this.value;
+                $.post("<?= $this->url('goods', ['action' => 'goodsIdSearch']);?>", {goodsId: goodsId, warehouseId: warehouseId}, function (data) {
+                    if(data.state == 'ok') {
+                        $('#stock_check_pre_goods_num_'+ goodsId).html(data.result.warehouseGoodsNum);
+                    }
+                });
+            })
+        }
+    });
+
+    laydate.render({elem: '#stockCheckTime'<?php if(!isset($this->stockCheckInfo)) { ?>, value: '<?=date("Y-m-d", time())?>'<?php } ?>});
+</script>

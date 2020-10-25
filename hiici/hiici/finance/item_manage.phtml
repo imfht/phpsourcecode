@@ -1,0 +1,252 @@
+<?php require_once('finance/inc/item_kind.php'); ?>
+<?php require_once('finance/inc/item_status.php'); ?>
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+global $config;
+if (!in_array($auth['id'], $config['manager'])) {
+	if (1 > dt_count('finance_lmcy', 'WHERE user_id = '.$auth['id'])) die('用户权限不够!');
+	$cond = 'AND lmcy_id = (SELECT id FROM finance_lmcy WHERE user_id = '.$auth['id'].' LIMIT 1)';
+} else {
+	$cond = '';
+}
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+$kind_filter = @intval($_COOKIE['item_kind_filter']);
+$term_filter = @intval($_COOKIE['item_term_filter']);
+$status_filter = @intval($_COOKIE['item_status_filter']);
+$audit_filter = @intval($_COOKIE['item_audit_filter']);
+
+//筛选器
+switch ($kind_filter) {
+case 2:
+	$cond .= " AND kind = 2";
+	break;
+case 3:
+	$cond .= " AND kind = 3";
+	break;
+case 4:
+	$cond .= " AND kind = 4";
+	break;
+case 5:
+	$cond .= " AND kind = 5";
+	break;
+}
+
+switch ($term_filter) {
+case 2:
+	$cond .= " AND term <= 3 ";
+	break;
+case 3:
+	$cond .= " AND term > 3 AND term <= 6";
+	break;
+case 4:
+	$cond .= " AND term > 6 AND term <= 9";
+	break;
+case 5:
+	$cond .= " AND term > 9 AND term <= 12";
+	break;
+case 6:
+	$cond .= " AND term > 12";
+	break;
+}
+
+switch ($status_filter) {
+case 2:
+	$cond .= " AND status = ".FINANCE_ITEM_STATUS_TB;
+	break;
+case 3:
+	$cond .= " AND status = ".FINANCE_ITEM_STATUS_HK;
+	break;
+case 4:
+	$cond .= " AND status = ".FINANCE_ITEM_STATUS_JS;
+	break;
+}
+
+switch ($audit_filter) {
+case 2:
+	$cond .= " AND audited = 'Y'";
+	break;
+case 3:
+	$cond .= " AND audited = 'N'";
+	break;
+}
+
+if (!empty($cond)) $cond = preg_replace('/AND/', 'WHERE', $cond, 1);
+
+if (empty($page)) { $page = 1; }
+$limit = 10;
+
+$items = dt_query("SELECT id, kind, name, money, revenue, term, audited, status, invest, phone, c_at FROM finance_item $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$items) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/nav_sub_im.html') ?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column" style="margin-top:20px">
+			<div class="finance-filter-well">
+				<ul id="kind_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目类别</a> </li>
+					<li><a href="javascript:do_kind_filter(1)">全部</a></li>
+					<?php foreach ($item_kind as $key => $kind) { ?>
+					<li><a href="javascript:do_kind_filter(<?php echo $key; ?>)"><?php echo $kind['name']; ?></a></li>                       
+					<?php } ?>
+				</ul>
+				<ul id="term_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目期限</a> </li>
+					<li><a href="javascript:do_term_filter(1)">全部</a></li>
+					<li><a href="javascript:do_term_filter(2)">3 个月以下</a></li>
+					<li><a href="javascript:do_term_filter(3)">3-6 个月</a></li>
+					<li><a href="javascript:do_term_filter(4)">6-9 个月</a></li>
+					<li><a href="javascript:do_term_filter(5)">9-12 个月</a></li>
+					<li><a href="javascript:do_term_filter(6)">12 个月以上</a></li>
+				</ul>
+				<ul id="status_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目状态</a> </li>
+					<li><a href="javascript:do_status_filter(1)">全部</a></li>
+					<?php foreach ($item_status as $key => $status) { ?>
+					<li><a href="javascript:do_status_filter(<?php echo $key; ?>)"><?php echo $status['name']; ?></a></li>
+					<?php } ?>
+					<a class="btn btn-default btn-sm" href="?c=finance&a=do_item_status_update">更新状态</a>
+				</ul>
+				<ul id="audit_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">项目审核</a> </li>
+					<li><a href="javascript:do_audit_filter(1)">全部</a></li>
+					<li><a href="javascript:do_audit_filter(2)">审核</a></li>
+					<li><a href="javascript:do_audit_filter(3)">未审核</a></li>
+				</ul>
+			</div>
+
+			<table class="table">
+				<thead>
+					<tr>
+						<th>项目名称</th>
+						<th>联系</th>
+						<th>投资人</th>
+						<th>种类</th>
+						<th>金额（元）</th>
+						<th>年化收益率</th>
+						<th>期限</th>
+						<th>状态</th>
+						<th>时间</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php while($item = mysql_fetch_array($items)) { ?>
+				<tr id="<?php echo $item['id'] ?>">
+					<td><a href="?c=finance&a=item_show&item_id=<?php echo $item['id']; ?>"><?php echo $item['name'] ?></a></td>
+					<td><?php echo $item['phone'] ?></td>
+					<td><?php echo $item['invest'] ?></td>
+					<td><?php echo $item['kind'] ?></td>
+					<td><?php echo $item['money'] ?></td>
+					<td><?php echo $item['revenue'].'%' ?></td>
+					<td><?php echo $item['term'].'个月' ?></td>
+					<td><?php echo $item['status'] ?></td>
+					<td><?php echo date('Y-m-d', $item['c_at']) ?></td>
+					<td>
+						<span id="item_audit">
+							<?php if ('N' == $item['audited']) { ?>
+							<a class="btn btn-default btn-sm" href="javascript:do_item_audit(<?php echo $item['id'] ?>)">通过审核</a>
+							<?php } else { ?>
+							<a class="btn btn-default btn-sm" href="javascript:do_item_un_audit(<?php echo $item['id'] ?>)">取消审核</a>
+							<?php } ?>
+						</span>
+						<a class="btn btn-default btn-sm" href="javascript:get_i_is(<?php echo $item['id'] ?>, 1)">查看投资人</a>
+						<a class="btn btn-default btn-sm" href="?c=finance&a=item_edit&item_id=<?php echo $item['id'] ?>">编辑</a>
+						<a class="btn btn-default btn-sm" href="javascript:do_item_del(<?php echo $item['id'] ?>)">删除</a>
+					</td>
+				</tr>
+				<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('finance_item', $cond, $page, $limit, '?c=finance&a=item_manage&page=') ?>
+		</div>
+
+
+	</div>
+</div>
+
+<div class="container" id="i_is">
+</div>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#finance_im').addClass('active');
+	$('li#im_xmgl').addClass('active');
+	var kind_filter = ('' == getCookie('item_kind_filter')) ? 1 : getCookie('item_kind_filter');
+	$('ul#kind_filter').find('li:eq('+kind_filter+')').addClass('active');
+	var term_filter = ('' == getCookie('item_term_filter')) ? 1 : getCookie('item_term_filter');
+	$('ul#term_filter').find('li:eq('+term_filter+')').addClass('active');
+	var status_filter = ('' == getCookie('item_status_filter')) ? 1 : getCookie('item_status_filter');
+	$('ul#status_filter').find('li:eq('+status_filter+')').addClass('active');
+	var audit_filter = ('' == getCookie('item_audit_filter')) ? 1 : getCookie('item_audit_filter');
+	$('ul#audit_filter').find('li:eq('+audit_filter+')').addClass('active');
+});
+
+function do_kind_filter(mark) {
+	setCookie('item_kind_filter', mark, 365, '/');
+	location = '?c=finance&a=item_manage';
+}
+
+function do_term_filter(mark) {
+	setCookie('item_term_filter', mark, 365, '/');
+	location = '?c=finance&a=item_manage';
+}
+
+function do_status_filter(mark) {
+	setCookie('item_status_filter', mark, 365, '/');
+	location = '?c=finance&a=item_manage';
+}
+
+function do_audit_filter(mark) {
+	setCookie('item_audit_filter', mark, 365, '/');
+	location = '?c=finance&a=item_manage';
+}
+
+function do_item_audit(item_id) {
+	$.get('?c=finance&a=do_item_opr&opr=1&item_id='+item_id, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('tr#'+item_id).find('span#item_audit').html('<a class="btn btn-default btn-sm" href="javascript:do_item_un_audit('+item_id+')">取消审核</a>');
+	});
+}
+
+function do_item_un_audit(item_id) {
+	$.get('?c=finance&a=do_item_opr&opr=2&item_id='+item_id, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('tr#'+item_id).find('span#item_audit').html('<a class="btn btn-default btn-sm" href="javascript:do_item_audit('+item_id+')">通过审核</a>');
+	});
+}
+
+function do_item_del(item_id) {
+	if (!confirm (" O_O 确定要删除吗！")) return;
+
+	$.get('?c=finance&a=do_item_opr&opr=3&item_id='+item_id, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('tr#'+item_id).remove();
+	});
+}
+
+</script>
+
+

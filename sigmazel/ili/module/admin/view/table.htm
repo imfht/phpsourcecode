@@ -1,0 +1,162 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<h3 class="title">{lang admin.table.view.header}</h3>
+				</div>
+				<div class="widget-content">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="javascript:void(null);" id="btn_submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</a>
+							<a href="javascript:void(null);" id="btn_delete_list" class="btn btn-small" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+							<a href="javascript:void(null);" id="btn_export_list" class="btn btn-small" {$dispatches[operations][export]}>{lang admin.table.view.operation.export}</a>
+							<a href="javascript:void(null);" id="btn_code_list" class="btn btn-small" {$dispatches[operations][export]}>{lang admin.operation.code}</a>
+							<a href="{$ADMIN_SCRIPT}/admin/table/_add" {$dispatches[operations][add]} class="btn btn-small">{lang admin.table.view.operation.add}</a>
+						</div>
+					</div>
+					
+					<hr/>
+					<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/admin/table&page={$_var[page]}&psize={$_var[psize]}" method="post">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="20"><input type="checkbox" class="fancy" name="cbxAll"/></th>
+								<th width="60">{lang admin.table.view.th.no}</th>
+					            <th width="160">{lang admin.table.view.th.identity}</th>
+					            <th>{lang admin.table.view.th.cname}</th>
+					            <th width="120">{lang admin.table.view.th.edit}</th>
+					            <th width="40">{lang admin.table.view.th.files}</th>
+					            <th width="40">{lang admin.table.view.th.column}</th>
+					            <th width="90">{lang admin.table.view.th.operate}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!--{loop $tables $_loop $table}-->
+							<tr class="item-row">
+							<td>
+				                <input type="checkbox" class="fancy" name="cbxItem[]" identity="{$table[IDENTITY]}" cname="{$table[CNAME]}" value="{$table[TABLEID]}" />
+				            </td>
+				            <td>
+				             	<input type="text" class="input-mini" size="4" name="displayorder[{$table[TABLEID]}]" value="{$table[DISPLAYORDER]}" />
+				            </td>
+				            <td>
+				            	{$table[IDENTITY]}
+				            </td>
+				            <td>
+				            	<input type="text" class="input-large" name="cname[{$table[TABLEID]}]" value="{$table[CNAME]}"/>
+				            </td>
+				            <td class="f10">
+				            	{$table[USERNAME]}<br/>
+				            	{echo $table['EDITTIME']? date('Y-m-d H:i', strtotime($table[EDITTIME])) : '';}
+				            </td>
+				            <td>
+				                {$table[FILENUM]}
+				            </td>
+				            <td>
+				                {echo count($table[COLUMNS]);}
+				            </td>
+				            <td>
+				            	<a class="btn btn-mini btn-primary" href="{$ADMIN_SCRIPT}/admin/table/_update&id={$table[TABLEID]}&page={$_var[page]}&psize={$_var[psize]}" {$dispatches[operations][edit]}>{lang admin.operation.edit}</a>
+				                <a class="btn btn-mini btn-delete" identity="{$table[IDENTITY]}" cname="{$table[CNAME]}" data="{$table[TABLEID]}" href="javascript:void(null);" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+				            </td>
+				            </tr>
+				            <!--{/loop}-->
+				            
+				            <!--{if $count == 0}-->
+					        <tr>
+					            <td colspan="7">
+					                * {lang admin.operation.empty}
+					            </td>
+					        </tr>
+					        <!--{/if}-->
+						</tbody>
+					</table>
+					</form>
+					
+					<hr/>
+					{$pager}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	$('.fancy').uniform();
+	
+	$('#btn_submit').click(function(){
+		$('#frm_grid').submit();
+	});
+	
+	$('#btn_delete_list').click(function(){
+		if($("#frm_grid input[name='cbxItem[]']:checked").length > 0){
+			var tempHTML = '<p>';
+			$("#frm_grid input[name='cbxItem[]']:checked").each(function(){
+				tempHTML += $(this).attr('cname') + '(' + $(this).attr('identity') + ')； ';
+			});
+			
+			tempHTML += '</p>';
+			
+			$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang admin.table.view.operation.delete.message}</p>' + tempHTML, callback:function(){
+				$('#modal_dialog .btn-primary').click(function(){
+					$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/admin/table&do=delete_list&page={$_var[page]}&psize={$_var[psize]}');
+					$('#frm_grid').submit();
+				});
+			}});
+		}else $.dialog({message:'{lang admin.table.view.operation.empty}'});
+	});
+	
+	$('#btn_export_list').click(function(){
+		window.open('{$ADMIN_SCRIPT}/admin/table/_export');
+	});
+	
+	$('#btn_code_list').click(function(){
+		if($("#frm_grid input[name='cbxItem[]']:checked").length > 0){
+			var cbxItem = '';
+			$("#frm_grid input[name='cbxItem[]']:checked").each(function(){
+				cbxItem += $(this).val() + ',';
+			});
+			
+			$.dialog({submit:'{lang admin.table.view.operation.code.submit}', title:'{lang admin.table_code.view.title}', href:'{$ADMIN_SCRIPT}/admin/table/_code&cbxItem='+ cbxItem +'&page={$_var[page]}&psize={$_var[psize]}', callback:function(){
+				$('#modal_dialog .fancy').uniform();
+				
+				$('#modal_dialog .btn-primary').click(function(){
+					$('#frm_dialog').submit();
+				});
+			}});
+		}else $.dialog({message:'{lang admin.table.view.operation.empty}'});
+	});
+	
+	$("#frm_grid input[name='cbxAll']").click(function(){
+		if(this.checked){
+			$('#frm_grid .item-row').addClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', true).parent().addClass('checked');
+		}else{
+			$('#frm_grid .item-row').removeClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', false).parent().removeAttr('class');
+		}
+	});
+	
+	$("#frm_grid input[name='cbxItem[]']").click(function(){
+		if(this.checked) $(this).parent().parent().parent().parent().addClass('warning');
+		else $(this).parent().parent().parent().parent().removeClass('warning');
+	});
+	
+	$('#frm_grid .btn-delete').click(function(){
+		var tableid = $(this).attr('data');
+		var tempHTML = '<p>' + $(this).attr('cname') + '(' + $(this).attr('identity') + ')； </p>';
+		$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang admin.table.view.operation.delete.one}</p>' + tempHTML, callback:function(){
+			$('#modal_dialog .btn-primary').click(function(){
+				$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/admin/table&do=delete&id=' + tableid + '&page={$_var[page]}&psize={$_var[psize]}');
+				$('#frm_grid').submit();
+			});
+		}});
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <include file="public/css" />
+    <style>
+        .help-icon{
+            margin-left:10px;
+            margin-right: 10px;
+        }
+        .help-icon:hover{
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend>{$vo.id ? '编辑':'新增'}任务</legend>
+</fieldset>
+
+<form class="layui-form" action="{:url('')}" method="post">
+    <div class="layui-form-item">
+        <div class="layui-form-item">
+            <label class="layui-form-label">项目所属</label>
+            <div class="layui-input-inline">
+                <select name="cate_id" lay-verify="required">
+                    <option value="">请选择</option>
+                    <volist name="cate_list" id="cate">
+                        <option value="{$cate.id}" <if condition="$vo.cate_id eq $cate.id">selected</if> >{$cate.name}</option>
+                    </volist>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">备注</label>
+            <div class="layui-input-block">
+                <input type="text" name="remark"   placeholder="请输入备注说明" autocomplete="off" class="layui-input" value="{$vo.remark|default=''}">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">cron表达式</label>
+            <div class="layui-input-inline">
+                <input type="text" style="font-size:18px;" id="cron_expression" name="cron_expression" lay-verify="required" autocomplete="off" class="layui-input" value="{$vo.cron_expression|default=''}">
+            </div>
+            <div class="layui-input-inline">
+                <i class="layui-icon help-icon">&#xe607;</i>
+                <button type="button" class="layui-btn layui-btn-normal" onclick="getNextRunTime()">查看下次执行时间</button>
+            </div>
+            <div class="layui-form-mid layui-word-aux ">注意：此处cron表达式比crontab多一位（第一位是秒）</div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">命令</label>
+            <div class="layui-input-block">
+                <input type="text" name="cmd" lay-verify="required"  placeholder="请输入要执行的命令" autocomplete="off" class="layui-input" value="{$vo.cmd|default=''}">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" lay-verify="required" value="0" title="禁用" checked >
+                <input type="radio" name="status" lay-verify="required" value="1" title="正常" <eq name="vo.status" value="1">checked</eq> >
+            </div>
+        </div>
+    </div>
+    <input type="hidden" name="id" value="{$vo.id|default=''}">
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="form1">提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+
+</body>
+<include file="public/js" />
+
+<script>
+    layui.use(['form'], function(){
+        var form = layui.form
+            ,layer = layui.layer;
+
+        //监听提交
+        form.on('submit(form1)', function(data){
+            api.post("{:url('')}",data.field);
+            return false;
+        });
+
+        $('.help-icon').hover(function () {
+            layer.tips('查看帮助', '.help-icon', {
+                tips: 1
+            });
+        },function(){});
+
+        $('.help-icon').on('click',function(){
+            layer.open({
+                type: 2,
+                title: 'cron表达式帮助',
+                shadeClose: true,
+                shade: false,
+                maxmin: true, //开启最大化最小化按钮
+                area: ['893px', '700px'],
+                content: '{:url("CronTask/help")}'
+            });
+        });
+
+
+    });
+    function getNextRunTime(){
+        $.ajax({
+            url:"{:url(getNextRunTime)}",
+            data:{cron_expression:$('#cron_expression').val()},
+            type:'post',
+            success:function(data){
+                if(data.code ===1){
+                    layer.msg(data.msg,{icon:1});
+                }else{
+                    layer.msg(data.msg,{icon:5});
+                }
+            }
+        });
+    }
+
+</script>
+</html>

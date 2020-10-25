@@ -1,0 +1,123 @@
+<extend name="Public/base"/>
+<block name="title">权限管理</block>
+<block name="body">
+    <nav class="breadcrumb">
+    <i class="Hui-iconfont">&#xe67f;</i> 权限管理 <span class="c-gray en">&gt;</span> 菜单管理<span class="c-gray en">&gt;</span> {$actionName}
+        <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新"> <i class="Hui-iconfont">&#xe68f;</i></a>
+	   </nav>
+    <div class="page-container">
+        <form action="" method="post" class="form form-horizontal" id="form-member-add" novalidate="novalidate">
+            <div class="row cl">
+                <label class="form-label col-xs-4 col-sm-3"><span class="c-red">*</span>权限列表:</label>
+                <div class="formControls col-xs-8 col-sm-3">
+                    <ul>
+                        <foreach name="menuList" item="vo">
+                            <li style="cursor:pointer" class="checkeds" pid="{$vo.pid}" menuid="{$vo.menu_id}"><input type="checkbox" name="menuIds[]" value="{$vo.menu_id}">{$vo.name}</li>
+                        </foreach>
+                    </ul>
+                </div>
+            </div>
+            <div class="row cl">
+                <div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-3">
+                    <input type="hidden" name="role_id" value="{$_GET['role_id']}">
+                    <input class="btn btn-primary radius" type="submit" value="&nbsp;&nbsp;保存&nbsp;&nbsp;">
+                </div>
+            </div>
+        </form>
+    </div>
+</block>
+<block name="javascript">
+    <script>
+
+        initCheckeds([{$checkedMenuIds|implode=',',###}]);
+
+        function initCheckeds(menuIds)
+        {
+            if ( !menuIds.length )
+            {
+                return;
+            }
+
+            $('.checkeds').each(function(){
+                if ( inArray($(this).attr('menuid'), menuIds) )
+                {
+                    $(this).find('input[type=checkbox]').prop('checked',true);
+                }
+            });
+        }
+
+        function inArray(dst, arr)
+        {
+
+            var i = 0,
+                len = arr.length;
+            for ( ;i <= len; i++ ) 
+            {
+                if ( dst == arr[i] )
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $('.checkeds').click(function(){
+            var self = $(this),
+                pid = self.attr('pid'),
+                menu_id = self.attr('menuid'),
+                isChecked = !self.find('input[type=checkbox]').prop('checked'),
+                domList = self.parent().find('.checkeds');
+
+            self.find('input[type=checkbox]').prop('checked', isChecked);
+
+            if ( pid == 0 ) 
+            {
+                checkedChildTree(domList,isChecked,menu_id);
+            }
+            else
+            {
+                if ( isChecked ) 
+                {
+                    checkedParentTree(domList,isChecked,pid);
+                }
+                if ( !isChecked )
+                {
+                    checkedChildTree(domList,isChecked,menu_id);
+                }
+            }
+        });
+
+       /**
+         * 向上递归选中
+         * @author jlb
+         */
+        function checkedParentTree(domList, isChecked, pid)
+        {
+
+            domList.each(function(){
+                if ( $(this).attr('menuid') == pid )
+                {
+                    $(this).find('input[type=checkbox]').prop('checked', isChecked);
+
+                    checkedParentTree(domList, isChecked, $(this).find('input[type=checkbox]').parent().attr('pid'));
+                }
+            });
+        }
+
+        /**
+         * 向下递归选中
+         * @author jlb
+         */
+        function checkedChildTree(domList, isChecked, pid)
+        {
+            domList.each(function(){
+                if ( $(this).attr('pid') == pid )
+                {
+                    $(this).find('input[type=checkbox]').prop('checked', isChecked);
+                    checkedChildTree(domList, isChecked, $(this).find('input[type=checkbox]').parent().attr('menuid'));
+                }
+            });
+        }
+    </script>
+</block>

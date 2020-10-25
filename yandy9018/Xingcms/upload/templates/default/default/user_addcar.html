@@ -1,0 +1,211 @@
+<script type="text/javascript" src="<{$weburl}>/static/js/laydate/laydate.js"></script>
+<script type="text/javascript">
+$(function(){
+	//品牌选择
+	$("#brand").change(function(){
+		$.get("<{$weburl}>/index.php?m=ajax&ajax=1", { 
+			brandid :  $("#brand").val() 
+		}, function (data, textStatus){
+               $("#subbrand").html(data); // 把返回的数据添加到页面上
+			}
+		);
+	});
+	//品牌选择
+	$("#subbrand").change(function(){
+		$.get("<{$weburl}>/index.php?m=ajax&ajax=1", { 
+			subbrandid :  $("#subbrand").val() 
+		}, function (data, textStatus){
+               $("#subsubbrand").html(data); // 把返回的数据添加到页面上
+			}
+		);
+	});
+	<{if $setting.version==3}>
+	//城市选择
+	$("#province").change(function(){
+		$.get("<{$weburl}>/index.php?m=ajax&ajax=1", { 
+			cityid :  $("#province").val() 
+		}, function (data, textStatus){
+			$("#city").html(data); // 把返回的数据添加到页面上
+					}
+		);
+	});
+	<{/if}>
+	//图片删除
+	$("#piclist li div span").live('click', function(){
+		$.get("index.php?m=user&ajax=1&p_id=<{$cars.p_id}>",{
+			p_pic :  $(this).next().val()
+		}, function (data, textStatus){
+			$("li").remove("#"+data);
+		});
+	});
+
+	//设为封面
+	$("#piclist li p span").live('click', function(){
+		$(this).parent().parent().children('.img').addClass("selected");
+		$(this).parent().parent().siblings().children('.img').removeClass("selected");
+		$("#mainpic").empty();
+		$("#mainpic").append('<input type="hidden" name="p_mainpic" value="'+$(this).next().val()+'">');
+	});
+	KindEditor.ready(function(K) {
+	var editor = K.editor({
+		uploadJson : 'index.php?m=upload_car',
+		allowFileManager : false,
+		imageUploadLimit : 10
+	});
+	K('#J_selectImage').click(function() {
+		var inputArr = $("#piclist").children("li");
+			var length = inputArr.length;
+			if(length>=10){
+				alert("您最多只能上传10图片！");
+				exit;
+			}
+		editor.loadPlugin('multiimage', function() {
+			editor.plugin.multiImageDialog({
+				clickFn : function(urlList) {
+					var div = K('#piclist');
+					K.each(urlList, function(i, data) {
+						var arr_picid = data.url.split("/");
+						var arr_length = arr_picid.length;
+						var arr_picids = arr_picid[arr_length-1].split(".");
+						div.append('<li id="'+arr_picids[0]+'"><img src="' + data.url + '" class="vt img"><div><span class="del"></span><input type="hidden" name="p_pics[]" value="'+ data.url +'"></div><p><span>设为封面</span><input type="hidden" name="url" value="'+ data.url +'"></p></li>');
+					});
+					editor.hideDialog();
+				}
+			});
+		});
+	});	
+	});
+});
+</script>
+<form name="form1" class="carform" enctype="multipart/form-data" method="post" action="index.php?m=user">
+    <table cellspacing="0" cellpadding="0" width="100%"  class="maintable">
+    <{if $setting.version==3}>
+			<tr>
+				<th>所在城市：</th>
+				<td colspan="3">
+					<select name="aid" id="province">
+						<{$selectprovince}>
+					</select>
+					<select name="cid" id="city">
+						<{$selectcity}>
+					</select>
+				</td>
+			</tr><{/if}>
+			<tr>
+				<th>品牌型号：</th>
+				<td colspan="3">
+					<select name="p_brand" id="brand" datatype="n" nullmsg="请选择品牌！">
+						<{$select_brand}>
+					</select>
+					<select class="subbrand" id="subbrand" name="p_subbrand" datatype="n" nullmsg="请选择车系！">
+						<option  value="">请选择车系</option>
+						<{$select_subbrand}>                    
+					</select> &nbsp;<select class="subbrand" id="subsubbrand" name="p_subsubbrand" datatype="n" nullmsg="请选择款式！">
+						<option  value="">请选择款式</option>
+						<{$select_subsubbrand}>	
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<th>车型选择：</th>
+				<td><select name="p_model">
+						<{$select_model}>
+					</select></td>
+				<th>预售价格：</th>
+				<td><input type="text" name="p_price"  size="5" value="<{$cars.p_price}>" datatype="s" nullmsg="请填写价格！">
+					<span class="gray">(万元)</span></td>
+			</tr>
+			<tr>
+				<th>车体颜色：</th>
+				<td width="180"><select name="p_color">
+						<{$select_color}>
+					</select></td>
+				<th width="50">排量：</th>
+				<td><select name="p_gas">
+						<{$select_gas}>
+					</select></td>
+			</tr>
+			<tr>
+				<th>变速箱：</th>
+				<td><select name="p_transmission">
+						<{$select_transmission}>
+					</select></td>
+				<th>上牌日期：</th>
+				<td><select name="p_year" id="p_year">
+						<{$select_year}>
+					</select>
+					<select name="p_month" id="p_month">
+						<{$select_month}>
+					</select></td>
+			</tr>
+			<tr>
+				<th>行驶里程：</th>
+				<td ><input name="p_kilometre" type="text" id="p_kilometre" size="5" value="<{$cars.p_kilometre}>"  />
+					<span class="gray">(万公里)</span></td>
+					</td>
+				<th>国产进口：</th>
+				<td><select name="p_country">
+						<{$select_country}>
+					</select></td>
+			</tr>
+			<tr>
+				<th>排放标准：</th>
+				<td colspan="3">
+					<select name="p_emission">
+						<option value="">请选择</option>
+						<option value="国一" <{if $cars.p_emission=='国一'}>selected<{/if}>>国一</option>
+						<option value="国二" <{if $cars.p_emission=='国二'}>selected<{/if}>>国二</option>
+						<option value="国三" <{if $cars.p_emission=='国三'}>selected<{/if}>>国三</option>
+						<option value="国四" <{if $cars.p_emission=='国四'}>selected<{/if}>>国四</option>
+						<option value="国五" <{if $cars.p_emission=='国五'}>selected<{/if}>>国五</option>
+					</select>
+				</td>
+			</tr>
+			<{foreach from=$paralist key=key item=paralist}>
+			<tr>
+				<th><{$paralist.c_name}>：</th>
+				<td>
+				<{if $paralist.type_name=='input'}>
+					<input name="para<{$key}>"   type="text" size="20" value="<{$paralist.c_value}>"/>
+				<{elseif $paralist.type_name=='textarea' }>	
+					<textarea name="para<{$key}>" ><{$paralist.c_value}></textarea>
+				<{elseif $paralist.type_name=='select' }>	
+					<select name="para<{$key}>"><{$paralist.select}></select>
+				<{elseif $paralist.type_name=='time' }>	
+					<input name="para<{$key}>" type="text" size="20" class="laydate-icon" value="<{$paralist.c_value}>" onclick="laydate()"/>
+				<{elseif $paralist.type_name=='checkbox' }>	
+					<{$checkbox_str}>
+				<{/if}>
+				</td>
+            </tr>
+			<{/foreach}>
+			<tr>
+				<th>图片：</th>
+				<td colspan="3">
+					<ul id="piclist" class="clearfix">
+						<{foreach from=$pic_list key=key item=pic_list}>
+							<li id="<{$pic_list.picid}>"><img src="<{$pic_list.pic}>" class="img"/><div><span class="del"></span><input type="hidden" name="p_pics[]" value="<{$pic_list.pic}>"></div><p><span>设为封面</span><input type="hidden" name="url" value="<{$pic_list.pic}>"></p></li></li>
+						<{/foreach}>
+					</ul>
+					<input type="button" id="J_selectImage" value="批量上传图片" class="uploadbut"/>
+					<div id="mainpic">
+						
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>车辆补充描述：</th>
+				<td colspan="5"><textarea  name="p_details" rows="2" cols="90" class="textarea01"><{$cars.p_details}></textarea></td>
+			</tr>
+			<tr>
+				<th></th>
+				<td colspan="5">
+					<div class="buttons">
+						<input type="submit" value="提 交" class="submit">
+						<input type="hidden" name="a" value="<{$ac}>">
+						<input type="hidden" name="id" value="<{$cars.p_id}>">
+					</div>
+				</td>
+			</tr>
+		</table>
+</form>

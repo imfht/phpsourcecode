@@ -1,0 +1,264 @@
+{extend name="default/base" /}
+{block name="js"}
+<script src="__STATIC__/plugins/echarts/echarts.min.js?v={$v}" type="text/javascript"></script>
+<script>
+// 销售统计
+function saleCount(){
+	$.post(WST.U('store/reports/getStatSales'),WST.getParams('.ipt'),function(data,textStatus){
+	    var json = WST.toJson(data);
+	    var myChart = echarts.init(document.getElementById('saleMain'));
+	    myChart.clear();
+	    $('#mainTable').hide();
+	    if(json.status=='1' && json.data){
+			var option = {
+			    tooltip : {
+			        trigger: 'axis'
+			    },
+			    calculable : true,
+			    xAxis : [
+			        {
+			            type : 'category',
+			            data : json.data.days
+			        }
+			    ],
+			    yAxis : [
+			        {
+			            type : 'value'
+			        }
+			    ],
+			    series : [
+			        {
+			            name:'销售额',
+			            type:'line',
+			            data:json.data.dayVals
+			        }
+			    ]
+			};
+			myChart.setOption(option);
+	    }
+	}); 
+}
+</script>
+{/block}
+{block name="css"}
+<link href="__STORE__/css/main.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="main"}
+<!---->
+<div class="wst-shop-info">
+	<div class="wst-shop-na">
+		<div class='wst-shop-name'>{:session('WST_STORE.storeName')}</div>
+		<span class="wst-shop-img">
+	        
+	            <img src="__RESOURCE_PATH__/{:session('WST_STORE.storeImg')}" title="{:session('WST_STORE.storeName')}">
+	        
+	    </span>
+		<div class="wst-shop-na2">
+		<a target='_blank' href="{:url('home/shops/index',array('shopId'=>$data['shop']['shopId']))}">
+		<div class="wst-shop-na3">所属商家：{$data['shop']['shopName']}</div>
+		</a>
+		<div class="wst-shop-na3">用户名：{$Think.session.WST_STORE.loginName}</div>
+		<div class="wst-shop-na3">上次登录：{:session('WST_STORE.lastTime')}</div>
+		<div class="wst-shop-na3">门店地址：{:session('WST_STORE.storeAddress')}</div>
+		</div>
+		
+	</div>
+	<div style="width: 30%;float: left;">
+    <div class='wst-shop-name' style="margin-left: 20px;"><a>店铺评分</a></div>
+	<div class="wst-shop-eva" style="margin-left: 8%">
+		<p>商品评分</p>
+		<div class="wst-shop-evai">
+		{for start="0" end="$data['shop']['scores']['goodsScore']"}
+			<img src="__STATIC__/plugins/raty/img/star-on.png">
+		{/for}
+		{for start="1" end="6-$data['shop']['scores']['goodsScore']"}
+			<img src="__STATIC__/plugins/raty/img/star-off.png">
+		{/for}
+		</div>
+	</div>
+	<div class="wst-shop-eva">
+		<p>时效评分</p>
+		<div class="wst-shop-evai">
+		{for start="0" end="$data['shop']['scores']['timeScore']"}
+			<img src="__STATIC__/plugins/raty/img/star-on.png">
+		{/for}
+		{for start="1" end="6-$data['shop']['scores']['timeScore']"}
+			<img src="__STATIC__/plugins/raty/img/star-off.png">
+		{/for}
+		</div>
+	</div>
+	<div class="wst-shop-eva">
+		<p>服务评分</p>
+		<div class="wst-shop-evai">
+		{for start="0" end="$data['shop']['scores']['serviceScore']"}
+			<img src="__STATIC__/plugins/raty/img/star-on.png">
+		{/for}
+		{for start="1" end="6-$data['shop']['scores']['serviceScore']"}
+			<img src="__STATIC__/plugins/raty/img/star-off.png">
+		{/for}
+		</div>
+	</div>
+    </div>
+	<div class="wst-shop-con">
+		<div class='wst-shop-name' style="margin-left: 20px;"><a>平台联系方式</a></div>
+		<p style="margin-left: 8%;"><span>电话：{$data['shop']['shopTel']}</span><span>QQ：{$data['shop']['shopQQ']}</span></p>
+		<p style="margin-left: 8%;"><span>邮箱：{:WSTConf('CONF.serviceEmail')}</span><span>服务时间：{php}echo date("H:i",strtotime($data['shop']['serviceStartTime']));{/php}-{php}echo date("H:i",strtotime($data['shop']['serviceEndTime']));{/php}</span></p>
+		<p></p>
+	</div>
+	<div class="f-clear"></div>
+</div>
+
+
+<div class="main">
+	<div class="main_middle">
+		<ul class="main_mid_box">
+			<li class="mid_l">
+				<div class="mid_l_item">
+					<div class="main_title">
+						<div class="wst-lfloat">
+							
+							<span class="c16_555">订单提示</span>
+						</div>
+						<div class="f-clear"></div>
+					</div>
+					<div class="mid_main">
+						<ul class="order_info">
+							{if WSTStoreGrant('store/orders/waituserpay')}
+							<li><a id="menuItem370" href="{:Url('store/orders/waituserpay')}" dataid="370">
+								<div class="complain_num">{$data['stat']['orderNeedpayCnt']}</div>
+								<div>待付款</div>
+							</a></li>
+							{/if}
+							{if WSTStoreGrant('store/orders/waitdelivery')}
+							<li><a id="menuItem371" href="{:Url('store/orders/waitdelivery')}" dataid="371">
+								<div class="complain_num">{$data['stat']['waitDeliveryCnt']}</div>
+								<div>待发货</div>
+							</a></li>
+							{/if}
+							
+							{if WSTStoreGrant('store/orders/failure')}
+							<li><a id="menuItem45" href="{:Url('store/orders/failure')}" dataid="45">
+								<div class="complain_num">{$data['stat']['cancel']}</div>
+								<div>已取消</div>
+							</a></li>
+							{/if}
+				
+						</ul>
+					</div>
+				</div>
+                
+				<div class="mid_l_item" style="margin-top:10px;">
+					<div class="main_title">
+						<div class="wst-lfloat">
+							<span class="c16_555">商品信息</span>
+						</div>
+					</div>
+					<div class="f-clear"></div>
+					<div class="mid_main">
+						<ul class="order_info">
+							{if WSTStoreGrant('store/goods/index')}
+							<li><a id="menuItem32" href="{:Url('store/goods/index')}" dataid="32">
+								<div class="complain_num">{$data['stat']['onSaleCnt']}</div>
+								<div>出售中</div>
+							</a></li>
+							{/if}
+						</ul>
+					</div>
+				</div>
+			</li>
+			
+			<li class="mid_r">
+				
+				<div class='mid_r_rbottom' style="margin-bottom: 10px;">
+					<div class="main_title">
+						<div class="wst-lfloat">
+							
+							<span class="c16_555">商家帮助</span>
+						</div>
+						<div class="f-clear"></div>
+					</div>
+					<div class="rbottom_main">
+						<ul class="shop_tips">
+							{wst:article cat="300" id="vo" num="8"}
+							<li class="wst-textover"><a href="{:url('home/news/view',['id'=>$vo['articleId']])}" target="_blank"><i></i>{$key+1}、{$vo.articleTitle}</a><span>{:date('Y-m-d',strtotime($vo['createTime']))}</span></li>
+							{/wst:article}
+						</ul>
+					</div>
+				</div>
+				<div class='mid_r_rbottom'>
+					<div class="main_title">
+						<div class="wst-lfloat">
+							
+							<span class="c16_555">商家公告</span>
+						</div>
+						<div class="f-clear"></div>
+					</div>
+					<div class="rbottom_main">
+						<ul class="shop_tips2">
+							{wst:article cat="51" id="vo" num="5"}
+							<li class="wst-textover"><a href="{:url('home/news/view',['id'=>$vo['articleId']])}" target="_blank">{$key+1}、{$vo.articleTitle}</a><i>NEWS</i>&nbsp;&nbsp;&nbsp;&nbsp;<span>{:date('Y-m-d',strtotime($vo['createTime']))}</span></li>
+							{/wst:article}
+						</ul>
+					</div>
+				</div>
+			</li>
+			{if WSTStoreGrant('store/reports/topSaleGoods')}
+			<li class="mid_c">
+				<div class="index-right">
+					<div class="index-right-item">
+						<div class="main_title" style="padding-left:10px;">
+							<div class="wst-lfloat">
+								
+								<span class="c16_555">最近30天门店商品销售排行</span>
+							</div>
+							<div class="f-clear"></div>
+						</div>
+						<ul class="right-list-tit">
+							<li class="c12_555">序号</li>
+							<li class="c12_555">商品</li>
+							<li class="c12_555">数量</li>
+						</ul>
+						{volist name="$data['stat']['goodsTop']" id="glist" key="gkey" length="10"}
+						<ul class="right-list-tit right-list">
+							<li class="c14_ff66">
+								<div class="gTop{$gkey} top-num">{$gkey}</div>
+							</li>
+							<li class="wst-textover"><a class="c14_ff90 atop{$gkey}" target="_blank" href="{:url('home/goods/detail',['goodsId'=>$glist.goodsId])}">{$glist.goodsName}</a></li>
+							<li class="c14_ff66 gTop{$gkey}">{$glist.goodsNum?:0}</li>
+						</ul>
+						{/volist}
+
+					</div>
+				</div>
+			</li>
+			{/if}
+			{if WSTStoreGrant('store/reports/statSales')}
+			<li class="mid_r">
+				<div class="sale_info">
+					<div class="main_title">
+						<div class="wst-lfloat">
+							
+							<span class="c16_555">近30天门店商品销售情况</span>
+						</div>
+						<div class="f-clear"></div>
+					</div>
+					<div id="saleMain" style="width:100%;height:310px;"></div>
+				</div>
+			</li>
+			<script>
+				$(function(){
+					saleCount()
+				});
+				</script>
+			{/if}
+		</ul>
+	</div>
+<div class="f-clear"></div>
+	
+</div>
+
+
+{/* 近30天 */}
+<input type="hidden"  id="startDate"  class="ipt" value='{:date("Y-m-d",strtotime("-30 day"))}'/>
+<input type="hidden" id="endDate" class="ipt" value='{:date("Y-m-d")}'/>
+{/block}

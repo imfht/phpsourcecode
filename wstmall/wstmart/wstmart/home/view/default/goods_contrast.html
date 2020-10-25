@@ -1,0 +1,130 @@
+{extend name="default/base" /}
+{block name="title"}商品对比 - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="meta"}
+<meta name="description" content="{:WSTConf('CONF.seoMallDesc')}">
+<meta name="Keywords" content="{:WSTConf('CONF.seoMallKeywords')}">
+{/block}
+{block name="css"}
+<link href="__STYLE__/css/goodslist.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="nav"}
+	{include file="default/header" /}
+{/block}
+{block name="main"}
+<div class='wst-filters'>
+   <div class='item' style="border-left:2px solid #df2003;padding-left: 8px;">
+      <a class='link' href='{:url('home/index/index')}'>首页</a>
+      <i class="arrow">></i>
+      <span class='link'>商品对比</span>
+   </div>
+   <div class='wst-clear'></div>
+</div>
+{/* 商品展示  */}
+<div class="wst-container">
+	<div class="wst-contrast">
+		<div class="goods" id="goodsTabs">
+			<table class="table">
+				<tbody><tr>
+					<th>
+						{if($data['list'])}
+						<div class="choice">
+							<input type="checkbox" onclick="screenContrast(this,0)">
+							<label>高亮不同项</label>
+						</div>
+						<div class="choice">
+							<input type="checkbox" onclick="screenContrast(this,1)">
+							<label>隐藏相同项</label>
+						</div>
+						{else}
+						<div class="choice">请选择商品对比</div>
+						{/if}
+					</th>
+					{volist name="$data['list']" id="go"}
+					<td>
+						<div class="goods-item">
+							<div class="img"><a href="{:Url('home/goods/detail','goodsId='.$go['goodsId'])}" target="_blank">
+							<img class="goodsImg"  data-original="__RESOURCE_PATH__/{:WSTImg($go['goodsImg'])}" title="{$go['goodsName']|WSTStripTags}">
+							</a></div>
+							<p class="name"><a href="{:Url('home/goods/detail','goodsId='.$go['goodsId'])}" target="_blank">{$go['goodsName']}</a></p>
+							<p class="price" id="goods-price-{$go['goodsId']}">¥ <span>{$go['shopPrice']}</span></p>
+							<div class="operation">
+								<a href="{:Url('home/goods/detail','goodsId='.$go['goodsId'])}" target="_blank" class="see">查看</a>
+								{if(count($data['list'])!=1)}<a href="javascript:void(0);" onclick="javascript:contrastDel({$go['goodsId']})" class="del">删除</a>{/if}
+							</div>
+							<div class='wst-clear'></div>
+						</div>
+					</td>
+					{/volist}
+				</tr></tbody>
+			</table>
+		</div>
+		<div class="goods goods-fixed2" id="goodsTabs2">
+			<table class="table">
+				<tbody><tr>
+					<th>
+						<div class="choice">空白</div>
+					</th>
+				</tr></tbody>
+			</table>
+		</div>
+		<table class="table2">
+		<tbody>
+		{volist name="$data['lists']" id="lis"}
+			<tr class="identical_{$lis['identical']}">
+				<th>
+					<div class="left-title">{$lis['name']}</div>
+				</th>
+				{volist name="$data['list']" id="go"}
+				{php}$in = isset($lis['info'][$go['goodsId']])?$lis['info'][$go['goodsId']]:'--'{/php}
+				<td>
+					{if($lis['type']=='shop' || $lis['type']=='brand')}<div class="right-title">{$in}</div>{/if}
+					{if($lis['type']=='score')}
+						<div class="right-title">
+						{for start="0" end="$in"}
+          					<img src="__STATIC__/plugins/raty/img/star-on.png">
+          				{/for}
+          				{for start="1" end="6-$in"}
+          					<img src="__STATIC__/plugins/raty/img/star-off.png">
+          				{/for}
+						</div>
+					{/if}
+					{if($lis['type']=='spec')}
+						{if(isset($in['list']))}
+						<ul class="list-box">
+							{volist name="$in['list']" id="sp"}
+							{if($sp['isDefault']==1)}<input type="hidden" id="defaultSpec_{$go['goodsId']}_{$sp['catId']}" class="defaultSpec_{$go['goodsId']}" value="{$sp['itemId']}"/>{/if}
+							{if($sp['isAllowImg']==1)}
+								<li class="img {if($sp['isDefault']==1)}active{/if}" onclick="javascript:choiceContrast(this,{$sp['itemId']},{$sp['catId']},{$go['goodsId']});">
+									<img class="goodsImg" data-original="__RESOURCE_PATH__/{:WSTImg($sp['itemImg'])}" title="{$sp['itemName']|WSTStripTags}">
+								</li>
+							{else}
+								<li class="{if($sp['isDefault']==1)}active{/if}" onclick="javascript:choiceContrast(this,{$sp['itemId']},{$sp['catId']},{$go['goodsId']});">{$sp['itemName']}</li>
+							{/if}
+							{/volist}
+						</ul>
+						{else}
+						<div class="right-title">{$in}</div>
+						{/if}
+					{/if}
+				</td>
+				{/volist}
+			</tr>
+		{/volist}
+		</tbody>
+		</table>
+	</div>
+</div>
+{/block}
+{block name="js"}
+<script>
+var saleSpec = {
+		{if isset($data['saleSpec'])}
+		sku:{:json_encode($data['saleSpec'])}
+		{/if}
+	}
+$(function(){
+	fixedGoods();
+})	
+</script>
+<script type='text/javascript' src='__STYLE__/js/goodslist.js?v={$v}'></script>
+{/block}

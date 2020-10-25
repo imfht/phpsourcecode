@@ -1,0 +1,124 @@
+<layout name="Index/layout" />
+<div class="box-form form-edit">
+    <div class="tit">
+	    <ul class="float">
+	        <li><a href="{:U('index')}" >单页列表</a></li>
+	        <li><a href="{:U('add')}" class="current" >添加单页</a></li>
+	    </ul> 
+    </div>
+    <div class="con form-edit">
+        <form class="AjaxForm" data-action="{:U()}" method="post">
+
+            <table class="bordered color">
+			    <tr>
+			        <th colspan="2">
+			            添加文章
+			        </th>
+			    </tr>
+                <tr>
+                    <td>栏目:</td>
+                    <td>
+                        <select name="cid">
+                        <foreach name="cate" item="v">
+                            <option value="{$v.id}" <eq name="v.is_menu" value="1">disabled</eq> >{$v.mark}{$v.title}</option>
+                        </foreach>
+                        </select>
+                    </td>
+                </tr>
+				<tr>
+					<td>标题:</td>
+					<td>
+						<input type="text" name="title" datatype="require" tip="标题(25个字至50个字节以内)">
+					</td>
+				</tr>
+				<tr>
+					<td width="10%">内容:</td>
+					<td width="90%">
+						{:W('Ueditor/editor',array('content'))}
+					</td>
+				</tr>
+				<tr>
+					<td>关键词:</td>
+					<td>
+						<input type="text" name="keywords" tip="关键词(5个词左右,单个词8汉字以内)">
+					</td>
+				</tr>
+				<tr>
+					<td>描述:</td>
+					<td>
+						<textarea name="description" style="width:50%" tip="描述(字数80个汉字，160个字符以内)"></textarea>
+					</td>
+				</tr>
+                <tr>
+                    <td class="td-2" colspan="2"><input type="submit" class="btn-big btn-blue" value="提交"></td>
+                </tr>
+            </table>
+
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+seajs.use(['validform','dialog'],function(validform,dialog){
+    $(".AjaxForm").Validform({
+        beforeSubmit:function(curform){
+            var url = curform.data('action'),
+                data = curform.serialize();
+            dialog({id:'LoadingBox'}).show();
+            var errorBox=function(content){
+                dialog({
+                    id: 'AjaxSubmitBox',
+                    title: '错误提示',
+                    quickClose: true,
+                    content: content,
+                    onshow: function (){dialog.get('LoadingBox').close().remove();},
+                }).show();
+            };
+            $.ajax({
+                type: "POST",
+                url: url,
+                data:data,
+                success: function (result) {
+                    if(result.status == undefined){
+                        errorBox(result);
+                        return false;
+                    }
+                    dialog({
+                        id:'AjaxSubmitBox',
+                        title: '操作提示',
+                        content: result.info,
+                        quickClose: true,
+                        onshow: function (){dialog.get('LoadingBox').close().remove();},
+                    }).show();
+                    if(result.status){
+                        setTimeout(function(){
+                            var location = window.location;
+                            if(result.url){
+                                location.href = result.url;
+                            }else{
+                                location.href = location.pathname + location.search;
+                            }
+                        }, 1000); 
+                    }else{
+                        setTimeout(function(){
+                            dialog.get('AjaxSubmitBox').close().remove();
+                        }, 3000); 
+                    }
+                },
+                error: function(x, t, e){
+                    errorBox(x.responseText);
+                }
+            });
+            return false;
+        }
+    });
+});
+</script>
+
+<script type="text/javascript">
+seajs.use(['ajaxsend'],function(ajaxsend){
+    ajaxsend.get();
+    ajaxsend.confirm();
+    ajaxsend.html();
+});
+</script>

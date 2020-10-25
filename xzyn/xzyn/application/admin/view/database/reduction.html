@@ -1,0 +1,94 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>数据库备份列表</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>数据库管理</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> 数据库管理</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"></h3>
+                    <div class="pull-left">
+                    </div>
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <tr>
+                            <th>备份序号</th>
+                            <th>备份名称</th>
+                            <th>备份时间</th>
+                            <th>备份大小</th>
+                            <th width="175">操作</th>
+                        </tr>
+                        {volist name="dataList" id="vo"}
+                        <tr>
+                            <td>{$i}</td>
+                            <td>{$vo.name}</td>
+                            <td>{$vo.time}</td>
+                            <td>{$vo.size}</td>
+                            <td>
+                            	{:BTN(C_NAME.'/dowonload','table='.$vo.name,'下载','btn btn-warning btn-xs','fa-download')}
+                                {:BTN(C_NAME.'/restore','','还原','btn btn-primary btn-xs delete-one','fa-rotate-left','data-url="' .url(C_NAME.'/restore'). '" data-id="' .$vo.name. '" data-title="还原"')}
+                                {:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.name.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+        checkboxClass: 'icheckbox_minimal-blue',
+        radioClass: 'iradio_minimal-blue'
+    });
+
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $(".select2").select2({language:"zh-CN"});
+
+    /*全选-反选*/
+    $('.checkbox-toggle').on('ifChecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("check");
+    });
+    $('.checkbox-toggle').on('ifUnchecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("uncheck");
+    });
+
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

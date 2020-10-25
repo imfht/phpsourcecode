@@ -1,0 +1,132 @@
+{layout name="layout" /}
+<form id="form" action="{:url('fastshop/config/index')}">
+<div class="titlebar">
+    <div class="fn-fb"><i class="iconfont icon-line-chart_icon"></i>会员配置</div>
+</div>
+<table class="formtable">
+    <tr><th>购买限制:</th><td>
+        <select datatype="*" class="select w180" name="shop_types">
+            <option value="0"{if $info.shop_types == 0}selected{/if}>任何人</option>
+            <option value="1"{if $info.shop_types == 1}selected{/if}>仅会员</option>
+        </select>
+        <span class="gray">想要获得推荐奖励,必须自己先开通会员.</span>
+    </td></tr>
+    <tr><th>开通会员:</th><td>
+        <input class="input" datatype="n" type="text" name="regvip_price" value="{$info.regvip_price}" />(￥)
+        <span class="gray">开通会员费用</span>
+    </td></tr>
+    <tr><th>直推返比:</th><td><input class="input" datatype="n" type="text" name="regvip_level1_ratio" value="{$info.regvip_level1_ratio}" /> %</td></tr>
+    <tr><th>间推返比:</th><td><input class="input" datatype="n" type="text" name="regvip_level2_ratio" value="{$info.regvip_level2_ratio}" /> %</td></tr>
+    <tr><th>提现手续费:</th><td>
+        <input class="input" datatype="n" type="text" name="tax" value="{$info.tax}" /> (%)
+        <span class="gray">公式：【 实际提现金额 - 实际提现金额*手续费 】 </span>
+    </td></tr>
+</table>
+<div class="titlebar">
+    <div class="fn-fb"><i class="iconfont icon-line-chart_icon"></i>抢购奖励</div>
+</div>
+<table class="formtable">
+    <tr><th>成交利润率:</th><td>
+        <input class="input" datatype="n" type="text" name="profit" value="{$info.profit}" /> (%)
+        <span class="gray">单件商品成交利润率.<span class="fn-f12">公式:商品1000元,10%利润率【A1000=B1000+C1000 】(A1000*10%=100)+(B1000*10%=100) = 200元</span></span><br />
+    </td></tr>
+    <tr><th>购物金比例:</th><td>
+        <input class="input" datatype="n" type="text" name="shopping" value="{$info.shopping }" /> (%)
+        <span class="gray">公式：【 禁止提现,只能用于闪商城消费 】 </span>
+    </td></tr>
+    <tr><th>奖励方式:</th><td>
+        <select datatype="*" class="select w180" name="reward_types">
+            <option value="0"{if $info.reward_types == 0}selected{/if}>成交奖励</option>
+            <option value="1"{if $info.reward_types == 1}selected{/if}>利润奖励</option>
+        </select>
+        <span class="gray">您推荐新用户成交的奖励方式</span>
+    </td></tr>
+    <tr><th class="rules_1">{if $info.reward_types == 0}推荐奖励{else}奖励倍数{/if}:</th><td>
+        <input class="input" datatype="n" type="text" name="reward_nth" value="{$info.reward_nth}" />
+        <span class="gray rules_1text">{if $info.reward_types == 0} (%)商品本身成交价的百分比奖励给推荐人 {else} 公式（成交利润率 - 购物金比例 ÷ 奖励倍数）= (奖励金额 ÷ 奖励倍数)N次(最小1元){/if}</span>
+    </td></tr>
+    <tr><th class="rules_2">{if $info.reward_types == 0}间接奖励{else}绩效奖励比例{/if}:</th><td>
+        <input class="input" datatype="n" type="text" name="reward_ratio" value="{$info.reward_ratio}" /> (%)
+        <span class="gray rules_2text">{if $info.reward_types == 0}商品本身成交价的百分比奖励给推荐人{else}商品本身成交价的百分比奖励给满足绩效规则的用户{/if}</span>
+    </td></tr>
+</table>
+<table class="formtable rules {if $info.reward_types == 0}fn-hide{/if}" id="props">
+{if empty($info.rules )}
+<tr>
+    <th>绩效奖励规则:</th>
+    <td>
+        <input class="input" type="text" name="num[]" value="" placeholder="人数"  />
+        <input class="input" type="text" name="much[]" value="" placeholder="成绩"/>
+        <input class="input" type="text" name="ratio[]" value="" placeholder="比例"/>(%)
+        <span class="fn-cp" id="add"><i class="iconfont icon-add_icon"></i></span>
+    </td>
+</tr>
+{else}
+{foreach $info.rules as $key => $vo}
+    <tr>
+        <th>{if !$key}绩效奖励规则:{/if}</th>
+        <td>
+            <input class="input" type="text" name="num[]" value="{$vo.num}" placeholder="人数" />
+            <input class="input" type="text" name="much[]" value="{$vo.much}" placeholder="成绩" />
+            <input class="input" type="text" name="ratio[]" value="{$vo.ratio}" placeholder="比例" />(%)
+            {if !$key}<span class="fn-cp" id="add"><i class="iconfont icon-add_icon"></i></span>
+            {else /}<span class="fn-cp" onclick="delProps(this)"><i class="iconfont icon-reduce_icon"></i></span>{/if}
+        </td>
+    </tr>
+{/foreach}
+{/if}
+</table>
+<table class="formtable">
+    <tr class="rules {if $info.reward_types == 0}fn-hide{/if}">
+        <th>平台奖励比例</th><td><input class="input" datatype="n" type="text" name="platform_ratio" value="{$info.platform_ratio ? $info.platform_ratio : 0}" /> (%) <span class="gray">0不启用</span></td>
+    </tr>
+    <tr class="rules {if $info.reward_types == 0}fn-hide{/if}">
+        <th>平台奖励条件</th><td>
+            <input class="input" type="text" name="platform_amout" value="{$info.platform_amout ? $info.platform_amout : 0}" placeholder="成绩"/>
+            <span class="gray rules_2text">{if $info.reward_types == 0}商品本身成交价的百分比奖励给推荐人{else}商品本身成交价的百分比奖励给满足绩效规则的用户{/if}</span>
+        </td>
+    </tr>
+    <tr>
+        <th></th>
+        <td>
+            <input type="submit" value="确定" class="button submit" />
+            <input type="reset" value="重置" class="button button-blank" />
+        </td>
+    </tr>
+</table>
+</form>
+<script type="text/javascript">
+Do('base', 'layer', 'form', function () {
+    $('#form').isForm();
+    //增加商品属性
+    $('#add').click(function () {
+        $("#props").append(
+            "<tr><th></th><td>" +
+            '<input class="input" type="text" name="num[]" placeholder="人数" /> ' +
+            '<input class="input" type="text" name="much[]" placeholder="成绩"  /> ' +
+            '<input class="input" type="text" name="ratio[]" placeholder="比例"  />(%)</div>' +
+            ' <span class="fn-cp" onClick="delProps(this)"><i class="iconfont icon-reduce_icon"></i></span></td></tr>')
+    })
+    $("select[name='reward_types']").change(function () {
+        var id = $(this).val();
+        if(id == 1){
+            $('.rules').show();
+            $('.rules_1').text('奖励倍数:');
+            $('.rules_2').text('绩效奖励比例:');
+            $('.rules_1text').text('公式（成交利润率 - 购物金比例 ÷ 奖励倍数）= (奖励金额 ÷ 奖励倍数)N次(最小1元)');
+            $('.rules_2text').text('商品本身成交价的百分比奖励给满足绩效规则的用户');
+        }else{
+            $('.rules').hide();
+            $('.rules_1').text('推荐奖励:');
+            $('.rules_2').text('间接奖励:');
+            $('.rules_1text').text('(%)商品本身成交价的百分比奖励给推荐人');
+            $('.rules_2text').text('商品本身成交价的百分比奖励给推荐人');
+        }
+    })
+})
+//删除属性
+function delProps(dom) {
+    $(dom).parents("tr").remove();
+    $(dom).parent().remove();
+}
+</script>

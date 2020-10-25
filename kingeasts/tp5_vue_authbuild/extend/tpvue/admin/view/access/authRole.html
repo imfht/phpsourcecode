@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,initial-scale=1.0,user-scalable=no" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <!-- intoHead Start -->
+        {include file="common/intohead" /}
+        <!-- /intoHead End -->
+    </head>
+	<body class="mainbody">
+		<div class="line10"></div>
+
+		<div id="floatHead" class="content-tab-wrap" style="height: 42px;">
+			<div class="content-tab" style="width: 1234px; position: static; top: 52px;">
+				<div class="content-tab-ul-wrap">
+					<div class="tab-title">
+						<span>角色授权</span><i></i>
+					</div>
+					<ul>
+						<li>
+							<a class="selected" href="#">角色授权</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+ 
+		<form action="" method="POST" data-url="" enctype="multipart/form-data" id="formData" onsubmit="return false">
+			<input type="hidden" name="id" value="{$id}"/>
+			<div class="tab-content">
+				<dl>
+					<dt>权限组名</dt>
+					<dd><input name="title" type="text" id="title" value="{$info.title}" class="input normal" datatype="*1-100" sucmsg=" "><span class="Validform_checktip"><span class="red">*</span> 角色中文名称，100字符内</span></dd>
+				</dl>
+				<dl>
+					<dt>权限状态</dt>
+					<dd>
+						<div class="rule-multi-radio multi-radio"><div class="boxwrap"><a href="javascript:;" class="selected">启用</a><a href="javascript:;">禁止</a></div>
+							<span id="rblmobile_status" style="display: none;">
+							  	<input id="mobile_status0" type="radio" name="status" value="1" {if condition="$info['status'] eq 1"}checked{/if}><label for="mobile_status0">启用</label>
+							    <input id="mobile_status1" type="radio" name="status" value="0" {if condition="$info['status'] eq 0"}checked{/if}><label for="mobile_status1">禁止</label>
+							</span>
+	  					</div> 
+					</dd>
+				</dl> 
+				<dl>
+					<dt>权限描述</dt>
+					<dd><textarea name="description" rows="5" style="width:308px;text-indent:2px;border: 1px solid #ccc;">{present name="$info['description']"}{$info.description}{/present}</textarea><span class="Validform_checktip"><span class="red">*</span> 请描述节点的用途</span></dd>
+				</dl>
+				<dl> 
+					<dt>管理权限</dt>
+					<dd>
+						<table width="100%" border="0" cellspacing="0" cellpadding="0" class="tab rules-data" data-rules="{$info['rules']}">
+	                        {volist name="nodeList" id="level1"}
+	                            <tr>
+	                                <td style="font-size: 14px;"><label><input name="rules[]" level="1" type="checkbox" obj="node_{$level1.id}" value="{$level1.id}" data="{$level1.id}:1:0" data-id="{$level1.id}" data-pid="0"/> <b class="mac-size">[项目]</b> {$level1.title}</label></td>
+	                            </tr>
+	                          {present name ="level1['_child']"}
+	                            {volist name="level1['_child']" id="level2"}
+	                                <tr>
+	                                    <td style="padding-left:60px; font-size: 14px;"><label><input name="rules[]" level="2" type="checkbox" obj="node_{$level1.id}_{$level2.id}" value="{$level2.id}"  data="{$level2.id}:2:{$level2.pid}" data-id="{$level2.id}" data-pid="{$level2.pid}"/> <b class="mac-size">[模块]</b> {$level2.title}</label></td>
+	                                </tr>
+	                                {present name ="$level2['_child']"}
+	                                    
+	                                    	    {volist name="level2['_child']" id="level3"}
+	                                    	  	<tr>
+	                                          		<td style="padding-left: 120px;">
+	                                                <label><input name="rules[]" level="3" type="checkbox" obj="node_{$level1.id}_{$level2.id}_{$level3.id}" value="{$level3.id}" data="{$level3.id}:3:{$level3.pid}" data-id="{$level3.id}" data-pid="{$level3.pid}"/> <b class="mac-size">[操作]</b>{$level3.title}</label> &nbsp;&nbsp;&nbsp;
+	                                                {present name ="$level3['_child']"}
+	                                                <tr>
+	                                        		  <td style="padding-left: 160px;">
+	                                               	    {foreach name="level3['_child']" item="level4" key="k" }
+	                                               	    {if condition="$level4.is_display eq 1"}|&nbsp;&nbsp;&nbsp;{/if}
+															<label>
+																<input name="rules[]" level="4" type="checkbox" obj="node_{$level1.id}_{$level2.id}_{$level3.id}_{$level4.id}" value="{$level4.id}" data="{$level4.id}:4:{$level4.pid}" data-id="{$level4.id}" data-pid="{$level4.pid}"/> {$level4.title} &nbsp;&nbsp;&nbsp;
+															</label> 
+	                                               	    {/foreach}
+	                                               	  </td>
+	                                    			</tr> 
+	                                               	{/present}
+	                                              </td>
+	                                   			</tr> 
+	                                            {/volist}
+	                                        
+	                                {/present}
+	                            {/volist}
+	                          {/present}  
+	                        {/volist}
+	                    </table>
+					</dd>
+				</dl>
+			</div>
+			{include file="common/submit" /}
+		</form>
+
+		<!--数据提交-->
+		
+		<!--/数据提交-->
+		
+		<script>
+			// -- 关联树控制
+			var rulesTab = $(".rules-data");
+			var checkbox = rulesTab.find("input");
+			var checkData =  rulesTab.attr("data-rules").split(",");
+			console.log(checkData);
+			checkbox.each(function(index, el) {
+				var $this = $(this),$thisId = $this.attr("data-id");
+				for(var i=0,l=checkData.length;i < l;i++){
+					if($thisId == checkData[i]){
+						$this.attr("checked","checked");
+					}
+				}
+			});
+
+			 //为项目时候全选本项目所有操作
+		    $("input[level='1']").click(function(){
+		        var obj=$(this).attr("obj")+"_";
+		        $("input[obj^='"+obj+"']").prop("checked",$(this).prop("checked"));
+		    });
+		    //为模块时候全选本模块所有操作
+		    $("input[level='2']").click(function(){
+		        var obj=$(this).attr("obj")+"_";
+		        $("input[obj^='"+obj+"']").prop("checked",$(this).prop("checked"));
+		        //分隔obj为数组
+		        var tem=obj.split("_");
+		        //将当前模块父级选中
+		        if($(this).prop('checked')){
+		            $("input[obj='node_"+tem[1]+"']").prop("checked","checked");
+		        }
+		    });
+		    //为操作时只要有勾选就选中所属模块和所属项目
+		    $("input[level='3']").click(function(){
+		        var tem=$(this).attr("obj").split("_");
+		        if($(this).prop('checked')){
+		            //所属项目
+		            $("input[obj='node_"+tem[1]+"']").prop("checked","checked");
+		            //所属模块
+		            $("input[obj='node_"+tem[1]+"_"+tem[2]+"']").prop("checked","checked");
+		        }
+		    });
+		    //为分类时只要有勾选就选中所属模块和所属项目
+		    $("input[level='4']").click(function(){
+		        var tem=$(this).attr("obj").split("_");
+		        if($(this).prop('checked')){
+		            //所属项目
+		            $("input[obj='node_"+tem[1]+"']").prop("checked","checked");
+		            //所属模块
+		            $("input[obj='node_"+tem[1]+"_"+tem[2]+"']").prop("checked","checked");
+		            //所属分类
+		            $("input[obj='node_"+tem[1]+"_"+tem[2]+"_"+tem[3]+"']").prop("checked","checked");
+		        }
+		    });
+		</script>
+	</body>
+</html>

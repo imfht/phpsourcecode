@@ -1,0 +1,159 @@
+<div class="row">
+	<div class="col-md-12 col-sm-12">
+		<!-- BEGIN EXAMPLE TABLE PORTLET-->
+		<div class="portlet">
+			<div class="portlet-title">
+				<div class="caption">
+					<i class="fa fa-cogs"></i><?php echo $meta_title?> 
+				</div>
+				<div class="actions">
+                
+                    <a href="<?php echo $this->url->get("AuthManager/createGroup")?>" class="btn btn-default btn-sm">
+					<i class="fa fa-plus"></i> 新 增 </a>
+					<a href="javascript:;" url="<?php echo $this->url->get("AuthManager/changeStatus/method/resumeGroup")?>" class="btn btn-default btn-sm changestatus">
+					<i class="fa fa-times"></i> 启 用 </a>
+                    <a href="javascript:;" url="<?php echo $this->url->get("AuthManager/changeStatus/method/forbidGroup")?>" class="btn btn-default btn-sm changestatus">
+					<i class="fa fa-times"></i> 禁 用 </a>
+                    <a href="javascript:;" url="<?php echo $this->url->get("AuthManager/changeStatus/method/deleteGroup")?>" class="btn btn-default btn-sm changestatus">
+					<i class="fa fa-times"></i> 删 除 </a>
+                    
+                
+				</div>
+			</div>
+			<div class="portlet-body">
+				<table class="table table-striped table-bordered table-hover" id="sample_3">
+				<thead>
+				<tr>
+					<th class="table-checkbox">
+						<input type="checkbox" class="group-checkable" data-set="#sample_3 .checkboxes"/>
+					</th>
+					<th>ID</th>
+                    <th class="">用户组</th>
+            		<th class="">描述</th>
+            		<th class="">状态</th>
+            		<th class="">操作</th>
+            		
+				</tr>
+				</thead>
+				<tbody>
+                <?php foreach($list as $key=>$vo){?>
+    				<tr class="odd gradeX">
+    					<td>
+    						<input type="checkbox" class="checkboxes" name="id[]" value="<?php echo $vo['id']?>"/>
+    					</td>
+    					<td>
+    						 <?php echo $vo['id']?>
+    					</td>
+    					<td><a href="<?php echo $this->url->get("AuthManager/editGroup/id/".$vo['id'])?>"><?php echo $vo['title']?></a> </td>
+            			<td><span><?php echo mb_strimwidth($vo['description'],0,60,"...","utf-8")?></span></td>
+            			<td><?php echo $vo['status_text']?></td>
+            			<td>
+                            <?php if($vo['status']!=0){?>
+            				<a href="<?php echo $this->url->get("AuthManager/changeStatus/method/forbidGroup/id/".$vo['id'])?>" class="ajax-get">禁用</a>
+            				<?php }?>
+                            <?php if($vo['status']!=1){?>
+            				<a href="<?php echo $this->url->get("AuthManager/changeStatus/method/resumeGroup/id/".$vo['id'])?>" class="ajax-get">启用</a>
+            				<?php }?>
+                            <?php if($vo['status']!=-1){?>
+            				<a href="<?php echo $this->url->get("AuthManager/changeStatus/method/deleteGroup/id/".$vo['id'])?>" class="confirm ajax-get">删除</a>
+                            <?php }?>
+                                                       
+                            
+                            <a href="<?php echo $this->url->get("AuthManager/access/group_name/".$vo['title']."/group_id/".$vo['id'])?>" >访问授权</a>
+                            <a href="<?php echo $this->url->get("AuthManager/user/group_name/".$vo['title']."/group_id/".$vo['id'])?>" >成员授权</a> 
+                        </td>
+    				</tr>
+                <?php }?>
+				
+				
+				</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- END EXAMPLE TABLE PORTLET-->
+	</div>
+</div>
+
+<script>
+jQuery(document).ready(function() {
+    var table = $('#sample_3');
+    
+        // begin: third table
+    table_data = table.dataTable({
+
+        // Internationalisation. For more info refer to http://datatables.net/manual/i18n
+        "language": {
+            "aria": {
+                "sortAscending": ": activate to sort column ascending",
+                "sortDescending": ": activate to sort column descending"
+            },
+            "emptyTable": "No data available in table",
+            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "infoEmpty": "No entries found",
+            "infoFiltered": "(filtered1 from _MAX_ total entries)",
+            "lengthMenu": "Show _MENU_ entries",
+            "search": "Search:",
+            "zeroRecords": "No matching records found"
+        },
+        
+        // Uncomment below line("dom" parameter) to fix the dropdown overflow issue in the datatable cells. The default datatable layout
+        // setup uses scrollable div(table-scrollable) with overflow:auto to enable vertical scroll(see: assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js). 
+        // So when dropdowns used the scrollable div should be removed. 
+        //"dom": "<'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
+
+        "bStateSave": true, // save datatable state(pagination, sort, etc) in cookie.
+        
+        "lengthMenu": [
+            [5, 10, 15, 20, -1],
+            [5, 10, 15, 20, "All"] // change per page values here
+        ],
+        // set the initial value
+        "pageLength": 10,
+        "language": {
+            "lengthMenu": " _MENU_ records"
+        },
+        "columnDefs": [{  // set default column settings
+            'orderable': false,
+            'targets': [0]
+        }, {
+            "searchable": false,
+            "targets": [0]
+        }],
+        "order": [
+            [1, "asc"]
+        ]
+    });
+ 
+    $('.changestatus').click( function () {
+        var rows = [];
+        $('tbody > tr > td:nth-child(1) input[type="checkbox"]:checked', table_data).each(function() {
+            rows.push($(this).val());
+        });
+        $.post($(this).attr("url"),{id:rows},success, "json");
+        function success(data){
+			if(data.status){
+                alert("ok");
+                window.location.href = data.url;
+			}
+		}
+        
+    } );
+
+    var tableWrapper = jQuery('#sample_3_wrapper');
+
+    table.find('.group-checkable').change(function () {
+        var set = jQuery(this).attr("data-set");
+        var checked = jQuery(this).is(":checked");
+        jQuery(set).each(function () {
+            if (checked) {
+                $(this).attr("checked", true);
+            } else {
+                $(this).attr("checked", false);
+            }
+        });
+        jQuery.uniform.update(set);
+    });
+
+    tableWrapper.find('.dataTables_length select').select2(); // initialize select2 dropdown
+});
+</script>

@@ -1,0 +1,58 @@
+<script language="javascript">
+$(function(){
+	$("#backupInfo").append('<p>成功获取数据信息！</p>');
+});
+
+var num = 0;
+var page = 0;
+loopTable(num,page);
+
+function loop(num,page){
+	loopTable(num,page);
+}
+
+
+function loopTable(num,page){
+	$(function(){
+		var total = Number('{$total}');
+		var act = '{$act}';
+		if(num<=total){
+			$.get('__ACTION__/act/'+act+'/go/'+num+'/page/'+page, function(data){
+				var info = data.split("|");
+				$("#backupInfo").append(info[0]);
+				$("#backupInfo").parent().scrollTop(1000*total);
+				if(info[1]==1){
+					loop(num,page);
+				}else{
+					if(info[2]>0){
+						loop(num,page);
+					}else{
+						num++;
+						loop(num,page);
+					}
+				}
+			});
+		}else{
+			$("#waiting").empty();
+			if(act=='bak'){
+				var info = '数据库备份成功！';
+			}else{
+				var info = '数据库还原成功！';
+			}
+			$.messager.alert('提示',info,'info',function(){
+				cancel['addBackup'].dialog('close');
+				cancel['addBackup'] = null;
+				$("#Backup").datagrid('reload');
+			});
+		}
+	});
+}
+</script>
+<div class="con-tb" id="backupInfo" style="padding:3px;">
+
+</div>
+<if condition="$act=='bak'">
+ <p id="waiting" style="margin-left:3px">数据正在备份中，请稍等...</p>
+<else />
+ <p id="waiting" style="margin-left:3px">数据正在还原中，请稍等...</p>
+</if>

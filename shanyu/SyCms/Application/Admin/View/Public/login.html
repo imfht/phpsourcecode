@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>山雨内容管理系统</title>
+	<link rel="shortcut Icon" href="__PUBLIC__/Img/favicon.ico" />
+
+	<link href="__PUBLIC__/Css/reset.css" rel="stylesheet">
+	<link href="__PUBLIC__/Admin/login.css" rel="stylesheet">
+</head> 
+
+<body id="public-login">
+<div class="head cl">
+	<div class="logo fl">
+		<img src="__PUBLIC__/Admin/logo.png" width="180" height="40" />
+	</div>
+</div>
+<div class="main">
+	<div class="login-box">
+		<div class="tit">
+			Login 
+		</div>
+		<div class="con">
+			<form id="LoginForm" action="{:U('login')}" method="post" autocomplete="off">
+				<ul>
+					<li class="mbt10">
+						<p>账号:</p>
+						<input id="User" class="text" type="text" maxlength="20" name="username" placeholder="请填写账号" value="">
+					</li>
+					<li class="mbt10">
+						<p>密码:</p>
+						<input id="Pass" class="text" type="password" maxlength="30" name="password" placeholder="请填写密码" value="">
+					</li>
+					<li class="cl mbt10">
+						<div class="fl">
+						<p>验证码:</p>
+						<input id="Code" class="code" type="text" maxlength="4" name="code">
+						</div>
+						<img id="CodeImg" class="code-img shadow fr" src="{:U('verify')}" alt="验证码">
+					</li>
+					<li>
+						<p class="fl"><input id="Remember" type="checkbox" name="remember" value="1" /><label for="Remember">记录登录信息</label></p>
+						<p class="fr"><a href="{:U('lost')}">忘记登录密码?</a></p>
+						<div class="clear"></div>
+						<input class="btn-all" type="submit" value="登录">
+					</li>
+				</ul>
+				<p id="AlertMsg" class="alert-error hide"></p>
+			</form>
+		</div>
+	</div>
+</div>
+<div class="foot cl">
+	<div class="copyright fl">
+		© CopyRight ShanYu
+	</div>
+	<div class="contact fr">
+		wf9100@qq.com
+	</div>
+</div>
+
+<script type="text/javascript" src="__PUBLIC__/Js/Jquery/jquery.min.js"></script> 
+<script>
+$(function(){
+	//初始化选中用户名输入框
+	$("#loginForm").find("input[name=username]").focus();
+	//刷新验证码
+	var verifyimg = $("#CodeImg").attr("src");
+    $("#CodeImg").click(function(){
+        if( verifyimg.indexOf('?')>0){
+            $("#CodeImg").attr("src", verifyimg+'&random='+Math.random());
+        }else{
+            $("#CodeImg").attr("src", verifyimg.replace(/\?.*$/,'')+'?'+Math.random());
+        }
+    });
+    //防止重复提交
+	$(document).ajaxStart(function(){
+	    $("input:submit").attr("disabled", true);
+	}).ajaxStop(function(){
+	    $("input:submit").attr("disabled", false);
+	});
+	//验证提交
+	$("#LoginForm").submit(function(){
+		var self = $(this);
+		//验证规则
+		var msg='';
+		if(self.find("#User").val() == '') msg+='请填写账号,';
+		if(self.find("#Pass").val() == '') msg+='请填写密码,';
+		if(self.find("#Code").val() == '') msg+='请填写验证码,';
+		if(msg != '') { self.find("#AlertMsg").addClass('alert-error').show().text(msg);return false; }
+
+		//提交
+		$.post(self.attr("action"), self.serialize(), success, "json");
+		return false;
+		function success(data){
+			if(data.status){
+				self.find("#AlertMsg").removeClass('alert-error').addClass('alert-success').show().text('登录中...');
+				setTimeout(function() {
+					window.location.href = data.url;
+				}, 1000);
+				
+			} else {
+				self.find("#AlertMsg").show().text(data.info);
+				//刷新验证码
+				$("#CodeImg").click();
+			}
+		}
+	});
+
+
+});
+</script>
+</body> 
+</html>

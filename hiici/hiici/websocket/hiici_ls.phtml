@@ -1,0 +1,55 @@
+<?php
+
+if (1 == @$_GET['m_f']) {
+	$auth = @$_SESSION['auth'];
+	if (empty($auth)) to_login('?c=websocket&a=hiici_ls&m_f=1');
+	$m_c = ' AND user_id in (SELECT to_user_id FROM follow WHERE user_id = '.$auth['id'].')';
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 我关注的直播 <small>>></small>'; 
+} else {
+	$m_c = '';
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 直播搜索 <small>>></small>'; 
+}
+
+$wd = @filter_var($_POST['wd'], FILTER_SANITIZE_STRING);
+if (empty($wd)) {
+	$a_c = " ORDER BY c_at DESC LIMIT 120";
+} else {
+	$a_c = " AND name LIKE '%$wd%'";
+}
+$md5_s = dt_query("SELECT name, n_id_md5, a_m, p_m FROM flex_n_id WHERE c_at > ".(time()-360).$m_c.$a_c);
+
+?>
+<script src="forum/inc/forum.js"></script>
+<link rel="stylesheet" href="forum/inc/forum.css">
+<?php require_once('forum/inc/pub_h.phtml') ?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><?php echo $v_title ?></li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-list-search">
+	<div class="row clearfix">
+		<div class="col-md-4 col-xs-2 column">
+		</div>
+		<div class="col-md-4 col-xs-8 column">
+			<form id="search" action="?c=websocket&a=hiici_ls" method="post">	
+				<div class="input-group">
+					<input class="form-control" type="text" name="wd" placeholder="直播搜索" value="<?php echo $wd ?>">
+					<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+					<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+				</div>
+			</form>	
+		</div>
+	</div>
+</div>
+<div class="container index-forum">
+	<h3 class="hidden-xs"><a href="#"><?php echo $v_title ?></a></h3>
+	<style> .index-forum .btn.hao123 { padding: 20px; } </style>
+	<?php while ($md5 = mysql_fetch_array($md5_s)) { ?><a target="_blank" class="btn btn-default hao123" href="?c=websocket&a=hiici_ui&n_id_md5=<?php echo $md5['n_id_md5'] ?>"> <?php echo $md5['name']; if (1 == $md5['a_m']) echo ' <span class="label label-default">言</span>'; if (1 == $md5['p_m']) echo ' <span class="label label-success">密</span>' ?> </a><?php } ?>
+</div>
+<script>
+$('li#websocket').addClass('active');
+</script>

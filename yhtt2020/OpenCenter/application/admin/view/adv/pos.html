@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>广告管理列表</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="__LAYUI__/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/admin.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/oc.css" media="all">
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-tab layui-tab-card">
+        <ul class="layui-tab-title">
+            <li class="layui-this">广告位置管理</li>
+            <li>广告管理</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div style="padding-bottom: 10px;">
+                    <button class="layui-btn layuiadmin-btn" data-type="add">添加</button>
+                    <button class="layui-btn layuiadmin-btn" data-type="del">删除</button>
+                </div>
+                <table id="list" lay-filter="list"></table>
+                <script type="text/html" id="bar">
+                    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="add">添加</a>
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div class="layui-tab-item">
+                <table id="data-list" lay-filter="data-list"></table>
+                <script type="text/html" id="data-bar">
+                    <a class="layui-btn layui-btn-xs edit" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="__LAYUI__/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '__LAYUI__/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'workorder', 'table'], function () {
+        var $ = layui.$
+            , form = layui.form
+            , table = layui.table;
+
+        //广告位列表
+        table.render({
+            elem: '#list',
+            url: "{:url('adv/pos')}", //数据接口
+            defaultToolbar: ['filter', 'print', 'exports'],
+            page: true, //开启分页
+            toolbar: true,
+            limits: [10, 20, 50, 100],
+            cols: [[ //表头
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: 'ID', sort: true, fixed: 'left'},
+                {field: 'name', title: '广告位名称', sort: true, fixed: 'left'},
+                {field: 'title', title: '广告位说明', sort: true, fixed: 'left'},
+                {field: 'path', title: '路径', sort: true},
+                {field: 'type_text', title: '类型', sort: true},
+                {field: 'width', title: '宽', sort: true},
+                {field: 'height', title: '高', sort: true},
+                {field: 'theme', title: '主题', sort: true},
+                {field: 'status_text', title: '状态', sort: true},
+                {fixed: 'right', width: 165, align: 'center', toolbar: '#bar'}
+            ]]
+        });
+        //监听工具条
+        table.on('tool(list)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+            if (layEvent === 'add') { //添加
+                $('[lay-event="add"]').attr('lay-href', "{:url('adv/appendAdv')}&pos_id=" + data.id);
+            } else if (layEvent === 'del') { //删除
+                layer.confirm('确定删除吗？', function (index) {
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.post("{:url('adv/delPos')}", {id: data.id}, function (res) {
+                        layer.msg('删除成功');
+                    })
+                });
+            } else if (layEvent === 'edit') { //编辑
+                //第三步：渲染模版
+                layer.open({
+                    type: 2
+                    , title: '编辑广告'
+                    , content: "{:url('adv/editPos')}&id=" + data.id
+                    , area: ['800px', '500px']
+                    , btn: ['确定', '取消']
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submit = layero.find('iframe').contents().find("#LAY-submit");
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(LAY-submit)', function (data) {
+                            var field = data.field; //获取提交的字段
+                            $.ajax({
+                                url: "{:url('adv/editPos')}",
+                                type: "POST",
+                                data: field,
+                                success: function (res) {
+                                    layer.msg(res.msg);
+                                }
+                            });
+                            table.reload('list');
+                            layer.close(index); //关闭弹层
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        });
+        //事件
+        var active = {
+            del: function () {
+                var checkStatus = table.checkStatus('list')
+                    , checkData = checkStatus.data; //得到选中的数据
+                if (checkData.length === 0) {
+                    return layer.msg('请选择数据');
+                }
+                layer.confirm('确定删除吗？', function (index) {
+                    var id_array = new Array();
+                    for (var i = 0; i < checkData.length; i++) {
+                        id_array.push(checkData[i]['id']);
+                    }
+                    var ids = id_array.join(',');
+                    //执行 Ajax 后重载
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.post("{:url('adv/delPos')}", {id: ids}, function (res) {
+                        layer.msg('删除成功');
+                    });
+                    table.reload('list');
+                });
+            },
+            add: function () {
+                layer.open({
+                    type: 2
+                    , title: '添加广告'
+                    , content: "{:url('adv/editPos')}"
+                    , area: ['800px', '500px']
+                    , btn: ['确定', '取消']
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submit = layero.find('iframe').contents().find("#LAY-submit");
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(LAY-submit)', function (data) {
+                            var field = data.field; //获取提交的字段
+                            $.ajax({
+                                url: "{:url('adv/editPos')}",
+                                type: "POST",
+                                data: field,
+                                success: function (res) {
+                                    layer.msg(res.msg);
+                                }
+                            });
+                            table.reload('list');
+                            layer.close(index); //关闭弹层
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        }
+        $('.layui-btn.layuiadmin-btn').on('click', function () {
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+        //监听搜索
+        form.on('submit(LAY-app-order-search)', function (data) {
+            var field = data.field;
+
+            //执行重载
+            table.reload('list', {
+                where: field
+            });
+        });
+
+        //广告列表
+        table.render({
+            elem: '#data-list',
+            url: "{:url('adv/adv')}", //数据接口
+            defaultToolbar: ['filter', 'print', 'exports'],
+            page: true, //开启分页
+            toolbar: true,
+            limits: [10, 20, 50, 100],
+            cols: [[ //表头
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: 'ID', sort: true, fixed: 'left'},
+                {field: 'title', title: '广告说明', sort: true, fixed: 'left'},
+                {field: 'pos_id', title: '所属广告位', sort: true, fixed: 'left'},
+                {field: 'click_count', title: '点击量', sort: true},
+                {field: 'url', title: '链接地址', sort: true},
+                {field: 'start_time', title: '生效时间', sort: true},
+                {field: 'end_time', title: '失效时间', sort: true},
+                {field: 'sort', title: '排序', sort: true},
+                {field: 'create_time', title: '创建时间', sort: true},
+                {field: 'status_text', title: '状态', sort: true},
+                {fixed: 'right', width: 165, align: 'center', toolbar: '#data-bar'}
+            ]]
+        });
+
+        //监听工具条
+        table.on('tool(data-list)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+
+            if (layEvent === 'del') { //删除
+                layer.confirm('确定删除吗？', function (index) {
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.post("{:url('adv/delAdv')}", {id: data.id}, function (res) {
+                        layer.msg('删除成功');
+                    })
+                });
+            } else if (layEvent === 'edit') { //编辑
+                $('.edit').attr('lay-href', "{:url('adv/appendAdv')}&id=" + data.id);
+            }
+        });
+    });
+</script>
+</body>
+</html>

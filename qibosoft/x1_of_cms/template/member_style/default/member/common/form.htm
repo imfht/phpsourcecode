@@ -1,0 +1,141 @@
+<style type="text/css">
+.layui-form .WapFormContainer dl{
+	background:#fff;
+	margin:8px 0 8px 0;
+}
+.layui-form .WapFormContainer dl dt{
+	padding:3px 10px 0px 10px;
+}
+.WapFormContainer dl dd{
+	padding:2px 10px 10px 10px;
+	background:#fefefe;
+}
+.layui-form .WapFormContainer dl dd input{
+	border:1px solid #eee;
+}
+.layui-form .WapFormContainer .layui-tab{
+	background:#fff;
+} 
+</style>
+
+<form name="" method="post" action="{:request()->url(true)}" class="ajax_post {notempty name='$tab_ext.trigger'} form-trigger {/notempty}  layui-form ">
+
+<div class="WapFormContainer">	
+	<div class="tag">{if ($tab_ext['page_title'])} {$tab_ext.page_title} {elseif (empty($info))}添加{else /}修改{/if}</div>
+	<!-- 功能接口钩子 -->
+	{:hook_listen('template_form_head',$form_items,$form_items,true)}
+
+{empty name="$tab_ext.group"}
+
+	<!--这种是最常用的,表单没做分组显示的-->
+	{if $tab_ext.area}
+		<!-- 这一段是地区选择 -->
+	<dl id="form_group_area"> 
+		<dt>地区选择</dt>
+		<dd class="layui-input-inline"> 
+			<div class="ListArea">
+				<select name='province_id' data-title="请选择省份" lay-ignore></select> 
+				<select name='city_id' data-title="请选择城市" lay-ignore></select> 
+				<select name='zone_id' data-title="请选择区域" lay-ignore></select> 
+				<select name='street_id' data-title="请选择街道" lay-ignore></select>
+			</div>
+		</dd>
+	</dl>
+	{/if}
+	<!-- 参数 field="pic,tit" 代表过滤哪些字段不显示出来 里边支持TP标签 -->
+    {qb:form field="" f_array="$f_array"}
+	<dl id="form_group_{$rs.name}">
+		<dt>{$rs.title}</dt>
+		<dd>
+		<div>{$rs.value}</div>
+		{notempty name="$rs.about"}<div>{$rs.about}</div>{/notempty}
+		</dd>
+	</dl>
+	{/qb:form}
+
+{else /}
+
+	<!-- 这是另一种用得很少,针对太多表单,而对他们做分组显示,下面就没做过滤哪些字段不显示的处理了,要自己重新修改做判断处理 -->
+    <div class="layui-tab">
+	  <ul class="layui-tab-title">
+	  	 <!-- 分组标题名称 -->
+		 {volist name="$tab_ext.group" id="rs"}
+			<li class="{eq name='i' value='1'}layui-this{/eq}">{$key}</li>
+		 {/volist}
+	  </ul>
+	  <div class="layui-tab-content">
+	   <!-- 分组表单输入选项 -->
+	   {volist name="$tab_ext.group" id="array"}
+				<div class="layui-tab-item {eq name='i' value='1'}layui-show{/eq}">
+					{if $tab_ext.area&&$i==1}
+					<!-- 这一段是地区选择 -->
+					<dl id="form_group_area"> 
+					  <dt>地区选择</dt>
+					  <dd> 
+						<div class="ListArea">
+							<select name='province_id' data-title="请选择省份" lay-ignore></select> 
+							<select name='city_id' data-title="请选择城市" lay-ignore></select> 
+							<select name='zone_id' data-title="请选择区域" lay-ignore></select> 
+							<select name='street_id' data-title="请选择街道" lay-ignore></select>
+						</div>
+					  </dd>
+					</dl>
+					{/if}
+					<!-- 每一组的所有表单 -->
+					{volist name=":fun('field@fields_to_form',fun('field@field_to_table',$array),$info)" id="rs"}
+						<dl id="form_group_{$rs.name}" {if $rs.type=='hidden'}style="display:none;"{/if}>
+							<dt>{$rs.title}</dt>
+							<dd>
+							<div>{$rs.value}</div>
+							{notempty name="$rs.about"}<div>{$rs.about}</div>{/notempty}
+							</dd>
+						</dl>
+					{/volist}	
+				</div>
+	   {/volist}
+	  </div>
+	</div>
+
+{/empty}
+
+	<!-- 功能接口钩子 -->
+	{:hook_listen('template_form_foot',$form_items,$form_items,true)} 
+	
+	{notempty name=":input('id')"}<input type="hidden" name="id" value="{:input('id')}">{/notempty}
+
+{if $tab_ext.addbtn}
+		<style type="text/css">
+		.ext_btn{margin:5px;}
+		.ext_btn button{width:45%;color:#666;background:#ddd;padding:5px;margin-bottom:5px;border:0px;}
+		.ext_btn button.post_btn{background:orange;float:right;color:#fff;}
+		</style>
+		<div class="ext_btn">{$tab_ext.addbtn} <button class="post_btn" type="submit">提交</button> </div>
+{else /}
+		<div class='butter'><button type="submit">提交</button></div>
+{/if}
+		{notempty name=":input('ext_id')"}<input type="hidden" name="ext_id" value="{:input('ext_id')}">{/notempty}
+		{notempty name=":input('ext_sys')"}<input type="hidden" name="ext_sys" value="{:input('ext_sys')}">{/notempty}
+	
+</div>
+
+</form>
+
+
+<!-- 某些表单的某些选项触发事件,少用 -->
+{notempty name="$tab_ext.trigger"}
+<script type="text/javascript">
+var trigger_config = {
+	{:fun('field@setTrigger',$tab_ext.trigger)}
+}
+</script>
+{/notempty}
+
+<!-- 表单常用事件,比如无刷新提交 -->
+<script LANGUAGE="JavaScript" src="__STATIC__/js/form/base.js"></script>
+
+<SCRIPT LANGUAGE="JavaScript">
+//地区选择事件
+{php}$info=getArray($info);{/php}
+var default_ckid = ["{$info.province_id}","{$info.city_id}","{$info.zone_id}","{$info.street_id}"];
+var get_area_url = "{:purl('area/api/getlist',[],'index')}";
+</SCRIPT>

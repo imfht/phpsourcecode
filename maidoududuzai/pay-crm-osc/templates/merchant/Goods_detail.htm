@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+<title>{echo admin_title()}</title>
+<!--header-->
+{template _:header}
+<style>
+form > .layui-table > tbody > tr:hover{ background: none;}
+.layui-text-red{ color:#FF5722!important;}
+.layui-icon-delete, .layui-icon-close{ cursor: pointer;}
+.layui-form-item .layui-input-inline{ width:450px; }
+.layui-upload{ overflow: auto;}
+.layui-upload .upload-btn{ display: block; float: left; cursor: pointer;}
+.layui-upload ul{ display: block; float: left; position: relative; overflow: auto;}
+.layui-upload ul li{ position: relative; float: left; display: block; width:100px; height: 100px; margin-right:10px; background: #fff url('/public/image/image.png') no-repeat center center; background-size:contain; border:1px solid #e6e6e6; box-sizing: border-box;}
+.layui-upload ul li .layui-icon-delete{ position: absolute; right: 0; cursor: pointer;}
+.input-group { position:relative; display:-webkit-box; display:-webkit-flex; display:-ms-flexbox; display:flex; }
+.input-group input { position:relative; z-index:2; -webkit-box-flex:1; -webkit-flex:1 1 auto; -ms-flex:1 1 auto; flex:1 1 auto; width:1%; margin-bottom:0; border-radius: 2px 0 0 2px; }
+.input-group-addon { padding:.5rem .75rem; margin-bottom:0; font-size:14px; font-weight:400; line-height:1.25; color:#464a4c; text-align:center; background-color:#efefef; border:1px solid #e6e6e6; border-radius:.25rem;}
+.input-group-btn{ cursor: pointer; background: #fff;}
+.input-group-addon:not(:first-child) {border-left: 0;border-bottom-left-radius: 0;border-top-left-radius: 0;}
+.input-group-addon:not(:last-child) {border-right: 0;border-bottom-right-radius: 0;border-top-right-radius: 0;}
+.attr-group{clear: left; width: 800px; margin:7px 0 0 110px; padding: .5em .75em; border:1px solid #eee; box-sizing: border-box;}
+.attr-group dt{ font-weight: bold; padding-bottom: .5rem;}
+.attr-group dt .layui-icon-close{ font-weight: normal;}
+.attr-group dd{white-space: normal;}
+.attr-group dd > .attr-item{background: #eee;margin-bottom: 4.5px; padding:0 2.75em 0 .75rem;height: 25px;line-height: 25px;display: inline-block;position: relative; vertical-align: middle;}
+.attr-group dd > .attr-item .layui-icon-close{ background: #fff;display: inline-block;height: 25px;line-height: 25px;position: absolute;right: 0;border: 1px solid #eee;box-sizing: border-box;padding: 0 .3em;}
+.attr-group dd [class^=layui-input]{ margin-bottom:4.5px;}
+.attr-group dd .input-group{ height: 25px; line-height: 25px;}
+.layui-input-sm,.input-group-sm{ height: 25px; font-size: 13px; line-height: 23px;}
+.input-group-sm input{ height: 25px; line-height: 23px; font-size: 13px;}
+.input-group-sm > .input-group-addon{box-sizing:border-box; padding: 0 .5em; font-size: 13px; line-height: 23px;}
+.attr-group .input-group-sm{ width: 14em;}
+</style>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+<!--top-->
+{template _main_top}
+<!--nav-->
+{template _main_nav}
+	<div class="position"><h1>{echo empty($value) ? '添加' : '编辑'}商品</h1></div>
+	<div id="app" class="layui-body admin-body">
+		<div class="admin-content">
+			<div class="opwindow">
+				<form name="theform" id="theform" method="post" class="layui-form" style="padding-top:1em;">
+					<table class="layui-table">
+						<tbody>
+							<tr>
+								<td><b>基本信息</b></td>
+								<td>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品分类</label>
+										<div class="layui-input-inline">
+											<select name="cat_id" id="cat_id" class="layui-select">
+												<!--{loop $goodsCat $key $val}-->
+												<option value="{$val[cat_id]}" <!--{if !empty($value) && $val['cat_id']==$value['cat_id']}-->selected<!--{/if}-->>{$val[cat_name]}</option>
+												<!--{/loop}-->
+											</select>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品名称</label>
+										<div class="layui-input-inline">
+											<input type="text" name="goods_name" id="goods_name" class="layui-input" value="{echo empty($value) ? '' : $value[goods_name]}">
+										</div>
+										<div class="layui-form-mid layui-word-aux layui-text-red">*</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品排序</label>
+										<div class="layui-input-inline">
+											<input type="number" name="sort" id="sort" class="layui-input" value="{echo empty($value) ? 99999 : $value[sort]}">
+										</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">虚拟销量</label>
+										<div class="layui-input-inline">
+											<input type="number" name="sales_virtual" id="sales_virtual" class="layui-input" value="{echo empty($value) ? 0 : $value[sales_virtual]}">
+										</div>
+										<div class="layui-form-mid layui-word-aux">前端展示的销量=实际销量+虚拟售量</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">限购数量</label>
+										<div class="layui-input-inline">
+											<input type="number" name="buy_limit" id="buy_limit" class="layui-input" value="{echo empty($value) ? 0 : $value[buy_limit]}">
+										</div>
+										<div class="layui-form-mid layui-word-aux">设置为0不限购</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品缩略图</label>
+										<div class="layui-input-block">
+											<div class="layui-upload" data-upload-field="cover_pic">
+												<ul>
+													<!--{if !empty($value['cover_pic'])}-->
+													<li style="background-image:url({$value[cover_pic]});">
+														<i class="layui-icon layui-icon-delete"></i>
+														<input type="hidden" name="cover_pic" value="{$value[cover_pic]}">
+													</li>
+													<!--{/if}-->
+												</ul>
+												<img src="/public/system/add-img.png" width="100" height="100" class="upload-btn" <!--{echo !empty($value[cover_pic]) ? 'style="display:none"' : ''}-->>
+												<span class="layui-text-red" style="margin-left: 10px; line-height: 100px;">*</span>
+											</div>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品主图</label>
+										<div class="layui-input-block">
+											<div class="layui-upload" data-upload-field="goods_pic">
+												<ul>
+													<!--{if !empty($value['goods_pic'])}-->
+													<!--{loop $value['goods_pic'] $key $val}-->
+													<li style="background-image:url({$val});">
+														<i class="layui-icon layui-icon-delete"></i>
+														<input type="hidden" name="goods_pic[]" value="{$val}">
+													</li>
+													<!--{/loop}-->
+													<!--{/if}-->
+												</ul>
+												<img src="/public/system/add-img.png" width="100" height="100" class="upload-btn" <!--{if !empty($value['goods_pic']) && count($value['goods_pic']) >= 5 }-->style="display:none"<!--{/if}-->>
+												<span class="layui-text-red" style="margin-left: 10px; line-height: 100px;">*</span>
+											</div>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item" v-show="!use_attr">
+										<label class="layui-form-label">售价</label>
+										<div class="layui-input-inline">
+											<div class="input-group">
+												<input type="number" name="price" id="price" class="layui-input" min="0" step="0.01" v-model="price">
+												<span class="input-group-addon">元</span>
+											</div>
+										</div>
+										<div class="layui-form-mid layui-word-aux layui-text-red">*</div>
+										<button type="button" class="layui-btn layui-btn-sm layui-btn-primary" style="margin-top:4px" v-on:click="unify_set_field('price')">统一设置</button>
+									</div>
+									<div class="layui-row layui-form-item" style="display:none;">
+										<label class="layui-form-label">成本</label>
+										<div class="layui-input-inline">
+											<div class="input-group">
+												<input type="number" name="price_cost" id="price_cost" class="layui-input" min="0" step="0.01" value="{echo empty($value) ? 0 : $value['price_cost']}">
+												<span class="input-group-addon">元</span>
+											</div>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">原价</label>
+										<div class="layui-input-inline">
+											<div class="input-group">
+												<input type="number" name="price_original" id="price_original" class="layui-input" min="0" step="0.01" value="{echo empty($value) ? 1 : $value['price_original']}">
+												<span class="input-group-addon">元</span>
+											</div>
+										</div>
+										<div class="layui-form-mid layui-word-aux"><i class="layui-text-red">*</i> &nbsp;仅作显示用</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">单位</label>
+										<div class="layui-input-inline">
+											<input type="text" name="unit" id="unit" class="layui-input" v-model="unit">
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td><b>规格库存</b></td>
+								<td>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">是否称重商品</label>
+										<div class="layui-input-inline">
+											<input type="checkbox" name="is_weigh" id="is_weigh" lay-skin="switch" lay-text="是|否" value="1" {echo !empty($value[is_weigh]) ? 'checked' : ''}>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品库存</label>
+										<div class="layui-input-inline">
+											<div class="input-group">
+												<input type="number" name="goods_stock" id="goods_stock" class="layui-input" v-model="goods_stock">
+												<span class="input-group-addon" v-text="unit"></span>
+											</div>
+										</div>
+										<div class="layui-form-mid layui-word-aux layui-text-red">*</div>
+										<button type="button" class="layui-btn layui-btn-sm layui-btn-primary" style="margin-top:4px" v-on:click="unify_set_field('goods_stock')">统一设置</button>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">商品货号</label>
+										<div class="layui-input-inline">
+											<input type="text" name="goods_no" id="goods_no" class="layui-input" value="{echo empty($value) ? '' : $value['goods_no']}" v-on:focus="selectText" v-on:click="selectText" v-on:keypress.enter.prevent>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item">
+										<label class="layui-form-label">是否使用规格</label>
+										<div class="layui-input-inline">
+											<input type="checkbox" name="use_attr" id="use_attr" lay-skin="switch" lay-text="是|否" lay-filter="use_attr" value="1" {echo !empty($value[use_attr]) ? 'checked' : ''}>
+										</div>
+									</div>
+									<div class="layui-row layui-form-item" v-show="use_attr">
+										<label class="layui-form-label">规格组</label>
+										<div class="layui-input-inline">
+											<div class="input-group">
+												<span class="input-group-addon">规格组</span>
+												<input type="text" class="layui-input" value="" placeholder="如温度、糖度、冰度" v-model="new_group_name">
+												<span class="input-group-addon input-group-btn" v-on:click="add_group">添加</span>
+											</div>
+										</div>
+										<div class="layui-form-mid layui-word-aux layui-text-red">*</div>
+										<div style="clear: both;"></div>
+										<dl class="attr-group" v-for="(group, group_index) in attr_group">
+											<dt><span v-text="group_index"></span> <i class="layui-icon layui-icon-close" v-on:click="del_group(group_index)"></i></dt>
+											<dd>
+												<template v-for="(attr, attr_index) in group">
+												<div class="attr-item">
+													<span v-text="attr.name"></span><i class="layui-icon layui-icon-close" v-on:click="del_attr(group_index, attr_index)"></i>
+												</div>&nbsp;
+												</template>
+												<div class="layui-input-inline" style="float: none;">
+													<div class="input-group input-group-sm">
+														<span class="input-group-addon">规格</span>
+														<input type="text" class="layui-input" placeholder="如红色、白色" v-model="new_attr_name[group_index]">
+														<span class="input-group-addon input-group-btn" v-on:click="add_attr(group_index)">添加</span>
+													</div>
+												</div>
+											</dd>
+										</dl>
+									</div>
+									<div class="layui-row layui-form-item" v-show="use_attr">
+										<label class="layui-form-label">价格和库存</label>
+										<div class="layui-input-block" v-show="list.length">
+											<table class="layui-table attr" style="width:800px;">
+												<thead>
+													<tr>
+														<template v-for="(group, group_index) in attr_group">
+														<th v-text="group_index"></th>
+														</template>
+														<!-- <th>库存</th> -->
+														<th>售价</th>
+														<th>货号</th>
+														<th>图片</th>
+													</tr> 
+												</thead>
+												<tbody>
+													<tr v-for="(sku, i) in list">
+														<template v-for="attr in sku.attr_list">
+														<td v-text="attr.name"></td>
+														</template>
+														<!-- <td><input type="number" class="layui-input layui-input-sm" v-model="sku.goods_stock"></td> -->
+														<td><input type="number" class="layui-input layui-input-sm" min="0" step="0.01" v-model="sku.price"></td>
+														<td><input type="text" class="layui-input layui-input-sm" v-model="sku.goods_no" v-on:focus="selectText" v-on:click="selectText" v-on:keypress.enter.prevent></td>
+														<td>
+															<div class="input-group input-group-sm">
+																<input type="text" class="layui-input" v-model="sku.pic">
+																<span class="input-group-addon input-group-btn layui-icon layui-icon-picture-fine" style="font-size:14px"></span>
+															</div>
+														</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+										<div class="layui-form-mid layui-word-aux" v-show="!list.length">请先填写规格组和规格值</div>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td><b>图文详情</b></td>
+								<td>
+									<div class="layui-form-item">
+										<label class="layui-form-label">描述</label>
+										<div class="layui-input-inline" style="width: 700px;">
+											<textarea name="desc" id="desc" class="layui-textarea">{echo !empty($value[content]) ? $value[desc] : ''}</textarea>
+										</div>
+									</div>
+									<div class="layui-form-item">
+										<label class="layui-form-label">图文详情</label>
+										<div class="layui-input-inline" style="width:700px">
+											<textarea name="content" id="content" style="width:100%;height:400px;visibility:hidden;">{echo !empty($value[content]) ? $value[content] : ''}</textarea>
+										</div>
+										<span class="layui-text-red" style="margin-left: 5px; line-height: 400px;">*</span>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div style="text-align:right; margin:13px 0 1.5em;">
+						<button type="submit" lay-submit lay-filter="*" class="layui-btn layui-btn-lg">提交</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<!--footer-->
+{template _:footer}
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script>
+//文本编辑器
+KindEditor.options.langType = 'zh_CN';
+KindEditor.options.uploadJson = "{echo url('merchant/bfeditor/upload')}";
+KindEditor.options.fileManagerJson = "{echo url('merchant/bfeditor/manager')}";
+KindEditor.options.extraFileUploadParams = {'PHPSESSID': '{echo session_id()}'};
+getEditor('content');
+//商品图片上传
+function kind_upload(btn, delegate, callback) {
+	if( arguments.length == 2 ) callback = delegate;
+	KindEditor.ready(function(K) {
+		var editor = K.editor({
+			shadowMode : false,
+			allowFileManager : true
+		})
+		,imageDialog = function(e) {
+			editor.loadPlugin("image", function() {
+				editor.plugin.imageDialog({
+					clickFn: function(url, title, width, height) {
+						editor.hideDialog();
+						if(isFunction(callback)) {
+							callback(e, url, title, width, height);
+						}
+					}
+				});
+			});
+		};
+		if( arguments.length == 2 ){
+			K(btn).click(function(e) {
+				imageDialog(e);
+			});
+		}else{
+			$(btn).on('click', delegate, function(e) {
+				imageDialog(e);
+			})
+		}
+	});
+}
+kind_upload("[data-upload-field] .upload-btn", function(e, url, title, width, height){
+	let parent = $(e.target).parentsUntil('[data-upload-field]');
+	parent = parent.length ? parent[parent.length - 1] : e.target;
+	parent = $(parent).parent();
+	let field = $(parent).data('upload-field');
+	if( field == 'goods_pic' ){
+		field = 'goods_pic[]';
+		//最多五张图
+		if( $(parent).find('ul li').length >= 4 ){
+			$(e.target).hide();
+		}
+	}else{
+		//最多一张图
+		$(e.target).hide();
+	}
+	$(parent).find('ul').append([
+	'<li style="background-image:url(' + url + ');">',
+		'<i class="layui-icon layui-icon-delete"></i>',
+		'<input type="hidden" name="' + field + '" value="' + url + '">',
+	'</li>'].join(''));
+});
+//删除商品图片
+$('body').on('click', '.layui-upload li .layui-icon-delete', function(e){
+	let field = $(this).siblings('input').attr('name').replace(/\[.*\]/, '');
+	let parent = $('[data-upload-field=' + field + ']');
+	if( field == 'cover_pic' ){
+		parent.find('.upload-btn').show();
+	}else{
+		if( parent.find('ul li').length <= 5 ){
+			parent.find('.upload-btn').show();
+		}
+	}
+	$(this).parent().remove();
+})
+//规格图片上传
+kind_upload("table.attr", 'td .layui-icon-picture-fine', function(e, url, title, width, height){
+	let tr = $(e.target).parentsUntil('tbody');
+	tr = tr[tr.length - 1],
+	index = $(tr).parent().children().index(tr);
+	$(e.target).parent().children('input').val(url);
+	app.list[index].pic = url;
+})
+//使用规格
+var app = new Vue({
+	el: '#app',
+	data: {
+		unit: "{echo empty($value) ? '件' : $value[unit]}",
+		price: "{echo empty($value) ? 1 : $value[price]}", //统一价格
+		goods_stock: {echo empty($value) ? -1 : $value[goods_stock]}, //统一库存
+		use_attr: {echo empty($value) ? 0 : $value[use_attr]}, //是否启用规格
+		new_group_name: '',
+		new_attr_name: {},
+		attr_group: {}, //规格组
+		list: {echo empty($value[attr]) ? '[]' : $value[attr]}, //Sku清单
+	},
+	created: function() {
+		//尝试从Sku清单生成规格组
+		this.attr_group = this.generate_group_from_sku(this.list);
+	},
+	methods: {
+		add_group(){
+			if(!this.new_group_name) return;
+			Vue.set(this.attr_group, this.new_group_name, []);
+			this.new_group_name = '';
+		},
+		add_attr(group_index){
+			if(!this.new_attr_name[group_index]) return;
+			let new_attr = {
+				name: this.new_attr_name[group_index],
+			};
+			Vue.set(this.attr_group[group_index], this.attr_group[group_index].length, new_attr);
+			Vue.set(this.new_attr_name, group_index, '');
+			this.update_list();
+		},
+		del_group(index){
+			Vue.delete(this.attr_group, index);
+			this.update_list();
+		},
+		del_attr(group_index, attr_index){
+			Vue.delete(this.attr_group[group_index], attr_index);
+			this.update_list();
+		},
+		/**
+		 * 获得所有树径(Sku)
+		 * @param object _cur_path 当前树径,可附加字段
+		 * @return array _list 路径列表
+		 */
+		get_tree_path(tree, _cur_path = {}, _list = []){
+			_cur_path = JSON.parse(JSON.stringify(_cur_path));
+			if( tree.group_name ){
+				if(!_cur_path.attr_list) _cur_path.attr_list = [];
+				_cur_path.attr_list.push({id:tree.id, name:tree.name, group_name:tree.group_name});
+			}
+			//到达树梢
+			if( tree.branchs === undefined ){
+				return _list.push(_cur_path);
+			}
+			for( let i in tree.branchs ){
+				this.get_tree_path(tree.branchs[i], _cur_path, _list);
+			}
+			return _list;
+		},
+		/**
+		 * 生长二叉树树梢(增加一个规格组)
+		 * @param object tree 树:[a1,a2]
+		 * @param object treetop 树梢:[b1,b2]
+		 * @return object newTree 新树:[a1:[b1,b2],a2:[b1,b2]]
+		 */
+		grow_treetop(tree, treetop){
+			tree = JSON.parse(JSON.stringify(tree));
+			treetop = JSON.parse(JSON.stringify(treetop));
+			if( tree.branchs === undefined ){
+				tree.branchs = treetop;
+				return tree;
+			}
+			let newTree = JSON.parse(JSON.stringify(tree));
+			for( let i in tree.branchs ){
+				newTree.branchs[i] = this.grow_treetop(tree.branchs[i], treetop);
+			}
+			return newTree;
+		},
+		/**
+		 * 根据规格组生成树
+		 * @param object attr_group 规格组
+		 * @return object tree 规格二叉树,一条路径一个规格组合/Sku
+		 */
+		generate_tree_from_group(attr_group){
+			let tree = {name:'root'};
+			for( const group_name in attr_group ){
+				let group = attr_group[group_name];
+				for(let attr_item of group){
+					attr_item.group_name = group_name;
+				}
+				tree = this.grow_treetop(tree, group);
+			}
+			return tree;
+		},
+		//根据树径(Sku)生成规格组
+		generate_group_from_sku(list){
+			let group = {};
+			for(let i in list){
+				let attr_list = list[i].attr_list;
+				for(let j in attr_list){
+					let attr = attr_list[j];
+					if(!group[attr.group_name]){
+						group[attr.group_name] = [];
+					}
+					let duplicate = false;
+					for(let k in group[attr.group_name]){//去重
+						if(JSON.stringify(group[attr.group_name][k]) == JSON.stringify({name: attr.name})){
+							duplicate = true;
+							break;
+						}
+					}
+					!duplicate && group[attr.group_name].push({name: attr.name});
+				}
+			}
+			return group;
+		},
+		update_list(){
+			this.tree = this.generate_tree_from_group( this.attr_group );
+			let new_list = this.get_tree_path( this.tree, {goods_stock:0, price:0, goods_no:'', pic:''} );
+			//旧Sku保留原库存、售价
+			for(let i in new_list){
+				for(let j in this.list){
+					if( JSON.stringify( new_list[i].attr_list ) == JSON.stringify( this.list[j].attr_list ) ){
+						new_list[i] = this.list[j];
+						break;
+					}
+				}
+			}
+			this.list = new_list;
+		},
+		//统一价格、库存
+		unify_set_field(field){
+			for( let i in this.list ){
+				this.list[i][field] = this[field]
+			}
+		},
+		//输入框获得焦点时自动选中文本
+		selectText(event){
+			const obj = event.target;
+			obj.selectionStart = 0; // 选中开始位置
+			obj.selectionEnd = obj.value.length;// 获取输入框里的长度。
+		}
+	}
+});
+
+layui.use('form', function(){
+	var form = layui.form;
+	//通过layui的switch点击事件控制vue的'是否使用规格'属性
+	form.on('switch(use_attr)', function(data){
+		app.use_attr = data.elem.checked;
+	});
+
+	form.on('submit(*)', function(data){
+		//data.field 当前容器的全部表单字段，名值对形式：{name: value}
+		//使用规格时售价自动变为最低价
+		if(app.use_attr){
+			data.field.price = app.list.reduce((prev, cur) => Number(prev.price) < Number(cur.price) ? prev.price : cur.price);
+		}
+		if(!data.field.goods_name){
+			showTips( $(data.form).find('input#goods_name'), '商品名称必填' );
+			return false;
+		}
+		if(!data.field.cover_pic){
+			layer.msg('商品缩略图必填', {anim:6,icon:2,time:2000});
+			return false;
+		}
+		if(!data.field['goods_pic[0]']){
+			layer.msg('商品主图必填', {anim:6,icon:2,time:2000});
+			return false;
+		}
+		if(data.field.price === ''){
+			showTips( $(data.form).find('input#price'), '售价必填' );
+			return false;
+		}
+		if(data.field.price_original === ''){
+			showTips( $(data.form).find('input#price_original'), '原价必填' );
+			return false;
+		}
+		if(data.field.goods_stock === ''){
+			showTips( $(data.form).find('input#goods_stock'), '库存必填' );
+			return false;
+		}
+		if(app.use_attr && !( app.list.constructor === Array && app.list.length )){
+			layer.msg('规格必填', {anim:6,icon:2,time:2000});
+			return false;
+		}
+		if(!data.field.content){
+			showTips( $(data.form).find('input#content'), '图文详情必填' );
+			return false;
+		}
+		data.field.attr = app.list;
+		showLoader();
+		$.ajax({
+			method: 'POST',
+			url: '{echo \befen\get_url()}', 
+			data: data.field, 
+			success: function(res) {
+				hideLoader();
+				if(res.status == '0'){
+					return showAlert(res.message)
+				}
+				let goods_id = "{echo empty($value[goods_id]) ? '' : $value[goods_id]}";
+				showInfo((goods_id ? '编辑' : '添加' ) + "成功");
+				if(goods_id){
+					reload();
+				}else{
+					gotourl("{echo url('goods/index')}");
+				}
+			},
+			error: function(jqXHR, textStatus, errorThrown){
+				hideLoader();
+				showAlert('请求失败：' + textStatus);
+			}
+		});
+		return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+	});
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{extend name="common:base"/}
+{block name="body"}
+<div class="row wrapper border-bottom white-bg page-heading">
+    <div class="col-lg-12">
+        <h2>系统</h2>
+    </div>
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>分类管理</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-sm-9 m-b-xs">
+                            <a class="btn btn-outline btn-primary" href="{:\\think\\Url::build('add')}">新增</a>
+                        </div>
+                        <!--                        <div class="col-sm-3">
+                                                    <div class="input-group">
+                                                        <input type="text" placeholder="请输入关键词" class="input-sm form-control"> <span class="input-group-btn">
+                                                            <button type="button" class="btn btn-sm btn-primary"> 搜索</button> </span>
+                                                    </div>
+                                                </div>-->
+                    </div>
+                    <div class="category">
+                        <div class="hd cf">
+                            <div class="fold">折叠</div>
+                            <div class="order">排序</div>
+                            <div class="order">发布</div>
+                            <div class="name">名称</div>
+                        </div>
+                        {:\\think\\Loader::action('tree',[$tree])}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="css"}
+<link href="__CSS__/category.css" rel="stylesheet">
+{/block}
+{block name="script"}
+<script type="text/javascript">
+    highlight_subnav("{:\\think\\Url::build('Category/index')}");
+    (function ($) {
+        /* 分类展开收起 */
+        $(".category dd").prev().find(".fold i").addClass("icon-unfold")
+                .click(function () {
+                    var self = $(this);
+                    if (self.hasClass("icon-unfold")) {
+                        self.closest("dt").next().slideUp("fast", function () {
+                            self.removeClass("icon-unfold").addClass("icon-fold");
+                        });
+                    } else {
+                        self.closest("dt").next().slideDown("fast", function () {
+                            self.removeClass("icon-fold").addClass("icon-unfold");
+                        });
+                    }
+                });
+
+        /* 三级分类删除新增按钮 */
+        $(".category dd dd .add-sub").remove();
+
+        /* 实时更新分类信息 */
+        $(".category").on("submit", "form", function () {
+            var self = $(this);
+            $.post(self.attr("action"), self.serialize(), function (data) {
+                var name = data.code ? "success" : "error", msg; /* 提示信息 */
+                msg = self.find(".msg").addClass(name).text(data.msg).css("display", "inline-block");
+                setTimeout(function () {
+                    msg.fadeOut(function () {
+                        msg.text("").removeClass(name);
+                    });
+                }, 1000);
+            }, "json");
+            return false;
+        }).on("focus", "input", function () {
+            $(this).data('param', $(this).closest("form").serialize());
+        }).on("blur", "input", function () {
+            if ($(this).data('param') != $(this).closest("form").serialize()) {
+                $(this).closest("form").submit();
+            }
+        });
+    })(jQuery);
+    $(".move").on('click', function () {
+            var url = $(this).attr('href');
+            $.get(url, function (str) {
+                if (str.code === 0) {
+                    return  alert_msg(str.msg);
+                }
+                layer.open({
+                    type: 1,
+                    title: "移动分类",
+                    area: '420px',
+                    content: str
+                });
+
+            });
+            return false;
+        });
+
+</script>
+{/block}

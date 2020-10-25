@@ -1,0 +1,59 @@
+<notdefined name="W_UPLOADIFY">
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/Js/Uploadify/uploadify.css" />
+<script type="text/javascript" src="__PUBLIC__/Js/Uploadify/jquery.uploadify.js"></script>
+<define name="W_UPLOADIFY" value="1" />
+</notdefined>
+
+<div class="IfyThumbBox">
+    <img class="IfyThumbImg" <empty name="value">src="__PUBLIC__/Img/thumb.png"<else />src="__ROOT__{$value}"</empty> width="128" height="108">
+    <br/>
+    <input id="{$name}" type="file" /><input class="IfyThumbDel" type="button" value="取消上传">
+    <input class="IfyThumbVal" name="{$name}" type="hidden" <notempty name="value">value="{$value}"</notempty> />
+</div>
+
+<script type="text/javascript">
+$(function(){
+    $("#{$name}").uploadify({
+        'swf'      : "__PUBLIC__/Js/Uploadify/uploadify.swf",//定义uploadify.swf的路径
+        'uploader' : "{:U('Admin/Index/widget/name/uploadify')}",//后端处理路径
+        'button_image_url':'__PUBLIC__/Js/Uploadify/clarity.png',
+
+        'auto':true,//自动上传
+        'multi': false,//允许多选
+
+        'fileObjName':'IfyData',//POST名称
+        'formData' : {
+            'session_id' : "{:session_id()}",
+            //动态配置参数
+            <foreach name="config" item="v" key="k">
+            "{$k}":"{$v}",
+            </foreach>
+
+        },
+
+        'fileTypeExts' : "*.gif,*.jpg,*.jpeg,*.bmp,*.png;",
+        
+        'buttonClass':'btn',
+        'buttonText':'文件上传',
+
+        'height' : 25,
+        'width'  : 70,
+
+        'debug':false,//开启调试
+        'queueID':true,//禁用queue
+        'preventCaching':true,
+        'overrideEvents' : ['onSelect','onUploadProgress'],//禁用div.uploadify-queue,禁用progress样式
+        'onUploadSuccess' : function(file, data, response) {
+            var obj = $.parseJSON(data);
+            var name = $('#'+this.movieName+'').parent('div').attr('id');
+            $("input[name='"+name+"']").val(obj.path);
+            $('div#'+name).siblings('img.IfyThumbImg').attr('src',"__ROOT__"+obj.path);
+        }
+
+    });
+    $('.IfyThumbDel').click(function(e){
+        $(this).siblings('img.IfyThumbImg').attr('src',"__PUBLIC__/Img/thumb.png");
+        $(this).siblings('input.IfyThumbVal').val('');
+    });
+});
+</script>

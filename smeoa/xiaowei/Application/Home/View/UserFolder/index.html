@@ -1,0 +1,136 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	<input type="hidden" name="ajax" id="ajax" value="1">
+	{:W('PageHeader/simple',array('name'=>$folder_name))}
+	<div class="operate  panel panel-default">
+		<div class="panel-body">
+			<div class="pull-right">
+				<a onclick="add()" class="btn btn-sm btn-primary">新增</a>
+				<a onclick="save()" class="btn btn-sm btn-primary">保存</a>
+				|
+				<a onclick="del()" class="btn btn-sm btn-danger">删除</a>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-3 sub_left_menu ">
+			<div class="well">
+				<?php echo $menu ?>
+			</div>
+		</div>
+		<div class="col-sm-9">
+			<form id="form_data" name="form_data" method="post" class="well form-horizontal clearfix">
+				<input type="hidden" name="id" id="id">
+				<input type="hidden" name="opmode" id="opmode" value="">
+				<select name="folder_list" id="folder_list" class="hidden">
+					{:fill_option($folder_list)}
+				</select>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="name">名称*：</label>
+					<div class="col-sm-9">
+						<input class="form-control" type="text" id="name" name="name" check="require" msg="请输入名称">
+					</div>
+				</div>
+				<if condition="$has_pid">
+					<div class="form-group col-xs-12">
+						<label class="col-sm-3 control-label" for="folder_name">父节点*：</label>
+						<div class="col-sm-9">
+							<div class="input-group">
+								<input class="form-control" type="text" id="folder_name" name="folder_name"  readonly="readonly">
+								<input type="hidden" name="pid" id="pid" value="0" check="require" msg="请选择父节点">
+								<span class="input-group-btn">
+									<button class="btn btn-sm btn-primary" onclick="select_pid()" type="button">
+										选择
+									</button> </span>
+							</div>
+						</div>
+					</div>
+				</if>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="sort">排序：</label>
+					<div class="col-sm-9">
+						<input class="form-control" type="text" id="sort" name="sort" >
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="is_del">状态：</label>
+					<div class="col-sm-9">
+						<select  class="form-control" name="is_del" id="is_del">
+							<option  value="0">启用</option>
+							<option value="1">禁用</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="remark" >备注：</label>
+					<div class="col-sm-9" >
+						<textarea class="form-control" name="remark" rows="5" class="col-xs-12" ></textarea>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function add() {
+			$("#opmode").val("add");
+			$("#id").val("");
+			sendForm("form_data", "", "__SELF__");
+		};
+
+		function del() {
+			ui_confirm('确定要删除吗?', function() {
+				$("#opmode").val("del");
+				sendForm("form_data", "", "__SELF__");
+			});
+		}
+
+		function save() {
+			if ($("#opmode").val() == "") {
+				ui_error("请选择文件夹或新增");
+				return false;
+			} else {
+				if (check_form("form_data")) {
+					sendForm("form_data", "", "__SELF__");
+				}
+			}
+		};
+
+		function showdata(result) {
+			for (var s in result.data) {
+				set_val(s, result.data[s]);
+			}
+			$("#folder_name").val($("#folder_list option[value='" + $("#pid").val() + "']").text());
+			$("#opmode").val("edit");
+		}
+
+		function select_pid() {
+			if ($("div.sub_left_menu a.active").length > 0) {
+				winopen("{:U('UserFolder/winpop')}", 560, 470);
+			} else if ($("div.sub_left_menu a").length == 0) {
+				winopen("{:U('UserFolder/winpop')}", 560, 470);
+			} else if ($("#opmode").val() == "add") {
+				winopen("{:U('UserFolder/winpop')}", 560, 470);
+			} else {
+				ui_error("请选择文件夹");
+				return false;
+			}
+		}
+
+		$(document).ready(function() {
+			$(".sub_left_menu .tree_menu  a").click(function() {
+				$(".sub_left_menu .tree_menu  a").each(function() {
+					$(this).attr("class", "");
+				});
+				$(this).attr("class", "active");
+				sendAjax("{:U('UserFolder/read')}", "id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+		});
+
+	</script>
+</block>

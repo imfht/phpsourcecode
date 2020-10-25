@@ -1,0 +1,96 @@
+<extend name="Public:common" />
+
+<block name="main"> 
+
+   <table class="table text-left"  id="zstable">
+        <thead>
+            <tr>
+            <th class="nosort" width="30"></th>
+                <th>备份名称</th>
+                    <th>卷数</th>
+                    <th>压缩</th>
+                    <th>数据大小</th>
+                    <th>备份时间</th>
+                    <th class="nosort" width="100">状态</th>
+                    <th class="nosort text-center" width="240">操作</th>
+                       
+                
+               
+            </tr>
+        </thead>
+        <tbody>
+<volist name="list" id="data">
+                    <tr><td></td>
+                        <td>{$data.time|date='Ymd-His',###}</td>
+                        <td>{$data.part}</td>
+                        <td>{$data.compress}</td>
+                        <td>{$data.size|format_bytes}</td>
+                        <td>{$key}</td>
+                        <td>-</td>
+                        <td class="action  text-center">
+                            <a href="javascript:void(0);" onclick="importdata(this);"  class="btn medium bg-green" url="{:U('Dataimport/import',array('time'=>$data['time']))}"><span class="button-content">还原</span></a>&nbsp;
+                            <a target="ajaxTodo" class="btn medium bg-red" href="{:U('del',array('time'=>$data['time']))}"  title="确定要删除该备份吗？"><span class="button-content"><i class="glyph-icon icon-trash-o"></i> 删除</span></a>
+                        </td>
+                    </tr>
+                </volist>
+       
+        </tbody>
+    </table>
+
+
+ 
+
+    <script type="text/javascript">
+   
+    	
+    	   
+
+
+    	    function importdata(obj){
+    	    	 var status = ".",obj;
+
+    	    	   
+    	    	    $.get($(obj).attr('url'), success, "json");
+    	    	    
+    	    	    
+    	    	    window.onbeforeunload = function(){ return "正在还原数据库，请不要关闭！" }
+    	    	    return false;
+    	    	    function success(data){
+    	    	    	
+    	    	        if(data.status){ 
+    	    	        	
+    	    	            if(data.gz){
+    	    	                data.info += status;
+    	    	               
+    	    	                if(status.length === 5){
+    	    	                    status = ".";
+    	    	                } else {
+    	    	                    status += ".";
+    	    	                }
+    	    	                $(obj).html('<span class="button-content">'+data.info+'</span>');
+    	    	            }
+    	    	            $(obj).parent().prev().text(data.info);
+    	    	            $(obj).html('<span class="button-content">'+data.info+'</span>');
+    	    	            if(data.part){
+    	    	                $.get($(obj).attr('url'), 
+    	    	                    {"part" : data.part, "start" : data.start}, 
+    	    	                    success, 
+    	    	                    "json"
+    	    	                );
+    	    	            }  else {
+    	    	                window.onbeforeunload = function(){ return null; }
+    	    	            }
+    	    	        } else {
+    	    	        	
+    	    	        	alertmessage('error',data.info,'','',3);
+    	    	        }
+    	    	    }
+
+    	    }
+
+    	    
+
+ 
+    </script>
+
+</block>

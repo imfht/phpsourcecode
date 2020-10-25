@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="ibox float-e-margins">
+        <div class="ibox-title">
+          <h5><i class="fa fa-home"></i> 佣金记录</h5>
+          <div class="ibox-tools"><a href="?" class="btn btn-xs btn-danger"><i class="fa fa-refresh"></i>刷新</a> </div>
+        </div>
+          <div class="ibox-content">
+            <form id="pagerForm" method="post" class="form-inline">
+              <div class="col-sm-3 m-b-xs"> 
+                <a class="btn btn-info" href="#">导出数据</a>
+                <div class="btn-group">
+                  <button data-toggle="dropdown" class="btn btn-danger dropdown-toggle">批量操作 <span class="caret"></span></button>
+                  <ul class="dropdown-menu">
+                    <li><a href="javascript:void(0)" class="batch_operation" data-act="del">批量删除</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-sm-9 m-b-xs text-right searchDateRange"> 发送时间：
+                <div class="input-daterange input-group" id="datepicker1">
+                  <input type="text" class="input-sm form-control" name="sdt1" placeholder="选择开始时间"/>
+                  <span class="input-group-addon">到</span>
+                  <input type="text" class="input-sm form-control" name="edt1" placeholder="选择结束时间" />
+                </div>
+                <div class="btn-group">
+                  <button data-toggle="dropdown" class="btn  dropdown-toggle"><span class="caret"></span></button>
+                  <div class="dropdown-menu">
+                    <div class="ibox-content">
+                      <div class="form-group">
+                        <label>手机号</label>
+                        <input type="text" name="mobile" placeholder="手机号" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>内容</label>
+                        <input type="text" name="content" placeholder="发送内容" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <button type="button" class="btn btn-primary btn-xs btn-block ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="input-group"> 
+							<span class="">
+                  <button type="button" class="btn btn-primary ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                  </span> </div>
+              </div>
+              
+            </form>
+          </div>
+          <div class="ibox-content">
+            <table class="table table-hover sorttable 07fly-table">
+              <thead>
+                <tr>
+                  <th width="22"><input type="checkbox" group="ids" class="checkboxCtrl"></th>
+                  <th width="50">编号</th>
+                  <th width="120">返点会员</th>
+                  <th width="120">佣金</th>
+                  <th width="120">下级层数</th>
+                  <th width="120">比例</th>
+                  <th width="120">购买会员</th>
+                  <th width="120">订单编号</th>
+                  <th width="120">订单金额</th>
+                  <th width="150" orderField="by_adt" class="sort-filed"><span>生成时间</span></th>
+                  <th width="120">生效时间</th>
+                  <th width="80">操作</th>
+                </tr>
+              </thead>
+              <tbody> </tbody>
+              <tfoot class="ibox-content">
+                <tr>
+                  <td colspan="12" align="center"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script id="tableListTpl" type="text/html">
+<% for(var i=0;i<list.length;i++) { %>
+	<tr>
+		<td><input name="id" class="checkboxCtrlId" value="<%=list[i]['id']%>" type="checkbox"></td>
+		<td><%=list[i]['id']%></td>
+		<td><%=list[i]['quick_member_name']%></td>
+		<td><%=list[i]['money_dist']%></td>
+		<td><%=list[i]['member_layers']%></td>
+		<td><%=list[i]['member_rate']%></td>
+		<td><%=list[i]['buyer_member_name']%></td>
+		<td><%=list[i]['ordernumber']%></td>
+		<td><%=list[i]['money']%></td>
+		
+		<td><%=list[i]['adt']%></td>
+		<td><%=list[i]['pay_adt']%></td>
+		<td width='10'>
+			<div class="btn-group">
+				<button data-toggle="dropdown" class="btn btn-info dropdown-toggle">操作 <span class="caret"></span></button>
+				<ul class="dropdown-menu">
+					<li><a href="javascript:void(0)" class="single_operation" data-id="<%=list[i]['id']%>" data-act="del">删除</a></li>
+				</ul>
+			</div>
+		</td>
+	</tr>
+<% } %>
+</script> 
+<!-- 自定义js --> 
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script> 
+<script>
+var ajaxUrl='#{$smarty.const.ACT}#/admin/MemberQuick/member_quick_json/';
+$(document).ready(function () {
+	turnPage(1);//页面加载时初始化分页
+
+		$("body").on("click", ".batch_operation", function() {
+		batch_act =$(this).attr("data-act")
+		var chk_value =[]; 
+    	$("tbody input[class='checkboxCtrlId']:checked").each(function(){ 
+        chk_value.push($(this).val()); 
+		}); 
+		member_id_txt=chk_value.join(",");
+		if(batch_act=="del"){
+			act_url="#{$smarty.const.ACT}#/admin/MemberQuick/member_quick_del/";
+		}
+    //alert(chk_value.length==0 ?'你还没有选择任何内容！':chk_value); 
+		$.ajax({
+			type: "POST",
+			url: act_url,
+			data:{"id":member_id_txt},
+			dataType:"json",
+			success: function(data){
+				if(data.rtnstatus=='success'){
+					layer.msg('操作成功', {icon: 1});
+					turnPage(1);
+				}
+			},
+			complete: function () {//完成响应
+			}
+		});
+	});
+	
+	$("body").on("click", ".single_operation", function() {
+		quick_id =$(this).attr("data-id");
+		single_act =$(this).attr("data-act")
+		if(single_act=="del"){
+			act_url="#{$smarty.const.ACT}#/admin/MemberQuick/member_quick_del/";
+		}
+		$.ajax({
+			type: "POST",
+			url: act_url,
+			data:{"id":quick_id},
+			dataType:"json",
+			success: function(data){
+				if(data.rtnstatus=='success'){
+					layer.msg('操作成功', {icon: 1}); 
+					turnPage(1);
+				}
+			}
+		});
+	});
+
+});
+</script>
+</body>
+
+<!-- Mirrored from www.upfine.cn/theme/hplus/table_basic.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:20:01 GMT -->
+</html>

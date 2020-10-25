@@ -1,0 +1,148 @@
+<SCRIPT type="text/javascript">
+        <!--
+        var setting = {
+                view: {
+                        addHoverDom: addHoverDom,
+                        removeHoverDom: removeHoverDom,
+                        selectedMulti: false,
+                        dblClickExpand: dblClickExpand
+                },
+                edit: {
+                        enable: true,
+                        editNameSelectAll: true,
+                        showRemoveBtn: showRemoveBtn,
+                        showRenameBtn: showRenameBtn
+                },
+                data: {
+                        simpleData: {
+                                enable: true
+                        }
+                },
+                callback: {
+                        beforeDrag: beforeDrag,
+                        beforeEditName: beforeEditName,
+                        beforeRemove: beforeRemove,
+                        beforeRename: beforeRename,
+                        onRemove: onRemove,
+                        onRename: onRename
+                }
+        };
+
+        var zNodes = {$menu_json_string};
+        var log, className = "dark";
+        function dblClickExpand(treeId, treeNode) {
+            return treeNode.level > 0;
+        }
+        function beforeDrag(treeId, treeNodes) {
+                return false;
+        }
+        function beforeEditName(treeId, treeNode) {
+                navTab.reload('admin.php?mod=menu&do=edit&menu_id=' + treeNode.id, {data: '', callback: ''});
+                //className = (className === "dark" ? "":"dark");
+                //showLog("[ "+getTime()+" beforeEditName ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+                //var zTree = $.fn.zTree.getZTreeObj("menutree");
+                //zTree.selectNode(treeNode);
+                //return confirm("进入节点 -- " + treeNode.name + " 的编辑状态吗？");
+        }
+        function beforeRemove(treeId, treeNode) {
+                className = (className === "dark" ? "":"dark");
+                //showLog("[ "+getTime()+" beforeRemove ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+                var zTree = $.fn.zTree.getZTreeObj("menutree");
+                zTree.selectNode(treeNode);
+                //return confirm("确认删除 节点 -- " + treeNode.name + " 吗？");
+                deleteMenuConfirmMsg("admin.php?mod=menu", {"do": "delete", "menu_id": treeNode.id});
+                return false;
+        }
+        function onRemove(e, treeId, treeNode) {
+            //showLog("[ "+getTime()+" onRemove ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+        }
+        function beforeRename(treeId, treeNode, newName) {
+                className = (className === "dark" ? "":"dark");
+                //showLog("[ "+getTime()+" beforeRename ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+                if (newName.length == 0) {
+                        alert("{lang node_name_not_none}");
+                        var zTree = $.fn.zTree.getZTreeObj("menutree");
+                        setTimeout(function(){zTree.editName(treeNode)}, 10);
+                        return false;
+                }
+                return true;
+        }
+        function onRename(e, treeId, treeNode) {
+                //self.location.href = 'admin.php?mod=menu&action=edit&menu_id=' + treeNode.id;
+                //showLog("[ "+getTime()+" onRename ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+//                var op = $.extend({ targetType:"navTab", rel:"", data:{menu_id:treeNode.id}, callback:null}, options);
+//                var $parent = op.targetType == "dialog" ? $.pdialog.getCurrent() : navTab.getCurrentPanel();
+//                var form = _getPagerForm($parent, op.data);
+//                var params = $(form).serializeArray();
+        }
+        function showRemoveBtn(treeId, treeNode) {
+                return (treeNode.pId != 1 && treeNode.id != 1);
+        }
+        function showRenameBtn(treeId, treeNode) {
+                return (treeNode.pId != 1 && treeNode.id != 1);
+        }
+        function showLog(str) {
+                if (!log) log = $("#log");
+                log.append("<li class='"+className+"'>"+str+"</li>");
+                if(log.children("li").length > 8) {
+                        log.get(0).removeChild(log.children("li")[0]);
+                }
+        }
+        function getTime() {
+                var now= new Date(),
+                h=now.getHours(),
+                m=now.getMinutes(),
+                s=now.getSeconds(),
+                ms=now.getMilliseconds();
+                return (h+":"+m+":"+s+ " " +ms);
+        }
+
+        var newCount = 1;
+        function addHoverDom(treeId, treeNode) {
+                var sObj = $("#" + treeNode.tId + "_span");
+                if (treeNode.editNameFlag || $("#addBtn_"+treeNode.id).length>0) return;
+                var addStr = "<span class='button add' id='addBtn_" + treeNode.id
+                        + "' title='add node' onfocus='this.blur();'></span>";
+                sObj.after(addStr);
+                var btn = $("#addBtn_"+treeNode.id);
+                if (btn) btn.bind("click", function(){
+                        navTab.reload('admin.php?mod=menu&do=add&menu_pid=' + treeNode.id, {data: '', callback: ''});
+                        //var zTree = $.fn.zTree.getZTreeObj("menutree");
+                        //zTree.addNodes(treeNode, {id:(100 + newCount), pId:treeNode.id, name:"new node" + (newCount++)});
+                        return false;
+                });
+        }
+        function removeHoverDom(treeId, treeNode) {
+                $("#addBtn_"+treeNode.id).unbind().remove();
+        }
+        function selectAll() {
+                var zTree = $.fn.zTree.getZTreeObj("menutree");
+                zTree.setting.edit.editNameSelectAll =  $("#selectAll").attr("checked");
+        }
+
+        function deleteMenuConfirmMsg(url, data){
+                alertMsg.confirm("{lang confirm_delete}", {
+                        okCall: function(){
+                            $.post(url, data, DWZ.ajaxDone, "json");
+                            var zTree = $.fn.zTree.getZTreeObj("menutree");
+                            var nodes = zTree.getSelectedNodes();
+                            zTree.removeNode(nodes[0]);
+                        },
+                        cancelCall : function(){
+
+                        }
+                });
+        }
+        $(document).ready(function(){
+                $.fn.zTree.init($("#menutree"), setting, zNodes);
+                $("#selectAll").bind("click", selectAll);
+        });
+        //-->
+</SCRIPT>
+<style type="text/css">
+.ztree li span.button.add {margin-left:2px; margin-right: -1px; background-position:-144px 0; vertical-align:top; *vertical-align:middle}
+</style>
+<div class="pageHeader">{lang info_menu_comment}</div>
+<div class="pageContent">
+    <ul id="menutree" class="ztree"></ul>
+</div>

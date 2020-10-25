@@ -1,0 +1,1 @@
+<?php return array('SITENAME'=>"虫哥博客",'TITLE'=>"专注于PHP开发，Linux运营维护，LAMP，Nginx技术等",'AUTHOR'=>"recho",'DOMAIN'=>"rc.com",'SYSTEMEMAIL'=>"198902158@qq.com",'TEL'=>"010-12345678",'ADDRESS'=>"朝阳区北三环东路18号",'TWOBARCODE'=>"",);

@@ -1,0 +1,116 @@
+<?php 
+
+if (!empty($_POST)) die;
+
+$auth = @$_SESSION['auth'];
+$m_falter = @intval($_GET['m_falter']);
+$page = @intval($_GET['page']);
+$search = @filter_var($_GET['search'], FILTER_SANITIZE_STRING);
+
+if (empty($page)) { $page = 1; }
+$limit = 27;
+
+$cond = "AND city = $forum_city";
+
+//筛选条件
+switch ($m_falter) {
+case 1: 			
+	if (empty($auth)) to_login();
+	$cond .= " AND user_id = ".$auth['id'];
+	$v_title = '['.$auth['name'].'] 的频道'; 
+	$v_p_url = '?c=forum&a=forum_list&m_falter=1&page=';
+	$v_nav = 'drop_my';
+	break;
+case 2:
+	if (empty($auth)) to_login();
+	$cond .= " AND id in (SELECT forum_id FROM forum_follow WHERE user_id = ".$auth['id'].")";
+	$v_title = '['.$auth['name'].'] 关注的频道'; 
+	$v_p_url = '?c=forum&a=forum_list&m_falter=2&page=';
+	$v_nav = 'drop_my';
+	break;
+case 3:
+	$cond .= " AND change_manager = 1";
+	$v_title = '<span class="glyphicon glyphicon-retweet"></span> 正在换主的频道'; 
+	$v_p_url = '?c=forum&a=forum_list&m_falter=3&page=';
+	$v_nav = 'get_forum';
+	break;
+case 4:
+	$user_id = intval($_GET['user_id']);
+	$cond .= " AND user_id = $user_id";
+	$v_title = '['.dt_query_one("SELECT name FROM user_info WHERE id = $user_id")['name'].'] 的频道'; 
+	$v_p_url = '?c=forum&a=forum_list&m_falter=4&user_id='.$user_id.'&page=';
+	$m_falter .= '&user_id='.$user_id;
+	break;
+case 5:
+	$kind = intval($_GET['kind']);
+	$cond .= " AND kind = $kind";
+	$forum_kind_name = dt_query_one("SELECT name FROM forum_kind WHERE id = $kind")['name'];
+	$v_title = '<img src="img/finance/hengxin_logo_sm_1.png" height="25px"> '.$forum_kind_name.' <small>>></small>'; 
+	$v_p_url = '?c=forum&a=forum_list&m_falter=5&kind='.$kind.'&page=';
+	$m_falter .= '&kind='.$kind;
+	$v_nav = 'forum_kind';
+	reset_title($forum_kind_name.' - '.$city_info['name'].SYS_NAME);
+	break;
+default:
+	$cond .= ' ';
+	$v_title = '<span class="glyphicon glyphicon-search"></span> 频道搜索'; 
+	$v_p_url = '?c=forum&a=forum_list&page=';
+	$v_nav = 'forum_list';
+}
+
+$v_p_search = '';
+if (!empty($search)) {
+	$cond .= " AND name LIKE '%$search%'";
+	$v_p_search = '&search='.$search;
+}
+
+if (!empty($cond)) $cond = preg_replace('/AND/', 'WHERE', $cond, 1);
+
+$forums = dt_query("SELECT * FROM forum $cond ORDER BY today_up_c DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$forums) die('获取数据失败！');
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><?php echo $v_title ?></li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-list-search">
+	<div class="row clearfix">
+		<div class="col-md-4 col-xs-2 column">
+		</div>
+		<div class="col-md-4 col-xs-8 column">
+			<form id="search" action="javascript:forum_list_search('<?php echo $m_falter ?>')">	
+				<div class="input-group">
+					<input id="forum_list_search" class="form-control" type="text" placeholder="搜索" value="<?php echo $search ?>">
+					<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+				</div>
+			</form>	
+		</div>
+	</div>
+</div>
+<div class="container index-forum">
+	<h3 class="hidden-xs"><a href="#"><?php echo $v_title ?></a></h3>
+	<?php while($forum = mysql_fetch_array($forums)) { ?>
+	<div class="col-md-2 col-sm-3 col-xs-4 column">
+		<a target="_blank" href="<?php echo s_url('?c=forum&a=topic_list&forum_id='.$forum['id']) ?>">
+			<div class="row forum-item">
+				<div class="forum-info">
+					<h4> <?php echo $forum['name'] ?> <?php if (date('Ymd', time()) == $forum['today']) echo '<b class="badge">'.$forum['today_reply_c'].'</b>' ?></h4>
+				</div>
+			</div>
+		</a>
+	</div>
+	<?php } ?>
+</div>
+<div class="container">
+	<?php pagination('forum', $cond, $page, $limit, $v_p_url, $v_p_search) ?>
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+	$('li#<?php echo $v_nav ?>').addClass('active');
+});
+</script>

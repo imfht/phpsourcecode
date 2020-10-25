@@ -1,0 +1,130 @@
+<?php
+/**
+ * 表字段说明
+ * 1、排序 依次为EDITTIME/CREATETIME/SERIAL/主键
+ * 2、创建时间 依次为CREATETIME/EDITTIME
+ * 3、操作人和审核人
+ * 	如果表中有前台浏览器信息，外链表USER中的三个字段为前台用户操作，无则为后台
+ * 	后台审核如果表中有AUDITID和AUDITTIME两个字段则优先使用，无则使用外链表USER的三个字段
+ * 4、地区
+ * 	一般需要4个字段PROVINCEID/CITYID/COUNTYID/PLACE，PLACE可空
+ * 5、外链接除USER外其它均采用下拉方式，必须有get_all()函数，表名称仅支持TITLE字段
+ * 
+ * 6、单条数据名称 依次为TITLE/REALNAME/CNAME/SERIAL/主键
+ * 7、单条数据详细 依次为TITLE/REALNAME/CNAME/SERIAL/IDNUMBER/MOBILE/WEIXIN/PIC
+ */
+
+//主键
+$table['PRIMARY_KEY'] = strtoupper($table['IDENTITY']).'ID';
+$table['ORDER_KEY'] = $table['PRIMARY_KEY']; //排序默认使用主键倒序
+$table['TITLE_KEY'] = $table['PRIMARY_KEY']; //单条数据名称
+$table['DETAIL_KEY'] = ''; //单条数据详细字段
+$table['DETAIL_NAME'] = ''; //单条数据字段名称
+
+if(count($table['FILES']) > 0){
+	$table['DETAIL_KEY'] = 'PIC';
+	$table['DETAIL_NAME'] = '图片';
+}
+
+$table['KEYWORDS'] = array();
+
+$table['CODE'] = array(
+'SERIAL' => '', //序列号
+'TITLE' => '', //标题
+'CNAME' => '', //名称
+'REALNAME' => '', //姓名
+'IDNUMBER' => '', //身份证号
+'MOBILE' => '', //手机号码
+'WEIXIN' => '', //微信号
+'ISAUDIT' => '', //是否审核
+'STATUS' => '', //状态
+'CREATETIME' => '', //创建时刻
+'BEGINTIME' => '', //开始时刻
+'ENDTIME' => '', //结束时刻
+'BEGINDATE' => '', //开始时间
+'ENDDATE' => '', //结束时间
+'AGENT' => '', //前台浏览器
+'USER' => '', //用户
+'GROUP' => '', //会员等级
+'AUDITER' => '', //审核人
+'DISTRICT' => '', //省市区
+'HTMLEDITOR' => '', //HTML编辑器, 如果字段里有text类型，则为1
+);
+
+$auditer = false;
+
+foreach ($table['COLUMNS'] as $key => $column){
+	if($column['identity'] == 'SERIAL') $table['CODE']['SERIAL'] = $column;
+	elseif($column['identity'] == 'TITLE') $table['CODE']['TITLE'] = $column;
+	elseif($column['identity'] == 'CNAME') $table['CODE']['CNAME'] = $column;
+	elseif($column['identity'] == 'REALNAME') $table['CODE']['REALNAME'] = $column;
+	elseif($column['identity'] == 'IDNUMBER') $table['CODE']['IDNUMBER'] = $column;
+	elseif($column['identity'] == 'MOBILE') $table['CODE']['MOBILE'] = $column;
+	elseif($column['identity'] == 'WEIXIN') $table['CODE']['WEIXIN'] = $column;
+	elseif($column['identity'] == 'ISAUDIT') $table['CODE']['ISAUDIT'] = 1;
+	elseif($column['identity'] == 'STATUS') $table['CODE']['STATUS'] = 1;
+	elseif($column['identity'] == 'CREATETIME') $table['CODE']['CREATETIME'] = 1;
+	elseif($column['identity'] == 'BEGINTIME') $table['CODE']['BEGINTIME'] = 1;
+	elseif($column['identity'] == 'ENDTIME') $table['CODE']['ENDTIME'] = 1;
+	elseif($column['identity'] == 'BEGINDATE') $table['CODE']['BEGINDATE'] = 1;
+	elseif($column['identity'] == 'ENDDATE') $table['CODE']['ENDDATE'] = 1;
+	elseif($column['identity'] == 'AGENT') $table['CODE']['AGENT'] = 1;
+	elseif($column['identity'] == 'PROVINCEID') $table['CODE']['DISTRICT'] = 1;
+	elseif($column['identity'] == 'AUDITID') $table['CODE']['AUDITER'] = 1;
+	elseif($column['identity'] == 'AUDITER') $auditer = true;
+	
+	if($column['type'] == 'text') $table['CODE']['HTMLEDITOR'] = $column;
+}
+
+if($table['CODE']['TITLE']){
+	$table['DETAIL_NAME'] = $table['CODE']['TITLE']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'TITLE';
+}elseif($table['CODE']['REALNAME']){
+	$table['DETAIL_NAME'] = $table['CODE']['REALNAME']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'REALNAME';
+}elseif($table['CODE']['CNAME']){
+	$table['DETAIL_NAME'] = $table['CODE']['CNAME']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'CNAME';
+}elseif($table['CODE']['SERIAL']){
+	$table['DETAIL_NAME'] = $table['CODE']['SERIAL']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'SERIAL';
+}elseif($table['CODE']['IDNUMBER']){
+	$table['DETAIL_NAME'] = $table['CODE']['IDNUMBER']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'IDNUMBER';
+}elseif($table['CODE']['MOBILE']){
+	$table['DETAIL_NAME'] = $table['CODE']['MOBILE']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'MOBILE';
+}elseif($table['CODE']['WEIXIN']){
+	$table['DETAIL_NAME'] = $table['CODE']['WEIXIN']['name'];
+	$table['DETAIL_KEY'] = $table['TITLE_KEY'] = 'WEIXIN';
+}
+
+if($auditer) $table['CODE']['AUDITER'] = 0;
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user'){
+		$table['CODE']['USER'] = 1;
+	}elseif($key == 'group'){
+		$table['CODE']['GROUP'] = 1;
+	}elseif($key == 'district'){
+		$table['CODE']['DISTRICT'] = 1;
+	}else{
+		$tmp = $_table->get_by_identity($key);
+		$table['JOINS'][$key] = $tmp ? $tmp['CNAME'] : '';
+	}
+	
+	unset($tmp);
+}
+
+if($table['CODE']['CREATETIME']) $table['ORDER_KEY'] = 'CREATETIME';
+elseif($table['CODE']['USER']){
+	$table['ORDER_KEY'] = 'EDITTIME';
+	$table['KEYWORDS'][] = array('key' => 'a.USERNAME', 'name' => '用户名');
+}elseif($table['CODE']['SERIAL']){
+	$table['ORDER_KEY'] = 'SERIAL';
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	if($column['type'] == 'varchar') $table['KEYWORDS'][] = array('key' => 'a.'.$column['identity'], 'name' => $column['name']);
+}
+?>

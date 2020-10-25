@@ -1,0 +1,168 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<h3 class="title">{lang wx.msg.view.header}</h3>
+				</div>
+				<div class="widget-content">
+					<form class="form-search" id="frm_search" name="frmSearch" action="{$ADMIN_SCRIPT}/wx/msg" method="post">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="javascript:void(null);" id="btn_delete_list" class="btn btn-small" {$dispatches[operations][delete]}>{lang wx.msg.view.operation.delete}</a>
+						</div>
+						<div class="pull-right" {$dispatches[operations][search]}>
+							<div class="input-append">
+								<input type="text" name="txtKeyword" value="{$_var[gp_txtKeyword]}" class="input-small search-query" />
+								<button type="submit" class="btn">{lang admin.search.submit}</button>
+							</div>
+						</div>
+					</div>
+					</form>
+					
+					<hr/>
+					<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/wx/msg&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}" method="post">
+					<input type="hidden" name="formsubmit" value="yes" />
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="40">{lang wx.msg.view.th.no}</th>
+					            <th>{lang wx.msg.view.th.content}</th>
+					            <th width="60">{lang wx.msg.view.th.type}</th>
+					            <th width="200">{lang wx.msg.view.th.formusername}</th>
+					            <th width="160">{lang wx.msg.view.th.createtime}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!--{loop $msg_list $loop $msg}-->
+							<tr class="item-row">
+								<td class="center">
+					        		{echo $start + $loop + 1;}、
+					            </td>
+					            <!--{if $msg['MSGTYPE'] == 'text'}-->
+					            <td class="left">
+					            	<pre>{$msg[CONTENT]}</pre>
+					            </td>
+					            <td>
+					            	<span>文字</span>
+					            </td>
+					            <!--{elseif $msg['MSGTYPE'] == 'image'}-->
+					            <td class="left item-image">
+					            	<iframe ref="{$msg[WX_MSGID]}" src="" width="300" frameborder="0" marginheight="0" marginwidth="0" framespacing="0" scrolling="no"></iframe>
+					            </td>
+					            <td>
+					            	<span>{lang wx.msg.view.td.type.image}</span>
+					            </td>
+					            <!--{elseif $msg['MSGTYPE'] == 'location'}-->
+					            <td class="left">
+					            	<!--{if $msg['LOCATIONX'] && $msg['LOCATIONY']}-->
+					            	<img src="http://apis.map.qq.com/ws/staticmap/v2/?center={$msg[LOCATIONX]},{$msg[LOCATIONY]}&zoom=14&size=300*200&markers=color:blue|label:A|{$msg[LOCATIONX]},{$msg[LOCATIONY]}&key=7FXBZ-GQXWU-5JNVC-4DPNJ-P6EX7-MUBWS" border="0"/>
+					            	<p>{lang wx.msg.view.td.type.location.xy}：{$msg[LABEL]}</p>
+					            	<!--{else}-->
+					            	<p>{lang wx.msg.view.td.type.location.xy}：{lang wx.msg.view.td.type.location.error}</p>
+					            	<!--{/if}-->
+					            </td>
+					            <td>
+					            	<span>{lang wx.msg.view.td.type.location}</span>
+					            </td>
+					            <!--{elseif $msg['MSGTYPE'] == 'voice'}-->
+					            <td class="left">
+					            	<!--{if $wx_setting['WX_VOICE'] && false}-->
+					            	<button type="button" class="btn" ref="{$msg[WX_MSGID]}"><i class="icon-play"></i> {lang wx.msg.view.td.type.voice.button.play}</button>
+					            	<p class="voice"></p>
+					            	<!--{else}-->
+					            	{lang wx.msg.view.td.type.voice.tips}
+					            	<!--{/if}-->
+					            </td>
+					            <td>
+					            	<span>{lang wx.msg.view.td.type.voice}</span>
+					            </td>
+					            <!--{elseif $msg['MSGTYPE'] == 'link'}-->
+					            <td class="left">
+					            	<a href="{$msg[URL]}" target="_blank">{$msg[TITLE]}</a>
+					            </td>
+					            <td>
+					            	<span>{lang wx.msg.view.td.type.link}</span>
+					            </td>
+					            <!--{else}-->
+					            <td></td>
+					            <td></td>
+					            <!--{/if}-->
+					            <td>
+					            	<span class="f10">{$msg[NICKNAME]}</span><br/>
+					            	<span class="f10">{$msg[FROMUSERNAME]}</span>
+					            </td>
+					            <td>
+					            	<span class="f10">{echo date('Y-m-d H:i:s', $msg[CREATETIME]);}</span>
+					            </td>
+				            </tr>
+				            <!--{/loop}-->
+				            <!--{if count($msg_list) == 0}-->
+					        <tr>
+					            <td colspan="5">
+					                * {lang admin.operation.empty}
+					            </td>
+					        </tr>
+					        <!--{/if}-->
+						</tbody>
+					</table>
+					</form>
+					
+					<hr/>
+					{$pager}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+var imgs = new Array();
+{loop $msglist $loop $msg}
+	{if $msg['MSGTYPE'] == 'image'}imgs['img_{$msg[WX_MSGID]}'] = '<img src="{$msg[PICURL]}?rnd=' + Math.random() + '" width="100%" border="0"/>';{/if}
+{/loop}
+
+$(function(){
+	$('.fancy').uniform();
+	
+	$('#btn_submit').click(function(){
+		$('#frm_grid').submit();
+	});
+	
+	$('#btn_delete_list').click(function(){
+		$.dialog({submit:'{lang wx.msg.view.operation.clear}', message:'<p>{lang wx.msg.view.operation.clear.message}</p>', callback:function(){
+			$('#modal_dialog .btn-primary').click(function(){
+				$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/wx/msg&do=delete_list');
+				$('#frm_grid').submit();
+			});
+		}});
+	});
+	
+	$('.item-image iframe').each(function(index, item){
+		$(item).attr('src', "javascript:parent.imgs['img_" + $(item).attr('ref') + "'];");
+	});
+	
+	$('.item-image').click(function(){
+		var win = window.open();
+		win.document.write(imgs['img_' + $('iframe', this).attr('ref')]);
+		win.focus();
+	});
+	
+	$('.item-voice button').click(function(){
+		var self = this;
+		$(self).html('{lang wx.msg.view.operation.voice.loading}');
+		$.getJSON('{$ADMIN_SCRIPT}/wx/msg/_voice&rnd=' + Math.random(), {msgid:$(self).attr('ref')}, function(data){
+			if(data.success){
+				$(self).hide();
+				$(self).next().html(show_quicktime(data.message));
+			}else{
+				$(self).html('<i class="icon-play"></i> {lang wx.msg.view.td.type.voice.button.play}');
+				$.dialog({message:data.message});
+			}
+		});
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

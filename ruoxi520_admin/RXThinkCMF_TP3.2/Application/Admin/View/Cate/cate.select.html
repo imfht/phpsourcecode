@@ -1,0 +1,54 @@
+<if condition="$cateList neq null">
+	<volist name="cateList" id="vo">
+	<div class="layui-input-inline">
+		<select name="{$vo.code}_id" id="{$vo.code}_id" lay-filter="{$vo.code}_id" lay-search="">
+			<option value="">【请选择{$vo.tname}】</option>
+			{$vo['list']|make_option=$vo['selected'],name,id}
+		</select>
+	</div>
+	</volist>
+</if>
+
+<script type="text/javascript">
+layui.use(['form'],function(){
+
+	//声明变量
+	var form = layui.form
+	,$ = layui.$;
+
+	//选择一级分类
+	form.on('select(p_category_id)',function(data){
+		var id = data.value;
+		console.log("一级分类ID:"+id);
+		var select = data.othis;
+		if (select[0]) {
+			if (id > 0) {
+				$.post(mUrl+"/Cate/getChilds", { 'p_cate_id':id }, function(data){
+					if (data.success) {
+						var str = "";
+						$.each(data.data, function(i,item){
+							str += "<option value=\"" + item.id + "\" >" + item.name + "</option>";
+						});
+						$("#category_id").html('<option value="">【请选择二级分类】</option>'+str);
+						form.render('select');
+					}else{
+						$("#category_id").html('');
+						form.render('select');
+						layer.msg(data.msg,{ icon: 5 });
+						return false;
+					}
+				}, 'json');
+			} else {
+				
+			}
+		}
+	});
+	
+	//选择二级分类
+	form.on("select(category_id)",function(data){
+		var id = data.value;
+		console.log("二级分类ID:"+id);
+	});
+	
+});
+</script>

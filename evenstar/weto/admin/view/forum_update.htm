@@ -1,0 +1,224 @@
+<!--{include header.htm}-->
+<style type="text/css">
+dt{width: 15%;}
+dd{width: 84%;}
+</style>
+<div class="width">
+	<form action="?forum-update-fid-$forum[fid].htm" method="post" id="forum_update_form">
+		<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+		
+		<div class="div" style="width: 700px;">
+			<div class="header">编辑版块 - $forum[name]</div>
+			<div class="body">
+				<dl class="dl28">
+					
+					<dt><label for="name">名称：</label></dt>
+					<dd><input type="text" name="name" id="name" value="$forum[name]" style="width: 150px" /> <a href="../?forum-index-fid-$forum[fid].htm" target="_blank">点击访问</a></dd>
+					
+					<dt><label for="rank">排序：</label></dt>
+					<dd><input type="text" name="rank" id="rank" value="$forum[rank]" style="width: 30px" /> <span class="grey">0-255, 正序</span></dd>
+					
+					<div style="clear: both; overflow: hidden;">
+						<dt><label for="brief">版块简介：</label></dt>
+						<dd><textarea name="brief" id="brief" style="width: 400px; height: 40px; font-size: 12px;">$forum[brief]</textarea></dd>
+					</div>
+
+					<!--{hook forum_update_brief_after.htm}-->
+					
+					<div style="clear: both; overflow: hidden;">
+						<dt><label for="orderby">主题排序方式：</label></dt>
+						<dd>
+							$input[orderby]
+						</dd>
+					</div>
+					
+					<dt><label for="recentthreads">版主：</label></dt>
+					<dd>
+						<input type="text" name="modnames" id="modnames" value="$forum[modnames]" style="width: 200px" />
+						<span class="grey">最多 6 个，用户名空格隔开；</span>
+					</dd>
+					
+					<dt><label for="seo_title">SEO 标题：</label></dt>
+					<dd><input type="text" name="seo_title" id="seo_title" value="$forum[seo_title]" style="width: 200px" /> <span class="grey">搜索引擎优化</span></dd>
+					
+					<dt><label for="seo_keywords">SEO 关键词：</label></dt>
+					<dd><input type="text" name="seo_keywords" id="seo_keywords" value="$forum[seo_keywords]" style="width: 200px" /> <span class="grey">搜索引擎优化，可以填写多个关键词</span></dd>
+					
+					<!--{hook forum_update_threadtype_before.htm}-->
+					
+					<dt>设置主题分类：</dt>
+					<dd class="grey">
+						<!--{if $forum[typelist]}-->
+							<input type="checkbox" name="typeon" id="typeon" value="1" checked="checked"/>
+						<!--{else}-->
+							<input type="checkbox" name="typeon" id="typeon" value="1" />
+						<!--{/if}-->
+						<br />
+						<div id="typeon_div" {if empty($forum[typelist])} style="display: none;" {/if}>
+							<!--{loop $forum[typelist] $typecateid $typelist}-->
+							<div class="div">
+								<div class="header">
+									大分类名称：<input type="text" name="typecatename[$typecateid]" value="$forum[typecatelist][$typecateid][catename]" size="8" />
+									顺序：<input type="text" name="typecaterank[$typecateid]" value="$forum[typecatelist][$typecateid][rank]" size="4" />
+									启用：<input type="checkbox" name="typecateenable[$typecateid]" value="1" {if $forum[typecatelist][$typecateid][enable]}checked="checked"{/if} />
+									版主权限：<input type="checkbox" name="typecatemod[$typecateid]" value="1" {if $forum[typecatelist][$typecateid][enable] & 2}checked="checked"{/if} title="开启版主权限以后，只有版主才能管理此分类" />
+								</div>
+								<div class="body">
+									<table width="200">
+										<tr>
+											<td width="60">小分类名称</td>
+											<td width="60">顺序</td>
+											<td width="30" align="center">启用</td>
+										</tr>
+										<!--{loop $typelist $typeid $type}-->
+										<tr {if empty($type[typename])} style="display: none;"{/if} typeid="$type[typeid]" typename="$type[typename]">
+											<td><input type="text" name="typename[$type[typeid]]" value="$type[typename]" size="8" /></td>
+											<td><input type="text" name="typerank[$type[typeid]]" value="$type[rank]" size="4" /></td>
+											<td><input type="checkbox" name="typeenable[$type[typeid]]" value="1" {if $type[enable]}checked="checked"{/if} /></td>
+										</tr>
+										<!--{/loop}-->
+										<tr>
+											<td colspan="3"><a href="javascript: void(0)" class="addtype">[+]增加</a></td>
+										</tr>
+									</table>
+								</div>
+							</div>
+							<!--{/loop}-->
+						</div>
+					</dd>
+					
+					<dt><label for="accesson">开启权限限制：</label></dt>
+					<dd>
+						<input type="checkbox" name="accesson" id="accesson" value="1" {if $forum[accesson]}checked="checked"{/if} />
+						<span class="grey">不利于缓存，不利于SEO。</span>
+						<div class="list" id="accesstable" style="width: 580px; {if !$forum[accesson]}display: none;{/if}">
+							<table class="table">
+								<tr class="header">
+									<td>用户组</td>
+									<td width="80"><input type="checkbox" id="checkread" />访问</td>
+									<td width="80"><input type="checkbox" id="checkpost" />回帖</td>
+									<td width="80"><input type="checkbox" id="checkthread" />发主题</td>
+									<td width="80"><input type="checkbox" id="checkattach" />上传</td>
+									<td width="80"><input type="checkbox" id="checkdown" />下载</td>
+								</tr>
+								<!--{loop $grouplist $group}-->
+								<!--{if $group[groupid] == 11}-->
+								<tr>
+									<td colspan="6">&nbsp;</td>
+								</tr>
+								<!--{/if}-->
+								<tr align="center">
+									<td align="right">$group[name] <input type="hidden" name="groupids[]" value="$group[groupid]"></td>
+									<td><input type="checkbox" name="allowread[{$group[groupid]}]" value="1" {if isset($accesslist[$group['groupid']]) && $accesslist[$group['groupid']]['allowread']}checked="checked"{/if} /></td>
+									<td><input type="checkbox" name="allowpost[{$group[groupid]}]" value="1" {if isset($accesslist[$group['groupid']]) && $accesslist[$group['groupid']]['allowpost']}checked="checked"{/if} /></td>
+									<td><input type="checkbox" name="allowthread[{$group[groupid]}]" value="1" {if isset($accesslist[$group['groupid']]) && $accesslist[$group['groupid']]['allowthread']}checked="checked"{/if} /></td>
+									<td><input type="checkbox" name="allowattach[{$group[groupid]}]" value="1" {if isset($accesslist[$group['groupid']]) && $accesslist[$group['groupid']]['allowattach']}checked="checked"{/if} /></td>
+									<td><input type="checkbox" name="allowdown[{$group[groupid]}]" value="1" {if isset($accesslist[$group['groupid']]) && $accesslist[$group['groupid']]['allowdown']}checked="checked"{/if} /></td>
+								</tr>
+								
+								<!--{if $group[groupid] == 0}-->
+								<tr>
+									<td colspan="6">&nbsp;</td>
+								</tr>
+								<!--{/if}-->
+								<!--{/loop}-->
+							</table>
+						</div>
+					</dd>
+					
+					<!--{hook forum_update_submit_before.htm}-->
+					
+					<dt></dt>
+					<dd>
+						<input type="submit" class="button bigblue" id="forum_update_submit" value="编辑版块" />
+						<input type="button" class="button biggrey" value="返回" onclick="history.back()" />
+						<div class="notice" id="notice" style="display: none;"></div>
+					</dd>
+				</dl>
+			</div>
+		</div>
+	</form>
+</div>
+
+
+<!--{include footer.htm}-->
+
+<script type="text/javascript">
+$('#forum_update_submit').click(function() {
+	/*$('#accesstable input[type=checkbox]').each(function() {
+		this.value = this.checked ? 1 : 0;
+	});*/
+	$('#forum_update_form').submit();
+	return false;
+});
+
+$('#accesson').click(function() {
+	if($(this).attr('checked')) {
+		$('#accesstable').show();
+	} else {
+		$('#accesstable').hide();
+	}
+});
+
+$('#checkread').click(function() {
+	$('#accesstable input[name^=allowread]').attr('checked', $(this).attr('checked'));
+});
+$('#checkpost').click(function() {
+	$('#accesstable input[name^=allowpost]').attr('checked', $(this).attr('checked'));
+});
+$('#checkthread').click(function() {
+	$('#accesstable input[name^=allowthread]').attr('checked', $(this).attr('checked'));
+});
+$('#checkattach').click(function() {
+	$('#accesstable input[name^=allowattach]').attr('checked', $(this).attr('checked'));
+});
+$('#checkdown').click(function() {
+	$('#accesstable input[name^=allowdown]').attr('checked', $(this).attr('checked'));
+});
+
+<!--{loop $error $k $v}-->
+<!--{if $v}-->
+	$('#$k').alert('$v');
+<!--{/if}-->
+<!--{/loop}-->
+
+<!--{if !empty($_POST)}-->
+<!--{if empty($error)}-->
+	$('#notice').html('编辑成功！').show();
+<!--{else}-->
+	$('#notice').html('编辑失败！').show();
+<!--{/if}-->
+<!--{/if}-->
+
+// 主题分类
+$('a.addtype').click(function() {
+	var find = 0;
+	var jtable = $(this).closest('table');
+	$('tr', jtable).each(function() {
+		var typeid = $(this).attr('typeid');
+		var typename = $(this).attr('typename');
+		if(!typeid) return;
+		if(find) return;
+		if($(this).css('display') == 'none') {
+			$(this).show();
+			find = 1;
+		}
+	})
+	if(!find) {
+		alert('每个大分类下只能有40个个小主题分类。');
+	}
+});
+
+$('#typeon').click(function() {
+	if(!$(this).attr('checked')) {
+		$('#typeon_div').hide();
+	} else {
+		$('#typeon_div').show();
+	}
+	return true;
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+<?php
+/**
+ * @package     Console.php
+ * @author      Jing <tangjing3321@gmail.com>
+ * @link        http://www.slimphp.net
+ * @version     1.0
+ * @copyright   Copyright (c) SlimCustom.
+ * @date        2017年6月3日
+ */
+
+namespace Demo\Console;
+
+use SlimCustom\Libs\Console\Console as Kernel;
+
+/**
+ * 控制台
+ * 
+ * @author Jing Tang <tangjing3321@gmail.com>
+ */
+class Console extends Kernel
+{
+    /**
+     * 注册我的命令
+     * 
+     * @var array
+     */
+    protected $commands = [
+        \Demo\Console\Commands\Hello::class
+    ];
+}

@@ -1,0 +1,89 @@
+{% extends 'layouts/master.html' %}
+
+{% set page = 'code' %}
+
+{% block title %}Gitamin{% endblock %}
+
+{% block breadcrumb %} 
+{% embed 'partials/breadcrumb.html' with {breadcrumbs: breadcrumbs} %}
+        {% block extra %}
+            <div class="pull-right">
+                <div class="btn-group download-buttons">
+                    <a type="button" href="{{ route('archive', {owner: owner.slug, project: project.slug, branch: branch, format: 'zip'}) }}" class="btn btn-default btn-xs" title="Download '{{ branch }}' as a ZIP archive">ZIP</a>
+                    <a type="button" href="{{ route('archive', {owner: owner.slug, project: project.slug, branch: branch, format: 'tar'}) }}" class="btn btn-default btn-xs" title="Download '{{ branch }}' as a TAR archive">TAR</a>
+                </div>
+                <div class="download-buttons">
+                    <a href="{{ route('rss', {owner: owner.slug, project: project.slug, branch: branch}) }}"><span class="octicon octicon-rss rss-icon"></span></a>
+                </div>
+            </div>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
+
+{% block project_description %}
+{% if path is empty %}
+<div class="header row">
+    <div class="col-sm-12">
+	<div class="repository-meta">
+         <span class="meta-about">{{ project.description }}</span>
+	</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if files is not empty %}
+    <table class="table tree">
+        {% if latest_commit is not null %}
+        <thead>
+            <tr>
+                <th colspan="2"><a href="mailto:{{latest_commit.author.email}}"><img src="{{ avatar( latest_commit.author.email, 16 ) }}" /> {{ latest_commit.author.name }}</a> committed on Gitamin: {{ latest_commit.getMessage }} 
+                </th>
+                <th>Latest commit <a href="{{ route('commit', {owner: owner.slug, project: project.slug, commit: latest_commit.hash}) }}">{{ latest_commit.shortHash }}</a> <span class="timeago">{{ latest_commit.commiterDate | format_date }}</span> 
+                </th>
+            </tr>
+        </thead>
+        {% endif %}
+        <tbody>
+            {% if parent is not null %}
+            <tr>
+                <td>
+                    {% if not parent %}
+                        <a href="{{ route('branch', {owner: owner.slug, project: project.slug, branch: branch}) }}">..</a>
+                    {% else %}
+                        <a href="{{ route('tree', {owner: owner.slug, project: project.slug, commitishPath: branch ~ '/' ~ parent}) }}">..</a>
+                    {% endif %}
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endif %}
+            {% for file in files %}
+            <tr>
+                <td class="icon"><span class="octicon {{ file.type == "folder" or file.type == "symlink" ? "octicon-file-directory" : "octicon-file-text" }}"></span> <a href="
+                    {%- if file.type == "folder" or file.type == "symlink" -%}
+                        {{ route('tree', {owner: owner.slug, project: project.slug, commitishPath: branch ~ '/' ~ path ~ (file.type == "symlink" ? file.path : file.name)}) }}
+                    {%- else -%}
+                        {{ route('blob', {owner: owner.slug, project: project.slug, commitishPath: branch ~ '/' ~ path ~ (file.type == "symlink" ? file.path : file.name)}) }}
+                    {%- endif -%}
+                ">{{ file.name }}</a></td>
+                <td>{{ file.commit.getMessage }}</td>
+                <td><span class="timeago " data-toggle="tooltip" data-placement="top" title="{{ file.commit.date | format_date }}">{{ file.commit.date | format_date }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>This repository is empty.</p>
+    {% endif %}
+    {% if readme is defined and readme is not empty %}
+        <div class="readme-view">
+            <div class="md-header">
+                <span class="meta">{{ readme.filename }}</span>
+            </div>
+            <div id="md-content">{{ readme.content }}</div>
+        </div>
+    {% endif %}
+
+{% endblock %}

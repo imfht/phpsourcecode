@@ -1,0 +1,172 @@
+{extend name="default/base" /}
+{block name="title"}商品评价 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/orders_appraises.css?v={$v}">
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+<link rel="stylesheet" href="__STATIC__/plugins/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="__STATIC__/plugins/photoswipe/default-skin/default-skin.css">
+{/block}
+{block name="header"}
+	{php}$Title='商品评价'{/php}
+  {include file="default/header" /}
+{/block}
+{block name="main"}
+    {/* 图片查看层 */}
+    <div id="gallery" class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="pswp__bg"></div>
+        <div class="pswp__scroll-wrap">
+            <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            </div>
+            <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="关闭"></button>
+                <button class="pswp__button pswp__button--fs" title="全屏"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip">
+                </div>
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center">
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="" value="" id="currPage" autocomplete="off">
+    <input type="hidden" name="" value="" id="totalPage" autocomplete="off">
+    <input type="hidden" name="" value="{$oId}" id="oId" autocomplete="off">
+    <section class="ui-container">  
+        <div class="item-head wst-flex-row wst-ac">
+        <div class="shop"><i></i>{$data['shopName']}</div>
+        </div>
+        {volist name="data['data']" id="g"}
+        <div class="ui-row-flex ui-whitespace border-b g-item" >
+            <div class="wst-flex-row" style="width:100%;border-bottom:1px solid #f2f2f2;">
+                <div class="" onclick="javascript:WST.intoGoods({$g['goodsId']});">
+                    <img class="o-Img" src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{:WSTImg($g['goodsImg'],3)}">
+                </div>
+                <div class="o-gInfo-container" >
+                    <div class="o-gInfo">
+                        <p class="o-gName ui-nowrap-multi ">{$g['goodsName']}</p>
+                        {if($g['goodsSpecNames'])}
+                        <p class="o-gSpec ui-nowrap-multi ">{$g['goodsSpecNames']}</p>
+                        {/if}
+                    </div>
+                    <div class="o-appr-btn wst-flex-row wst-jfe">
+                        {if ($g['appraise']!='')}
+                        <button onclick="appraise({$g.goodsId},{$g['goodsSpecId'] ?? 0},{$g.id},this)">查看评价</button>
+                        {else /}
+                        <button onclick="toApprDetail({$oId},{$g.id})">评价</button>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="appBox_{$g.id}"></div>
+        {/volist}
+        <script id="appraises-box" type="text/html">
+            <ul class="ui-row appraise-box">
+                <li class="ui-col ui-col-25 appraise-title appr-group" style="height: 25px;line-height:25px;">商品评分</li>
+                <li class="ui-col ui-col-75 appr-group">
+                    <ul class="ui-row">
+                      <li class="ui-col ui-col-80">
+                        {{# for(var i=0;i<d.goodsScore;i++){ }}
+                            <span class="start-on"></span>
+                        {{# } }}
+
+                        {{# for(var j=0;j<5-d.goodsScore;j++){ }}
+                             <span class="start-not"></span>
+                        {{# } }}
+                      </li>
+                      <li class="ui-col ui-col-20 score" id="goodsScore" score="{{(d.timeScore!='')?d.timeScore:'0'}}" style="height: 25px;line-height:25px;">{{(d.goodsScore!='')?d.goodsScore:'0'}}分</li>
+                    </ul>
+                </li>
+
+                <li class="ui-col ui-col-25 appraise-title appr-group" style="height: 25px;line-height:25px;">服务评分</li>
+                <li class="ui-col ui-col-75 appr-group">
+                    <ul class="ui-row">
+                      <li class="ui-col ui-col-80">
+                        {{# for(var i=0;i<d.serviceScore;i++){ }}
+                            <span class="start-on"></span>
+                        {{# } }}
+
+                        {{# for(var j=0;j<5-d.serviceScore;j++){ }}
+                             <span class="start-not"></span>
+                        {{# } }}
+                      </li>
+                      <li class="ui-col ui-col-20 score" id="serviceScore" score="{{(d.timeScore!='')?d.timeScore:'0'}}" style="height: 25px;line-height:25px;">{{(d.serviceScore!='')?d.serviceScore:'0'}}分</li>
+                    </ul>
+                </li>
+
+                <li class="ui-col ui-col-25 appraise-title appr-group" style="height: 25px;line-height:25px;">时效评分</li>
+                <li class="ui-col ui-col-75 appr-group">
+                    <ul class="ui-row">
+                      <li class="ui-col ui-col-80">
+                        {{# for(var i=0;i<d.timeScore;i++){ }}
+                            <span class="start-on"></span>
+                        {{# } }}
+
+                        {{# for(var j=0;j<5-d.timeScore;j++){ }}
+                             <span class="start-not"></span>
+                        {{# } }}
+                      </li>
+                      <li class="ui-col ui-col-20 score" id="timeScore" score="{{(d.timeScore!='')?d.timeScore:'0'}}" style="height: 25px;line-height:25px;">{{(d.timeScore!='')?d.timeScore:'0'}}分</li>
+                    </ul>
+                </li>
+
+
+                     <li class="ui-col ui-col-25 appraise-title appr-group">点评内容</li>
+                     <li class="ui-col ui-col-75 appr-group">
+                        {{d.content}}
+                    </li>
+                    <li class="ui-col ui-col-25 appraise-title" >评价附件</li>
+                     <li class="ui-col ui-col-75" >
+                        {{# if(WST.blank(d.images)!=''){
+                            var img = d.images;
+                         }}
+                        <ul class="complainFileBox" data-gallery="{{img}}">
+                          {{# for(var g=0;g<img.length;++g){ }}
+                            <li onclick="gViewImg({{g}},this)"><img src="__RESOURCE_PATH__/{{img[g]}}"> </li>
+                          {{# } }}
+                        </ul>
+                        {{# } }}
+                     </li>
+
+            </ul>
+
+            
+
+        </script>
+        <div id="appraisesBox">
+        </div>
+
+    </section>
+{/block}
+{block name="include"}
+{include file="default/dialog" /}<!-- 对话框模板 -->
+{/block}
+{block name="footer"}
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script src="__STATIC__/plugins/photoswipe/photoswipe.js"></script>
+<script src="__STATIC__/plugins/photoswipe/photoswipe-ui-default.min.js"></script>
+<script type='text/javascript' src='__MOBILE__/users/orders/orders_appraises.js?v={$v}'></script>
+<script type='text/javascript' src='__STATIC__/plugins/webuploader/webuploader.js?v={$v}'></script>
+{/block}

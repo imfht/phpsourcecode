@@ -1,0 +1,148 @@
+<!--{template /module/admin/view/head}-->
+<style type="text/css">
+    #div_tag_list .-ilinei-tag span {display:inline-block; *display:inline; margin:0 4px 10px 0;}
+    #div_tag_list .-ilinei-tag .btn {padding:4px 10px; text-shadow:none; background:#fff; border:1px solid #ccc; border-radius:0;}
+    #div_tag_list .-ilinei-tag .btn:focus {outline:none;}
+    #div_tag_list .-ilinei-tag .btn-inverse {color:#00af4f; text-shadow:none; background:#fff; border:1px solid #00af4f;}
+</style>
+<div id="left_layout">
+    <div id="main_content" class="container-fluid" style="padding-top:0;">
+        <!--{template /module/admin/view/head_nav}-->
+        <div class="row-fluid">
+            <div class="well widget" style="border-top:0; padding-top:5px;">
+                <div class="widget-content">
+                    <form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/admin/file/_ilinei&frame=content&file={$_var[gp_file]}&path={$_var[gp_path]}" method="post">
+                        <input type="hidden" name="formsubmit" value="yes" />
+                        <fieldset>
+                            <span class="help-inline">
+                                {lang admin.file.view.textarea.tips}
+                            </span>
+                            <textarea name="txtContent" id="txt_content" style="width:98%; background:#f3f3f3; color:#008200;" rows="16" cols="80">{$file[content]}</textarea>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--{template /module/admin/view/ilinei_frame_tag}-->
+
+<script type="text/javascript" src="static/plugins/emmet.js"></script>
+
+<script>
+    //TAG列表
+    var blocks = new Array();
+
+    blocks['blank'] = {key:'blank', name:'{lang admin.ilinei.frame_parser.view.button.blank}', params:{}};
+    blocks['blank'].file = {type:'string', value:''};
+    blocks['block'] = {key:'blank', name:'{lang admin.ilinei.frame_parser.view.button.block}', params:{}};
+    blocks['block'].file = {type:'string', value:''};
+
+    {loop $blocks $loop $block}
+    blocks['{$block[key]}'] = {key:'{$block[key]}', name:'{$block[name]}', params:{}};
+    {loop $block[params] $key $param}
+    blocks['{$block[key]}'].params.{$param[id]} = {type:'{$param[type]}', value:'{$param[value]}', readonly:'{$param[readonly]}'};
+    {/loop}
+    {/loop}
+
+    //TAG生成
+    function block_maker(rel){
+        if(!blocks[rel]) return '';
+
+        if(rel == 'blank') return block_wrap('file="" ');
+        if(rel == 'block') return block_wrap('file="' + $("#tag-block input[name='rdoBlock']:checked").val() + '" ');
+
+        var block = 'key="' + rel + '" ';
+
+        var params = blocks[rel].params;
+
+        for(var p in params){
+            var param = params[p];
+            if(param.readonly) continue;
+
+            if(param.type == 'string' || param.type == 'number'){
+                block += p + '="' + $("#tag-" + rel + " input[name='txt_" + p + "']").val() + '" ';
+            }else if(param.type == 'checkbox'){
+                if($("#tag-" + rel + " input[name='cbx_" + p + "']:checked").length > 0){
+                    block += p + '="true" ';
+                }
+            }else if(param.type == 'page'){
+                block += p + '="' + $("#tag-" + rel + " select[name='slt_" + p + "']").val() + '" ';
+            }
+        }
+
+        block += 'theme="' + $("#tag-" + rel + " input[name='rdo_theme']:checked").val() + '"';
+
+        return block_wrap(block);
+    }
+
+    function block_wrap(block){
+        //为避免模板解析，帮将模板标签隔开
+        return '<' + '!--{' + 'block' + ' ' + block + '}-->';
+    }
+
+    //添加TAG
+    function block_add(){
+        $.dialog({title:'{lang admin.ilinei.frame_parser.view.block.title}', width:850, submit:'{lang admin.ilinei.frame_parser.view.block.add}', message:$('#txt_tag_list').val(), callback:function(){
+            $('#modal_dialog .fancy').uniform();
+
+            //默认空TAG
+            $('#modal_dialog .-ilinei-tag .tag-blank').addClass('btn-inverse');
+            $('#tag-blank').show();
+
+            //选择TAG
+            $('#modal_dialog .-ilinei-tag .btn').click(function(){
+                $('#modal_dialog .-ilinei-tag .btn').removeClass('btn-inverse');
+                $(this).addClass('btn-inverse');
+
+                $('#div_tag_list .tag').hide();
+
+                var rel = $(this).attr('rel');
+                $('#tag-' + rel).show();
+
+                //非空和引用块外，都要默认皮肤
+                if(!(rel == 'blank' || rel == 'block')){
+                    $("#tag-" + rel + " input[name='rdo_theme']:first").attr('checked', true).parent().addClass('checked');
+                }
+            });
+
+            //确认提交
+            $('#modal_dialog .btn-primary').click(function(){
+                //检查是否选了。
+                var rel = $('#div_tag_list .btn-inverse').attr('rel');
+
+                if(!rel) return;
+                if($('#tag-' + rel).length == 0) return;
+
+                var content = $('#txt_content').get(0);
+                content.value = content.value.substr(0, content.selectionStart) + block_maker(rel) + content.value.substring(content.selectionStart, content.value.length);
+
+                $('#modal_dialog').modal('hide').remove();
+            });
+        }});
+    }
+
+    //保存
+    function save(){
+        $.dialog({submit:'{lang admin.ilinei.frame_parser.view.submit}', message:'<p>{lang admin.ilinei.frame_parser.view.submit.message}</p>', callback:function(){
+            $('#modal_dialog .btn-primary').click(function(){
+                $('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/admin/file/_ilinei&frame=content&file={$_var[gp_file]}&path={$_var[gp_path]}');
+                $('#frm_grid').submit();
+            });
+        }});
+    }
+
+    $(function(){
+        $('.fancy').uniform();
+        $('#txt_content').css('height', ($(document).height() - 100) + 'px');
+
+        //加载textarea编辑器
+        emmet.require('textarea').setup({
+            pretty_break:true,
+            use_tab:true
+        });
+    });
+</script>
+
+<!--{template /module/admin/view/foot}-->

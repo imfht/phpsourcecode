@@ -1,0 +1,1 @@
+<div style="color:green">id:<?php echo $id;?></div>

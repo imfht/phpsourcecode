@@ -1,0 +1,234 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/adv_search',array('name'=>'记账明细'))}
+	<form method="post" name="form_adv_search" id="form_adv_search">
+		<div class="adv_search panel panel-default  hidden"  id="adv_search">
+			<div class="panel-heading">
+				<div class="row">
+					<h4 class="col-xs-6">高级搜索</h4>
+					<div class="col-xs-6 text-right">
+						<a  class="btn btn-sm btn-info" onclick="submit_adv_search();">搜索</a>
+						<a  class="btn btn-sm " onclick="close_adv_search();">关闭</a>
+					</div>
+				</div>
+			</div>
+			<div class="panel-body">
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="eq_account_id">账户：</label>
+					<div class="col-sm-8">
+						<select id="account_id" name="eq_account_id" class="form-control">
+							<option value="">请选择</option>
+							{:fill_option($account_list)}
+						</select>
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="li_type">类别：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="li_type" name="li_type" >
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="li_remark">摘要：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="li_remark" name="li_remark" >
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="li_content">客户/供应商：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="li_partner" name="li_partner" >
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="be_create_time">登录时间：</label>
+					<div class="col-sm-8">
+						<div class="input-daterange input-group" >
+							<input type="text" class="input-sm form-control text-center" name="be_input_date" readonly="readonly"/>
+							<span class="input-group-addon">-</span>
+							<input type="text" class="input-sm form-control text-center" name="en_input_date" readonly="readonly"/>
+						</div>
+					</div>
+				</div>
+				<div class="form-group col-sm-6">
+					<label class="col-sm-4 control-label" for="li_content">经办：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="li_actor_name" name="li_actor_name" >
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div class="space-8"></div>
+	<if condition="$auth['write']">
+		<div class="operate panel panel-default">
+			<div class="panel-body">
+				<div class="pull-right">
+					<a class="btn btn-sm btn-primary" href="{:U('account_list')}" >账户管理</a>
+					<a class="btn btn-sm btn-primary" onclick="add_income()">记收入</a>
+					<a class="btn btn-sm btn-primary" onclick="add_payment()">记支出</a>
+					<a class="btn btn-sm btn-primary" onclick="add_transfer()">记转账</a>
+				</div>
+			</div>
+		</div>
+	</if>
+	<div class="ul_table">
+		<ul>
+			<li class="thead">
+				<span class="col-8 text-center">单据编号</span>
+				<span class="col-8 text-center">日期</span>
+				<div class="pull-right">
+					<span class="col-8 ">账户</span>
+					<span class="col-10 text-right">收入</span>
+					<span class="col-10 text-right">支出</span>
+					<span class="col-10 text-right">合计</span>
+					<span class="col-10 text-center">类别</span>
+					<span class="col-10  text-center">客户/供应商</span>
+					<span class="col-6  text-center">经办</span>
+					<span class="col-6  text-center">录入</span>
+				</div>
+				<span class="auto autocut">摘要 </span>
+			</li>
+			<empty name="list">
+				<li class="no-data">
+					没找到数据
+				</li>
+				<else/>
+				<foreach name="list" item="vo">
+					<li class="tbody data_item">
+						<span class="col-8 text-center">{$vo.doc_no}</span>
+						<span class="col-8 text-center">{$vo.input_date}</span>
+						<div class="pull-right">
+							<span class="col-8 ">{$vo.account_name}</span>
+							<span class="col-10 text-right data data_1">{$vo.income|default=0}</span>
+							<span class="col-10 text-right data data_2">{$vo.payment|default=0}</span>
+							<span class="col-10 text-right data data_3">{$vo['income']-$vo['payment']}</span>
+							<span class="col-10 text-center">{$vo.type}</span>
+							<span class="col-10 text-center">{$vo.partner}&nbsp;</span>
+							<span class="col-6 text-center">{$vo.actor_name}</span>
+							<span class="col-6 text-center">{$vo.user_name}</span>
+						</div>
+						<span class="auto autocut"><a href="{:U('read','id='.$vo['id'])}">{$vo.remark}</a></span>
+					</li>
+				</foreach>
+				<li class="tbody data_total">
+					<span class="col-8 text-center">合计</span>
+					<span class="col-8 text-center">&nbsp;</span>
+					<div class="pull-right">
+						<span class="col-10 text-right data data_1"></span>
+						<span class="col-10 text-right data data_2"></span>
+						<span class="col-10 text-right data data_3"></span>
+						<span class="col-32 text-center">&nbsp;</span>
+					</div>
+				</li>
+				<div class="pagination">
+					{$page}
+				</div>
+			</empty>
+		</ul>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		$(document).ready(function() {
+			set_return_url();
+			total_init();
+		});
+
+		function total_init() {
+			for (var i = 1; i < 11; i++) {
+				total = 0;
+				item_selecter = ".data_item .data_" + i;
+
+				$(item_selecter).each(function() {
+					total = dec_add(total, $(this).text());
+				});
+				total_selecter = ".data_total .data_" + i;
+				$(total_selecter).text(total);
+			}
+			$(".ul_table .data").each(function() {
+				$(this).text(formatMoney($(this).text()));
+			});
+		}
+
+		function dec_add(num1, num2) {
+			var reg = /\./i;
+			if (!reg.test(num1) && !reg.test(num2)) {
+				return parseInt(num1) + parseInt(num2);
+			}
+			var r1 = 0, r2 = 0, m;
+			var str1 = num1.toString(), str2 = num2.toString();
+			if (str1.indexOf('.') > -1) {
+				r1 = str1.split('.')[1].length;
+			}
+			if (str2.indexOf('.') > -1) {
+				r2 = str2.split('.')[1].length;
+			}
+			m = Math.pow(10, Math.max(r1, r2));
+			return (dec_mul(num1, m) + dec_mul(num2, m)) / m;
+		}
+
+		function dec_mul(num1, num2) {
+
+			var t1 = 0, t2 = 0, r1, r2;
+			try {
+				t1 = num1.toString().split(".")[1].length;
+			} catch(e) {
+				t1 = 0;
+			}
+			try {
+				t2 = num2.toString().split(".")[1].length;
+			} catch(e) {
+				t2 = 0;
+			}
+			with (Math) {
+				r1 = Number(num1.toString().replace(".", ""));
+				r2 = Number(num2.toString().replace(".", ""));
+				return (r1 * r2) / pow(10, t2 + t1);
+			}
+		}
+
+		function formatMoney(numStr, separator) {
+			s = numStr;
+			if (/[^0-9\.\-]/.test(s))
+				return "　";
+			s = s.replace(/^(-)?(\d*)$/, "$1$2.");
+			s = (s + "00").replace(/(-)?(\d*\.\d\d)\d*/, "$1$2");
+			s = s.replace(".", ",");
+			var re = /(\d)(\d{3},)/;
+			while (re.test(s))
+			s = s.replace(re, "$1,$2");
+			s = s.replace(/,(\d\d)$/, ".$1");
+			return s.replace(/^\./, "0.");
+		}
+
+		function formatQty(numStr, separator) {
+			s = numStr;
+			if (/[^0-9\.\-]/.test(s))
+				return "　";
+			s = s.replace(/^(-)?(\d*)$/, "$1$2.");
+			s = (s + "00").replace(/(-)?(\d*\.\d\d)\d*/, "$1$2");
+			s = s.replace(".", ",");
+			var re = /(\d)(\d{3},)/;
+			while (re.test(s))
+			s = s.replace(re, "$1,$2");
+			s = s.replace(/,(\d\d)$/, ".$1");
+			s = s.replace(/^\./, "0.");
+			if (s.split(".")[1] == "00")
+				s = s.split(".")[0];
+			return s;
+		}
+
+		function add_income() {
+			window.open("{:U('add_income')}", "_self");
+		}
+
+		function add_payment() {
+			window.open("{:U('add_payment')}", "_self");
+		}
+
+		function add_transfer() {
+			window.open("{:U('add_transfer')}", "_self");
+		}
+	</script>
+</block>

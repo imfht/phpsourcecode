@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>用户行为日志</title>
+
+    <!-- Bootstrap -->
+    <link href="{:config('__public__')}/static/bootstrap-3.3.4/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link href="/Admin/css/iframeCommon.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="contentTop">
+    <h3>用户行为日志</h3>
+      <div class="toolBar">
+      </div>
+    </div>
+
+    <table  class="table table-striped table-condensed" >
+      <thead class="bg-info">
+      <tr>
+        <th>id</th>
+        <th>用户ID</th>
+        <th>ip地址</th>
+        <th>请求类型</th>
+        <th>请求地址</th>
+        <th>参数</th>
+        <th>说明</th>
+        <th>操作时间</th>
+      </tr>
+      </thead>
+      <tbody>
+        {notempty name="_list"}
+        {volist name="_list" id="vo"}
+        <tr>
+        <td><a href="{:url('detail', ['id'=>$vo['id']])}">{$vo.id}</a></td>
+          <td><a href="{:url('index', ['user_id'=>$vo['user_id']])}">{$vo.user_id}</a></td>
+          <td class="clientIp" id="{$vo['id']}"><a href="{:url('index', ['ip'=>$vo['ip']])}">{$vo.ip|long2ip}</a></td>
+          <td>{$vo.req_type}</td>
+          <td>{$vo.request|substr=###,0,40}</td>
+          <td>{$vo.param|substr=###,0,40}</td>
+          <td>{$vo.remark}</td>
+          <td>{$vo.create_time}</td>
+        </tr>
+        {/volist}
+        {else /}
+        <tr><td colspan="4" class="text-center">暂无数据</td></tr>
+        {/notempty}
+
+      </tbody>
+    </table>
+    <div class="page text-right">
+      {$_list->render();}
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{:config('__public__')}/static/bootstrap-3.3.4/dist/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="{:config('__public__')}/static/artDialog-6.0.4/css/ui-dialog.css">
+    <script src="{:config('__public__')}/static/artDialog-6.0.4/dist/dialog-min.js"></script>
+    <script>
+    $(function(){
+      $(".clientIp").bind('click', function(){
+        var ip = $(this).find("a").text();
+        var id = $(this).attr('id');
+        d = dialog({
+            content: '',
+            quickClose: true// 点击空白处快速关闭
+        });
+        d.show(document.getElementById(id)); //
+        $.post('{:url('Others/iplocation')}', {ip:ip},function(data){
+          if(data.code){
+            d.content(data.msg);
+          }
+        })
+      })
+    })
+    // $(function(){
+    //   $(".clientIp").hover(
+    //     function(){
+    //       var ip = $(this).children().text();
+    //       var id = $(this).attr('id');
+    //         d = dialog({
+    //             content: '加载中...',
+    //             quickClose: true// 点击空白处快速关闭
+    //         });
+    //         d.show(document.getElementById(id));
+    //         $.post('{:url('Others/iplocation')}', {ip:ip},function(data){
+    //           if(data.code){
+    //             d.content(data.msg);
+    //           }
+    //         })
+    //     },
+    //     function(){
+    //       d.close().remove();
+    //     }
+    //     )
+    // })
+    // 
+    // 
+    // var timer = null;
+    // var that='';
+    // var ip = '';
+    // var d = '';
+    // function callback() {
+    //     $.post('{:url('Others/iplocation')}', {ip:ip},function(data){
+    //       if(data.code){
+    //         d = dialog({
+    //             content: data.msg,
+    //             quickClose: true// 点击空白处快速关闭
+    //         });
+    //         d.show($(that));
+    //       }
+    //     })
+    // }
+    // function onSecondDelay(that) {
+    //   that = that;
+    //   ip = $(that).find("a").text();
+    //     clearTimeout(timer);
+    //     timer = setTimeout(callback, 1000);
+    // }
+
+    // function out(that)
+    // {
+    //   clearTimeout(timer);
+    //   if(d!=''){
+    //     d.close().remove();
+    //     d='';
+    //   }
+    // }
+    // $(".dropdown-toggle").on("mouseover", function() {
+    //   if ($(this).parent().is(".open")) {
+    //       return
+    //   }
+    //   $(this).dropdown("toggle")
+    // })
+    // $(".dropdown-toggle").on("mouseout", function() {
+    //   setTimeout(function(){
+    //     $(this).dropdown("toggle");
+    //   }, 2500);
+    // })
+    </script>
+  </body>
+</html>

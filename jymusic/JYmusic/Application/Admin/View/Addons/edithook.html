@@ -1,0 +1,167 @@
+<extend name="Public/base" />
+<block name="style">	
+	<style>
+/* 拖动排序列表 */
+.dragsort {
+
+}
+.edit_sort {
+    display: inline-block;
+    border:1px solid #cdcdcd;
+    color: #404040;
+    line-height: 35px;
+    width: 20%;
+    height: 376px;
+
+}
+.edit_sort span {
+    background: #EEEEEE;
+    width: 100%;
+    display: inline-block;
+    font-weight: bold;
+    text-indent: 10px;
+    border-bottom: 1px solid #cdcdcd;
+    margin-bottom:5px;
+}
+.edit_sort ul {
+    padding: 0 5px;
+    overflow-y:scroll;
+    height: 334px;
+}
+.edit_sort_l {
+    float: left;
+    margin-right: 20px;
+}
+.tab2 p {
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-indent: 15px;
+}
+.dragsort li {
+    margin-bottom: 5px;
+    padding: 0 6px;
+    height: 30px;
+    line-height: 30px;
+    border: 1px solid #eee;
+    background-color: #fff;
+	overflow: hidden;
+}
+.dragsort li em {
+    font-style: normal;
+}
+.dragsort li b {
+    display: none;
+    float: right;
+    padding: 0 6px;
+    font-weight: bold;
+    color: #000;
+}
+.dragsort li:hover b {
+    display: block;
+}
+.dragsort .draging-place {
+    border-style: dashed;
+    border-color: #ccc;
+   
+}
+.dragsort {
+		  width:300px;
+		   padding-left:0px;
+}
+	</style>
+</block>
+<block name="content">
+<h3>钩子管理</h3>
+<div class="panel panel-default">
+	<div class="panel-heading"><present name="data">编辑<else />新增</present>钩子</div>
+ 	<div class="panel-body">
+			<form action="<{:U('updateHook')}>" method="post" class="form-horizontal">
+				<div class="form-group">
+					<label class="col-sm-2 control-label">钩子名称</label>
+					<div class="col-sm-3">
+						<input type="text" value="<{$data.name}>" name="name" class="form-control">						
+					</div>
+					<span class="help-block">需要在程序中先添加钩子，否则无效</span>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">钩子描述</label>
+					<div class="col-sm-3">
+						<textarea name="description" class="form-control" ><{$data.description}></textarea>					
+					</div>
+					<span class="help-inline">钩子的描述信息</span>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">钩子类型</label>
+					<div class="col-sm-2">
+						<select name="type" class="form-control" style="width:auto">
+							<volist name=":C('HOOKS_TYPE')" id="vo">
+								<option value="<{$key}>" <eq name="data.type" value="$key"> selected</eq>><{$vo}></option>
+							</volist>
+						</select>						
+					</div>
+					<span class="help-block">区分钩子的主要用途</span>
+				</div>
+				<present name="data">
+				<div class="form-group">
+					<label class="col-sm-2 control-label">钩子挂载的插件排序</label>
+					<div class="col-sm-4">
+						<input type="hidden" name="addons" value="<{$data.addons}>" readonly>
+						<empty name="data.addons">
+							<span class="help-inline">暂无插件，无法排序</span>
+						<else />
+						<ul id="sortUl" class="dragsort chosen-choices">
+							<volist name=":explode(',',$data['addons'])" id="addons_vo">
+								<li class="getSort"><b>&times;</b><em><{$addons_vo}></em></li>
+							</volist>
+						</ul>
+						<script type="text/javascript">
+							$(function(){
+								$("#sortUl").dragsort({
+		                            dragSelector:'li',
+		                            placeHolderTemplate: '<li class="draging-place">&nbsp;</li>',
+		                            dragEnd:function(){
+		                            	updateVal();
+		                            }
+		                        });
+	
+								$('#sortUl li b').click(function(){
+	                            	$(this).parent().remove();
+	                            	updateVal();
+	                            });
+	
+								// 更新排序后的隐藏域的值
+		                        function updateVal() {
+		                        	var sortVal = [];
+	                            	$('#sortUl li').each(function(){
+	                            		sortVal.push($('em',this).text());
+	                            	});
+	                                $("input[name='addons']").val(sortVal.join(','));
+		                        }
+							})
+						</script>
+						</empty>
+					</div>
+					<span class="help-block">拖动后保存顺序，影响同一个钩子挂载的插件执行先后顺序</span>
+				</div>
+				</present>
+				<div class="form-group">
+					<input type="hidden" name="id" value="<{$data.id}>">
+					<div class="col-sm-4 col-sm-offset-2">
+						<button type="submit" class="btn submit-btn ajax-post btn-primary" target-form="form-horizontal">确 定</button>
+						<button class="btn btn-return btn-danger" onclick="javascript:history.back(-1);return false;">返 回</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>	
+</block>
+
+<block name="script">
+	<present name="data">
+		<script type="text/javascript" src="__STATIC__/jquery.dragsort-0.5.1.min.js"></script>
+	</present>
+	<script type="text/javascript">
+		 highlight_subnav("<{:U('Addons/index')}>","<{:U('Addons/hooks')}>");
+	</script>
+</block>

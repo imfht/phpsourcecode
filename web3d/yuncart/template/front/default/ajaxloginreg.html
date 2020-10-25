@@ -1,0 +1,269 @@
+<div class="login_one_tc">
+	<div class="login_close" title="关闭" onclick="$.tbox.close();return false;"><a href="javascript:void(0)"></a></div>
+	<div class="login_lable">
+		<ul>
+			<li <!--{if $opertype == "login"}-->class="on"<!--{/if}-->><a href="javascript:void(0)" onclick="loginreg('login');return false;">登 录</a></li>
+			<li <!--{if $opertype == "reg"}-->class="on"<!--{/if}-->><a href="javascript:void(0)" onclick="loginreg('reg');return false;">注册</a></li>
+		</ul>
+		<div class="clear"></div>
+	</div>
+	<!--登录-->
+	<!--{if $opertype == "login"}-->
+	<div id="forlogin" class="login_onebox">
+			<p class="loginret"></p>
+			<div class="login_name">
+				<input name="uname" id="uname" type="text"  value="用户名" />
+			</div>
+			<p class="loginhint"></p>
+			<div class="clear"></div>
+			<div class="login_pass">
+				<input name="pass2" id="pass2" type="text"	   value="密码"/>
+				<input name="pass"  id="pass"  type="password" value="" class="none"/>
+			</div>
+			<p class="loginhint"></p>
+			<div class="clear"></div>
+            <div class="login_but">
+				<input type="submit" class="o_button" value="登 录" id="login_btn" onclick="checklogin()"/>
+				<a href="<!--{url('index','user','forgetpwd')}-->">忘记密码？</a>
+			</div>
+			<!--{if $tlogins}-->
+           <div class="login_qt">
+				<p>或通过合作网站直接登录</p>
+				<ul class="ext_connect">
+					<!--{foreach $tlogins tlogin}-->
+						<li class="<!--{$tlogin.host}-->">
+							<a href="connect.php?w=<!--{$tlogin.host}-->"	target="_blank"><!--{$tlogin.name}--></a>
+						</li>
+					<!--{/foreach}-->
+				</ul>
+				<div class="clear"></div>
+			</div>
+			<!--{/if}-->
+	</div>
+	<script type="text/javascript">
+		$(function(){
+			$("#uname").focus(function(){
+				var $this = $(this),val = $this.val(),$parent = $this.parent();
+				$parent.removeClass("hintborder");
+				$parent.next().text('');
+				$(".loginret").text('');
+				if(val == "用户名") {
+					$this.val('');
+				}
+			}).blur(function(){
+				var $this = $(this),val = $this.val();
+				if(val == "") {
+					$this.val("用户名");
+				}
+			}).keydown(function(event){
+				if(event.keyCode == 13) {
+					checklogin();
+				}
+			});;
+			$("#pass2").focus(function(){
+				var $this = $(this),$parent = $this.parent();
+				$this.hide();
+				$parent.removeClass("hintborder");
+				$parent.next().text('');
+				$(".loginret").text('');
+				$("#pass").show().focus();
+			});
+			$("#pass").blur(function(){
+				var $this = $(this),val = $this.val();
+				if(val == "") {
+					$this.hide();
+					$("#pass2").show();
+				}
+			}).keydown(function(event){
+				if(event.keyCode == 13) {
+					checklogin();
+				}
+			});
+		});
+		function checklogin(){
+			var $uname = $("#uname"),uname = $uname.val(),
+				$pass  = $("#pass"),pass = $pass.val();
+				ret = true;
+			if(uname == "" || uname == "用户名") {
+				$uname.parent().next().text("请填写此项").show();
+				$(".login_name").addClass("hintborder");
+				ret = false;
+			}
+			if(pass == "") {
+				$pass.parent().next().text("请填写此项").show();
+				$(".login_pass").addClass("hintborder");
+				ret = false;
+			}
+			if(!ret) return false;
+			$("#login_btn").val("正在验证");
+			$.post("<!--{url('index','user','dologin')}-->",{uname:uname,pass:pass},function(data){
+				$("#login_btn").val("登 录");
+				if(data.ret == "success") {
+					window.location.href = data.msg;
+				} else {
+					$(".loginret").text(data.msg).show();
+				}
+			},"json");
+		};
+	</script>
+	<!--{/if}-->
+	<!--登录 end-->
+	<!--注册-->
+	<!--{if $opertype == "reg"}-->
+	<form name="regform" id="regform" action="<!--{url('index','user','doreg')}-->" method="post" onsubmit="return checkreg()">
+	<div id="forreg" class="login_twobox">
+		<ul>
+			<li>
+				<div class="login_left"><span class="text_red">*</span>用户名：</div>
+				<input name="uname" id="uname" type="text" class="login_butt" /> 
+				<span class="text_red"></span>
+			</li>
+			<li>
+				<div class="login_left"><span class="text_red">*</span>密码：</div>
+				<input name="pass" id="pass" type="password" class="login_butt" /> 
+				<span class="text_red"></span>
+			</li>
+			<li>
+				<div class="login_left"><span class="text_red">*</span>确认密码：</div>
+				<input name="pass2" id="pass2" type="password" class="login_butt" /> 
+				<span class="text_red"></span>
+			</li>
+			<li>
+				<div class="login_left"><span class="text_red">*</span>E-Mail：</div>
+				<input name="email" id="email" type="text" class="login_butt" /> 
+				<span class="text_red"></span>
+			</li>
+			<li>
+				<div class="login_left"><span class="text_red">*</span>验证码：</div>
+				<input name="seccode" id="seccode" type="text" class="login_butt"/>
+				<span style="display:none;margin-top:7px;">
+					<img src="util.php?action=seccode" id="seccodeimg" class="mid"/>
+					<a href="javascript:void(0)" class="fl" onclick="chgimg();return false;">换一张</a>
+				</span>
+				<span class="text_red"></span>
+			</li>
+			<li class="li_xieyi">
+				<input name="agree" id="agree" type="checkbox" value="" checked/> 
+				<label for="agree">我已看过并接受《<a href="<!--{url('index','front','agree')}-->" class="text_orange" target="_blank">用户协议</a>》</label>
+				<span class="text_red"></span>
+			</li>
+			<li>
+				<div class="login_but" style="padding-top:10px;">
+					<input type="submit" class="o_button" value="注 册"/>
+				</div>
+			</li>
+		</ul>
+	</div>
+	</form>
+	<script type="text/javascript">
+		function checkreg() {
+			var $agree = $("#agree"),
+				$uname = $("#uname"),
+				$pass = $("#pass"),
+				$pass2 = $("#pass2"),
+				$email	= $("#email"),
+				$seccode = $("#seccode");
+			var agreecheck = $agree.prop("checked"),
+				uname = $uname.val(),
+				ulength = uname.replace(/[^\x00-\xff]/g,"**").length,
+				pass  = $pass.val(),
+				pass2 = $pass2.val(),
+				email = $email.val(),
+				seccode = $seccode.val(),
+				canreg = true;
+			if(!agreecheck) {
+				$agree.parent().find("span").text("选择此项");
+				canreg = false;
+			}
+			if(ulength <4 || ulength > 20) {
+				canreg = false;
+				$uname.addClass('hintborder');
+			}
+			if(pass.length < 4 || pass.length > 20) {
+				canreg = false;
+				$pass.addClass('hintborder');
+			}
+			if(!pass2 || pass2 != pass) {
+				canreg = false;
+				$pass2.addClass('hintborder');
+			}
+			if(!$.util.isemail(email)) {
+				canreg = false;
+				$email.addClass('hintborder');
+			}
+			if(seccode == "") {
+				canreg = false;
+				$seccode.addClass('hintborder');
+			}
+			if(!canreg) chgimg();
+			return canreg;
+		}
+		$(function(){
+			$("#uname").blur(function(){
+				var $this	= $(this),
+					val		= $.trim($this.val()),
+					len		= val.replace(/[^\x00-\xff]/g,"xx").length,
+					$hint	= $this.next();
+				if(val == "") return ;
+				if(len < 4) {
+					$hint.text("用户名较短！");
+					return false;
+				}
+				if(len > 20) {
+					$hint.text("用户名较长！");
+					return false;
+				}
+				$.post("<!--{url('index','user','checkname')}-->",{uname:val},function(data) {
+					if(data == "success") {
+						$hint.html("<font color='#618605'>可以使用！</font>");
+					} else {
+						$hint.text("用户名重复！");
+					}
+				});
+			});
+			$("#seccode").focus(function(){
+				$(this).next("span").show();
+			});
+			$("#pass,#pass2").blur(function(){
+				var $this = $(this),
+					val = $this.val(),
+					len = val.length,
+					$hint = $this.next();
+				if(val == "") return false;
+				if(len < 4) {
+					$hint.text("密码较短");
+					return false;
+				}
+				if(len > 20) {
+					$hint.text("密码较长");
+					return false;
+				}
+				$hint.text('');
+			});
+			$("#email").blur(function(){
+				var $this = $(this),
+					email = $this.val(),
+					$hint = $this.next();
+				if(email == "") return false;
+				if(!$.util.isemail(email)) {
+					$hint.text("格式错误");
+					return false;
+				}
+				$hint.text('');
+			});
+			$("#uname,#pass,#pass2,#email,#seccode,#agree").focus(function(){
+				var $this = $(this);
+				$this.removeClass("hintborder");
+				$this.nextAll(".text_red").text('');
+			});
+		});
+	</script>
+
+	<!--{/if}-->
+<!--注册 end-->
+</div>
+<script type="text/javascript">
+function loginreg(type){
+	$.tbox.popup("<!--{url('index','user','"+type+"','ajax=1',false)}-->");
+}
+</script>

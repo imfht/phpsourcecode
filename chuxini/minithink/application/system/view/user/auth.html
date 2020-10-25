@@ -1,0 +1,140 @@
+{extend name="base@:style" /}
+{block name="body"}
+<div class="container-fluid larry-wrapper">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <!--头部搜索-->
+            <section class="panel panel-padding">
+                <form class="layui-form" action='{:url("system/user/getauths")}'>
+                    <div class="layui-form">
+                        <div class="layui-inline">
+                            <div class="layui-input-inline">
+                                <input class="layui-input" name="keyword" placeholder="角色名称">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button lay-submit class="layui-btn" lay-filter="search">查找</button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+            <!--列表-->
+            <section class="panel panel-padding">
+                <div class="group-button">
+                    <button class="layui-btn layui-btn-small modal-catch"
+                            data-params='{"content": ".add-subcat", "title": "添加角色权限","type":"1","area":"600px,700px","data":"id=0"}'>
+                        <i class="iconfont">&#xe649;</i> 添加
+                    </button>
+
+                    <button class="layui-btn layui-btn-small layui-btn-danger ajax-all" data-name="checkbox"
+                            data-params='{"url": "allDelete","data":"model=Auth"}'>
+                        <i class="iconfont">&#xe626;</i> 删除
+                    </button>
+                </div>
+                <div id="list" class="layui-form"></div>
+
+                <div class="text-right" id="page"></div>
+            </section>
+        </div>
+    </div>
+</div>
+<div class="add-subcat">
+    <form id="form1" class="layui-form layui-form-pane" action="save_auth">
+
+        <div class="layui-form-item ">
+            <div class="layui-form-item">
+                <label class="layui-form-label">角色名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" required jq-verify="required" jq-error="角色名称不能为空" placeholder="请输入角色名称" autocomplete="off" class="layui-input ">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">描述</label>
+                <div class="layui-input-block">
+                    <input type="text" name="mark" placeholder="对角的描述" autocomplete="off" class="layui-input ">
+                </div>
+            </div>
+
+            <div class="layui-form-item permission-list">
+                <label class="layui-form-label">拥有权限</label>
+                <div class="layui-input-block">
+                    <ul>
+                        {volist name="menu" id="one_vo"}
+                        <li><input type="checkbox" name="{$one_vo.id}" value="{$one_vo.id}" title="{$one_vo.name}" lay-filter="role" />
+                            {volist name="one_vo.sub" id="two_vo"}
+                            <dl> <input type="checkbox" name="{$two_vo.id}" value="{$two_vo.id}" title="{$two_vo.name}" lay-filter="role" />
+                                {volist name="two_vo.sub" id="three_vo"}
+                                <dd><input type="checkbox" name="{$three_vo.id}" value="{$three_vo.id}" title="{$three_vo.name}" lay-filter="role" /></dd>
+                                {/volist}
+                            </dl>
+                            {/volist}
+                        </li>
+                        {/volist}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" jq-submit jq-filter="submit">立即提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+        <input type="hidden" name="id" value="0"/>
+    </form>
+</div>
+{/block}
+{block name="each"}
+<script id="list-tpl" type="text/html" data-params='{"url":"{:url("system/user/getauths")}","data":"","dataName":"authCatData","pageid":"#page"}'>
+    <table id="example" class="layui-table lay-even" data-name="authCatData" data-tplid="list-tpl">
+        <thead>
+        <tr>
+            <th width="30"><input type="checkbox" id="checkall" data-name="checkbox" lay-filter="check"
+                                  lay-skin="primary"></th>
+            <th width="60">序号</th>
+            <th width="222">角色名称</th>
+            <th width="500">描述</th>
+            <th width="100">排序</th>
+            <th width="80">状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{# layui.each(d.list, function(index, item){ }}
+        <tr>
+            <td><input type="checkbox" name="checkbox" value="{{ item.id}}" lay-skin="primary"></td>
+            <td>{{ item.id}}</td>
+            <td>{{ item.name}}</td>
+            <td>{{ item.mark}}</td>
+            <td><input type="text" class="layui-input ajax-blur" name="orders" value="{{ item.orders}}"
+                       data-params='{"url":"changeOrder","data":"model=Auth&id={{ item.id}}"}'></td>
+            <td><input type="checkbox" name="state" lay-skin="switch" lay-text="ON|OFF" {{#if (item.state){
+                       }}checked="checked" {{# } }} lay-filter="ajax"
+                       data-params='{"url":"changeState","data":"model=Auth&id={{item.id}}"}'></td>
+            <td>{{ item.create_time}}</td>
+            <td>
+                <button class="layui-btn layui-btn-mini modal-catch"
+                        data-params='{"content": ".add-subcat","area":"500px","title":"编辑 {{ item.name}}","key":"id={{ item.id}}","type":"1"}'>
+                    <i class="iconfont">&#xe653;</i>编辑
+                </button>
+                <button class="layui-btn layui-btn-mini layui-btn-danger ajax"
+                        data-params='{"url": "forceDelete","confirm":"true","data":"model=Auth&id={{item.id}}"}'>
+                    <i class="iconfont">&#xe626;</i>删除
+                </button>
+            </td>
+
+        </tr>
+        {{# }); }}
+        </tbody>
+
+    </table>
+</script>
+{/block}
+
+{block name="js"}
+<script>
+    layui.use(['list','role']);
+</script>
+{/block}

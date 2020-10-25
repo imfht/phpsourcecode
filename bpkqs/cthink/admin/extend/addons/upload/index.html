@@ -1,0 +1,130 @@
+<?php if($data['isloads'] == 'yes'){ ?>
+<script src="{$static}/upload/jquery.uploadify-3.1.min.js?s=<?php echo time();?>" type="text/javascript"></script>
+<link  href="{$static}/upload/uploadify.css" rel="stylesheet" type="text/css" >
+<?php } ?>
+<div class="swfupload-image">
+	<div id="imagelist{$data.randstr}">
+	<?php if($data['data']){ ?>
+		{volist name="data.data" id="attachvo"}
+			<?php if(isset($attachvo)){ ?> 
+				<div class="fl upload-imagepos img_{$attachvo.attach_id}"><img src="{:get_img_url($attachvo['attach_id'], 80, 80)}"><div class="delete" data-id="{$data.name}{$data.randstr}" onclick="removeImage('{$attachvo.attach_id}',event,this)">删除</div></div>
+			<?php }?>		
+		{/volist}
+	<?php } ?>
+		
+	</div>
+	<div class="fl upload-imagepos">
+		<input id="file_upload{$data.randstr}" name="file_upload{$data.randstr}" type="file" multiple="true">
+	</div>
+	<?php if($data['iahave'] != 'yes'){ ?>
+		<input name="{$data.name}" id="{$data.name}{$data.randstr}" value="{$data['attachidlist']}" type="hidden" />
+	<?php }else{ ?>
+		<input name="{$data.name}" id="{$data.name}{$data.randstr}" value="{$data['attachidlist']}" type="hidden" datatype="*" nullmsg="请上传图片" />
+	<?php } ?>
+</div>
+{block name="script"}
+<script type="text/javascript">
+	<?php 
+		$timestamp = time();
+		if($data['count'] == 1){
+			$multi = false;
+		}else {
+			$multi = true;
+		}
+	?>
+	var loadinghtml = '<div class="fl upload-imagepos" id="loadings{$data.randstr}"><div style="text-align:center;padding-top:20px;"><img src="{$static}/upload/loading.gif" style="width:40px;height:40px;"/></div></div>';
+	$(function(){
+		$('#file_upload{$data.randstr}').uploadify({
+			'formData'     		: {
+				'timestamp' 	: '<?php echo $timestamp;?>',
+				'token'     	: '<?php echo md5('unique_salt' . $timestamp);?>',
+				'PHPSESSID'		: "<?php echo session_id(); ?>",
+				'width'			: '<?php echo $data['width'];?>',
+				'height'		: '<?php echo $data['height'];?>',
+				'crop'			: '<?php echo $data['crop'];?>'
+			},
+			'multi'             : '<?php echo $multi;?>', 
+			'swf'      			: '{$static}/upload/uploadify.swf?s=<?php echo time();?>',
+			'uploader' 			: '{:config("url_domain")}/api.php/UploadImage/upload',
+			'buttonImage'		: '{$static}/upload/add-photo-multi.png',
+			'width'				: 80,
+			'height'			: 80,
+			'queueID'			: true,
+			'queueSizeLimit'	: '<?php echo $data['count'];?>',	//最多上传图片张数
+			'fileSizeLimit'		: '<?php echo $data['size'];?>', //最大上传图片大小
+			'fileTypeDesc'		: '所有图片文件',//只允许上传图像
+			'fileTypeExts'		: "<?php echo $data['exts']; ?>",	//允许的文件类型
+			'overrideEvents'	: ['onSelectError', 'onDialogClose'],
+			'onUploadSuccess'	: function(file, data, response){
+				var jsondata = $.parseJSON(data);
+				if(jsondata.code === 1){
+					var msg = jsondata.msg;
+					var imgurl = '{:config("url_domain")}/public/uploads/'+msg.save_path+'/'+msg.save_name;
+					var html = '<div class="fl upload-imagepos img_'+msg.attach_id+'"><img src="'+imgurl+'" /><div class="delete" data-id="{$data.name}{$data.randstr}" onclick="removeImage('+msg.attach_id+',event,this)">删除</div></div>';
+					
+					$('#loadings{$data.randstr}').remove();
+					$('#imagelist{$data.randstr}').append(html);
+					addImage(msg.attach_id,'{$data.name}{$data.randstr}');
+						
+				}else{
+					cthink.toast(jsondata.msg,1,'error');
+				}
+			},
+			onSelectError: function (file, errorCode, errorMsg) {
+				switch (errorCode) {
+					case -100:cthink.toast('单次最多上传'+errorMsg+'个图片',1,'error');break;
+					case -110:cthink.toast("文件 [" + file.name + "] 大小超出系统限制的" + $('#file_upload{$data.randstr}').uploadify('settings', 'fileSizeLimit') + "大小",1,'error');break;
+					case -120:cthink.toast("文件 [" + file.name + "] 大小异常",1,'error'); break;
+					case -130:cthink.toast("文件 [" + file.name + "] 类型不正确",1,'error'); break;
+					default :cthink.toast('未知错误',1,'error'); break;
+				}
+			},
+			onFallback: function () {
+				cthink.toast('您未安装FLASH控件，无法上传图片！请点击<a href="http://www.adobe.com/go/getflash" target="_blank"><span style="color:#06a7e1">这里</span></a>安装FLASH控件后再试',1,'error');
+			},
+			onUploadStart: function (file) {
+				var attach_ids = $('#{$data.name}{$data.randstr}').val();
+				var count = 0;
+				if( attach_ids ) {
+					count = attach_ids.split(',').length;
+				}
+				var total = '{$data.total}'?parseInt('{$data.total}'):1;
+				if(count >= total){
+					cthink.toast('最多可以上传'+total+'张图片',1,'error');
+					$('#file_upload{$data.randstr}').uploadify('stop');
+					$('#file_upload{$data.randstr}').uploadify('cancel', file.id);
+					return false;
+				}else{
+					$('#imagelist{$data.randstr}').append(loadinghtml);
+				}
+			}
+		});
+	});
+	
+	
+	<?php if($data['isloads'] == 'yes'){ ?>
+		function addImage(attachId,namerandstr){
+			var attachArr = [];
+			var attachids = $('#'+namerandstr).val();
+			if(attachids){
+				 attachArr = attachids.split(',');
+				 attachArr.push(attachId);
+			}else{
+				attachArr.push(attachId);			
+			}
+			var str = attachArr.join(',');
+			$('#'+namerandstr).val(str);
+		}
+		
+		function removeImage(attachId,e,th){
+			var namerandstr = $(th).attr('data-id');
+			var attachids = $('#'+namerandstr).val();
+			var attachArr = attachids.split(',');
+			attachArr.splice($.inArray(attachId,attachArr),1);
+			$('#'+namerandstr).val(attachArr.join(','));
+			$(th).closest('.upload-imagepos').remove();
+			e.stopPropagation();
+		}
+	<?php } ?>
+</script>
+{/block}

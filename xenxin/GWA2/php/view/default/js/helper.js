@@ -1,0 +1,7 @@
+//to php 
+$(function(){
+	
+});
+
+
+

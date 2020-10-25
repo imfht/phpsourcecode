@@ -1,0 +1,1 @@
+   <div class="headerWrapper"> <a id="jsurl" href="<?php echo $account; ?>" class="accountButton"></a><a href="" class="shoppingCartButton"></a><a href="" class="mainMenuButton"></a></div>

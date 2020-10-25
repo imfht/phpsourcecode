@@ -1,0 +1,1 @@
+document.write("<option value=7>|-图片频道</option><option value=52 style=\'background:99C4E3\'>&nbsp;&nbsp;|-明星风采</option><option value=53 style=\'background:99C4E3\'>&nbsp;&nbsp;|-自然风景</option><option value=54 style=\'background:99C4E3\'>&nbsp;&nbsp;|-动漫图片</option>");

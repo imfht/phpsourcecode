@@ -1,0 +1,138 @@
+<div class="content-wrapper">
+    <?php
+    $form = $this->form;
+    $form->prepare();
+
+    $form->get('adminGroupName')->setAttributes([
+        'placeholder' => $this->translate('管理员组名称')
+    ]);
+
+    ?>
+    <?= $this->form()->openTag($form); ?>
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <a href="<?=$this->url('admin-group', ['action'=> 'adminGroupList']);?>" class="btn btn-default btn-sm"><i class="fa fa-arrow-left"></i> <?=$this->translate('返回管理员组列表')?></a>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-check"></i> <?=$this->translate('保存管理员组')?></button>
+            <?=(isset($group) ? $this->HelpUrl('adminGroupEdit') : $this->HelpUrl('adminGroupAdd'))?>
+        </h1>
+    </section>
+
+    <section class="content">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><?=((isset($group) && $group->getAdminGroupId()) ? $this->translate('编辑管理员组') : $this->translate('添加管理员组'))?></h3>
+                    </div>
+
+                    <div class="box-body">
+                        <?=$this->formElementErrors($form->get('dberp_csrf'), ['class'=>'error-message']); ?>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"><?=$this->translate('管理员组')?><span class="must_add_value">*</span></label>
+                            <div class="col-sm-6">
+                                <?= $this->formElement($form->get('adminGroupName')); ?>
+                                <?= $this->formElementErrors($form->get('adminGroupName'), ['class'=>'error-message']); ?>
+                            </div>
+                        </div>
+
+                        <?php if(!isset($this->group) || (isset($this->group) && $this->group->getAdminGroupId() != 1)) { ?>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label"><?=$this->translate('权限设置')?></label>
+                            <div class="col-sm-6">
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" name="allSelect" id="allSelect" value="1" class="minimal"><?=$this->translate('全选')?>
+                                </label>
+                            </div>
+                        </div>
+
+                        <?php
+                        if($this->group && !empty($this->group->getAdminGroupPurview())) $groupPermission = explode(',', $this->group->getAdminGroupPurview());
+                        foreach ($this->permissionArray as $key => $permission) { ?>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label"><?=$permission['name']?></label>
+                                <div class="col-sm-6">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" value="1" id="<?=$key?>" class="minimal erp-group"><?=$permission['name']?><?=$this->translate('全选')?>
+                                    </label>
+                                </div>
+                            </div>
+                            <?php foreach ($permission['controllers'] as $controllerKey => $controllerValue) {
+                                $controllerStr = str_replace('\\', '_', $controllerKey);
+                                ?>
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label"><?=$controllerValue['name']?> <input type="checkbox" value="1" class="minimal <?=$key?> erp-group-one" id="<?=$controllerStr?>"></div>
+                                <div class="col-sm-10">
+                                    <?php foreach ($controllerValue['action'] as $value) {
+                                        $pName = $controllerStr . '_' . $value;
+                                        ?>
+                                        <label class="checkbox-inline">
+                                            <input type="checkbox" name="adminGroupPermission[]" class="minimal <?=$key?> <?=$controllerStr?>" <?=(isset($groupPermission) && in_array($pName, $groupPermission)) ? 'checked' : ''?> value="<?=$pName?>"><?=$controllerValue['actionNames'][$value]?>
+                                        </label>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                            <?php } ?>
+                        <?php } ?>
+                        <?php } ?>
+                    </div>
+
+                    <div>
+                        <div class="box-footer">
+                            <?=$this->formElement($form->get('dberp_csrf')); ?>
+                            <button type="submit" class="btn btn-primary col-md-offset-2"><i class="fa fa-check"></i> <?=$this->translate('保存管理员组')?></button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </section>
+<?= $this->form()->closeTag(); ?>
+
+</div>
+<script>
+    $(document).ready(function() {
+        $("#<?=$form->getName()?>").validate({
+            rules: {
+                adminGroupName: {
+                    required: true
+                }
+            },
+            messages: {
+                adminGroupName: {
+                    required: "<?=$this->translate('管理员组不能为空！')?>"
+                }
+            }
+        });
+    });
+
+    $("#allSelect").click(function () {
+        if(!this.checked) {
+            $("input[name='adminGroupPermission[]']").prop("checked", false);
+            $(".erp-group,.erp-group-one").prop("checked", false);
+        } else {
+            $("input[name='adminGroupPermission[]']").prop("checked", true);
+            $(".erp-group,.erp-group-one").prop("checked", true);
+        }
+    });
+
+    $(".erp-group").click(function () {
+        if(!this.checked) {
+            $("."+this.id).prop("checked", false);
+        } else {
+            $("."+this.id).prop("checked", true);
+        }
+    });
+
+    $(".erp-group-one").click(function () {
+        if(!this.checked) {
+            $("."+this.id).prop("checked", false);
+        } else {
+            $("."+this.id).prop("checked", true);
+        }
+    });
+</script>

@@ -1,0 +1,198 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<include file="Public:head" />
+<css file="__STATIC_CSS__/validate.css" />
+<script src="__PUBLIC__/Static/js/validate/jquery.validateid.js"></script>
+
+</head>
+
+<body>
+<include file="Public:header" />
+
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	var validator = $("#signupform").validate({
+		onkeyup: false,
+		rules:{
+			<if condition="C('ik_isinvite') eq 1">
+			invitecode:{
+				required:true,
+				remote:"{:U('checkUser',array('t'=>'isinvite'))}"
+			},
+			</if>
+			email: {
+				required: true,
+				email: true,
+				remote: "{:U('checkUser',array('t'=>'email'))}"
+			},
+			password: {
+				required: true,
+				minlength: 6
+			},
+			repassword: {
+				required: true,
+				minlength: 6,
+				equalTo: "#password"
+			},
+			username:{
+				required: true,
+				minlength: 2,
+				maxlength: 12,
+				remote:"{:U('checkUser',array('t'=>'username'))}"
+			}
+		},
+		messages: {
+		<if condition="C('ik_isinvite') eq 1">
+			invitecode:{
+				required:"请输入邀请码",
+				remote:jQuery.format("邀请码无效，请寻找新的邀请码！")
+			},
+		</if>
+			email: {
+					required: "请输入Email地址",
+					email: "请输入一个正确的Email地址",
+					remote:jQuery.format("Email已经存在，请更换其他Email")
+			},
+			password: {
+				required: "请输入密码",
+				minlength: jQuery.format("至少输入6个字符")
+			},
+			repassword: {
+				required: "请重复输入密码",
+				minlength: jQuery.format("两次输入密码不一致"),
+				equalTo: "两次输入密码不一致"
+			},
+			username:{
+				required:"请输入用户名",
+				minlength: jQuery.format("至少输入2个字符"),
+				maxlength: jQuery.format("最多输入12个字符"),
+				remote:jQuery.format("用户名已经存在，请更换其他用户名")
+			}
+		},
+
+		// the errorPlacement has to take the table layout into account
+		errorPlacement: function(error, element) {
+			if ( element.is(":radio") )
+				error.appendTo( element.parent().next().next() );
+			else if ( element.is(":checkbox") )
+				error.appendTo ( element.next() );
+			else
+				error.appendTo( element.parent().next() );
+		},
+
+		success: function(label) {
+			// set &nbsp; as text for IE
+			label.html("&nbsp;").addClass("checked");
+		}
+	});
+
+});
+</script>
+
+<script language="javascript">
+$(function(){
+	var verifyimg = $(".verifyimg").attr("src");
+    $(".reloadverify").click(function(){
+        if( verifyimg.indexOf('?')>0){
+            $(".verifyimg").attr("src", verifyimg+'&random='+Math.random());
+        }else{
+            $(".verifyimg").attr("src", verifyimg.replace(/\?.*$/,'')+'?'+Math.random());
+        }
+    });
+});
+</script>
+
+
+<!--main-->
+<div class="midder">
+<div class="mc">
+<h1 class="user_tit">{:L('user_regist_tit')}</h1>
+
+<if condition="C('ik_isinvite') eq 2">
+<p>系统升级中，暂时关闭用户注册！<a href="{:C('ik_site_url')}">[返回首页]</a></p>
+<else />
+
+<div class="user_left">
+<form  id="signupform" method="POST" action="{:U('home/user/register')}">
+
+<table width="100%" border="0" cellspacing="0" cellpadding="0"  class="Tabletext">
+<if condition="C('ik_isinvite') eq 1">
+<tr>
+<td class="label"><label id="invitecode" for="invitecode">
+<font color="red">邀请码：</font></label></td>
+<td class="field" width="300"><input class="uinput" id="invitecode" name="invitecode" type="text" value="" placeholder="请输入邀请码"/></td>
+<td class="status"></td>
+</tr>
+</if>
+
+
+<tr>
+<td class="label"><label id="email" for="email">Email：</label></td>
+<td class="field" width="300"><input class="uinput" id="email" name="email" type="email" value="" placeholder="请输入Email" autofocus  style="width:250px"/></td>
+<td class="status"></td>
+</tr>
+<tr>
+<td class="label"><label>密码：</label></td>
+<td class="field"><input class="uinput" type="password" id="password" name="password"  style="width:250px"/></td>
+<td class="status"></td>
+</tr>
+<tr>
+<td class="label"><label>重复密码：</label></td>
+<td class="field"><input class="uinput" type="password" id="repassword" name="repassword"  style="width:250px"/></td>
+<td class="status"></td>
+</tr>
+
+<tr>
+<td class="label"><label>用户名：</label></td>
+<td class="field"><input class="uinput" type="text" id="username" name="username" style="width:250px"/></td>
+<td class="status"></td>
+</tr>
+
+<tr><td class="label">验证码：</td><td class="field">
+<input name="authcode"  class="uinput" placeholder="请输入验证码" style="width:250px"/>
+</td>
+<td class="status"></td></tr>
+
+<tr><td class="label">&nbsp;</td>
+<td class="field">
+<img class="verifyimg reloadverify" src="{:U('user/captcha')}" alt="点击刷新验证码" style="cursor:pointer;" align="absmiddle">
+</td>
+<td class="status"></td></tr>
+
+<tr>
+<td class="label"></td>
+<td class="field">
+<notempty name="fuserid">
+<input type="hidden" name="fuserid" value="{$fuserid}" />
+</notempty>
+<input class="submit" type="submit" value="注册" style="margin-top:8px"/> 
+</td>
+<td class="status"></td>
+</tr>
+
+<tr>
+<td class="label"><br /></td>
+<td class="field"><br /></td> 
+<td class="status"></td>
+</tr>
+
+</table>
+</form>
+</if>
+</div>
+
+<div class="aside">
+            
+	<p class="pl2">&gt; 已经拥有爱客网帐号? <a href="{:U('home/user/login')}" rel="nofollow">直接登录</a></p>
+
+</div>
+<div class="cl"></div>
+
+</div>
+</div>
+<include file="Public:footer" />
+</body>
+</html>

@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>微信支付</title>
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="stylesheet" href="__STATIC__/css/base.css">
+<link rel="stylesheet" href="__STATIC__/css/qb_ui.css">
+<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+<script type="text/javascript" src="__STATIC__/js/core/jquery.min.js"></script>
+<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+</head>
+<body>
+ 
+<link rel="stylesheet" href="__STATIC__/images/post.css">
+<div class="bbsContainer">
+
+	<ul class="topBoxs">
+		<li class="logo"><a href="/"><img src="__STATIC__/images/logo1.png"></a></li>
+		<li class="info"><span>{:M('name')}</span><em>{$userdb.username}</em></li>
+		<li class="atten"><a href="{:get_url('member')}"><i class="si si-user"></i></a></li>
+	</ul>
+	<div class="quideBox" style="text-align:center;height:auto;"><img src="__STATIC__/images/wxpay.png">
+	<br>请用微信扫码支付：<font style="color:red;font-weight:bold;">{$money}</font>元</div>
+
+	 
+	<div class="PostBox" style="text-align:center;display:none;">		 
+		<img width="250" src="{$qrcode}"/>
+	</div>
+	 
+</div>
+<script type="text/javascript">
+{if in_wap()}
+	if (window.self != window.top){	//不能在框架中运行apicloud
+		window.top.location.href = window.location.href;
+	}
+{/if}
+
+function countSecond(){　
+	$.get("{:urls('/index/pay/index')}?banktype=weixin&action=checkpay&numcode={$numcode}&"+Math.random(), function(result){
+		if(result.code==0){
+			var check = false;
+			try{	//避免跨域调用的时候报错,而终止下面的代码
+				check = (typeof(parent.Pay)=='object' && parent.Pay.pc_callback()==true);
+			}catch(e){
+				console.error(e);
+			}
+			if(window.top!=window.self && check){
+				parent.Pay.pc_callback('ok');
+				parent.layer.close(parent.layer.getFrameIndex(window.name));
+			}else{
+				window.location.href="{$return_url}";
+			}
+		}else{
+			if(pay_in_pc)setTimeout("countSecond()",3000);
+		}
+	});	
+}
+var pay_in_pc = false;
+if(typeof(window.inApk)=='object'){	//在套壳APP里
+	window.inApk.app_weixin_pay(window.location.href+'&client_type=wxapp&in_app=1');	//在APP中打开
+}else{
+	pay_in_pc = true;
+	$(".PostBox").show();
+	countSecond();
+}
+
+$(function(){	
+	setTimeout(function(){		
+		if(typeof(api)=='object'){	//在仿原生APP里
+			pay_in_pc = false;
+			$(".PostBox").hide();
+			if("{:config('webdb.wxopen_appkey')}"!=""){	//APP原生支付
+				wxopen_get_cfg();
+			}else{	//APP借助小程序实现支付
+				xcx_pay("{:get_url('location')}&client_type=wxapp&in_app=1");
+				/*
+				api.execScript({					
+					name:"main", //frameName: 'iframe',
+					script: "app_weixin_pay('{:get_url('location')}&client_type=wxapp&in_app=1')"
+				 });
+				 */
+			}
+		}
+	},500)
+});
+
+function xcx_pay(url){
+	var wxPlus = api.require('wxPlus');
+		wxPlus.launchMiniProgram({
+			apiKey: '',
+			miniProgramType: 'release',
+			userName: "{$webdb['P__h5app']['wxapp_ghid']}",
+			path: "pages/wap/iframe/index?url="+encodeURIComponent(url),
+		}, function(ret, err) {	//alert( JSON.stringify(ret) );
+			var url = ret.extMsg;
+			layer.msg("支付结束");
+			//支付结束,给其它窗口的回调
+			api.execScript({
+				name:"main", //frameName: 'iframe',
+				script: "Qibo.app_pay_end('"+url.substring(url.indexOf('ispay=')+6)+"')"
+			});
+			setTimeout(function(){								
+				window.location.href = url;
+			},500);
+		});
+}
+
+
+//APP微信原生支付
+function wxopen_get_cfg(){
+	layer.msg("请稍候,正在拉取支付参数...");
+	$.post("{:iurl('index/wxapp.pay/index')}?type=wxopen",{
+				money:'{$money}',
+				numcode:'{$numcode}',
+				title:'{$title}',
+				callback_class:'',
+			}, function(res){
+				if (res.code==0) {
+					//alert(res.data.prepayid);
+					layer.msg("请稍候,正在拉起微信支付...");
+					wxopen_pay(res.data.appid,res.data.prepayid,res.data.partnerid,res.data.noncestr,res.data.timestamp,res.data.sign);
+					//api.alert({ msg: JSON.stringify(res) });
+				} else {
+					layer.alert(res.msg);
+				}
+			});
+}
+//APP微信原生支付
+function wxopen_pay(apiKey,orderId,mchId,nonceStr,timeStamp,sign){
+	var wxPayPlus = api.require('wxPayPlus');
+	wxPayPlus.payOrder({
+		apiKey: apiKey,
+		orderId: orderId,
+		mchId: mchId,
+		nonceStr: nonceStr,
+		timeStamp: timeStamp,
+		package: 'Sign=WXPay',
+		sign: sign,
+	}, function(ret, err) {
+		if (ret.status) {
+			//支付成功
+			//api.alert({ msg: JSON.stringify(ret) });
+			layer.msg("支付成功");
+
+			//支付结束,给其它窗口的回调
+			api.execScript({
+				name:"main", //frameName: 'iframe',
+				script: "Qibo.app_pay_end('ok')"
+			});
+
+			setTimeout(function(){
+				window.location.href="{$return_url}";
+			},500);
+		} else {
+			//alert(err.code);
+			if(err.code==-2){
+
+				//支付结束,给其它窗口的回调
+				api.execScript({
+					name:"main", //frameName: 'iframe',
+					script: "Qibo.app_pay_end('0')"
+				});
+
+				layer.alert("你放弃了支付,或支付失败",{ icon: 1, closeBtn: 0 },function (index) {	 	
+					window.location.href="{:get_url('member')}";
+				 });
+			}else{
+				layer.alert('可能参数有误,支付故障!');
+			}			
+		}
+	});
+}
+
+</script>
+</body>
+</html>

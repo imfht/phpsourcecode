@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>维护模式</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>维护模式</legend>
+			<ol>
+				<li>
+                                        <h2 class="title_h2">维护模式介绍</h2>
+					首先我们提出一个问题，然后引入维护模式的概念。
+					<br>问题：
+					<br>我们的网站已经上线，出现了重大问题，我们需要关闭网站来维护。给出一个友好的维护提示页面。
+					<br>同时我们内部开发人员能正常访问线上的网站方便调试找出问题。
+					<br>虽然通过修改虚拟主机的配置可以达到关闭网站给出一个友好的维护提示页面，但是所有人都不能访问了，
+					<br>即使通过复杂的配置达到上面的目的，但是这个变动太大，一个维护就要动服务器配置这是不合理的做法。
+					<br>分析：
+					<br>通过问题我们得出，我们需要有一个网站的“维护模式”，这个模式下，开发人员访问正常，其他人访问显示维护页面。
+					<br>Soter支持设置“维护模式”，维护模式是基于ip控制访问的，维护模式下我们的开发人员可以把自己的ip加入到白名单中，
+					<br>然后就能正常访问网站，不在白名单中的访问显示维护页面。
+				</li>	
+				<li>
+                                        <h2 class="title_h2">维护模式配置</h2>
+					在入口文件里面我们可以发现下面的配置：
+                                        <pre class="brush:php">
+						/* 宕机维护模式 */
+						->setIsMaintainMode(false)
+						/* 宕机维护模式IP白名单 */
+						//->setMaintainIpWhitelist(array('127.0.0.2', '192.168.0.2/32'))
+						/* 宕机维护模式处理方法 */
+						->setMaintainModeHandle(new Soter_Maintain_Handle_Default())
+                                        </pre>
+					可以看到有三个相关配置，它们作用是：
+					<br>1.->setIsMaintainMode() 设置是否开启维护模式
+					<br>2.->setMaintainIpWhitelist() 设置维护模式IP白名单
+					<br>3.->setMaintainModeHandle() 设置维护模式处理方法,我们可以在方法里面显示友好的维护的页面或者其它操作。
+					<br>1和2很好理解，3是需要传入一个实现了接口Soter_Maintain_Handle的类对象，默认去情况下我们传入了Soter_Maintain_Handle_Default类对象，
+					<br>Soter_Maintain_Handle_Default类代码如下：
+					<pre class="brush:php">
+						class Soter_Maintain_Handle_Default implements Soter_Maintain_Handle {
+
+							public function handle() {
+								header('Content-type: text/html;charset=utf-8');
+								echo '&lt;center>&lt;h2>server is under maintenance&lt;/h2>&lt;h3>服务器维护中&lt;/h3>' . date('Y/m/d H:i:s e') . '&lt;/center>';
+							}
+
+						}
+					</pre>
+					可看到Soter_Maintain_Handle_Default类很简单，实现了接口Soter_Maintain_Handle，在handle方法里显示了维护提示。
+				</li>	
+				<li>
+                                        <h2 class="title_h2">自定义维护模式处理类</h2>
+					下面我们要自定义一个维护模式处理类。
+					<br>1.新建文件：application/classes/Maintain/MyHandle.php
+					<br>2.输入如下内容：
+					<pre class="brush:php">
+						class Maintain_MyHandle implements Soter_Maintain_Handle {
+
+							public function handle() {
+								echo '服务器维护中，2015-12-20 04:00恢复访问,请耐心等待';
+							}
+
+						}
+					</pre>
+					这样不在白名单的ip访问的时候，显示的就是我们设置的维护提示信息。
+					<br>3.修改配置，启用白名单模式，设置ip白名单，注册我们的维护模式处理类。
+					<br>我们假设开发人员ip之一是：192.168.1.35，网段192.168.2的ip也都能访问。
+					<pre class="brush:php">
+						/* 宕机维护模式 */
+						->setIsMaintainMode(true)
+						/* 宕机维护模式IP白名单 */
+						//->setMaintainIpWhitelist(array('192.168.1.35', '192.168.2.1/24'))
+						/* 宕机维护模式处理方法 */
+						->setMaintainModeHandle(new Maintain_MyHandle())
+                                        </pre>
+					<br>4.现在我们分别通过不同的ip访问我们的网站，如果ip在白名单中能正常访问网站，其它ip就会显示维护提示信息。
+					<br>5.当我们的网站维护完毕的时候，我们把维护模式关闭即可，修改配置设置false，<code>->setIsMaintainMode(false)</code>。
+					<br><b>这样我们不用修改任何服务器配置就能轻松的维护网站。</b>
+                                </li>
+                        </ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

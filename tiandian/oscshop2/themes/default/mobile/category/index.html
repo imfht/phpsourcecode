@@ -1,0 +1,98 @@
+{extend name="public:base" /}
+{block name="head"}
+<link href="__PUBLIC__/view_res/mobile/css/category.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/lib/weui.min.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/css/jquery-weui.min.css" type="text/css" rel="Stylesheet" />
+<script src="__PUBLIC__/jquery-weui/dist/js/jquery-weui.min.js"></script>
+
+{/block} 
+{block name="header"}
+{include file="public/search" /}
+{/block}
+
+{block name="content"}
+<input type="hidden" value="0" id="cat" />
+<div class="clearfix" id="viewCat">
+    <div id="viewCatLeft">
+    	{volist name="category" id="d"}
+        <div class="viewCatTopItem Elipsis" data-catid="{$d.id}">{$d.name}</div>                
+        {/volist}
+    </div>
+    <div id="viewCatRight"></div>
+</div>
+
+
+
+{/block}
+
+
+
+{block name="script"}
+<script>
+        // 对应分类id
+        var cat = $('#cat').val() !== '' && parseInt($('#cat').val()) !== 0 ? parseInt($("#cat").val()) : parseInt($('.viewCatTopItem').eq(0).attr('data-catid'));
+
+        // 左侧按钮点击
+        $('.viewCatTopItem').bind({'touchend touchcancel mouseup': function (event) {
+                var node = $(this);
+                event.preventDefault();
+                if (cat !== node.attr('data-catid')) {
+                    cat = node.attr('data-catid');
+                    
+                    $.showLoading();
+                    
+                    fnLoadCatlist(cat);
+                    
+                    setTimeout(function (){
+				        $.hideLoading();		     
+				    }, 500);
+				    
+                    $('.viewCatTopItem.hov').removeClass('hov');
+                    node.addClass('hov');
+                }
+            }});
+
+        // window resizer
+        $(window).bind('resize', function () {
+            // 调整高度
+            $('#viewCatRight').height($(window).height() - $('.search-w-box').height() - 35);
+            $('#viewCatLeft').height($(window).height() - $('.search-w-box').height() - 20);
+            $('#whiteWrap').height($('#viewCatRight').height() + 35);
+            // 调整圆图标宽高
+            $('.subcat_item').each(function () {
+                $(this).css({
+                    'height': $(this).width() + 25 + 'px'
+                });
+            });
+        }).resize();
+
+        // 默认load第一个分类的列表
+        $('.viewCatTopItem[data-catid="' + cat + '"]').eq(0).addClass('hov');
+        fnLoadCatlist(cat);
+
+        /**
+         *列表加载函数
+         * @param {type} cat
+         * @returns {undefined}
+         */
+      
+        function fnLoadCatlist(cat) {
+            if ($('#whiteWrap').length === 0) {
+                $('#viewCatRight').append('<div id="whiteWrap"></div>');
+            }
+            $('#whiteWrap').height($('#viewCatRight').height() + 35);            
+            
+            $('#viewCatRight').load("{:url('category/get_goods')}" +'/id/'+ cat,
+                    function () {
+                        // 调整圆图标宽高
+                        $('.subcat_item img').each(function () {
+                            $(this).css({
+                                'height': $(this).width() + 'px'
+                            });
+                        });
+                        $('.subcatBrand').width(($('#viewCatRight').width() / 2) - 15);
+                    });
+                  
+        }
+</script>
+{/block}

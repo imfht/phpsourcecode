@@ -1,0 +1,67 @@
+{extend name="base" /}
+{block name="body"}
+<div class="layui-card">
+    <div class="layui-card-body">
+        <div class="layui-tab layui-tab-brief" lay-filter="group">
+            <ul class="layui-tab-title">
+                {foreach name="list" key="k" item="v"}
+                <li {if $k eq 'website'}class="layui-this"{/if} lay-id="{$k}">{$v.name}</li>
+                {/foreach}
+            </ul>
+            <div class="layui-tab-content">
+                {foreach name="list" key="k" item="v"}
+                <div class="layui-tab-item {if $k eq 'website'}layui-show{/if}">
+                    <form action="{:url('admin/config/setting')}" class="layui-form" method="post">
+                        {foreach name="v.config" item="config"}
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">{$config.title}</label>
+                            <div class="layui-input-block">
+                                {if $config.type eq 'input'}
+                                <input type="text" name="{$config.id|hashids_encode}" value="{$config.value|default=''}" placeholder="请输入{$config.title}" class="layui-input">
+                                {/if}
+                                {if $config.type eq 'textarea'}
+                                <textarea name="{$config.id|hashids_encode}" placeholder="请输入{$config.title}" class="layui-textarea">{$config.value|default=''}</textarea>
+                                {/if}
+                                {if $config.type eq 'select'}
+                                <select name="{$config.id|hashids_encode}">
+                                    {foreach name=":parse_attr($config.options)" key="i" item="j"}
+                                    <option value="{$i}" {if condition="$config.value eq $i"}selected="selected"{/if}>{$j}</option>
+                                    {/foreach}
+                                </select>
+                                {/if}
+                                {if $config.type eq 'radio'}
+                                {foreach name=":parse_attr($config.options)" key="i" item="j"}
+                                <input type="radio" name="{$config.id|hashids_encode}" value="{$i}" title="{$j}" {if condition="$config.value eq $i"}checked="checked"{/if}>
+                                {/foreach}
+                                {/if}
+                                {if $config.type eq 'image'}
+                                <input type="text" name="{$config.id|hashids_encode}" value="{$config.value|default=''}" autocomplete="off" placeholder="请上传{$config.title}" class="layui-input">
+                                <button type="button" class="layui-btn layui-btn-primary layui-btn-position ajax-images"><i class="fa fa-file-image-o"></i> 选择图片</button>
+                                {/if}
+                            </div>
+                        </div>
+                        {/foreach}
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" lay-filter="i" lay-submit="">保存</button>
+                                <button class="layui-btn layui-btn-primary" type="reset">重置</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {/foreach}
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="js"}
+<script>
+var layid = location.hash.replace(/^#group=/, '');
+element.tabChange('group', layid);
+
+element.on('tab(group)', function (elem) {
+    location.hash = 'group=' + $(this).attr('lay-id');
+});
+</script>
+{/block}

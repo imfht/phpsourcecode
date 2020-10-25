@@ -1,0 +1,73 @@
+<div data-options="region:'west',split:true,title:'{:lang(\" 模块功能\")}'" style="width:180px;padding:10px;">
+<ul id="main_menu"></ul>
+</div>
+<script type="text/javascript">
+    $(function () {
+        console.log('-- web_app/pc/admin/main/main_menu.html');
+        // 基本变量 - TP系统变量
+        var base_url = '{:url("/")}';
+
+        // 初始化页面模块
+        var main_page = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        var menu_data = main_page.tree().nag_menu_build(JSON.parse('{$menu_data}'));
+
+        // 菜单
+        $('#main_menu').tree({
+//        url: "__URL__/main_menu",
+            data: menu_data,
+            lines: true,
+            onClick: function (node) {
+                if (node['attributes'] !== undefined) {
+                    if ($('#tabs').tabs('exists', node['text'])) {
+                        $('#tabs').tabs('select', node['text']);
+                    } else {
+                        $('#tabs').tabs('add', {
+                            //id: node['attributes']['id'],
+                            title: node['text'],
+//                         content: '<iframe frameborder=0 src=' + base_url + node.attributes['module'] + '/' + node['attributes']['controller'] + '>' + '</iframe>',
+//                        href: node['attributes']['url'],
+                            href: base_url + node['attributes']['module'] + '/' + node['attributes']['controller'],
+                            // cache: true,
+                            fit: true,
+                            closable: true,
+                            border: false,
+                            tools: [{
+                                iconCls: 'icon-mini-refresh',
+                                handler: function () {
+                                    var tab = $('#tabs').tabs('getSelected');
+                                    var tab_index = $('#tabs').tabs('getTabIndex',tab);
+                                    main_page.base().page_destroy(tab_index);
+
+                                    tab.panel('refresh', node['attributes']['url']);
+                                }
+                            }],
+                        });
+                        $('#tabs').tabs({
+                            onClose: function(title, index){
+                                console.log('close tab title: ' + index + " : " + title);
+                                main_page.base().page_destroy(index);
+                            }
+                        });
+
+                    }
+                } else {
+                    $(this).tree('toggle', node.target);
+                }
+            }
+        });
+        // TODO 初始化软件全局配置参数
+
+        // 初始化用户全局参数
+        /*
+         $.post('__URL__/init_user_para', null, function(data) {
+         $.each(data, function(para_name, value){
+         sessionStorage.setItem( para_name, value);
+         });
+         });
+         */
+    });
+</script>

@@ -1,0 +1,234 @@
+<include file="Common/header-control" />
+<script>
+    require(['angular', 'bootstrap', 'util'], function(angular, $, u){
+        angular.module('app', []).controller('paymentSetting', function($scope, $http){
+            $scope.alipay = {};
+            $scope.alipay.enable = {$pay['alipay']['enable'] ? 'true' : 'false'};
+            
+            $scope.weixin = {};
+            $scope.weixin.enable = {$pay['weixin']['enable'] ? 'true' : 'false'};
+            $scope.weixin.accounts = eval('{:json_encode($accounts)}');
+            if($scope.weixin.accounts.length > 0) {
+                var acid = "{$pay['weixin']['account']}";
+                if(acid) {
+                    $.each($scope.weixin.accounts, function(){
+                        if(acid == this.id) {
+                            $scope.weixin.account = this;
+                            return false;
+                        }
+                    });
+                }
+                if(!$scope.weixin.account) {
+                    $scope.weixin.account = $scope.weixin.accounts[0];
+                }
+            }
+            
+            $scope.submit = function() {
+                var message = '';
+                if($scope.alipay.enable) {
+                    if($.trim($(':text[name="alipay[account]"]').val()) == '') {
+                        message += '必须输入支付宝收款账号 <br>';
+                    }
+                    if($.trim($(':text[name="alipay[partner]"]').val()) == '') {
+                        message += '必须输入支付宝合作者身份 <br>';
+                    }
+                    if($.trim($(':text[name="alipay[secret]"]').val()) == '') {
+                        message += '必须输入支付宝合作密钥 <br>';
+                    }
+                }
+                if($scope.weixin.enable) {
+                    if($.trim($(':text[name="weixin[partner]"]').val()) == '') {
+                        message += '必须输入微信商户身份 <br>';
+                    }
+                    if($.trim($(':text[name="weixin[key]"]').val()) == '') {
+                        message += '必须输入微信商户密钥 <br>';
+                    }
+                    if($.trim($(':text[name="weixin[mchid]"]').val()) == '') {
+                        message += '必须输入微信商户ID <br>';
+                    }
+                }
+                if(message) {
+                    u.message(message);
+                    return;
+                }
+                $('form')[0].submit();
+            };
+        });
+        angular.bootstrap(document, ['app']);
+        $(function(){
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var from = $(e.relatedTarget).attr('href');
+                var to = $(e.delegateTarget).attr('href');
+                if($(to).index() < $(from).index()) {
+                    $(to).removeClass('fadeInRight fadeInLeft').addClass('fadeInLeft');
+                } else {
+                    $(to).removeClass('fadeInRight fadeInLeft').addClass('fadeInRight');
+                }
+            });
+        });
+    });
+</script>
+<div class="row ng-cloak" ng-controller="paymentSetting">
+    <form class="form-horizontal" action="" method="post" ng-submit="submit();">
+        <div class="box col-md-12 box-top">
+            <div class="box-inner">
+                <div class="box-header well" data-original-title="">
+                    <h2><i class="fa fa-weixin"></i> 支付宝支付参数</h2>
+                </div>
+                <div class="box-content">
+                    <div class="form-group">
+                        <label class="col-xs-12 col-sm-3 col-md-2 control-label">支付宝支付说明</label>
+                        <div class="col-sm-9 col-xs-12">
+                            <div class="alert alert-warning">
+                                您的支付宝账号必须支持手机网页即时到账接口, 才能使用手机支付功能, <a href="https://b.alipay.com/order/productDetail.htm?productId=2013080604609688" target="_blank">申请及详情请查看这里</a>.
+                            </div>
+                            <label class="radio-inline">
+                                <input type="radio" name="alipay[enable]" ng-model="alipay.enable" ng-value="true" />
+                                开启
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="alipay[enable]" ng-model="alipay.enable" ng-value="false" />
+                                关闭
+                            </label>
+                            <span class="help-block">是否使用支付宝支付</span>
+                        </div>
+                    </div>
+                    <div ng-show="alipay.enable">
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-2 control-label">收款支付宝账号</label>
+                            <div class="col-sm-9 col-xs-12">
+                                <input type="text" name="alipay[account]" class="form-control" value="{$pay['alipay']['account']}" autocomplete="off">
+                                <span class="help-block">如果开启兑换或交易功能，请填写真实有效的支付宝账号，用于收取用户以现金兑换交易积分的相关款项。如账号无效或安全码有误，将导致用户支付后无法正确对其积分账户自动充值，或进行正常的交易对其积分账户自动充值，或进行正常的交易。 如您没有支付宝帐号，<a href="https://memberprod.alipay.com/account/reg/enterpriseIndex.htm" target="_blank">请点击这里注册</a></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-2 control-label">合作者身份</label>
+                            <div class="col-sm-9 col-xs-12">
+                                <input type="text" name="alipay[partner]" class="form-control" value="{$pay['alipay']['partner']}" autocomplete="off"/>
+                                <span class="help-block">支付宝签约用户请在此处填写支付宝分配给您的合作者身份，签约用户的手续费按照您与支付宝官方的签约协议为准。<br>如果您还未签约，<a href="https://memberprod.alipay.com/account/reg/enterpriseIndex.htm" target="_blank">请点击这里签约</a>；如果已签约,<a href="https://b.alipay.com/order/pidKey.htm?pid=2088501719138773&amp;product=fastpay" target="_blank">请点击这里获取PID、Key</a>;如果在签约时出现合同模板冲突，请咨询0571-88158090</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-2 control-label">校验密钥</label>
+                            <div class="col-sm-9 col-xs-12">
+                                <input type="text" name="alipay[secret]" class="form-control" value="{$pay['alipay']['secret']}" autocomplete="off"/>
+                                <span class="help-block">支付宝签约用户可以在此处填写支付宝分配给您的交易安全校验码，此校验码您可以到支付宝官方的商家服务功能处查看</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box col-md-12 box-top">
+            <div class="box-inner">
+                <div class="box-header well" data-original-title="">
+                    <h2><i class="fa fa-weixin"></i> 微信支付参数</h2>
+                </div>
+                <div class="box-content">
+                    <if condition="!empty($accounts)">
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-2 control-label">微信支付说明</label>
+                            <div class="col-sm-9 col-xs-12">
+                                <div class="alert alert-warning">
+                                    你必须向微信公众平台提交企业信息以及银行账户资料，审核通过并签约后才能使用微信支付功能 <a href="http://bbs.we7.cc/thread-1354-1-1.html" target="_blank">申请及详情请查看这里</a>.
+                                </div>
+                                <div class="alert alert-warning">
+                                    <p>微擎0.6支持微信支付接口，注意你的微擎访问地址一定不要写错了，这里我们用访问地址代替下面说明中出现的链接，申请微信支付的接口说明如下：</p>
+                                    <br>
+                                    <h4>JS API网页支付参数</h4>
+                                    <p>支付授权目录: {$_W['siteroot']}payment/wechat/</p>
+                                    <p>共享收货地址: 选择"是"</p>
+                                    <br>
+                                    <h4>Native原生支付</h4>
+                                    <p>支付回调URL: {$_W['siteroot']}payment/wechat/native.php</p>
+                                    <br>
+                                    <h4>警告通知URL</h4>
+                                    <p>警告通知URL: {$_W['siteroot']}payment/wechat/warning.php</p>
+                                </div>
+                                <label class="radio-inline">
+                                    <input type="radio" name="weixin[enable]" ng-model="weixin.enable" ng-value="true" />
+                                    开启
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" name="weixin[enable]" ng-model="weixin.enable" ng-value="false" />
+                                    关闭
+                                </label>
+                                <span class="help-block">是否使用微信支付</span>
+                            </div>
+                        </div>
+                        <div ng-show="weixin.enable">
+                            <div class="form-group">
+                                <label class="col-xs-12 col-sm-3 col-md-2 control-label">支付账号</label>
+                                <div class="col-sm-9 col-xs-12">
+                                    <select ng-model="weixin.account" ng-options="acc.title for (id, acc) in weixin.accounts" class="form-control">
+                                    </select>
+                                    <span class="help-block">您有多个微信公众账号, 请选择其中支持微信支付的账号并填写支付参数</span>
+                                    <input type="hidden" name="weixin[account]" value="{{weixin.account.id}}"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-12 col-sm-3 col-md-2 control-label">身份标识<br />(appId)</label>
+                                <div class="col-sm-9 col-xs-12">
+                                    <input type="text" class="form-control" ng-model="weixin.account.appid" readonly="readonly" autocomplete="off">
+                                    <span class="help-block">公众号身份标识 <a href="{:U('control/platform/weixin/do/modify')}?id={{weixin.account.id}}">请通过修改公众号信息来保存</a></span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-12 col-sm-3 col-md-2 control-label">身份密钥<br />(appSecret)</label>
+                                <div class="col-sm-9 col-xs-12">
+                                    <input type="text" class="form-control" ng-model="weixin.account.secret" readonly="readonly" autocomplete="off"/>
+                                    <span class="help-block">公众平台API(参考文档API 接口部分)的权限获取所需密钥Key <a href="{:U('control/platform/weixin/do/modify')}?id={{weixin.account.id}}">请通过修改公众号信息来保存</a></span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-12 col-sm-3 col-md-2 control-label">商户身份<br />(partnerId)</label>
+                                <div class="col-sm-9 col-xs-12">
+                                    <input type="text" name="weixin[partner]" class="form-control" value="{$pay['weixin']['partner']}" autocomplete="off"/>
+                                    <span class="help-block">财付通商户身份标识</span>
+                                    <span class="help-block">公众号支付请求中用于加密的密钥Key</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-12 col-sm-3 col-md-2 control-label">商户密钥<br />(partnerKey)</label>
+                                <div class="col-sm-9 col-xs-12">
+                                    <input type="text" name="weixin[key]" class="form-control" value="{$pay['weixin']['key']}" autocomplete="off"/>
+                                    <span class="help-block">财付通商户权限密钥Key</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-12 col-sm-3 col-md-2 control-label">微信支付商户号(MchId)</label>
+                                <div class="col-sm-9 col-xs-12">
+                                    <input type="text" name="weixin[mchid]" class="form-control" value="{$pay['weixin']['mchid']}" autocomplete="off"/>
+                                    <span class="help-block">公众号支付请求中用于加密的密钥Key</span>
+                                </div>
+                            </div>
+                        </div>
+                        <else/>
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-2 control-label">微信支付说明</label>
+                            <div class="col-sm-9 col-xs-12">
+                                <div class="alert alert-warning">
+                                    你必须向微信公众平台提交企业信息以及银行账户资料，审核通过并签约后才能使用微信支付功能 <a href="http://bbs.we7.cc/thread-1354-1-1.html" target="_blank">申请及详情请查看这里</a>.
+                                </div>
+                                <span class="help-block">你还没有支持微信支付的账号, <a href="{:U('control/platform/weixin')}">请添加或修改你的微信账号为认证服务号</a></span>
+                            </div>
+                        </div>
+                    </if>
+                </div>
+            </div>
+        </div>
+        <div class="box col-md-12 box-top">
+            <div class="box-inner">
+                <div class="box-content">
+                    <div class="form-group">
+                        <label class="col-xs-12 col-sm-3 col-md-2 control-label"></label>
+                        <div class="col-sm-9 col-xs-12">
+                            <input type="submit" class="btn btn-primary" value="保存支付参数" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<include file="Common/footer-control" />

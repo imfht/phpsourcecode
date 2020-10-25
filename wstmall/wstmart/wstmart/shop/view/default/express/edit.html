@@ -1,0 +1,129 @@
+{extend name="default/base" /}
+{block name="css"}
+<link href="__STATIC__/plugins/validator/jquery.validator.css?v={$v}" rel="stylesheet">
+<style type="text/css">
+  .wst-list tbody tr td{padding: 15px 20px}
+  .wst-shop-content .sname{font-weight: bold;}
+  .wst-shop-content .snum{float: right;font-weight: bold;color: #FF5722;}
+  table {
+    max-width: 100%;
+    background-color: transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  #list td {
+      padding: 10px;
+      border: 1px solid #eeeeee;
+  }
+  .itext{width: 100px !important;}
+  .layui-colla-icon{right: 15px!important;left:auto;}
+  .layui-colla-content{border-top:0;padding: 10px 55px;}
+  .layui-collapse{border-top:0;}
+  .layui-checkbox-disbaled span{color: #9e9e9e!important;}
+  .tpox{position:absolute;bottom:10px;left:30px;}
+</style>
+{/block}
+{block name="main"}
+<div class="wst-body"> 
+<div class="wst-clear"></div>
+   <div class="wst-shop-content">
+
+    <form name="editForm"  id="editForm" autocomplete="off">
+      <br>
+      <table class='wst-list' >
+         <tbody id='list'>
+        <tr>
+          <td style="width:120px">模板名称<font color='red'>*</font>：</td>
+          <td colspan="4">
+            <input type='hidden' id='id' name='id' class="ipt" value="{$object['id']}" />
+            <input type='hidden' id='shopExpressId' name='shopExpressId' class="ipt" value="{$shopExpressId}" />
+            <input id="tempName" name="tempName" class="ipt wst-regist-input" data-rule='请输入模板名称:required;'  type="text" value="{$object['tempName']}" maxlength="50" />
+            <input type='hidden' id='provinceIds' name='provinceIds' class="ipt" value="{$object['provinceIds']}" />
+            <input type='hidden' id='cityIds' name='cityIds' class="ipt" value="{$object['cityIds']}" />
+          </td>
+        </tr>
+        <tr>
+          <td >选择地区<font color='red'>*</font>：</td>
+          <td colspan="4">
+            {if($object['tempType']==1)}
+            <div id="pnames" style="float: left;margin-right:10px">{$object['pnames']}</div><div class="wst-sec-but u-btn btn btn-primary btn-mright" onclick="freightAreas();">指定地区城市</div>
+            {else}
+            <div class="wst-sec-but u-btn btn btn-primary btn-mright" style="background: #9E9E9E;">默认全国范围</div>
+            <span style="font-weight: bold;"></span>
+            {/if}
+
+            <?php 
+              $provinceIds = explode(",",$object['provinceIds']); 
+              $cityIds = explode(",",$object['cityIds']); 
+
+              $otherAreas = $object['otherAreas'];
+              $otherCityIds = $otherAreas['otherCityIds']; 
+            ?>
+                
+            <div id="freightAreas" style="display: none;padding: 10px;" class="layui-form" >
+            {volist name="$areaList" id="province"}
+              <div class="layui-collapse" lay-accordion="">
+                <div class="layui-colla-item" style="position: relative;">
+                  <div style="position: absolute;left: 20px;top:4px;z-index: 100">
+                  <input type="checkbox" name="provinceIds[{$province['areaId']}]" data-areaid="{$province['areaId']}" lay-skin="primary" title="{$province['areaName']|WSTStripTags}" class="province province_{$province['areaId']}" lay-filter="chooseProvince"
+                  {:in_array($province['areaId'],$provinceIds)?"checked":""}
+                  {$province['isDisabled']==1?"disabled":""}>
+                  </div>
+                  <h2 class="layui-colla-title"></h2>
+                  <div class="layui-colla-content layui-form-item">
+                      <div class="layui-colla-item" style="padding: 10px;">
+                          {volist name="$province['list']" id="city"}
+                            <input type="checkbox" name="cityIds[{$city['areaId']}]" lay-skin="primary" title="{$city['areaName']|WSTStripTags}" class="city parent_{$province['areaId']}" lay-filter="chooseCity" data-areaid="{$city['areaId']}" data-parentid="{$province['areaId']}" 
+                            {:in_array($city['areaId'],$cityIds)?"checked":""} 
+                            {:in_array($city['areaId'],$otherCityIds)?"disabled":""} >
+                          {/volist}
+                      </div>
+                  </div>
+                </div>
+              </div>
+            {/volist}
+            <div id="chkAllBox" style="display: none;"><div class='tpox'><input type='checkbox' name='chkAll' lay-skin='primary' title='全选/全不选' class='' lay-filter='chooseAll' style="display: none;" /></div></div>
+            </div>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>按件数</td>
+          <td>首件(件)：<span class="snum"><input type="text" id="buyNumStart" class="ipt itext" value="{$object['buyNumStart']}"/></span></td>
+          <td>首件运费(元)：<span class="snum"><input type="text" id="buyNumStartPrice" class="ipt itext" value="{$object['buyNumStartPrice']}"/></span></td>
+          <td>续件(件)：<span class="snum"><input type="text" id="buyNumContinue" class="ipt itext" value="{$object['buyNumContinue']}"/></span></td>
+          <td>续件运费(元)：<span class="snum"><input type="text" id="buyNumContinuePrice" class="ipt itext" value="{$object['buyNumContinuePrice']}"/></span></td>
+       </tr>
+       <tr>
+          <td>按重量</td>
+          <td>首重(kg)：<span class="snum"><input type="text" id="weightStart" class="ipt itext" value="{$object['weightStart']}"/></span></td>
+          <td>首重运费(元)：<span class="snum"><input type="text" id="weightStartPrice" class="ipt itext" value="{$object['weightStartPrice']}"/></span></td>
+          <td>续重(kg)：<span class="snum"><input type="text" id="weightContinue" class="ipt itext" value="{$object['weightContinue']}"/></span></td>
+          <td>续重运费(元)：<span class="snum"><input type="text" id="weightContinuePrice" class="ipt itext" value="{$object['weightContinuePrice']}"/></span></td>
+       </tr>
+       <tr>
+          <td>按体积</td>
+          <td>首体积量(m³)：<span class="snum"><input type="text" id="volumeStart" class="ipt itext" value="{$object['volumeStart']}"/></span></td>
+          <td>首体积运费(元)：<span class="snum"><input type="text" id="volumeStartPrice" class="ipt itext" value="{$object['volumeStartPrice']}"/></span></td>
+          <td>续体积量(m³)：<span class="snum"><input type="text" id="volumeContinue" class="ipt itext" value="{$object['volumeContinue']}"/></span></td>
+          <td>续体积运费(元)：<span class="snum"><input type="text" id="volumeContinuePrice" class="ipt itext" value="{$object['volumeContinuePrice']}"/></span></td>
+       </tr>
+        <tr>
+          <td colspan="5" class="wst-bottombar" style="text-align: center;">
+              <button type="button" onclick='javascript:save()' class="wst-sec-but u-btn btn btn-primary btn-mright"><i class="fa fa-check"></i>保存</button>
+              <button type="button" class="btn" onclick="javascript:window.history.go(-1)"><i class="fa fa-angle-double-left"></i>返&nbsp;回</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </form>
+   </div>
+</div>
+{/block}  
+{block name="footer"}
+  {include file="default/footer" /}
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__SHOP__/express/express.js?v={$v}'></script>
+<script type="text/javascript" src="__STATIC__/plugins/validator/jquery.validator.min.js?v={$v}"></script>
+{/block}

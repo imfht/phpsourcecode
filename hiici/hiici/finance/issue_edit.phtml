@@ -1,0 +1,93 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+global $config;
+if (!in_array($auth['id'], $config['manager'])) die('用户权限不够!');
+
+if (empty($_GET)) die;
+
+$issue_id = intval($_GET['issue_id']);
+
+$rs = dt_query("SELECT * FROM finance_issue WHERE id=$issue_id");
+$issue = mysql_fetch_array($rs);
+if (empty($issue)) {
+	put_info('公告不存在！');
+	header('Location:?c=finance&a=issue_list');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/nav_sub_im.html') ?>
+<div class="container finance-item-add" style="padding-top:15px">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<h3><span class="glyphicon glyphicon-edit"></span> 编辑公告</h3>
+			<hr class="solid">
+			<div class="col-md-12 column">
+				<form class="form-horizontal" action="?c=finance&a=do_issue_edit" method="post">
+					<fieldset>
+						<!-- id -->
+						<input type="hidden" name="issue_id" value="<?php echo $issue['id'] ?>"/>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">公告类别</label>  
+							<div class="col-md-7">
+								<select name="kind" class="form-control">
+									<option value="PTGG" <?php if ('PTGG' == $issue['kind']) echo 'selected="selected"' ?>>平台公告</option>
+									<option value="HKGG" <?php if ('HKGG' == $issue['kind']) echo 'selected="selected"' ?>>还款公告</option>
+									<option value="MTBD" <?php if ('MTBD' == $issue['kind']) echo 'selected="selected"' ?>>媒体报道</option>
+								</select>
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">公告标题</label>  
+							<div class="col-md-7">
+								<input name="title" type="text" placeholder="公告标题" class="form-control input-md" required="" value="<?php echo $issue['title']; ?>"/>
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<br>
+						<div class="form-group">
+							<label class="col-md-2 control-label">公告内容</label>  
+							<div class="col-md-9">
+								<textarea id="issue_content" name="content" type="text" class="form-control input-md finance-item-well" style="height:800px" required=""><?php echo $issue['content']; ?></textarea>
+							</div>
+						</div>
+
+
+						<!-- token -->
+						<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+
+						<!-- Button -->
+						<br>
+						<div class="form-group">
+							<label class="col-md-2 control-label"></label>
+							<div class="col-md-2">
+								<button class="btn btn-primary btn-block">更新公告</button>
+							</div>
+						</div>
+
+					</fieldset>
+				</form>	
+
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+var issue_content = UM.getEditor("issue_content");  
+
+$(document).ready(function(){
+	$('li#finance_im').addClass('active');
+});
+
+</script>

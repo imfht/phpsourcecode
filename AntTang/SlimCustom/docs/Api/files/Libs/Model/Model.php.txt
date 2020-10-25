@@ -1,0 +1,272 @@
+<?php
+/**
+ * @package     Model.php
+ * @author      Jing <tangjing3321@gmail.com>
+ * @link        http://www.slimphp.net
+ * @version     1.0
+ * @copyright   Copyright (c) SlimCustom.
+ * @date        2017年5月3日
+ */
+namespace SlimCustom\Libs\Model;
+
+use \Closure;
+use SlimCustom\Libs\App;
+use SlimCustom\Libs\Model\Query\PdoQuery as Query;
+use SlimCustom\Libs\Support\Collection;
+
+/**
+ * Model
+ * 
+ * @author Jing <tangjing3321@gmail.com>
+ */
+class Model
+{
+
+    /**
+     * 查询对象
+     *
+     * @var \SlimCustom\Libs\Model\Query\PdoQuery
+     */
+    protected $query;
+    
+    /**
+     * 查询申明
+     * 
+     * @var array
+     */
+    protected $statements;
+
+    /**
+     * 表名
+     *
+     * @var string
+     */
+    protected $table;
+    
+    /**
+     * 闭包
+     * 
+     * @var \Closure
+     */
+    protected $closure;
+    
+    /**
+     * 验证规则
+     * 
+     * @var array
+     */
+    protected $rules = [];
+
+    /**
+     * 注入插叙对象
+     *
+     * @param Query $query            
+     */
+    public function __construct(Query $query)
+    {
+        $this->query = $query;
+        $this->table($this->table);
+    }
+    
+    /**
+     * Query
+     *
+     * @param \Closure $callable
+     * @return \SlimCustom\Libs\Model\Query\PdoQuery
+     */
+    public static function query(Closure $callable = null)
+    {
+        $model = App::di(static::class);
+        return ($callable instanceof Closure) ? call_user_func_array($callable->bindTo($model), [$model->query]) : $model->query;
+    }
+    
+    /**
+     * Return Rows
+     * 
+     * @param array $columns
+     * @param unknown $fetch_style
+     * @param unknown $cursor_orientation
+     * @param unknown $cursor_offset
+     * @return []
+     */
+    public function rows($columns = ['*'], $fetch_style = null, $cursor_orientation = null, $cursor_offset = null)
+    {
+        $statement = $this->statementResolve($this->query->select($columns))->execute();
+        $closure = $this->closure;
+        $rows = [];
+        while ($row = $statement->fetch($fetch_style, $cursor_orientation, $cursor_offset)) {
+            $row = new Collection($row);
+            if ($closure instanceof \Closure) {
+                $closure = $closure->bindTo($row);
+                $row = $closure($row);
+            }
+            $rows[] = $row->toArray();
+        }
+        return $rows;
+    }
+    
+    /**
+     * Return Row
+     * 
+     * @param array $columns
+     * @param unknown $fetch_style
+     * @param unknown $cursor_orientation
+     * @param unknown $cursor_offset
+     * @return []
+     */
+    public function row($columns = ['*'], $fetch_style = null, $cursor_orientation = null, $cursor_offset = null)
+    {
+        $row = $this->limit(1, 0)->rows($columns, $fetch_style, $cursor_orientation, $cursor_offset);
+        return isset($row[0]) ? $row[0] : [];
+    }
+    
+    /**
+     * Insert Row
+     * 
+     * @param array $pairs
+     * @param string $insertId
+     * @return mix
+     */
+    public function create($pairs = [], $insertId = true)
+    {
+        if ($this->rules) {
+            $validator = validator($pairs, $this->rules);
+            if ($validator->fails()) {
+                foreach ($validator->messagesInfo() as $msg) {
+                    throw new \InvalidArgumentException($msg[0]);
+                }
+            }
+        }
+        return $this->statementResolve($this->query->insert($pairs))->execute($insertId)->fetch();
+    }
+    
+    /**
+     * Renew Row
+     * 
+     * @param array $pairs
+     * @return boolean
+     */
+    public function renew($pairs = [])
+    {
+        if ($this->rules) {
+            $validator = validator($pairs, $this->rules);
+            if ($validator->fails()) {
+                foreach ($validator->messagesInfo() as $msg) {
+                    throw new \InvalidArgumentException($msg[0]);
+                }
+            }
+        }
+        return $this->statementResolve($this->query->update($pairs))->execute();
+    }
+    
+    /**
+     * Remove Row
+     * 
+     * @return boolean
+     */
+    public function remove()
+    {
+        return $this->statementResolve($this->query->delete())->execute();
+    }
+    
+    /**
+     * 绑定闭包
+     * 
+     * @param \Closure $closure
+     * @return \SlimCustom\Libs\Model\Model
+     */
+    public function bind(\Closure $closure)
+    {
+        $this->closure = $closure;
+        return $this;
+    }
+    
+    /**
+     * 设置表名
+     *
+     * @param string $table
+     * @return \SlimCustom\Libs\Model\Model
+     */
+    public function table($table)
+    {
+        $this->table = $table;
+        $this->query->table(config('database.prefix', '') . $this->table);
+        return $this;
+    }
+    
+    /**
+     * 设置验证规则
+     * 
+     * @param array $rules
+     * @return \SlimCustom\Libs\Model\Model
+     */
+    public function rules($rules = [])
+    {
+        $this->rules = $rules;
+        return $this;
+    }
+    
+    /**
+     * 查询申明
+     * 
+     * @param Statement $statement
+     * @throws \BadMethodCallException
+     * @return \Slim\PDO\Statement\SelectStatement|\Slim\PDO\Statement\InsertStatement|\Slim\PDO\Statement\UpdateStatement|\Slim\PDO\Statement\DeleteStatement
+     */
+    private function statementResolve($statement)
+    {
+        if ($this->statements) {
+            foreach ($this->statements as $closure) {
+                $statement = $closure($statement);
+            }
+        }
+        return $statement;
+    }
+    
+    /**
+     * 魔术方法 __call
+     *
+     * @param string $method            
+     * @param array $args            
+     * @throws \BadMethodCallException
+     * @return mixed
+     */
+    public function __call($method, $args = [])
+    {
+        if ($this->query instanceof Query && ! is_callable([$this->query, $method])) {
+            $this->statements[] = function ($statement) use ($method, $args) {
+                if (! is_callable([$statement, $method])) {
+                    throw new \BadMethodCallException("Invalid Statement Method '{$method}' Called");
+                }
+                return call_user_func_array([$statement, $method], $args);
+            };
+            return $this;
+        }
+        
+        return call_user_func_array([
+            $this->query,
+            $method
+        ], $args);
+    }
+
+    /**
+     * 魔术方法 __callstatic
+     *
+     * @param string $method
+     * @param array $args            
+     * @return mixed
+     */
+    public static function __callstatic($method, $args = [])
+    {
+        return call_user_func_array([
+            App::di(static::class),
+            $method
+        ], $args);
+    }
+
+    /**
+     * 关闭资源
+     */
+    public function __destruct()
+    {}
+}

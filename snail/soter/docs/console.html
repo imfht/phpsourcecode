@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>命令行任务</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>命令行Task任务</legend>
+			<ol>
+				<li><h2 class="title_h2">Task介绍</h2>
+					在网站需求中，往往有一些任务需要在命令行下面用定时任务定期执行，Soter也对命令行进行了支持，
+					<br>在Soter里面把这种需求要执行的代码称为任务，一个任务也就是一个Soter_Task类。
+					<br>在Task里面我们可以按照Soter框架的正常特性写代码，比如数据库操作，缓存操作等。
+				</li>
+				<li><h2 class="title_h2">系统要求</h2>
+					<b class="text_strong">命令行下面运行Soter任务，需要启用shell_exec函数</b>，但是为了网站安全，基本都在php.ini配置里面禁用了这个函数。
+					<br>那么我们可以专门准备一个php-cli.ini配置文件用于命令行，我们只需要复制网站使用的php.ini命名为php-cli.ini,
+					<br>然后在php-cli.ini里面把shell_exec函数启用即可。
+					<br>然后我们就可以通过php命令的-c参数指定使用的配置文件。
+					<br>比如下面的命令：
+					<pre class="brush:php">
+						php -c /server/php5.5/bin/ect/php-cli.ini /home/www/soter/index.php --task=TestTask
+					</pre>
+					上面这条php命令，使用了配置文件/server/php5.5/bin/ect/php-cli.ini，/home/www/soter/index.php是soter框架的入口文件，
+					<br>--task=TestTask指定了执行的任务是TestTask。
+				</li>
+				<li><h2 class="title_h2">创建Task</h2>
+					Task类文件都在application/classes/Task/目录下面，每个Task类都必须继承抽象类Soter_Task，实现抽象方法execute。
+					<br>下面我们创建一个Task
+					<br><b>1.新建文件：application/classes/Task/My/FirstTask.php</b>
+					<br>内容如下：
+					<pre class="brush:php">
+						class  Task_My_FirstTask extends Soter_Task {
+							public function execute(Soter_CliArgs $args) {
+								echo $args->get('test');
+								//$this->_log('line start  with time');
+								//$this->_log('line with no time',false);
+							}
+						}	
+					</pre>
+					我们看到我们的Task_My_FirstTask类，继承了抽象类Soter_Task，实现了execute方法，接受了一个Soter_CliArgs参数对象，
+					<br>通过这个对象我们可以获取命令行传递过来的参数，比如上面传递的--test=hello，
+					<br>我们就可以通过$args->get('test')获取hello。
+					<b class="text_strong"><br>提示：
+						<br>1.因为Soter在执行完execute方法之后还有一些工作要做，所以不要在execute方法里面执行退出脚本的操作比如exit、die，可以使用return替代。
+						<br>2.我们可以在任务里面通过$this->_log($msg, $time=true)在控制台显示一行日志信息,日志信息前面会有时间,会自动换行,
+						<br>我们在task里面利用$this->_log($msg, $time)可以方便的在控制台输出日志信息。</b>
+					<br><b>2.命令行执行这个Task任务</b>
+					<br>比如执行下面的命令：
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --task=My_FirstTask --test=hello	
+					</pre>
+					我们会看到输出了:hello
+					<br><b class="text_strong">提示：
+						<br>1.我们可以通过参数 --env指定环境，这里环境就是我们<a href="config.html">config手册部分</a>所指的环境，
+						<br>用来告诉Soter使用config目录下面的哪个目录作为配置文件夹目录。
+					</b>
+					<br>如果Task是hmvc子模块里面的(application/hmvc/demo/classes/Task/My/FirstTask.php )
+					<br>比如入口文件index.php里hmvc的配置：
+					<pre class="brush:php">
+						//注册hmvc模块，数组键是uri里面的hmvc模块名称，值是hmvc模块文件夹名称
+						->setHmvcModules(array(
+							 'Demo' => 'demo'
+						))
+					</pre>
+					我们执行下面的命令：
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --hmvc=Demo --task=My_FirstTask --test=hello	
+					</pre>
+					我们会看到输出了:hello
+					<br><b class="text_strong">提示：
+						<br>我们可以通过参数 --hmvc指定hmvc模块名称，也就是入口文件里面hvmc模块配置数组的键名称。
+					</b>
+					<br><b>提示：</b>
+					<br>对于参数 --task=My_FirstTask，其中的下划线还可以使用/，这样对应文件夹更好理解，比如：--task=My/FirstTask
+					<br>就是Task目录下面的My目录下面的FirstTask.php文件。当然FirstTask.php文件里面的类名还是Task_My_FirstTask。
+
+				</li>
+				<li><h2 class="title_h2">单例Task</h2>
+					<h3 class="title_h3">1.概念</h3>
+					对于上面我们继承抽象类Soter_Task创建的自己的任务：Task_My_FirstTask，
+					<br>如果我们在计划任务里面每隔一分钟执行一次这个任务，而且这个任务执行的时间大于1分钟，
+					<br>那么就会一分钟之后就会同时存在多个Task_My_FirstTask任务在并行执行。如果我们的业务允许这样那么就没什么问题，
+					<br><b>但是如果我们的需求是：同一时间只能存在一个相同任务被执行，如果上一次的任务没有执行完毕后面启动的任务应该不执行，并自动退出。</b>
+					<br>后面这种“<b class="text_strong">同一时间只能存在一个相同任务被执行的任务</b>”在Soter里面称为“单例Task”。
+					<h3 class="title_h3">2.创建单例Task</h3>
+					单例Task类文件同样都在application/classes/Task/目录下面，每个单例Task类都必须继承抽象类Soter_Task_Single，实现抽象方法execute。
+					<br>下面我们创建一个单例Task
+					<br><b>1.新建文件：application/classes/Task/My/SingleTask.php</b>
+					<br>内容如下：
+					<pre class="brush:php">
+						class  Task_My_SingleTask extends Soter_Task_Single {
+							public function execute(Soter_CliArgs $args) {
+								echo $args->get('test');
+								sleep(30);
+							}
+						}	
+					</pre>
+					我们看到我们的Task_My_SingleTask类，继承了抽象类Soter_Task_Single，实现了execute方法，接受了一个Soter_CliArgs参数对象，
+					<br>通过这个对象我们可以获取命令行传递过来的参数，比如上面传递的--test=hello，
+					<br>我们就可以通过$args->get('test')获取hello。
+					<br><b>2.命令行执行这个Task任务</b>
+					<br>比如执行下面的命令：
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --task=My_SingleTask  --test=hello	
+					</pre>
+					我们会看到输出了:hello,然后30秒后脚本退出。
+					<br><b class="text_strong">提示：
+						<br>1.我们可以通过参数 --env指定环境，这里环境就是我们<a href="config.html">config手册部分</a>所指的环境，
+						<br>用来告诉Soter使用config目录下面的哪个目录作为配置文件夹目录。
+						<br>2.如果我们同时多次执行这个任务，会发现第一次执行没有结束的时候，后面启动执行的任务会自动退出，同一时间只会存在一个任务在执行。
+					</b>
+					<br><b>3.多个单例Task</b>
+					<br>有时候我们写了个任务，通过命令行传递参数做不同的工作。
+					<br>比如我们创建了任务TestTask,传递了参数a，TestTask做工作a。传递了参数b，TestTask做工作b。
+					<br>a,b两个工作每分钟执行一次，我们希望的是只存在a，b两个TestTask实例，而不是多个a和多个b。
+					<br><b class="text_strong">我们可以通过参数--pid指定pid文件保存位置，那么使用相同的pid文件的任务多次执行只会存在一个实例。</b>
+					<br>比如我们的crontab定时任务执行下面的命令：
+					<pre class="brush:php">
+						*/1 * * * *  php /home/www/soter/index.php --env=development  --task=TestTask  --test=hello --test=a  --pid=/tmp/mytask-a.pid
+						*/1 * * * *  php /home/www/soter/index.php --env=development  --task=TestTask  --test=hello --test=b  --pid=/tmp/mytask-b.pid
+					</pre>
+					上面的命令我们看到添加了两个执行TestTask任务，分别传递了--test=a和--test=b，让TestTask做不同的工作a和b，
+					<br>然后分别传递了不同的pid参数--pid=/tmp/mytask-a.pid和--pid=/tmp/mytask-b.pid，通过不同的pid文件我们
+					<br>就可以让a和b同时执行并只保留一个实例在运行。
+				</li>
+				<li><h2 class="title_h2">多例Task</h2>
+					<h3 class="title_h3">1.概念</h3>
+					对于上面我们继承抽象类Soter_Task创建的自己的任务：Task_My_FirstTask，
+					<br>如果我们在计划任务里面每隔一分钟执行一次这个任务，而且这个任务执行的时间大于1分钟，
+					<br>那么就会一分钟之后就会同时存在多个Task_My_FirstTask任务在并行执行。如果我们的业务允许这样那么就没什么问题，
+					<br><b>但是如果我们的需求是：同一时间只能存在<b>指定数目的相同任务</b>被执行，如果指定数目的任务中没有一个执行完毕的，那么后面启动的任务应该不执行，并自动退出。</b>
+					<br>后面这种“<b class="text_strong">同一时间只能存在指定数目的相同任务</b>”在Soter里面称为“多例Task”。
+					<h3 class="title_h3">2.创建多例Task</h3>
+					多例Task类文件同样都在application/classes/Task/目录下面，每个多例Task类都必须继承抽象类Soter_Task_Multiple，实现抽象方法getMaxCount和execute。
+					<br>下面我们创建一个多例Task
+					<br><b>1.新建文件：application/classes/Task/My/MultipleTask.php</b>
+					<br>内容如下：
+					<pre class="brush:php">
+						class  Task_My_MultipleTask extends Soter_Task_Multiple {
+							protected function getMaxCount() {
+								return 5;
+							}
+							public function execute(Soter_CliArgs $args) {
+								echo $args->get('test');
+								sleep(30);
+							}
+						}	
+					</pre>
+					我们看到我们的Task_My_MultipleTask类，继承了抽象类Soter_Task_Multiple，
+					<br>a、实现了getMaxCount方法，该方法返回了这个任务在执行的时候同一时间允许存在的任务最大数目。
+					<br>b、实现了execute方法，接受了一个Soter_CliArgs参数对象，
+					<br>通过这个对象我们可以获取命令行传递过来的参数，比如上面传递的--test=hello，
+					<br>我们就可以通过$args->get('test')获取hello。
+					<br><b>2.命令行执行这个Task任务</b>
+					<br>比如执行下面的命令：
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --task=My_MultipleTask  --test=hello --debug	
+					</pre>
+					我们会看到输出了:hello,然后30秒后脚本退出。
+					<br><b class="text_strong">提示：
+						<br>1.我们可以通过参数 --env指定环境，这里环境就是我们<a href="config.html">config手册部分</a>所指的环境，
+						<br>用来告诉Soter使用config目录下面的哪个目录作为配置文件夹目录。
+						<br>2.如果我们同时多次执行这个任务，会发现后面启动超过最大数目的任务在没有任务结束的时候，后面启动执行的任务会自动退出，
+						<br>同一时间只会存在最大数目的任务在执行。
+					</b>
+					<br><b>3.多个单例Task</b>
+					<br>有时候我们写了个任务，通过命令行传递参数做不同的工作。
+					<br>比如我们创建了任务TestTask,传递了参数a，TestTask做工作a。传递了参数b，TestTask做工作b。
+					<br>a,b两个工作每分钟执行一次，我们希望的是只存在a，b两个TestTask实例，而不是多个a和多个b。
+					<br><b class="text_strong">我们可以通过参数--pid指定pid文件保存位置，那么使用相同的pid文件的任务多次执行只会存在一个实例。</b>
+					<br>比如我们的crontab定时任务执行下面的命令：
+					<pre class="brush:php">
+						*/1 * * * *  php /home/www/soter/index.php --env=development  --task=TestTask  --test=hello --test=a  --pid=/tmp/mytask-a.pid
+						*/1 * * * *  php /home/www/soter/index.php --env=development  --task=TestTask  --test=hello --test=b  --pid=/tmp/mytask-b.pid
+					</pre>
+					上面的命令我们看到添加了两个执行TestTask任务，分别传递了--test=a和--test=b，让TestTask做不同的工作a和b，
+					<br>然后分别传递了不同的pid参数--pid=/tmp/mytask-a.pid和--pid=/tmp/mytask-b.pid，通过不同的pid文件我们
+					<br>就可以让a和b同时执行并只保留一个实例在运行。
+				</li>
+				<li><h2 class="title_h2">调试Task</h2>
+					当我们命令行运行任务的时候，如果想知道任务的一些执行流程，
+					<br>可以开启task的调试功能，那么执行任务的时候就会看到有一些任务的信息输出。
+					<br>开启这个调试功能我们只需要传递--debug参数即可。
+					<br>还支持--debug-error参数，只有任务执行失败的时候才输出信息。
+					<br>任务执行是否失败，是根据任务的execute方法的返回值判断的，
+					<br>返回空代表执行成功 返回错误信息或者错误码表示执行失败。
+					<br>提示：
+					<br>--debug-error参数和--debug参数只能存在一个，如果都存在则忽略--debug
+					<br>比如下面的命令：
+					<br>1.普通Task
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --debug --task=My_FirstTask  --test=hello	
+					</pre>
+					2.单例Task
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --debug --task=My_SingleTask  --test=hello	
+					</pre>
+					3.多例Task
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --debug --task=My_MultipleTask  --test=hello	
+					</pre>
+					4.普通Task
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --debug-error --task=My_FirstTask  --test=hello	
+					</pre>
+					5.单例Task
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --debug-error --task=My_SingleTask  --test=hello	
+					</pre>
+					6.多例Task
+					<pre class="brush:php">
+						php /home/www/soter/index.php --env=development --debug-error --task=My_MultipleTask  --test=hello	
+					</pre>
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

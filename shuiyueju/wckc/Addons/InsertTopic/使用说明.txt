@@ -1,0 +1,41 @@
+后台钩子新增beforeSendRepost钩子
+上传至Addons目录，然后去后台扩展目录安装上传附件插件即可使用
+
+
+
+使用该插件需要新增两个函数
+
+function parse_topic($content){
+	//找出话题
+	$topic = get_topic($content);
+
+	//将##替换成链接
+	foreach ($topic as $e) {
+		$tik = D('Weibo/Topic')->where(array('name' => $e))->find();
+
+		//没有这个话题的时候创建这个话题
+		if($tik){
+			//D('Weibo/Topic')->add(array('name'=> $e));
+			$space_url = U('Weibo/Topic/index',array('topk'=>$e));
+			$content = str_replace("#$e#", "<a  href=\"$space_url\" target=\"_blank\">#$e# </a>", $content);
+		}
+	}
+
+	//返回替换的文本
+	return $content;
+}
+
+function get_topic($content){
+	//正则表达式匹配
+	$topic_pattern = "/#([^\\#|.]+)#/";
+	preg_match_all($topic_pattern, $content, $users);
+
+	//返回话题列表
+	return array_unique($users[1]);
+}
+
+
+
+这两个函数一个作用于删选话题，一个作用于展示匹配
+
+同时更新的还有Application/Weibo/Controller/IndexController.class.php 的doSend函数   在函数的$feed_data['attach_ids'] = $attach_ids;代码后面新增Hook('beforeSendRepost',array('content'=>&$content,'type'=>&$type,'feed_data'=>&$feed_data)); 

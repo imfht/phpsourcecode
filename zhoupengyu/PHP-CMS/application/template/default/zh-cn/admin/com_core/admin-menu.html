@@ -1,0 +1,320 @@
+<SCRIPT type="text/javascript">
+	    
+
+		
+	$(function(){
+		
+		$('#delete').click(function(){
+			
+			layer.confirm('您确定要删除？', {
+			  btn: ['确定','取消'] //按钮
+			}, function(){
+				 location.href="index.php?m=admin&t=delManagerMenu&id=<{$gvar.fget.id}>";
+			}, function(){
+			  	layer.closeAll()
+			});
+			
+			
+		})
+		
+		$('#add').click(function(){
+			
+			layer.open({
+			  type: 1,
+			  title: "新增菜单",
+			 
+			  area: ['50%', '72%'],
+			  shade: false,
+			 
+			  content: $('#add_form'), //捕获的元素
+			  
+			});	
+		
+		
+		})
+		
+		
+	})
+
+</SCRIPT>
+<script>
+layui.use(['form','tree','layer'], function(){
+  var form = layui.form();
+  var layer = layui.layer;
+  var Nodes =[
+		<{foreach item=v name=p from=$tree}>	
+		{name:"<{$v.title}><{if $v.status==2}>[禁用]<{/if}>",href:"index.php?m=admin&t=menuManager&id=<{$v.id}>",spread:true,pid:0,children:[<{foreach item=val name=s from=$v.children}>{name:"<{$val.title}>",href:"index.php?m=admin&t=menuManager&id=<{$val.id}>"}<{if !$smarty.foreach.s.last}>,<{/if}><{/foreach}>]}<{if !$smarty.foreach.p.last}>,<{/if}>
+		<{/foreach}>
+  ];
+  //console.log(Nodes)
+  layui.tree({
+    elem: '#layui-tree' //指定元素
+    //,target: '_blank' //是否新选项卡打开（比如节点返回href才有效）
+    ,click: function(item){ //点击节点回调
+     // layer.msg('当前节名称：'+ item.name + '<br>全部参数：'+ JSON.stringify(item));
+      //console.log(item);
+    }
+    ,nodes: Nodes
+  });
+  
+});
+</script>
+<style>
+i{
+	margin-top:-2px;
+}
+</style>
+<div id="content" style="background-color:#ffffff">
+  <div id="content-header">
+    <div id="breadcrumb"> <a href="?m=admin&t=main" title="Go to Home" class="tip-bottom"><i class="icon-home"></i> 后台首页</a> <a href="#" class="tip-bottom">系统设定</a> <a href="#" class="current">后台菜单管理</a> </div>
+    
+  </div>
+  <div class="container-fluid">
+    
+    <div class="row-fluid">
+      <blockquote class="layui-elem-quote">操作指南：新增或修改菜单之后需要在群组里重新配置权限  传送门：<a style='color:#03A9F4' href='./index.php?m=admin&o=core&t=group'>群组管理</a></blockquote>
+         <fieldset class="layui-elem-field" style="width:49%; float:left">
+          <legend>系统菜单</legend>
+              <div class="layui-field-box">
+              	  <blockquote class="layui-elem-quote layui-quote-nm" >友情提示：<span style='color:#ff5722'>单击小箭头折叠</span><button id='add' class="layui-btn layui-btn-radius layui-btn-small" style='float: right; margin-top: -4px;'><i class="layui-icon"></i>新增菜单</button></blockquote>
+                  <div class="widget-content nopadding" style='border-bottom:0px'>
+                    <div class="zTreeDemoBackground left">
+                        <ul id="treeDemo" class="ztree"></ul>
+                        
+                        <ul id="layui-tree" class="ztree"></ul>
+                    </div>
+                  </div>
+             </div>
+       </fieldset>
+      
+       <fieldset class="layui-elem-field" style=" width: 49%; float: right;">
+          <legend>菜单设置</legend>
+         <div  class="layui-field-box">
+         
+          <form  class="layui-form " action="index.php?m=admin&t=saveManagerMenu&id=<{$gvar.fget.id}>" method="post">
+            <div class="layui-form-item">
+            <label class="layui-form-label">所属频道</label>
+            <div class="layui-input-block">
+              
+              
+               <select name="pid" >
+               
+                <option value="0">根频道</option>
+                <{section name=list loop=$datas}>
+                <{if !$datas[list].pid && $gvar.fget.id!=$datas[list].id}>
+                <option value="<{$datas[list].id}>" <{if $datas[list].id==$data.pid}>selected="selected"<{/if}>><{$datas[list].title}></option>
+                <{/if}>
+                <{/section}>
+              </select>
+              
+              
+            </div>
+          </div>
+      
+       <div class="layui-form-item">
+        <label class="layui-form-label">菜单标题</label>
+        <div class="layui-input-block">
+          <input type="text" name="title" value="<{$data.title}>" lay-verify="required" autocomplete="off" placeholder="请输入菜单标题" class="layui-input">
+        </div>
+      </div>
+       <div class="layui-form-item">
+        <label class="layui-form-label">URL</label>
+        <div class="layui-input-block">
+          <input type="text" name="url" value="<{$data.url}>" lay-verify="required" autocomplete="off" placeholder="请输入URL" class="layui-input">
+        </div>
+      </div>
+      
+       <div class="layui-form-item">
+        <label class="layui-form-label">排序</label>
+        <div class="layui-input-block">
+          <input type="text" name="sort" value="<{$data.sort|default:0}>" lay-verify="required" autocomplete="off" placeholder="请输入排序" class="layui-input">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block">
+           <input type="radio" name="status" value="1" title="开启" <{if $data.status==1}>checked="checked"<{/if}>checked="checked">
+      	   <input type="radio" name="status" value="2" title="关闭" <{if $data.status==2}>checked="checked"<{/if}>>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">权限</label>
+        <div class="layui-input-block">
+          
+          
+          
+            <input type="checkbox" title='执行' name="execute" value="1" <{if $data.execute==1}>checked="checked"<{/if}> checked="checked"/>
+           
+         
+            <input type="checkbox" title='查询' name="select" value="1" <{if $data.select==1}>checked="checked"<{/if}>/>
+           
+          
+            <input type="checkbox" title='保存' name="insert" value="1" <{if $data.insert==1}>checked="checked"<{/if}>/>
+           
+         
+            <input type="checkbox" title='删除' name="delete" value="1" <{if $data.delete==1}>checked="checked"<{/if}>/>
+            
+         
+            <input type="checkbox" title='其他' name="other" value="1" <{if $data.other==1}>checked="checked"<{/if}>/>
+            
+          
+          
+          
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">菜单图标</label>
+        <div class="layui-input-block">
+           <input type="radio" name="icon" title='<i class="icon-home"></i>' value="icon-home" <{if $data.icon=="icon-home"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-th-list"></i>' value="icon-th-list" <{if $data.icon=="icon-th-list"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-tint"></i>' value="icon-tint" <{if $data.icon=="icon-tint"}>checked="checked"<{/if}>/>
+          <input type="radio" name="icon" title=' <i class="icon-info-sign"></i>' value="icon-info-sign" <{if $data.icon=="icon-info-sign"}>checked="checked"<{/if}>/>
+          <input type="radio" name="icon" title=' <i class="icon-user"></i>' value="icon-user" <{if $data.icon=="icon-user"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-check"></i>'  value="icon-check" <{if $data.icon=="icon-check"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-key"></i>'  value="icon-key" <{if $data.icon=="icon-key"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-envelope"></i>'  value="icon-envelope" <{if $data.icon=="icon-envelope"}>checked="checked"<{/if}>/>
+          <input type="radio" name="icon" title=' <i class="icon-plus"></i>'  value="icon-plus" <{if $data.icon=="icon-plus"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-trash"></i>'  value="icon-trash" <{if $data.icon=="icon-trash"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-cog"></i>'  value="icon-cog" <{if $data.icon=="icon-cog"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-share-alt"></i>'  value="icon-share-alt" <{if $data.icon=="icon-share-alt"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-search"></i>'  value="icon-search" <{if $data.icon=="icon-search"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-inbox"></i>'  value="icon-inbox" <{if $data.icon=="icon-inbox"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-th"></i>'  value="icon-th" <{if $data.icon=="icon-th"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-file"></i>'  value="icon-file" <{if $data.icon=="icon-file"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-group"></i>' value="icon-group" <{if $data.icon=="icon-group"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-remove"></i>' value="icon-remove" <{if $data.icon=="icon-remove"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-leaf"></i>'  value="icon-leaf" <{if $data.icon=="icon-leaf"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-signal"></i>'  value="icon-signal" <{if $data.icon=="icon-signal"}>checked="checked"<{/if}>/>
+           <input type="radio" name="icon" title='<i class="icon-phone"></i>'  value="icon-phone" <{if $data.icon=="icon-phone"}>checked="checked"<{/if}>/>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+          
+          <{if $gvar.fget.id}><button type="button" id="delete" class="layui-btn layui-btn-primary">删除</button><{/if}>
+        </div>
+      </div>
+    </form>
+         
+         
+        
+        </div>
+      </fieldset>
+      
+    </div>
+  </div>
+</div>
+
+<div id='add_form' style='display:none' class="layui-field-box">
+         
+          <form  class="layui-form " action="index.php?m=admin&t=saveManagerMenu" method="post">
+            <div class="layui-form-item">
+            <label class="layui-form-label">所属频道</label>
+            <div class="layui-input-block">
+              
+              
+               <select name="pid" >
+               
+                <option value="0">根频道</option>
+                <{section name=list loop=$datas}>
+                <{if !$datas[list].pid && $gvar.fget.id!=$datas[list].id}>
+                <option value="<{$datas[list].id}>"><{$datas[list].title}></option>
+                <{/if}>
+                <{/section}>
+              </select>
+              
+              
+            </div>
+          </div>
+      
+       <div class="layui-form-item">
+        <label class="layui-form-label">菜单标题</label>
+        <div class="layui-input-block">
+          <input type="text" name="title" value="" lay-verify="required" autocomplete="off" placeholder="请输入菜单标题" class="layui-input">
+        </div>
+      </div>
+       <div class="layui-form-item">
+        <label class="layui-form-label">URL</label>
+        <div class="layui-input-block">
+          <input type="text" name="url" value="" lay-verify="required" autocomplete="off" placeholder="请输入URL" class="layui-input">
+        </div>
+      </div>
+      
+       <div class="layui-form-item">
+        <label class="layui-form-label">排序</label>
+        <div class="layui-input-block">
+          <input type="text" name="sort" value="" lay-verify="required" autocomplete="off" placeholder="请输入排序" class="layui-input">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block">
+           <input type="radio" name="status" value="1" title="开启" checked="checked">
+      	   <input type="radio" name="status" value="2" title="关闭">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">权限</label>
+        <div class="layui-input-block">
+          
+          
+          
+            <input type="checkbox" title='执行' name="execute" value="1"  checked="checked"/>
+           
+         
+            <input type="checkbox" title='查询' name="select" value="1" />
+           
+          
+            <input type="checkbox" title='保存' name="insert" value="1" />
+           
+         
+            <input type="checkbox" title='删除' name="delete" value="1"/>
+            
+         
+            <input type="checkbox" title='其他' name="other" value="1" />
+            
+          
+          
+          
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">菜单图标</label>
+        <div class="layui-input-block">
+           <input type="radio" name="icon" title='<i class="icon-home"></i>' value="icon-home" />
+           <input type="radio" name="icon" title='<i class="icon-th-list"></i>' value="icon-th-list" />
+           <input type="radio" name="icon" title='<i class="icon-tint"></i>' value="icon-tint" />
+          <input type="radio" name="icon" title=' <i class="icon-info-sign"></i>' value="icon-info-sign" />
+          <input type="radio" name="icon" title=' <i class="icon-user"></i>' value="icon-user" />
+           <input type="radio" name="icon" title='<i class="icon-check"></i>'  value="icon-check" />
+           <input type="radio" name="icon" title='<i class="icon-key"></i>'  value="icon-key" />
+           <input type="radio" name="icon" title='<i class="icon-envelope"></i>'  value="icon-envelope" />
+          <input type="radio" name="icon" title=' <i class="icon-plus"></i>'  value="icon-plus" />
+           <input type="radio" name="icon" title='<i class="icon-trash"></i>'  value="icon-trash" />
+           <input type="radio" name="icon" title='<i class="icon-cog"></i>'  value="icon-cog" />
+           <input type="radio" name="icon" title='<i class="icon-share-alt"></i>'  value="icon-share-alt" />
+           <input type="radio" name="icon" title='<i class="icon-search"></i>'  value="icon-search" />
+           <input type="radio" name="icon" title='<i class="icon-inbox"></i>'  value="icon-inbox" />
+           <input type="radio" name="icon" title='<i class="icon-th"></i>'  value="icon-th" />
+           <input type="radio" name="icon" title='<i class="icon-file"></i>'  value="icon-file" />
+           <input type="radio" name="icon" title='<i class="icon-group"></i>' value="icon-group" />
+           <input type="radio" name="icon" title='<i class="icon-remove"></i>' value="icon-remove" />
+           <input type="radio" name="icon" title='<i class="icon-leaf"></i>'  value="icon-leaf" />
+           <input type="radio" name="icon" title='<i class="icon-signal"></i>'  value="icon-signal" />
+           <input type="radio" name="icon" title='<i class="icon-phone"></i>'  value="icon-phone" />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+          <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+      </div>
+    </form>
+         
+         
+        
+</div>
+
+

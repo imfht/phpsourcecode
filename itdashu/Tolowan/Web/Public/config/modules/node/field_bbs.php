@@ -1,0 +1,76 @@
+<?php
+$settings = array(
+    'title' => array(
+        'left' => true,
+        'field' => 'string',
+        'widget' => 'Text',
+        'isLabel' => true,
+        'access' => array(
+            'addForm' => true,
+            'editForm' => true,
+        ),
+        'minLength' => 1,
+        'maxLength' => 11,
+        'fullTextSearch' => true,
+        'isTitle' => true,
+        'number' => 1,
+        'addition' => true,
+        'label' => '标题',
+        'description' => '',
+        'error' => '',
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+    ),
+    'body' => array(
+        'left' => true,
+        'field' => 'textLong',
+        'widget' => 'Textarea',
+        'access' => array(
+            'addForm' => true,
+            'editForm' => true,
+        ),
+        'search' => true,
+        'fullTextSearch' => true,
+        'wordsmith' => true,
+        'minLength' => 1,
+        'maxLength' => 11,
+        'number' => 1,
+        'addition' => true,
+        'label' => '内容',
+        'description' => '',
+        'error' => '',
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+    ),
+    'tags' => array(
+        'left' => true,
+        'field' => 'term',
+        'widget' => 'Tags',
+        'access' => array(
+            'addForm' => true,
+            'editForm' => true,
+        ),
+        'addTerm' => true,
+        'valueType' => 'name',
+        'type' => 'article',
+        'maxNum' => 10,
+        'taxonomy' => 'tags',
+        'mainTable' => 2,
+        'parent' => 0,
+        'addition' => true,
+        'label' => '标签',
+        'description' => '文章标签',
+        'error' => '',
+        'attributes' => array(
+            'class' => 'form-control',
+        ),
+    ),
+    'commentContentModel' => 'comment',
+    'settings' => array(
+        'nodeAdd' => true,
+        'nodeEditor' => true,
+        'nodeDelete' => true,
+    )
+);

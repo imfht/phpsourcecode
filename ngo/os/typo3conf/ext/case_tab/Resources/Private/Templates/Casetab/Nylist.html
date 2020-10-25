@@ -1,0 +1,331 @@
+{namespace n=GeorgRinger\News\ViewHelpers}
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+<f:layout name="Default" />
+<!-- /**  
+ * @Author: Wang Hongbin  
+ * @Email:   wanghongbin@ngoos.org  
+ * @Date:   2018-06-21 14:28:22  
+ * @Last Modified by:   Wang Hongbin  
+ * @Last Modified time: 2018-06-21 14:28:22  
+ */ -->  
+<f:section name="content">
+
+<f:flashMessages />
+<link rel="stylesheet" type="text/css" href="{f:uri.resource(path:'Css/style.css')}" />
+ <f:form.hidden name="ajaxurl" id="fileurl"  value="<f:uri.action action='nyajax'/>"/>
+	<div class="tabstitle">行业分类 <i class="glyphicon glyphicon-chevron-down" onclick="toggle(this)"></i></div>
+	<ul class="case-tabs clearfix hyul">
+		<li onclick="activeli(this,'industry','')" class="{f:if(condition:'\'\'=={industry}', then:'active',else:'')}">
+			<f:link.action action="nylist" arguments="{industry:'',product:product,labels:labels}" >全部</f:link.action>
+		</li>
+		<f:for each="{hylist}" as="hy"  iteration="itemIteration">
+			<li onclick="activeli(this,'industry','{hy.uid}')" class="{f:if(condition:'{hy.uid}=={industry}', then:'active',else:'')}">
+				<f:link.action action="nylist" arguments="{industry : hy.uid,product:product,labels:labels}" >{hy.name}</f:link.action>
+			</li>
+		</f:for>
+	</ul>
+	<div class="tabstitle">产品分类 <i class="glyphicon glyphicon-chevron-down" onclick="toggle(this)"></i></div>
+	<ul class="case-tabs clearfix cpul">
+		<li onclick="activeli(this,'product','')"  class="{f:if(condition:'\'\'=={product}', then:'active',else:'')}">
+			<f:link.action action="nylist" arguments="{industry : industry,product:'',labels:labels}" >全部</f:link.action>
+		</li>
+		<f:for each="{cplist}" as="cp"  iteration="itemIteration">
+			<li onclick="activeli(this,'product','{hy.uid}')"  class="{f:if(condition:'{cp.uid}=={product}', then:'active',else:'')}">
+				<f:link.action action="nylist" arguments="{industry : industry,product:cp.uid,labels:labels}" >{cp.name}</f:link.action>
+			</li>
+		</f:for>
+	</ul>
+	<div class="tabstitle">项目标签 <i class="glyphicon glyphicon-chevron-down" onclick="toggle(this)"></i></div>
+	<ul class="case-tabs clearfix bqul">
+		<li onclick="activeli(this,'labels','')"  class="{f:if(condition:'\'\'=={labels}', then:'active',else:'')}">
+			<f:link.action action="nylist" arguments="{industry : industry,product:product,labels:''}" >全部</f:link.action>
+		</li>		
+		<f:for each="{bqlist}" as="bq"  iteration="itemIteration">
+			<li onclick="activeli(this,'labels','{hy.uid}')"  class="{f:if(condition:'{bq.uid}=={labels}', then:'active',else:'')}">
+				<f:link.action action="nylist" arguments="{industry : industry,product:product,labels:bq.uid}" >{bq.name}</f:link.action>
+			</li>
+		</f:for>
+	</ul>
+	<link rel="stylesheet" type="text/css" href="{f:uri.resource(path:'Css/base.css')}" />
+	<link rel="stylesheet" type="text/css" href="{f:uri.resource(path:'Css/index.css')}" />
+	<script type="text/javascript" src="{f:uri.resource(path:'JavaScript/jQueryColor.js')}"></script>
+	<script type="text/javascript" src="{f:uri.resource(path:'JavaScript/jquery.masonry.min.js')}"></script>
+	<script type="text/javascript" src="{f:uri.resource(path:'JavaScript/jQeasing.js')}"></script>
+	<!-- 新内容 -->
+	<div class="content">
+	    <div class="waterfull clearfloat" id="waterfull">
+	        <ul class="masonry">
+	        	<f:for each="{casetabs}" as="casecont1" iteration="itemIter1">
+		            <li class="item masonry-brick">
+		            	<f:link.action pageUid="{settings.previewPid}" extensionName="casetab" pluginName="casetab" controller="Casetab" action="show" arguments="{casetab : casecont1}"  class="a-img">
+		            		<f:image src="uploads/tx_casetab/{casecont1.allimage.0}" width="500c"></f:image>
+		            	</f:link.action>
+		                <h2 class="li-title" title="{casecont1.title}">{casecont1.title}</h2>
+		                <p class="description">{casecont1.spare4}</p>
+		                <div class="qianm clearfloat">
+		                    <span class="sp1">类型：{casecont1.industry.name}</span>
+		                    <span class="sp2">浏览量：{casecont1.hits}</span>
+		                </div>
+		            </li>
+		        </f:for>
+	        </ul>
+	    </div>
+
+	    <div id="imloading" style="width:150px;height:30px;line-height:30px;font-size:16px;text-align:center;border-radius:3px;opacity:0.7;background:#000;margin:10px auto 30px;color:#fff;display:none">
+	    素材加载中.....
+	    </div>
+	    <div class="hide"><f:link.page pageUid="{settings.previewPid}" id="pagemore"></f:link.page></div>
+	</div>
+<script type="text/javascript" src="{f:uri.resource(path:'JavaScript/common.js')}"></script>
+<script type="text/javascript">
+/*
+    抛开瀑布流布局各种乱七八糟的算法，基于masonry的瀑布流，很是简单的，而且通过扩展animate,能实现瀑布流布局的晃动、弹球等效果。
+    masonry还有很多参数我这里注解了常用的参数
+ */
+	var url = $("#fileurl").val();
+	var industry = '{industry}';
+	var product ='{product}';
+	var labels ='{labels}';
+	var nowpage =1;
+	var sqlJson='';
+	var isall = 0;
+    var loading=$('#imloading');
+    $(function(){
+        /*瀑布流开始*/
+        var container = $('.waterfull ul');
+        // 初始化loading状态
+        loading.data("on",true);
+        /*判断瀑布流最大布局宽度，最大为1280*/
+        function tores(){
+            var tmpWid=$(window).width();
+            if(tmpWid>1280){
+                tmpWid=1280;
+            }else{
+                var column=Math.floor(tmpWid/320);
+                tmpWid=column*320;
+            }
+            $('.waterfull').width(tmpWid);
+        }
+        tores();
+        $(window).resize(function(){
+            tores();
+        });
+        container.imagesLoaded(function(){
+          container.masonry({
+            columnWidth: 320,
+            itemSelector : '.item',
+            isFitWidth: true,//是否根据浏览器窗口大小自动适应默认false
+            isAnimated: true,//是否采用jquery动画进行重拍版
+            isRTL:false,//设置布局的排列方式，即：定位砖块时，是从左向右排列还是从右向左排列。默认值为false，即从左向右
+            isResizable: true,//是否自动布局默认true
+            animationOptions: {
+                duration: 800,
+                easing: 'easeInOutBack',//如果你引用了jQeasing这里就可以添加对应的动态动画效果，如果没引用删除这行，默认是匀速变化
+                queue: false//是否队列，从一点填充瀑布流
+            }
+          });
+        });
+        $(window).scroll(function(){
+            if(!loading.data("on")) {
+            	return;
+            }
+
+            // 计算所有瀑布流块中距离顶部最大，进而在滚动条滚动时，来进行ajax请求，方法很多这里只列举最简单一种，最易理解一种
+            var itemNum=$('#waterfull').find('.item').length;
+            var itemArr=[];
+            itemArr[0]=$('#waterfull').find('.item').eq(itemNum-1).offset().top+$('#waterfull').find('.item').eq(itemNum-1)[0].offsetHeight;
+            itemArr[1]=$('#waterfull').find('.item').eq(itemNum-2).offset().top+$('#waterfull').find('.item').eq(itemNum-1)[0].offsetHeight;
+            itemArr[2]=$('#waterfull').find('.item').eq(itemNum-3).offset().top+$('#waterfull').find('.item').eq(itemNum-1)[0].offsetHeight;
+            var maxTop=Math.max.apply(null,itemArr);
+            if(maxTop<$(window).height()+$(document).scrollTop()){
+            	nowpage = nowpage + 1;
+				$.post(url,"act=morelist&industry="+industry+"&product="+product+"&labels="+labels+"&nowpage="+nowpage,
+					function(data1,status){
+						if(data1.stat==1){
+							sqlJson = data1.data;
+						}else if(data1.stat==0){
+							isall = 1;
+						}else{
+							alert('请求失败！');
+						}
+				},"json");
+                //加载更多数据
+                loading.data("on",false).fadeIn(800);
+                (function(sqlJson){
+                    /*这里会根据后台返回的数据来判断是否你进行分页或者数据加载完毕这里假设大于30就不在加载数据*/
+                    if(isall==1){
+                        loading.text('就有这么多了！');
+                    }else{
+                        var html="";
+                        for(var i in sqlJson){
+                        		var ids = "link"+sqlJson[i].uid;
+                            html+='<li class="item"><a href="'+$("#pagemore").attr("href")+"?uid="+sqlJson[i].uid+'" class="a-img"><img src="uploads/tx_casetab/'+sqlJson[i].image+'" width="500m"/></a>';
+                            html+="<h2 class='li-title'>"+sqlJson[i].title+"</h2>";
+                            html+="<p class='description'>"+sqlJson[i].yycj+"</p><div class='qianm clearfloat'>";
+                            html+="<span class='sp1'>类型："+sqlJson[i].industryname+"</span>";
+                            html+="<span class='sp2'>浏览量："+sqlJson[i].hits+"</span></div></li>";
+                        }
+                        /*模拟ajax请求数据时延时800毫秒*/
+                        var time=setTimeout(function(){
+                            $(html).find('img').each(function(index){
+                                loadImage($(this).attr('src'));
+                            })
+                            var $newElems = $(html).css({ opacity: 0}).appendTo(container);
+                            $newElems.imagesLoaded(function(){
+                                $newElems.animate({ opacity: 1},800);
+                                container.masonry( 'appended', $newElems,true);
+                                loading.data("on",true).fadeOut();
+                                clearTimeout(time);
+                            });
+                        },800)
+                    }
+                })(sqlJson);
+            }
+        });
+        function loadImage(url) {
+             var img = new Image(); 
+             //创建一个Image对象，实现图片的预下载
+              img.src = url;
+              if (img.complete) {
+                 return img.src;
+              }
+              img.onload = function () {
+                return img.src;
+              };
+         };
+         loadImage('images/one.jpg');
+        /*item hover效果*/
+        var rbgB=['#71D3F5','#F0C179','#F28386','#8BD38B'];
+        $('#waterfull').on('mouseover','.item',function(){
+            var random=Math.floor(Math.random() * 4);
+            $(this).animate({'backgroundColor':rbgB[random]},1000);
+        });
+        $('#waterfull').on('mouseout','.item',function(){
+            $(this).animate({'backgroundColor':'#fff'},1000);
+        });
+    })
+</script>
+<script>//remove 17173 video ad
+	doAdblock();
+	function doAdblock(){
+	    (function() {
+	        function A() {}
+	        A.prototype = {
+	            rules: {
+	                '17173_in':{
+	                    'find':/http:\/\/f\.v\.17173cdn\.com\/(\d+\/)?flash\/PreloaderFile(Customer)?\.swf/,
+	                    'replace':"http://swf.adtchrome.com/17173_in_20150522.swf"
+	                },
+	                '17173_out':{
+	                    'find':/http:\/\/f\.v\.17173cdn\.com\/(\d+\/)?flash\/PreloaderFileFirstpage\.swf/,
+	                    'replace':"http://swf.adtchrome.com/17173_out_20150522.swf"
+	                },
+	                '17173_live':{
+	                    'find':/http:\/\/f\.v\.17173cdn\.com\/(\d+\/)?flash\/Player_stream(_firstpage)?\.swf/,
+	                    'replace':"http://swf.adtchrome.com/17173_stream_20150522.swf"
+	                },
+	                '17173_live_out':{
+	                    'find':/http:\/\/f\.v\.17173cdn\.com\/(\d+\/)?flash\/Player_stream_(custom)?Out\.swf/,
+	                    'replace':"http://swf.adtchrome.com/17173.out.Live.swf"
+	                }
+	            },
+	            _done: null,
+	            get done() {
+	                if(!this._done) {
+	                    this._done = new Array();
+	                }
+	                return this._done;
+	            },
+	            addAnimations: function() {
+	                var style = document.createElement('style');
+	                style.type = 'text/css';
+	                style.innerHTML = 'object,embed{\
+	                -webkit-animation-duration:.001s;-webkit-animation-name:playerInserted;\
+	                -ms-animation-duration:.001s;-ms-animation-name:playerInserted;\
+	                -o-animation-duration:.001s;-o-animation-name:playerInserted;\
+	                animation-duration:.001s;animation-name:playerInserted;}\
+	                @-webkit-keyframes playerInserted{from{opacity:0.99;}to{opacity:1;}}\
+	                @-ms-keyframes playerInserted{from{opacity:0.99;}to{opacity:1;}}\
+	                @-o-keyframes playerInserted{from{opacity:0.99;}to{opacity:1;}}\
+	                @keyframes playerInserted{from{opacity:0.99;}to{opacity:1;}}';
+	                document.getElementsByTagName('head')[0].appendChild(style);
+	            },
+	            animationsHandler: function(e) {
+	                if(e.animationName === 'playerInserted') {
+	                    this.replace(e.target);
+	                }
+	            },
+	            replace: function(elem) {
+	                if(this.done.indexOf(elem) != -1) return;
+	                this.done.push(elem);
+	                var player = elem.data || elem.src;
+	                if(!player) return;
+	                var i, find, replace = false;
+	                for(i in this.rules) {
+	                    find = this.rules[i]['find'];
+	                    if(find.test(player)) {
+	                        replace = this.rules[i]['replace'];
+	                        if('function' === typeof this.rules[i]['preHandle']) {
+	                            this.rules[i]['preHandle'].bind(this, elem, find, replace, player)();
+	                        }else{
+	                            this.reallyReplace.bind(this, elem, find, replace)();
+	                        }
+	                        break;
+	                    }
+	                }
+	            },
+	            reallyReplace: function(elem, find, replace) {
+	                elem.data && (elem.data = elem.data.replace(find, replace)) || elem.src && ((elem.src = elem.src.replace(find, replace)) && (elem.style.display = 'block'));
+	                var b = elem.querySelector("param[name='movie']");
+	                this.reloadPlugin(elem);
+	            },
+	            reloadPlugin: function(elem) {
+	                var nextSibling = elem.nextSibling;
+	                var parentNode = elem.parentNode;
+	                parentNode.removeChild(elem);
+	                var newElem = elem.cloneNode(true);
+	                this.done.push(newElem);
+	                if(nextSibling) {
+	                    parentNode.insertBefore(newElem, nextSibling);
+	                } else {
+	                    parentNode.appendChild(newElem);
+	                }
+	            },
+	            init: function() {
+	                var handler = this.animationsHandler.bind(this);
+	                document.body.addEventListener('webkitAnimationStart', handler, false);
+	                document.body.addEventListener('msAnimationStart', handler, false);
+	                document.body.addEventListener('oAnimationStart', handler, false);
+	                document.body.addEventListener('animationstart', handler, false);
+	                this.addAnimations();
+	            }
+	        };
+	        new A().init();
+	    })();
+	}
+</script>
+	<script> 
+		$('.pic').mouseenter(function(event) {
+			$(this).find('.itemmc').height($(this).find('img').height()-20);
+			$(this).find('.itemmc').width($(this).find('img').width()-20);
+			$(this).find('.itemmc').slideDown(10);
+		}).mouseleave(function(event) {
+			$(this).find('.itemmc').slideUp(10);
+		});
+
+		function activeli(i,types,uid){
+			$(i).parent().children('li').removeClass('active');
+			$(i).addClass('active');
+			if(types=='industry'){
+				industry = uid;
+			}else if(types=='product'){
+				product = uid;
+			}else if(types=='labels'){
+				labels = uid;
+			}
+			nowpage = 1;
+			// loading.data("on",false);
+		}
+	</script>
+</f:section>
+</html>

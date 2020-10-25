@@ -1,0 +1,387 @@
+<extend name="Public/base"/>
+<block name="style">
+    <style type="text/css">
+        .modal-backdrop{ z-index: 1;}
+        .modal-backdrop.in{ opacity: 0;}
+        .modal-body>p{ text-align: center;}
+    </style>
+</block>
+<block name="body">
+
+    <div class="main-title">
+        <h2>编辑商品规格</h2>
+    </div>
+    <div class="controls">
+        <button class="btn add-sku" data-toggle="modal" data-target="#myModal" style="margin-bottom: 5px">添加规格</button>
+        <button class="btn refresh-sku" onclick="refresh_sku()"  style="margin-bottom: 5px">&nbsp;重新添加</button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">添加规格</h4>
+          </div>
+          <div class="modal-body">
+            <div><input type="text" class="form-control sku-type" placeholder="请输入规格类别"></div>
+            <p>填规格类别，例如：颜色，尺寸</p>
+            <div><input type="text" class="form-control sku-detail" placeholder="用逗号隔开"></div>
+            <p>填详细分类，例如：红色，蓝色，紫色。</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" id="confirm-sku-btn">确定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-item">
+
+        <script type="text/javascript" charset="utf-8" src="__PUBLIC__/js/ext/webuploader/js/webuploader.js"></script>
+        <link href="__PUBLIC__/js/ext/webuploader/css/webuploader.css" type="text/css" rel="stylesheet">
+<!--        <div class="controls">-->
+<!--            <div id="upload_single_image_{$config.name}" style="padding-bottom: 5px;">选择图片</div>-->
+<!--            <input class="attach" type="hidden" name="config[{$config.name}]" value="{$config['value']}"/>-->
+<!--            <div class="upload-img-box">-->
+<!--                <div class="upload-pre-item popup-gallery">-->
+<!--                    <notempty name="config.value">-->
+<!--                        <div class="each">-->
+<!--                            <a href="{$config.value|get_cover='path'}" title="点击查看大图">-->
+<!--                                <img src="{$config.value|get_cover='path'}">-->
+<!--                            </a>-->
+<!--                            <div class="text-center opacity del_btn" ></div>-->
+<!--                            <div onclick="admin_image.removeImage($(this),'{$config.value}')"  class="text-center del_btn">删除</div>-->
+<!--                        </div>-->
+<!--                    </notempty>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+        <script>
+            $(function () {
+                var uploader_{$config.name}= WebUploader.create({
+                    // 选完文件后，是否自动上传。
+                    auto: true,
+                    // swf文件路径
+                    swf: 'Uploader.swf',
+                    // 文件接收服务端。
+                    server: "{:U('File/uploadPicture',array('session_id'=>session_id()))}",
+                    // 选择文件的按钮。可选。
+                    // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+                    pick: '#upload_single_image_{$config.name}',
+                    // 只允许选择图片文件。
+                    accept: {
+                        title: 'Images',
+                        extensions: 'gif,jpg,jpeg,bmp,png',
+                        mimeTypes: 'image/*'
+                    }
+                });
+                uploader_{$config.name}.on('fileQueued', function (file) {
+                    uploader_{$config.name}.upload();
+                });
+                /*上传成功*/
+                uploader_{$config.name}.on('uploadSuccess', function (file, data) {
+                    if (data.status) {
+                        $("[name='config[{$config.name}]']").val(data.id);
+                        $("[name='config[{$config.name}]']").parent().find('.upload-pre-item').html(
+                                ' <div class="each"><a href="'+ data.path+'" title="点击查看大图"><img src="'+ data.path+'"></a><div class="text-center opacity del_btn" ></div>' +
+                                        '<div onclick="admin_image.removeImage($(this),'+data.id+')"  class="text-center del_btn">删除</div></div>'
+                        );
+                        uploader_{$config.name}.reset();
+                    } else {
+                        updateAlert(data.info);
+                        setTimeout(function () {
+                            $('#top-alert').find('button').click();
+                            $(that).removeClass('disabled').prop('disabled', false);
+                        }, 1500);
+                    }
+                });
+            })
+        </script>
+
+<!--        <form action="{:U()}" method="post" class="form-horizontal">-->
+            <div class="with-padding">
+                <table class="table  sku-table">
+                    <thead>
+                        <tr>
+                            <th id="thead-mark">售价，即支付价格（分）</th>
+                            <th>原价（分）</th>
+                            <th>库存（件）</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-item with-padding">
+                <input type="hidden" name="id" value="{$info.id|default=''}">
+                <button class="btn " id="submit" type="submit" target-form="form-horizontal">确 定</button>
+                <button class="btn btn-return" onclick="javascript:history.back(-1);return false;">返 回</button>
+            </div>
+<!--        </form>-->
+    </div>
+</block>
+
+<block name="script">
+    <script type="text/javascript">
+        $(document).ready(function(){
+            
+            //保存数据
+            tableSave = {};
+            
+            //初始化
+    	    var product = {$product.sku_table|json_encode};
+            if (product) {
+//                product = JSON.parse(product);
+                product = product;
+                console.log(product);
+                //遍历table对象
+                for (var i in product['table']) {
+                    var arr = [];
+                    arr[0] = i;
+                    arr[1] = product['table'][i];
+                    buildTable(arr);
+                    add_type_fnc();
+                }
+                //遍历info对象
+                var len = $('.sku-table').find('.oldTr').length;
+                var j = 0;
+                for (var i in product['info']) {
+                    j++;
+                    //console.log(i,j);
+                    $('.sku-table').find('.oldTr:eq('+(j-1)+')')
+                                    .find('input:eq(0)').val(product['info'][i]['price']);
+                    $('.sku-table').find('.oldTr:eq('+(j-1)+')')
+                                    .find('input:eq(1)').val(product['info'][i]['ori_price']);
+                    $('.sku-table').find('.oldTr:eq('+(j-1)+')')
+                                    .find('input:eq(2)').val(product['info'][i]['quantity']); 
+                    //console.log('*************这是分界线***************');
+
+                }
+
+            }
+
+            //导航高亮
+            highlight_subnav('{:U('index')}');
+
+            //弹出框确定按钮
+            $('#confirm-sku-btn').on('click', function(){
+                $('#myModal').modal('hide');
+                var data = [];
+                var sku_type = $('.sku-type').val();
+                var sku_detail = $('.sku-detail').val();
+                sku_detail = sku_detail.replace(/，/gi,',');//将中文逗号替换成英文逗号
+                sku_detail = sku_detail.split(',');
+                data.push(sku_type);
+                data.push(sku_detail);
+                //console.log('创建table data',data);
+                buildTable(data);   //创建表格
+                add_type_fnc();     //追加标识
+                //清空输入框
+                $('.sku-type').val('');
+                $('.sku-detail').val('');
+            });
+
+            $('#submit').on('click', function(e){
+                e.preventDefault();
+                var info = {};
+                $('.sku-table').find('.oldTr').each(function(){
+                    var str = '';
+                    $(this).find('.firstTd').each(function(){
+                        str+=$(this).attr('data-type')+':'+$(this).text()+';';
+                    });
+                    var price = $(this).children('.table-price').children('input').val();
+                    var ori_price = $(this).children('.table-ori-price').children('input').val();
+                    var quantity = $(this).children('.table-quantity').children('input').val();
+                    str = str.replace(/\;$/,'');//去掉末尾的分号
+                    info[str] = {
+                        price : price,
+                        ori_price : ori_price,
+                        quantity : quantity
+                    }
+                });
+                //console.log(info);
+                var data = {
+	                id : {$product.id},
+                    table : tableSave,
+                    info : info
+                }
+                //console.log('data...',data);
+                $.post("{:U('Shop/product',array('action'=>'sku_table','id'=>$data['id']))}",data,function(data){
+                    //console.log(data);
+                    if (data.status == 1) {
+                        if (data.url) {
+                            updateAlert(data.info + ' 页面即将自动跳转~', 'success');
+                        } else {
+                            updateAlert(data.info, 'success');
+                        }
+                        setTimeout(function () {
+                            if (data.url) {
+                                location.href = data.url;
+                            } else if ($(that).hasClass('no-refresh')) {
+                                $('#top-alert').find('button').click();
+                            } else {
+                                location.reload();
+                            }
+                        }, 3000);
+                    } else {
+                        updateAlert(data.info);
+                        setTimeout(function () {
+                            if (data.url) {
+                                location.href = data.url;
+                            } else {
+                                $('#top-alert').find('button').click();
+                            }
+                        }, 15000);
+                    }
+                });  
+            });
+        });
+
+        //创建表格 每次接受一个数组 ['颜色',['红色','蓝色','紫色']]
+        function buildTable(data,callback){
+            var type = $(".sku-table thead tr th").length-3;
+            /*头部插入***************************************/
+            var head = '<th class="head-type" data-type="'+data[0]+'" data-length="'+data[1].length+'">分类'+type+':'+data[0]+'</th>';
+            $("#thead-mark").before(head);
+            /*
+            * 制造盒子
+            * */
+            var length = data[1].length;
+
+            /**TABLE FOR SAVE*********************************************/
+            var arrData=[]; //过渡接受值数组
+            for(var a=0;a<length;a++){
+                arrData.push(data[1][a]) //将传入数组的第二项值遍历并存到arrData中
+            }
+            //console.log('aaa',arrData);
+            tableSave[data[0]]=arrData; //将arrData赋给tableSave保存 颜色:红色,蓝色,紫色
+            //console.log('tableSave',tableSave);
+            /*************************************************************/
+            //console.log('data...',data);
+
+            if(type==1){
+                var table='';
+                for(var i=0;i<length;i++){
+                    table+=
+                        '<tr class="oldTr">' +
+                        '<td class="firstTd" rowspan="1">'+ data[1][i]+'</td> ' +
+                        '<td class="table-price">' +
+                            '<input style="display: inline;width: 120px" class="price-in-table form-control" minlength="1" type="number" pattern="^[0-9]+(.[0-9]{1,100})?$" placeholder="售价"/>' +
+                            '<span style="margin-left: 7px">分</span>' +
+                        '</td> ' +
+                        '<td class="table-ori-price">' +
+                            '<input style="display: inline;width: 120px" class="price-in-table form-control" minlength="1" type="number" pattern="^[0-9]+(.[0-9]{1,100})?$" placeholder="原价"/>' +
+                            '<span style="margin-left: 7px">分</span>' +
+                        '</td>' +
+                        '<td class="table-quantity">' +
+                            '<input style="display: inline;width: 95px" class="price-in-table form-control" minlength="1" type="number" pattern="^[1-9]\\d*$" placeholder="库存"/>' +
+                            '<span style="margin-left: 7px">件</span>' +
+                        '</td> ' +
+                        '<td>' +
+                            '<img class="imgBoxBtn sku-icon" data-func="iconImg"/>' +
+                        '</td> ' +
+                        '</tr>' ;
+                }
+                //console.log(table);
+                $(".sku-table").children("tbody").html(table);
+            }
+            /****************************************************/
+            if(!(type==1)){
+                var oldTr=$(".oldTr");
+                oldTr.each(function () {
+                    /*补全前面不显示*用于保存*/
+                    var oldTdHtml;
+                    $(this).children(".firstTd").each(function () {
+                        oldTdHtml+='<td class="firstTd" rowspan="0" data-type="" style="display: none">'+$(this).text()+'</td>'
+                    });
+
+                    var newTr='';
+                    for(var n=1;n<length;n++){
+                        newTr+=
+                            '<tr>' ;
+                        newTr+=oldTdHtml;
+                        newTr+=
+                            '<td class="firstTd" rowspan="1">'+ data[1][n]+'</td> ' +
+                            '<td class="table-price">' +
+                            '<input style="display: inline;width: 120px" class="price-in-table form-control js-pattern-number" minlength="1" type="number" pattern="^[0-9]+(.[0-9]{1,100})?$" placeholder="售价"/>' +
+                            '<span style="margin-left: 7px">分</span>' +
+                            '</td> ' +
+                            '<td class="table-ori-price">' +
+                            '<input style="display: inline;width: 120px" class="price-in-table form-control js-pattern-number" minlength="1" type="number" pattern="^[0-9]+(.[0-9]{1,100})?$" placeholder="原价"/>' +
+                            '<span style="margin-left: 7px">分</span>' +
+                            '</td>' +
+                            '<td class="table-quantity">' +
+                            '<input style="display: inline;width: 95px" class="price-in-table form-control js-pattern-number" minlength="1" type="number" pattern="^[1-9]\\d*$" placeholder="库存"/>' +
+                            '<span style="margin-left: 7px">件</span>' +
+                            '</td> ' +
+                            '<td>' +
+                            '<img class="imgBoxBtn sku-icon" data-func="iconImg"/>' +
+                            '</td> ' +
+                            '</tr>' ;
+                    }
+                   $(this).after(newTr);
+                });
+                /**********************************/
+                var td='<td class="firstTd" rowspan="1">'+ data[1][0]+'</td>';
+                /***********************************/
+                oldTr.each(function () {
+                    /*更新rowspan*/
+                    $(this).children(".firstTd").each(function () {
+                       var  rowSpan = $(this).attr("rowspan");
+                        $(this).attr("rowspan",rowSpan*length)
+                    });
+                    /*添加新的一行**********************************/
+                    $(this).children(".table-price").before(td)
+                });
+                $(".sku-table").children("tbody").children("tr").attr("class","oldTr")
+            }
+
+            /*回调*******/
+            if(callback){
+                callback()
+            }
+
+        }
+
+        //加上type标识
+        function add_type_fnc(){
+            var length = $('.sku-table').find('.head-type').length;
+            for(var i = 0; i < length; i++){
+                var type = $('.sku-table').find('.head-type:eq('+i+')').attr('data-type');
+                $('.sku-table').find('.oldTr').find('.firstTd:eq('+i+')').attr('data-type',type);
+            }
+        }
+
+	    function refresh_sku()
+	    {
+		   var data ={
+			   id : {$product.id}
+	        }
+		    $.post("{:U('Shop/product',array('action'=>'delete_sku_table'))}",data,function(data){
+			    //console.log(data);
+			    if (data.status == 1) {
+				    if (data.url) {
+					    updateAlert(data.info + ' 页面即将自动跳转~', 'success');
+				    } else {
+					    updateAlert(data.info, 'success');
+				    }
+				    setTimeout(function () {
+					    if (data.url) {
+						    location.href = data.url;
+					    } else if ($(that).hasClass('no-refresh')) {
+						    $('#top-alert').find('button').click();
+					    } else {
+						    location.reload();
+					    }
+				    }, 2000);
+			    }
+			    location.reload();
+		    });
+	    }
+    </script>
+    
+</block>

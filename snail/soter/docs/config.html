@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>系统配置</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>配置文件</legend>
+			<ol>
+				<li><h2 class="title_h2">位置</h2>
+					项目中我们有很多配置信息，我们可以把这些信息写入一个配置文件然后放在配置文件目录，
+					<br>使用的时候加载它即可。
+					<br>一般情况下我们把配置文件放在application/config/default/里面即可。
+					<br>你肯定发现了application/config里面有四个目录default、development、production、testing。
+					<br>它们的含义分别是：
+					<br>1.default      ：默认环境
+					<br>2.development  ：开发环境
+					<br>3.production   ：产品环境
+					<br>4.testing      ：测试环境
+					<br>它们的作用是什么呢。
+					<br>下面进行说明：
+					<br>首先我们提出一个问题：
+					<br>我们开发的时候和产品环境以及测试的时候使用的配置一般是不一样的，特别是数据库信息。
+					<br>那么怎么解决环境变化的时候，我们的配置文件不需要改动就能适应环境呢？
+					<br>答：配置目录可以自动切换到对应环境即可。
+					<br>当我们使用Sr::config('database_config')加载database_config.php这个配置文件。
+					<br>会发生什么呢，Sr::config()方法会先去“当前环境”的目录里面去找database_config.php，
+					<br>如果没有找到，就去“默认环境”default目录里面去找database_config.php。
+					<br>那么我们只要在每个环境下配置一个对应环境的database_config.php配置文件即可，
+					<br>当环境变化的时候自动加载对应环境目录下的配置文件。
+					<br><b>提示：</b>
+					<br>“当前环境”可以通过入口文件里面进行设置，在入口文件里面我们可以看到下面的配置:
+					<pre class="brush:php">
+					//设置运行环境
+					->setEnvironment(($env = (($cliEnv = Sr::getOpt('env')) ? $cliEnv : Sr::arrayGet($_SERVER, 'ENVIRONMENT'))) ? Sr::config()->getServerEnvironment($env) : Sr::ENV_DEVELOPMENT)
+					</pre>
+					上面一句很长，什么作用呢？作用就是：
+					<br>1.先看看是不是命令行模式而且指定了env环境参数，有就设置当前环境为$env参数的值
+					<br>2.再看有没有$_SERVER['ENVIRONMENT']变量指定了环境参数，有就设置当前环境为$env参数的值
+					<br>3. 1和2都没找到的话，setEnvironment设置的就是环境值：Sr::ENV_DEVELOPMENT
+					<br>4. 1或者2找到了，就通过Sr::config()->getServerEnvironment($env)获取环境值。
+					<br>5. <b class="text_strong">$env的值可以是：development production testing 
+						<br>分别代表着：开发环境、产品环境、测试环境 , 
+						<br>分别对应的config目录下面的：development目录、production目录、testing目录。</b>
+					<br>当我们通过setEnvironment设置了“当前环境”之后，Sr::config()方法会优先去“当前环境”的目录里面去找配置文件，
+					<br>如果没有找到，就去“默认环境”default目录里面去找。
+					<br><b class="text_strong">一般情况下如果我们的配置文件和环境无关，我们把文件放在default目录里面即可。</b>
+					<br><b class="text_strong">提示：</b>
+					<br>比如nginx里面我们设置$_SERVER变量ENVIRONMENT，并且值为development，如下04行：
+					<pre class="brush:php">
+					location ~ \.php {
+						fastcgi_pass 127.0.0.1:9000;
+						fastcgi_index  index.php;
+						fastcgi_param ENVIRONMENT development;
+						fastcgi_param SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+						fastcgi_split_path_info ^((?U).+\.php)(/?.+)$;
+						fastcgi_param PATH_INFO $fastcgi_path_info;
+						fastcgi_param PATH_TRANSLATED $document_root$fastcgi_path_info;
+						include fastcgi_params;
+					}
+					</pre>
+					比如apache里面我们可以通过下面的配置设置$_SERVER变量ENVIRONMENT，并且值为development，如下05行：
+					<pre class="brush:php">
+					&lt;VirtualHost *:80>
+						DocumentRoot "/www/soter/test.com"
+						ServerName test.com
+						ServerAlias 
+						SetEnv ENVIRONMENT development
+					      &lt;Directory "/www/soter/test.com">
+						  Options FollowSymLinks ExecCGI
+						  AllowOverride All
+						  Order allow,deny
+						  Allow from all
+						  Require all granted
+					      &lt;/Directory>
+					&lt;/VirtualHost>
+					</pre>
+				</li>
+				<li><h2 class="title_h2">规范</h2>
+					配置文件规范里面需要return一个关联数组，这个数组就是要使用的配置信息。
+					<br>比如：文件application/config/default/config.php
+					<br>内容如下：
+					<pre class="brush:php">
+					&lt;?php
+					return array(
+					    'host' => '127.0.0.1',
+					    'user' => array(
+							'name' => 'username'
+					    )
+					);
+					</pre>
+				</li>
+				<li><h2 class="title_h2">加载使用</h2>
+					获取一个配置文件里面的配置信息，比如有配置文件application/config/default/config.php，
+					<br>我们可以使用下面的方法Sr::config()获取配置文件里面的配置信息,参数是配置文件的文件名称，不需要.php后缀。
+					<pre class="brush:php">
+					$config=Sr::config('config');
+					</pre>
+					<b>我们还可以用Sr::config()通过点分隔的方式直接获取配置数组里面的某一个键的值</b>
+					<br>1.比如我们要获取上面例子中的host，可以使用下面的代码：
+					<pre class="brush:php">
+					$host=Sr::config('config.host');
+					</pre>
+					2.比如我们要获取上面例子中的name，可以使用下面的代码：
+					<pre class="brush:php">
+					$name=Sr::config('config.user.name');
+					</pre>
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

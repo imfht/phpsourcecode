@@ -1,0 +1,119 @@
+<notempty name="forum_post_list">
+    <div class="block-bar">
+        <div class="container">
+            <div class="block-body row">
+                <div class="common-block" style="margin:0 10px;">
+                    <div style="margin:0 -10px;">
+                        <div class="col-xs-12">
+                            <div>
+                                <h2 class="test">找到的帖子 —— 关键词<span style="color: red">{$_REQUEST.keywords}</span></h2>
+
+                                <div class="forum-list">
+                                    <volist name="forum_post_list" id="vo">
+                                        <php>
+                                            $user = query_user(array('avatar128','avatar64','nickname','uid','space_url'),$vo['uid']);
+                                        </php>
+                                        <div class="clearfix">
+                                            <div class="col-xs-2 text-center">
+                                                <p>
+                                                    <a href="{$user.space_url}">
+                                                        <img src="{$user.avatar64}" ucard="{$user.uid}" class="avatar-img"/>
+                                                    </a>
+                                                </p>
+                                            </div>
+                                            <div class="col-xs-10">
+                                                <p>
+                                                    <a class="forum_forum_name" href="{:U('Forum/Index/forum',array('id'=>$vo['forum_id']))}">[{$vo.forum.title|text}]</a>
+                                                    <a class="forum-list-title-link" title="{$vo.title|text}"
+                                                       href="{:U('Forum/Index/detail',array('id'=>$vo['id']))}">{$vo.title|htmlspecialchars|mb_substr=0,30,'utf-8'}
+                                                    </a>
+                                                    <eq name="document.is_top" value="2"><span class="label label-badge label-danger">{:L('_ALL_SITE_')}</span>
+                                                        <else/>
+                                                        <eq name="document.is_top" value="1"><span class="label label-badge label-info">{:L('')}</span></eq>
+                                                    </eq>
+                                                </p>
+
+                                                <p class="pull-right text-muted">
+                                                    <span>{:L('_READ_')}（{$vo.view_count}）</span>
+                                                    <span style="width: 1em; display: inline-block;">&nbsp;</span>
+                                                    <span>{:L('_REPLY_')}（{$vo.reply_count}）</span>
+                                                </p>
+
+                                                <p class="text-muted author">
+                                                    <a href="{$user.space_url}" ucard="{$user.uid}">{$user.nickname|op_t}</a>
+                                                    {:L('_PUBLISH_')}{:L('_COLON_')}{$vo.create_time|friendlyDate} |
+                                                    {:L('_LAST_REPLY_TIME_')}{:L('_COLON_')}{$vo.last_reply_time|friendlyDate}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <if condition="$i neq count($forum_post_list)">
+                                            <hr class="forum-list-hr"/>
+                                            <else/>
+                                            <div class="forum-list-no-hr"></div>
+                                        </if>
+                                    </volist>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</notempty>
+
+<style>
+    .position-forums >div{
+        margin-bottom: 15px;
+    }
+    .position-forums .text-muted{
+        margin-top: 5px;
+    }
+    .position-forums .follow-simple{
+        font-size: 14px;
+        color: #4f8ad0;
+    }
+    .forum-list-hr{
+        margin-top: 0px;
+        margin-bottom: 10px;
+    }
+    .forum-list-no-hr{
+        padding: 10px;
+    }
+
+    .forum-list {
+        max-height: 500px;
+        overflow: scroll;
+    }
+</style>
+<script>
+    $(function () {
+        ucard();
+    });
+    var forum = {
+        'following_simple': function (obj) {
+            var id = $(obj).attr('data-id');
+            var $obj = $('[data-role=followingSimple][data-id='+id+']');
+
+            $.post(U('Forum/index/doFollowing'), {id: id}, function (msg) {
+                handleAjax(msg);
+                if (msg.status == 1) {
+                    if(msg.follow==0){
+                        $obj.each(function(){
+                            $(this).find('span').text("{:L('_PLUS_')} {:L('_FOLLOWERS_')}");
+                        })
+                    }else{
+                        $obj.each(function(){
+                            $(this).find('span').text("{:L('_MINUS_')} {:L('_FOLLOWED_')}");
+                        })
+                    }
+                }
+            })
+        }
+    };
+</script>

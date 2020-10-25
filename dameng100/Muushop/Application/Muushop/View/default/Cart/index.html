@@ -1,0 +1,273 @@
+
+<extend name="Public/common"/>
+<block name="style">
+</block>
+<block name="body">
+<div id="main-container" class="container">
+<header class="color-main vertical-box">
+    <h3 class="header-title">购物车</h3>
+</header>
+
+    <article class="cart-main">
+        <notempty name="cart">
+        <div class="cart-thead clearfix">
+            <div class="column t-checkbox">
+                全选
+            </div>
+            <div class="column t-goods">商品</div>
+            <div class="column t-props"></div>
+            <div class="column t-price">单价</div>
+            <div class="column t-quantity">数量</div>
+            <div class="column t-sum">小计</div>
+            <div class="column t-action">操作</div>
+        </div>
+        <div class="cart-tbody">
+        <volist name="cart" id="data">
+            <div class="good-section clearfix" data-id="{$data['id']}">
+                <div class="border-box clearfix">
+                    <div class="good-left-check vertical-box">
+                        <span class="circle-checkbox active-bg">
+                            <img src="__IMG__/check.png">
+                        </span>
+                    </div>
+                    <div class="good-info clearfix">
+                        <div class="good-section-pic">
+                            <a href="{:U('index/product',array('id'=>$data['product']['id']))}">
+                                <img class="good-section-img" src="{$data['product']['main_img']|getThumbImageById=200,200}">
+                            </a>
+                        </div>
+                        <div class="good-section-title">
+                            <a href="{:U('index/product',array('id'=>$data['product']['id']))}">
+                                {$data['product']['title']}
+                            </a>
+                        </div>
+                        
+                        <div class="good-section-option">{$data['product']['sku_id'][1]}</div>
+                        
+                        <div class="good-section-tprice">
+                            ￥<span class="">{$data['product']['price']}</span>
+                        </div>
+
+                        <div class="good-section-quantity">
+                            <span class="section-type sku-type count-box clearfix">
+                                <button class="count-btn cut-btn">-</button>
+                                <input class="count-input" type="text" value="{$data['quantity']}" readonly>
+                                <button class="count-btn add-btn">+</button>
+                            </span>
+                            <span class="">（剩余库存：<span class="quantity">{$data['product']['quantity']}</span>）</span>
+                        </div>
+
+                        <div class="good-section-tsum">
+                            ￥<span class="product-price">{$data['total_price']}</span>
+                        </div>
+
+                        <div class="good-section-action">
+                            <span class="del-good">删除</span>
+                        </div>
+
+                    </div> 
+                </div>
+            </div>
+        </volist>
+        </div>
+        <else />
+            <p class="empty-cart-p tips-font">购物车还是空的噢<br/>去挑几件商品吧</p>
+        </notempty>
+    </article>
+
+    <notempty name="cart">
+    <div class="buy-confirm-box">
+        <div class="clearfix ">
+
+            <div class="border-box editing-cart">
+                <span class="group-right-text">移除选定商品</span>
+            </div>
+            
+            <div class="border-box buyImmediately">
+                <span class="group-right-text">去结算</span>
+                <span class="normal-text">（已选商品:<span id="products-count">0</span>）</span>
+            </div>
+
+            <div class="border-box total-price">
+                合计：￥<span id="products-price-all">0</span>
+            </div>
+
+            
+        </div>
+    </div>
+    </notempty>
+</div>
+
+<script>
+$(function () {
+    /**
+     * 购物车JS
+     */
+    /*全选按钮*/
+    $('.t-checkbox').click(function(){
+        var goodSection = $('.good-section');
+        for(var i=0;i<goodSection.length;i++){
+            $(goodSection[i]).addClass('checked-section');
+        }
+
+        check_price();
+    });
+    /*结算按钮*/
+    $('.buyImmediately').click(function () {
+        var id = $(this).data('id');
+        if(id&&id!=''){
+            window.location.href='{:U("muushop/order/makeorder")}&cart_id='+id;
+        }else{
+            toast.error('请先选择商品', '温馨提示');
+        }
+    });
+    /*删除商品*/
+    $('.editing-cart').click(function(){
+        var id = $(this).data('id');
+        delGoodCart(id);
+        
+    });
+
+    $('.del-good').click(function(event){
+        event.stopPropagation();
+        var id = $(this).parents('.good-section').attr('data-id');
+        delGoodCart(id);
+        
+    });
+    function delGoodCart(id){
+        if(id&&id!=''){
+            if(confirm('您确定要删除吗？')){
+                id = id.split(',');
+                $.post('{:U("muushop/cart/delete_cart")}',{ids:id}, function (ret) {
+                    console.log(ret);
+                    if(ret.status==1){
+                        toast.success(ret.info, '温馨提示');
+                        window.location.reload();
+                    }
+                    else{
+                        toast.error(ret.info, '温馨提示');
+                    }
+                })
+            }
+        }else{
+                toast.error('请先选择要移除的商品', '温馨提示');
+        }
+    }
+    /*
+    调整商品数
+     */ 
+    $('.count-box .add-btn').click(function (event) {
+        var box = $(this).parents('.count-box');
+        var maxNum = box.parents('.good-section-quantity').find('.quantity').text();
+        event.stopPropagation();
+        count.add(box,maxNum);
+        tsum_price(box);
+    });
+    $('.count-box .cut-btn').click(function (event) {
+        var box = $(this).parents('.count-box');
+        event.stopPropagation();
+        count.cut(box);
+        tsum_price(box)
+    })
+    /*
+    选择购物车里的商品
+    */
+    $('.good-section').click(function () {
+        $(this).toggleClass('checked-section');
+        check_price();
+    });
+})
+/*更改小计算价格*/
+    function tsum_price(box){
+        var num = parseFloat(box.find('.count-input').val());
+        var tprice = parseFloat(box.parents('.good-section').find('.good-section-tprice span').text());
+        var tsumBox = box.parents('.good-section').find('.good-section-tsum span');
+        tsumBox.html(formatCurrency(num*tprice));
+        //如果是选中商品就更改一次结算价格
+        var sectionBox = box.parents('.good-section');
+        if(sectionBox.hasClass('checked-section')){
+            check_price()
+        }
+    }
+/*更新结算价格*/
+    function check_price(){
+        var price_all = 0;
+        var checked_section = $('.checked-section');
+        var card_id = '';/*随手记录购物车id*/
+        checked_section.each(function () {
+            price_all+=parseFloat($(this).find('.product-price').text(),10);
+            /**/
+            var id = $(this).data('id');
+            card_id += ','+id
+        });
+        card_id = card_id.substr(1);
+        //console.log('all',card_id,price_all);
+        $('.buyImmediately').data('id',card_id);
+        $('.editing-cart').data('id',card_id)
+        $('#products-price-all').text(price_all.toFixed(2));
+        $('#products-count').text(checked_section.length)
+    }
+/**  
+ * 将数值四舍五入(保留2位小数)后格式化成金额形式  
+ * @param num 数值(Number或者String)  
+ * @return 金额格式的字符串,如'1,234,567.45'  
+ * @type String  
+ */    
+    function formatCurrency(num) {    
+        num = num.toString().replace(/\$|\,/g,'');
+        if(isNaN(num))
+        num = "0";    
+        sign = (num == (num = Math.abs(num)));    
+        num = Math.floor(num*100+0.50000000001);    
+        cents = num%100;    
+        num = Math.floor(num/100).toString();    
+        if(cents<10)    
+        cents = "0" + cents;    
+        //for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++)    
+        //num = num.substring(0,num.length-(4*i+3))+','+    
+        //num.substring(num.length-(4*i+3));    
+        return (((sign)?'':'-') + num + '.' + cents);    
+    }    
+/*商品数量增减类*/
+    var count = {
+        add:function(box,maxNum){
+            var maxNum = parseInt(maxNum);
+            var oNum = parseInt(box.find('.count-input').val());
+            if(oNum>=maxNum){
+                return;
+            }else{
+                box.find('.count-input').val(oNum+1);
+            }
+            var id = box.parents('.good-section').attr('data-id');
+            editQuantity(id,oNum+1);
+        },
+        cut:function(box){
+            var oNum = parseInt(box.find('.count-input').val());
+            if(oNum<=1){
+                return;
+            }else{
+                box.find('.count-input').val(oNum-1);
+            }
+            var id = box.parents('.good-section').attr('data-id');
+            editQuantity(id,oNum-1);
+        }
+    }
+    function editQuantity(id,quantity){
+        var data = {
+            id:id,
+            quantity:quantity
+        };
+        $.post('{:U("muushop/cart/edit_to_cart")}',{data:data}, function (ret) {
+            if(ret.status==1){
+                //toast.success(ret.info, '温馨提示');
+            }
+            else{
+                toast.error(ret.info, '温馨提示');
+            }
+        })
+    }
+</script>
+</block>
+<block name="script">
+    <script src="__JS__/common.js"></script>
+</block>

@@ -1,0 +1,137 @@
+<include file="Public:header" />
+	<div class="container">
+		<div class="page-header">
+			<h4>{:L('SYSTEM_SETTING')}</h4>
+		</div>
+		<include file="Public:alert" />
+		<div class="tabbable">
+			<ul class="nav nav-tabs">
+				<li><a href="{:U('setting/defaultInfo')}">{:L('BASIC_SYSTEM_SETTING')}</a></li>
+				<li><a href="{:U('setting/smtp')}">{:L('SMTP_SETTING')}</a></li>
+				<li class="active"><a href="{:U('setting/fields')}">{:L('CUSTOMIZING_FIELDS_SETTING')}</a></li>		
+				<li><a href="{:U('navigation/setting')}">{:L('SYSTEM_NAVIGATION_SETTING')}</a></li>
+				<li><a href="{:U('setting/weixin')}">{:L('WHCHAT_SETTING')}</a></li>
+			</ul>
+		</div>
+		<div class="row">	
+			<div class="span2 knowledgecate">
+				<ul class="nav nav-list">
+					<li class="active">
+						<a href="javascript:void(0);" onclick="color_box()">{:L('CUSTOMIZING_FIELDS_SETTING')}</a>
+					</li>
+					<li><a href="{:U('setting/fields', 'model=customer')}"><i class="icon-chevron-right"></i>{:L('CUSTOMER_FIELDS_SETTING')}</a></li>
+					<li><a href="{:U('setting/fields', 'model=business')}"><i class="icon-chevron-right"></i>{:L('BUSINESS_FIELDS_SETTING')}</a></li>
+					<li><a href="{:U('setting/fields', 'model=product')}"><i class="icon-chevron-right"></i>{:L('PRODUCT_FIELDS_SETTING')}</a></li>
+					<li><a href="{:U('knowledge/category')}"><i class="icon-chevron-right"></i>{:L('KNOWLEDGE_CATEGORY')}</a></li>
+					<li><a href="{:U('log/category')}" class="active"><i class="icon-chevron-right"></i>{:L('LOG_CATEGORY')}</a></li>
+				</ul>
+			</div>
+			<form action="{:U('log/categoryDelete')}" method="post">
+				<div class="span10">
+					<p><div class="bulk-actions align-left">
+						<input type="submit" class="btn" value="{:L('DELETE')}"/> &nbsp; <a class="btn" id="sort_btn">{:L('SAVE_ORDER')}</a>
+						<div class="pull-right">
+							<a class="btn btn-primary" id="add_category" href="javascript:void(0);">{:L('ADD_LOG_CATEGORY')}</a>
+						</div>
+					</div></p>
+				</div>
+				<div class="span10">
+					<table class="table table-hover table-striped table_thead_fixed" width="95%" border="0" cellspacing="1" cellpadding="0">
+						<thead>
+							<tr>
+								<th width="15%"><input class="check_all" name="check_all" id="check_all" type="checkbox" /> &nbsp;</th>
+								<th width="15%">{:L('CATEGORY_NAME')}</th>
+								<th width="35%">{:L('CATEGORY_DESCRIPTION')}</th>
+								<th width="15%">{:L('OPERATING')}</th>
+							</tr>
+						</thead>
+						<tfoot>
+							<tr>
+								<td colspan="5">
+									{$page}
+								</td>
+							</tr>
+						</tfoot>
+						<tbody>
+							<volist name="category_list" id="vo">
+								<tr>
+									<td>
+									<input class="list" type="checkbox" id="category" name="category_id[]" value="{$vo.category_id}"/> &nbsp;
+									</td>
+									<td>{$vo.name}</td>
+									<td>
+										{$vo.description}
+									</td>
+									<td><if condition="$vo['category_id'] neq 1"><a class="delete_category" rel="{$vo.category_id}" href="javascript:void(0)">{:L('DELETE')}</a> &nbsp;</if><a class="edit_category" rel="{$vo.category_id}" href="javascript:void(0)">{:L('EDIT')}</a> &nbsp;
+									<a href="{:U('log/index','by=all&category_id='.$vo['category_id'])}">{:L('VIEW_THIS_CATEGORY_LOG')}</a></td>
+								</tr>
+							</volist>
+						</tbody>
+					</table>
+				</div> <!-- End #main-content -->
+			</form>
+		</div>		
+	</div>
+	<div id="dialog-message1" class="hide" title="{:L('DIALOG_ADD_LOG_CATEGORY')}">loading...</div>
+	<div id="dialog-message3" class="hide" title="{:L('DELETE_LOG_CATEGORY')}">loading...</div>
+	<div id="dialog-message2" class="hide" title="{:L('DIALOG_EDIT_LOG_CATEGORY')}">loading...</div>
+<script type="text/javascript">
+	$('#dialog-message1').dialog({
+		autoOpen: false,
+		modal: true,
+		width: 600,
+		maxHeight: 400,
+		position :["center",200]
+	});
+
+	$('#dialog-message2').dialog({
+		autoOpen: false,
+		modal: true,
+		width: 600,
+		maxHeight: 400,
+		position :["center",200]
+	});
+	
+	$('#dialog-message3').dialog({
+		autoOpen: false,
+		modal: true,
+		width: 600,
+		maxHeight: 400,
+		position :["center",200]
+	});
+
+	$(function(){
+		$("table tbody").sortable({connectWith: "table tbody"});
+		$("#check_all").click(function(){
+			$("input[class='list']").prop('checked', $(this).prop("checked"));
+		});
+		$("#add_category").click(function(){
+			$('#dialog-message1').dialog('open');
+			$('#dialog-message1').load('{:U("log/categoryAdd")}');
+		});
+		$(".edit_category").click(function(){
+			$('#dialog-message2').dialog('open');
+			$id = $(this).attr('rel');
+			$('#dialog-message2').load("{:U('log/categoryEdit','id=')}"+$id);
+		});
+		$(".delete_category").click(function(){
+			$('#dialog-message3').dialog('open');
+			$id = $(this).attr('rel');
+			$('#dialog-message3').load("{:U('log/categoryDelete','id=')}"+$id);
+		});
+		$("#sort_btn").click(
+			function() {
+				position = [];
+				$.each($(".list"), function(i, item){position.push(item.value)});
+				$.get('{:U("log/categorysort")}',{postion:position.join(',')}, function(data){
+					if (data.status == 1) {
+						$(".page-header").after('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+					} else {
+						$(".page-header").after('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+					}
+				}, 'json');
+			}	
+		);
+	});
+</script>
+<include file="Public:footer" />

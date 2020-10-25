@@ -1,0 +1,106 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>BANNER列表</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>BANNER列表</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> BANNER列表</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    {:BTN(C_NAME.'/create','','新增','btn btn-primary btn-sm','fa-save')}
+                    {:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-sm delete-all','fa-trash','data-url="'.url(C_NAME.'/delete').'"')}
+                    {include file="public/search" /}
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover table-sort">
+                        <tr>
+                            <th width="35"><input type="checkbox" class="minimal checkbox-toggle"></th>
+                            <th>ID{:table_sort('id')}</th>
+                            <th>标题{:table_sort('title')}</th>
+                            <th>链接地址</th>
+                            <th>模块分类</th>
+                            <th>状态{:table_sort('status')}</th>
+                            <th>排序{:table_sort('sorts')}</th>
+                            <th width="124">操作</th>
+                        </tr>
+                        {volist name="dataList" id="vo"}
+                        <tr>
+                            <td><input type="checkbox" name="id[]" value="{$vo.id}" class="minimal"></td>
+                            <td>{$vo.id}</td>
+                            <td><span class="editable" data-pk="{$vo.id}" data-name="title" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.title}</span></td>
+                            <td><span class="editable" data-pk="{$vo.id}" data-name="url" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.url}</span></td>
+                            <td>{$vo->moduleClass->title}</td>
+                            <td>
+                                <a href="javascript:void(0);" data-id="{$vo.id}" data-field="status"
+                                data-value="{$vo.status}" data-url="{:url('edit', 'id='.$vo['id'])}"
+                                class='editimg fa {if condition=" $vo.status == 1 "}fa-check-circle text-green{else /}fa-times-circle text-red{/if}'></a>
+                            </td>
+                            <td>{$vo.sorts}</td>
+                            <td>
+                            	{:BTN(C_NAME.'/edit','id='.$vo.id,'编辑','btn btn-primary btn-xs','fa-edit')}
+                            	{:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+                <div class="box-footer clearfix">
+                    {$dataList->render()|raw}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+        checkboxClass: 'icheckbox_minimal-blue',
+        radioClass: 'iradio_minimal-blue'
+    });
+
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $(".select2").select2({language:"zh-CN"});
+
+    /*全选-反选*/
+    $('.checkbox-toggle').on('ifChecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("check");
+    });
+    $('.checkbox-toggle').on('ifUnchecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("uncheck");
+    });
+
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

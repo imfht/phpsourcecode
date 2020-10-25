@@ -1,0 +1,99 @@
+{extend name="public/base" /}
+{block name="title"}
+<title>{:confv('title')}</title>
+<meta name="keywords" content="{:confv('keywords')}">
+<meta name="description" content="{:confv('description')}">
+{/block}
+{block name="pjax_container"}
+<div class="content">
+    <div class="row">
+
+        <div class="col-sm-8">
+			<!--幻灯片-->
+
+			<!--置顶/推荐/头条-->
+			<div class="nav-tabs-custom">
+	            <ul class="nav nav-tabs">
+	              	<li class="active"><a href="#tab_1" data-toggle="tab">置顶</a></li>
+	              	<li><a href="#tab_2" data-toggle="tab">推荐</a></li>
+	              	<li><a href="#tab_3" data-toggle="tab">头条</a></li>
+	            </ul>
+	            <div class="tab-content">
+	            	{php}$zhidinglist = arclist('','10','a','click desc'){/php}
+		            <div class="tab-pane active" id="tab_1">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$zhidinglist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-red"> 置顶</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+		            </div>
+		            {php}$tuijianlist = arclist('','10','c','click desc'){/php}
+		            <div class="tab-pane" id="tab_2">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$tuijianlist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-green"> 推荐</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+		            </div>
+		            {php}$toutiaolist = arclist('','10','h','click desc'){/php}
+	              	<div class="tab-pane" id="tab_3">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$toutiaolist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-yellow"> 头条</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+	              	</div>
+	            </div>
+	       	</div>
+
+            <div class="new-arc-box"></div>
+            <div class="x-mb-15">
+				<button class="btn btn-block btn-success" id="new-arc-btn" data-page="1"
+                data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt; 加载中..." >点击加载</button>
+          	</div>
+        </div>
+        <div class="col-sm-4">
+            {include file="inc/right" /}
+        </div>
+
+    </div>
+</div>
+
+<script>
+$(function() {
+    $('body').off('click', '#new-arc-btn');
+    $('body').on("click", '#new-arc-btn', function(event) {
+        var _this = $(this);
+        var page = _this.data('page');
+        _this.button('loading');
+        $.ajax({
+            type: "get",
+            url: "/index/index/newarc/page/" + page,
+            success: function(html) {
+//                  console.log(html);
+                if(html != '') {
+                    $('.new-arc-box').append(html);
+                    _this.data("page", page + 1); //分页数+1
+                    _this.button('reset');
+                } else {
+                    _this.html('没有更多');
+                }
+            }
+        });
+    });
+    $('#new-arc-btn').trigger("click");
+})
+</script>
+{/block}

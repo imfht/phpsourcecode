@@ -1,0 +1,53 @@
+<?php 
+
+if (!empty($_POST)) die;
+
+$page = @intval($_GET['page']);
+
+if (empty($page)) { $page = 1; }
+$limit = 20;
+
+$cond = 'WHERE user_id = '.$auth['id'];
+
+$logs = dt_query("SELECT * FROM account_log $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$logs) die('获取log数据失败！^_^');
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-8 column" style="border-right: 1px solid #ddd">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>时间</th>
+						<th>描述</th>
+						<th>发生额（元）</th>
+						<th>余额（元）</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php while($log = mysql_fetch_array($logs)) { ?>
+					<tr id="<?php echo $log['id'] ?>">
+						<td><?php echo fmt_date($log['c_at']) ?></td>
+						<td><?php echo $log['des'] ?></td>
+						<td><?php echo ((1 == $log['i_o']) ? '+' : '-').$log['m_$'] ?></td>
+						<td><?php echo $log['r_$'] ?></td>
+					</tr>
+					<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('account_log', $cond, $page, $limit, '?c=account&a=index&page=') ?>
+		</div>
+		<div class="col-md-4 column">
+			<?php require_once('inc/account_pub_sidebar.phtml') ?>	
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#detail').addClass('active');
+});
+
+</script>

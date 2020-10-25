@@ -1,0 +1,218 @@
+{extend name="common@base/common" /}
+{block name="style"}
+<link href="__CSS__/main.min.css" type="text/css" rel="stylesheet">
+
+{/block}
+{block name="body"}
+<div id="main-container" class="container">
+<!--隐藏区域 以便js调用-->
+<input type="hidden" data-type="delivery_id" data-value="{$delivery_id}"/>
+<input type="hidden" data-type="real_quantity" data-value="{$real_quantity}"/>
+<!--隐藏区域end-->
+<div class="makeorder">
+    <section class="address-section common_box">
+        <h2 class="linear-title">
+            <span>收货人信息</span>
+        </h2>
+        <div class="address-main clearfix">
+            <div class="address-list" data-role="address_list" data-url="{:url('muushop/api/address',['action'=>'list'])}">
+                <div class="col-md-3">
+                    <div class="edit-address" data-remote="{:url('user/address',['action'=>'edit'])}" data-toggle="modal">
+                        <div class="item">
+                            <i class="icon icon-plus-sign"></i>
+                            <p>添加收货人信息</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="more-address hidden">
+            <span>更多地址</span> <span><i class="icon icon-double-angle-down"></i></span>
+        </div>
+    </section>
+
+    <!--购物车购买-->
+    {notempty name="products"}
+        <input type="hidden" data-type="cart_id" data-value="{$cart_id}"/>
+        <section class="good-section common_box margin-top-10">
+        <h2 class="linear-title">产品信息</h2>
+        {volist name="products" id="data"}
+            <div class="good-list-box clearfix" data-id="{$data['id']}">
+                <div class="good-section-left">
+                    <a href="{:url('index/product',array('id'=>$data['product']['id']))}" target="_black">
+                        <img class="good-section-img" src="{$data['product']['main_img']|getThumbImageById=200,200}">
+                    </a>
+                </div>
+                <div class="good-section-right border-box">
+                    <h4 class="good-section-title">
+                        <a href="{:url('index/product',array('id'=>$data['product']['id']))}" target="_black">
+                            {$data['product']['title']}
+                        </a>
+                    </h4>
+                    {notempty name="$data['sku']"}
+                    <div class="good-section-option">
+                        {volist name="$data['sku']" id="sku"}
+                        <span class="sku">{$sku}</span>
+                        {/volist}
+                    </div>
+                    {/notempty}
+                    <div class="good-section-option">
+                        ￥{$data['product']['price']} x {$data['quantity']}
+                        <span data-type="p_total_price" data-value="{$data['total_price']}" class="good-section-price">
+                        ￥{$data['total_price']}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {/volist}
+        </section>
+    {/notempty}
+
+    <section class="pay-section common_box margin-top-10">
+        <h2 class="linear-title vertical-box">支付方式</h2>
+        {notempty name="paytype"}
+        <div class="clearfix">
+            {volist name="paytype" id="vo"}
+                <span class="linear-input pay-type" data-role="pay_type" data-value="{$vo.value}">{$vo.title}<i></i></span>
+           {/volist}
+        </div>
+        {/notempty}
+    </section>
+
+
+    <section class="return-section common_box margin-top-10">
+        <h2 class="linear-title">使用优惠/积分/余额 </h2>
+        <div class="return-main">
+            <div class="panel-group" id="accordionPanels" aria-multiselectable="true">
+              <!--优惠卷列表-->
+              <div class="panel panel-info coupon">
+                <div class="panel-heading" id="headingOne">
+                  <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordionPanels" href="#collapseCoupon">
+                      优惠卷
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapseCoupon" class="panel-collapse collapse in">
+                  <div class="panel-body">
+                    <div class="coupon-section clearfix">
+                        {notempty name="enable_coupon"}
+                            {volist name="enable_coupon" id="data"}
+                            <div class="col-md-3">
+                                <div class="item" data-id={$data.id} data-value="{$data.discount}">
+                                    <span class="ico"></span>
+                                    <div class="info clearfix">
+                                        <div class="discount"><span>¥</span>{$data.discount}</div>
+
+                                        <div class="other">
+                                            {notempty name="data.min_price"}
+                                            <span>满<span>¥</span>{$data.min_price}可用</span>
+                                            {/notempty}
+                                        </div>
+                                    </div>
+                                    <div class="end_time">
+                                    {eq name="$data.expire_time" value="0"}
+                                        有效期至：永久
+                                    {else /}
+                                        有效期至：{$data.expire_time|time_format}
+                                    {/eq}
+                                    </div>
+                                    <div class="receive"><a>立即使用 >></a></div>
+                                </div>
+                            </div>
+                            {/volist}
+                        {else /}
+                            <span style="display:block;padding:50px 0;text-align:center">无可用优惠卷...</span>
+                        {/notempty}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!--积分列表-->
+              <div class="panel panel-info score" data-type="score" data-id="{$score.id}">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="collapsed" data-toggle="collapse" data-parent="#accordionPanels" href="#collapse{$score.id}">
+                      {$score.title}
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapse{$score.id}" class="panel-collapse collapse">
+                  <div class="panel-body data-id="{$score.id}">
+                    <span>账户共 
+                        <em class="quantity" data-type="quantity">{$score.quantity}</em> 
+                        {$score.unit}{$score.title}
+                    </span>
+                    <span>
+                        本次使用 <input type="number" class="form-control" data-prop="{$score.prop}" data-id="{$score.id}" style="display:inline-block;width:100px">
+                    </span>
+                    <span>
+                        (本次还可用<em class="ableScoreNum"></em> {$score.unit})
+                    </span>
+                    <span>抵扣 ￥<em class="return">0.00 </em></span>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+        </div>
+    </section>
+
+    <section class="common_box margin-top-10 clearfix">
+        <h2 class="linear-title"><span>备注</span></h2>
+        <div class="col-md-6">
+            <div>
+                <h3 class="linear-title"><span>给商家留言</span></h3>
+                <input class="form-control remark-input" type="text">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div>
+                <h3>发票抬头</h3>
+                <input class="form-control invoice-title" type="text">
+            </div>
+        </div>
+        
+    </section>
+
+    <section class="common_box margin-top-10 order-summary">
+        <div class="list">
+            <span>共 <em class="ftx-01">{$real_quantity}</em> 件商品，总商品金额：</span>
+            <em class="price" id="warePriceId" v="499">￥<i>{$real_price}</i></em>
+        </div>
+        <div class="list">
+            <span>返现：</span>
+            <em class="price" id="cachBackId" v="-0">-￥<i> 0.00</i></em>
+        </div>
+        <div id="deliveryId" v="普通快递" class="list" data-role="delivery" data-id="{$delivery_id}" data-url="{:url('muushop/api/delivery')}">
+            <span>运送方式：
+                <em class="price">快递</em> 
+            </span>
+            <span>邮费：
+                <em class="price" id="freightPriceId" v="0">￥<i>0.00</i></em>
+            </span>
+        </div>
+    </section>
+</div>
+
+<footer class="btn-footer margin-top-10">
+    <div class="container">
+        <div class="makeorder_fee_box">
+            <span>应付总额：￥<span class="real-pay" data-type="total_price" data-value="{$real_price}"></span></span>
+        </div>
+        <div class="makeorder_address_box">
+        </div>
+        <div class="makeorder_submit_box">
+            <button class="makeorderBtn btn btn-lg btn-warning" data-role="make-order" data-url="{:url('muushop/Api/order',['action'=>'markorder'])}">提交订单</button>
+        </div>
+    </div>
+</footer>
+
+<!--添加新地址模态框-->
+
+<!--添加新地址模态框END-->
+{/block}
+{block name="script"}
+<script src="__JS__/common.min.js"></script>
+<script src="__JS__/makeorder.min.js"></script>
+{/block}

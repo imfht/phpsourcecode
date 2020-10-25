@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>支付宝支付</title>
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="stylesheet" href="__STATIC__/css/base.css">
+<link rel="stylesheet" href="__STATIC__/css/qb_ui.css">
+<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+<script type="text/javascript" src="__STATIC__/js/core/jquery.min.js"></script>
+<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+</head>
+<body>
+<link rel="stylesheet" href="__STATIC__/images/post.css">
+<div class="bbsContainer" style="display:none;">
+	<ul class="topBoxs">
+		<li class="logo"><a href="/"><img src="__STATIC__/images/logo1.png"></a></li>
+		<li class="info"><span>{:M('name')}</span><em>{$userdb.username}</em></li>
+		<li class="atten"><a href="{:get_url('member')}"><i class="si si-user"></i></a></li>
+	</ul>
+	<div class="quideBox" style="text-align:center;height:auto;"><img src="__STATIC__/images/alipay.png">
+	<br>请用支付宝(不是微信)扫码支付：<font style="color:red;font-weight:bold;">{$money}</font>元
+	</div>
+
+	 
+	<div class="PostBox" style="text-align:center;">		 
+		<img width="250" src="{$qrcode}"/>
+		<br><a href="{$payurl}" target="_blank"><b>继续使用电脑支付</b></a>
+	</div>
+</div>
+<script type="text/javascript">
+if(window.top==window.self){
+	window.location.href="{$payurl}";	
+}else{
+	$(".bbsContainer").show();
+	countSecond();
+}
+
+function countSecond(){　
+	$.get("{:urls('/index/pay/index')}?banktype=alipay&action=checkpay&numcode={$numcode}&"+Math.random(), function(result){
+		if(result.code==0){
+			var check = false;
+			try{	//避免跨域调用的时候报错,而终止下面的代码
+				check = (typeof(parent.Pay)=='object' && parent.Pay.pc_callback()==true);
+			}catch(e){
+				console.error(e);
+			}
+			if(window.top!=window.self && check){
+				parent.Pay.pc_callback('ok');
+				parent.layer.close(parent.layer.getFrameIndex(window.name));
+			}else{
+				window.location.href="{$return_url}";
+			}			
+		}else{
+			setTimeout("countSecond()",3000);
+		}
+	});	
+}
+
+</script>
+</body>
+</html>

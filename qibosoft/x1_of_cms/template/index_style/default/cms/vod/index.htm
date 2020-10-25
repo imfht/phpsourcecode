@@ -1,0 +1,244 @@
+{extend name="$member_style_layout" /}
+
+{block name="title"}主题列表{/block}
+{block name="content"}
+<style type="text/css">
+.listshops{
+	border-bottom:#DDD dotted 1px;
+	padding:10px 10px 30px 150px;
+	min-height:60px;
+	position:relative;
+}
+.listshops .img{
+	width:90px;
+	height:75px;
+	border:#DDD solid 1px;
+	padding:1px;
+	overflow:hidden;
+	text-align:center;
+	line-height:85px;
+	position:absolute;
+	left:12px;
+	top:12px;
+}
+.listshops .img img{
+	max-width:90px;
+	max-height:75px;
+	vertical-align:middle;
+}
+.listshops .atcs{
+	width:500px;
+	height:32px;
+	position:absolute;
+	right:32px;
+	top:35px;
+	text-align:right;
+	line-height:30px;
+	word-spacing:10px;
+}
+.listshops .atcs a{
+	display:inline-block;
+	border:#F60 solid 1px;
+	border-radius:5px;
+	padding:0 15px;
+	background:#F90;
+	color:#FFF;
+}
+.listshops .atcs a.dels{
+	border:#F00 solid 1px;
+	background:#F30;
+}
+.listshops .atcs a.edits{
+	border:#124272 solid 1px;
+	background:#336699;
+}
+.listshops .title a{
+	display:block;
+	height:30px;
+	line-height:30px;
+	overflow:hidden;
+	font-size:16px;
+}
+.listshops .info{
+	height:25px;
+	line-height:25px;
+	overflow:hidden;
+	color:#888;
+	font-size:14px;
+}
+.listshops .info a{
+	color:#2BB8AA;
+}
+.listshops .info span{
+	color:#F60;
+}
+.listshops .price{
+	width:150px;
+	height:30px;
+	line-height:30px;
+	position:absolute;
+	left:150px;
+	bottom:20px;
+	font-size:14px;
+	color:#888;
+}
+.listshops .price span{
+	font-size:24px;
+	color:#F60;
+}
+.search{float:right; background:#fff; border-radius:3px; padding:5px; margin:10px 10px 0 0;}
+.search .keyWord{float:left; width:200px; height:30px; line-height:30px;}
+.search .keyWord input{width:100%; height:28px; padding-left:5px;}
+.search .button{float:left; width:60px; margin-left:20px;}
+.search .button input{width:100%; height:30px;}
+</style>
+
+ 
+<div class="MainCont">
+	<div class="head">
+	  <div class="tag" id="tagname">{$mid==4?'音频专辑列表':'视频专辑列表'} </div>
+	  <div class="search"> 
+	    
+		  <div class="keyWord"><input type="text" id="keyword" placeholder="请输入要搜索的标题"/></div>
+		  <div class="button"><input type="submit" name="submit1" onclick="search()" value="搜索"/></div>
+		  
+	  </div>
+	</div>
+    <div class="cont">		 
+		<div class="list-hack"></div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+var type = '';
+var uid = 0;
+var mod_array = {};
+var page = 1;
+var scroll_get = true;
+var keyword = '';
+
+function search(){
+	keyword = $("#keyword").val();
+	if(keyword==''){
+		layer.alert("关键字不能为空!");
+		return ;
+	}
+	page = 1;
+	layer.msg("请稍候");
+	get_list_data();
+}
+
+function add_action(){
+	$('.list-hack .edits').off("click");
+	$('.list-hack .edits').click(function(){
+		var id = $(this).data("id");
+		var m_title = $(this).data("title");
+		var m_content = $(this).data("content");
+		var m_picurl = $(this).data("picurl");
+		var m_url = $(this).data("url");
+		if(m_picurl==null) m_picurl = '';
+		m_title = m_title.replace('"',"'");
+		if(m_content==''||m_content==null){
+			m_content = '暂无介绍';
+		}
+		layer.msg('请稍候...',{offset:'100px'});
+		layer.load(1);
+		$.get("{:urls('post_vod')}?aid={$aid}&id="+id,function(res){
+			if(res.code==0){
+				console.log(res.data);
+				var arr = {
+					play_index:0,
+					play_time:0,
+					play_urls:res.data,
+				}
+				layer.msg("提交成功");
+				//通知所有用户打开播放器,或者同步音乐信息
+				//window.parent.w_s.send('{"type":"qun_to_alluser","tag":"give_vod_voice_state","data":' + JSON.stringify( arr ) + '}');
+				window.parent.ws_send({ 
+					type:"qun_to_alluser",
+					tag:"{$mid==4?'give_vod_voice_state':'give_vod_mv_state'}",
+					data: arr 
+				});
+				setTimeout(function(){					
+					parent.layer.close(parent.layer.getFrameIndex(window.name));
+				},500);			
+			}else{
+				layer.alert(res.msg);
+			}
+		});		 		
+	});
+}
+function get_list_data(){
+		layer.msg("加载中,请稍候...");
+		var url = "/index.php/cms/wxapp.index/listbyuid.html?mid={$mid}&page="+page+"&keyword="+keyword+"&rows=10";
+		$.get(url,function(res){
+			layer.closeAll();
+			if(res.code==0){
+				if(res.data.length>0){
+					if(page==1){
+						$('.list-hack').html( format_list_data(res.data) );
+					}else{
+						$('.list-hack').append( format_list_data(res.data) );
+					}					
+					add_action();
+					page++;
+					scroll_get = true;
+				}else{
+					if(page==1){
+						layer.alert("没找到任何数据!");
+					}else{
+						layer.msg("没有了!");
+					}
+					
+				}
+			}
+		});		
+}
+get_list_data()
+function format_list_data(array){
+		var str = "";
+		array.forEach((rs)=>{
+			var content = rs.content.substring(0,20);
+			var title = rs.title.substring(0,15);
+			if(rs.url==undefined){
+				rs.url=`/index.php/${type}/content/show/id/${rs.id}.html`;
+			}
+			if(rs.picurl==null){
+				rs.picurl='';
+			}
+			str +=`
+			<div class="listshops">
+				<div class="img"><a href="${rs.url}" class="iframe" target="_blank"><img class="ring ring-group" src="${rs.picurl}" onerror="this.src='/public/static/images/nopic.png'"/></a> </div>
+				<div class="title"><a href="${rs.url}" target="_blank">${title}</a></div>
+				<div class="info">${content}</div>			
+				<div class="atcs">				 
+					<a href="javascript:" data-id="${rs.id}" data-url="${rs.url}" data-title="${rs.title}" data-picurl="${rs.picurl}" data-content="${rs.content}" class="edits">{if $mid==4}<i class="glyphicon glyphicon-headphones"></i>直播{else /}<i class="fa fa-fw fa-tv"></i>点播{/if}</a>
+				</div>
+			</div>
+			`;
+		});
+		return str;
+}
+
+ 
+
+$(document).ready(function () {
+	$(window).scroll(function () {		
+		var h = $(document).height() - $(window).height()-$(window).scrollTop();//console.log( h );
+		if (scroll_get==true && h<200) {
+			//window.parent.$(window).scrollTop(0);
+			scroll_get = false;
+			layer.msg('内容加截中,请稍候');
+			get_list_data();
+			if(page>2){
+				window.parent.document.body.scrollTop = window.parent.document.documentElement.scrollTop = 0;	//父窗口要返回到顶部,不然会看不到下面的内容
+			}
+		}
+	});
+});
+
+
+</script>
+{/block}

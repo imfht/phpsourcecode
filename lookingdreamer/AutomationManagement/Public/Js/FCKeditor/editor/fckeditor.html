@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>FCKeditor</title>
+    <meta name="robots" content="noindex, nofollow"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Cache-Control" content="public"/>
+    <script type="text/javascript">
+
+        function LoadScript(url) {
+            document.write('<scr' + 'ipt type="text/javascript" src="' + url + '" onerror="alert(\'Error loading \' + this.src);"><\/scr' + 'ipt>');
+        }
+
+        function LoadCss(url) {
+            document.write('<link href="' + url + '" type="text/css" rel="stylesheet" onerror="alert(\'Error loading \' + this.src);" />');
+        }
+
+        var sSuffix = /msie/.test(navigator.userAgent.toLowerCase()) ? 'ie' : 'gecko';
+
+        LoadScript('js/fckeditorcode_' + sSuffix + '.js');
+
+        LoadScript('../fckconfig.js');
+
+    </script>
+    <script type="text/javascript">
+
+        if (FCKBrowserInfo.IsIE) {
+            try {
+                document.execCommand('BackgroundImageCache', false, true);
+            }
+            catch (e) {
+            }
+
+            FCK.IECleanup = new FCKIECleanup(window);
+            FCK.IECleanup.AddItem(FCKTempBin, FCKTempBin.Reset);
+            FCK.IECleanup.AddItem(FCK, FCK_Cleanup);
+        }
+
+        FCKConfig.ProcessHiddenField();
+
+    </script>
+    <script type="text/javascript">
+
+        FCKConfig_LoadPageConfig();
+
+        FCKConfig_PreProcess();
+
+        LoadCss(FCKConfig.SkinPath + 'fck_editor.css');
+
+        FCKLanguageManager.Initialize();
+        LoadScript('lang/' + FCKLanguageManager.ActiveLanguage.Code + '.js');
+
+    </script>
+    <script type="text/javascript">
+
+        FCKPlugins.Load();
+
+    </script>
+    <script type="text/javascript">
+
+        window.document.dir = FCKLang.Dir;
+
+        if (FCKConfig.ForcePasteAsPlainText || FCKConfig.AutoDetectPasteFromWord)
+            FCK.Events.AttachEvent('OnPaste', FCK.Paste);
+
+    </script>
+    <script type="text/javascript">
+
+        window.onload = function () {
+            InitializeAPI();
+
+            if (FCKBrowserInfo.IsIE)
+                FCK_PreloadImages();
+            else
+                LoadToolbarSetup();
+        }
+
+        function LoadToolbarSetup() {
+            FCKeditorAPI._FunctionQueue.Add(LoadToolbar);
+        }
+
+        function LoadToolbar() {
+            var oToolbarSet = FCK.ToolbarSet = FCKToolbarSet_Create();
+
+            if (oToolbarSet.IsLoaded)
+                StartEditor();
+            else {
+                oToolbarSet.OnLoad = StartEditor;
+                oToolbarSet.Load(FCKURLParams['Toolbar'] || 'Default');
+            }
+        }
+
+        function StartEditor() {
+            FCK.ToolbarSet.OnLoad = null;
+
+            FCKeditorAPI._FunctionQueue.Remove(LoadToolbar);
+
+            FCK.Events.AttachEvent('OnStatusChange', WaitForActive);
+
+            FCK.StartEditor();
+        }
+
+        function WaitForActive(editorInstance, newStatus) {
+            if (newStatus == FCK_STATUS_ACTIVE) {
+                if (FCKBrowserInfo.IsGecko)
+                    FCKTools.RunFunction(window.onresize);
+
+                _AttachFormSubmitToAPI();
+
+                FCK.SetStatus(FCK_STATUS_COMPLETE);
+
+                if (typeof( window.parent.FCKeditor_OnComplete ) == 'function')
+                    window.parent.FCKeditor_OnComplete(FCK);
+            }
+        }
+
+        if (FCKBrowserInfo.IsGecko) {
+            function Window_OnResize() {
+                if (FCKBrowserInfo.IsOpera)
+                    return;
+
+                var oCell = document.getElementById('xEditingArea');
+
+                var eInnerElement = oCell.firstChild;
+                if (eInnerElement) {
+                    eInnerElement.style.height = 0;
+                    eInnerElement.style.height = oCell.scrollHeight - 2;
+                }
+            }
+
+            window.onresize = Window_OnResize;
+        }
+
+    </script>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="height: 100%; table-layout: fixed">
+    <tr id="xToolbarRow">
+        <td id="xToolbarSpace" style="overflow: hidden">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr id="xExpanded">
+                    <td id="xToolbar" class="TB_ToolbarSet"></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td id="xEditingArea" valign="top" style="height: 100%"></td>
+    </tr>
+</table>
+</body>
+</html>

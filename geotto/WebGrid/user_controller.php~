@@ -1,0 +1,140 @@
+<?php
+/*
+ * 该脚本用于提供用户访问功能
+ * */
+ include_once("controller.php");
+ 
+class UserController extends Controller{
+		function __construct($modelPath, $viewPath, $dbc=null){
+			parent::__construct($modelPath, $viewPath, $dbc);
+			
+			define("PASSWORD_LEN", 6);
+			define("INCLUDES", "includes");
+		}
+		
+		//注册页面
+		function register(){
+			$page = "注册-WebGrid";
+			include(VIEW_PATH."/user_register.php");
+		}
+		
+		//执行注册
+		function doRegister(){
+			//加载模型
+			$user = $this->loadModel("User", "User");
+			$syslogModel = $this->loadModel("SysLog", "SysLog");
+			$desktopModel = $this->loadModel("Desktop", "Desktop");
+			
+			//获取参数
+			$name = $this->getPost('name', true);
+			$password = $this->getPost('password', true);
+			
+			//检测参数
+			if(strlen($password) < PASSWORD_LEN){
+				$msg = new Message(Message::MSG_ARG_ERROR, "密码长度有误，请重新输入");
+				echo $msg->form();
+				return;
+			}
+			
+			$exists = $user->exists($name);
+			if($exists){
+				$msg = new Message(Message::MSG_ALREADY_EXISTS, "使用的用户名已被注册");
+				echo $msg->form();
+				return;
+			}
+			
+			try{
+				$id = $user->register($name, $password);
+			}catch(Exception $e){
+				$msg = new Message(Message::MSG_ERROR, "执行操作时发生错误，我们对此感到十分抱歉", $e->getMessage());
+				$syslogModel->log($msg);
+				echo $msg->form();
+				return;
+			}
+			
+			//添加桌面
+			try{
+				$desktop_id = $desktopModel->addDesktop($id);
+				$user->addDesktop($id, $desktop_id);
+			}catch(Exception $e){
+				$msg = new Message(Message::MSG_ERROR, "执行操作时发生错误，我们对此感到十分抱歉", $e->getMessage());
+				$syslogModel->log($msg);
+				echo $msg->form();
+				return;
+			}
+			
+			$msg = new Message(Message::MSG_SUCCESS, "操作成功");
+			echo $msg->form();
+		}
+		
+		//主页面
+		function index(){
+			$categoryModel = $this->loadModel("Category", "Category");
+			$userModel = $this->loadModel("User", "User");
+			
+			$user_id = $this->logged();
+			
+			//获取分类
+			$categories = $categoryModel->getCategories();
+			//获取桌面
+			if($user_id){
+				try{
+					$desktops = $userModel->getDesktops($user_id);
+				}catch(Exception $e){
+					$msg = new Message(Message::MSG_ERROR, "执行操作时发生错误，我们对此感到十分抱歉", $e->getMessage());
+					$syslogModel->log($msg);
+					echo $msg->form();
+					return;
+				}
+			}
+			
+			include(VIEW_PATH."/user_index.php");
+		}
+		
+		//登录
+		function doLogin(){
+			//获取参数
+			$name = $this->getPost("name", true);
+			$password = $this->getPost("password", true);
+			
+			$userModel = $this->loadModel("User", "User");
+			$user = $userModel->login($name, $password);
+			if($user == null){
+					echo "用户名或密码错误，请重新输入";
+					return;
+			}
+			
+			session_start();
+			$_SESSION['id'] = $user['id'];
+			$_SESSION['name'] = $user['name'];
+			$_SESSION['background'] = $user['background'];
+			
+			echo "SUCCESS";
+		}
+		
+		//根据分类获取网址
+		function getSitesByCategory(){
+				$category = $this->getPost("category", true);
+				
+				$siteModel = $this->loadModel("Site", "Site");
+				$sites = $siteModel->getSitesByCategory($category, 0, ITEM_COUNT);
+				if($sites == null){
+					$msg = new Message(Message::MSG_NONE, "暂无记录");
+					echo $msg->form();
+					return;
+				}
+				
+				$rows = array();
+				foreach($sites as $site){
+					$rows[] = implode(SEP_II, $site);
+				}
+				$msg = new Message(Message::MSG_SUCCESS, implode(SEP_I, $rows));
+				echo $msg->form();
+		}
+		
+		//获取用户编号
+		function logged(){
+			return isset($_SESSION['id'])?$_SESSION['id']:false;
+		}
+}
+?>

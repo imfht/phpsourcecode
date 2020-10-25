@@ -1,0 +1,1 @@
+<img src="<?php echo URL('/yzmShow'); ?>" />

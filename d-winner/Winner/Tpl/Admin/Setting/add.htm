@@ -1,0 +1,234 @@
+<script language="javascript">
+$(function(){
+	
+	$("#editOpt").click(function(){
+		$("#showType").html('<textarea name="opts" cols="38" rows="3" class="easyui-validatebox"><?php echo $info["opts"] ?></textarea>');
+	});
+	
+	$("#addFormSetting{$uniqid}").form({
+		onLoadSuccess:function(e){
+			//alert(1);
+			var tp = '<?php echo $info["types"] ?>';
+			switch(tp){
+				case 'char':
+					$("#showType").html('<input name="opts" type="text" class="easyui-validatebox" data-options="" value="<?php echo $info["opts"] ?>" size="38" />');
+				break;
+				
+				case 'int':
+					$("#showType").html('<input name="opts" type="text" class="easyui-numberbox" data-options="" value="<?php echo $info["opts"] ?>" size="20" />');
+				break;
+				
+				case 'bool':
+					$("#showType").html('<select class="easyui-combobox" name="opts"><option value="1" {$info["opts"]==1?"selected=\"selected\"":""}>开启</option><option value="0" {$info["opts"]==0?"selected=\"selected\"":""}>关闭</option></select>');
+				break;
+				
+				case 'upload':
+					$("#showType").html('<input name="opts" type="file" />');
+				break;
+				
+				case 'between':
+					$("#showType").html('<input name="opts[]" type="text" class="easyui-numberbox" data-options="" value="<?php echo $info["opts"][0] ?>" size="10" /> - <input name="opts[]" type="text" class="easyui-numberbox" data-options="" value="<?php echo $info["opts"][1] ?>" size="10" />');
+				break;
+				
+				case 'text':
+					$("#showType").html('<textarea name="opts" cols="38" rows="3" class="easyui-validatebox"><?php echo $info["opts"] ?></textarea>');
+				break;
+				
+				case 'select':
+					$("#showType").html('<select class="easyui-combobox"name="vals"><?php echo $sopt ?></select>');
+				break;
+				
+				case 'more':
+					$("#showType").html('<select class="easyui-combobox" id="moreVals"  name="vals[]" data-options="width:220,multiple:true"><?php echo $mopt ?></select>');
+					//$("#moreVals").combobox('setValue','');
+				break;
+			}
+		}
+	});
+	
+	$("#addFormSetting{$uniqid}").form('load',{
+		'gid':'<?php echo $info["gid"] ?>',
+		'name':'<?php echo $info["name"] ?>',
+		'keyword':'<?php echo $info["keyword"] ?>',
+		'types':'<?php echo $info["types"] ?>',
+		'otypes':'<?php echo $info["types"] ?>',
+		'oopts':'<?php echo $info["opts"] ?>',
+		'notes':'<?php echo $info["notes"] ?>'
+	});
+	
+	$("#types").combobox({
+		onSelect:function(e){
+			var idd = e.value;
+			switch(idd){
+				case 'char':
+					$("#showType").html('<input name="opts" type="text" class="easyui-validatebox" data-options="" size="38" />');
+				break;
+				
+				case 'int':
+					$("#showType").html('<input name="opts" type="text" class="easyui-numberbox" data-options="" size="20" />');
+				break;
+				
+				case 'bool':
+					$("#showType").html('<select class="easyui-combobox" name="opts"><option value="1">开启</option><option value="0">关闭</option></select>');
+				break;
+				
+				case 'upload':
+					$("#showType").html('<input name="opts" type="file" />');
+				break;
+				
+				case 'between':
+					$("#showType").html('<input name="opts[]" type="text" class="easyui-numberbox" data-options="" size="10" /> - <input name="opts[]" type="text" class="easyui-numberbox" data-options="" size="10" />');
+				break;
+				
+				case 'text':
+					$("#showType").html('<textarea name="opts" cols="38" rows="3" class="easyui-validatebox"></textarea>');
+				break;
+				
+				case 'select':
+					$("#showType").html('<textarea name="opts" cols="38" rows="3" class="easyui-validatebox"></textarea>');
+				break;
+				
+				case 'more':
+					$("#showType").html('<textarea name="opts" cols="38" rows="3" class="easyui-validatebox"></textarea>');
+				break;
+			}
+		}
+	});
+});
+
+function onSubmitSetting(idd){
+	$.messager.progress();
+	$("#addFormSetting"+idd).form('submit',{
+		url:'__URL__/add/act/add/go/1',
+		onSubmit: function(){
+			var isValid = $(this).form('validate');
+			if (!isValid){
+				$.messager.progress('close');
+			}
+			return isValid;
+		},
+		success:function(data){
+			$.messager.progress('close');
+			if(data==1){
+				$.messager.alert('提示','新增数据成功！','info',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					cancel['tabs'].datagrid('reload');
+					if(sa==1){
+						cancel['Setting'].dialog('close');
+						cancel['Setting'] = null;
+					}
+				});
+			}else if(data==0){
+				$.messager.alert('提示','新增数据失败！','warning');
+			}else if(data==-99){
+				$.messager.alert('提示','该参数已存在！','warning');
+			}else{
+				$.messager.alert('提示',data,'warning',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					if(sa==1){
+						cancel['Setting'].dialog('close');
+						cancel['Setting'] = null;
+					}
+				});
+			}
+		}
+	});
+}
+
+function onUploadSetting(idd){
+	$.messager.progress();
+	var ids = $("#ids"+idd).val();
+	$("#addFormSetting"+idd).form('submit',{
+		url:'__URL__/add/act/edit/go/1/id/'+ids,
+		onSubmit: function(){
+			var isValid = $(this).form('validate');
+			if (!isValid){
+				$.messager.progress('close');
+			}
+			return isValid;
+		},
+		success:function(data){
+			$.messager.progress('close');
+			if(data==1){
+				$.messager.alert('提示','更新数据成功！','info',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					cancel['tabs'].datagrid('reload');
+					if(sa==1){
+						cancel['Setting'].dialog('close');
+						cancel['Setting'] = null;
+					}
+				});
+				$("#add").dialog('refresh');
+			}else if(data==0){
+				$.messager.alert('提示','更新数据失败！','warning');
+			}else{
+				$.messager.alert('提示','您没有更新权限！','warning',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					if(sa==1){
+						cancel['Setting'].dialog('close');
+						cancel['Setting'] = null;
+					}
+				});
+			}
+		}
+	});
+}
+
+function onResetSetting(idd){
+	cancel['Setting'].dialog('close');
+	cancel['Setting'] = null;
+}
+</script>
+<div class="con-tb">
+<form method="post" enctype="multipart/form-data" id="addFormSetting{$uniqid}">
+ <table class="infobox" width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td width="23%"><label for="gid">所谓组别</label></td>
+    <td width="77%">
+    <select class="easyui-combobox" id="gid" name="gid" data-options="editable:false">  
+        <option value="1">基础设置</option>  
+        <option  value="2">性能设置</option> 
+        <option  value="3">文件设置</option> 
+        <option  value="4">全局设置</option>  
+    </select><input id="ids{$uniqid}" type="hidden" value="{$id}" />
+   </td>
+  </tr>
+  <tr>
+    <td width="23%"><label for="name">参数标签</label></td>
+    <td width="77%">
+    <input name="name" class="easyui-validatebox"  size="22" data-options="required:true" />    </td>
+  </tr>
+  <tr>
+    <td width="23%"><label for="keyword">参数名</label></td>
+    <td width="77%"><input name="keyword" type="text" class="easyui-validatebox" size="22" data-options="required:true" /></td>
+  </tr>
+  <tr>
+    <td width="23%"><label for="type">参数类型</label></td>
+    <td width="77%">
+    <select class="easyui-combobox" id="types" name="types" data-options="editable:false">  
+        <option value="char">文本</option>  
+        <option  value="int">数值</option> 
+        <option  value="bool">布尔</option>
+        <option  value="upload">图片上传</option>
+        <option  value="between">取值范围</option>  
+        <option  value="text">多行文本</option>
+        <option  value="select">单选框</option>
+        <option  value="more">复选框</option>
+    </select>
+   </td>
+  </tr>
+  <tr>
+    <td width="23%"><label for="vals">参数值</label><if condition="$info['types']=='select' || $info['types']=='more'">&nbsp;<a href="#"><img id="editOpt" src="__ITEM__/__ADMIN.IMG__/gif_45_081.gif" width="16" height="16" title="编辑选项" /></a></if></td>
+    <td width="77%"><div id="showType"><input name="opts" type="text" class="easyui-validatebox" data-options="" size="38" /></div> <if condition="$info['types']=='upload'"><input name="delimg" type="checkbox" value="1" />
+    删除原图</if><input name="oopts" type="hidden" value="" /><input name="otypes" type="hidden" value="" /></td>
+  </tr>
+  <tr>
+    <td width="23%"><label for="notes">参数说明</label></td>
+    <td width="77%"><input name="notes" type="text" class="easyui-validatebox" value="" size="38" /></td>
+  </tr>
+  <tr>
+    <td height="38" colspan="2" align="center"><if condition="$act=='add'"><a href="javascript:void(0);" onclick="javascript:onSubmitSetting('{$uniqid}')" id="su" class="easyui-linkbutton" data-options="iconCls:'icon-save'">保存</a><else /><a href="javascript:void(0);" onclick="javascript:return onUploadSetting('{$uniqid}')" id="sue" class="easyui-linkbutton" data-options="iconCls:'icon-save'">保存</a></if> &nbsp; <a href="javascript:void(0);" onclick="javascript:onResetSetting('{$uniqid}')" id="re" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">关闭</a></td>
+  </tr>
+ </table>
+</form>
+</div>

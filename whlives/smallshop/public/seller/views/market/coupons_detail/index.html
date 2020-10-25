@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-form layui-card-header layuiadmin-card-header-auto" lay-filter="search_from">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">卡号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="code" placeholder="请输入" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">用户名</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="username" placeholder="请输入" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button class="layui-btn layuiadmin-btn-list" lay-submit lay-filter="search_button">
+                                <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layui-card-body">
+                    <table id="table_list" lay-filter="table_list"></table>
+                    <script type="text/html" id="username_tmp">
+                        {{# if(d.username){ }}
+                        {{ d.username }}
+                        {{# }else{ }}
+                        <span class="layui-badge">未绑定</span>
+                        {{# } }}
+                    </script>
+                    <script type="text/html" id="status_tmp">
+                        <input type="checkbox" value="{{d.id}}" lay-skin="switch" lay-text="正常|锁定" lay-filter="status_btn" {{# if(d.status== 1){ }}checked{{# } }}>
+                    </script>
+                    <script type="text/html" id="action_button">
+                        <a class="layui-btn layui-btn-xs" lay-event="bind">绑定用户</a>
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'table', 'helper'], function () {
+        var admin = layui.admin,
+            table = layui.table,
+            form = layui.form,
+            helper = layui.helper,
+            api_action_url = layui.setter.apiHost + '/market/coupons_detail';
+
+        var coupons_id = helper.get_query_variable('id');
+        //表格操作
+        table.render({
+            elem: '#table_list',
+            url: api_action_url,
+            where: {coupons_id: coupons_id},
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: 'ID', width: 80},
+                {field: 'code', title: '券号', minWidth: 150},
+                {field: 'username', title: '绑定用户', width: 150, toolbar: '#username_tmp'},
+                {field: 'is_use', title: '使用状态', width: 100},
+                {field: 'status', title: '状态', width: 100},
+                {field: 'use_at', title: '使用时间', width: 170},
+                {field: 'bind_at', title: '绑定时间', width: 170},
+                {title: '操作', width: 150, align: 'center', fixed: 'right', toolbar: '#action_button'}
+            ]],
+            page: true
+        });
+
+        //监听工具条操作按钮
+        table.on('tool(table_list)', function (obj) {
+            var data = obj.data;
+            switch (obj.event) {
+                case 'bind':
+                    layer.prompt({title: '请输入用户名', formType: 3}, function (username, index) {
+                        form_data = {id: data.id, username: username};
+                        helper.ajax(api_action_url + '/bind', form_data);
+                        layer.close(index);
+                    });
+                    return false;
+                    break;
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{foreach $order as $rs}
+<table class="pure-table">
+    <thead>
+        <tr class="pure-table-title">
+            <td>{$rs.order_starttime} 订单号 : <i class="iconfont icon-wodedingdan2"></i>{$rs.order_no}</td>
+            <td class="fn-tar">
+                {if $rs.is_del ==1}
+                    <span class="badge">已删除</span>
+                {else}
+                    {if $rs.status == 1}
+                        <span class="badge">已完成</span>
+                    {else}
+                        {if $rs.paid_at}
+                            {if $rs.express_status}
+                                <span class="badge bg-green">已发货</span>
+                            {else}
+                                <span class="badge bg-blue">待发货</span>    
+                            {/if}
+                        {else}
+                            <span class="badge bg-red">待付款</span>
+                        {/if}
+                    {/if}
+                {/if}
+            </td>
+        </tr>
+        <tr>
+            <td>收货人：{$rs.express_name}&nbsp;/&nbsp;{$rs.express_phone}<br />收货地址：{$rs.express_address}</td>
+            <td>
+                {if $rs.express_status}
+                    物流公司：{$rs.express_company}<br />
+                    快递单号：<a href="http://www.kuaidi100.com/all/sf.shtml?mscomnu={$rs.express_no}" target="_blank" class="badge">{$rs.express_no}</a>
+                {/if}
+            </td>
+        </tr>
+        <tr><th>商品</th><th class="w180 fn-tac">小计</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+            {foreach $rs.item as $vo}
+            <div class="fn-clear order">
+                <div class="img fn-left"><img src="{$vo.img}?x-oss-process=style/80" /></div>
+                <div class="info">{$vo.name}<br ><span class="gray">{$vo.note}</span></div>
+                <div class="number fn-right">￥{$vo.buy_price} x {$vo.buy_nums}</div>
+            </div>
+            {/foreach}
+            </td>
+            <td class="fn-tac">￥{$rs.order_amount}</td>
+        </tr>
+    </tbody>
+</table>
+{/foreach}
+<form id="form" action="{:url('popupshop/order/sendgoods')}" class="fn-right">
+    <input type="hidden" name="order_no" value="{$order_no}"/>
+    <table class="formtable">
+        <tr><td class="button-group">
+            <input placeholder="快递公司/或取货方式" datatype="s" class="input fn-left" type="text" name="express_company" />
+            <input placeholder="快递单号" datatype="s" class="input fn-left input_end" type="text" name="express_no" />
+            <button type="button" class="button button-blue submit" /> 立即发货</button>
+        </td></tr>
+    </table>
+</form>
+<style type="text/css">
+    .order {border-bottom: 1px #e9ecf3 solid;display: flex;}
+    .order:last-child{border-bottom:none}
+    .order div {margin: 5px;}
+    .order .img {width: 80px;height: 80px;overflow: hidden;border: 1px dotted #e9ecf3;padding: 2px;}
+    .order .img img {width: 78px;}
+    .order .info {line-height: 25px;margin-top: 10px;display: block;flex: 1px;}
+    .order .info .gray {color: #9e9e9e;font-size: 12px;}
+    .order .number {line-height: 50px;margin: 10px 20px;}
+</style>
+<script type="text/javascript">
+Do('base','layer','form',function(){
+    var index = parent.layer.getFrameIndex(window.name);
+    $("#form").Validform({
+        btnSubmit:".submit",ajaxPost:true,tiptype:4,postonce:true,
+        callback:function(data){
+            if(data.code == 200){
+                parent.layer.close(index);
+                parent.$("#iframe")[0].contentWindow.location.reload()
+            }else{
+                parent.layer.alert(data.msg,{icon:5});
+            }
+        }
+    });
+})
+</script>

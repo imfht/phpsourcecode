@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" standalone="yes"?>
+<tablecfg>
+    <table name="fin_todotbl">
+        <chnname>待处理任务管理表</chnname>
+        <listfieldcount>8</listfieldcount> <!--max_disp_cols-->
+        <since>20121024</since>
+        <creator>Xenxin</creator>
+        <!-- <superaccess>inherit::id=USER_ID::rw</superaccess> -->
+        <managemode>o-w</managemode><!-- record owner write only, others cannot write -->
+        <!-- <actoption>jdo.php::tbl=THIS_TBL,pnskpid=THIS_ID,id=THIS_ID,pid=THIS_pid,pnsktriggerbyparent=THIS_triggerbyparent,pnsktriggerbyparentid=THIS_triggerbyparentid,act='addbycopy',_Updt_Clit_Urlp='1'::回复::confirm=0,blank=0 -->
+        <actoption>jdo.php::tbl=THIS_TBL,pnskpid=THIS_ID,id=THIS_ID,pid=THIS_pid,pnsktriggerbyparent=THIS_togroup,pnsktriggerbyparentid=THIS_touser,pnsktogroup=THIS_triggerbyparent,pnsktouser=THIS_triggerbyparentid,act='addbycopy',_Updt_Clit_Urlp='1'::回复::confirm=0,blank=0
+            |jdo.php::tbl=THIS_TBL,pnskpid=THIS_ID,id=THIS_ID,pid=THIS_pid,pnsktriggerbyparent=THIS_togroup,pnsktriggerbyparentid=THIS_touser,pnsktogroup='0',pnsktouser='0',act='addbycopy',_Updt_Clit_Urlp='1'::转交::confirm=0,blank=0</actoption>
+        <hidesk>touser::=::THIS_USER|togroup::=::THIS_GROUP</hidesk> <!-- |sm::=::0 -->
+		<orderby>istate desc</orderby>
+    </table>
+    <field name="id">
+      <chnname>序号</chnname>
+    </field>
+
+    <field name="taskname">
+      <chnname>任务名</chnname>
+      <memo>新建任务时填写; &lt;br/>回复或转交任务时忽略过;</memo>
+      <!-- <href>ido.php::tbl='fin_todotbl',pnskpid=THIS_id,pnskid=THIS_id,pnsm='0',pnobid='1'::打开::isblank=0</href> -->
+	  <href>javascript:if(true){var tmpUrl='ido.php?tbl=THIS_TBL&amp;sid=THIS_SID&amp;pnsm=0'; if('THIS_pid'!='0'){ tmpUrl+='&amp;pnskpid=THIS_pid&amp;pnskid=THIS_pid';}else{ tmpUrl+='&amp;pnskpid=THIS_id&amp;pnskid=THIS_id'; } window.location.href=tmpUrl; }::打开::isblank=0</href>
+    </field>
+	
+    <field name="tasktype">
+      <chnname>任务类型</chnname>
+	  <selectoption>1:生产子系统|2:统计子系统|0:Other</selectoption>
+    </field>	
+
+    <field name="triggerbyparent">
+      <chnname>需方组</chnname>
+	   <selectoption>fromtable::info_grouptbl::groupname</selectoption>
+	   <listview>0</listview>
+       <defaultvalue>system:GROUPID</defaultvalue>
+       <!-- <readonly>1</readonly> -->
+       <!-- <delayjsaction>onload::3::if(true){ var tmpObj=_g('triggerbyparent'); if(tmpObj){tmpObj.readOnly=true;} console.log('triggerbyparent set disabled.'); };</delayjsaction> -->
+       <memo>Auto Fill...</memo>
+    </field>
+    <field name="triggerbyparentid">
+      <chnname>需方用户</chnname>
+	  <selectoption>fromtable::info_usertbl::email</selectoption>
+       <defaultvalue>system:USERID</defaultvalue>
+       <!-- <readonly>1</readonly> -->
+       <!-- <delayjsaction>onload::3::if(true){ var tmpObj=_g('triggerbyparentid'); if(tmpObj){tmpObj.readOnly=true;} console.log('triggerbyparentid set disabled.'); };</delayjsaction> -->
+       <memo>Auto Fill...</memo>
+    </field>	 
+    <field name="togroup">
+      <chnname>供方组</chnname>
+	  <selectoption>fromtable::info_grouptbl::groupname</selectoption>
+	  <listview>0</listview>
+    </field> 
+     <field name="touser">
+      <chnname>供方用户</chnname>
+	  <selectoption>fromtable::info_usertbl::email</selectoption>
+    </field> 
+    <!--
+    <field name="fwgroup">
+      <chnname>转发至组</chnname>
+	  <selectoption>fromtable::info_grouptbl::groupname</selectoption>
+	  <listview>0</listview>
+      <jsaction>onclick::if('THIS_id'==''||'THIS_isforward'!='1'){ this.disabled=true; console.log('fwgroup has been set disabled.'); };</jsaction>
+      <memo>新建任务时忽略过;
+        &lt;br/>转交任务时据实填写;</memo>
+    </field> 
+    <field name="fwuser">
+      <chnname>转发至用户</chnname>
+	  <selectoption>fromtable::info_usertbl::email</selectoption>
+      <jsaction>onclick::if('THIS_id'==''||'THIS_isforward'!='1'){ this.disabled=true; console.log('fwuser has been set disabled.'); };</jsaction>
+      <memo>新建任务时忽略过; &lt;br/>转交任务时据实填写;</memo>
+    </field> 
+    -->
+	<field name="inserttime">
+      <chnname>開始時間</chnname>
+	  <listview>2</listview>
+      <readonly>1</readonly>
+      <memo>Auto Fill...</memo>
+    </field> 
+	<field name="updatetime">
+      <chnname>更新時間</chnname>
+	  <listview>2</listview>
+      <readonly>1</readonly>
+      <memo>Auto Fill...</memo>
+    </field> 
+  	<field name="istate">
+		<chnname>状态</chnname>
+		<selectoption>1:待做|2:供方进行中|3:待需方确认|0:已完成|-2:擱置|-1:取消</selectoption>
+        <delayjsaction>onload::3::if('THIS_ID'==''){parent.fillReset('istate','select',1);}</delayjsaction>
+        <css>0:greycolor|1::redcolor|2::greencolor|3::purplecolor</css>
+        <trigger>ALL::copyto::fin_todotbl::istate=istate,updatetime=NOW()::id=pid,operator=operator::NO_INSERT</trigger> 
+	</field>
+	<field name="taskmemo">
+      <chnname>任务描述</chnname>
+	  <inputtype>textarea</inputtype>
+      <listview>0</listview>
+      <delayjsaction>onload::3::if(true){ var hasDisabled=false;var taskMemoObj=parent._g('taskmemo');if('THIS_pid'!=''&amp;&amp;'THIS_pid'!='0'){ taskMemoObj.readOnly=true; hasDisabled=true;}else if('THIS_istate'=='0'&amp;&amp;taskMemoObj){taskMemoObj.readOnly=true;hasDisabled=true} if(hasDisabled){console.log('taskmemo has been set disabled.');}}</delayjsaction>
+      <memo>新建任务时填写; &lt;br/>回复或转交任务时忽略过;</memo>
+    </field>
+    <field name="taskreply">
+      <chnname>处理进度</chnname>
+	  <inputtype>textarea</inputtype>
+      <delayjsaction>onload::3::if(true){var hasDisabled=false;var taskReplyObj=parent._g('taskreply'); if('THIS_id'==''){ taskReplyObj.readOnly=true;}else if('THIS_istate'=='0'&amp;&amp;taskReplyObj){ taskReplyObj.readOnly=true; hasDisabled=true}; if(hasDisabled){console.log('taskreplay has been set disabled.');};}</delayjsaction>
+      <memo>新建任务时忽略过;
+        &lt;br/>回复或转交任务时据实填写;</memo>
+	  <listview>2</listview>
+    </field>
+    <field name="pid">
+        <chnname>任务主线</chnname>
+        <!-- <readonly>1</readonly> -->
+        <delayjsaction>onload::3::if(true){ var pidObj=parent._g('pid'); if(pidObj&amp;&amp;parent.userinfo.urlParams){ var urlPid=parent.userinfo.urlParams['pid']; var urlPidP=0; if(!urlPid){ urlPidP=parent.userinfo.urlParams['pnskpid']; }; if(urlPid &amp;&amp; urlPidP){ if(urlPid>urlPidP){ urlPid=urlPidP; } }  if(urlPid>0){ pidObj.value=urlPid; }else{ console.log('urlPid:'+urlPid+' urlPidP:'+urlPidP); }; pidObj.readOnly=true; }  console.log('pid has been set disabled.'); };</delayjsaction>
+        <memo>Auto Fill...</memo>
+    </field>
+    
+    <field name="taskfile">
+      <chnname>附件</chnname>
+	  <inputtype>file</inputtype>
+    </field>
+
+  	<field name="operator">
+      <chnname>操作人</chnname>
+	  <selectoption>fromtable::info_usertbl::email</selectoption>
+    </field>
+		
+</tablecfg>
+

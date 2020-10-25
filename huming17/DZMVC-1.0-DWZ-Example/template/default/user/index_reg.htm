@@ -1,0 +1,97 @@
+﻿<!--{subtemplate index/common_header}-->
+<!--JS校验函数 start-->
+<link rel="stylesheet" href="template/default/static/js/validation_engine/validationEngine.jquery.css" type="text/css"/>
+<script src="template/default/static/js/jquery.min.js" type="text/javascript"></script>
+<script src="template/default/static/js/validation_engine/languages/jquery.validationEngine-cn.js" type="text/javascript" charset="utf-8"></script>
+<script src="template/default/static/js/validation_engine/jquery.validationEngine.js" type="text/javascript" charset="utf-8"></script>
+<script>
+	jQuery(document).ready(function(){
+		// binds form submission and fields to the validation engine
+		jQuery("#user_reg").validationEngine({
+                    validationEventTriggers:"blur",  //触发的事件  validationEventTriggers:"keyup blur",   
+                    inlineValidation: true,//是否即时验证，false为提交表单时验证,默认true   
+                    success :  false,//为true时即使有不符合的也提交表单,false表示只有全部通过验证了才能提交表单,默认false   
+                    promptPosition: "centerRight"//提示所在的位置，topLeft, topRight, bottomLeft,  centerRight, bottomRight   
+                    //failure : function() { alert("验证失败，请检查。");  }//验证失败时调用的函数   
+                    //success : function() { callSuccessFunction() },//验证通过时调用的函数  
+                });
+	});
+</script>
+
+<!--JS校验函数 end-->
+<form method="post" action="{eval echo site_rewrite_url('','user','center','add');}" id="user_reg"  target="_self">
+  <input type="hidden" name="is_submit" value="1">
+  <div data-role="fieldcontain"> <span class="red">*</span>
+    <label for="user_realname"> 真实姓名：</label>
+    <input type="text" class="input validate[required]" name="user_realname" id="user_realname" value="" data-prompt-position="topLeft:90">
+  </div>
+  <div data-role="fieldcontain" style="position:relative"> <span class="red">*</span>
+    <label for="user_name"> 常用邮箱：</label>
+    <input type="text" class="input validate[required,custom[email],ajax[ajaxUserCallPhp]] text-input" name="user_name" id="user_name" value="" autocomplete="off" disableautocomplete="" data-prompt-position="topLeft:90">
+  </div>
+  <div data-role="fieldcontain"> <span class="red">*</span>
+    <label for="user_name2"> 确认邮箱：</label>
+    <input onpaste="return false" type="text" value="" id="user_name2" name="user_name2" class="input validate[required,custom[email],equals[user_name]] text-input" autocomplete="off"  onpaste="return false" data-prompt-position="topLeft:90">
+  </div>
+  <div data-role="fieldcontain"> <span class="red">*</span>
+    <label for="user_password"> 设置密码：</label>
+    <input type="password" class="input validate[required] text-input" name="user_password" id="user_password"  data-prompt-position="topLeft:90" />
+  </div>
+  <div data-role="fieldcontain"> <span class="red">*</span>
+    <label for="user_password2"> 确认密码：</label>
+		<input type="password" class="input validate[required,equals[user_password]] text-input" name="user_password2" id="user_password2" onpaste="return false"  data-prompt-position="topLeft:90" />
+  </div>
+  <div data-role="fieldcontain"> <span class="red">*</span>
+    <label for="6_letters_code"> 验证码：</label>
+    <input type="text" class="input" name="6_letters_code" id="6_letters_code" style="width:116px;" data-prompt-position="topLeft:90" />
+    <div id="6_letters_code_img" style="display:none;"><img src="{eval echo site_rewrite_url('','ajax','seccode','display');}" id='captchaimg' /><a href="javascript: refreshCaptcha();"> 验证码</a></div>
+  </div>
+  <input type="hidden" name="inviteCode" value="" id="inviteCode">
+  <div data-role="fieldcontain" style="line-height:16px; height:40px;">
+  	<label for="agree">我同意<a href="javascript:;" onClick="openServiceItems(0)">使用条款</a>和<a href="javascript:;" onClick="openServiceItems(1)">隐私条款</a></label>
+  	<input id="agree" type="checkbox" class="validate[required] checkbox" checked="checked" name="agree" style="vertical-align:middle"> 
+  	
+  </div>
+  <input type="submit" class="regbt" value="注册" style="text-indent:0px;">
+  <p> 已有入账号？<a href="{eval echo site_rewrite_url('','','','','','','',$special_url='admin.php');}" target="_blank">立即登录</a></p>
+  <span id="passwordLevel_msg"></span>
+</form>
+<script type='text/javascript'>
+function refreshCaptcha()
+{
+	var img = document.images['captchaimg'];
+	console.log(img);
+	<!--{if $_G['setting']['site_rewrite']=='1'}-->
+	img.src = img.src+"?rand="+Math.random()*1000;
+	<!--{else}-->
+	img.src = img.src.substring(0,img.src.lastIndexOf("&"))+"&rand="+Math.random()*1000;
+	<!--{/if}-->
+}
+
+$(function(){
+	/*进入焦点时触发*/
+	$("#6_letters_code").focus(function(){
+		$("#6_letters_code_img").show();
+	}); 
+	/*失去焦点时触发*/
+	$("#6_letters_code").blur(function(){
+		seccode = $(this).val();
+		if(seccode != ""){
+			$.ajax({
+			  type: "POST",
+			  url: "index.php",
+			  cache: false,
+			  data: { "mod":"ajax", "action":"seccode", "do":"check", "seccode": seccode }
+			}).done(function( result ) {
+			  if(result == '1'){
+				$("#6_letters_code_img").hide();
+			  }else{
+				refreshCaptcha();
+				alert("验证码错误");
+			  }
+			});
+		}
+	});
+});
+</script> 
+<!--{subtemplate index/common_footer}-->

@@ -1,0 +1,133 @@
+<script language="javascript">
+var role = '{$role}';
+if(role==-2){
+	cancel['Notice'].dialog('close');
+	cancel['Notice'] = null;
+	$.messager.alert('提示','您没有新增权限！','warning');
+}else if(role==-3){
+	cancel['Notice'].dialog('close');
+	cancel['Notice'] = null;
+	$.messager.alert('提示','您没有编辑权限！','warning');
+}
+$(function(){
+	$("#addFormNotice{$uniqid}").form('load',{
+		'title':'<?php echo $info["title"] ?>',
+		'status':'<?php echo $info["status"] ?>',
+	});
+});
+
+var idd = '';
+function onSubmitNotice(idd){
+	$.messager.progress();
+	$("#addFormNotice"+idd).form('submit',{
+		url:'__URL__/add/act/add/go/1',
+		onSubmit: function(){
+			var isValid = $(this).form('validate');
+			if (!isValid){
+				$.messager.progress('close');
+			}
+			return isValid;
+		},
+		success:function(data){
+			$.messager.progress('close');
+			if(data==1){
+				$.messager.alert('提示','新增数据成功！','info',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					$("#Notice").datagrid('reload');
+					if(sa==1){
+						cancel['Notice'].dialog('close');
+						cancel['Notice'] = null;
+					}
+				});
+			}else if(data==0){
+				$.messager.alert('提示','新增数据失败！','warning');
+			}else{
+				$.messager.alert('提示','您没有新增权限！','warning',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					if(sa==1){
+						cancel['Notice'].dialog('close');
+						cancel['Notice'] = null;
+					}
+				});
+			}
+		}
+	});
+}
+
+function onUploadNotice(idd){
+	$.messager.progress();
+	var ids = $("#ids"+idd).val();
+	$("#addFormNotice"+idd).form('submit',{
+		url:'__URL__/add/act/edit/go/1/id/'+ids,
+		onSubmit: function(){
+			var isValid = $(this).form('validate');
+			if (!isValid){
+				$.messager.progress('close');
+			}
+			return isValid;
+		},
+		success:function(data){
+			$.messager.progress('close');
+			if(data==1){
+				$.messager.alert('提示','更新数据成功！','info',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					$("#Notice").datagrid('reload');
+					if(sa==1){
+						cancel['Notice'].dialog('close');
+						cancel['Notice'] = null;
+					}
+				});
+				$("#add").dialog('refresh');
+			}else if(data==0){
+				$.messager.alert('提示','更新数据失败！','warning');
+			}else{
+				$.messager.alert('提示','您没有更新权限！','warning',function(){
+					var sa = '{$TC.config.SUBMIT_ACTION}';
+					if(sa==1){
+						cancel['Notice'].dialog('close');
+						cancel['Notice'] = null;
+					}
+				});
+			}
+		}
+	});
+}
+
+function onResetNotice(idd){
+	cancel['Notice'].dialog('close');
+	cancel['Notice'] = null;
+}
+</script>
+<div class="con-tb">
+<form id="addFormNotice{$uniqid}" method="post">
+ <table class="infobox" width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td width="13%"><label for="username">创建人</label><input id="ids{$uniqid}" type="hidden" value="{$id}" /></td>
+    <td width="37%">
+    <if condition="$act=='add'"><?php echo $_SESSION['login']['se_user']; ?><else />{$info.username}</if>
+    </td>
+    <td width="13%"><label for="status">状态</label></td>
+    <td width="37%">
+     <select class="easyui-combobox" name="status">  
+        <option value="1">顶置</option>  
+        <option value="2" selected="selected">上线</option>  
+        <option  value="0">下线</option>  
+     </select>
+    </td>
+  </tr>
+  <tr>
+    <td width="13%"><label for="title">公告标题</label></td>
+    <td colspan="3"><input name="title" type="text" class="easyui-validatebox" value="" style="width:99%;" data-options="required:true,validType:'ptext'" /></td>
+    </tr>
+  <tr>
+    <td width="13%"><label for="contents">公告内容</label></td>
+    <td colspan="3">
+    <textarea name="content" id="contentID{$uniqid}"  rows="18" class="easyui-kindeditor" style="width:99%; height:350px" data-options="uploadJson:'__APP__/Public/Upload/save/act/notice'">{$info.content}</textarea>
+    </td>
+  </tr>
+  <tr>
+    <td height="38" colspan="4" align="center"><if condition="$act=='add'"><a href="javascript:void(0);" onclick="javascript:onSubmitNotice('{$uniqid}')" id="su" class="easyui-linkbutton" data-options="iconCls:'icon-save'">保存</a><else /><a href="javascript:void(0);" onclick="javascript:return onUploadNotice('{$uniqid}')" id="sue" class="easyui-linkbutton" data-options="iconCls:'icon-save'">保存</a></if> &nbsp; <a href="javascript:void(0);" onclick="javascript:onResetNotice('{$uniqid}')" id="re" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">关闭</a></td>
+  </tr>
+ </table>
+</form>
+</div>

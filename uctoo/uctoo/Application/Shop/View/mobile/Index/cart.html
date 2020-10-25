@@ -1,0 +1,220 @@
+
+<include file="mobile/Public/header" />
+
+<link rel="stylesheet" href="__CSS__/good.css">
+<link rel="stylesheet" href="__CSS__/fonts.css">
+<link rel="stylesheet" href="__CSS__/count_box.css">
+<link rel="stylesheet" href="__CSS__/cart.css">
+<header class="color-main vertical-box">
+    <span class="header-title">购物车</span>
+    <php>
+    if(!empty($cart)){
+        </php>
+        <div class="edit-cart-btn header-right vertical-box white-tips-font">
+            <span class="img-btn">编辑</span>
+        </div>
+    <php>
+    }
+    </php>
+</header>
+<article class="<php> echo(!empty($cart)?"cart-":"") </php>nav-footer-margin">
+    <article class="cart-article">
+        <php>
+        if(!empty($cart)){
+            foreach ($cart as $c) {
+                </php>
+
+                <section class="good-section linear-section" data-id="<php> echo $c['id'] </php>">
+                    <div class="good-left-check vertical-box">
+                    <span class="circle-checkbox active-bg">
+                        <img src="__IMG__/check.png">
+                    </span>
+                    </div>
+                    <div class="good-section-left">
+                        <img class="good-section-img" src="<php> echo (empty($c['product']['main_img'])?'':pic($c['product']['main_img'])) </php>">
+                    </div>
+                    <div class="good-section-right border-box">
+                        <p class="good-section-title"><php> echo (empty($c['product']['title'])?'':$c['product']['title']) </php></p>
+                        <php>
+                        if(!empty($c['product']['sku_id'][1])){
+                            </php>
+                            <p class="good-section-option small-text tips-font"><php> echo $c['product']['sku_id'][1] </php></p>
+                            <php>
+                        }
+                        </php>
+                        <p class="good-section-option small-text tips-font clearfix buy-mode">
+                            ￥<php> echo (empty($c['product']['price'])?'':sprintf("%.2f", $c['product']['price']/100)) </php> x <php> echo $c['quantity'] </php>
+                            <span class="big-text good-section-price secondary-font">
+                                ￥<span class="product-price"><php> echo (empty($c['product']['price'])?'':sprintf("%.2f", ($c['product']['price']*$c['quantity'])/100)) </php></span>
+                            </span>
+                        </p>
+                        <p class="good-section-option small-text tips-font clearfix edit-mode" style="display: none">
+                            <span class="section-type sku-type count-box clearfix">
+                                <button class="count-btn cut-btn big-text">-</button>
+                                <input class="count-input" type="text" value="<php> echo $c['quantity'] </php>" readonly="">
+                                <button class="count-btn add-btn big-text">+</button>
+                            </span>
+                        </p>
+                    </div>
+                </section>
+
+                <php>
+            }
+        }
+        else{
+            </php>
+            <p class="empty-cart-p tips-font">购物车还是空的噢<br/>去挑几件商品吧</p>
+        <php>
+        }
+        </php>
+    </article>
+
+    <php>
+    if(!empty($guess['list'])){
+        </php>
+        <p class="guess-title cut-off-rule-p">猜你喜欢</p>
+        <article class="guess-article block-good-article clearfix">
+            <php>
+            foreach($guess['list'] as $g){
+                </php>
+                <section class="block-good-section border-box" onclick="window.location.href={:U('shop/index/product')}'&id=<php> echo $g['id'] </php>'">
+                    <div class="block-top">
+                        <img class="block-good-img" src="<php> echo pic($g['main_img']) </php>">
+                    </div>
+                    <div class="block-bottom">
+                        <p class="text-ellipsis"><php> echo $g['title'] </php></p>
+                        <p class="secondary-font">￥<php> echo sprintf("%.2f", $g['price']/100) </php></p>
+                    </div>
+                </section>
+            <php>
+            }
+            </php>
+        </article>
+    <php>
+    }
+    </php>
+
+</article>
+
+<php>
+if(!empty($cart)){
+    </php>
+    <footer class="fix-btn-group clearfix big-text">
+        <div class="group-left border-box">
+            合计：￥<span id="products-price-all">0</span>
+        </div>
+        <div class="group-right border-box color-primary buyImmediately">
+            <span class="group-right-text">去结算</span>
+            <span class="normal-text">（<span id="products-count">0</span>）</span>
+        </div>
+    </footer>
+    <php>
+}
+</php>
+<include file="mobile/Public/nav-footer" />
+
+<include file="mobile/Public/footer" />
+
+
+<script>
+    //'jquery' or 'zepto' 脚本入口,按情况选择加载
+    seajs.use('zepto', function () {
+        $(document).ready(function () {
+            /*
+                结算按钮
+            */
+            $('.buyImmediately').click(function () {
+                var id = $(this).data('id');
+                if(id&&id!=''){
+                    var edit_status = $(this).hasClass('editing-cart');
+                    /*结算*/
+                    if(!edit_status){
+                        window.location.href='{:U('shop/index/makeorder')}&cart_id='+id;
+                    }
+                    /*删除*/
+                    else{
+                        console.log(id);
+                        if(confirm('您确定要删除吗？')){
+                            id = id.split(',');
+                            console.log(id);
+                            $.post('{:U('shop/index/delete_cart')}',{ids:id}, function (ret) {
+                                console.log(ret);
+		                        ret =  JSON.parse(ret)
+		                        if(ret.status==1){
+                                    showTip('','删除成功','');
+                                    window.location.reload();
+                                }
+                                else{
+                                    showTip('','删除失败'+ret.info,'');
+                                    window.location.reload();
+                                }
+                            })
+                        }
+                    }
+                }
+                else{
+                    showTip('','请选择商品','')
+                }
+            });
+            /*
+                编辑按钮
+            */
+            $('.edit-cart-btn').click(function () {
+                var buy = $('.buyImmediately');
+                var text = $('.group-right-text');
+                var status = buy.hasClass('editing-cart');
+                if(status) {
+                    buy.removeClass('editing-cart color-secondary');
+                    text.text('去结算');
+                    $(this).children().text('编辑');
+                }
+                else {
+                    buy.addClass('editing-cart color-secondary');
+                    text.text('删除');
+                    $(this).children().text('完成')
+                }
+//                $('.edit-mode').toggle();
+//                $('.buy-mode').toggle();
+            });
+            seajs.use('seajs/count_box', function (count) {
+                $('.count-box .add-btn').click(function (event) {
+                    var box = $(this).parents('.count-box');
+                    count.add(box);
+                    event.stopPropagation()
+                });
+                $('.count-box .cut-btn').click(function (event) {
+                    var box = $(this).parents('.count-box');
+                    count.cut(box);
+                    event.stopPropagation()
+                })
+            });
+            /*
+                选择购物车里的商品
+            */
+            $('.good-section').click(function () {
+                $(this).toggleClass('checked-section');
+                check_price()
+            });
+            /*更新价格*/
+            function check_price(){
+                var price_all = 0;
+                var checked_section = $('.checked-section');
+                var card_id = '';/*随手记录购物车id*/
+                checked_section.each(function () {
+                    price_all+=parseFloat($(this).find('.product-price').text(),10);
+                    /**/
+                    var id = $(this).data('id');
+                    card_id += ','+id
+                });
+                card_id = card_id.substr(1);
+                console.log('all',card_id,price_all);
+                $('.buyImmediately').data('id',card_id);
+                $('#products-price-all').text(price_all.toFixed(2));
+                $('#products-count').text(checked_section.length)
+            }
+
+        })
+    });
+</script>
+</body>
+</html>

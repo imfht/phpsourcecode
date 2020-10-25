@@ -1,0 +1,105 @@
+{extend name="$member_style_layout" /}
+{block name="title"}转发公众号文章{/block}
+{block name="content"}
+<style>
+.PostMsg ul{
+	display: table;
+	width: 100%;
+	margin-bottom: 10px;
+	background: #FFF;
+}
+.PostMsg ul ol,.PostMsg ul li{
+	display: table-cell;
+	padding: 5px;
+	vertical-align: middle;
+}
+.PostMsg ul ol{
+	width: 70px;
+	text-align: right;
+}
+.PostMsg ul li input{
+	width: 98%;
+	border: #CCC solid 1px;
+	text-indent: 5px;
+}
+.PostMsg dl{
+	margin-bottom: 10px;
+	background: #FFF;
+	padding: 10px;
+}
+.PostMsg dl dt{
+	padding-bottom: 3px;
+}
+.PostMsg dl dd input{
+	width: 99%;
+	border: #CCC solid 1px;
+	text-indent: 5px;
+}
+.PostMsg dl dd textarea{
+	width: 97%;
+	border: #CCC solid 1px;
+	height: 80px;
+	padding: 5px 1%;
+}
+.PostMsg div{
+	text-align: center;
+}
+.PostMsg div button{
+	border: #F30 solid 1px;
+	background: #F60;
+	padding: 5px 20px;
+	color: #FFF;
+	border-radius: 5px;
+	cursor: pointer;
+}
+</style>
+<script>$('.fa-pencil').addClass('blue');</script>
+<div class="PostMsg">
+	<form name="form1" method="post" action="" class="ajax-post">
+		<ul>
+		 <ol>栏目：</ol>
+		 <li><select name="fid">
+		 <option value="">请选择一个栏目</option>
+	{volist name="''|sort_config" id="rs"}
+	{if ($rs.mid==1)}<option value="{$rs.id}" {eq name="$fid" value="$rs.id"}selected{/eq}>{$rs.title_prefix}{$rs.name}</option>{/if}
+	{/volist}
+</select></li>
+		</ul>
+		<dl>
+		 <dt>公众号文章网址：</dt>
+		 <dd><input type="text" name="mpurl" placeholder="请粘贴公众号文章网址"/></dd>
+		</dl>
+
+		<div><button type="submit">开始采集</button></div>
+	</form>
+</div>
+<script type="text/javascript">
+	$(document).ready(function(){
+        $('.ajax-post').submit(function () {
+			if($(this).find("select[name='fid']").val()==''){
+				layer.alert('请选择栏目')
+				return false;
+			}
+			if($(this).find("input[name='mpurl']").val()==''){
+				layer.alert('公众号文章网址不能为空')
+				return false;
+			}
+            var form_data = $(this).serialize();
+			layer.alert('采集需要一点时间,请耐心等候...');
+			var index = layer.load(1,{shade: [0.7, '#393D49']}, {shadeClose: true}); //0代表加载的风格，支持0-2
+            $.post("{:iurl('wxapp.post/copynews')}", form_data).success(function (res) {
+				//layer.closeAll();
+                if(res.code==0){
+					layer.msg("采集成功");
+					location.href="{:iurl('show')}?id=" + res.data.id;
+				}else{
+					layer.alert('采集失败:' + res.msg);
+				}
+            }).fail(function () {
+				layer.open({title: '提示',content: '服务器发生错误'});
+            });
+            return false;
+        });
+    });
+</script>
+{/block}

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>Alpaca - App</title>
+    <script type='text/javascript' src='http://spa.tkc8.com/common/js/jquery-2.1.4.min.js'></script>
+    <script> $.config = {router: false};</script>
+    <script src="http://full.tkc8.com/admin/common/js/alpaca-spa-2.0.js?v=1.111" type="text/javascript"></script>
+</head>
+<!-- END HEAD -->
+<!-- BEGIN BODY -->
+<body>
+<p>微信APP_ID：<span id="cur_app_id"></span></p>
+<a href="#/main/index/page1">去Page1(测试登录)</a> |
+<a href="#/main/index/page2">去Page2(测试其他)</a> |
+<hr>
+<div class="content"></div>
+
+<!-- page 1 -->
+<script id='tpl_page1' type="text/x-dot-template">
+    <h4>我是page1 用来测试登录</h4>
+    <div>
+        <h5>1 测试微信登录</h5>
+        <a onclick='Alpaca.to("#/main/index/getCode")'>点我获取code</a>
+    </div>
+</script>
+<!-- page 2 -->
+<script id='tpl_page2' type="text/x-dot-template">
+    <div>
+        <h4>我是page2 用来测试别的</h4>
+        <h3><a onclick='Alpaca.to("#/main/index/testWebLogin")'>网页登录</a></h3>
+        <h3><a onclick='Alpaca.to("#/main/index/info")'>点我查看当前用户的信息</a></h3>
+        <h3><a onclick='Alpaca.to("#/main/index/logout")'>点我注销</a></h3>
+    </div>
+</script>
+
+<!-- page wxBack -->
+<script id='tpl_wxBack' type="text/x-dot-template">
+    <div>
+        <h3>微信回调回来了</h3>
+        <h5>用Ajax 发送code到后端接口登录去吧</h5>
+        CODE={{= it.code}}
+        <br>
+        <h3><a onclick='Alpaca.to("#/main/index/wxLogin/{{= it.code}}")'>点我登录</a></h3>
+    </div>
+</script>
+<!-- page wxBack -->
+<script id='tpl_webBack' type="text/x-dot-template">
+    <div>
+        <h3>Web登录回调回来了</h3>
+        <h5>用Ajax 发送code到后端接口登录去吧</h5>
+        CODE={{= it.code}}
+        <br>
+        <h3><a onclick='Alpaca.to("#/main/index/webLogin/{{= it.code}}")'>点我登录</a></h3>
+    </div>
+</script>
+<!-- page wxBack -->
+<script id='tpl_result' type="text/x-dot-template">
+    <div>
+        <h3>登录结果</h3>
+        <h5>Code:{{= it.code}}</h5>
+        <h5>Msg:{{= it.msg}}</h5>
+        <h5>Data:{{= JSON.stringify(it.data)}}</h5>
+        <br>
+    </div>
+</script>
+<script>
+    var g_url = 'http://wn-album.tkc8.com/';
+    Alpaca.MainModule = {};
+    Alpaca.MainModule.IndexController = {
+        page1Action: function () {
+            return new Alpaca.View({from: "#tpl_page1", to: ".content"});
+        },
+        page2Action: function () {
+            return new Alpaca.View({from: "#tpl_page2", to: ".content"});
+        },
+        testWebLoginAction: function () {
+            var token      = Alpaca.Router.getParams('token');
+            var g_url     = 'http://wn-album.tkc8.com/';
+            var ajaxParam = {
+                url: g_url + "main/self/loginByQrToken",
+                data: {token: token},
+                success: function (data) {
+                    Alpaca.to("#/main/index/result", data);
+                },
+            };
+            AlpacaAjax(ajaxParam);
+        },
+        getCodeAction: function () {
+            var redirect = Alpaca.Router.getParams(0, '');
+            var back_uri = "/test-login.html#/main/index/wxBack/" + redirect;
+            var str      = getWxAuthUrl(back_uri);
+            console.log(str);
+            window.location.replace(str);
+        },
+        wxBackAction: function () {
+            var code = Alpaca.Router.getParams('code');
+            return new Alpaca.View({data: {code: code}, from: "#tpl_wxBack", to: ".content"});
+        },
+        wxLoginAction: function () {
+            var code      = Alpaca.Router.getParams(0);
+            var g_url     = 'http://wn-album.tkc8.com/';
+            var ajaxParam = {
+                url: g_url + "main/auth/loginByWx",
+                data: {code: code},
+                success: function (data) {
+                    Alpaca.to("#/main/index/result", data);
+                },
+            };
+            AlpacaAjax(ajaxParam);
+        },
+        infoAction: function () {
+            var ajaxParam = {
+                url: g_url + "main/self/info",
+                success: function (data) {
+                    Alpaca.to("#/main/index/result", data);
+                },
+            };
+            AlpacaAjax(ajaxParam);
+        },
+        logoutAction: function () {
+            var ajaxParam = {
+                url: g_url + "main/auth/logout",
+                success: function (data) {
+                    Alpaca.to("#/main/index/result", data);
+                },
+            };
+            AlpacaAjax(ajaxParam);
+        },
+        resultAction: function (data) {
+            Alpaca.Tpl({data: data, from: "#tpl_result", to: ".content"});
+        },
+    };
+
+    $(document).ready(function () {
+        $("#cur_app_id").html(WX_APP_ID);
+        Alpaca.run("#/main/index/page1");
+    });
+</script>
+<script>
+    var WX_APP_ID = 'wxd07b2ad48b8cb0fb';
+    var getWxAuthUrl = function (redirect, scope) {
+        if (!redirect) {
+            redirect = '/';
+        }
+        var reurl   = "http://" + window.location.host + '' + redirect;
+        var baseUrl = encodeURIComponent(reurl);
+
+        var urlObj              = {};
+        urlObj["appid"]         = WX_APP_ID;
+        urlObj["redirect_uri"]  = baseUrl;
+        urlObj["response_type"] = "code";
+
+        if (scope == 'base') {
+            urlObj["scope"] = "snsapi_base";
+        } else {
+            urlObj["scope"] = "snsapi_userinfo";
+        }
+        urlObj["state"] = "STATE" + "#wechat_redirect";
+
+        var toUrlParams = function (urlObj) {
+            var buff = "";
+            for (var k  in urlObj) {
+                var v = urlObj[k];
+                if (k != "sign") {
+                    buff += k + "=" + v + "&";
+                }
+            }
+
+            if (buff.substr(0, 1) == '&') {
+                buff = buff.substr(1);
+            }
+            var reg = /&$/gi;
+
+            buff = buff.replace(reg, "");
+
+            return buff;
+        };
+
+        var bizString = toUrlParams(urlObj);
+
+        var url = "https://open.weixin.qq.com/connect/oauth2/authorize?" + bizString;
+        return url;
+    };
+
+</script>
+
+<script>
+    //封装Ajax
+    var AlpacaAjax = function (param) {
+        var ajaxParam = {
+            type: "post",
+            url: g_url + "",
+            data: {},
+            dataType: "json",
+            xhrFields: {
+                withCredentials: true
+            },
+            crossDomain: true,
+            async: true,
+            beforeSend: function () {
+            },
+            success: function (data) {
+            },
+            complete: function () {
+            },
+            error: function () {
+                alert('error');
+            }
+        };
+
+        for (var p in param) { // 方法
+            ajaxParam[p] = param[p];
+
+        }
+        $.ajax(ajaxParam);
+    };
+
+</script>
+
+</body>
+<!-- END BODY -->
+</html>

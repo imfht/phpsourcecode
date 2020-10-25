@@ -1,0 +1,351 @@
+<!doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="keywords" content="$_seo_keywords" />
+	<meta name="description" content="$_seo_description " />
+	<meta name="generator" content="Xiuno BBS" />
+	<meta name="author" content="Xiuno Team" />
+	<meta name="copyright" content="2008-2012 xiuno.com" />
+	<meta name="MSSmartTagsPreventParsing" content="True" />
+	<meta http-equiv="MSThemeCompatible" content="Yes" />
+	<!--{hook header_css_before.htm}-->
+	<link href="view/common.css" type="text/css" rel="stylesheet" />
+	<link rel="shortcut icon" href="favicon.ico" />
+	<!--{hook header_css_after.htm}-->
+	<script type="text/javascript">
+	var cookie_pre = '$conf[cookie_pre]';
+	var g_uid = $_user[uid];
+	</script>
+	<title><!--{loop $_title $title}-->$title <!--{/loop}--></title>
+</head>
+<body style="background: none; width: 600px;">
+<div class="dialog" style="display: block; left: 0px; top: 0px; width: 600px;">
+	<div class="body" style="width: 600px;">
+		<form action="?attach-updategold-fid-$fid-pid-$pid-ajax-1.htm" id="file_upload_form_$pid" method="post">
+			<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+			<table width="597" style="table-layout: fixed;">
+				<tr class="header" align="left">
+					<td>文件名</td>
+					<td width="60">大小</td>
+					<td width="152">上传进度</td>
+					<td width="61">金币</td>
+					<td width="50">删除</td>
+				</tr>
+				<tr><td colspan="5"><hr /></td></tr>
+				<!--{loop $attachlist $attach}-->
+				<tr aid="$attach[aid]" pid="$attach[pid]">
+					<td>
+						<a href="$attach[fileurl]" target="_blank">
+						<img src="view/image/filetype/$attach[filetype].gif" />
+						<span class="filename" title="$attach[orgfilename]">$attach[orgfilename_fmt]</span></a>
+						<!--{if $pid != 0}--><span class="update">[更新]</span><!--{/if}-->
+					</td>
+					<td>$attach[filesize_fmt]</td>
+					<td>
+						<span class="progress" style="width: 100px;"><span style="width: 100px;"></span></span>
+						<span class="complete">完成</span>
+						<span class="stop" style="cursor: pointer; display: none;">停止</span>
+						<span class="start" style="cursor: pointer; display: none;">继续</span>
+					</td>
+					<td><input type="text" name="gold[{$attach[aid]}]" value="$attach[golds]" size="4" /></td>
+					<td><span class="delete" style="cursor: pointer;">删除</span></td>
+				</tr>
+				<tr><td colspan="5"><hr /></td></tr>
+				<!--{/loop}-->
+				<tr style="display: none;">
+					<td><a href="javascript:void(0)" target="_blank"><img src="view/image/filetype/unknown.gif" /><span class="filename">unknown.gif</span></a></td>
+					<td>0k</td>
+					<td>
+						<span class="progress" style="width: 100px;"><span style="width: 100px;"></span></span>
+						<span class="complete" style="display: none;">完成</span>
+						<span class="stop" style="cursor: pointer; display: none;">停止</span>
+						<span class="start" style="cursor: pointer; display: none;">继续</span>
+					</td>
+					<td><input type="text" name="gold[]" value="0" size="4" /></td>
+					<td><span class="delete" style="cursor: pointer;" title="删除文件">删除</span></td>
+				</tr>
+				<tr style="display: none;"><td colspan="5"><hr /></td></tr>
+			</table>
+			<div>
+				<div style="width: 40%; height:; float: left;"><span id="file_upload_button_$pid"></span></div>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script src="view/js/jquery-1.4.min.js" type="text/javascript" ></script>
+<script src="view/js/common.js" type="text/javascript"></script>
+<script src="view/js/dialog.js" type="text/javascript"></script>	
+<script src="view/js/swfupload/swfupload.js" type="text/javascript"></script>	
+<script>
+
+//var editor = parent.editor;
+var attachnum = $attachnum;
+var pid = $pid;
+
+function attach_file_type(type) {
+	var type = type.substr(1).toLowerCase();
+	var filetypes = $filetyps;
+	for(k in filetypes) {
+		if($.inArray(type, filetypes[k]) != -1) {
+			return k;
+		}
+	}
+	return 'unknown';
+}
+
+// live 删除
+$('#file_upload_form_'+pid+' span.delete').die('click').live('click', function() {
+	// ajax 请求，仅判断服务端返回的状态位，确定是否删除成功。
+	if(window.confirm('确认删除附件吗？')) {
+		var jtr = $(this).closest('tr');
+		var aid = jtr.attr('aid');
+		var pid = jtr.attr('pid');
+		$.get('?attach-deletefile-fid-$fid-pid-'+pid+'-aid-'+aid+'-ajax-1.htm', function(s) {
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <= 0) {alert(json.message); return false;}
+			jtr.next('tr').remove();
+			jtr.remove();
+			attachnum--;
+		
+		});
+	}
+});
+
+// -------------------------------------->上传文件部分
+var upload_file_id   = 'file_upload_button_'+pid;
+var file_size_limit = intval('$upload_max_filesize') + ' MB';
+var swf_settings = {
+	flash_url : 'view/js/swfupload/swfupload.swf',
+	upload_url: '?attach-uploadfile-fid-$fid-pid-$pid-$conf[cookie_pre]sid-$_sid-$conf[cookie_pre]auth-$_auth-ajax-1.htm',
+	prevent_swf_caching : false,
+	preserve_relative_urls : false,
+	//post_params: {"sid":"","auth":""},
+	file_size_limit : file_size_limit,
+	file_types : "*.*", //"*.*"
+	file_types_description : "所有文件",
+	file_upload_limit : 100,
+	file_queue_limit : 0,
+	custom_settings : {
+		thumbnail_height: 120000,
+		thumbnail_width: 1600,
+		thumbnail_quality: 80
+	},
+	debug: false,
+	button_image_url: "view/js/swfupload/uploadfile.png",
+	button_width: "74",
+	button_height: "22",
+	button_placeholder_id: upload_file_id,
+	button_text: '<span class="theFont">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>',
+	button_text_style: ".theFont {font-size: 16;}",
+	button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,	// chrome may be does not work!
+	file_dialog_complete_handler : function(numFilesSelected, numFilesQueued) {
+		if(numFilesSelected > 0) {}
+		try {this.startUpload(); return false;
+		} catch(ex) { this.debug(ex); }
+	},
+	upload_start_handler : function(file) {
+		var _swf = this;
+		var jtrs = $('#file_upload_form_'+pid+' tr');
+		var jtr = jtrs.eq(jtrs.last().index() - 1).clone();	// 最后一行
+		jtr.appendTo(jtrs.parent()).attr('file', $.escape(file.name + file.index)).show();
+		var jtds = $('td', jtr);
+		
+		var newsrc = jtds.eq(0).find('img').attr('src').replace(/\/\w+\.gif$/i, '/'+attach_file_type(file.type)+'.gif');
+		jtds.eq(0).find('img').attr('src', newsrc);			// filetype
+		jtds.eq(0).find('span.filename').html(file.name);		// filename
+		jtds.eq(1).html(humansize(file.size));				// filesize
+		jtds.eq(2).find('span.stop, span.start, span.complete').hide();
+		jtds.eq(2).find('span.start').click(function() {
+			_swf.startUpload();
+			jtds.eq(2).find('span.start').hide();
+			jtds.eq(2).find('span.stop').show();
+		});
+		jtds.eq(2).find('span.stop').click(function() {
+			_swf.stopUpload();
+			jtds.eq(2).find('span.start').show();
+			jtds.eq(2).find('span.stop').hide();
+		}).show();
+		jtds.eq(3).find('input').attr('disabled', 'disabled');		// gold
+		jtds.eq(4).find('span.delete').hide();				// 删除
+		
+		jtrs.last().clone().appendTo(jtrs.parent()).show();
+		return true;
+	},
+	upload_progress_handler : function(file, bytesLoaded, bytesTotal) {
+		var jtr = $('#file_upload_form_'+pid+' tr[file='+$.escape(file.name + file.index)+']');
+		var jtds = $('td', jtr);
+		jtds.eq(1).html(bytesTotal);	
+		$('span span', jtds.eq(2)).width(100 * (bytesLoaded / bytesTotal));// progress
+	},
+	upload_error_handler : function(file, errorCode, message) {},
+	upload_success_handler : function(file, serverData) {
+		var json = json_decode(serverData);
+		if(error = json_error(json)) {alert(error); return false;}
+		var jtr = $('#file_upload_form_'+pid+' tr[file='+$.escape(file.name + file.index)+']');
+		var jtds = $('td', jtr);
+		if(json.status <= 0) {
+			jtds.eq(2).find('span.complete').html('失败').addClass('error').attr('title', json.message).show();
+			jtds.eq(2).find('span.start').hide();
+			jtds.eq(2).find('span.stop').hide();
+			return false;
+		}
+		var s = json.message;
+		var aid = s.aid;
+		jtr.attr('aid', s.aid);
+		jtr.attr('fid', s.fid);
+		jtr.attr('pid', s.pid);
+		jtds.eq(0).find('a').attr('href', s.desturl);			// filetype
+		jtds.eq(0).find('span.filename').html(s.orgfilename);		// filename
+		jtds.eq(1).html(humansize(s.filesize));					// filesize
+		jtds.eq(2).find('span.complete').html('完成').addClass('ok').show();
+		jtds.eq(2).find('span.start').hide();
+		jtds.eq(2).find('span.stop').hide();
+		jtds.eq(3).find('input').attr('disabled', '').attr('name', 'gold['+aid+']');	// gold
+		jtds.eq(4).find('span.delete').show();		// delete
+		attachnum++;
+		parent.set_attach_num(attachnum);
+		return true;
+	},
+	upload_complete_handler : function(file) {},
+	file_queued_handler : function(file) {},
+	file_queue_error_handler : function(file, errorCode, message) {
+		if(errorCode == SWFUpload.QUEUE_ERROR.FILE_EXCEEDS_SIZE_LIMIT) {
+			alert('您选择的文件'+file.name+'大小为'+humansize(file.size)+'，超出了服务器端允许的最大值:$upload_max_filesize');
+			return true;
+		} else {
+			alert('upload_queue_error: file:'+file+', errorCode:'+errorCode+', message:'+message);
+		}
+		return false;
+	},
+	queue_complete_handler : function(numFilesUploaded){}
+};
+var swfu = new SWFUpload(swf_settings);
+
+
+<!--{if $pid > 0}-->
+
+// -----------------------------> 更新附件的 swfupload
+var file_size_limit = intval('$upload_max_filesize') + ' MB';
+// 这里要创建一堆 swfupload 对象，会占用比较多的内存，比较恶心。 
+var jupdate = $('#file_upload_form_$pid tr[aid]').each(function() {
+	var jtr = $(this);
+	var jtds = jtr.find('td');
+	var aid = jtr.attr('aid');
+	var updateid = 'attach_update_'+aid;
+	$('td:first span.update', this).attr('id', updateid);
+	var swf_settings = {
+		flash_url : 'view/js/editor/swfupload.swf',
+		upload_url: '?attach-updatefile-fid-$fid-aid-'+aid+'-pid-$pid-$conf[cookie_pre]sid-$_sid-$conf[cookie_pre]auth-$_auth-ajax-1.htm',
+		prevent_swf_caching : false,
+		preserve_relative_urls : false,
+		//post_params: {"sid":"","auth":""},
+		file_size_limit : file_size_limit,
+		file_types : "*.*",
+		file_types_description : "所有文件",
+		file_upload_limit : 100,
+		file_queue_limit : 1,
+		custom_settings : {
+			thumbnail_height: 120000,
+			thumbnail_width: 1600,
+			thumbnail_quality: 90
+		},
+		debug: false,
+		//button_image_url: "view/js/editor/uploadimage.png",
+		button_width: "36",
+		button_height: "18",
+		button_placeholder_id: updateid,
+		button_text: '<span class="theFont">[更新]</span>',
+		button_text_style: ".theFont {font-size: 12px;}",
+		button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,	// chrome may be does not work!
+		file_dialog_complete_handler : function(numFilesSelected, numFilesQueued) {
+			this.startUpload();
+		},
+		upload_start_handler : function(file) {
+			// copy from 第二段
+			var _swf = this;
+			jtds.eq(0).find('span.filename').html(file.name);		// filename
+			jtds.eq(1).html(humansize(file.size));				// filesize
+			jtds.eq(2).find('span.stop, span.start, span.complete').hide();
+			jtds.eq(2).find('span.start').click(function() {
+				_swf.startUpload();
+				jtds.eq(2).find('span.start').hide();
+				jtds.eq(2).find('span.stop').show();
+			});
+			jtds.eq(2).find('span.stop').click(function() {
+				_swf.stopUpload();
+				jtds.eq(2).find('span.start').show();
+				jtds.eq(2).find('span.stop').hide();
+			}).show();
+			
+			return true;
+			// copy end
+		},
+		upload_progress_handler : function(file, bytesLoaded, bytesTotal) {
+			// copy from 第二段
+			jtds.eq(1).html(bytesTotal);	
+			$('span span', jtds.eq(2)).width(100 * (bytesLoaded / bytesTotal));// progress
+			// copy end
+		},
+		upload_error_handler : function(file, errorCode, message) {
+			alert('upload_error: file:'+file+', errorcode:'+errorcode+', message:'+message);
+		},
+		upload_success_handler : function(file, serverData) {
+			// copy from 第二段
+			var json = json_decode(serverData);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <= 0) {
+				jtds.eq(2).find('span.complete').html('失败').addClass('error').attr('title', json.message).show();
+				jtds.eq(2).find('span.start').hide();
+				jtds.eq(2).find('span.stop').hide();
+				return false;
+			}
+			var s = json.message;
+			var aid = s.aid;
+			jtds.eq(1).html(humansize(s.filesize));				// filesize
+			jtds.eq(2).find('span.complete').html('完成').addClass('ok').show();
+			jtds.eq(2).find('span.start').hide();
+			jtds.eq(2).find('span.stop').hide();
+			// copy end
+			return true;
+		},
+		file_queue_error_handler : function(file, errorCode, message) {
+			if(errorCode == SWFUpload.QUEUE_ERROR.FILE_EXCEEDS_SIZE_LIMIT) {
+				alert('您选择的文件：'+file+' 尺寸太大！错误信息：'+message);
+				return true;
+			} else {
+				alert('upload_queue_error: file:'+file+', errorCode:'+errorCode+', message:'+message);
+			}
+			return false;
+		},
+		queue_complete_handler : function(numFilesUploaded) {
+			//$('a.image', _this.toolbar).width(49);
+			//$('a.imageloading', _this.toolbar).hide();
+		}
+	};
+	var swfu = new SWFUpload(swf_settings);
+});
+
+<!--{/if}-->
+
+
+
+
+window.attach_form_submit = function(dialog) {
+	var jform = $('#file_upload_form_'+pid);
+	
+	var postdata = jform.serialize();
+	$.post(jform.attr('action'), postdata,  function(s){
+		var json = json_decode(s);
+		if(error = json_error(json)) {alert(error); return false;}
+		if(json.status <= 0) {alert(json.message); return false;}
+		json = json.message;
+		dialog.close();
+	});
+};
+
+</script>
+</body>
+</html>

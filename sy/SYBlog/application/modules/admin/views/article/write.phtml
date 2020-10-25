@@ -1,0 +1,105 @@
+<?php
+use \sy\base\Router;
+use \blog\libs\Common;
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<title><?=$title?> - SYBlog</title>
+	<?php $this->display('common/header'); ?>
+	<style>#title,.title{display:block;width:100%}</style>
+</head>
+<body>
+	<?php $this->display('common/navbar'); ?>
+	<div class="page-content">
+		<div class="row">
+			<div class="col s9">
+				<h2 class="title"><?=$title?></h2>
+				<input id="title" name="title" type="text" placeholder="标题"/>
+				<textarea id="body" name="body" data-provide="markdown" rows="10" placeholder="在这里输入文章内容，支持Markdown"></textarea>
+			</div>
+			<div id="toolbar" class="col s3">
+				<button id="article_submit" class="waves-effect waves-light btn">发布</button>
+				<ul class="tabs">
+					<li class="tab col s6"><a class="active" href="#option">选项</a></li>
+					<li class="tab col s6"><a href="#attachment">附件</a></li>
+				</ul>
+				<div id="option">
+					<ul class="collapsible" data-collapsible="expandable">
+						<li>
+							<div class="collapsible-header active">发布时间</div>
+							<div class="collapsible-body">
+								<p>此时间仅用作显示</p>
+								<div class="input-field date"><input id="date" name="date" type="text" placeholder="例如2015-07-01"/></div>
+								<div class="input-field date"><input id="time" name="time" type="text" placeholder="例如13:05:10"></div>
+								<button id="setToNow" class="waves-effect waves-light btn">当前时间</button>
+							</div>
+						</li>
+						<li>
+							<div class="collapsible-header active">Tags</div>
+							<div class="collapsible-body">
+								<p>以逗号隔开</p>
+								<span id="tag_box" class="selection">
+									<ul>
+										<li class="selection-input"><input id="tag_input" class="selection-input-field" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text"/></li>
+									</ul>
+									<ul id="tag_select" class="dropdown-content selection-list"></ul>
+								</span>
+							</div>
+						</li>
+					</ul>
+				</div>
+				<div id="attachment">
+					<button id="upload_button" class="waves-effect waves-light btn">上传</button>
+					<input id="upload_input" type="file" data-ext="refuse:<?=implode(',', Sy::$app->get('notupload'))?>" data-maxsize="<?=Common::option('attachmentSize')?>"/>
+					<ul class="collection"></ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="attachmentEdit" class="modal">
+		<div class="modal-content">
+			<h4>编辑附件信息</h4>
+			<input type="hidden" name="id"/>
+			<div class="row">
+				<div class="input-field col s12">
+					<input name="name" type="text"/>
+					<label class="active">名称</label>
+				</div>
+				<div class="input-field col s12">
+					<input name="url" type="text" readonly="true"/>
+					<label class="active">地址</label>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button id="attachment_submit" type="button" class="waves-effect waves-green btn-flat">保存</button>
+			<button class="modal-action modal-close waves-effect waves-green btn-flat">取消</button>
+		</div>
+	</div>
+	<script>
+	window.sy = {
+		"url": {
+			"submit": "<?=Router::createUrl('admin/article/write', 'json')?>",
+			"meta": "<?=Router::createUrl('admin/meta/get', 'json')?>",
+			"upload": "<?=Router::createUrl('admin/attachment/upload')?>",
+			"base64Upload": "<?=Router::createUrl('admin/attachment/uploadBase64')?>",
+			"list": "<?=Router::createUrl('admin/article/list')?>",
+			"attachmentEdit": "<?=Router::createUrl('admin/attachment/edit', 'json')?>"
+		},
+		"page": "<?=$page?>"
+	};
+	<?php if (isset($article)) { ?>
+	window.sy.article = {
+		"id": "<?=$id?>",
+		"title": "<?=addslashes($article->title)?>",
+		"tag": "<?=addslashes($article->tags)?>",
+		"body": "<?=str_replace("\n", '\n', addslashes($article->body))?>",
+		"modify": "<?=$article->modify?>",
+		"publish": "<?=$article->publish?>"
+	};
+	<?php } ?>
+	</script>
+	<?php $this->display('common/footer'); ?>
+</body>
+</html>

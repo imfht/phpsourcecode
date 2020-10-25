@@ -1,0 +1,521 @@
+<include file="Public:header" />
+<script src="__PUBLIC__/js/chart/highcharts.js"></script>
+<script src="__PUBLIC__/js/chart/modules/exporting.js"></script>
+<script src="__PUBLIC__/js/chart/modules/funnel.js"></script>
+
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li>
+			<a href="{:U('business/index')}"><img src="__PUBLIC__/img/shangji.png"/>&nbsp; {:L('BUSINESS')}</a>
+		  </li>
+		  <li class="active"><a href="{:U('business/analytics')}"><img src="__PUBLIC__/img/tongji.png"/> &nbsp;{:L('STATISTICS')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=26" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />
+	<div class="row">
+		<div class="span12">
+			<ul class="nav pull-left">
+				<li class="pull-left">
+					<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action="" method="get">
+						<ul class="nav pull-left">
+							<li class="pull-left">
+								{:L('CHOOSE_DEPARTMENT')}&nbsp; <select style="width:auto" name="department" id="department" onchange="changeRole()">
+									<option class="all" value="all">{:L('ALL')}</option>
+									<volist name="departmentList" id="vo">
+										<option value="{$vo.department_id}">{$vo.name}</option>
+									</volist>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								{:L('SELECT_EMPLOYEES')}&nbsp; <select style="width:auto" name="role" id="role" onchange="changeCondition()">
+									<option class="all" value="all">{:L('ALL')}</option>
+									<volist name="roleList" id="vo">
+										<option value="{$vo.role_id}">{$vo.role_name}-{$vo.user_name}</option>
+									</volist>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								{:L('SELECT_A_DATE')}&nbsp; {:L('CONG')}<input type="text" id="start_time" name="start_time" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" class="Wdate" value="{$Think.get.start_time}"/>{:L('ZHI')}<input type="text" id="end_time" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" name="end_time" class="Wdate" value="{$Think.get.end_time}" />&nbsp;&nbsp;
+							</li>
+							<li class="pull-left"><input type="hidden" name="m" value="business"/><input type="hidden" name="a" value="analytics"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" class="btn">{:L('SEARCH')}</button></li>
+						</ul>
+					</form>
+				</li>				
+			</ul>
+		</div>
+		<div class="span2 knowledgecate">
+			<ul class="nav nav-list">
+				<li class="active">
+					<a href="javascript:void(0);">{:L('CHOOSE_STATISTICS_CONTENT')}</a>
+				</li>
+				<li id="report"><a id="show_report" class="active" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('BUSINESS_STATISTICS')}</a></li>
+				<li id="status"><a id="show_status" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('SALES_FUNNEL_FIGURE')}</a></li>
+				<li id="money"><a id="show_money" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('BUSINESS_AMOUNT_FIGURE')}</a></li>
+				<li id="source"><a id="show_source" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('SOURCES_OF_STATISTICAL_FIGURE')}</a></li>
+				<li id="day"><a id="show_day" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('TREND_ANALYSIS_BY_THE_DAY')}</a></li>
+				<li id="week"><a id="show_week" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('TREND_ANALYSIS_BY_THE_WEEK')}</a></li>
+				<li id="month"><a id="show_month" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('TREND_ANALYSIS_BY_THE_MONTH')}</a></li>
+			</ul>
+		</div>
+		<div class="span10" id="an_chart">
+			<div id="report_content">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							<th>{:L('STAFF')}</th>
+							<th>{:L('ADD_THE_BUSINESS_OPPORTUNITIES')}</th>
+							<th>{:L('RESPONSIBLE_FOR_BUSINESS_OPPORTUNITIES')}</th>
+							<th>{:L('CLINCH_A_DEAL_THE_BUSINESS')}</th>
+							<th>{:L('FOLLOW_UP_THE_BUSINESS')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr>
+							<td>{:L('SUM_TO')}</td>
+							<td colspan="4"><span style="color:red;">{:L('ADD_OPPORTUNITIES',array($total_report['add_count']))} &nbsp; {:L('SOMEONE_IS_RESPONSIBLE_FOR_THE_BUSINESS',array($total_report['own_count']))}&nbsp; {:L('CLINCH_A_DEAL_THE_BUSINESS_OPPORTUNITIES',array($total_repor['success_count']))}&nbsp; {:L('FOLLOW_UP_THE_BUSINESS_T',array($total_report['deal_count']))}</span> </td>
+						</tr>
+					</tfoot>
+					<tbody>
+						<volist name="reportList" id="vo">
+						<tr>
+							<td><a class="role_info" rel="{$vo.user.role_id}" href="javascript:void(0)">{$vo.user.user_name}</a></td>
+							<td>{$vo.add_count}</td>
+							<td><a href="{:U('business/index')}&field=owner_role_id&search={$vo.user.role_id}&by=sub">{$vo.own_count}</a></td>
+							<td><a href="{:U('business/index')}&field=owner_role_id&search={$vo.user.role_id}&by=transformed">{$vo.success_count}</a></td>
+							<td>{$vo.deal_count}</td>
+						</tr>
+						</volist>
+					</tbody>
+				</table>
+			</div>
+			<div id="source_content" class="hidden">
+				<div id="canvas_resource" style="margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+			</div>
+			<div id="status_content" class="hidden">
+				<div id="canvas_status"  style="margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+			</div>
+			<div id="money_content" class="hidden">
+				<div id="canvas_money" style="margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+			</div>
+			<div id="day_content" class="hidden">
+				<div id="canvas_day" style="margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+			</div>
+            <div id="week_content" class="hidden">
+				<div id="canvas_week" style="margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+			</div>
+            <div id="month_content" class="hidden">
+				<div id="canvas_month" style="margin: 0 auto">{:L('TEMPORARILY_NO_DATA')}</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-import" title="{:L('IMPORT_DATA')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('EMPLOYEE_INFORMATION')}">loading...</div>
+<script type="text/javascript">
+	<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+	$("#dialog-role-info").dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight: 400,
+		position: ["center",100]
+	});
+	
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	
+	$(function () {
+		var canvas_width = $('#an_chart').width();
+		var canvas_height = $('#an_chart').height();
+		$('#canvas_resource').css({width:canvas_width});
+		$('#canvas_status').css({width:canvas_width*0.6});
+		$('#canvas_money').css({width:canvas_width});
+		$('#canvas_week').css({width:canvas_width});
+		$('#canvas_month').css({width:canvas_width});
+		$('#canvas_day').css({width:canvas_width});
+		var chart1;
+		$(document).ready(function () {
+			Highcharts.getOptions().colors = Highcharts.map(Highcharts.getOptions().colors, function(color) {
+				return {
+					radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 },
+					stops: [
+						[0, color],
+						[1, Highcharts.Color(color).brighten(-0.3).get('rgb')] // darken
+					]
+				};
+			});
+			<if condition="$total_report.add_count gt 0">
+			// Build the chart1
+			$('#canvas_resource').highcharts({
+				chart1: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false
+				},
+				title: {
+					text: '{:L('SOURCE_OF_BUSINESS_STATISTICS_SUM_TO',array($total_report['add_count']))}'
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>',
+				},
+				plotOptions: {
+					pie: {
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: false
+						},
+						showInLegend: true
+					}
+				},
+				series: [{
+					type: 'pie',
+					name: '{:L('THE_SOURCE_OF')}',
+					data: [
+						{$source_count}
+					]
+				}]
+			});
+			
+			
+			var chart2;
+			// Build the chart2
+			$('#canvas_money').highcharts({
+				chart2: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false
+				},
+				title: {
+					text: '{:L('AMOUNT_OF_BUSINESS_STATISTICS_SUM_TO',array($total_report['add_count']))}'
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>',
+					percentageDecimals: 1
+				},	
+				plotOptions: {
+					pie: {
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: false
+						},
+						showInLegend: true
+					}
+				},
+				series: [{
+					type: 'pie',
+					name: '{:L('THE_AMOUNT_OF')}',
+					data: [
+						{$money_count}
+					]
+				}]
+			});
+			
+			var chart3;
+			// Build the chart3
+			$('#canvas_day').highcharts({
+				chart3: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false
+				},
+                title: {
+                    text: '{:L('TREND_ANALYSIS_BY_THE_DAY')}'
+                },
+                xAxis: {
+                    categories: [{$day_count}],
+                    labels: { 
+                      rotation:60,
+                      y:40,
+                      x:15,
+                      step:3
+                    }
+                },
+                yAxis: {
+                    title: {
+                        text: null
+                    },
+                    min: 0,
+                },
+                legend: {
+                    align: 'left',
+                    verticalAlign: 'top',
+                    y: 0,
+                    floating: true,
+                    borderWidth: 0
+                },
+                tooltip: {
+                    shared: true,
+                    crosshairs: true
+                },			
+                plotOptions: {
+                    series: {
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function() {
+                                    hs.htmlExpand(null, {
+                                        pageOrigin: {
+                                            x: this.pageX,
+                                            y: this.pageY
+                                        },
+                                        headingText: this.series.name,
+                                        maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+                                            this.y +' visits',
+                                        width: 200
+                                    });
+                                }
+                            }
+                        },
+                        marker: {
+                            lineWidth: 1
+                        }
+                    }
+                },			
+                series: [{
+                    name: '{:L('CREATE_BUSINESS_OPPORTUNITIES')}',
+                    data: [{$day_create_count}],
+                }, {
+                    name: '{:L('TO_WIN_A_SINGLE_BUSINESS')}',
+                    data: [{$day_success_count}],
+                }]
+            });
+			
+			$('#canvas_status').highcharts({
+				chart: {
+					type: 'funnel',
+					marginRight: 100
+				},
+				title: {
+					text: '{:L('SALES_FUNNEL_SUM_TO',array($total_report['add_count']))}',
+					x: -50
+				},
+				plotOptions: {
+					series: {
+						dataLabels: {
+							enabled: true,
+							format: '<b>{point.name}</b> ({point.y:,.0f})',
+							color: 'black',
+							softConnector: true
+						},
+						neckWidth: '30%',
+						neckHeight: '25%'
+					}
+				},
+				legend: {
+					enabled: false
+				},
+				series: [{
+					name: '{:L('STAGE_OPPORTUNITIES_FOR')}',
+					data: [
+						{$status_count}
+					]
+				}]
+			});
+            $('#canvas_week').highcharts({
+                chart_week: {
+                    plotBackgroundColor: null,
+                    plotBorderWidth: null,
+                    plotShadow: false,
+                    inverted:true,
+                },
+                title: {
+                    text: '{:L('TREND_ANALYSIS_BY_THE_WEEK')}'
+                },
+                xAxis: {
+                    categories: [{$week_count}],
+                    labels: { 
+                      rotation:60,
+                      y:40,
+                      x:15,
+                      step:3
+                    }
+                },
+                yAxis: {
+                    title: {
+                        text: null
+                    },
+                    min: 0
+                },
+                legend: {
+                    align: 'left',
+                    verticalAlign: 'top',
+                    y: 0,
+                    floating: true,
+                    borderWidth: 0
+                },
+                tooltip: {
+                    shared: true,
+                    crosshairs: true
+                },			
+                plotOptions: {
+                    series: {
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function() {
+                                    hs.htmlExpand(null, {
+                                        pageOrigin: {
+                                            x: this.pageX,
+                                            y: this.pageY
+                                        },
+                                        headingText: this.series.name,
+                                        maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+                                            this.y +' visits',
+                                        width: 200
+                                    });
+                                }
+                            }
+                        },
+                        marker: {
+                            lineWidth: 1
+                        }
+                    }
+                },			
+                series: [{
+                    name: '{:L('CREATE_BUSINESS_OPPORTUNITIES')}',
+                    data: [{$week_create_count}],
+                }, {
+                    name: '{:L('TO_WIN_A_SINGLE_BUSINESS')}',
+                    data: [{$week_success_count}],
+                }]
+            });
+            $('#canvas_month').highcharts({
+                chart_month: {
+                    plotBackgroundColor: null,
+                    plotBorderWidth: null,
+                    plotShadow: false
+                },
+                title: {
+                    text: '{:L('TREND_ANALYSIS_BY_THE_MONTH')}'
+                },
+                xAxis: {
+                    categories: [{$month_count}],
+                    labels: { 
+                      rotation:60,
+                      y:40,
+                      x:15,
+                    }
+                },
+                yAxis: {
+                    title: {
+                        text: null
+                    },
+                    min: 0
+                },
+                legend: {
+                    align: 'left',
+                    verticalAlign: 'top',
+                    y: 0,
+                    floating: true,
+                    borderWidth: 0
+                },
+                tooltip: {
+                    shared: true,
+                    crosshairs: true
+                },			
+                plotOptions: {
+                    series: {
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function() {
+                                    hs.htmlExpand(null, {
+                                        pageOrigin: {
+                                            x: this.pageX,
+                                            y: this.pageY
+                                        },
+                                        headingText: this.series.name,
+                                        maincontentText: Highcharts.dateFormat('%A, %b %e, %Y', this.x) +':<br/> '+
+                                            this.y +' visits',
+                                        width: 200
+                                    });
+                                }
+                            }
+                        },
+                        marker: {
+                            lineWidth: 1
+                        }
+                    }
+                },			
+                series: [{
+                    name: '{:L('CREATE_BUSINESS_OPPORTUNITIES')}',
+                    data: [{$month_create_count}],
+                }, {
+                    name: '{:L('TO_WIN_A_SINGLE_BUSINESS')}',
+                    data: [{$month_success_count}],
+                }]
+            });
+			</if>
+		});
+	});
+	
+	function changeRole(){
+		department_id = $("#department option:selected").val();
+		$.ajax({
+			type:'get',
+			url:'index.php?m=user&a=getrolebydepartment&department_id='+department_id,
+			async:true,
+			success:function(data){
+				options = '<option value="all">{:L('ALL')}</option>';
+				if(data.data != null){
+					$.each(data.data, function(k, v){
+						options += '<option value="'+v.role_id+'">'+v.role_name+"-"+v.user_name+'</option>';
+					});
+				}
+				$("#role").html(options);
+				<if condition="$_GET['role']">
+				$("#role option[value='{$Think.get.role}']").prop("selected", true);
+				</if>
+			},
+			dataType:'json'});
+	}
+	
+	<if condition="$_GET['department'] and $_GET['department'] neq 'all'">
+	$("#department option[value='{$Think.get.department}']").prop("selected", true); 
+	changeRole();
+	</if>
+	<if condition="$_GET['department'] eq 'all'">
+	$("#role option[value='{$Think.get.role}']").prop("selected", true);
+	</if>
+	
+	$(function(){
+		$("#show_report").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#report_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+		$("#show_status").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#status_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+		$("#show_source").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#source_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+		$("#show_money").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#money_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+		$("#show_day").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#day_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+        $("#show_week").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#week_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+        $("#show_month").click(function(){
+			$(this).addClass('active').parent().siblings().find('a').removeClass('active');
+			$("#month_content").removeClass('hidden').siblings().addClass('hidden');
+		});
+	});
+</script>
+<include file="Public:footer" />

@@ -1,0 +1,1 @@
+<?php $this->display('posts/index_sidebar'); ?>

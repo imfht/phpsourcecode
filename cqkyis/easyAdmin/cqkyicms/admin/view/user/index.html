@@ -1,0 +1,306 @@
+{extend name='index/index'/}
+{block name="main"}
+<style>
+    .checkbox{
+        margin-bottom: -5px;
+        margin-top: 0;
+    }
+</style>
+<div class="content">
+    <div class="container">
+
+        <!-- Page-Title -->
+        <div class="row">
+            <div class="col-sm-12">
+                <h4 class="pull-left page-title">{$title}</h4>
+                <ol class="breadcrumb pull-right">
+                    <li>{$title}</li>
+                    <li class="active">{$name}</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="col-lg-2">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">部门列表</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="inbox-widget nicescroll mx-box" tabindex="5000" style="overflow: hidden; outline: none;">
+
+                        <div id="menuTree"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-10">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">会员列表</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="inbox-widget nicescroll mx-box" tabindex="5000" style="overflow: hidden; outline: none;">
+
+                        <a class="btn btn-success btn-icon btn-sm" href="{:url('user/add')}" rel="add" >
+                            <i class="md  md-add"></i>
+                            <span>添加会员</span>
+                        </a>
+
+                        <a class="btn btn-danger btn-icon btn-sm" onclick="batchRemove()" >
+                            <i class="md md-remove"></i>
+                            <span>删除</span>
+                        </a>
+                        <div class="columns pull-right">
+                            <button class="btn btn-success btn-sm" onclick="reLoad()">查询</button>
+                        </div>
+                        <div class="columns pull-right col-md-2 nopadding">
+                            <input id="searchname" type="text" class="form-control"
+                                   placeholder="姓名">
+                        </div>
+
+                        <table class="table  table-striped" id="menuTable">
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        </div>
+    </div>
+<script src="__JS__/jsTree/jstree.min.js"></script>
+<link href="__JS__/jsTree/style.min.css" rel="stylesheet" type="text/css">
+<script src="__JS__/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="__JS__/bootstrap-table/bootstrap-table-mobile.min.js"></script>
+<script src="__JS__/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+<script>
+var detpId='';
+load(detpId);
+    function load(deptId) {
+        $('#menuTable')
+                .bootstrapTable(
+                        {
+                            method: "get",  //使用get请求到服务器获取数据
+                            url: "{:url('user/index')}", //获取数据的地址
+                            striped: true,  //表格显示条纹
+                            pagination: true, //启动分页
+                            pageSize: 10,  //每页显示的记录数
+                            pageNumber:1, //当前第几页
+                            pageList: [5, 10, 15, 20, 25],  //记录数可选列表
+                            sidePagination: "server", //表示服务端请求
+                            paginationFirstText: "首页",
+                            paginationPreText: "上一页",
+                            paginationNextText: "下一页",
+                            paginationLastText: "尾页",
+                            queryParamsType : "undefined",
+
+
+
+                            queryParams : function queryParamsType(params) {
+
+
+
+                                var param = {
+                                    pageNumber: params.pageNumber,
+                                    pageSize: params.pageSize,
+                                    searchText:$('#searchname').val()
+                                };
+                                return param;
+
+
+                            },
+                            columns : [
+                                {
+                                    checkbox : true
+                                },
+                                {
+                                    field : 'uid', // 列字段名
+                                    title : '序号' // 列标题
+                                },
+                                {
+                                    field : 'nickname',
+                                    title : '姓名'
+                                },
+                                {
+                                    field : 'username',
+                                    title : '用户名'
+                                },
+                                {
+                                    field : 'login_num',
+                                    title : '登录次数'
+                                },
+                                {
+                                    field : 'login_ip',
+                                    title : 'IP'
+                                },
+                                {
+                                    field : 'role_name',
+                                    title : '所属角色'
+                                },
+                                {
+                                    field : 'creattime',
+                                    title : '创建时间'
+                                },
+                                {
+                                    field : 'status',
+                                    title : '状态',
+                                    align : 'center',
+                                    formatter : function(value, row, index) {
+                                        if (value == '0') {
+                                            return '<span class="label label-danger">禁用</span>';
+                                        } else if (value == '1') {
+                                            return '<span class="label label-primary">正常</span>';
+                                        }
+                                    }
+                                },
+                                {
+                                    title : '操作',
+                                    field : 'uid',
+                                    align : 'center',
+                                    formatter : function(item, index) {
+                                       // console.log(item);
+                                        var pid = item;
+                                        var addother = "{:url('user/editpwd',array('id'=>'p_id'))}";
+                                        var editother = "{:url('user/edit',array('id'=>'p_id'))}";
+                                        var delother = "{:url('user/del',array('id'=>'p_id'))}";
+                                        var add =  addother.replace("p_id",pid);
+                                        var edit =  editother.replace("p_id",pid);
+                                        var del=delother.replace("p_id",pid);
+
+                                        var e="<a class='btn btn-pink waves-effect waves-light  btn-sm' rel='add' href='"+edit+"'><i class='fa fa-edit'></i> </a>&nbsp;";
+                                        var d="<a class='btn btn-inverse  waves-effect waves-light  btn-sm' rel='del' href='"+del+"'><i class='fa fa-remove'></i></a>&nbsp;";
+                                        var p='<a class="btn btn-success  waves-effect waves-light  btn-sm" rel="add" href="'+add+'"><i class="fa fa-key"></i></a>&nbsp;';
+
+
+                                        return e + d + p;
+                                    }
+                                } ],
+                            onLoadSuccess: function(res){  //加载成功时执行
+                                console.log(res);
+
+                                layer.msg("加载成功", {time : 1000});
+                            },
+                            onLoadError: function(){  //加载失败时执行
+                                layer.msg("加载数据失败");
+                            }
+
+                        });
+    }
+    function reLoad() {
+        $('#menuTable').bootstrapTable('refresh');
+    }
+
+
+   function batchRemove() {
+       var rows = $('#menuTable').bootstrapTable('getSelections'); // 返回所有选择的行，当没有选择的记录时，返回一个空数组
+       if (rows.length == 0) {
+           swal({
+               title: "请选择要删除的数据！",
+               text: "",
+               type: "error",
+               timer: 2000,
+               showConfirmButton: false
+           });
+           //layer.msg('请选择要删除的数据!');
+         return;
+       }
+
+       swal({
+                   title: "确认要删除选中的"+rows.length+"条数据吗？",
+                   text: "删除过后你将无法恢复数据！",
+                   type: "warning",
+                   showCancelButton: true,
+                   confirmButtonColor: "#DD6B55",
+                   confirmButtonText: "确定删除！",
+                   cancelButtonText: "取消",
+                   closeOnConfirm: false
+               },
+               function(){
+                   var ids = new Array();
+                   $.each(rows, function(i, row) {
+                    ids[i] = row['uid'];
+                  });
+                  // console.log(ids);
+                   $.ajax({
+                       type : 'POST',
+                       data : {
+                        "ids" : ids
+                     },
+                       url :"{:url('user/batchRemove')}",
+                       success : function(r) {
+                           if (r.code == 1) {
+                               swal(r.msg, r.msg, "success");
+
+                               reLoad();
+                           }else{
+                               swal(r.msg, r.msg, "error");
+
+                           }
+                       }
+                   });
+
+
+               });
+
+
+
+
+
+
+   }
+
+
+
+
+
+
+
+
+
+
+
+    getMenuTreeData();
+    function getMenuTreeData() {
+        $.ajax({
+            type : "GET",
+            url : "{:url('dept/tree')}",
+            success : function(menuTree) {
+                loadMenuTree(menuTree);
+            }
+        });
+    }
+
+    function loadMenuTree(menuTree) {
+
+        var tree = '['+menuTree+']';
+        var treeshow = eval(tree);
+        $('#menuTree').jstree({
+            'core' : {
+                'data' :treeshow
+            },
+           "plugins" : [ "search" ]
+        });
+        $('#menuTree').jstree().open_all();
+  }
+    $('#menuTree').on("changed.jstree", function(e, data) {
+        if (data.selected == -1) {
+            var opt = {
+                query : {
+                    deptId : '',
+                }
+            };
+            $('#menuTable').bootstrapTable('refresh', opt);
+        } else {
+            var opt = {
+                query : {
+                    deptId : data.selected[0],
+                }
+            };
+            $('#menuTable').bootstrapTable('refresh',opt);
+        }
+
+    });
+</script>
+{/block}

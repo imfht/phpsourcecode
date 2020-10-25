@@ -1,0 +1,45 @@
+version: '2'
+
+services:
+  web:
+    image: lxerxa/actionview:latest
+    restart: always
+    volumes:
+      - ./data/uploads:/var/www/actionview/storage/app
+    expose:
+      - 80
+    depends_on:
+      - db
+    links:
+      - db:db
+    command: /bin/bash /scripts/run.sh
+
+  cron:
+    image: lxerxa/actionview:latest
+    restart: always
+    volumes_from:
+      - web
+    depends_on:
+      - db
+    links:
+      - db:db 
+    command: /bin/bash /scripts/cronrun.sh
+
+  nginx:
+    restart: always
+    image: lxerxa/actionviewnginx:latest
+    depends_on:
+      - web
+    ports:
+      - 8000:80
+    links:
+      - web:web
+
+  db:
+    image: lxerxa/actionviewdb:latest
+    restart: always
+    expose:
+      - 27017
+    volumes:
+      - ./data/db:/data 
+    command: /bin/bash /scripts/run.sh

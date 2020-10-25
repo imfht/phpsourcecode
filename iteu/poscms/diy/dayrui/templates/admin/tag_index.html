@@ -1,0 +1,87 @@
+{template nheader.html}
+
+<div class="page-bar">
+	<ul class="page-breadcrumb mylink">
+		{$menu.link}
+	</ul>
+	<ul class="page-breadcrumb myname">
+		{$menu.name}
+	</ul>
+	<div class="page-toolbar">
+		<div class="btn-group pull-right">
+			<button type="button" class="btn green btn-sm btn-outline dropdown-toggle" data-toggle="dropdown" aria-expanded="false" data-hover="dropdown"> {fc_lang('操作菜单')}
+				<i class="fa fa-angle-down"></i>
+			</button>
+			<ul class="dropdown-menu pull-right" role="menu">
+				{loop $menu.quick $t}
+				<li>
+					<a href="{$t.url}">{$t.icon} {$t.name}</a>
+				</li>
+				{/loop}
+				<li class="divider"> </li>
+				<li>
+					<a href="javascript:window.location.reload();">
+						<i class="icon-refresh"></i> {fc_lang('刷新页面')}</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
+<div class="mytopsearch">
+	<form method="get" action="" name="searchform" id="searchform">
+		<input name="s" type="hidden" value="{APP_DIR}" />
+		<input name="c" type="hidden" value="tag" />
+		<input name="m" type="hidden" value="index" />
+		<label>{fc_lang('关键字')}：</label>
+		<label><input type="text" class="form-control" placeholder="{fc_lang('关键字')}" value="{$param['kw']}" name="kw" /></label>
+		<label><button type="submit" class="btn green btn-sm" name="submit" > <i class="fa fa-search"></i> {fc_lang('搜索')}</button></label>
+	</form>
+</div>
+
+<form action="" method="post" name="myform" id="myform">
+	<input name="action" type="hidden" value="del" />
+	<div class="portlet mylistbody">
+		<div class="portlet-body">
+			<div class="table-scrollable">
+
+				<table class="mytable table table-striped table-bordered table-hover table-checkable dataTable">
+
+		<thead>
+		<tr>
+			<th width="20" align="right"></th>
+			<th width="50" class="{ns_sorting('id')}" name="id" align="left">Id</th>
+			<th width="200" class="{ns_sorting('name')}" name="name" align="left">{fc_lang('名称')}</th>
+			<th width="100" class="{ns_sorting('code')}" name="code" align="left">Tag</th>
+			<th width="80" class="{ns_sorting('hits')}" name="hits" align="center">{fc_lang('点击量')}</th>
+			<th align="left" class="dr_option">{fc_lang('操作')}</th>
+		</tr>
+		</thead>
+		<tbody>
+		{loop $list $t}
+		<tr id="dr_row_{$t['id']}">
+			<td align="right"><input name="ids[]" type="checkbox" class="dr_select toggle md-check" value="{$t['id']}" /></td>
+			<td align="left">{$t['id']}</td>
+			<td align="left">{dr_keyword_highlight($t['name'], $param['kw'])}</a></td>
+			<td align="left">{$t['code']}</td>
+			<td align="center">{$t['hits']}</td>
+			<td align="left" class="dr_option">
+			<a class="ago" href="{dr_tag_url($mod, $t['name'])}" target="_blank"> <i class="fa fa-send"></i> {fc_lang('访问')}</a>{if $this->ci->is_auth(APP_DIR.'/admin/tag/edit')}<a class="aedit" href="{dr_dialog_url(dr_url(APP_DIR.'/tag/edit', array('id' => $t['id'])), 'edit')}"> <i class="fa fa-edit"></i> {fc_lang('修改')}</a>{/if}
+			{if $this->ci->is_auth(APP_DIR.'/admin/tag/del')}<a class="adel" href="javascript:;" onClick="return dr_dialog_del('{fc_lang('您确定要这样操作吗？')}','{dr_url(APP_DIR.'/tag/del',array('id'=>$t['id']))}');"> <i class="fa fa-trash"></i> {fc_lang('删除')}</a>{/if}
+			</td>
+		</tr>
+		{/loop}
+		<tr class="mtable_bottom">
+			<th width="20"  ><input class=" toggle md-check" name="dr_select" id="dr_select" type="checkbox" onClick="dr_selected()" /></th>
+			<td colspan="6" >
+			{if $this->ci->is_auth(APP_DIR.'/admin/tag/del')}
+				<button type="button" class="btn red btn-sm" name="option" onClick="$('#action').val('del');dr_confirm_set_all('{fc_lang('您确定要这样操作吗？')}')"><i class="fa fa-trash"></i> {fc_lang('删除')}</button>
+			{/if}
+			</td>
+		</tr>
+		</tbody>
+		</table>
+	</div>
+</div>
+</form>
+<div id="pages"><a>{fc_lang('共%s条', $param['total'])}</a>{$pages}</div>
+{template nfooter.html}

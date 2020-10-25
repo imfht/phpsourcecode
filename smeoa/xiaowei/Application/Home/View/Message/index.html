@@ -1,0 +1,93 @@
+<extend name='Layout/ins_page' />
+<block name="content">
+	{:W('PageHeader/search',array('name'=>'站内消息','search'=>'M'))}
+	<div class="space-8"></div>
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+
+			</div>
+			<div class="pull-right">
+				<a class="btn btn-sm btn-primary" onclick="add()">发送消息</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="ul_table">
+		<hr>
+		<empty name="list">
+			没找到数据
+			<else/>
+			<foreach name="list" item="vo">
+				<div class="row">
+					<div class="col-xs-1">
+						<div class="user">
+							<eq name="vo.sender_id" value="$owner_id">
+								<img class="img-thumbnail" src="__ROOT__/{$vo.receiver_id|get_emp_pic}"  onerror="javascript:this.src='/Uploads/emp_pic/no_avatar.jpg'"/>
+								<else/>
+								<img class="img-thumbnail" src="__ROOT__/{$vo.sender_id|get_emp_pic}"  onerror="javascript:this.src='/Uploads/emp_pic/no_avatar.jpg'"/>							
+							</eq>
+						</div>
+					</div>
+					<div class="col-xs-11">
+						<div class="<gt name='vo.unread' value='0'>bold</gt>">
+							<eq name="vo.sender_id" value="$owner_id">
+								发给 {$vo.receiver_name}：<span>{$vo.create_time|to_date='Y-m-d H:i'}</span>								
+								<else/>
+								{$vo.sender_name}：<span>{$vo.create_time|to_date='Y-m-d'}</span>																		
+							</eq>
+						</div>
+						<div class="<gt name='vo.unread' value='0'>bold</gt>">
+							{$vo.content}
+						</div>
+						<p>							
+							<span class="pull-right">
+								<eq name="vo.sender_id" value="$owner_id">
+									<a href="{:U('read','reply_id='.$vo['receiver_id'])}">共{$vo.count}条对话</a>
+									<a onclick="reply_message({$vo.receiver_id})">回复</a>
+									<a onclick="del_message({$vo.receiver_id})">删除</a>
+								<else/>
+									<a href="{:U('read','reply_id='.$vo['sender_id'])}">共{$vo.count}条对话</a>
+									<a onclick="reply_message({$vo.sender_id})">回复</a>
+									<a onclick="del_message({$vo.sender_id})">删除</a>								
+								</eq>
+							</span>
+						</p>
+					</div>
+				</div>
+				<hr>
+			</foreach>
+			<div class="pagination">
+				{$page}
+			</div>
+		</empty>
+	</div>
+</block>
+
+<block name="js">
+	<script type="text/javascript">
+		function del_message($reply_id) {
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('del','type=dialogue')}", 'reply_id=' + $reply_id, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							location.reload(true);
+						});
+					}
+				});
+			});
+		}
+
+		function reply_message($reply_id) {
+			winopen(fix_url("{:U('reply')}?reply_id=" + $reply_id), 700, 430);
+		}
+
+		function add() {
+			window.open("{:U('add','fid='.$folder='')}", "_self");
+		}
+
+		$(document).ready(function() {
+			set_return_url();
+		});
+	</script>
+</block>

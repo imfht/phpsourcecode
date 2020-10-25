@@ -1,0 +1,99 @@
+<script type="text/javascript">
+var [table];
+$(function(){
+    var pageSize = [rows];
+    if (!pageSize) pageSize = 10
+    var url = [url];
+    if (!url) url = window.location.href;
+    [table] = $.fn.bsgrid.init('[table]', {
+        url: url,
+        pageSize: pageSize,
+        // autoLoad:false,
+        displayBlankRows:false,
+        event: {
+            selectRowEvent: function (record, rowIndex, trObj, options) {
+                var name = [table].getRecordIndexValue(record, 'name');
+                $('#[table]-action').find('a[grid-btn]').each(function(idx,it){
+                    $(this).removeClass('disabled');
+                    var u = $(this).attr('href');
+                    u = U('name',name,u);
+                    $(this).attr('href',u);
+                });   
+                var url = "{:U('AcField/index')}";
+                url = U('table',name,url);
+                fieldObj.options.settings.url = url;
+                fieldObj.page(1);             
+            },
+            unselectRowEvent: function (record, rowIndex, trObj, options) {
+                var name = [table].getRecordIndexValue(record, 'name');
+                $('#[table]-action').find('a[grid-btn]').each(function(idx,it){
+                    $(this).addClass('disabled');
+                    var u = $(this).attr('href');
+                    u = U('name','',u);
+                    $(this).attr('href',u);
+                })
+            }
+        },
+    });
+
+
+    $('#[table]-action').find('[grid-dialog]').on('click',function(event){
+        event.preventDefault();
+        var box = $('<div style="max-height:500px;overflow-y: auto;" class="row"></div>');
+        var size = $(this).attr('dialog-size');
+        if (!size) size = 'size-wide';
+        var url = $(this).attr('href');
+        var title = $(this).attr('dialog-title');
+        box.load(url);
+        BootstrapDialog.show({
+            message: box,
+            size:size,
+            title:title,
+            buttons: [{
+                label: '确定',
+                action: function(dialogRef) {
+                    var form = dialogRef.getModalBody().find('form');
+                    if (form.length > 0) {
+                        var url = form.attr('action');
+                        var data = form.serialize();
+                        $.post(url,data,function(req){
+                            $.bootstrapGrowl(req.info);
+                            if (req.status == 1) {
+                                dialogRef.close();
+                                [table].refreshPage();
+                            }
+                        })
+                    }else{
+                        dialogRef.close();
+                        [table].refreshPage();
+                    }
+                }
+            },{
+                label: '取消',
+                action: function(dialogRef){
+                    dialogRef.close();
+                }
+            }]
+        });
+    })
+
+
+    $('#[table]-action').find('[grid-delete]').confirmation({
+        container: 'body',
+        href:false,
+        onConfirm:function(event, element){
+            event.preventDefault();
+            el  = $(element);
+            var url = el.attr('href');
+            $.get(url,function(req){
+                $.bootstrapGrowl(req.info);
+                var st = req.status;
+                [table].refreshPage();
+            })
+        }
+    });
+
+
+
+})
+</script>

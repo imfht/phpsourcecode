@@ -1,0 +1,179 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header">
+		<h4>{:L('ADD_CUSTOMER_CARE')}</h4>
+	</div>
+	<div class="row">
+		<div class="span12">
+			<include file="Public:alert" />
+			<form action="{:U('customer/caresadd')}" method="post">
+			    <input type="hidden" name="refer_url" value="{$refer_url}">
+				<table class="table" width="95%" border="0" cellspacing="1" cellpadding="0">
+					<thead>
+						<tr>
+							<td>&nbsp;</td>
+							<td <if condition="C('ismobile') neq 1">colspan="3"</if>><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE')}"/>&nbsp; <input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE_AND_NEW')}"/> &nbsp;<input class="btn" type="button" onclick="javascript:history.go(-1)" value="{:L('RETURN')}"/></td>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr> 
+							<td>&nbsp;</td>
+							<td <if condition="C('ismobile') neq 1">colspan="3"</if>><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE')}"/> &nbsp;<input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE_AND_NEW')}"/>&nbsp; <input class="btn" type="button" onclick="javascript:history.go(-1)" value="{:L('RETURN')}"/> </td>				
+						</tr>
+					</tfoot>
+					<tbody>
+						<tr><th <if condition="C('ismobile') neq 1">colspan="4"<else/>colspan="2"</if>>{:L('BASIC_INFORMATION')}</th></tr>
+						<tr>
+							<td width="15%" class="tdleft">{:L('CUSTOMER_CLICK_TO_SELECT')}</td>
+							<td width="35%">
+								<input type="hidden" name="customer_id" id="customer_id" value="{$customer['customer_id']}"/>
+								<input  type="text" name="customer_name" id="customer_name" value="{$customer['name']}"> <a target="_blank" href="{:U('customer/add')}">{:L('CREATE_NEW_CUSTOMER')}</a>
+							</td>	
+							<if condition="C('ismobile') eq 1"></tr><tr></if>
+							<td width="15%" class="tdleft">{:L('LINKMAN_CLICK_TO_SELECT')}</td>
+							<td width="35%"><input type="hidden" name="contacts_id" id="contacts_id" value="{$customer[contacts_id]}"/><input  type="text" name="contacts_name" id="contacts_name" value="{$customer[contacts_name]}"/> <a target="_blank" href="{:U('contacts/add')}">{:L('CREATE_NEW_LINKMAN')}</a></td>
+						</tr>
+						<tr>
+							<td class="tdleft" width="15%">{:L('CARE_THEME')}</td>
+							<td width="35%" ><input class="text-input large-input" type="text" name="subject" id="name">&nbsp;<span style="color:red;">{:L('REQUIRED')}</span></td>
+							<if condition="C('ismobile') eq 1"></tr><tr></if>
+							<td class="tdleft" width="15%">{:L('DATE_OF_CARE')}</td>
+							<td width="35%" >
+								<input onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})"  type="text" id="care_time" name="care_time"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="tdleft">{:L('OPERATOR')}</td>
+							<td>
+								<input type="hidden" name="owner_role_id" id="owner_role_id" value="{$Think.session.role_id}"/>
+								<input type="text" name="owner_name" id="owner_name" value="{$Think.session.name}"/>
+							</td>
+							<if condition="C('ismobile') eq 1"></tr><tr></if>
+							<td class="tdleft" >{:L('CARING_TYPE')}</td>
+							<td>
+								<select name="type">
+									<option value="">-{:L('NONE')}-</option>
+									<option value="phone">{:L('PHONE')}</option>
+									<option value="email">{:L('EMAIL')}</option>
+									<option value="message">{:L('NOTE')}</option>
+									<option value="other">{:L('OTHER')}</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td class="tdleft">{:L('CARE_CONTENT')}</td>
+							<td <if condition="C('ismobile') neq 1">colspan="3"</if>><textarea rows="6" class="span8" name="content"></textarea></td>
+						</tr>
+						<tr>
+							<td class="tdleft" >{:L('REMARK')}</td>
+							<td <if condition="C('ismobile') neq 1">colspan="3"</if>><textarea rows="6" class="span8" name="description"></textarea></td>
+						</tr>
+					</tbody>
+				</table>
+			</form>			
+		</div>
+	</div>
+</div>
+<div id="dialog-message" title="{:L('CHOOSE_TO_EXECUTION')}">loading...</div>
+<div id="dialog-message2" title="{:L('CHANCE_CUSTOMER')}">loading...</div>
+<div class="hide" id="dialog-message3" title="{:L('SELECT_LINKMAN')}">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+$("#dialog-message").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	buttons: {
+		"Ok": function () {
+			var item = $('input:radio[name="owner"]:checked').val();
+			var name = $('input:radio[name="owner"]:checked').parent().next().html();
+			$('#owner_name').val(name);
+			$('#owner_role_id').val(item);
+			$(this).dialog("close");
+		},
+		"Cancel": function () {
+			$(this).dialog("close");
+		}
+	},
+	position: ["center", 100]
+});
+$("#dialog-message2").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	buttons: {
+		"Ok": function () {
+			var item = $('input:radio[name="customer"]:checked').val();
+			var name = $('input:radio[name="customer"]:checked').parent().next().html();
+			var contacts_id = $('input:radio[name="customer"]:checked').attr('rel');
+			var contacts_name = $('input:radio[name="customer"]:checked').next().attr('value');
+			if(item){
+				$('#customer_name').val(name);
+				$('#customer_id').val(item);
+				$('#contacts_id').val(contacts_id);
+				$('#contacts_name').val(contacts_name);
+			}
+			$(this).dialog("close");
+		},
+		"Cancel": function () {
+			$(this).dialog("close");
+		}
+	},
+	position: ["center", 100]
+});
+$("#dialog-message3").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	buttons: { 
+		"Ok": function () {
+			var item = $('input:radio[name="contacts"]:checked').val();
+			var name = $('input:radio[name="contacts"]:checked').parent().next().html();
+			$('#contacts_id').val(item);
+			$('#contacts_name').val(name);
+			$(this).dialog("close"); 
+		},
+		"Cancel": function () {
+			$(this).dialog("close");
+		}
+	},
+	position:["center",100]
+});
+$(function(){
+	$("#owner_name").click(
+		function(){
+			$('#dialog-message').dialog('open');
+			$('#dialog-message').load('{:U("user/listDialog")}');
+		}
+	);
+	$("#customer_name").click(
+		function(){
+			$('#dialog-message2').dialog('open');
+			$('#dialog-message2').load('{:U("customer/listDialog")}');
+		}
+	);
+	$("input[name='submit']").click(function(){			
+		if($("#name").val() == null || $("#name").val() == ""){
+			alert('关怀主题不能为空！');
+			return false;
+		}
+	})
+	
+	$('#contacts_name').click(
+			function(){
+				$customer_name = $('#customer_name').val();
+				$customer_id = $('#customer_id').val();
+				if($customer_name == '' || $customer_name == null){
+					alert('{:L('PLEASE_CHOOSE_THE_CUSTOMER_FIRST')}');
+				}else{
+					$('#dialog-message3').dialog('open');
+					$('#dialog-message3').load('{:U("contacts/radiolistdialog", "customer_id=")}'+$('#customer_id').val());
+				}
+			}
+		);
+});
+</script>
+<include file="Public:footer" />

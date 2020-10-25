@@ -1,0 +1,175 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>$vo['name'],'search'=>'N'))}
+	<input type="hidden" id="id" name="id" value="{$vo.id}">
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a onclick="go_return_url()" class="btn btn-sm btn-primary">返回</a>
+				<div class="btn-group">
+					<a class="btn btn-sm btn-primary" onclick="reply('reply');">回复</a>
+					<button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+						<span class="fa fa-caret-down"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li>
+							<a onclick="reply('reply');">回复</a>
+						</li>
+						<li>
+							<a onclick="reply('all');">全部回复</a>
+						</li>
+						<li>
+							<a onclick="reply('forward');" >转发</a>
+						</li>
+					</ul>
+				</div>
+				<a onclick="del()" class="btn btn-sm btn-danger">删除</a>
+				<div class="btn-group">
+					<a class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> 标记为 <span class="fa fa-caret-down"></span> </a>
+					<ul class="dropdown-menu">
+						<li>
+							<a onclick="mark('readed');">已读</a>
+						</li>
+						<li>
+							<a onclick="mark('unread');">未读</a>
+						</li>
+					</ul>
+				</div>
+				<div class="btn-group" id="move_to">
+					<a class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> 转移到 <span class="fa fa-caret-down"></span> </a>
+					<ul class="dropdown-menu">
+						{$folder_list}
+					</ul>
+				</div>
+				<a  onclick="winprint()" class="btn btn-sm btn-primary hidden-xs">打印</a>
+			</div>
+			<div class="pull-right">
+				<div class="btn-group">
+					{$next_link}
+				</div>
+			</div>
+		</div>
+	</div>
+	<form class="well form-horizontal">
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >发件人：</label>
+			<p class="col-sm-8 form-control-static">
+				{$vo.from|show_contact}
+			</p>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >时间：</label>
+			<p class="col-sm-8 form-control-static">
+				{$vo.create_time|to_date='Y年m月d日 H:i'}
+			</p>
+		</div>
+
+		<div class="form-group col-sm-12">
+			<label class="col-sm-2 control-label" >收件人：</label>
+			<p class="col-sm-10 form-control-static">
+				{$vo.to|show_contact}
+			</p>
+		</div>
+
+		<div class="form-group col-sm-12">
+			<label class="col-sm-2 control-label" >抄送：</label>
+			<p class="col-sm-10 form-control-static">
+				{$vo.cc|show_contact}
+			</p>
+		</div>
+		<div class="clearfix"></div>
+		<div class="form-group">
+			<div class="col-xs-12">
+				<div class="content_wrap" >
+					<iframe class="content_iframe"></iframe>
+					<textarea class="content" name="content" style="width:100%;display:none;">{$vo.content}</textarea>
+				</div>
+			</div>
+		</div>
+		<gt name="vo.add_file|strlen" value="2">
+			<div class="row form-horizontal">
+				<div class="form-group col-xs-12">
+					<label class="col-sm-2 control-label" for="name">附件：</label>
+					<div class="col-sm-10">
+						{:W('FileUpload/view',array('add_file'=>$vo['add_file']))}
+					</div>
+				</div>
+			</div>
+		</gt>
+		</div>
+	</form>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function del() {
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('mark','action=del')}", 'id=' + $("#id").val(), function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							window.open($("#next_link").attr("href"), '_self');
+						});
+					}
+				});
+			});
+		}
+
+		function mark_spam() {
+			sendAjax("{:U('mark','action=spam')}", 'mail_id=' + $("#id").val(), function(data) {
+				if (data.status) {
+					ui_info(data.info);
+				}
+			});
+		}
+
+		function del_forever() {
+			sendAjax("{:U('mark','action=del_forever')}", 'mail_id=' + $("#id").val(), function(data) {
+				if (data.status) {
+					ui_info(data.info);
+				}
+			});
+		}
+
+		function forword() {
+			if ($("input[name='mail_id']:checkbox:checked").length == 1) {
+				window.open(fix_url("{:U('reply')}?id=" + $("input[name='mail_id']:checkbox:checked:first").val()) + "&type=forward", "_self");
+			} else {
+				ui_error("请选择一封要转发的邮件");
+				return false;
+			};
+		}
+
+		function mark(val) {
+			if (val == "readed") {
+				sendAjax("{:U('mark','action=readed')}", 'main_id=' + $("#id").val());
+			} else {
+				sendAjax("{:U('mark','action=unread')}", 'main_id=' + $("#id").val());
+			}
+		}
+
+		function move_to(val) {
+			sendAjax("{:U('mark','action=move_to')}", 'val=' + val + '&mail_id=' + $("#id").val(), function(data) {
+				if (data.status) {
+					ui_info(data.info);
+				}
+			});
+		}
+
+		function reply(type) {
+			if (type == "reply") {
+				setTimeout(function() {
+					window.location.href = fix_url("{:U('reply','id='.$vo['id'])}?type=" + type);
+				}, 300);
+			} else {
+				window.location.href = fix_url("{:U('reply','id='.$vo['id'])}?type=" + type);
+			}
+		}
+
+
+		$(document).ready(function() {
+			$("#move_to li").click(function() {
+				move_to($(this).attr("id"));
+			});
+			show_content();
+		});
+	</script>
+</block>

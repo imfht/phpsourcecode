@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>分享</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body style="background: #fff;">
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>分享二维码</h1>
+  <a class="hui-header-sreach-txt" id="share_save">保存</a>
+</header>
+<div class="hui-wrap">
+  <div class="hui-img-list" style="padding:20px;">
+    <ul>
+      <li id="qrcode" style="text-align: center;"></li>
+    </ul>
+  </div>
+	<div class="hui-row">
+		<div class="hui-col-12" style="text-align: center;"><a href="/down/yumiqianbao.apk">复制地址下载软件</a></div>
+		<div class="hui-col-12 hui-mt-20" style="text-align: center;">
+			<input type="text" style="width: 100%;" class="hui-input hui-input-clear" value="IOS地址(复制地址)：#{$url}#"></div>
+		<div class="hui-col-12 hui-mt-20" style="text-align: center;"><a href="#{$smarty.const.ACT}#/home/WxMemberShare/member_share_log/">分享记录</a></div>
+	</div>
+</div>
+<a id="downloadLink"></a>
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui.js" type="text/javascript" charset="utf-8"></script>
+<script src="#{$smarty.const.APP}#/View/template/home/plus/jquery1.42.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="#{$smarty.const.APP}#/View/template/home/plus/qrcode.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="#{$smarty.const.APP}#/View/template/home/plus/jquery.qrcode.js" type="text/javascript" charset="utf-8"></script>
+<script src="#{$smarty.const.APP}#/View/template/home/plus/utf.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+$("#qrcode").qrcode({
+	render : "canvas",    //设置渲染方式，有table和canvas，使用canvas方式渲染性能相对来说比较好
+	 size: 200,
+	text : "#{$url}#",    //扫描二维码后显示的内容,可以直接填一个网址，扫描二维码后自动跳向该链接
+	width : "300",            // //二维码的宽度
+	height : "300",              //二维码的高度
+	background : "#ffffff",       //二维码的后景色
+	foreground : "#000000",        //二维码的前景色
+	src: '#{$smarty.const.APP}#/View/template/home/img/logo.png'             //二维码中间的图片
+});
+function downloadClick(){
+	var canvas = $('#qrcode').find("canvas")[0];
+	 var img = convertCanvasToImage(canvas);  
+	 $('#qrcode').html(img);//imgDiv表示你要插入的容器id  
+	var qrCode = 'cron';
+	try {//解决IE转base64时缓存不足，canvas转blob下载
+		var blob = canvas.msToBlob();
+		navigator.msSaveBlob(blob, qrCode + '.png');
+	} catch (e) {//如果为其他浏览器，使用base64转码下载
+		var url = canvas.toDataURL('image/png');
+		$("#downloadLink").attr("download", qrCode + '.png')
+		$("#downloadLink").attr('href', url).get(0).click();
+	}
+}
+//从canvas中提取图片image  
+function convertCanvasToImage(canvas) {  
+	//新Image对象，可以理解为DOM  
+	var image = new Image();  
+	// canvas.toDataURL 返回的是一串Base64编码的URL  
+	// 指定格式PNG  
+	image.src = canvas.toDataURL("image/png");  
+	return image;  
+}
+hui('#share_save_1').click(function(){
+	hui.ajax({
+		type : 'POST',
+		url : '#{$smarty.const.ACT}#/home/WxShare/member_share_save/',
+		data : '',
+		backType:'json',
+		beforeSend : function(){hui.loading();},
+		complete : function(){hui.closeLoading();},
+		success : function(data){
+			if(data.code=='sucess'){
+				hui.upToast(data.message);
+				hui.toast('操作成功', 'success');
+			}else{
+				hui.upToast(data.message);
+			}
+		},
+		error : function(e){
+			console.log(JSON.stringify(e));
+			hui.iconToast('读取消息失败', 'warn');
+		}
+	});
+});
+	
+hui('#share_save').click(function(){
+
+	// 创建下载任务
+	picurl="http://www.yumiqianbao.com/down/cron.png";
+	//图片保存到手机后的路径
+	picname="erwei.png";
+	var dtask = plus.downloader.createDownload(picurl, {}, function ( d, status ) {
+	// 下载完成
+		if ( status == 200 ) { 
+		//		alert( "Download success: " + d.filename );
+			plus.gallery.save(picname,function() {//保存到相册方法
+				hui.toast('已保存到手机相册');
+			}, function() {
+				hui.toast('保存失败，请重试！');
+			});
+		} else {
+		//		alert( "Download failed: " + status ); 
+		}
+	});
+	//dtask.addEventListener( "statechanged", onStateChanged, false );
+	dtask.start();//开始下载
+});
+</script> 
+
+
+
+</body>
+</html>

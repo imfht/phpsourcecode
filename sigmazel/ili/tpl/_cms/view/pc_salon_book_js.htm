@@ -1,0 +1,125 @@
+<!--{@name 线下沙龙报名脚本}-->
+<script type="text/javascript">
+function flash_seccode(){
+	$('#spn_seccode').html('<img src="index.php?r=/misc/seccode&rnd=' + Math.random() + '" onclick="flash_seccode()"/>');
+}
+
+function check_form(){
+	var frm = $('#_dialog .window form').get(0);
+			
+	if(frm.txtRealName.value.trim().length == 0){
+		$('.icon', $(frm.txtRealName).parent()).html('<img src="tpl/_cms/static/images/icon-error.png"/>');
+		$('.tips', $(frm.txtRealName).parent()).html('姓名不能为空！').addClass('tips-error');
+		$(frm.txtRealName).addClass('input-active');
+		return null;
+	}
+	
+	if(frm.txtMobile.value.trim().length == 0){
+		$('.icon', $(frm.txtMobile).parent()).html('<img src="tpl/_cms/static/images/icon-error.png"/>');
+		$('.tips', $(frm.txtMobile).parent()).html('手机号码不能为空！').addClass('tips-error');
+		$(frm.txtMobile).addClass('input-active');
+		return null;
+	}
+	
+	if(frm.txtSeccode.value.trim().length == 0){
+		$('.icon', $(frm.txtSeccode).parent()).html('<img src="tpl/_cms/static/images/icon-error.png"/>');
+		$('.tips', $(frm.txtSeccode).parent()).html('验证码不能为空！').addClass('tips-error');
+		$(frm.txtSeccode).addClass('input-active');
+		return null;
+	}
+	
+	var json = {};
+	
+	json.txtRealName = frm.txtRealName.value.trim();
+	json.txtMobile = frm.txtMobile.value.trim();
+	json.txtSeccode = frm.txtSeccode.value.trim();
+	
+	return json;
+}
+
+function bind_dialog_event(){
+	$("input[name='txtRealName']").focus(function(){
+		$('.icon', $(this).parent()).html('');
+		$('.tips', $(this).parent()).html('输入真实姓名').removeClass('tips-error');
+		$(this).addClass('input-active');
+	}).blur(function(){
+		$(this).removeClass('input-active');
+		
+		var _this = $(this);
+		var val = $(_this).val();
+		var icon = $('.icon', $(_this).parent());
+		var tips = $('.tips', $(_this).parent());
+		
+		if(!val){
+			$(icon).html('<img src="tpl/_cms/static/images/icon-error.png"/>');
+			$(tips).html('姓名不能为空！').addClass('tips-error');
+			$(_this).addClass('input-active');
+		}
+	});
+	
+	$("input[name='txtMobile']").focus(function(){
+		$('.icon', $(this).parent()).html('');
+		$('.tips', $(this).parent()).html('输入手机号码').removeClass('tips-error');
+		$(this).addClass('input-active');
+	}).blur(function(){
+		$(this).removeClass('input-active');
+		
+		var _this = $(this);
+		var val = $(_this).val();
+		var icon = $('.icon', $(_this).parent());
+		var tips = $('.tips', $(_this).parent());
+		
+		if(!val || !val.isMobile()){
+			$(icon).html('<img src="tpl/_cms/static/images/icon-error.png"/>');
+			$(tips).html('手机号码不能为空！').addClass('tips-error');
+			$(_this).addClass('input-active');
+		}
+	});
+	
+	$("input[name='txtSeccode']").focus(function(){
+		$('.icon', $(this).parent()).html('');
+		$('.tips', $(this).parent()).html('注：6位验证码。').removeClass('tips-error');
+		$(this).addClass('input-active');
+	}).blur(function(){
+		$(this).removeClass('input-active');
+		
+		var _this = $(this);
+		var val = $(_this).val();
+		var icon = $('.icon', $(_this).parent());
+		var tips = $('.tips', $(_this).parent());
+		
+		if(!val){
+			$(icon).html('<img src="tpl/_cms/static/images/icon-error.png"/>');
+			$(tips).html('验证码不能为空！').addClass('tips-error');
+			$(_this).addClass('input-active');
+		}
+	});
+}
+
+$(function(){
+	$('.btn-book').click(function(){
+		var self = this;
+		
+		$.dialog({
+			title:'我要报名', 
+			width:500, 
+			height:240, 
+			href:'salon.html?op=detail&do=book&id=' + $(self).attr('rel') + '&rnd' + Math.random(), 
+			button:{cancel:'关闭', submit:'确认提交'}, 
+			remove:false, 
+			callback:function(){
+				bind_dialog_event();
+			},
+			submit:function(){
+				var json = check_form();
+				if(!json) return;
+				
+				$.getJSON('salon.html?op=detail&do=book&formsubmit=yes&id=' + $(self).attr('rel') + '&rnd' + Math.random(), {json:json_encode(json)}, function(data){
+					$.toast({message:data.message});
+					if(data.success == true) $(self).text('报名成功').addClass('booked').attr('disabled', 'disabled');
+				});
+			}
+		});
+	});
+});
+</script>

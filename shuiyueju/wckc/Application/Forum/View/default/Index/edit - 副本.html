@@ -1,0 +1,158 @@
+<extend name="Public/forum"/>
+
+<block name="body">
+    <div class="row">
+
+        <div class="col-xs-12">
+            <div class="fourm-top common_block_border" style="padding: 15px 20px;margin: -15px;margin-top: 0;margin-bottom: 15px">
+                <h4>
+                    <if condition="$isEdit">
+                        编辑帖子
+                        <else/>
+                        发表新帖
+                    </if>
+                </h4>
+                <hr/>
+                <section id="contents">
+                    <form action="{:U('Forum/Index/doEdit')}" method="post" id="edit-article-form">
+                        <input type="hidden" name="post_id" value="{$post.id}"/>
+
+                        <div class="row">
+                            <!-- 帖子分类 -->
+                            <div class="col-sm-3 col-xs-12">
+                                <p>
+                                    <select class="form-control" name="forum_id">
+                                        <volist name="forum_list" id="each_forum">
+                                            <if condition="$each_forum['allow_publish']">
+                                                <php>
+                                                    $selected = $each_forum['id'] == $forum_id ? 'selected' : '';
+                                                </php>
+                                                <option value="{$each_forum.id}"
+                                                {$selected}>{$each_forum.title|op_t}</option>
+                                            </if>
+                                        </volist>
+                                    </select>
+                                </p>
+                            </div>
+                            <div class="col-sm-9 col-xs-12">
+                                <p>
+                                    <input id="title" type="text" name="title" placeholder="标题" value="{$post.title}"
+                                           class="form-control"/>
+                                </p>
+                            </div>
+                        </div>
+                        <p>
+
+                            <php>$config='';</php>
+
+                            {:W('UeditorMini/editor',array('contentEditor','content',$post['content'],'100%','250px',$config))}
+
+                        </p>
+
+                        <p>&nbsp;</p>
+
+                        <p class="pull-right">
+                            <button type="submit" class="btn btn-large btn-primary" id="submit-button">
+                                <span class="glyphicon glyphicon-edit"></span>
+                            <span id="submit-content">
+                                <if condition="$isEdit">
+                                    编辑帖子 Ctrl+Enter
+                                    <else/>
+                                    发表帖子 Ctrl+Enter
+                                </if>
+                            </span>
+                            </button>
+                            <input type="hidden" id="isEdit" value="{$isEdit}">
+                        </p>
+                        <p>
+                            <a class="btn btn-large btn-primary" onclick="history.go(-1)">
+                                <span class="glyphicon glyphicon-home"></span>
+                                返回帖子列表
+                            </a>
+                        </p>
+                    </form>
+                </section>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-xs-9">
+        </div>
+        <div class="col-xs-3">
+
+        </div>
+    </div>
+</block>
+
+<block name="script">
+    <script type="text/javascript" src="__PUBLIC__/Core/js/ext/atwho/atwho.js"></script>
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/Core/js/ext/atwho//atwho.css"/>
+    <script>
+        //点击编辑或发表按钮之后
+        $(function () {
+            $('#edit-article-form').keypress(function (e) {
+                if (e.ctrlKey && e.which == 13 || e.which == 10) {
+                    $('#submit-button').focus();
+                    $("#submit-button").click();
+                }
+            });
+
+           var $inputor = $('#contentEditor').atwho(atwho_config);
+
+            var submitCount = 0;
+            $('#edit-article-form').submit(function (e) {
+                //为了得到编辑器中的内容，触发两次提交事件
+                if (submitCount == 0) {
+                    submitCount = 1;
+                    $('#edit-article-form').trigger('submit');
+                    e.preventDefault();
+                    return false;
+                } else {
+                    submitCount = 0;
+                }
+                //显示正在提交
+                showSubmitting();
+                //获取用户输入的内容
+                var postData = $(this).serialize();
+                var action = $(this).attr('action');
+                $.post(action, postData, function (e) {
+                    if (e.status) {
+                        showSubmitSuccess(e.info, e.url);
+                    } else {
+                        showSubmitError(e.info);
+                    }
+                });
+                //停止提交
+                e.preventDefault();
+                return false;
+            });
+
+            function showSubmitError(message) {
+                $('#submit-button').removeClass('disabled');
+                var isEdit = $('#isEdit').val();
+                var text = '';
+                if (isEdit) {
+                    text = '编辑帖子';
+                } else {
+                    text = '发表帖子';
+                }
+                $('#submit-content').text(text);
+                toast.error(message, '错误');
+            }
+
+            function showSubmitSuccess(message, url) {
+                toast.success(message, '温馨提示');
+                setTimeout(function () {
+                    location.href = url;
+                }, 1500);
+            }
+
+            function showSubmitting() {
+                $('#submit-button').attr('class', 'btn btn-primary disabled');
+                $('#submit-content').text('正在提交');
+            }
+        })
+    </script>
+</block>

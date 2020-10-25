@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>异常处理</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>异常处理</legend>
+			<ol>
+				<li><h2 class="title_h2">Soter异常概念</h2>
+					在Soter里面，把PHP的notice，warnning，fatal等错误以及各种exception异常统称为“异常”。
+					<br>Soter一旦发生了“异常”，系统会把相关错误信息封装进一个Soter_Exception异常对象，
+					<br>然后交给注册的异常处理类处理这个异常对象，接着代码就会终止运行。
+					<br>Soter抛出的异常对象有三种：
+					<br>1.Soter_Exception_404　　　　当找不到相关资源的时候抛出
+					<br>2.Soter_Exception_500　　　　当发生程序内部错误的时候抛出
+					<br>3.Soter_Exception_Database　 当发生数据库错误的时候抛出
+					<br>提示：
+					<br>Soter_Exception异常对象是继承了Excepiton的对象。
+				</li>
+				<li><h2 class="title_h2">异常处理</h2>
+					默认情况下，Soter一旦发生了“异常”，代码就会终止运行，并显示出错误信息在浏览器中。
+					<h3 class="title_h3">1.默认处理</h3>
+					在入口文件里面我们可以看到下面自定义的错误显示控制处理类的配置：
+					<pre class="brush:php">
+						//系统错误显示设置，非产品环境才显示
+						->setShowError(Sr::config()->getEnvironment() != Sr::ENV_PRODUCTION)
+						...
+						//设置自定义的错误显示控制处理类
+						->setExceptionHandle(new Soter_Exception_Handle_Default())
+					</pre>
+					Soter_Exception_Handle_Default类代码如下：
+					<pre class="brush:php">
+						class Soter_Exception_Handle_Default implements Soter_Exception_Handle {
+							public function handle(Soter_Exception $exception) {
+								$exception->render();
+							}
+						}
+					</pre>
+					可以看到，默认情况下，Soter_Exception_Handle_Default类在handle方法里面
+					<br>直接调用了Soter_Exception异常对象$exception的render方法向浏览器输出了错误信息。
+					<br>如果我们不想显示这个错误信息，我看可以通过在入口文件里面通过设置showError为false，
+					<br>就会关闭错误信息在浏览器中的显示。
+					<h3 class="title_h3">2.自定义处理</h3>
+					如果我们想自己控制这个错误信息的显示怎么办呢，我们只需要通过setExceptionHandle设置自己的异常处理类即可。
+					<br>异常处理类都必须实现Soter_Exception_Handle接口，也就是要有一个handle方法接收一个Soter_Exception参数。
+					<br>比如新建文件：application/classes/Exception/MyHandle.php,内容如下：
+					<pre class="brush:php">
+						class Exception_MyHandle implements Soter_Exception_Handle {
+							public function handle(Soter_Exception $exception) {
+								if (Sr::isCli()) {
+									$exception->render();
+								} elseif (Sr::isAjax()) {
+									$exception->renderJson();
+								} else {
+									$exception->setHttpHeader();
+									$data['exception'] = $exception;
+									if ($exception instanceof Soter_Exception_404) {
+										Sr::view()->load('error/404', $data);
+									} elseif ($exception instanceof Soter_Exception_500) {
+										Sr::view()->load('error/404', $data);
+									} elseif ($exception instanceof Soter_Exception_Database) {
+										echo Sr::view()->load('error/404', $data);
+									} else {
+										Sr::view()->load('error/404', $data);
+									}
+								}
+								exit();
+							}
+						}
+					</pre>
+					上面我们自定义类一个异常处理类Exception_MyHandle，实现了handle方法，在方法里面直接显示不同类型的错误提示信息，
+					<br>然后注册我们的类：
+					<pre class="brush:php">
+						//设置自定义的错误显示控制处理类
+						->setExceptionHandle(new Exception_MyHandle())
+					</pre>
+					<b>那么当我们showError为true的时候</b>，只要发生了异常，页面就会显示我们写的不同类型的错误提示信息。
+					<br><b class="text_strong">注意：只有showError为true的时候，用户用户自定义类错误显示处理类或系统错误显示处理类才会被调用。</b>
+					<br>1.当设置了自定义类错误显示处理类，系统错误显示处理类不再起作用，是否显示错误由用户自定义类处理。
+					<br>2.当没有设置自定义类错误显示处理类，系统错误显示处理类显示错误。
+				</li>
+				<li><h2 class="title_h2">异常日志记录</h2>
+					当发生了异常我们可以通过注册日志记录类，来记录异常信息到数据库，到文件等等。
+					<br><b class="text_strong">日志记录类不应该有输出，应该仅记录错误信息到日志系统（文件、数据库等等）
+						<br>而且不能执行退出的操作比如exit，die。
+					</b>
+					<h3 class="title_h3">1.默认情况</h3>
+					在入口文件里面我们可以看到下面错误日志类相关配置：
+					<pre class="brush:php">
+						/* 错误日志记录，注释掉这行会关闭日志记录，去掉注释则开启日志文件记录,
+						 * 第一个参数是日志文件路径，第二个参数为是否记录404类型异常 */
+						//->addLoggerWriter(new Soter_Logger_FileWriter(SOTER_APP_PATH . 'storage/logs/',false))
+						/* 设置日志记录子目录格式，参数就是date()函数的第一个参数,默认是 Y-m-d/H */
+						->setLogsSubDirNameFormat('Y-m-d/H')
+					</pre>
+					我们可以多次调用addLoggerWriter方法注册多个不同的日志记录类。
+					<br>默认情况下，我们看到Soter注册了一个默认的日志记录类Soter_Logger_FileWriter，
+					<br>这个类会把错误信息记录到日志目录application/storage/logs/。
+					<br>Soter_Logger_FileWriter类代码如下：
+					<pre class="brush:php">
+						class Soter_Logger_FileWriter implements Soter_Logger_Writer {
+
+							private $logsDirPath, $log404;
+
+							public function __construct($logsDirPath, $log404 = true) {
+								$this->log404 = $log404;
+								$this->logsDirPath = Sr::realPath($logsDirPath) . '/' . date(Sr::config()->getLogsSubDirNameFormat()) . '/';
+							}
+
+							public function write(Soter_Exception $exception) {
+								if (!$this->log404 && ($exception instanceof Soter_Exception_404)) {
+									return;
+								}
+								$content = 'Domain : ' . Sr::server('http_host') . "\n"
+									. 'ClientIP : ' . Sr::server('SERVER_ADDR') . "\n"
+									. 'ServerIP : ' . Sr::serverIp() . "\n"
+									. 'ServerHostname : ' . Sr::hostname() . "\n"
+									. (!Sr::isCli() ? 'Request Uri : ' . Sr::server('request_uri') : '') . "\n"
+									. (!Sr::isCli() ? 'Get Data : ' . json_encode(Sr::get()) : '') . "\n"
+									. (!Sr::isCli() ? 'Post Data : ' . json_encode(Sr::post()) : '') . "\n"
+									. (!Sr::isCli() ? 'Cookie Data : ' . json_encode(Sr::cookie()) : '') . "\n"
+									. (!Sr::isCli() ? 'Server Data : ' . json_encode(Sr::server()) : '') . "\n"
+									. $exception->renderCli() . "\n";
+								if (!is_dir($this->logsDirPath)) {
+									mkdir($this->logsDirPath, 0700, true);
+								}
+								if (!file_exists($logsFilePath = $this->logsDirPath . 'logs.php')) {
+									$content = '<?php defined("IN_SOTER") or exit();?>' . "\n" . $content;
+								}
+								file_put_contents($logsFilePath, $content, LOCK_EX | FILE_APPEND);
+							}
+
+						}
+					</pre>
+					可以看到Soter_Logger_FileWriter日志处理类把错误信息整理之后写入得到了日志目录。
+					<h3 class="title_h3">2.自定义日志处理类</h3>
+					默认情况下，Soter注册了一个默认的日志记录类Soter_Logger_FileWriter，那么如何注册我们自己的错误日志记录类呢？
+					<br>错误日志记录类只要实现了Soter_Logger_Writer接口即可，也就是实现write方法处理异常对象。
+					<br>比如新建文件：application/classes/Logger/MyFileWriter.php,内容如下：
+					<pre class="brush:php">
+						class Logger_MyFileWriter implements Soter_Logger_Writer {
+
+							public function write(Soter_Exception $exception) {
+								$environment=$exception->getEnvironment();//当前环境								
+								$line=$exception->getErrorMessage();//错误信息
+								$code=$exception->getErrorCode();//错误码
+								$file=$exception->getErrorFile();//错误文件路径
+								$line=$exception->getErrorLine();//出错行数
+								$type=$exception->getErrorType();//错误类型
+								$formatCliString=$exception->renderCli();//不含html的文本，用于记录到文件
+								$formatJsonString=$exception->renderJson();//json格式，用于api接口输出
+								$formatHtmlString=$exception->renderHtml();//含有html的文本，用于显示到浏览器
+								$autoFormatString=$exception->render(false,true);//会根据环境自动返回不含html的文本或者含有html的文本
+								$traceCliString=$exception->getTraceCliString();//不含html的调用堆栈信息文本,用于记录到文件，或者在命令行下面显示
+								$traceHtmlString=$exception->getTraceHtmlString();//含html的调用堆栈信息文本，用于显示到浏览器
+								//这里可以把上面需要的信息记录到文件或者其它地方
+								file_put_contents('logger.txt',$formatCliString);
+							}
+
+						}
+					</pre>
+					上面我们自定义了一个Logger_MyFileWriter日志记录类，实现了接口Soter_Logger_Writer的write方法，
+					<br>然后在write方法里面通过异常对象$exception获取各种信息，然后把信息记录到logger.txt文件。
+					<br>然后注册我们的Logger_MyFileWriter日志记录类：
+					<pre class="brush:php">
+						//错误日志记录，注释掉这行会关闭日志记录，去掉注释则开启日志文件记录
+						->addLoggerWriter(new Soter_Logger_FileWriter(SOTER_APP_PATH . 'storage/logs/'))
+						//设置日志记录子目录格式，参数就是date()函数的第一个参数,默认是 Y-m-d/H
+						->setLogsSubDirNameFormat('Y-m-d/H')
+						//注册我们自己的日志处理类
+						->addLoggerWriter(new Logger_MyFileWriter())
+					</pre>
+					最后我们在控制器里面故意触发一个错误，比如我们在Welcome控制器的index方法里面调用不存在的方法，none();
+					<br>然后访问比如：http://127.0.0.1/index.php/Welcome/index.do
+					<br>然后我们就能发现入口文件目录里面多了个logger.txt文件里面记录了错误信息。
+                                        <br><b class="text_strong">温馨提示：</b>
+                                        <br>我们可以从上面看到<code>renderJson()</code>方法，<code>renderJson()</code>方法里面的内容可以根据我们个人爱好来自定义。
+                                        <br>我们可以在入口文件看到<code>->setExceptionJsonRender</code>方法，<code>->setExceptionJsonRender</code>方法就是来自定义<code>renderJson()</code>方法里面内容。
+                                        <br>示例如下:
+                                        <pre class="brush:php">
+                                                ->setExceptionJsonRender(function(Exception $e) {
+							$json['environment'] = $e->getEnvironment();
+                                                        $json['file'] = $e->getErrorFile();
+                                                        $json['line'] = $e->getErrorLine();
+                                                        $json['message'] = $e->getErrorMessage();
+                                                        $json['type'] = $e->getErrorType();
+                                                        $json['code'] = $e->getErrorCode();
+                                                        $json['time'] = date('Y/m/d H:i:s T');
+                                                        $json['trace'] = $e->getTraceCliString();
+                                                        return @json_encode($json);
+                                                })
+                                        </pre>
+				</li>
+				<li><h2 class="title_h2">关闭异常处理功能</h2>
+					在某些未知的特殊运行环境中，程序执行后空白，即使我们打开了Soter的错误显示，
+					<br>还是没有任何错误信息输出，我们无法发现错误进行调试。
+					<br>这个时候我们可以<b>临时</b>关闭Soter管理异常功能，使用PHP原生的报错信息。
+					<br>我们可以通过修改入口文件的下面的配置，关闭Soter管理异常功能。
+					<pre class="brush:php">
+						/* 设置Soter管理异常错误 */
+						->setExceptionControl(false)
+                                        </pre>
+					参数：
+					<br>1.为false时关闭Soter管理异常功能。
+					<br>2.为true时打开Soter管理异常功能。
+					<br><b class="text_strong">提示：
+						<br>当我们关闭Soter管理异常功能后，上面的提到的异常各种管理功能和显示控制都将无效。
+						<br>当我们解决了错误之后，应该打开这个功能，也就是设置参数为true，恢复Soter对异常的控制，
+						<br>这样上面的提到的异常各种管理功能和显示控制才会有效。
+					</b>
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

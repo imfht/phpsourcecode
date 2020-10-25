@@ -1,0 +1,97 @@
+<div class="dux-page-header uk-clearfix">
+    <div class="page-title">
+        <a class="uk-button uk-button-primary" href="{url('index')}"> 筛选列表</a>
+    </div>
+    <div class="page-action">
+        <a class="uk-button uk-button-danger" href="javascript:location.reload();"><i class="fa fa-refresh"></i></a>
+    </div>
+</div>
+
+<div class="uk-margin-top">
+    <div class="uk-card uk-card-small uk-card-default dux-panel">
+        <div class="uk-card-header">{$assignName}筛选</div>
+        <div class="uk-card-body">
+            <form class="dux-form uk-form  uk-form-horizontal  " id="form" data-dux="form-bind" method="post">
+                <fieldset>
+                    <div class="uk-form-group">
+                        <label class=" uk-form-label">名称</label>
+                        <div class="uk-form-controls">
+                            <input type="text" name="name" value="{$info.name}" placeholder="请输入筛选名称" required>
+                        </div>
+                    </div>
+                    <div class="uk-form-group">
+                        <label class=" uk-form-label">筛选属性</label>
+                        <div class="uk-form-controls">
+                            <a class="uk-button uk-button-primary " id="add-attr" href="javascript:;"> 增加属性</a>
+                            <br>
+                            <table class="uk-table  uk-table-responsive  uk-table-striped uk-table-hover uk-table-middle dux-table">
+                                <thead>
+                                <tr>
+                                    <th>属性名</th>
+                                    <th>类型</th>
+                                    <th>选择属性,文本框无效</th>
+                                    <th width="200">是否筛选,文本框无效</th>
+                                    <th width="100">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody id="attr-list">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="uk-form-group">
+                        <div class="uk-form-controls">
+                            <input type="hidden" name="filter_id" value="{$info.filter_id}">
+                            <button class="uk-button uk-button-primary" type="submit" disabled>保存</button>
+                        </div>
+                    </div>
+
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/html" id="tpl-attr">
+    {{# for(var i in d){ }}
+    <tr>
+        <td>
+            <input type="hidden" name="attr[attr_id][]" value="{{ d[i].attr_id }}" >
+            <input type="text" name="attr[name][]" value="{{ d[i].name }}" datatype="s">
+        </td>
+        <td>
+            <select  name="attr[type][]">
+                <option value="0" {{# if(d[i].type == 0){ }} selected {{# } }} >单选</option>
+                <option value="1" {{# if(d[i].type == 1){ }} selected {{# } }} >多选</option>
+                <option value="2" {{# if(d[i].type == 2){ }} selected {{# } }} >文本框</option>
+            </select>
+        </td>
+        <td><input type="text" name="attr[value][]"  value="{{ d[i].value }}" datatype="*"></td>
+        <td><input type="checkbox" name="attr[filter][]"  value="1" datatype="*"  {{ d[i].filter ? 'checked' : '' }}></td>
+        <td>
+            <button class="uk-button uk-button-danger uk-button-sm js-del" type="button">删除</button>
+        </td>
+    </tr>
+    {{# } }}
+</script>
+<script>
+    var attrData = {$attrList ? json_encode($attrList) : '[]'};
+    Do('base', 'tpl', function () {
+        function addAttr(data){
+            if(data.length < 1) {
+                return false;
+            }
+            var tpl = $('#tpl-attr').html();
+            laytpl(tpl).render(data, function(html){
+                $('#attr-list').append(html);
+            });
+        }
+        $('#add-attr').on('click', function() {
+            var data = [{'name': '','value':'','attr_id':''}];
+            addAttr(data);
+        });
+        $('#attr-list').on('click','.js-del',function(){
+            $(this).parents('tr').remove();
+        });
+        addAttr(attrData);
+    });
+</script>

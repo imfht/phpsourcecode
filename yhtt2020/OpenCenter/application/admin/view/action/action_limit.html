@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>行为限制</title>
+    <link rel="stylesheet" href="__LAYUI__/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/admin.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/oc.css" media="all">
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-tab layui-tab-card">
+        <ul class="layui-tab-title">
+            <li class="layui-this">行为限制</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div style="padding-bottom: 10px;">
+                    <button class="layui-btn layuiadmin-btn-useradmin" data-type="add">添加</button>
+                    <button class="layui-btn layuiadmin-btn-useradmin" data-type="del">删除</button>
+                </div>
+                <table id="list" lay-filter="list"></table>
+                <script type="text/html" id="barDemo">
+                    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+            <div class="layui-tab-item">
+                <table id="data-list" lay-filter="list"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="__LAYUI__/layui/layui.js"></script>
+<script>
+    layui.use(['table', 'jquery'], function () {
+        var table = layui.table,
+            $ = layui.$;
+        table.render({
+            elem: '#list',
+            url: "{:url('admin/action/actionLimit')}", //数据接口
+            title: '用户权限表',
+            toolbar: 'true',
+            defaultToolbar: ['filter', 'print', 'exports'],
+            page: true,
+            loading: true,
+            limit: 20,
+            limits: [10, 20, 50, 100],
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: 'ID', sort: true, fixed: 'left'},
+                {field: 'title', title: '标题', sort: true},
+                {field: 'rule_title', title: '权限节点名称', sort: true},
+                {field: 'frequency', title: '频率', sort: true},
+                {field: 'punish_type', title: '处罚方式', sort: true},
+                {field: 'if_message', title: '是否发送提示信息', sort: true},
+                {field: 'message_content', title: '消息提示内容', sort: true},
+                {field: 'create_time', title: '创建时间', sort: true},
+                {field: 'update_time', title: '更新时间', sort: true},
+                {field: 'status', title: '状态', sort: true},
+                {fixed: 'right', width: 165, align: 'center', toolbar: '#barDemo'}
+            ]],
+        });
+
+        //事件
+        var active = {
+            del: function () {
+                var checkStatus = table.checkStatus('list')
+                    , checkData = checkStatus.data; //得到选中的数据
+                if (checkData.length === 0) {
+                    return layer.msg('请选择数据');
+                }
+                var ids = [];
+                for (var v in checkData) {
+                    ids.push(checkData[v].id);
+                }
+                layer.confirm('确定删除吗？', function (index) {
+                    $.post("{:url('admin/action/delActionLimit')}", {id: ids}, function (res) {
+                        if (res.code === 1) {
+                            layer.close(index);
+                            table.reload('list');
+                            layer.msg(res.msg);
+                        } else {
+                            layer.msg(res.msg);
+                        }
+                    }, 'json')
+                })
+            }
+            , add: function () {
+                layer.open({
+                    type: 2
+                    , title: "添加用户行为限制"
+                    , content: "{:url('admin/action/actionLimitForm')}"
+                    , area: ['600px', '500px']
+                    , maxmin: true
+                    , btn: ['确定', '取消']
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submitID = 'LAY-user-front-submit'
+                            , submit = layero.find('iframe').contents().find('#' + submitID);
+
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(' + submitID + ')', function (data) {
+                            //提交 Ajax 成功后，静态更新表格中的数据
+                            $.post("{:url('admin/action/actionLimitForm')}", {data: data.field}, function (res) {
+                                if (res.code === 1) {
+                                    table.reload('list');   //数据刷新
+                                    layer.close(index);     //关闭弹层
+                                    layer.msg(res.msg);
+                                } else {
+                                    layer.msg(res.msg);
+                                }
+                            });
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        };
+        $('.layuiadmin-btn-useradmin').on('click', function () {
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+        //监听行工具事件
+        table.on('tool(list)', function (obj) {
+            var data = obj.data;
+            var layEvent = obj.event;
+            if (layEvent === 'del') {
+                layer.confirm('真的删除行么', function (index) {
+                    $.post('{:url("admin/action/delActionLimit")}', {id: [data.id]}, function (res) {
+                        if (res.code === 1) {
+                            obj.del();
+                            layer.close(index);
+                            layer.msg(res.msg);
+                        } else {
+                            layer.msg(res.msg);
+                        }
+                    });
+                });
+            } else if (layEvent === 'edit') {
+                layer.open({
+                    type: 2
+                    , title: '编辑用户行为限制'
+                    , content: "{:url('admin/action/actionLimitForm')}?id=" + data.id
+                    , maxmin: true
+                    , area: ['600px', '500px']
+                    , btn: ['确定', '取消']
+                    , yes: function (index, layero) {
+                        var iframeWindow = window['layui-layer-iframe' + index]
+                            , submitID = 'LAY-user-front-submit'
+                            , submit = layero.find('iframe').contents().find('#' + submitID);
+
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(' + submitID + ')', function (data) {
+                            //提交 Ajax 成功后，静态更新表格中的数据
+                            $.post("{:url('admin/action/actionLimitForm')}", {data: data.field}, function (res) {
+                                if (res.code === 1) {
+                                    table.reload('list');   //数据刷新
+                                    layer.close(index);     //关闭弹层
+                                    layer.msg(res.msg);
+                                } else {
+                                    layer.msg(res.msg);
+                                }
+                            }, 'json');
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>

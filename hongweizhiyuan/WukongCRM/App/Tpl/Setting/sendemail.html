@@ -1,0 +1,143 @@
+<include file="Public:header" />
+<script type="text/javascript" src="__PUBLIC__/js/kindeditor-all-min.js"></script>
+<link rel="stylesheet" href="__PUBLIC__/css/kindeditor.css" type="text/css" />
+<script type="text/javascript">
+	<if condition="C('ismobile') neq 1">
+		var editor;
+		KindEditor.ready(function(K) {
+			editor = K.create('textarea[name="content"]', {
+				uploadJson:'{:U("file/editor")}',
+				allowFileManager : true,
+				loadStyleMode : false,
+				fileManagerJson: "{:U('file/manager')}",
+				urlType:"domain"
+			});
+		});
+	</if>
+</script>
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px; ">
+		<ul class="nav nav-tabs">
+			<li><a href="{:U('setting/sendsms')}">{:L('SEND_SMS')}</a></li>
+			<li ><a href="{:U('setting/smsrecord')}">{:L('SMS_RECORD')}</a></li>
+			<li class="active"><a href="{:U('setting/sendemail')}">{:L('SEND_EMAIL')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />	
+	<notempty name="contacts">
+		<?php $first = 0; ?>
+			<volist name="contacts" id="vo">
+				<if condition="!is_email($vo['email'])">
+					<?php if($first==0){ $first = 1; }else{ $first = 2; } ?>
+					<if condition="$first == 1"><div class="alert alert-warning">{:L('INVALIDATE_EMAIL_HAVE_BEEN_FILTER')}<br/>{:L('DETAILS_SEE_BLOW')}:</if>
+					{$vo['email']|trim} &nbsp; {$vo['name']}[{:L('CUSTOMER')}:{$vo['customer_name']}]、	
+				</if>
+			</volist>
+			<if condition="$first != 0"></div></if>
+	</notempty>
+	<div class="row">
+		<div class="span12">
+		</div>
+		<div>
+			<div class="span2 warning pull-left" style="background-color:#f5f5f5;">
+				<pre><h4>{:L('OPERATING_TIPS')}</h4>{:L('EMAIL_TIPS_ONE')}<span style="color:red"><br/>123@5kcrm.com<br/>321@5kcrm.com</span><br/>{:L('EMAIL_TIPS_TWO')}<span style="color:red">{</span><span style="color:red">name}</span>{:L('INSTEAD')}<br><span style="color:red">{:L('EMAIL_TIPS_TWO_NOTIC')}<br/>123@5kcrm.com,{:L('ZHANGSAN')}<br/>321@5kcrm.com,{:L('LISI')}</span><br/>{:L('EMAIL_TIPS_TWO_NOTICS')}<br/>3、<span style="color:red">{:L('EMAIL_TIPS_THREE')}</span>
+				</pre>
+			</div>
+			<form  action="{:U('setting/sendemail')}" method="post">
+			<div class="pull-left">
+				<div class="pull-left" style="margin-left:30px;">
+					<div class="alert-info alert" style="margin:0px;">{:L('EMAIL_TIPS_THREE_EXTRA')}
+					<br>{:L('EMAIL_TIPS_THREE_EXTRAS')}</div>
+					<div><textarea id="emails" name="emails" style="min-height: 375px;width:200px;"><notempty name="contacts">
+						<volist name="contacts" id="vo">
+							<if condition="is_email($vo['email'])">
+								{$vo['email']|trim},{$vo['name']},{$vo['customer_name']}<?php echo chr(10);?>
+							</if>
+						</volist>
+					</notempty></textarea></div>
+				</div>
+				<div class="pull-left" style="margin-left:30px;">
+					<p>
+						{:L('CHANCE_SEND_BOX')}<select name="smtp" id="smtp" style="width:auto;font-size:12px;">
+							<volist name="smtpList" id="v">
+								<option value="{$v['smtp_id']}">{$v['name']}</option>
+							</volist>
+						</select>
+						<a href="{:U('email/smtp')}" style="color:red;">{:L('SETTING')}</a> &nbsp;  &nbsp;  &nbsp;  &nbsp; 
+						
+						{:L('CHANCE_EMAIL_TEMPLATE')}<select name="template" id="template" style="width:auto;font-size:12px;" onchange="changeContent()">
+							<option>{:L('SELECT_EMAIL_TPA')}</option>
+							<volist name="templateList" id="v">
+								<option value="{$v['template_id']}" rel="{$v['content']}" id="{$v['title']}">{$v['subject']}</option>
+							</volist>
+						</select>
+						<a href="{:U('email/index')}" style="color:red;">{:L('SETTING')}</a>
+					</p>
+					<div>{:L('EMAIL_TITLE')}<br><input id="title" name="title" style="width:690px;"></input></div>
+					<div>{:L('EMAIL_CONENT')}<br>
+					<textarea id="contented" name="content" placeholder="{:L('PLEASE_READ_OPERATING_TIPS')}" style="height: 300px;width:700px;"></textarea><br>
+					<input type="submit" class="btn btn-primary" value="{:L('SEND')}"/> &nbsp; 
+					</div>
+				</div>
+			</div>
+			</form>
+		</div>
+	</div> <!-- End #main-content -->
+</div>
+<script type="text/javascript">
+/*function sub(){
+	var img = new Array();
+	var file = new Array();
+	img = $("iframe").contents().find("img").each(function() {
+				img.push($(this).attr("data-ke-src"));
+			});
+	file = $("iframe").contents().find("a").each(function() {
+				file.push($(this).attr("href"));
+			});
+	if(img){
+		$.post('{:U("setting/sendemail")}',
+		{img:img,file:file},
+		function(data){
+			alert(data.info);
+		},
+		'json');
+	}
+}*/
+/*$(function(){
+	$('#submit').click(
+		function(){
+			var img=[];
+			var file=[];
+			$("iframe").contents().find("img").each(function(){
+				img.push($(this).attr("src"));
+			});
+			$("iframe").contents().find("a").each(function(){
+				file.push($(this).attr("data-ke-src"));
+			});
+			 
+			if(img){
+				$.post('{:U("setting/sendemail")}',
+				{img:img,file:file,title:title,emails:emails,content:content},
+				function(data){
+					alert(data.info);
+				},
+				'json');
+			}
+
+		}
+	);
+});*/
+function changeContent(){
+	var a = $('#template option:selected').attr('rel');
+	var b = $('#template option:selected').attr('id');
+	if(a){
+		$('#title').val(b);
+		$("iframe").contents().find("body").html(a);
+	}else{
+		$('#title').val('');
+		$("iframe").contents().find("body").html('');
+	}
+	
+}
+</script>
+<include file="Public:footer" />	

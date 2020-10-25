@@ -1,0 +1,103 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <parameters>
+        <parameter key="bluehouseapp.mail.class">Bluehouseapp\Bundle\CoreBundle\Service\MailService</parameter>
+
+        <parameter key="bluehouseapp.registration.listener.class">Bluehouseapp\Bundle\CoreBundle\Listener\SecurityRegistrationListener</parameter>
+        <parameter key="bluehouseapp.login.listener.class">Bluehouseapp\Bundle\CoreBundle\Listener\LoginListener</parameter>
+
+
+        <parameter key="bluehouseapp.controller.configuration_factory.class">Bluehouseapp\Bundle\CoreBundle\Controller\Resource\ConfigurationFactory</parameter>
+
+        <parameter key="bluehouseapp.controller.parameters_parser.class">Bluehouseapp\Bundle\CoreBundle\Controller\Resource\ParametersParser</parameter>
+        <parameter key="bluehouseapp.controller.parameters.class">Bluehouseapp\Bundle\CoreBundle\Controller\Resource\Parameters</parameter>
+        <parameter key="bluehouseapp.event_subscriber.load_orm_metadata.class">Bluehouseapp\Bundle\CoreBundle\EventListener\LoadORMMetadataSubscriber</parameter>
+        <parameter key="bluehouseapp.event_subscriber.kernel_controller.class">Bluehouseapp\Bundle\CoreBundle\EventListener\KernelControllerSubscriber</parameter>
+        <parameter key="bluehouseapp.event_subscriber.kernel_request.class">Bluehouseapp\Bundle\CoreBundle\EventListener\KernelRequestSubscriber</parameter>
+
+        <parameter key="bluehouseapp.form.type.category_entity.class">Bluehouseapp\Bundle\CoreBundle\Form\CategoryEntityType</parameter>
+        <parameter key="bluehouseapp.form.type.member_image.class">Bluehouseapp\Bundle\CoreBundle\Form\MemberImageType</parameter>
+
+    </parameters>
+    <services>
+
+        <service id="bluehouseapp.form.type.category_entity" class="%bluehouseapp.form.type.category_entity.class%">
+            <argument>%bluehouseapp.model.category.class%</argument>
+            <tag name="form.type" alias="bluehouseapp_category_entity_choice" />
+        </service>
+        <!--
+        <service id="bluehouseapp.form.type.member_image" class="%bluehouseapp.form.type.member_image.class%">
+            <argument>%bluehouseapp.model.member.class%</argument>
+            <tag name="form.type" alias="bluehouseapp_member_image" />
+        </service>
+        -->
+
+
+
+        <service id="bluehouseapp.controller.configuration_factory" class="%bluehouseapp.controller.configuration_factory.class%">
+            <argument type="service" id="bluehouseapp.controller.parameters_parser" />
+            <argument>%bluehouseapp.resource.settings%</argument>
+        </service>
+        <service id="bluehouseapp.controller.parameters_parser" class="%bluehouseapp.controller.parameters_parser.class%">
+
+        </service>
+        <service id="bluehouseapp.controller.parameters" class="%bluehouseapp.controller.parameters.class%" />
+
+
+        <service id="bluehouseapp.controller.configuration_factory" class="%bluehouseapp.controller.configuration_factory.class%">
+            <argument type="service" id="bluehouseapp.controller.parameters_parser" />
+            <argument>%bluehouseapp.resource.settings%</argument>
+        </service>
+
+        <service id="bluehouseapp.event_subscriber.load_orm_metadata" class="%bluehouseapp.event_subscriber.load_orm_metadata.class%">
+            <argument>%bluehouseapp.config.classes%</argument>
+            <tag name="doctrine.event_subscriber" />
+        </service>
+
+        <service id="bluehouseapp.event_subscriber.kernel_controller" class="%bluehouseapp.event_subscriber.kernel_controller.class%">
+            <argument type="service" id="bluehouseapp.controller.parameters_parser" />
+            <argument type="service" id="bluehouseapp.controller.parameters" />
+            <argument>%bluehouseapp.resource.settings%</argument>
+            <tag name="kernel.event_subscriber" />
+        </service>
+
+
+
+
+        <service id="bluehouseapp.mail" class="%bluehouseapp.mail.class%">
+            <argument type="service" id="mailer">mailer</argument>
+            <argument type="service" id="templating">template</argument>
+        </service>
+
+        <service id="bluehouseapp.registrationListener" class="%bluehouseapp.registration.listener.class%">
+            <tag name="kernel.event_subscriber"/>
+            <argument type="service" id="doctrine.orm.entity_manager">em</argument>
+            <argument type="service" id="router" />
+        </service>
+        <service id="bluehouseapp.LoginListener" class="%bluehouseapp.login.listener.class%">
+            <tag name="kernel.event_listener" event="security.interactive_login" method="onSecurityInteractiveLogin"/>
+            <argument type="service" id="doctrine.orm.entity_manager">em</argument>
+            <argument type="service" id="router" />
+	    <argument type="service" id="event_dispatcher" />
+        </service>
+
+        <service id="bluehouseapp.set_image_url.orm.listener" class="Bluehouseapp\Bundle\CoreBundle\Listener\ModelSetImageURLListener">
+            <argument type="service" id="vich_uploader.templating.helper.uploader_helper" />
+            <argument type="service" id="liip_imagine.cache.manager" />
+
+
+            <tag name="doctrine.event_listener" event="postLoad" />
+
+        </service>
+
+        <service id="liip_imagine.filter.loader.bluehouseapp_filter" class="Bluehouseapp\Bundle\CoreBundle\Imagine\Filter\Loader\BlueHouseThumbnailFilterLoader">
+            <tag name="liip_imagine.filter.loader" loader="bluehouseapp_filter" />
+        </service>
+
+
+    </services>
+
+</container>

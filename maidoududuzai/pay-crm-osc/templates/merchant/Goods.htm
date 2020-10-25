@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+<title>{echo admin_title()}</title>
+<!--header-->
+{template _:header}
+<style>
+table.goods_list th,table.goods_list td{text-align: center;}
+</style>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+<!--top-->
+{template _main_top}
+<!--nav-->
+{template _main_nav}
+	<div class="position">
+		<h1>商品列表</h1>
+	</div>
+	<div class="layui-body admin-body">
+		<div class="admin-content">
+			<div class="searcher">
+				<div class="right"><button type="button" class="layui-btn layui-add">添加商品</button></div>
+				<form name="sch_form" id="sch_form" method="get" action="{echo \befen\get_url()}">
+					<div class="layui-input-inline">
+						<select name="cat_id" class="layui-select" style="min-width: 170px;">
+							<option value="">请选择分类</option>
+							<!--{loop $goodsCat $key $val}-->
+							<option value="{$val[cat_id]}" {if $val[cat_id]==input('param.cat_id')}selected{/if}>{$val[cat_name]}</option>
+							<!--{/loop}-->
+						</select>
+					</div>
+					<div class="layui-input-inline">
+						<select name="status" class="layui-select" style="min-width: 170px;">
+							<option value="">请选择状态</option>
+							<option value="1" {if '1'===input('param.status/s')}selected{/if}>上架</option>
+							<option value="0" {if '0'===input('param.status/s')}selected{/if}>下架</option>
+						</select>
+					</div>
+					<div class="layui-input-inline">
+						<input type="text" name="wd" class="layui-input" value="{echo input('param.wd')}" placeholder="商品名">
+					</div>
+					<div class="layui-input-inline layui-left-margin"><button type="submit" id="search" class="layui-btn">查询</button></div>
+				</form>
+				<div class="clear"></div>
+			</div>
+			<form name="theform" id="theform" method="post" action="{echo \befen\get_url()}">
+			<table class="layui-table goods_list" lay-skin="line">
+				<thead>
+					<tr>
+						<th>商品ID</th>
+						<th>商品分类</th>
+						<th>商品名称</th>
+						<th>商品图</th>
+						<th>售价</th>
+						<!-- <th>库存</th> -->
+						<th>状态</th>
+						<th>销量</th>
+						<th>排序</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!--{loop $list $key $val}-->
+					<tr>
+						<td>{$val[goods_id]}</td>
+						<td>{$val[cat_name]}</td>
+						<td>{$val[goods_name]}</td>
+						<td><div style="width:42px; height:42px; margin: 0 auto; background:url({$val[cover_pic]}) center; background-size:cover;"></div></td>
+						<td>￥{$val[price]}</td>
+						<!-- <td>{$val[goods_stock]}{$val[unit]}</td> -->
+						<td>
+							<!--{if $val[status]}-->
+							<span class="layui-badge layui-bg-status-1">已上架</span> | <a href="javascript:void(0);" op="status" lay-url="{echo url('goods/toggleStatus', ['goods_id'=>$val['goods_id']])}" style="color:#01AAED">下架</a>
+							<!--{else}-->
+							<span class="layui-badge layui-bg-status-2">已下架</span> | <a href="javascript:void(0);" op="status" lay-url="{echo url('goods/toggleStatus', ['goods_id'=>$val['goods_id']])}" style="color:#01AAED">上架</a>
+							<!--{/if}-->
+						</td>
+						<td>{$val[sales]}</td>
+						<td>{$val[sort]}</td>
+						<td class="op">
+							<a href="{echo url('goods/detail', ['goods_id' => $val['goods_id']])}" class="layui-btn layui-btn-xs layui-btn-normal">详情</a>
+							<a op="delete" lay-url="{echo url('goods/delete', ['goods_id' => $val['goods_id']])}" class="layui-btn layui-btn-xs layui-btn-danger">删除</a>
+						</td>
+					</tr>
+    				<!--{/loop}-->
+				</tbody>
+			</table>
+			</form>
+			<div class="listpages">{$pagenav}</div>
+		</div>
+	</div>
+</div>
+<!--footer-->
+{template _:footer}
+<script>
+$(".layui-add").click(function(){
+	gotourl("{echo url('goods/add')}");
+});
+$("a[op=delete]").click(function(){
+	showDelete($(this).attr('lay-url'), function(res){
+		reload();
+	})
+});
+$("a[op=status]").click(function(){
+	op('确认' + $(this).text() + '？', $(this).attr('lay-url'), function(res){
+		reload();
+	})
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<script language="javascript">
+	function onClickTree(node){
+		var id = node.id;
+		var tit = node.text;
+		var url = node.url;
+		var icon = node.iconCls;
+		var code = node.code;
+		//alert(url);
+		if(url){
+			addTabs(id,tit,url,icon,code);
+		}
+	}
+	
+	var idd = '';
+	var tit = '';
+	var url = '';
+	var icon = '';
+	var code = '';
+	var ischart = '';
+	function addTabs(id,tit,url,icon,code){
+		$(function(){
+			var mod = '{$TC.config.CFG_OPEN_TABS}';
+			//alert(code);
+			if(mod==1){
+				if(code=='Chart'){
+				var ishas = $("#rightTabs").tabs('exists',ischart);
+					if(!ishas){
+						$("#rightTabs").tabs('add',{
+							id : -2,
+							title : tit,
+							href : '__ITEM__'+url,
+							closable : true,
+							iconCls : icon
+						});
+						ischart = tit;
+					}else{
+						if(ischart==tit){
+							$("#rightTabs").tabs('select',tit);
+						}else{
+							var tab = $("#rightTabs").tabs('getTab',ischart);
+							$.get('__GROUP__/index/clear', function(data){});
+							$("#rightTabs").tabs('update',{
+								tab:tab,
+								options:{
+									id:-2,
+									title : tit,
+									href : '__ITEM__'+url,
+									closable : true,
+									iconCls : icon
+								} 
+							});
+							ischart = tit;
+						}
+					}
+				}else{
+					var ishas = $("#rightTabs").tabs('exists',tit);
+					if(!ishas){
+						$("#rightTabs").tabs('add',{
+							id : idd,
+							title : tit,
+							href : '__ITEM__'+url,
+							closable : true,
+							iconCls : icon
+						});
+					}else{
+						$("#rightTabs").tabs('select',tit);
+					}
+				}
+				
+			}else{
+				var tab = $("#rightTabs").tabs('getTab',1);
+				if(!tab){
+					$("#rightTabs").tabs('add',{
+						id : -3,
+						title : tit,
+						href : '__ITEM__'+url,
+						closable : true,
+						iconCls : icon
+					});
+				}else{
+					var ishas = $("#rightTabs").tabs('exists',tit);
+					if(!ishas){
+						var tab = $("#rightTabs").tabs('getTab',1);
+						$.get('__GROUP__/index/clear', function(data){});
+						$("#rightTabs").tabs('update',{
+							tab:tab,
+							options:{
+								id:-3,
+								title : tit,
+								href : '__ITEM__'+url,
+								closable : true,
+								iconCls : icon
+							} 
+						});
+					}else{
+						$("#rightTabs").tabs('select',tit);
+					}
+				}
+			}
+		});
+	}
+</script>
+<div id="leftMenu" data-options="fit:true,border:false" class="easyui-accordion">
+<foreach name="info" item="t">
+ <?php
+   $access = IndexPublic::GS('User_group_table',$gid);
+ ?>
+ <if condition="$t['type']=='='">
+  <?php
+   $view = unserialize($t['view']);
+   if(strstr($t['level'],$access) || ($group_access>=999 && $t['level']<9999) || in_array($uid,$view)){
+  ?>
+  <div title="{$t.text}" data-options="iconCls:'{$t.iconCls}'">
+   <ul class="easyui-tree left-tree" data-options="url:'__GROUP__/Index/json/mid/{$t.id}',editable:false,lines:true,method:'get',onClick:function(node){onClickTree(node);}"></ul>
+  </div>
+  <?php
+   }
+  ?>
+ <else />
+  <?php
+   $view = unserialize($t['view']);
+   if($access>=$t['level'] || in_array($uid,$view)){
+  ?>
+  <div title="{$t.text}" data-options="iconCls:'{$t.iconCls}'">
+   <ul class="easyui-tree left-tree" data-options="url:'__GROUP__/Index/json/mid/{$t.id}',editable:false,lines:true,method:'get',onClick:function(node){onClickTree(node);}"></ul>
+  </div>
+  <?php
+   }
+  ?>
+ </if>
+</foreach>
+<!--
+ <div title="系统管理" data-options="iconCls:'icon-setting'">
+ <ul class="easyui-tree left-tree",editable:false,lines:true">
+  <li data-options="text:'菜单管理',url:'__GROUP_/Menu/index'">菜单管理</li>
+ </ul>
+ </div>
+-->
+</div>

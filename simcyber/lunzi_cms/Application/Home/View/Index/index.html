@@ -1,0 +1,99 @@
+<include file="Index:header"/>
+<include file="Index:menu"/>
+	<div class="dropdown">
+	<button class="btn dropdown-toggle" type="button" data-toggle="dropdown">
+	  <php>if($ids['tag_name']){ echo urldecode($ids['tag_name']);}else{ echo "所有分类";}</php>
+	  <span class="caret"></span>
+	</button>
+	<php>$list_rs=M('lz_tags')->select();</php>
+	<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+		<php>if($ids['tag_name']){</php>
+		<li><a href="{:U('Index/index',array('type'=>$ids['type']))}">所有分类</a></li>
+		<php>}</php>
+		<php>foreach($list_rs as $k=>$v){</php>
+			<li><a href="{:U('Index/index',array('type'=>$ids['type'],'tag_name'=>urlencode($v['tag_name'])))}"><php>echo $v['tag_name'];</php></a></li>
+		<php>}</php>
+	</ul>
+	<a href="{:U('Index/index',array('type'=>'new'))}" class="btn {:set_active('new',$ids['type'],true)} dropdown-toggle" type="button" >最新</a>
+	<a href="{:U('Index/index',array('type'=>'fav'))}" class="btn {:set_active('fav',$ids['type'],false)} dropdown-toggle" type="button" >收藏</a>
+	<a href="{:U('Index/tag')}" class="btn {:set_active('tag',$ids['type'],false)} dropdown-toggle" type="button" >分类</a>
+	</div>
+	<php>if($keyword){</php>
+	<h1>#{$keyword}#</h1>
+	<php>}</php>
+	<div class="row" style="margin-top:20px;">
+	  <div class="col-md-12">
+		<table class="table datatable">
+		  <thead>
+			<tr style="background-color:#FFF; border-bottom: 2px solid #ddd; font-weight:bold;">
+			  <!-- 以下两列左侧固定 -->
+			  <td class="col-md-6">主题</td>
+			  <td class="col-md-1">分类</td> 
+			  <td class="col-md-2">来源</td>
+			  <td class="col-md-1">浏览</td>
+			  <td class="col-md-2">日期</td>
+			</tr>
+		  </thead>
+		  <tbody>
+		  <php>$i=1;</php>
+		  <volist name="rs" id="vo">
+			<tr>
+				<td>
+				<php>if($i<=3){</php>
+				<div style="display:inline-block">
+				<a href="{:get_url($vo['bid'],$vo['url'])}" target="_blank" class="text-ellipsis" style="font-size:18px;color:#000;"><i class="icon icon-bookmark-empty" style="font-size:20px;padding:2px;"></i>{$vo.title}</a>
+				</div>
+				<div style="display:inline-block">
+				{:show_post_info($vo['body'])}
+				</div>
+				<php>}else{</php>				
+				<a href="{:get_url($vo['bid'],$vo['url'])}" target="_blank" class="text-ellipsis" style="font-size:18px;color:#000;">{$vo.title}</a>
+				<php>}</php>
+				<br>
+				<php>if($_SESSION['is_admin']==1){</php>
+				<a href="###" class="sc" sc_bid={$vo.bid}><i class="icon icon-heart"></i>收藏</a>
+				<a href="###" class="del" sc_bid={$vo.bid} style="color:#F00;"><i class="icon icon-trash"></i>删除</a>
+				<a href="###" class="do_edit" sc_bid={$vo.bid} style="color:#e4a;"><i class="icon icon-edit"></i>编辑</a>
+				<php>}</php>
+				</td>
+				<td><span class="label label-dot" style="background-color:{$vo.tag_color};"></span><a href="{:U('Index/index',array('type'=>$ids['type'],'tag_name'=>urlencode($v['tag_name'])))}" style="color:#000;">{$vo.tag}</a></td>
+				<td><a href="{:U('Index/goto_url',array('bid'=>$vo['bid']))}" class="label label-badge label-info" target="_blank" >{$vo.site}</a></td>
+				<td>{:show_hit($vo['hit'])}</td>
+				<td>{:date("Y-m-d",strtotime($vo['datetime']))}</td>
+			</tr>
+		   </volist>
+
+		  </tbody>
+		</table>
+		
+		{$page}
+	  </div>
+	</div>
+	<php>if($_SESSION['is_admin']==1){</php>
+	<script>
+	$(".sc").click(function(){
+		var bid = $(this).attr("sc_bid");
+		$.post("{:U('Index/set_fav')}",{bid:bid},function(result){
+			var msg = new $.zui.Messager('收藏成功！', {placement: 'center',type:'success'});
+			msg.show();
+		});
+	});
+	$(".del").click(function(){
+		var bid = $(this).attr("sc_bid");
+		$.post("{:U('Index/del')}",{bid:bid},function(result){
+			var msg = new $.zui.Messager('删除成功！', {placement: 'center',type:'danger'});
+			msg.show();
+			window.location.reload();
+		});
+	});
+	$(".do_edit").click(function(){
+		var bid = $(this).attr("sc_bid");
+		$.post("{:U('Index/edit')}",{bid:bid},function(result){
+			var msg = new $.zui.Messager('进入编辑页面中……', {placement: 'center',type:'danger'});
+			msg.show();
+			location.href=result.url;
+		});
+	});
+	</script>
+	<php>}</php>
+<include file="Index:footer"/>

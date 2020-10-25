@@ -1,0 +1,148 @@
+{extend name="public/base" /}
+
+{block name="title"}
+<title>{$parent['typename']}{neq name="$arctype['pid']" value="0"} _ {$arctype.typename} {/neq} - {:confv('title')}</title>
+<meta name="keywords" content="{$arctype.keywords},{$parent.keywords}">
+<meta name="description" content="{$arctype.description}">
+{/block}
+
+{block name="pjax_container"}
+<div class="content">
+    <div class="row">
+        <div class="col-sm-8" >
+			<!--文章分类-->
+			<div class="box box-solid">
+	            <div class="box-body x-pt-0">
+	            	<div class="row  x-mlr-0">
+	            		<div class="col-sm-3 col-xs-4 x-plr-5 x-mt-10">
+							<a href="/category/{$parent.dirs}" class="btn btn-block btn-default">{$parent['typename']}</a>
+						</div>
+	            		{volist name="typelist" id="vo"}
+						<div class="col-sm-3 col-xs-4 x-plr-5 x-mt-10">
+							<a href="/category/{$vo.dirs}" class="btn btn-block btn-default">{$vo['typename']}</a>
+						</div>
+						{/volist}
+	            	</div>
+	            </div>
+          	</div>
+			<!--置顶/推荐/头条-->
+			<div class="nav-tabs-custom">
+	            <ul class="nav nav-tabs">
+	              	<li class="active"><a href="#tab_1" data-toggle="tab">置顶</a></li>
+	              	<li><a href="#tab_2" data-toggle="tab">推荐</a></li>
+	              	<li><a href="#tab_3" data-toggle="tab">头条</a></li>
+	              	{notempty name="$user"}
+	              	<li class="pull-right"><a href="{:url('Detail/addArticle')}" class=""><i class="fa fa-pencil-square-o"> 发布</i></a></li>
+	              	{/notempty}
+	            </ul>
+	            <div class="tab-content">
+	            	{php}$zhidinglist = arclist('','10','a','click desc'){/php}
+		            <div class="tab-pane active" id="tab_1">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$zhidinglist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-red"> 置顶</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+		            </div>
+		            {php}$tuijianlist = arclist('',10,'c','click desc'){/php}
+		            <div class="tab-pane" id="tab_2">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$tuijianlist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-green"> 推荐</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+		            </div>
+		            {php}$toutiaolist = arclist('',10,'h','click desc'){/php}
+	              	<div class="tab-pane" id="tab_3">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$toutiaolist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-yellow"> 头条</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+	              	</div>
+	            </div>
+	        </div>
+
+			<!--内容列表-->
+            {volist name="dataList" id="vo" empty="$empty"}
+			<div class="media box box-solid x-p-10 huaguo_yinying">
+				<a class="media-left" href="{$vo.arcurl}" title="{$vo.title}">
+			       	<img class="media-object x-yy-4" src="{$vo['litpic']}" />
+				</a>
+				<div class="media-body x-dwr">
+					{eq name="$vo['writer']" value="$user['id']"}
+					<div class="x-dwa-rb">
+						<a href="{:url('@member/index/edit',['id'=>$vo['id']])}" class="btn btn-xs btn-info btn-flat"><i class="fa fa-pencil-square-o"></i> 编辑</a>
+						<a href="javascript:void(0);" data-dataobj='{"title":"删除提醒","info":"确认要删除吗？","url":"{:url('@member/index/delete')}","data":{"id":"{$vo['id']}"}}' class="popups btn btn-xs btn-danger btn-flat"><i class="fa fa-trash-o"></i> 删除</a>
+					</div>
+					{/eq}
+					<a href="{$vo.arcurl}" class="" title="{$vo.title}">
+						<h4 class="media-heading x-t-no1 x-mb-0 x-lh-28">{$vo.title}</h4>
+						<p class="x-t-no3 x-lh-20 text-muted x-mb-0">
+							&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{$vo.description|default='没有简介'}
+						</p>
+					</a>
+				</div>
+				<div class="x-tc-hui x-mt-5">
+			        <div class="pull-left">
+			            <a href="{:url('/category/'.$vo->Arctype->dirs)}" class="text-muted" title="{$vo->Arctype->typename}">
+			            	<i class="fa fa-tags"></i> {$vo->Arctype->typename}
+			            </a>
+			        </div>
+			        <div class="pull-left x-ml-5">
+			            <a href="/userinfo/{$vo['user']['id']}" class="text-muted" title="{$vo['user']['name'] ?: $vo['user']['username']} 发布">
+			            	<i class="fa fa-user"></i> {$vo['user']['name'] ?: $vo['user']['username']}
+			            </a>
+			        </div>
+			        <div class="pull-right x-tr">
+			            <i class="fa fa-clock-o x-pr-5"> {$vo.create_time}</i>
+			            <i class="fa fa-eye x-pr-5"> {$vo.click}</i>
+			            <i class="fa fa-commenting-o x-pr-5"> {$vo['reply_num']}</i>
+			            <i class="fa fa-thumbs-o-up"> {$vo['zan_num']}</i>
+			        </div>
+			    </div>
+			    {notempty name="$vo['flag']"}
+					{if in_array('h',$vo['flag'])}
+					    <div class="x-jb">头条</div>
+					{elseif in_array('a',$vo['flag']) /}
+						<div class="x-jb x-bgc-cheng">置顶</div>
+					{elseif in_array('c',$vo['flag'])}
+						<div class="x-jb x-bgc-lv">推荐</div>
+					{/if}
+				{/notempty}
+			</div>
+            {/volist}
+            {if $dataList neq null }
+			<div class="box box-solid">
+				<div class="box-body x-ptb-0">	<!--分页-->
+            		{$dataList|raw}
+      			</div>
+			</div>
+			{/if}
+        </div>
+
+        <div class="col-sm-4" >
+            {include file="inc/right" /}
+        </div>
+
+    </div>
+</div>
+{notempty name="$user"}
+<a href="{:url('Detail/addArticle')}" class="x-yuan btn btn-warning x-yy-5 x-fd-b x-p-0 x-lh-40" style="bottom:75px;right:10px;width:40px;height:40px;">
+	<i class="fa fa-lg fa-pencil-square-o"></i>
+</a>
+{/notempty}
+
+{/block}

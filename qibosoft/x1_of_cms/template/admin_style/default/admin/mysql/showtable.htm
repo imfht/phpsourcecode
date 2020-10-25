@@ -1,0 +1,191 @@
+{extend name="index:layout" /}
+
+{block name="menu"}{/block}
+
+{block name="content"}
+
+ 
+<style>
+body,h1,h2,h3,h4,h5,h6,hr,p,blockquote,dl,dt,dd,ul,ol,li,pre,form,fieldset,legend,button,input,textarea,th,td{margin:0;padding:0;}
+body,button,input,select,textarea{color:#333;font-size:14px;}
+h1,h2,h3,h4,h5,h6{font-size:100%;}
+address,cite,dfn,em,var{font-style:normal;}
+code,kbd,pre,samp{font-family:courier new,courier,monospace;}
+small{font-size:12px;}
+ul,ol{list-style:none;}
+a{text-decoration:none;color:#2d374b;}
+a:hover {color:#d00;}
+table{border-collapse:collapse;border-spacing:0;}
+.ListTable{border-top:#DDD solid 1px;border-left:#DDD solid 1px;}
+.ListTable th,.ListTable td{border-bottom:#DDD solid 1px;border-right:#DDD solid 1px;padding:3px;color:666;vertical-align:middle;}
+.ListTable th{background:#EFEFEF;color:red;}
+.Nodata{line-height:30px;padding-left:20px;color:#F00;}
+.ShowPage{text-align:center;line-height:30px;}
+.ASC,.DESC{display:block; position:relative; padding-right:15px;}
+.ASC:after,.DESC:after{content:''; display:block;width:0;height:0; position:absolute; right:0; top:5px;border:6px solid transparent;}
+.DESC:after{border-top: 8px solid #999;border-bottom:0;}
+.ASC:after{border-bottom: 8px solid #999;border-top:0;}
+.SearchBox{padding:10px;}
+.SearchBox input[type=text]{width:100px; margin-right:10px;border:#DDD solid 1px; line-height:25px; text-indent:5px;}
+.SearchBox select{border:#DDD solid 1px; height:25px;}
+.SearchBox input[type=radio]{margin-left:10px;border:0;}
+.SearchBox input[type=submit]{ line-height:25px; border:#DDD solid 1px; padding:0 10px; background:#FFF; cursor:pointer; margin-left:10px;margin-right:10px;}
+/*****PC分页样式开始*****/
+.pagination{
+	text-align: center;
+	width: 100%;
+	clear: both;
+	padding: 10px 0;
+}
+.pagination li{
+	display: inline-block;
+	line-height: 30px;	
+	margin: 0 5px;	
+}
+.pagination li a,.pagination li span{
+	display: block;
+	border: #DDD solid 1px;
+	padding: 0 8px;
+	color: #666;
+}
+.pagination li a,.pagination li span{
+	color: #999;
+}
+.pagination li a:hover{
+	border:#F30 solid 1px;
+	background: #F60;
+	color: #FFF;
+}
+.pagination li.active span{
+	border:#21806E solid 1px;
+	background: #64C2B0;
+	color: #FFF;
+}
+.MainContainers {
+    border: #CCC solid 0px!important;
+}
+/*****PC分页样式结束*****/
+
+.normal_search,.where_search{float:left;line-height:40px;padding-right:10px;}
+
+{if $types==2}
+.normal_warp{display:none;}
+{else /}
+.where_search{display:none;}
+{/if}
+
+</style>
+<div class="MainContainers">
+<div style="padding:10px;"><button onclick="history.go(-1)" class="layui-btn layui-btn-normal">返回</button> {$table} {$table_describe}</div>
+<table class="ListTable">
+ <tr>
+{volist name="titledb" id="value"}
+ 	<th style="line-height:14px;"><a href="{:url('showtable',['table'=>$table,'ordertype'=>$value,'orderby'=>($orderby=='asc'?'desc':'asc')])}?field={$field}&keyword={:urlencode($keyword)}&keyword2={:urlencode($keyword2)}&types={$types}" {eq name="ordertype" value="$value"}style="color:red;"{/eq}>{$value}</a><br><font style="font-size:12px;font-weight:normal;color:#666;">{$field_describe[$value]}</font></th>
+
+{/volist}
+ </tr>
+ 
+{volist name="listdb" id="rs"}
+  <tr>
+	{volist name="titledb" id="value"}
+{php}
+	if($key==0) { $f_id=$value;$f_value=$rs[$f_id]; }
+{/php}
+    <td ondblclick="edit_value($(this))" data-url="table={$table}&id_field={$f_id}&id_value={$f_value}&v_field={$value}">
+{if strlen($rs[$value])>32}
+	{php}$rs[$value] = str_replace(array('<','>','&nbsp;'),array('&lt;','&gt;','&amp;nbsp;'),$rs[$value]); {/php}
+	<textarea name='textfield' style='width:300px;height:50px'  onchange="end_edit($(this))" data-url="table={$table}&id_field={$f_id}&id_value={$f_value}&v_field={$value}">{$rs[$value]}</textarea>
+{else /}
+	<div>{$rs[$value]}</div>
+{/if}
+	</td>
+	{/volist}
+  </tr>
+{/volist}
+
+</table>
+
+<script type="text/javascript">
+function edit_value(obj){ 
+	if( obj.find('input').length==0 ){
+		var son = obj.find('div');
+		var v = obj.find('div').html();
+		son.html('<input onchange="end_edit($(this))" type="text" name="" value="'+v+'" data-url="'+obj.data('url')+'" style="width:auto;">');
+	}	
+}
+function end_edit(obj){
+	layer.confirm('你确认要修改吗?',function(){
+		$.post("{:url('tool','type=edit')}?"+obj.data('url'),{v_value:obj.val()},function(res){
+			if(res.code==0){
+				layer.msg('修改成功');
+			}else{
+				layer.alert(res.msg);
+			}
+		});
+	});	
+}
+</script>
+
+{empty name="listdb"}
+<div class="Nodata">当前数据表没有相应内容,记录为空!!</div>
+{/empty}
+<div class="SearchBox">
+<form name="form_search" method="get" action="" class="layui-form">
+
+	 <div class="normal_search normal_warp">关键词:</div>
+	 <div class="normal_warp" style="float:left;"><input style="width:200px;" class="layui-input" name="keyword" type="text" value="{$keyword}"/></div>
+	 <div class="normal_search normal_warp">字段：</div>
+	<div class="normal_warp" style="float:left;width:100px;">
+		<select name="field"> 
+	{volist name="titledb" id="value"}
+		  <option value="{$value}" {eq name="field" value="$value"}selected{/eq}>{$value}</option>
+	{/volist}
+		</select>
+	</div>
+
+	<div class="where_search">查询条件:</div> 
+	<div class="where_search"><input style="width:300px;" placeholder="比如:uid=4&fid!=6&title*手机&picurl!=NULL" class="layui-input" name="keyword2" type="text" value="{$keyword2}"/></div>
+
+	<input name="types" type="radio" value="0" lay-filter="types" {empty name="types"}checked{/empty} title="模糊搜索" /> 
+	<input name="types" type="radio" value="1" lay-filter="types"  {eq name="types" value="1"}checked{/eq} title="精确搜索" /> 
+	<input name="types" type="radio" value="2" lay-filter="types"  {eq name="types" value="2"}checked{/eq} title="多条件搜索" />
+	 
+	<button class="layui-btn" lay-submit lay-filter="formDemo">立即搜索</button>
+	<a href="{:url('showtable',['table'=>$table])}" class="layui-btn layui-btn-warm">查看全部</a>
+</form>
+</div>
+<div class="ShowPage">{$showpage}</div>
+<div style="text-align:center;"><button onclick="history.go(-1)" class="layui-btn layui-btn-normal">返回</button></div>
+<div><br>数据表结构<br>
+<textarea style="width:90%;height:250px;">{$create_table}</textarea>
+</div>
+
+</div>
+<script src="/public/static/layui/layui.js"></script>
+<script type="text/javascript">
+
+$("form input[name=types]").click(function(){
+	$(".normal_warp,.where_search").hide();
+	if($(this).val()==2){
+		$(".where_search").show();
+	}else{
+		$(".normal_warp").show();
+	}
+});
+
+$(function(){
+	layui.use(['form'], function(){
+		var form = layui.form;	 
+		form.on('radio(types)', function(data){
+			$(data.elem).trigger('click');
+		})
+	});
+});
+
+
+
+
+$("body").css({'overflow':'scroll'});
+</script>
+
+{/block}

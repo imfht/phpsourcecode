@@ -1,0 +1,712 @@
+{{include file="public/header" /}}
+
+<!-- right content start  -->
+<div class="content-right">
+	<div class="content">
+		<!-- form start -->
+		<form class="am-form form-validation view-save" action="{{:MyUrl('admin/goods/save')}}" method="POST" request-type="ajax-url" request-value="{{:MyUrl('admin/goods/index', $params)}}" enctype="multipart/form-data">
+			<legend>
+				<span class="am-text-default">商品{{if empty($data['id'])}}添加{{else /}}编辑{{/if}}</span>
+				<a href="{{:MyUrl('admin/goods/index', $params)}}" class="am-fr am-text-sm am-margin-top-xs am-icon-mail-reply"> 返回</a>
+			</legend>
+
+			<nav class="goods-nav">
+				<ul>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-base">基础信息</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-operations">商品规格</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-photo">商品相册</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-video">商品视频</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-app">手机端详情</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-web">电脑端详情</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-fictitious">虚拟商品</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-extends">扩展数据</a>
+					</li>
+					<li>
+						<a href="javascript:;" data-value="#goods-nav-seo">SEO</a>
+					</li>
+					<li class="am-text-center am-padding-xs nav-shrink-submit">
+						<i class="am-icon-angle-double-right am-icon-sm"></i>
+					</li>
+				</ul>
+			</nav>
+
+			<!-- 基础信息 -->
+			<div id="goods-nav-base" class="division-block">
+				<label class="block nav-detail-title">基础信息</label>
+				<div class="am-form-group">
+					<label>标题名称</label>
+					<div class="am-input-group am-input-group-sm">
+						<input type="hidden" name="title_color" value="{{if !empty($data['title_color'])}}{{$data.title_color}}{{/if}}" />
+						<input type="text" name="title" placeholder="标题名称" minlength="2" maxlength="60" data-validation-message="标题名称格式 2~60 个字符" class="am-form-field am-radius" {{if !empty($data)}} value="{{$data.title}}" {{/if}} {{if !empty($data['title_color'])}} style="color:{{$data.title_color}};" {{/if}} required />
+						<span class="am-input-group-btn">
+							<button type="button" class="am-btn am-btn-default am-btn-xs colorpicker-submit" data-input-tag="input[name='title']" data-color-tag="input[name='title_color']">
+								<img src="{{$attachment_host}}/static/common/images/colorpicker.png" />
+							</button>
+						</span>
+					</div>
+				</div>
+				<div class="am-form-group">
+					<label>商品简述</label>
+					<input type="text" name="simple_desc" placeholder="商品简述" maxlength="160" data-validation-message="商品简述格式 最多160个字符" class="am-radius" {{if !empty($data)}} value="{{$data.simple_desc}}"{{/if}} />
+				</div>
+				<div class="am-form-group">
+					<label>商品型号</label>
+					<input type="text" name="model" placeholder="商品型号" maxlength="30" data-validation-message="商品型号格式 最多30个字符" class="am-radius" {{if !empty($data)}} value="{{$data.model}}"{{/if}} />
+				</div>
+				<div class="am-form-group">
+					<label>商品分类</label>
+					<br />
+					<select name="category_id" class="am-radius chosen-select" multiple="multiple" minchecked="1" data-placeholder="请选择..." data-validation-message="请至少选择一个商品分类" required>
+						{{if !empty($goods_category_list)}}
+							{{foreach $goods_category_list as $v}}
+								<option value="{{$v.id}}" {{if !empty($data['category_ids']) and in_array($v['id'], $data['category_ids'])}}selected{{/if}}>一级 - {{$v.name}}</option>
+								{{if !empty($v['items'])}}
+									{{foreach $v.items as $vs}}
+										<option style="padding-left: 30px;" value="{{$vs.id}}" {{if !empty($data['category_ids']) and in_array($vs['id'], $data['category_ids'])}}selected{{/if}}>二级-{{$vs.name}}</option>
+										{{if !empty($vs['items'])}}
+											{{foreach $vs.items as $vss}}
+												<option style="padding-left: 60px;" value="{{$vss.id}}" {{if !empty($data['category_ids']) and in_array($vss['id'], $data['category_ids'])}}selected{{/if}}>三级-{{$vss.name}}</option>
+											{{/foreach}}
+										{{/if}}
+									{{/foreach}}
+								{{/if}}
+							{{/foreach}}
+						{{/if}}
+					</select>
+				</div>
+				<div class="am-form-group">
+					<label>品牌</label>
+					<br />
+					<select name="brand_id" class="am-radius chosen-select" data-placeholder="请选择..." data-validation-message="请至少选择一个商品分类">
+						{{if !empty($brand_list)}}
+							<option value="0">请选择...</option>
+							{{foreach $brand_list as $v}}
+								<option value="{{$v.id}}" {{if isset($data['brand_id']) and $data['brand_id'] eq $v['id']}}selected{{/if}}>{{$v.name}}</option>
+							{{/foreach}}
+						{{/if}}
+					</select>
+				</div>
+				<div class="am-form-group">
+					<label>生产地</label>
+					<br />
+					<select name="place_origin" class="am-radius chosen-select" data-placeholder="请选择..." data-validation-message="请选择生产地">
+						<option value="0">请选择...</option>
+						{{if !empty($region_province_list)}}
+							{{foreach $region_province_list as $v}}
+								<option value="{{$v.id}}" {{if !empty($data['place_origin']) and $v['id'] eq $data['place_origin']}}selected{{/if}}>{{$v.name}}</option>
+							{{/foreach}}
+						{{/if}}
+					</select>
+				</div>
+				<div class="am-form-group">
+					<label>库存单位</label>
+					<input type="text" name="inventory_unit" placeholder="库存单位" minlength="1" maxlength="6" data-validation-message="库存单位格式 1~6 个字符" class="am-radius" {{if !empty($data)}} value="{{$data.inventory_unit}}"{{/if}} required />
+				</div>
+				<div class="am-form-group">
+                    <label>购买赠送积分比例<span class="am-form-group-label-tips">按照商品金额比例乘以数量的比例进行发放</span></label>
+                    <div class="am-input-group am-input-group-sm">
+                        <input type="number" name="give_integral" placeholder="购买赠送积分" min="0" max="100" data-validation-message="购买赠送积分比例 0~100 的数字" class="am-form-field am-radius" {{if !empty($data['give_integral'])}} value="{{$data.give_integral}}"{{/if}} />
+                        <span class="am-input-group-btn">
+                            <button type="button" class="am-btn am-btn-default am-radius">%</button>
+                        </span>
+                    </div>
+                </div>
+				<div class="am-form-group">
+					<label>最低起购数量<span class="am-form-group-label-tips">默认数值 1</span></label>
+					<input type="number" name="buy_min_number" placeholder="最低起购数量" min="1" max="100000000" data-validation-message="最低起购数量 1~100000000" class="am-radius" value="{{if empty($data) or empty($data['buy_min_number'])}}1{{else /}}{{$data.buy_min_number}}{{/if}}" required />
+				</div>
+				<div class="am-form-group">
+					<label>单次最大购买数量<span class="am-form-group-label-tips">单次最大数值 100000000, 小于等于0或空则不限</span></label>
+					<input type="number" name="buy_max_number" placeholder="单次最大购买数量" min="0" max="100000000" data-validation-message="单次最大购买数量 1~100000000" class="am-radius" {{if !empty($data['buy_max_number'])}} value="{{$data.buy_max_number}}"{{/if}} />
+				</div>
+				<div class="am-form-group">
+					<label>商品类型</label>
+					<div class="am-alert am-alert-warning am-radius am-margin-top-0" data-am-alert>
+					    <p>1. 当前系统配置的站点类型为[ <strong class="am-text-danger">{{$common_site_type_list[$common_site_type]['name']}}</strong> ]</p>
+					    <p>2. 如果商品类型未配置则跟随系统配置的站点类型</p>
+					    <p>3. 当设置的商品类型不在系统设置的站点类型包含的时候，商品加入购物车功能将失效</p>
+					</div>
+					<select name="site_type" class="am-radius chosen-select am-margin-top-xs" data-placeholder="可选择..." data-validation-message="请选择商品类型">
+						<option value="-1">可选择...</option>
+						{{if !empty($common_site_type_list)}}
+							{{foreach $common_site_type_list as $v}}
+								<option value="{{$v.value}}" {{if isset($data['site_type']) and $v['value'] eq $data['site_type']}}selected{{/if}}>{{$v.name}}</option>
+							{{/foreach}}
+						{{/if}}
+					</select>
+				</div>
+				<div class="am-form-group am-form-file">
+					<label class="block">封面图片<span class="am-form-group-label-tips">留空则取相册第一张图</span></label>
+					<ul class="plug-file-upload-view goods-recommended-images-view" data-form-name="images" data-max-number="1" data-dialog-type="images">
+						{{if !empty($data['images'])}}
+							<li>
+								<input type="text" name="images" value="{{$data.images}}" />
+								<img src="{{$data.images}}" />
+								<i>×</i>
+							</li>
+						{{/if}}
+					</ul>
+					<div class="plug-file-upload-submit" data-view-tag="ul.goods-recommended-images-view">+上传图片</div>
+				</div>
+				<div class="am-form-group">
+					<label class="block">扣减库存<span class="am-form-group-label-tips">扣除规则根据后台配置->扣除库存规则而定</span></label>
+					<input name="is_deduction_inventory" value="1" type="checkbox" data-off-text="否" data-on-text="是" data-size="xs" data-on-color="success" data-off-color="default" data-handle-width="50" data-am-switch {{if (isset($data['is_deduction_inventory']) and $data['is_deduction_inventory'] eq 1) or empty($data)}}checked="true"{{/if}} />
+				</div>
+				<div class="am-form-group">
+					<label class="block">上下架<span class="am-form-group-label-tips">下架后用户不可见</span></label>
+					<input name="is_shelves" value="1" type="checkbox" data-off-text="下架" data-on-text="上架" data-size="xs" data-on-color="success" data-off-color="default" data-handle-width="50" data-am-switch {{if (isset($data['is_shelves']) and $data['is_shelves'] eq 1) or empty($data)}}checked="true"{{/if}} />
+				</div>
+				<div class="am-form-group">
+					<label class="block">首页推荐<span class="am-form-group-label-tips">推荐后在首页展示</span></label>
+					<input name="is_home_recommended" value="1" type="checkbox" data-off-text="否" data-on-text="是" data-size="xs" data-on-color="success" data-off-color="default" data-handle-width="50" data-am-switch {{if isset($data['is_home_recommended']) and $data['is_home_recommended'] eq 1}}checked="true"{{/if}} />
+				</div>
+			</div>
+
+			<!-- 规格 -->
+			<div id="goods-nav-operations" class="division-block" data-spec-add-max-number="{{:MyC('common_spec_add_max_number', 3, true)}}">
+				<label class="block nav-detail-title">商品规格</label>
+				<!-- 规格快捷操作 -->
+				<div class="spec-quick am-margin-bottom-lg">
+					<div class="am-alert am-alert-warning am-radius" data-am-alert>
+					    快捷操作可以快速创建商品SKU，大量节省SKU编辑时间，快捷操作数据不影响SKU数据，仅生成的时候重新覆盖SKU。
+					</div>
+					<span class="business-operations-submit quick-spec-title-add">+快捷操作</span>
+					<span class="business-operations-submit am-margin-left-sm am-icon-gg quick-spec-created">生成规格</span>
+					<div class="goods-specifications business-form-group" {{if empty($data['spec_base'])}}style="display: none;"{{/if}}>
+						<table class="am-table am-table-bordered am-table-centered am-table-striped am-table-hover">
+							<thead>
+								<tr>
+									<th class="spec-quick-th-title">规格名</th>
+									<th class="spec-quick-th-value">规格值</th>
+								</tr>
+							</thead>
+							<tbody>
+								{{if !empty($data['spec_base'])}}
+									{{foreach $data.spec_base as $spec_base_key=>$spec_base}}
+										<tr>
+											<td class="am-text-middle">
+												<i class="am-close am-close-spin quick-title-remove">×</i>
+												<input type="text" value="{{$spec_base.title}}" name="spec_base_title_{{$spec_base_key}}" placeholder="规格名" />
+											</td>
+											<td class="spec-quick-td-value am-cf">
+												{{if !empty($spec_base['value'])}}
+													{{foreach $spec_base.value as $value}}
+														<div class="am-fl am-margin-xs value-item">
+															<input type="text" class="am-fl" name="spec_base_value_{{$spec_base_key}}[]" value="{{$value}}" placeholder="规格值" />
+															<i class="am-close am-close-spin quick-value-remove">×</i>
+														</div>
+													{{/foreach}}
+												{{/if}}
+												<div class="am-fl am-margin-xs value-item am-text-left"><span class="business-operations-submit quick-spec-value-add" data-index="{{$spec_base_key}}">+添加规格值</span>
+												</div>
+											</td>
+										</tr>
+									{{/foreach}}
+								{{/if}}
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- 规格常规操作 -->
+				<span class="business-operations-submit specifications-nav-title-add">+添加规格</span>
+				<span class="business-operations-submit am-margin-left-sm specifications-nav-set-all am-icon-cogs" data-am-modal="{target: '#spec-popup-all-operation'}"> 高级批量设置</span>
+				<div class="goods-specifications business-form-group am-padding-top-sm">
+					<!-- 所有规格批量操作弹层 -->
+					<div class="am-popup" id="spec-popup-all-operation">
+						<div class="am-popup-inner">
+							<div class="am-popup-hd">
+								<h4 class="am-popup-title">高级批量设置</h4>
+								<span data-am-modal-close class="am-close">&times;</span>
+							</div>
+							<div class="am-popup-bd">
+								<div class="am-alert am-alert-secondary spec-title-container"></div>
+								<div class="am-form-group">
+									<label class="block">销售价格</label>
+									<input type="text" placeholder="价格" class="am-radius popup_all_price" pattern="^([0-9]{1}\d{0,6})(\.\d{1,2})?$" data-validation-message="请填写有效的销售金额" />
+								</div>
+								<div class="am-form-group">
+									<label class="block">重量</label>
+									<input type="number" placeholder="重量" class="am-radius popup_all_weight" maxlength="80" min="0.00" max="100000000.00" step="0.01" data-validation-message="规格重量 0.00~100000000.00" />
+								</div>
+								<div class="am-form-group">
+									<label class="block">编码</label>
+									<input type="text" placeholder="编码" class="am-radius popup_all_coding" maxlength="80" data-validation-message="规格编码最多80个字符" />
+								</div>
+								<div class="am-form-group">
+									<label class="block">条形码</label>
+									<input type="text" placeholder="条形码" class="am-radius popup_all_barcode" maxlength="80" data-validation-message="条形码最多80个字符" />
+								</div>
+								<div class="am-form-group">
+									<label class="block">原价</label>
+									<input type="text" placeholder="原价" class="am-radius popup_all_original_price" pattern="^([0-9]{1}\d{0,6})(\.\d{1,2})?$" data-validation-message="请填写有效的原价" />
+								</div>
+								<div class="am-form-group am-form-group-refreshing am-text-center">
+									<button type="button" class="am-btn am-btn-warning am-radius am-btn-sm am-margin-right-lg" data-am-modal-close>取消</button>
+									<button type="button" class="am-btn am-btn-secondary am-radius am-btn-sm am-margin-left-lg">确认</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- 单个规格批量操作弹层 -->
+					<div class="am-modal am-modal-no-btn" tabindex="-1" id="spec-modal-all-operation">
+						<div class="am-modal-dialog">
+							<div class="am-modal-hd">批量操作
+								<a href="javascript: void(0)" class="am-close am-close-spin" data-am-modal-close>&times;</a>
+							</div>
+							<div class="am-modal-bd">
+								<div class="am-input-group am-input-group-sm">
+									<input type="text" class="am-form-field" placeholder="批量设置的值" />
+									<span class="am-input-group-btn">
+										<button type="button" class="am-btn am-btn-default">确认</button>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- 规格列表 -->
+					<table class="am-table am-table-bordered am-table-centered specifications-table am-margin-bottom-sm am-table-striped am-table-hover">
+						<thead class="title-nav">
+							<tr>
+								{{if !empty($specifications['type'])}}
+									{{foreach $specifications.type as $type_v}}
+										<th class="table-title table-title-{{$type_v.id}}">
+											<i class="am-close am-close-spin title-nav-remove" data-index="{{$type_v.id}}">×</i>
+											<input type="text" name="specifications_name_{{$type_v.id}}" placeholder="规格名" value="{{$type_v.name}}" data-validation-message="请填写规格名" required />
+										</th>
+									{{/foreach}}
+								{{/if}}
+								<th class="title-start">
+									<span>价格(元)</span>
+									<i class="am-icon-edit"></i>
+								</th>
+								<th>
+									<span>重量(kg)</span>
+									<i class="am-icon-edit"></i>
+								</th>
+								<th>
+									<span>规格编码</span>
+									<i class="am-icon-edit"></i>
+								</th>
+								<th>
+									<span>条形码</span>
+									<i class="am-icon-edit"></i>
+								</th>
+								<th>
+									<span>原价(元)</span>
+									<i class="am-icon-edit"></i>
+								</th>
+								<th class="extend-btn">扩展</th>
+								<th class="operation-btn">操作</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{if empty($specifications['value'])}}
+								<tr class="line-0" data-line-tag=".line-0">
+									<td class="value-start">
+										<input type="text" name="specifications_price[]" placeholder="价格" class="am-radius" pattern="^([0-9]{1}\d{0,6})(\.\d{1,2})?$" data-validation-message="请填写有效的销售金额" required />
+									</td>
+									<td>
+										<input type="number" name="specifications_weight[]" placeholder="重量" class="am-radius" maxlength="80" min="0.00" max="100000000.00" step="0.01" data-validation-message="规格重量 0.00~100000000.00" />
+									</td>
+									<td>
+										<input type="text" name="specifications_coding[]" placeholder="编码" class="am-radius" maxlength="80" data-validation-message="规格编码最多80个字符" />
+									</td>
+									<td>
+										<input type="text" name="specifications_barcode[]" placeholder="条形码" class="am-radius" maxlength="80" data-validation-message="条形码最多80个字符" />
+									</td>
+									<td>
+										<input type="text" name="specifications_original_price[]" placeholder="原价" class="am-radius" pattern="^([0-9]{1}\d{0,6})(\.\d{1,2})?$" data-validation-message="请填写有效的原价" />
+									</td>
+									<td>
+										<input type="hidden" name="specifications_extends[]" value="" class="line-extend-input" />
+										<span class="am-text-xs cr-blue c-p line-extend-btn">编辑</span>
+									</td>
+									<td>
+										<!--operation-->
+									</td>
+								</tr>
+							{{/if}}
+
+							{{if !empty($specifications['value'])}}
+								{{foreach $specifications.value as $line_k=>$line_v}}
+									<tr class="line-{{$line_k}} {{if $line_k gt 0}} line-not-first{{/if}}" data-line-tag=".line-{{$line_k}}">
+									{{foreach $line_v as $v}}
+										{{if isset($v['data_type'])}}
+											{{switch v.data_type}}
+												{{case spec}}
+													<td class="table-value table-value-{{$v.data.key}}">
+														<input type="text" name="specifications_value_{{$v.data.key}}[]" placeholder="规格值" value="{{$v.data.value}}" data-validation-message="请填写规格值" required />
+													</td>
+												{{/case}}
+
+												{{case base}}
+													<td class="value-start">
+														<input type="text" name="specifications_price[]" placeholder="价格" class="am-radius" pattern="^([0-9]{1}\d{0,6})(\.\d{1,2})?$" data-validation-message="请填写有效的销售金额" value="{{$v.data.price}}" required />
+													</td>
+													<td>
+														<input type="number" name="specifications_weight[]" placeholder="重量" class="am-radius" min="0.00" max="100000000.00" step="0.01" data-validation-message="规格重量 0.00~100000000.00" value="{{if $v['data']['weight'] gt 0}}{{$v.data.weight}}{{/if}}" />
+													</td>
+													<td>
+														<input type="text" name="specifications_coding[]" placeholder="编码" class="am-radius" maxlength="80" data-validation-message="规格编码最多80个字符" value="{{$v.data.coding}}" />
+													</td>
+													<td>
+														<input type="text" name="specifications_barcode[]" placeholder="条形码" class="am-radius" maxlength="80" data-validation-message="条形码最多80个字符" value="{{$v.data.barcode}}" />
+													</td>
+													<td>
+														<input type="text" name="specifications_original_price[]" placeholder="原价" class="am-radius" pattern="^([0-9]{1}\d{0,6})(\.\d{1,2})?$" data-validation-message="请填写有效的原价" value="{{if $v['data']['original_price'] gt 0}}{{$v.data.original_price}}{{/if}}" />
+													</td>
+													<td>
+														<input type="hidden" name="specifications_extends[]" value="{{$v.data.extends}}" class="line-extend-input" />
+														<span class="am-text-xs cr-blue c-p line-extend-btn">编辑</span>
+													</td>
+													<td>
+														{{if $line_k gt 0}}
+															<span class="am-text-xs cr-blue c-p am-margin-right-xs line-copy">复制</span>
+															<span class="am-text-xs cr-red c-p line-remove">移除</span>
+														{{else /}}
+															<!--operation-->
+														{{/if}}
+													</td>
+												{{/case}}
+											{{/switch}}
+										{{/if}}
+									{{/foreach}}
+									</tr>
+								{{/foreach}}
+							{{/if}}
+						</tbody>
+					</table>
+					<span class="business-operations-submit specifications-line-add">+添加一行</span>
+					<ul class="spec-images-list">
+						<div class="am-alert am-alert-warning am-radius" data-am-alert>
+						    规格名称与规格值保持一致，相同规格名称添加一次即可，重复添加则后面覆盖前面，顺序不影响前端展示效果。
+						    <span class="business-operations-submit specifications-line-images-add">+添加规格图片</span>
+						    <span class="business-operations-submit specifications-line-images-auto-add am-margin-left-sm am-icon-dot-circle-o"> 第<input type="text" class="am-inline-block am-text-center am-margin-horizontal-xs am-radius" value="1" />列规格自动生成</span>
+						</div>
+						{{if !empty($specifications['type'])}}
+							{{foreach $specifications.type as $type}}
+								{{if !empty($type['value'])}}
+									{{foreach $type.value as $spec_key=>$spec}}
+										{{if !empty($spec['images'])}}
+											<li class="spec-images-items spec-images-items-{{$type.id}}{{$spec_key}}">
+												<input type="text" name="spec_images_name[{{$type.id}}{{$spec_key}}]" placeholder="规格名称" class="am-radius t-c" data-validation-message="请填写规格名称" value="{{$spec.name}}" required >
+												<ul class="plug-file-upload-view spec-images-view-{{$type.id}}{{$spec_key}}" data-form-name="spec_images[{{$type.id}}{{$spec_key}}]" data-max-number="1" data-delete='0' data-dialog-type="images">
+													<li>
+														<input type="hidden" name="spec_images[{{$type.id}}{{$spec_key}}]" value="{{$spec.images_old}}" data-validation-message="请上传规格图片" required />
+														<img src="{{$spec.images}}" />
+														<i>×</i>
+													</li>
+												</ul>
+												<div class="plug-file-upload-submit" data-view-tag="ul.spec-images-view-{{$type.id}}{{$spec_key}}">+上传图片</div>
+											</li>
+										{{/if}}
+									{{/foreach}}
+								{{/if}}
+							{{/foreach}}
+						{{/if}}
+					</ul>
+				</div>
+			</div>
+
+			<!-- 相册 -->
+			<div id="goods-nav-photo" class="division-block">
+				<label class="block nav-detail-title">商品相册<span class="am-form-group-label-tips">可拖拽图片进行排序，建议图片尺寸一致</span></label>
+				<ul class="plug-file-upload-view goods-photo-view" data-form-name="photo[]" data-max-number="30" data-dialog-type="images">
+					{{if !empty($data['photo'])}}
+						{{foreach $data.photo as $v}}
+							<li>
+								<input type="text" name="photo[]" value="{{$v.images_old}}" />
+								<img src="{{$v.images}}" />
+								<i>×</i>
+							</li>
+						{{/foreach}}
+					{{/if}}
+				</ul>
+				<div class="plug-file-upload-submit" data-view-tag="ul.goods-photo-view">+上传相册</div>
+			</div>
+
+			<!-- 视频 -->
+			<div id="goods-nav-video" class="division-block">
+				<label class="block nav-detail-title">商品视频</label>
+				<div class="am-form-group am-form-file">
+					<label class="block">短视频<span class="am-form-group-label-tips">视频比图文更有具带入感，仅支持 mp4 格式</span></label>
+					<ul class="plug-file-upload-view plug-file-upload-view-video goods-video-view" data-form-name="video" data-max-number="1" data-dialog-type="video">
+						{{if !empty($data['video'])}}
+							<li>
+								<input type="text" name="video" value="{{$data.video}}" />
+								<video src="{{$data.video}}" controls>your browser does not support the video tag</video>
+								<i>×</i>
+							</li>
+						{{/if}}
+					</ul>
+					<div class="plug-file-upload-submit" data-view-tag="ul.goods-video-view">+上传视频</div>
+				</div>
+			</div>
+
+			<!-- app内容 -->
+			<div id="goods-nav-app" class="division-block">
+				<label class="block nav-detail-title">手机端详情</label>
+				<ul class="content-app-items business-form-group" data-max-count="10" data-required="1" data-images-name="content_app_images" data-content-name="content_app_text" data-images-text="图片" data-content-text="文本内容" data-delete-text="删除" data-drag-sort-text="拖拽排序">
+					{{if !empty($data['content_app'])}}
+						{{foreach $data.content_app as $v}}
+							<li>
+								<div>
+									<div class="content-app-left">
+										<label class="block">图片</label>
+										<ul class="plug-file-upload-view goods-content-app-images-view-{{$v.id}}" data-form-name="content_app_images_{{$v.id}}" data-max-number="1" data-dialog-type="images">
+											{{if !empty($v['images'])}}
+												<li>
+													<input type="text" name="content_app_images_{{$v.id}}" value="{{$v.images_old}}" />
+													<img src="{{$v.images}}" />
+													<i>×</i>
+												</li>
+											{{/if}}
+										</ul>
+										<div class="plug-file-upload-submit" data-view-tag="ul.goods-content-app-images-view-{{$v.id}}">+上传图片</div>
+									</div>
+									<div class="am-form-group content-app-right fr">
+										<label>文本内容</label>
+										<textarea rows="5" name="content_app_text_{{$v.id}}" maxlength="105000" class="am-radius" placeholder="文本内容" data-validation-message="文本内容最多 105000 个字符">{{if !empty($v)}}{{$v.content_old|raw}}{{/if}}</textarea>
+									</div>
+								</div>
+								<i class="c-p am-text-xs cr-red content-app-items-rem-sub">删除</i>
+								<i class="c-m am-text-xs drag-sort-submit">拖拽排序</i>
+							</li>
+						{{/foreach}}
+					{{/if}}
+				</ul>
+				<span class="business-operations-submit content-app-items-add-sub">+添加手机详情</span>
+			</div>
+
+			<!-- web内容 -->
+			<div id="goods-nav-web" class="division-block">
+				<label class="block nav-detail-title">电脑端详情</label>
+				<div class="am-form-group">
+					<textarea class="am-radius am-validate" name="content_web" maxlength="105000" id="editor-tag" data-validation-message="电脑端详情内容最多 105000 个字符">{{if !empty($data)}}{{$data.content_web}}{{/if}}</textarea>
+				</div>
+			</div>
+
+			<!-- 虚拟商品 -->
+			<div id="goods-nav-fictitious" class="division-block">
+				<label class="block nav-detail-title">虚拟商品<span class="am-form-group-label-tips">用户下单后自动发货，用于将该数据展示在用户订单中</span></label>
+				<div class="am-form-group">
+					<script type="text/plain" id="goods-fictitious-container" name="fictitious_goods_value">{{if !empty($data)}}{{$data.fictitious_goods_value|raw}}{{/if}}</script>
+				</div>
+			</div>
+
+			<!-- 扩展数据 -->
+			<div id="goods-nav-extends" class="division-block">
+				<label class="block nav-detail-title">扩展数据<span class="am-form-group-label-tips-must">该区域为插件扩展数据，请按照插件文档填写相应的值</span></label>
+				<!-- 插件扩展数据 start -->
+				{{if isset($shopxo_is_develop) and $shopxo_is_develop eq true}}
+	                <div class="plugins-tag">
+	                    <span>plugins_view_admin_goods_save</span>
+	                </div>
+	            {{/if}}
+				{{if !empty($plugins_view_admin_goods_save_data) and is_array($plugins_view_admin_goods_save_data)}}
+					{{foreach $plugins_view_admin_goods_save_data as $hook}}
+	                    {{if is_string($hook) or is_int($hook)}}
+	                        {{$hook|raw}}
+	                    {{/if}}
+	                {{/foreach}}
+				{{else /}}
+					<div class="table-no"><i class="am-icon-warning"></i> 没有扩展数据</div>
+				{{/if}}
+				<!-- 插件扩展数据 end -->
+			</div>
+
+			<!-- seo -->
+			<div id="goods-nav-seo" class="division-block">
+				<label class="block nav-detail-title">SEO</label>
+				{{include file="lib/seo" /}}
+			</div>
+
+			<div class="am-form-group am-form-group-refreshing">
+				<input type="hidden" name="id" {{if isset($data) and !empty($data['id']) and (!isset($is_copy) or $is_copy neq 1)}} value="{{$data.id}}"{{/if}} />
+				<button type="submit" class="am-btn am-btn-primary am-radius btn-loading-example am-btn-sm am-btn-block" data-am-loading="{loadingText:'处理中...'}">保存</button>
+			</div>
+		</form>
+        <!-- form end -->
+	</div>
+</div>
+<!-- right content end  -->
+
+<!-- 规格扩展数据弹层 -->
+<div class="am-popup" id="specifications-extends-popup">
+	<div class="am-popup-inner">
+		<div class="am-popup-hd">
+			<h4 class="am-popup-title">规格扩展数据</h4>
+			<span data-am-modal-close class="am-close">&times;</span>
+		</div>
+		<div class="am-popup-bd">
+			<form class="am-form form-validation-specifications-extends view-save" request-type="sync" request-value="SpecificationsExtendsBack">
+				{{if !empty($goods_specifications_extends) and is_array($goods_specifications_extends)}}
+					{{foreach $goods_specifications_extends as $v}}
+						<div class="am-alert am-alert-secondary">
+							<label class="am-text-sm">{{$v.name}}</label>
+							{{if !empty($v['desc'])}}
+								<span class="am-text-xs am-text-warning am-margin-left-xs">{{$v.desc}}</span>
+							{{/if}}
+							{{if !empty($v['tips'])}}
+								<div class="am-alert am-alert-warning am-margin-0" data-am-alert>
+									<button type="button" class="am-close">&times;</button>
+									<p>{{$v.tips|raw}}</p>
+								</div>
+							{{/if}}
+							{{if !empty($v['element'])}}
+								{{foreach $v.element as $element}}
+									{{if !empty($element['name'])}}
+										<div class="am-form-group">
+											{{if !empty($element['title']) or !empty($element['desc'])}}
+												<label class="block">
+													{{if !empty($element['title'])}}
+														{{$element.title}}
+													{{/if}}
+													{{if !empty($element['desc'])}}
+														<span class="am-form-group-label-tips">{{$element.desc}}</span>
+													{{/if}}
+												</label>
+											{{/if}}
+											{{switch element.element}}
+												{{case input}}
+													{{if isset($element['type'])}}
+														{{if in_array($element['type'], ['radio', 'checkbox']) and !empty($element['element_data']) and is_array($element['element_data'])}}
+															{{foreach $element.element_data as $element_data_key=>$element_data}}
+																<label class="{{if isset($element['is_block']) and $element['is_block'] eq 1}}am-{{$element.type}}{{else /}}am-{{$element.type}}-inline{{/if}}">
+																	<input
+																		type="{{$element.type}}"
+																		name="{{$element.name}}"
+																		value="{{$element_data.value}}"
+
+																		{{if isset($data['config'][$element['name']]) and in_array($element_data['value'], explode(',', $data['config'][$element['name']]))}} checked{{/if}}
+
+																		{{if isset($element['minchecked']) and $element['type'] eq 'checkbox'}} minchecked="{{$element.minchecked}}"{{/if}}
+
+																		{{if isset($element['maxchecked']) and $element['type'] eq 'checkbox'}} maxchecked="{{$element.maxchecked}}"{{/if}}
+
+																		{{if isset($element['message'])}} data-validation-message="{{$element.message}}"{{/if}}
+
+																		{{if $element_data_key eq 0 and isset($element['is_required']) and $element['is_required'] eq 1}}required{{/if}}
+																		data-am-ucheck />
+																		{{$element_data.name}}
+																</label>
+															{{/foreach}}
+														{{else /}}
+															<input
+																class="am-radius"
+																type="{{$element.type}}"
+																name="{{$element.name}}"
+																value="{{if isset($data['config'][$element['name']])}}{{$data['config'][$element['name']]}}{{else /}}{{if isset($element['default'])}}{{$element.default}}{{/if}}{{/if}}"
+
+																{{if isset($element['placeholder'])}} placeholder="{{$element.placeholder}}"{{/if}}
+
+																{{if isset($element['message'])}} data-validation-message="{{$element.message}}"{{/if}}
+
+																{{if isset($element['is_required']) and $element['is_required'] eq 1}} required{{/if}}
+																/>
+														{{/if}}
+													{{else /}}
+														<p class="am-text-danger">element input-type 配置有误</p>
+													{{/if}}
+												{{/case}}
+												{{case select}}
+													{{if !empty($element['element_data']) and is_array($element['element_data'])}}
+														<select
+															class="chosen-select am-radius"
+															name="{{$element.name}}"
+
+															{{if isset($element['message'])}} data-validation-message="{{$element.message}}"{{/if}}
+
+															{{if !empty($element['placeholder'])}} data-placeholder="{{$element.placeholder}}"{{/if}}
+
+															{{if isset($element['is_multiple']) and $element['is_multiple'] eq 1}}
+																multiple
+																{{if isset($element['minchecked'])}} minchecked="{{$element.minchecked}}"{{/if}}
+																{{if isset($element['maxchecked'])}} maxchecked="{{$element.maxchecked}}"{{/if}}
+															{{/if}}
+
+															{{if isset($element['is_required']) and $element['is_required'] eq 1}}required{{/if}}
+														>
+														{{if !isset($element['is_multiple']) or $element['is_multiple'] neq 1}}
+															{{if !empty($element['placeholder'])}}
+																<option value="">{{$element.placeholder}}</option>
+															{{/if}}
+														{{/if}}
+															{{foreach $element.element_data as $element_data_key=>$element_data}}
+																<option
+																	value="{{$element_data.value}}"
+																	{{if isset($data['config'][$element['name']]) and in_array($element_data['value'], explode(',', $data['config'][$element['name']]))}}selected{{/if}}
+																	>{{$element_data.name}}</option>
+															{{/foreach}}
+														</select>
+													{{/if}}
+												{{/case}}
+												{{case textarea}}
+													<textarea
+														class="am-radius"
+														name="{{$element.name}}"
+
+														{{if isset($element['rows'])}} rows="{{$element.rows}}"{{/if}}
+
+														{{if isset($element['placeholder'])}} placeholder="{{$element.placeholder}}"{{/if}}
+
+														{{if isset($element['is_required']) and $element['is_required'] eq 1}}
+															{{if isset($element['minlength'])}} minlength="{{$element.minlength}}"{{/if}}
+															{{if isset($element['maxlength'])}} maxlength="{{$element.maxlength}}"{{/if}}
+															required
+														{{/if}}
+													>{{if isset($data['config'][$element['name']])}}{{$data['config'][$element['name']]}}{{else /}}{{if isset($element['default'])}}{{$element.default}}{{/if}}{{/if}}</textarea>
+												{{/case}}
+											{{/switch}}
+										</div>
+									{{else /}}
+										<p class="am-text-danger">element form-name 配置有误</p>
+									{{/if}}
+								{{/foreach}}
+							{{/if}}
+						</div>
+					{{/foreach}}
+
+					<div class="am-form-group am-form-group-refreshing">
+						<button type="submit" class="am-btn am-btn-primary am-radius btn-loading-example am-btn-sm am-btn-block">确认</button>
+					</div>
+				{{else /}}
+					<div class="table-no"><i class="am-icon-warning"></i> 没有扩展数据</div>
+				{{/if}}
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- footer start -->
+{{include file="public/footer" /}}
+<!-- footer end -->
+
+<!-- 拖拽排序初始化 -->
+<script type="text/javascript">
+// 规格扩展返回处理
+function SpecificationsExtendsBack(data)
+{
+	var $extends_popup = $('#specifications-extends-popup');
+    $('.specifications-table').find($extends_popup.attr('data-line-extend')).find('.line-extend-input').val(JSON.stringify(data));
+    $extends_popup.modal('close');
+}
+</script>

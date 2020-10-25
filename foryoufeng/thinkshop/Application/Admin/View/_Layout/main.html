@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <title>{$meta_title}｜{:C('WEB_SITE_TITLE')}后台管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="author" content="{:C('WEB_SITE_TITLE')}">
+    <meta name="keywords" content="{$meta_keywords}">
+    <meta name="description" content="{$meta_description}">
+    <meta name="generator" content="CoreThink">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="{:C('WEB_SITE_TITLE')}">
+    <meta name="format-detection" content="telephone=no,email=no">
+    <link rel="apple-touch-icon" type="image/x-icon" href="__ROOT__/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="__ROOT__/favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/admin.min.css?v={:C('STATIC_VERSION')}">
+    <link rel="stylesheet" type="text/css" href="__ADMIN_CSS__/default.css">
+    <block name="style"></block>
+
+    <!-- 如果配置里CDN静态资源列表则使用CDN否则使用静态资源 -->
+    <?php if(C('CDN_RESOURCE_LIST')): ?>
+        {:C('CDN_RESOURCE_LIST')}
+    <?php else: ?>
+        <script type="text/javascript" src="__PUBLIC__/libs/jquery/1.x/jquery-1.11.3.min.js"></script>
+    <?php endif; ?>
+    <block name="libs"></block>
+</head>
+
+<body id="<?php echo 'body-'.$__CONTROLLER_NAME__.'-'.$__ACTION_NAME__; ?>" class="<?php echo 'body-'.$__CONTROLLER_NAME__.' body-'.$__CONTROLLER_NAME__.'-'.$__ACTION_NAME__; ?>">
+    <div class="clearfix full-header">
+        <div class="navbar navbar-inverse" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse-top">
+                        <span class="sr-only">切换导航</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <php>if(C('WEB_SITE_LOGO')):</php>
+                        <a class="navbar-brand" target="_blank" href="__ROOT__/">
+                            <img class="logo" src="{$Think.config.WEB_SITE_LOGO|get_cover}">
+                        </a>
+                    <php>else:</php>
+                        <a class="navbar-brand" target="_blank" href="__ROOT__/">
+                            <img class="logo" src="__PUBLIC__/images/logo.png">
+                        </a>
+                    <php>endif;</php>
+                </div>
+                <div class="collapse navbar-collapse navbar-collapse-top">
+                    <!-- 顶部主导航 -->
+                    <ul class="nav navbar-nav">
+                        <volist name="__ALL_MENU_LIST__" id="vo">
+                            <li <php>if($vo['id'] == $__CURRENT_ROOTMENU__) echo 'class="active"';</php> >
+                                <a href="{:U($vo['url'])}"><i class="{$vo.icon}"></i> {$vo.title}</a>
+                            </li>
+                        </volist>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="{:U('Admin/Index/rmdirr')}" class="ajax-get"><i class="fa fa-trash"></i> 清空缓存</a></li>
+                        <li><a target="_blank" href="__ROOT__/"><i class="fa fa-external-link-square"></i> 打开前台</a></li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-user"></i> {$__USER__.username} <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a target="_blank" href="{:U('Home/User/center')}"><i class="fa fa-home"></i> 个人中心</a></li>
+                                <li><a href="{:U('Admin/User/edit', array('id' => is_login()))}"><i class="fa fa-edit"></i> 修改信息</a></li>
+                                <li class="divider"></li>
+                                <li><a href="{:U('Admin/Public/logout')}" class="ajax-get"><i class="fa fa-sign-out"></i> 退出</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="clearfix full-container">
+        <div class="container-fluid">
+            <block name="container">
+                <div class="row">
+
+                    <div id="sidebar" class="col-xs-12 col-sm-2 sidebar">
+                        <!-- 切换左侧菜单 -->
+                        <button id="sidebar-toggle" class="btn btn-default btn-block hidden-xs" title="切换左侧菜单">
+                            <i class="fa fa-bars"></i>
+                        </button>
+
+                        <!-- 侧边导航 -->
+                        <div class="panel-group" role="tablist">
+                            <volist name="__SIDE_MENU_LIST__" id="vo">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab">
+                                        <h4 class="panel-title"><a data-toggle="collapse" href="#side-menu{$key}">
+                                            <i class="{$vo.icon}"></i> 
+                                            <span class="sidebar-title">{$vo.title}</a></span>
+                                        </h4>
+                                    </div>
+                                    <div id="side-menu{$key}" class="panel-collapse collapse in" role="tabpanel">
+
+                                        <div class="list-group">
+                                            <volist name="vo._child" id="vo_child">
+                                                <a class="list-group-item <?php if(dirname($vo_child['url'])===$current_active) echo 'active'; ?>"
+                                                href="{$vo_child['url']}">
+                                                    <i class="{$vo_child.icon}"></i> 
+                                                    <span class="sidebar-title">{$vo_child.title}</span>
+                                                </a>
+                                            </volist>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </volist>
+                        </div>
+                    </div>
+
+
+                    <div id="main" class="col-xs-12 col-sm-10 main">
+                        <!-- 面包屑导航 -->
+                        <ul class="breadcrumb">
+                            <li><i class="fa fa-map-marker"></i></li>
+                            <volist name="__PARENT_MENU__" id="vo">
+                                <li>{$vo.title}</li>
+                            </volist>
+                        </ul>
+
+                        <block name="main"></block>
+
+                        <div class="footer text-muted">
+                            <span>版权所有 © 2014-<php>echo date("Y",time());</php></span>
+                            <a href="{:C('WEBSITE_DOMAIN')}" class="text-muted" target="_blank">{:C('PRODUCT_NAME')} v{:C('CURRENT_VERSION')}</a>
+                            <a href="{:C('WEBSITE_DOMAIN')}" class="text-muted" target="_blank">{:C('COMPANY_NAME')}</a> 
+                            <a class="text-muted pull-right">项目开发团队：{:C('DEVELOP_TEAM')}</a>
+                        </div>
+                    </div>
+
+                </div>
+            </block>
+        </div>
+    </div>
+
+    <div class="clearfix full-script">
+        <div class="container-fluid">
+            <div id="universal">
+                <script type="text/javascript">
+                    var $_var_{$__ACTION_NAME__} = {<block name='var'></block>};
+                </script>
+            </div>
+            <script type="text/javascript" src="__PUBLIC__/js/admin.min.js?v={:C('STATIC_VERSION')}"></script>
+            <block name="script"></block>
+        </div>
+    </div>
+</body>
+</html>

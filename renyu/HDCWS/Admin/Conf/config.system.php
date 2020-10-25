@@ -1,0 +1,1 @@
+<?php return array('HD_Desktop_Bg' => './uploads/desktop/desktop4.jpg');

@@ -1,0 +1,117 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?=$this->HelpUrl('financePayableList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th width="10%"><?=$this->translate('采购单号')?></th>
+                                <!--<th width="10%"><?=$this->translate('入库单号')?></th>-->
+                                <th width="10%"><?=$this->translate('供应商')?></th>
+                                <th width="10%"><?=$this->translate('付款方式')?></th>
+                                <th width="10%"><?=$this->translate('采购金额')?></th>
+                                <th width="10%"><?=$this->translate('已付金额')?></th>
+                                <th width="10%"><?=$this->translate('操作')?></th>
+                            </tr>
+                            <?php
+                            $sForm = $this->searchForm;
+                            $sForm->prepare();
+                            ?>
+                            <?= $this->form()->openTag($sForm); ?>
+                            <tr>
+                                <td>
+                                    <?= $this->formElement($sForm->get('p_order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('p_order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('supplier_name')); ?>
+                                    <?=$this->formElementErrors($sForm->get('supplier_name'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('payment_code')); ?>
+                                    <?=$this->formElementErrors($sForm->get('payment_code'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('pur_start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('pur_end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('pur_start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('pur_end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                    <?php if(!empty(array_filter($sForm->getData()))) { ?>
+                                        <a href="<?=$this->url('finance-payable');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <?= $this->form()->closeTag(); ?>
+                            </thead>
+
+                            <?php if($this->PayableList) foreach ($this->PayableList as $PayableValue) {?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($PayableValue->getPOrderSn())?></td>
+                                    <!--<td></td>-->
+                                    <td><?=$this->escapeHtml($PayableValue->getSupplierName());?></td>
+                                    <td><?=$this->PurchaseHelper()->orderPayment($PayableValue->getPaymentCode());?></td>
+                                    <td><?=$this->erpCurrencyFormat($PayableValue->getPaymentAmount())?></td>
+                                    <td>
+                                        <span <?=($PayableValue->getPaymentAmount() == $PayableValue->getFinishAmount() ? 'class="text-green"' : '')?>><?=$this->erpCurrencyFormat($PayableValue->getFinishAmount())?></span>
+                                        <?php if($PayableValue->getFinishAmount() != 0.0000) { ?>
+                                        <a href="<?= $this->url('finance-payable',
+                                            ['action'=>'payableLog', 'id'=>$PayableValue->getPayableId()]); ?>" title="<?=$this->translate('付款记录')?>"><i class="fa fa-book text-green"></i></a>
+                                        <?php } ?>
+                                    </td>
+                                    <td>
+                                        <?php if($PayableValue->getPaymentAmount() != $PayableValue->getFinishAmount()) { ?>
+                                        <a href="<?= $this->url('finance-payable',
+                                            ['action'=>'addPayable', 'id'=>$PayableValue->getPayableId()]); ?>"
+                                           class="btn btn-xs btn-success"><i class="fa fa-usd"></i> <?=$this->translate('付款')?></a>
+                                        <?php } ?>
+                                        <a href="<?= $this->url('finance-payable',
+                                            ['action'=>'show', 'id'=>$PayableValue->getPayableId()]); ?>"
+                                           class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('查看')?>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->PayableList, 'Sliding', 'layout/page', ['route' => 'finance-payable']); ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

@@ -1,0 +1,199 @@
+<extend name="Base/common"/>
+
+<block name="style">
+    <link href="__CSS__/event.css" rel="stylesheet" type="text/css"/>
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/Core/js/ext/magnific/magnific-popup.css"/>
+</block>
+
+<block name="body">
+<!--导航-->
+<include file="_nav"/>
+
+
+    <div class="col-md-3 pull-right" style="z-index: 99">
+        <include file="_right"/>
+    </div>
+
+
+    <div class="col-md-9">
+
+
+        <div class="forum_module" style="width: 100%;min-height: 800px;">
+
+            <div class="row" style="padding: 10px 10px 0 0 ">
+                <div class="col-md-12">
+                    <div class="event_header_title">
+                        <div class="pull-left">我的活动</div>
+                        <div class="btn-group btn-group-sm  pull-right" style="margin-bottom:5px;">
+                            <a href="{:U('myevent',array('lora'=>'','type_id'=>$type_id))}"
+                               class="btn btn-default <if condition="$lora
+                            eq ''">active</if>">我发起的</a>
+                            <a href="{:U('myevent',array('lora'=>'attend','type_id'=>$type_id))}"
+                               class="btn btn-default <if condition="$lora eq 'attend'">active</if>">我参加的</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <volist name="contents" id="vo">
+                <div class="clearfix event_list">
+                    <div class="col-md-5" style="padding: 0">
+                        <if condition="time() lt $vo['eTime']">
+                            <div class="event_state" style="background: #d61f39">
+                                正在进行
+                            </div>
+                            <else/>
+                            <div class="event_state" style="background: #000;">
+                                已结束
+                            </div>
+                        </if>
+
+                        <a class="pull-left" href="{:U('Event/Index/detail',array('id'=>$vo['id']))}"> <img
+                                class="cover"
+                                src="{$vo.cover_id|getThumbImageById=320,210}" style="width: 320px;height: 210px;overflow: hidden"/></a>
+                    </div>
+                    <div class="pull-left col-md-7">
+                        <div class="mgl20 event_title"><a href="{:U('Event/Index/detail',array('id'=>$vo['id']))}"
+                                                          class="text-more" style="width: 100%">{$vo.title}</a></div>
+                        <div class="event_fq_count pull-left">
+                            <div class="pull-left mgb10 col-md-12">
+                                <div class="pull-left col-md-6 " style="padding-left: 5px;">by&nbsp; <a class=""
+                                                                                                        href="{$vo.user.space_url}">
+                                    <span class="event_count">{$vo.user.nickname}</span></a></div>
+                                <div title="报名人数" class="pull-left col-md-3">
+                                    <div class="event_logo" style=""></div>
+                                    <span class="event_count">&nbsp;{$vo.signCount}人</span></div>
+                                <div class="pull-left col-md-3">
+                                    <div class="event_logo" style="background-position: -20px 0px;"></div>
+                                    <span class="event_count">&nbsp;{$vo.view_count}</span></div>
+                            </div>
+                            <div class="pull-left mgb10">
+                                <div class="pull-left mgl20 " style="font-size: 14px;">时间：
+                                    {:date('Y-m-d',$vo['sTime'])}--{:date('Y-m-d',$vo['eTime'])} &nbsp;&nbsp;
+                                    {$vo.type.title}
+                                </div>
+                            </div>
+                            <div class="pull-left mgb10">
+                                <div class="pull-left mgl20 " style="font-size: 14px;">报名截止时间：
+                                    {:date('Y-m-d',$vo['deadline'])} &nbsp;&nbsp;
+
+                                </div>
+                            </div>
+                            <div class="word-wrap pull-left mgl20 event_short_explain" style="width: 80%">简介：
+                                {$vo.explain|op_h='font'|getShortSp=30}
+                            </div>
+                            <div class="pull-left mgl20 mgt10" style=" ">
+                                <div class="btn-group">
+                                    <if condition="($vo['uid'] eq is_login()) OR is_administrator(is_login())">
+
+                                        <if condition="time() lt $vo['eTime']">
+                                            <a class="btn btn-default endEvent" data-eventID="{$vo.id}">提前结束</a>
+                                        </if>
+
+                                        <a href="{:U('edit',array('id'=>$vo['id']))}" class="btn btn-default">编辑活动</a>
+                                        <a class="btn btn-default delEvent" data-eventID="{$vo.id}">删除活动</a>
+                                        <else/>
+                                        <php>if(!$vo['check_isSign']){</php>
+
+                                        <php>if($vo['deadline'] < time()){</php>
+                                        <a class="btn btn-default  " href="javascript:"
+                                           onclick="toast.error('报名已截止')">报名已截止 </a>
+                                        <php>}else{</php>
+                                        <if condition="is_login() eq 0">
+                                            <a class="btn  btn-info   " href="javascript:" style="color: #fff"
+                                               onclick="toast.error('请登陆后再报名')">报名参加 </a>
+                                            <else/>
+                                            <a class="btn  btn-info  event_sign " style="color: #fff"
+                                               href="{:U('ajax_sign',array('event_id'=>$vo['id']))}">报名参加 </a>
+                                        </if>
+                                        <php>}</php>
+                                        <php>}else{</php>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;<a class="btn btn-default unSign"
+                                                                   data-eventID="{$vo.id}" href="javascript:"
+                                                                   id="unSign">取消报名 </a>
+
+                                        <span style="line-height: 34px;"> 已报名&nbsp;&nbsp;&nbsp;&nbsp;<if
+                                                condition="$vo['check_isSign'][0]['status'] eq 1">已审核
+                                            <else/>
+                                            未审核
+                                        </if></span>
+
+                                        <php>}</php>
+
+                                    </if>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </volist>
+            <div class="row issue_list">
+
+
+                <if condition="count($contents) eq 0">
+                    <div style="font-size:3em;padding:2em 0;color: #ccc;text-align: center">此分类下暂无内容哦。O(∩_∩)O~</div>
+                </if>
+
+            </div>
+        </div>
+
+
+        <div>
+            <div class="pull-right">
+
+                {:getPagination($totalPageCount,10)}
+            </div>
+        </div>
+
+    </div>
+
+
+</block>
+
+<block name="script">
+    <script type="text/javascript" src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>
+    <script type="text/javascript" src="__JS__/event.js"></script>
+    <script type="text/javascript" src="__PUBLIC__/Core/js/ext/magnific/jquery.magnific-popup.min.js"></script>
+    <script>
+        $(function () {
+            $('#top_nav >li >a ').mouseenter(function () {
+                $('.children_nav').hide();
+                $('#children_' + $(this).attr('data')).show();
+            });
+
+            $('.event_sign').magnificPopup({
+                type: 'ajax',
+                overflowY: 'scroll',
+                modal: true,
+                callbacks: {
+                    ajaxContentAdded: function () {
+                        // Ajax content is loaded and appended to DOM
+
+                        console.log(this.content);
+                    }
+                }
+            });
+            bindSupport();
+
+        })
+
+
+    </script>
+
+    <script type="text/javascript">
+        var SUPPORT_URL = "{:addons_url('Support://Support/doSupport')}";
+
+    </script>
+</block>
+
+
+
+
+
+
+
+
+
+

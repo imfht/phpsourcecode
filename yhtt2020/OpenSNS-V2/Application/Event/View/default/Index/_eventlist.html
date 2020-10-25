@@ -1,0 +1,173 @@
+<div class="col-xs-5 event-cover">
+    <if condition="time() lt $vo['eTime']">
+        <div class="event_state" style="background: #d61f39">
+            {:L('_IN_PROGRESS_')}
+        </div>
+        <else/>
+        <div class="event_state" style="background: #000;">
+            {:L('_ALREADY_OVER_')}
+        </div>
+    </if>
+
+    <a class="pull-left" href="{:U('Event/Index/detail',array('id'=>$vo['id']))}">
+        <img class="" src="{$vo.cover_id|getThumbImageById=320,210}"/>
+    </a>
+</div>
+
+<div class="pull-left col-xs-7">
+    <div class=" event_title">
+        <a href="{:U('Event/Index/detail',array('id'=>$vo['id']))}" class="text-more">{:msubstr($vo['title'],0,18)}</a>
+    </div>
+    <div class="event_fq_count pull-left" style="padding-left: 20px">
+        <div class=" mgb10 col-xs-12 pdl0">
+            <div class=" col-xs-6 pdl0 event_count">by<a class="pdl10" href="{$vo.user.space_url}">
+                <span>{$vo.user.nickname}</span></a>
+            </div>
+            <div title="{:L('_TITLE_APPLY_COUNT_')}" class="pull-left col-xs-3">
+                <i class="event_logo"></i>
+                <span class="event_count">{$vo.signCount}人</span>
+            </div>
+            <div class=" col-xs-3">
+                <i class="event_logo" style="background-position: -20px 0;"></i>
+                <span class="event_count">{$vo.view_count}</span>
+            </div>
+        </div>
+        <div class="mgb10">
+            <div class="event_count">{:L('_TIME_')}{:L('_COLON_')}
+                {:date('Y-m-d',$vo['sTime'])}--{:date('Y-m-d',$vo['eTime'])} &nbsp;&nbsp;
+                {$vo.type.title}
+            </div>
+        </div>
+
+        <div class="pull-left mgb10">
+            <div class="pull-left  event_count">{:L('_REGISTRATION_TIME_DEADLINE_')}{:L('_COLON_')}
+                {:date('Y-m-d',$vo['deadline'])}
+            </div>
+        </div>
+        <div class="word-wrap pull-left  event_short_explain event_count" style="width: 80%">{:L('_INTRO_')}{:L('_COLON_')}
+            {$vo.explain|op_t|getShortSp=30}
+        </div>
+        <div class="pull-left  mgt10">
+            <div class="btn-group">
+                <if condition="($vo['uid'] eq is_login()) OR is_administrator(is_login())">
+
+                    <if condition="time() lt $vo['eTime']">
+                        <a class="btn btn-default endEvent" data-eventID="{$vo.id}">{:L('_OVER_AHEAD_')}</a>
+                    </if>
+
+                    <a href="{:U('edit',array('id'=>$vo['id']))}" class="btn btn-default">{:L('_EVENT_EDIT_')}</a>
+                    <a class="btn btn-default delEvent" data-eventID="{$vo.id}">{:L('_EVENT_DELETE_')}</a>
+                </if>
+                <if condition="($vo['uid'] neq is_login())">
+                    <php>if(!$vo['check_isSign']){</php>
+
+                    <php>if($vo['deadline'] < time()){</php>
+                    <a class="btn btn-default  " href="javascript:" onclick="toast.error({:L('_REGISTRATION_HAS_OVER_')})">{:L('_REGISTRATION_HAS_OVER_')} </a>
+                    <php>}else{</php>
+                    <if condition="is_login() eq 0">
+                        <a class="btn btn-info  " href="javascript:" style="color: #fff" onclick="toast.error({:L('_ERROR_REGISTER_AFTER_LOGIN_')})">{:L('_REGISTER_OP_')} </a>
+                        <else/>
+                        <if condition="check_auth('Event/Index/doSign')">
+                            <a class="btn btn-primary event_sign " style="color: #fff" href="{:U('ajax_sign',array('event_id'=>$vo['id']))}">{:L('_REGISTER_OP_')} </a>
+                        </if>
+                    </if>
+                    <php>}</php>
+                    <php>}else{</php>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<a class="btn btn-default unSign" data-eventID="{$vo.id}" href="javascript:" id="unSign">{:L('_REGISTER_CANCEL_')} </a>
+
+                    <span style="line-height: 34px;"> {:L('_REGISTER_ED_')}&nbsp;&nbsp;&nbsp;&nbsp;<if
+                            condition="$vo['check_isSign'][0]['status'] eq 1">{:L('_AUDIT_ED_')}
+                                            <else/>
+                                            {:L('_AUDIT_OP_')}
+                                        </if></span>
+                    <php>}</php>
+                </if>
+            </div>
+        </div>
+
+    </div>
+</div>
+<block name="script">
+    <script type="text/javascript" src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>
+    <script>
+        $(function () {
+            $('#top_nav >li >a ').mouseenter(function () {
+                $('.children_nav').hide();
+                $('#children_' + $(this).attr('data')).show();
+            });
+
+
+            $('.event_sign').magnificPopup({
+                type: 'ajax',
+                overflowY: 'scroll',
+                modal: true,
+                callbacks: {
+                    ajaxContentAdded: function () {
+                        console.log(this.content);
+                    }
+                }
+            });
+
+
+
+            /**
+             * 取消报名
+             * */
+            $('#unSign').click(function () {
+                if (confirm("{:L('_PROMPT_CANCEL_')}{:L('_QUESTION_')}")) {
+                    var event_id = "{$content['id']}";
+                    $.post("{:U('Event/Index/unSign')}", {event_id: event_id}, function (res) {
+                        if (res.status) {
+                            toast.success(res.info);
+                            setTimeout(function () {
+                                location.reload();
+                            }, 1500);
+                        }
+                        else {
+                            toast.error(res.info);
+                        }
+                    }, 'json');
+                }
+            });
+            /**
+             * 删除活动事件
+             * */
+            $('#delEvent').click(function () {
+                if (confirm("{:L('_PROMPT_DELETE_')}{:L('_QUESTION_')}")) {
+                    var event_id = "{$content['id']}";
+                    $.post("{:U('Event/Index/doDelEvent')}", {event_id: event_id}, function (res) {
+                        if (res.status) {
+                            toast.success(res.info);
+                            setTimeout(function () {
+                                location.href = "{:U('index')}";
+                            }, 1500);
+                        }
+                        else {
+                            toast.error(res.info);
+                        }
+                    }, 'json');
+                }
+            });
+            /**
+             * 提前结束活动点击事件
+             */
+            $('#endEvent').click(function () {
+                if (confirm("{:L('_PROMPT_OVER_')}{:L('_QUESTION_')}")) {
+                    var event_id = "{$content['id']}";
+                    $.post("{:U('Event/Index/doEndEvent')}", {event_id: event_id}, function (res) {
+                        if (res.status) {
+                            toast.success(res.info);
+                            setTimeout(function () {
+                                location.reload();
+                            }, 1500);
+                        }
+                        else {
+                            toast.error(res.info);
+                        }
+                    }, 'json');
+                }
+            });
+        })
+    </script>
+
+</block>

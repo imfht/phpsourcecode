@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>会员签到</title>
+</head>
+<body>
+<script type="text/javascript">var $=window.parent.$,layer=window.parent.layer,bui=window.parent.bui,p=window.parent;</script>
+<script type="text/javascript">
+
+var sign_str = `
+	 <link rel="stylesheet" type="text/css" href="/public/static/libs/bui/pages/signin/style.css">
+	<div class="signInBox" style="display:none;">
+		<div class="BackBox"></div>
+		<div class="InContBox">
+			<div class="head"><img src="https://www.wxyxpt.com/images/signin/qdh.png" /><span class="close_btn"></span></div>
+			<div class="cont">
+				<div class="note">您已连续签到 <span>{{signday}}</span> 天</div>
+				<ul>
+					<!--listdb-->
+				</ul>
+				<div id="signInBtn" class="butter"><img src="https://www.wxyxpt.com/images/signin/qd.png" /></div>
+				<div class="other">提示：连续签到可获得对应天数的奖励，如果中断签到，则会重新统计</div>
+			</div>		
+		</div>
+	</div>
+	`;
+//使用教程网址 http://help.php168.com/1435153
+//页面加载完毕后被执行的函数
+function init(res){
+}
+//只执行一次
+function once(res){
+}
+//所有模块加载完毕后被执行的函数,只执行一次
+function finish(resdata){
+}
+//切换圈子执行
+function logic_init(res){
+	var quninfo = window.parent.quninfo;
+	$.get("/index.php/p/signin-api-get_cfg/id/"+quninfo.id+".html",function(res){
+		if(res.code==0){
+			if(res.data.today_have_signin==true){
+				console.log('今天已经签到过了');
+			}else{
+				if(typeof(res.data.money_days)!='undefined' && res.data.money_days.length>0){
+					var str = '';
+					res.data.money_days.forEach((rs)=>{
+						str += `<li class="rs.day<=signday?'over':''"><span>第${rs.day}天</span><em><img src="https://www.wxyxpt.com/images/signin/qb${rs.money}.png" /></em><p>${rs.money} 积分</p></li>`;
+					});
+					sign_str = sign_str.replace(/<!--listdb-->/,str);
+					sign_str = sign_str.replace(/{{signday}}/,res.data.continue_num);
+					set_html(sign_str)
+				}
+			}
+		}
+	});
+}
+
+function set_html(str){
+	$("body").append(str);
+	$(".signInBox").show();
+	
+	btn();
+
+	$('.BackBox').click(function(){
+		$('.signInBox').fadeOut();
+		$("#iframe_chat").contents().find('video').parent().show()
+	});
+	$('.close_btn').click(function(){
+		$('.signInBox').fadeOut();
+		$("#iframe_chat").contents().find('video').parent().show()
+	});
+	$("#iframe_chat").contents().find('video').parent().hide();	//避免video太高,挡住层
+}
+
+function btn(){
+		$("#signInBtn").click(function(){
+			var qun_userinfo = window.parent.qun_userinfo;	//当前用户所在圈子的身份信息,
+			var quninfo = window.parent.quninfo; //圈子信息
+			if(typeof(window.parent.my_uid)=='undefined'||window.parent.my_uid<1){
+				layer.confirm("你还没登录,是否立即登录?",{btn:['立即登录','取消']},function(){
+					window.parent.location.href = "/index.php/index/login/index.html?fromurl="+encodeURIComponent(window.parent.location.href);
+				});
+			}else if(qun_userinfo==''){	//不是本圈内成员 注意:如果跳转到了其它申请页面,再返回来的话,这里的值有必要重新获取一次.不然还是空的
+				if(quninfo._autoyz==1){	//随意加入的话,就自动加入
+						$.get("/index.php/qun/wxapp.member/join.html?id="+quninfo.id,function(res){
+						if(res.code==0){	//自动加入成功
+							//layer.msg(res.msg);
+							bui.hint(res.msg);
+							signIn();
+						}else{
+							layer.alert(res.msg);
+						}
+					});
+				}else{ //需要审核或需要验证码才能加入的情况
+					layer.confirm("你还不是本圈子成员,是否先加入本圈子?",{btn:['立即加入','取消']},function(i){
+						layer.close(i);
+						bui.load({url: "/public/static/libs/bui/pages/frame/show.html",param: {"url": "/index.php/qun/content/apply.html?id="+quninfo.id}});
+					});
+				}
+			}else if(qun_userinfo.type==0){
+				layer.alert("你还没通过审核,暂时还不能签到");
+			}else{
+				signIn();
+			}
+		});
+}
+
+function signIn(){
+	var quninfo = window.parent.quninfo; //圈子信息
+		$.get("/index.php/p/signin-api-sign/id/"+quninfo.id+".html",function(res){
+			if(res.code==0){
+				layer.msg(res.msg);
+				$('.signInBox').fadeOut();
+			}else{
+				$('.signInBox').fadeOut();
+				layer.alert(res.msg);
+			}
+			$("#iframe_chat").contents().find('video').parent().show()
+	});
+}
+
+</script>
+</body>
+</html>
+

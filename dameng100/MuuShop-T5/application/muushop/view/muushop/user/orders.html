@@ -1,0 +1,208 @@
+{extend name="common@base/common" /}
+{block name="style"}
+<link href="__CSS__/main.min.css" type="text/css" rel="stylesheet">
+{/block}
+{block name="body"}
+{include file="muushop/public/_nav"/}
+<div id="main-container" class="container">
+	<div class="col-md-2">
+		<!--用户中心导航-->
+		{include file="muushop/user/_nav"/}
+	</div>
+	<div class="col-md-10 user_common_section">
+		<div class="orders-num-content clearfix">
+			<div class="col-xs-3">
+				<a href="{:url('muushop/User/orders',['status'=>1])}">
+		    		<div class="orders-num-box status-1" data-role="orders-num" data-status="1" data-url="{:url('muushop/api/order',['action'=>'count','status'=>1])}">
+			    		<h3 class="text-center">待付款</h3>
+			    		<p class="text-center" data-toggle="num">0</p>
+		    		</div>
+	    		</a>
+	    	</div>
+	    	<div class="col-xs-3">
+	    		<a href="{:url('muushop/User/orders',['status'=>2])}">
+		    		<div class="orders-num-box status-2" data-role="orders-num" data-status="2" data-url="{:url('muushop/api/order',['action'=>'count','status'=>2])}">
+			    		<h3 class="text-center">待发货</h3>
+			    		<p class="text-center" data-toggle="num">0</p>
+		    		</div>
+		    	</a>
+	    	</div>
+	    	<div class="col-xs-3">
+	    		<a href="{:url('muushop/User/orders',['status'=>3])}">
+		    		<div class="orders-num-box status-3" data-role="orders-num" data-status="3" data-url="{:url('muushop/api/order',['action'=>'count','status'=>3])}">
+			    		<h3 class="text-center">待收货</h3>
+			    		<p class="text-center" data-toggle="num">0</p>
+		    		</div>
+		    	</a>
+	    	</div>
+	    	<div class="col-xs-3">
+	    		<a href="{:url('muushop/User/orders',['status'=>4])}">
+		    		<div class="orders-num-box status-4" data-role="orders-num" data-status="4" data-url="{:url('muushop/api/order',['action'=>'count','status'=>4])}">
+			    		<h3 class="text-center">待评价</h3>
+			    		<p class="text-center" data-toggle="num">0</p>
+		    		</div>
+		    	</a>
+	    	</div>
+		</div>
+		<div class="margin-top-10">
+			<h3>我的订单</h3>
+			<div class="index-orders-list row">
+			{notempty name="order_list"}
+			{volist name="order_list" id="order"}
+				<div class="order-item clearfix" data-id="{$order.order_no}">
+					<div class="col-md-12">
+						<div class="order-base-info clearfix">
+							<span class="pull-left">
+								订单号：{$order.order_no}
+							</span>
+							<span class="order-status pull-right">
+								订单状态：
+								<em>
+								{switch name="order.status"}
+								    {case value="1"}待付款{/case}
+								    {case value="2"}待发货{/case}
+								    {case value="3"}已发货{/case}
+								    {case value="4"}已收货{/case}
+								    {case value="5"}退货中{/case}
+								    {case value="6"}退货完成{/case}
+								    {case value="10"}已取消{/case}
+								    {case value="12"}已完成{/case}
+								    {default /}待付款
+								{/switch}
+								</em>
+							</span>
+						</div>
+					</div>
+					<div class="col-md-9">
+						<div class="goods-box clearfix">
+							{volist name="order.products" id="products"}
+							<div class="goods-item clearfix">
+								<div class="p-img">
+									<a href="{:url('Index/product',array('id'=>$products['id']))}" target="_blank">
+	                        			<img src="{$products.main_img|getThumbImageById=60,60}" title="{$products.title}" width="60" height="60">
+	                        		</a>
+								</div>
+								<div class="p-msg">
+									<div class="p-name">
+										<a href="{:url('Index/product',array('id'=>$products['id']))}" class="a-link" target="_blank" title="{$products.title}">{$products.title}
+	                        			</a>
+									</div>
+									{notempty name="products.sku"}
+		                        	<div class="sku_box">
+		                        		{foreach name="products.sku" item="sku" }
+		                                 <span class="sku_li_span">{$sku}</span>  
+		                                {/foreach}
+		                        	</div>
+		                        	{/notempty}
+									<div class="goods-number">x{$products.quantity}</div>
+								</div>
+								<div class="p-service">
+									{eq name='order.status' value='4'}
+
+									{notempty name="products.service"}
+										<p class="">售后服务</p>
+										<p data-status="{$products.service.status}">
+											{$products.service.status_str}
+										</p>
+
+										<div class="action">
+										{switch name="$products.service.status"}
+										    {case value="1"}
+										    	<button class="btn btn-sm" data-remote="{:url('muushop/User/service',['action'=>'return_express','id'=>$products['service']['id']])}" data-toggle="modal">立即退货</button>
+										    {/case}
+										    {case value="2"}
+										    	<button class="btn btn-sm" data-remote="{:url('muushop/User/service',['action'=>'return_express_info','id'=>$products['service']['id']])}" data-toggle="modal">查看物流</button>
+										    {/case}
+										     {case value="4"}
+										    	<button class="btn btn-sm" data-remote="{:url('muushop/User/service',['action'=>'replace_express_info','id'=>$products['service']['id']])}" data-toggle="modal">查看物流</button>
+										    	<button class="btn btn-sm" data-remote="{:url('muushop/User/service',['action'=>'confirm','id'=>$products['service']['id']])}" data-title="确认收到退回的商品" data-toggle="modal">确认收货</button>
+										    {/case}
+										{/switch}
+										</div>
+									{else /}
+										<a data-id="{$products.id}" data-remote="{:url('muushop/User/service',['action'=>'apply','product_id'=>$products['id'],'order_id'=>$order['id']])}" data-toggle="modal">申请售后</a>
+									{/notempty}
+
+									{/eq}
+								</div>
+							</div>
+							{/volist}
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="row">
+						<div class="col-md-6 col-xs-12">
+							<div class="amount text-center">合计：<span>¥{$order.paid_fee}</span></div>
+							<div class="paytype text-center">
+								<span>
+								{switch name="order.pay_type"}
+								    {case value="onlinepay"}在线支付{/case}
+								    {case value="balance"}余额支付{/case}
+								    {case value="delivery"}货到付款{/case}
+								{/switch}
+								</span>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12">
+							<div class="operate">
+								{switch name="order.status"}
+							    {case value="1"}
+							    <a href="{:url('muushop/order/pay',['order_no'=>$order['order_no']])}" class="btn btn-success btn-sm btn-block" data-toggle="pay_order">
+			                        立即支付
+								</a>
+							    <a class="btn btn-warning btn-sm btn-block" data-toggle="cannel_order" data-id="{$order.id}" data-url="{:url('muushop/Api/order',['action'=>'cannel'])}">
+		                        	取消订单
+			                    </a>
+			                    {/case}
+							    {case value="2"}
+							    {eq name="order.pay_type" value="delivery"}
+							    	
+			                    {/eq}
+		                    	<a class="btn btn-block btn-sm disabled">
+		                        	配货中
+		                        </a>
+							    {/case}
+							    {case value="3"}
+						    	<a target="_blank" class="btn btn-danger btn-sm btn-block" data-toggle="do_receipt" data-id={$order.id} data-url="{:url('muushop/Api/order',['action'=>'confirm'])}">
+						    		确认收货
+						    	</a>
+						    	<a class="btn btn-block btn-sm" data-remote="{:url('muushop/User/orders',['action'=>'delivery_info','id'=>$order['id']])}" data-toggle="modal">查看物流</a>
+							    {/case}
+							    {case value="4"}
+						    	<a class="btn btn-info btn-sm btn-block" href="{:url('muushop/User/comment',array('id'=>$order['id']))}">
+	                        		评价
+		                        </a>
+							    {/case}
+							    
+							    {case value="12"}
+						    	<a class="btn btn-block btn-sm disabled">
+	                        		已评价
+								</a>
+							    {/case}
+								    
+								{/switch}
+									<a href="{:url('muushop/user/orders',['action'=>'detail','id'=>$order['id']])}" class="btn btn-link btn-sm btn-block detail" type="button">详情</a>
+							</div>
+						</div>
+						</div>
+					</div>
+				</div>
+			{/volist}
+			{else /}
+	            还没有订单...快去下个单喽！
+	        {/notempty}
+		</div>
+	</div>
+
+    <div class="common_box margin-top-10 clearfix">
+	    <div class="page text-right">
+	        {$page}
+	    </div>
+    </div>
+	</div>
+</div>
+{/block}
+{block name="script"}
+<script src="__JS__/common.min.js"></script>
+<script src="__JS__/user.min.js"></script>
+{/block}

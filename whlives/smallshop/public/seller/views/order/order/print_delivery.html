@@ -1,0 +1,64 @@
+<style type="text/css">
+    .align-center {
+        text-align: center;
+    }
+
+    .none_border td {
+        border-left: none;
+        border-right: none;
+    }
+</style>
+<div class="layui-fluid">
+    <div class="layui-tab-item layui-show" id="print_delivery-list"></div>
+    <script id="print_delivery-tpl" type="text/html">
+        {{# layui.each(d.data, function(index, tmp){ }}
+        {{ tmp.content }}
+        <br>
+        {{# }); }}
+    </script>
+    <div class="layui-text align-center">
+        <button type="button" class="layui-btn" lay-filter="print_delivery-add">打印</button>
+    </div>
+</div>
+<script type="text/html" template lay-done="layui.data.sendParams(d.params)"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/print.js"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['admin', 'table', 'laytpl'], function () {
+            var admin = layui.admin,
+                laytpl = layui.laytpl,
+                $ = layui.jquery,
+                api_action_url = layui.setter.apiHost + '/order/order';
+
+            //详情
+            function print_delivery() {
+                admin.req({
+                    url: api_action_url + "/print_delivery",
+                    data: {id: params.id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            laytpl($('#print_delivery-tpl').html()).render(result, function (html) {
+                                $('#print_delivery-list').html(html);
+                            })
+                        } else {
+                            layer.msg(result.msg);
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败，请刷新页面重试！');
+                    }
+                });
+            }
+
+            print_delivery();
+
+            //打印
+            $('body').on('click', '[type="button"]', function () {
+                var filter = $(this).attr('lay-filter');
+                if (filter == 'print_delivery-add') {
+                    Print('#print_delivery-list')
+                }
+            })
+        });
+    }
+</script>

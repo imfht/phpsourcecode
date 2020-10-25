@@ -1,0 +1,63 @@
+<?php use think\Db; ?>
+{volist name="order" id="orders"}
+    <div class="uc-orderitem" id="orderitem{$orders.order.order_id}">
+        <div class="uc-seral clearfix">
+            <p class="order_serial">订单号：{$orders.order.order_num_alias}</p>
+
+            <p class="order_status"><?php echo get_order_status_name($orders['order']['order_status_id']); ?></p>
+        </div>
+        {volist name="orders['list']" id="o"}
+            <div class="clearfix items"
+                 onclick="location = '{:url("order/order_info",array("order_id"=>$orders["order"]["order_id"]))}';">
+                <img class="ucoi-pic"
+                     src="IMG_ROOT{$o.image|resize=100,100}">
+
+                <div class="ucoi-con">
+                    <!-- 商品标题 -->
+                    <span class="title" style='height:42px;'>{$o.name}</span>
+                    <span class="spec Elipsis">
+                        						
+						<?php if($option_list=Db::query('select * from '.config('database.prefix').'order_option where order_goods_id='.$o['order_goods_id'].' and order_id='.$orders["order"]["order_id"])){ ?>
+						<?php foreach ($option_list as $option) { ?>
+		                <br />
+		                &nbsp;<small> - <?php echo $option['name']; ?>: <?php echo $option['value']; ?></small>
+		                <?php } ?>
+		                <?php } ?>
+                    </span>
+                    <!-- 商品单价 -->
+                    
+                    
+                    <?php if($orders['order']['points_order']==0){ ?>
+			            <span class="price">
+	                    	<span class="dprice">&yen;{$o.price}</span> x 
+	                    	<span class="dcount">{$o.quantity}</span>
+                    	</span>			           
+		           <?php } ?>
+                    
+                </div>
+            </div>
+        {/volist}
+         <div class="uc-summary clearfix" style='padding:8px 7px;text-align:right;'>
+         	<?php if($orders['order']['points_order']==0){ ?>
+            <div class="sum">
+				总计: <span class="dprice">&yen;{$orders.order.total}</span>
+            </div>
+           <?php }elseif($orders['order']['points_order']==1){ ?>
+           	<div class="sum">
+				积分: <span class="dprice">{$orders.order.pay_points}</span>
+            </div>
+           <?php } ?>
+            <?php if($orders['order']['order_status_id']==config('default_order_status_id')){ ?>             
+                <a class="olbtn cancel" href="javascript:;" onclick="cancelOrder({$orders.order.order_id}, this);">取消订单</a>
+                <a class="olbtn wepay wepay_button" href="javascript:;" {if condition="in_wechat()"}  onclick="wxpayOrder({$orders.order.order_id});"{else/}  onclick="alipayOrder({$orders.order.order_id});"{/if} data-id="{$orders.order.order_id}">立即支付</a>         
+            <?php }elseif($orders['order']['order_status_id']==config('paid_order_status_id')){ ?> 
+                <a class="olbtn wepay" href='{:url("order/order_info",array("order_id"=>$orders["order"]["order_id"]))}'>订单详情</a>
+            <?php }elseif($orders['order']['order_status_id']==config('cancel_order_status_id')){ ?>               
+                <a class="olbtn cancel" href='{:url("order/order_info",array("order_id"=>$orders["order"]["order_id"]))}'>订单详情</a>
+            <?php }elseif($orders['order']['order_status_id']==config('complete_order_status_id')){ ?>               
+                <a class="olbtn cancel" href='{:url("order/order_info",array("order_id"=>$orders["order"]["order_id"]))}'>订单详情</a>                
+            <?php } ?>
+            
+        </div> <!---->
+    </div>
+{/volist}

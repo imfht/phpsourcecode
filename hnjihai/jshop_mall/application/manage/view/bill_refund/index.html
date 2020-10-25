@@ -1,0 +1,244 @@
+<style>
+    @media screen and (max-width: 500px) {
+        .layui-table-view {
+            width: 100% !important;
+            overflow-x: scroll !important;
+            left: 0 !important;
+        }
+        .layui-table-box {
+            width: 1200px !important;
+            box-sizing: border-box;
+        }
+        .layui-layer.layui-layer-page {
+            width: 100% !important;
+            overflow: hidden !important;
+            left: 0 !important;
+        }
+        .layui-layer-title {
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        .layui-layer-content {
+            width: 100% !important;
+        }
+    }
+</style>
+<form class="layui-form seller-form" action="">
+    <div class="layui-form-item" style="margin-bottom:0;">
+        <div class="layui-inline">
+            <label class="layui-form-label">退款单号：</label>
+            <div class="layui-input-inline seller-inline-3">
+                <input type="text" name="refund_id" lay-verify="title" placeholder="请输入退款单号" autocomplete="off"
+                    class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">单号：</label>
+            <div class="layui-input-inline seller-inline-3">
+                <input type="text" name="source_id" lay-verify="title" placeholder="" autocomplete="off"
+                    class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label" style="width:120px;">用户手机号码：</label>
+            <div class="layui-input-inline seller-inline-3">
+                <input type="text" name="mobile" lay-verify="title" placeholder="请输入手机号码" autocomplete="off"
+                    class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">类型：</label>
+            <div class="layui-input-inline seller-inline-2">
+                <select name="type" lay-verify="">
+                    <option value=""></option>
+                    <option value="1">订单</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">状态：</label>
+            <div class="layui-input-inline seller-inline-2">
+                <select name="status" lay-verify="">
+                    <option value=""></option>
+                    <option value="1">未退款</option>
+                    <option value="2">退款成功</option>
+                    <option value="3">其他</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="*"><i
+                    class="iconfont icon-chaxun"></i>筛选</button>
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="export-refund"><i
+                    class="iconfont icon-msnui-cloud-download" style="font-size: 20px !important;"></i>导出</button>
+        </div>
+    </div>
+</form>
+<div class="table-body">
+    <table id="billRefund" lay-filter="test"></table>
+</div>
+
+<div id="exportRefund" style="display: none;">
+    <form class="layui-form export-form" action="">
+        <div class="layui-form-item">
+            <div class="layui-margin-10">
+                <blockquote class="layui-elem-quote layui-text">
+                    请先选中或筛选要导出的退款单
+                </blockquote>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">任务名称：</label>
+                <input type="text" name="taskname" lay-verify="title" style="width:200px;" placeholder="请输入任务名称"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    layui.use(['form', 'layedit', 'laydate', 'table'], function () {
+        layui.table.render({
+            elem: '#billRefund',
+            height: 'full-99',
+            cellMinWidth: '80',
+            page: 'true',
+            limit: '20',
+            url: "{:url('billRefund/index')}?_ajax=1",
+            id: 'billRefund',
+            cols: [[
+                { field: 'refund_id', width: 150, sort: true, title: '退款单号', align: 'center' },
+                { field: 'source_id', sort: true, width:150, title: '单号', align: 'center' },
+                { field: 'user_id', width: 130, title: '用户', align: 'center' },
+                { field: 'money', width: 120, title: '退款金额', align: 'center' },
+                { field: 'new_memo', title: '说明', align: 'center',templet: function(data){
+                        return '<span style="color:red">'+data.new_memo+'</span>';
+                }},
+                { field: 'payment_code', width: 120, sort: true, title: '退款方式', align: 'center' },
+                { field: 'status_name', width: 100, title: '状态', align: 'center' },
+                { field: 'type', width: 100, title: '类型', align: 'center' },
+                { field: 'ctime', width: 170, title: '创建时间', align: 'center' },
+                {
+                    field: 'operating', title: '操作', width: 140, align: 'center', templet: function (data) {
+                        var html = '';
+                        if (data.status == 1) {
+                            html += '<a  class="layui-btn layui-btn-xs option-audit" data-id="' + data.refund_id + '">退款</a>';
+                        }
+                        if (data.status == 3) {
+                            html += '<a  class="layui-btn layui-btn-xs option-reaudit" data-id="' + data.refund_id + '">再次退款</a>';
+                        }
+                        html += '<a  class="layui-btn layui-btn-xs option-view layui-btn-primary" data-id="' + data.refund_id + '">明细</a>';
+                        return html;
+                    }
+                },
+            ]]
+        });
+        layui.form.on('submit(*)', function (data) {
+            layui.table.reload('billRefund', {
+                where: data.field
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        });
+        //审核操作
+        $(document).on('click', '.option-audit', function () {
+            JsGet("{:url('billRefund/refund')}?refund_id="+$(this).attr('data-id'), function(e){
+                if (e.status) {
+                    window.box = layer.open({
+                        type: 1,
+                        content: e.data,
+                        area: setpage(600,400),
+                        title: '退款单审核',
+                        btn: ['确认', '取消'],
+                        yes: function (index, layero) {
+                            JsPost("{:url('billRefund/refund')}", $('#refund_form').serialize(), function(res){
+                                if (res.status) {
+                                    layer.msg('操作成功');
+                                } else {
+                                    layer.msg(res.msg);
+                                }
+                                layer.close(index);
+                                layui.table.reload('billRefund');
+                                return false;
+                            });
+                        }
+                    });
+                } else {
+                    layer.msg(e.msg);
+                }
+            });
+        });
+        //退款失败后，再次退款
+        $(document).on('click', '.option-reaudit', function () {
+            JsPost("{:url('billRefund/reaudit')}", {refund_id: $(this).attr('data-id')}, function(res){
+                if (res.status) {
+                    layer.msg('保存成功');
+                } else {
+                    layer.msg(res.msg);
+                }
+                layui.table.reload('billRefund');
+                return false;
+            });
+        });
+        //查看操作
+        $(document).on('click', '.option-view', function () {
+            JsGet("{:url('billRefund/view')}?refund_id="+$(this).attr('data-id'), function(e){
+                if (e.status) {
+                    window.box = layer.open({
+                        type: 1,
+                        content: e.data,
+                        area: setpage(600,400),
+                        title: '退款单查看'
+                    });
+                } else {
+                    layer.msg(e.msg);
+                }
+            });
+        });
+
+        //支付单导出
+        layui.form.on('submit(export-refund)', function (data) {
+
+            layer.open({
+                type: 1,
+                title: '退款单导出',
+                area: setpage(400,290), //宽高
+                btn: ['确定', '取消'],
+                content: $("#exportRefund").html(),
+                yes: function () {
+                    //判断是否有选中
+                    var checkStatus = layui.table.checkStatus('billRefund');
+                    var checkData = checkStatus.data;
+                    var length = checkStatus.data.length;
+                    var ids = [];
+                    if (length) {
+                        $.each(checkData, function (i, obj) {
+                            ids.push(obj.payment_id);
+                        });
+                    }
+
+                    //判断是否有选中
+                    var filter = $(".seller-form").serialize();
+                    filter += '&ids=' + ids;
+                    $(".export-form:last").append("<input type='hidden' name='filter' value='" + filter + "'>");
+                    var data = $(".export-form:last").serializeArray();
+
+                    data.push({ 'name': 'model', 'value': 'BillRefund' });
+
+                    JsPost("{:url('Ietask/export')}", data, function (res) {
+                                layer.msg(res.msg, { time: 1500 }, function () {
+                                    if (res.status) {
+                                        layui.table.reload('billRefund');
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                    );
+                }, btn2: function () {
+                    layer.closeAll();
+                }
+            });
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        });
+    });
+</script>

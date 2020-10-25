@@ -1,0 +1,350 @@
+<include file="public:head" />
+<style type="text/css">
+  .layui-progress , .layui-progress-bar{border-radius: 0px;}
+  .layui-upload-drag{padding: 30px 0px;}
+  .fenleidiv {margin-top: 20px;}
+</style>
+<!-- 二级页次级导航 -->
+<div class="layui-hide-xs">
+  <div class="fly-panel fly-column">
+    <div class="layui-container">
+      <span class="layui-breadcrumb">
+        <a href="{:C('wkcms_site_url')}">首页</a>
+        <a href="">上传批量文档</a>
+      </span>
+      <div class="fly-column-right layui-hide-xs"> 
+        <span class="fly-search"><i class="layui-icon"></i></span> 
+        <a href="{:U('doc/doc_share')}" class="layui-btn layui-btn-primary"><i class="layui-icon">&#xe681;</i> 上传文档</a> 
+      </div> 
+    </div>
+  </div>
+</div>
+<!-- 二级页次级导航结束 -->
+
+<!-- 主体开始 -->
+<div class="layui-container">
+    <div class="layui-row layui-col-space15">
+        <!-- 左侧开始 -->
+        <div class="layui-col-md9 content detail">
+            <div class="fly-panel fly-panel-user" pad20>
+                <div class="layui-tab layui-tab-brief" >
+                  <ul class="layui-tab-title">
+                    <li><a href="{:U('doc/doc_share')}">上传单个文档</a></li>
+                    <li class="layui-this"><a href="{:U('doc/doc_batch_share')}">上传批量文档</a></li>
+                  </ul>
+                </div>
+                <!-- 上传部分开始 -->
+                <blockquote class="layui-elem-quote layui-quote-nm">
+                1. 文档标题、文档标签将自动从源文件名中获得；点击相应标签可以修改信息。<br>
+                2. 由于web效率问题，每次上传的文件个数不可超过5个。<br>
+                3. 如果您是站长，需要大批上传，<span style="color: #FF5722">请使用七只熊批量上传工具</span>,<a href="http://wpa.qq.com/msgrd?v=3&amp;uin={:C('wkcms_site_qq')}&amp;site=qq&amp;menu=yes" style="color: #1E9FFF" target="_blank">点击联系客服下载</a>  
+            </blockquote>
+                <form method="post" class="layui-form" enctype="multipart/form-data">
+                <div class="layui-upload">
+                  <button type="button" class="layui-btn layui-btn-normal" id="doclist">选择多个文档</button> 
+                  <div class="layui-upload-list">
+                    <table class="layui-table">
+                        <colgroup>
+                            <col width="">
+                            <col width="230">
+                            <col width="80">
+                            <col width="130">
+                            <col width="110">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>标签</th>
+                            <th>售价</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                      <tbody id="infoList"></tbody>
+                    </table>
+                  </div>
+                    <div class="fenleidiv">
+                    请选择分类 <hr>
+                    <div class="layui-form-item">
+                         <div class="layui-input-inline" style="width: 30%">
+                          <select id="groupcateid" class="J_cate_select" multiple="multiple" lay-ignore >
+                            <option disabled>请选择一级分类</option>
+                            <volist name="catlist" id="vo">
+                              <option value="{$vo.id}">{$vo.name}</option>
+                            </volist>
+                          </select>
+                        </div>
+                        <div class="layui-input-inline" style="width: 30%">
+                          <select name="tid" id="tid" class="J_cate_select" multiple="multiple" lay-ignore>
+                            <option disabled>请选择二级分类</option>
+                          </select>
+                        </div>
+                    </div>
+                    </div>
+                  <button type="button" class="layui-btn" id="doclistAction">上传文件列队</button>
+                </div>
+                </form>
+                <!-- 上传部分结束 -->
+            </div>
+        </div>
+        <!-- 左侧结束 -->
+
+        <!-- 右侧开始 -->
+        <div class="layui-col-md3 ">
+            <!-- 客服开始 -->
+            <div class="fly-panel">
+                <h3 class="fly-panel-title">遇到问题，联系客服免费帮您解决</h3>
+                <div class="fly-panel-main">
+                  <a target="_blank" href="http://wpa.qq.com/msgrd?v=3&amp;uin={:C('wkcms_site_qq')}&amp;site=qq&amp;menu=yes" class="fly-zanzhu">联系QQ客服  {:C('wkcms_site_qq')}</a>
+                  <h3 style="margin-top: 10px; text-align: center;">全国免长途电话：{:C('wkcms_site_tel')}</h3>
+                </div>
+            </div>
+            <!-- 客服结束 -->
+            <!-- 广告 -->
+            <div class="fly-panel">
+                <div class="fly-panel-main">
+                   {:R('advert/index', array(11), 'Widget')} 
+                </div>
+            </div>
+              <!-- 广告结束 -->
+        </div>
+        <!-- 右侧结束 -->
+    </div>
+</div>
+<!-- 主体结束 -->
+
+<include file="public:footer" />
+<!-- 网站底部END -->
+<script>
+layui.use('upload', function(){
+    var $ = layui.jquery , upload = layui.upload;
+    // 建立部分文档信息 - 留重新赋值用
+    var docTitle = '';
+    var cateId = '';
+    var scores = '0';
+    var tag = '';
+    var intros = '';
+
+    //点一级获二级分类
+    $('#groupcateid').change(function() {
+        loading = layer.msg('请稍后...', {
+            icon: 16,
+            shade: 0.01
+        });        
+        var caturl = '{:U("doc_cate/ajax_getsubcate")}&id=' + $(this).val();
+        cateId = $(this).val(); //赋值选中ID
+        $.post(caturl,function(data) {
+          layer.close(loading);
+            if (data.status == 1) {
+                $('#tid').html('');
+                $('#tid').append('<option disabled>请选择二级分类</option>');
+                $('#tiddiv').removeClass("disnone");
+                for (var i = 0; i < data.data.length; i++) {
+                    $('#tid').append('<option value="' + data.data[i]['id'] + '">' + data.data[i]['name'] + '</option>');
+                }
+            } else {
+                //$('#tiddiv').addClass("disnone");
+                $('#tid').html('');
+            }
+
+        });
+    });
+    //点二级获三级分类
+    $('#tid').change(function() {
+        cateId = $(this).val(); //赋值选中ID
+        var caturl = '{:U("doc_cate/ajax_getsubcate")}&id=' + $(this).val();
+
+    });
+    //自动获取标签方法
+    function getTag(title) {
+        var data= '' ; 
+        $.ajaxSetup({async: false});//getJSON不能直接return，必须加这东西。而且必须在方法外return
+        $.getJSON('{:U("doc/ajax_gettags")}', {title: title},function(res) {
+            if (res.status == 1) {
+                data = res.data;  
+            } else {
+                data = res.msg;  
+            }
+        });
+         return data;
+    }
+
+    //获取文档标题
+    function getTitle(title) {
+        var arr = title.split('.');
+        return arr[0];
+    }
+    
+    //多文件上传
+    var infoListView = $('#infoList')
+        ,uploadListIns = upload.render({
+        elem: '#doclist'
+        ,field: 'Filedata'
+        ,url: "{:U('doc/ajax_upload_imgs')}"
+        ,accept: 'file'
+        ,exts:'doc|docx|ppt|pptx|xls|xlsx|vsd|pot|pps|rtf|wps|et|dps|pdf|txt'
+        ,multiple: true
+        ,number:5
+        ,auto: false
+        ,bindAction: '#doclistAction'
+        ,choose: function(obj){   
+          var files = this.files = this.all = obj.pushFile(); //将每次选择的文件追加到文件队列
+          //读取本地文件
+          obj.preview(function(index, file, result){
+            this.func = function() {
+                obj.upload(index, file);
+            };
+            var tr = $(['<tr id="upload-'+ index +'">'
+              ,'<td>'+ getTitle(file.name) +'</td>'
+              ,'<td>'+ getTag(getTitle(file.name)) +'</td>'
+              ,'<td>免费</td>'
+              ,'<td class="upload-status">等待上传</td>'
+              ,'<td>'
+                ,'<a class="layui-btn layui-btn-xs docup-reload layui-hide">重传</a>'
+                ,'<button class="layui-btn layui-btn-xs layui-btn-danger doc-delete">删除</button>'
+              ,'</td>'
+            ,'</tr>'].join(''));
+
+            // 赋值文档信息
+            docTitle = file.name;
+            tag = getTag(getTitle(file.name));
+
+            //点击修改标题
+            tds = tr.children();
+            tds.eq(0).click(function(){
+                if(!$(this).is('.input')){
+                    $(this).addClass('input').html('<input type="text" class="layui-input layui-table-edit" value="'+ $(this).text() +'" />').find('input').focus().blur(function(){
+                    $(this).parent().removeClass('input').html($(this).val() || 0);
+                    });
+                }
+                }).hover(function(){
+                    $(this).addClass('hover');
+                },function(){
+                    $(this).removeClass('hover');
+            });
+            //点击修改标签
+            tds.eq(1).click(function(){
+                if(!$(this).is('.input')){
+                    $(this).addClass('input').html('<input type="text" class="layui-input layui-table-edit" value="'+ $(this).text() +'" />').find('input').focus().blur(function(){
+                    $(this).parent().removeClass('input').html($(this).val());
+                    });
+                }
+                }).hover(function(){
+                    $(this).addClass('hover');
+                },function(){
+                    $(this).removeClass('hover');
+            });
+             //点击修改价格
+            tds.eq(2).click(function(){
+                if(!$(this).is('.input')){
+                    $(this).addClass('input').html('<input type="number" class="layui-input layui-table-edit" value="'+ $(this).text() +'" />').find('input').focus().blur(function(){
+                    $(this).parent().removeClass('input').html($(this).val());
+                    });
+                }
+                }).hover(function(){
+                    $(this).addClass('hover');
+                },function(){
+                    $(this).removeClass('hover');
+            });
+
+            //单个重传
+            tr.find('.docup-reload').on('click', function(){
+              obj.upload(index, file);
+            });
+            
+            //删除预上传的文件列
+            tr.find('.doc-delete').on('click', function(){
+              delete files[index]; //删除对应的文件
+              tr.remove();
+              uploadListIns.config.elem.next()[0].value = ''; //清空 input file 值，以免删除后出现同名文件不可选
+            });
+            
+            infoListView.append(tr);
+          });
+
+        }
+
+        ,before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
+          $(".upload-status").each(function()
+          {
+            var html = $(this).html();
+            if (html.indexOf('update-error') != -1) {
+                $(this).html('上传中');
+            }
+          })
+        }
+
+        // 执行上传请求后的回调
+        ,done: function(res, index, upload){
+            var self = this;
+          if(res.status == 1){ //上传成功
+            var tr = infoListView.find('tr#upload-'+ index)
+            ,tds = tr.children();
+            tds.eq(3).html('<span style="color: #5FB878;">上传成功</span>');
+            tds.eq(4).find('.docup-reload').addClass('layui-hide');
+
+            //组织文档信息
+            var fileurl = res.info.name;
+            var ext = res.info.ext;
+            var filesize = res.info.size;
+            var oldname = tds.eq(0).html();
+            var hash = res.info.hash;
+            var cateid = cateId[0];
+            var title = tds.eq(0).html();
+            var score = tds.eq(2).html();
+            var tags = tds.eq(1).html();
+            var intro = intros;
+            if (score == '免费') {
+                score = 0;
+            }
+
+            //列队提交前，提示必须选择文档分类，否则中断操作
+            if (cateId == '') {
+                layer.msg('请选择分类', {time: 1800});
+                self.error(index, upload, '请选择分类')
+                return false;
+            }
+            // 提交文档    
+            $.post("{:U('doc/doc_share',array('type'=>'add'))}",{fileurl:fileurl,ext:ext,filesize:filesize,oldname:oldname,hash:hash,cateid:cateid,title:title,score:score,tags:tags,intro:intro},function(res) {
+                // 这里是异步的，所以只能通过delete来设置是否上传成功失败，无法通过layer或者return 来中断。
+                if (res.status == 1) {
+                    delete self.files[index];
+                    layer.msg(res.msg, {time: 1800});
+                    return true;
+                     location.href = "{:u('ucenter/mydoclist')}";
+                } else {
+                     //列队中如有返回错误，则中断列队上传。 用户删除相应错误文件后，点上传，再继续下面的。
+                    //layer.msg(res.status.info, {time: 1800});
+                    self.error(index, upload, res.status.info);
+                    return false;
+                }
+            });
+            return true;
+          }
+          this.error(index, upload, res.info);
+        }
+        //执行上传请求出现异常的回调（一般为网络异常、URL 404等）。返回两个参数，分别为：index（当前文件的索引）、upload（重新上传的方法）
+        ,error: function(index, upload, msg){
+            
+            console.log(msg);
+            if (!msg) {
+                msg = '';
+            }
+            var self = this;
+            var tr = infoListView.find('tr#upload-'+ index)
+            ,tds = tr.children();
+            tds.eq(3).html('<span><a href="javascript:;" title="'+msg+'"  style="color: #FF5722;" class="update-error">'+msg+'</a></span>');
+            tds.eq(4).find('.docup-reload').removeClass('layui-hide'); //显示重传
+        }
+    });
+      
+});
+</script>
+<script>
+layui.config({
+  version: "3.0.0"
+  ,base: '__PUBLIC__/theme/blueideal/mods/' //这里实际使用时，建议改成绝对路径
+}).extend({
+  fly: 'index'
+}).use('fly');
+</script>

@@ -1,0 +1,160 @@
+<!--{@name 主题列表}-->
+<!DOCTYPE html>
+<html>
+<head>
+<!--{template /tpl/_cms/view/pc_meta}-->
+<style type="text/css">
+.background-pc {background:url({$categories['05'][FILE01][0]});}
+.background-mobile {background:url({$categories['05'][FILE02][0]});}
+</style>
+</head>
+<body>
+	<!--{template /tpl/_cms/view/pc_head}-->
+	
+	<div class="forum">
+		<div class="banner banner-mini background-{echo $ismobile ? 'mobile' : 'pc';}">
+			<div class="box">
+				<p class="title">{$categories['05'][COMMENT]}</p>
+			</div>
+		</div>
+		
+		<div class="topics">
+			<div class="box">
+				<div class="left">
+					<p class="crumb">
+						<a href="index.html" title="首页">首页</a> \ <a href="forum.html" title="社区">社区</a> \  {$forum[NAME]}
+					</p>
+					<p class="line"></p>
+					<div class="intro">
+						<p class="img">
+							<img src="{$forum[FILE01][0]}" border="0" alt="{$forum[NAME]}"/>
+						</p>
+						<div class="text">
+							<p class="title">{$forum[NAME]}</p>
+							<p class="tips">
+								{$forum[REMARK]}
+							</p>
+						</div>
+						<br class="clear"/>
+					</div>
+					
+					<!--{if $forum['RULE']}-->
+					<p class="rule">{$forum[RULE]}</p>
+					<!--{/if}-->
+					
+					<p class="tags">
+						<a href="forum.html?op=topics&tag=all&id={$_var[gp_id]}" class="tag {echo !$_var['gp_tag'] || $_var['gp_tag'] == 'all' ? 'tag-active' : '';}" title="全部">全部</a>
+						<a href="forum.html?op=topics&tag=hit&id={$_var[gp_id]}" class="tag {echo $_var['gp_tag'] == 'hit' ? 'tag-active' : '';}" title="热门">热门</a>
+						<a href="forum.html?op=topics&tag=top&id={$_var[gp_id]}" class="tag {echo $_var['gp_tag'] == 'top' ? 'tag-active' : '';}" title="置顶">置顶</a>
+						<span class="tag tag-line">|</span>
+						<span class="tag tag-stat">主题{$count}</span>
+						<span class="tag tag-stat">回复{$forum[POSTCOUNT]}</span>
+					</p>
+					<p class="line"></p>
+					<ul>
+						<!--{loop $topics $loop $topic}-->
+						<li>
+							<p class="photo">
+								<a title="{$topic[USERNAME]}">
+									<!--{if $topic['PHOTO']}-->
+									<img src="{$topic[PHOTO]}" border="0"/>
+									<!--{else}-->
+									<img src="tpl/_cms/static/images/forum/icon-photo.png" border="0"/>
+									<!--{/if}-->
+								</a>
+							</p>
+							<div class="text">
+								<p class="title">
+									<a href="forum.html?op=posts&id={$topic[FORUM_TOPICID]}&pid={$_var[page]}&tag={$_var[gp_tag]}" title="{$topic[TITLE]}">{$topic[TITLE]}</a>
+									<!--{if $topic['ISTOP']}-->
+									<img src="tpl/_cms/static/images/forum/icon-top.png" border="0"/>
+									<!--{/if}-->
+								</p>
+								<p class="desc">
+									{$topic[USERNAME]} 发表于 {$topic[EDITTIME]} 
+									<!--{if $topic['LASTPOST']}-->最后回复 {$topic[LASTPOST]}<!--{/if}-->
+								</p>
+							</div>
+							<div class="stat">
+								<p class="hits">{$topic[HITS]}</p>
+								<p class="post">{$topic[POSTCOUNT]}</p>
+								<br class="clear"/>
+							</div>
+							<br class="clear"/>
+						</li>
+						<!--{/loop}-->
+					</ul>
+					
+					<!--{if $count == 0}-->
+					<p class="empty">
+						<!--{if $forum['ERR'] == 0}-->
+						沙发放了很久，怎么没有人来坐坐~
+						<!--{elseif $forum['ERR'] == 1}-->
+						此社区限“<!--{loop $forum['GROUPS'] $loop $group}-->{$group[CNAME]} <!--{/loop}-->”访问，您无此权限！
+						<!--{/if}-->
+					</p>
+					<!--{/if}-->
+					
+					<div class="showpager">{$pager}</div>
+				</div>
+				<!--{template /tpl/_cms/view/pc_forum_right}-->
+				<br class="clear"/>
+			</div>
+		</div>
+	</div>
+	
+	<!--{template /tpl/_cms/view/pc_foot}-->
+	<script type="text/javascript">
+	var _interval = null;
+	
+	$(function(){
+		$('.btn-scan').click(function(){
+			var self = this;
+			
+			var message = '';
+			{if $wx_setting['WX_OPEN'] && $wx_setting['WX_AUTH']}
+			message = '<img src="auth.html?rnd=' + Math.random() + '"/>';
+			{else}
+			message = '<br/><br/>微信公众号未开启网页授权认证！';
+			{/if}
+			
+			$.dialog({
+				title:'微信扫码登录', 
+				width:400, 
+				height:220, 
+				message:message, 
+				cancel:function(){
+					clearInterval(_interval);
+				},
+				callback:function(){
+					{if $wx_setting['WX_OPEN'] && $wx_setting['WX_AUTH']}
+					_interval = setInterval(function(){
+						$.getJSON('auth.html?op=check&rnd=' + Math.random(), function(data){
+							if(data.success == true || data.message){
+								clearInterval(_interval);
+								
+								if(data.message) $.toast({message:data.message});
+								else{
+									$(self).html('发布主题').removeClass('btn-scan').unbind('click').click(function(){
+										location.href='forum.html?op=pub&id={$forum[FORUMID]}';
+									});
+									
+									$.dialog({close:true});
+								}
+								
+								return;
+							}
+						});
+					}, 1500);
+					{/if}
+				}
+			});
+		});
+		
+		$('.btn-auth').click(function(){
+			location.href = 'auth.html?op=oauth2&ref=forum|pub|{$_var[gp_id]}';
+		});
+	});
+	</script>
+</body>
+</html>

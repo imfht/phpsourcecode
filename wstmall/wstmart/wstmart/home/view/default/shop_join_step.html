@@ -1,0 +1,555 @@
+{extend name="default/base" /}
+{block name="title"}入驻人联系方式 - 商家入驻 - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="main"}
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+<link href="__STATIC__/plugins/validator/jquery.validator.css?v={$v}" rel="stylesheet">
+<link href="__STYLE__/css/shopapply.css?v={$v}" rel="stylesheet">
+<div class="wst-container">
+    <input type="hidden" id="flowId" value="{$flowId}">
+    <div class="flow-container">
+        <div id="stepflex" class="stepflex">
+            {volist name="shopFlows" id="vo"}
+            <dl class="first {if $vo['sort'] <= $currStep['sort']}doing{/if}">
+                <dt class="{if $vo['sort'] <= $currStep['sort']}s-num{else}s-num1{/if}">{$key+1}</dt>
+                <dd class="{if $vo['sort'] <= $currStep['sort']}s-text{else}s-text1{/if}">{$vo['flowName']}</dd>
+                <dd></dd>
+            </dl>
+            {/volist}
+        </div>
+    </div>
+    <div class='wst-clear'></div>
+    <div class='main-head'>{$currStep['flowName']}</div>
+    {if $flowId==1}
+        <div class='apply-agreement-box'>
+         {php}$article = WSTTable('articles',['articleId'=>109],'articleContent');{/php}
+         {$article['articleContent']|htmlspecialchars_decode}
+        </div>
+        <form id='applyFrom' autocomplete='off'>
+        <div class='agreement_box'>
+          <label>
+             <input type='checkbox' id="protocol" onclick='checkProtocol(this)' name="protocol" data-rule="checked" data-target="#protocolTip" data-msg-checked="必须同意协议才能申请入驻"/>我已阅读并同意以上协议
+          </label>
+          <span id='protocolTip' class="msg-box"></span>
+          </span>
+        </div>
+        </form>
+    {elseif $flowId==4}
+        {if $pkey && $apply['applyStatus']==0}
+        <div class='apply-box'>
+            {if $payStep==1}
+            <input type="hidden" id="pkey" value="{$pkey}">
+            <div>
+                <div class="pay-tip1"></div>
+            </div>
+            <div class='pay-sbox'>
+                <div class="tips-box">
+                    请及时付款，以便快速处理您的入驻申请，在线实付年费金额(年费为店铺所属行业的类目费用)<span class="wst-fred">&nbsp;¥{$catFee}&nbsp;</span>
+                </div>
+                <div class="pay-type">选择支付方式</div>
+                <div class="pay-list">
+                    <input type="hidden" id="payCode" name="payCode" />
+                    {volist name="$payments" id="payment"}
+                    {if condition="$payment['isOnline'] eq 1"}
+                    <div class="wst-payCode-{$payment['payCode']}" data="{$payment['payCode']}"></div>
+                    {/if}
+                    {/volist}
+                    <div class="wst-clear"></div>
+                </div>
+                <div class="bnt-box">
+                    <div onclick='javascript:getPayUrl();' class="wst-pay-bnt"></div>
+                </div>
+            </div>
+            <div id="alipayform" style="display:none;"></div>
+            {elseif $payStep==2}
+                {if $payType=='weixinpays'}
+                    <div>
+                        <div class="pay-tip2"></div>
+                    </div>
+                    <div class='pay-sbox' >
+                        <div class="qrcode-box">
+                            <div class="pbox">
+                                请您扫描以下二维码，支付年费金额：<span class="wst-fred">￥{$needPay}</span>
+                            </div>
+                            <div style="" class="wst-qrcode"></div>
+                        </div>
+                    </div>
+                {else}
+                    <input type="hidden" id="token" value='{:WSTConf("CONF.pwdModulusKey")}'/>
+                    <div>
+                        <div class="pay-tip2"></div>
+                    </div>
+                    <div class='pay-sbox'>
+                        <div class="balance-box">
+                            <div class='tips-box'>待支付年费总额：<span class="wst-fred">￥{$needPay}</span></div>
+                            <div class='wst-wallet-box'>
+                                <div class='wst-wallte-item'>
+                                    钱包余额：<span class="wst-fred">￥{$userMoney}</span>
+                                </div>
+                                <div style='float:right;'>支付：<span class="wst-fred">￥{$needPay}</span></div>
+                            </div>
+                            {if ($userMoney>=$needPay)}
+                            <div class="pbox">
+                                <input type='hidden' id='pkey' value='{$pkey}' class='j-ipt' autocomplete="off" />
+                                {if ($hasPayPwd==1)}
+                                支付密码：<input type='password' class='u-query j-ipt' id='payPwd' autocomplete='off'>
+                                <a class='pbox-tip' maxlength='6' href='{:url("home/users/editPayPass")}'>忘记密码?</a>
+                                {else}
+                                您尚未设置支付密码，请先设置支付密码
+                                <div id="paypwd-box" class="j-paypwd-box" style="display:none;padding:20px;">
+                                    <table class="wst-table">
+                                        <tr class="wst-login-tr">
+                                            <td align='right'>支付密码：</td>
+                                            <td><input type="password" class='j-ipt' id="payPwd" name="payPwd" style="width:250px;" maxlength="6" aria-required="true"></td>
+                                        </tr>
+                                        <tr class="wst-login-tr">
+                                            <td align='right'>确认支付密码：</td>
+                                            <td><input type="password" class="ipt n-invalid" id="reNewPass" name="reNewPass" style="width:250px;" maxlength="6" aria-required="true" aria-invalid="true"></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                {/if}
+                            </div>
+                            <div class="pbox2">
+                                {if($hasPayPwd==1)}
+                                <button class="pay-btn" type="button" style="width:100px;height: 30px;" onclick='javascript:payByWallet()'>确认支付</button>
+                                {else}
+                                <button class="pay-btn" type="button" style="width:100px;height: 30px;" onclick='javascript:setPaypwd()'>去设置支付密码</button>
+                                {/if}
+                            </div>
+                            {else}
+                            <div class="pbox">
+                                <img src='__STYLE__/img/icon_jinggao.png'>&nbsp;很抱歉，您的钱包余额不足，不能进行支付。<a class='pbox-tip' href='javascript:void(0)' onclick="javascript:history.go(-1)">返回上一页</a>。
+                            </div>
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
+            {/if}
+        </div>
+        {else}
+        <div class='apply-box'>
+            <div class='examine-tips'>
+                {if $apply['applyStatus']==1}
+                <img src='__ROOT__/wstmart/home/view/default/img/examine.png' style="vertical-align:middle"/>&nbsp;
+                您的入驻申请已提交审核，请等待审核结果...
+                {/if}
+                {if $apply['applyStatus']==-1}
+                <img src='__ROOT__/wstmart/home/view/default/img/error_1.png' style="vertical-align:middle"/>
+                很抱歉，您的入驻申请因【{$apply['applyDesc']}】审核不通过。。。
+                <div style='clear:both;'></div>
+                {/if}
+                {if $apply['applyStatus']==2}
+                <img src='__ROOT__/wstmart/home/view/default/img/apply-ok.png' style="vertical-align:middle"/>&nbsp;
+                您的入驻申请已通过，赶紧开始上架商品吧~
+                {/if}
+            </div>
+        </div>
+        {/if}
+    {else}
+        <div {if $stepFields}class='apply-box'{else}class='apply-box2'{/if}>
+            <form id='applyFrom' autocomplete='off'>
+                <table class='agreement-table' style='margin-top:10px;margin-bottom:10px;'>
+                {volist name="stepFields" id="vo"}
+                {switch $vo['fieldType']}
+                    {case input}
+                        {if $vo['isShow']==1}
+                            <tr {if $vo['isRelevance']}id="{$vo['fieldName']}Tr"{/if} {if $vo['isRelevance'] && $apply[$vo['fieldRelevance']] == 0}style='display:none;'{/if} >
+                                <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                <td>
+                                    {if $vo['isRelevance']}
+                                    <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required(#{$vo['fieldRelevance']}1:checked)"{/if}  value="{$apply[$vo['fieldName']]}" maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                                    {else}
+                                    <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} value="{$apply[$vo['fieldName']]}" maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                                    {/if}
+                                </td>
+                            </tr>
+                        {/if}
+                    {/case}
+                    {case textarea}
+                        {if $vo['isShow']==1}
+                        {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                        <tr>
+                            <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                            <td>
+                                <textarea id="{$vo['fieldName']}" class='a-ipt' rows="{$fieldAttr[0]}" cols="{$fieldAttr[1]}" {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if}>{$apply[$vo['fieldName']]}</textarea>
+                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                            </td>
+                        </tr>
+                        {/if}
+                    {/case}
+                    {case radio}
+                        {if $vo['isShow']==1}
+                        {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                        <tr>
+                            <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                            <td>
+                                {volist name="$fieldAttr" id="voo"}
+                                {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                <label>
+                                    <input type='radio' name="{$vo['fieldName']}"  id="{$vo['fieldName']}{$fieldAttrValue[0]}" class='a-ipt' value="{$fieldAttrValue[0]}" onclick='javascript:WST.showHide({$fieldAttrValue[0]},"#{$vo['fieldRelevance']}Tr")' {if $apply[$vo['fieldName']]==$fieldAttrValue[0]}checked{/if}/>{$fieldAttrValue[1]}
+                                </label>
+                                {/volist}
+                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                            </td>
+                        </tr>
+                        {/if}
+                    {/case}
+                    {case checkbox}
+                        {if $vo['fieldAttr'] == 'custom'}
+                        <tr>
+                            <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                            <td>
+                                {volist name=":WSTGoodsCats(0)" id="voo"}
+                                <label class='goodsCat'>
+                                    <input type='checkbox' class='a-ipt goods-cat' name="{$vo['fieldName']}" value='{$voo["catId"]}' {if $i == 1}data-rule="{$vo['fieldTitle']}:checked" {/if}  {if array_key_exists($voo['catId'],$apply['catshops'])}checked{/if} data-target="#msg_{$vo['fieldName']}"/>{$voo["catName"]}
+                                </label>
+                                {/volist}
+                                <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                            </td>
+                        </tr>
+                        
+                        {else}
+                            {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr >
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        {volist name="$fieldAttr" id="voo"}
+                                        {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                        <label>
+                                            <input type='checkbox' name="{$vo['fieldName']}"  id="{$vo['fieldName']}" class='a-ipt' value="{$fieldAttrValue[0]}"  {if $vo['isRequire'] == 1}data-rule="{$vo['fieldTitle']}:checked" {/if} {if $apply[$vo['fieldName']]==$fieldAttrValue[0]}checked{/if}/>{$fieldAttrValue[1]}
+                                        </label>
+                                        {/volist}
+                                    </td>
+                                    {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                                </tr>
+                            {/if}
+                        {/if}
+                    {/case}
+                    {case select}
+                        {if $vo['isShow']==1}
+                        {php} if($vo['fieldAttr']!='custom')$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                        {if $vo['fieldName']=='tradeId'}
+                        <tr>
+                            <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                            <td>
+                                <select id="{$vo['fieldName']}" class='a-ipt' onchange="changeCatFee(this)" style="width: auto;">
+                                    {volist name=":WSTTrades(0)" id="td"}
+                                    <option tradeFee="{$td['tradeFee']}" value="{$td['tradeId']}" {if $apply[$vo['fieldName']]==$td['tradeId']}selected{/if}>{$td['tradeName']} ({$td['tradeFee']}元)</option>
+                                    {/volist}
+                                </select>
+                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>年费：</th>
+                            <td><span id="totalCatFee">0</span>元（年费为店铺所属行业的类目费用）</td>
+                        </tr>
+                        {else}
+                        <tr>
+                            <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                            <td>
+                                <select id="{$vo['fieldName']}" class='a-ipt'>
+                                    {if $vo['fieldAttr']!='custom'}
+                                        {volist name="$fieldAttr" id='voo'}
+                                            {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                            <option value="{$fieldAttrValue[0]}" {if $apply[$vo['fieldName']]==$fieldAttrValue[0]}selected{/if} >{$fieldAttrValue[1]}</option>
+                                        {/volist}
+                                    {else}
+                                        {php}
+                                            $banks = WSTTable('banks',['dataFlag'=>1],'bankId,bankName',100);
+                                            foreach($banks as $aky => $bank){
+                                        {/php}
+                                            <option value="{$bank['bankId']}" {if $apply[$vo['fieldName']]==$bank['bankId']}selected{/if}>{$bank['bankName']}</option>
+                                        {php}}{/php}
+                                    {/if}
+                                </select>
+                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                            </td>
+                        </tr>
+                        {/if}
+                        
+                        
+                        {/if}
+                    {/case}
+                    {case other}
+                        {switch $vo['fieldAttr']}
+                            {case area}
+                                {if $vo['isShow']==1}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <select id="{$vo['fieldName']}_0" class="j-{$vo['fieldName']}" data-name="{$vo['fieldName']}" level="0" onchange="changeArea(this)" data-value="{$apply[$vo['fieldName']]}">
+                                            <option value="">-请选择-</option>
+                                            {php}
+                                            $areas = WSTTable('areas',['isShow'=>1,'dataFlag'=>1,'parentId'=>0],'areaId,areaName',100,'areaSort desc');
+                                            foreach($areas as $aky => $area){
+                                            {/php}
+                                            <option value="{$area['areaId']}">{$area['areaName']}</option>
+                                            {php}}{/php}
+                                        </select>
+                                        {if $vo['isMap']}
+                                            {if(WSTConf('CONF.mapKey'))} <button type='button' class='btn btn-primary' data-name="{$vo['fieldName']}" onclick="javascript:mapCity(this)" style="top: 8px;height: 28px;line-height: 28px;font-size: 14px;font-weight: 400;"><i class='fa fa-map-marker'></i>地图定位</button>{/if}
+                                        {/if}
+                                        {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div><br>{/if}
+                                    </td>
+                                </tr>
+                                {if $vo['isMap']}
+                                    {if(WSTConf('CONF.mapKey'))}
+                                        <tr>
+                                            <th>&nbsp;</th>
+                                            <td>
+                                                <div id="container"  style='width:700px;height:400px'></div>
+                                                <input type='hidden' id='mapLevel' class='a-ipt'  value="{$apply['mapLevel']}"/>
+                                                <input type='hidden' id='longitude' class='a-ipt'  value="{$apply['longitude']}"/>
+                                                <input type='hidden' id='latitude' class='a-ipt'  value="{$apply['latitude']}"/>
+                                            </td>
+                                        </tr>
+                                    {/if}
+                                {/if}
+                                {/if}
+                            {/case}
+                            {case date}
+                                {if $vo['isShow']==1}
+                                    <tr>
+                                        <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td>
+                                            <input type='text' id="{$vo['fieldName']}" readonly class='a-ipt laydate-icon' onclick="laydate()" {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}" data-timely="2" value="{$apply[$vo['fieldName']]}"/>
+                                            {if $vo['dateRelevance']}
+                                                {php}$dateRelevance = explode(',',$vo['dateRelevance']);{/php}
+                                                    {if array_key_exists($dateRelevance[0],$apply) && array_key_exists($dateRelevance[1],$apply)}
+                                                    - <input type='text' id="{$dateRelevance[0]}" readonly class='a-ipt laydate-icon' onclick="laydate()"  data-timely="2" value="{$apply[$dateRelevance[0]]}" {if $apply[$dateRelevance[1]]==1}style='display:none'{/if} />&nbsp;&nbsp;&nbsp;<label><input type='checkbox' name='{$dateRelevance[1]}' id='{$dateRelevance[1]}' class='a-ipt' onclick='WST.showHide(this.checked?0:1,"#{$dateRelevance[0]}")' {if $apply[$dateRelevance[1]]==1}checked{/if}  value='1'/>{$dateRelevance[2]}</label>
+                                                    {/if}
+                                            {/if}
+                                            {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div><br>{/if}
+                                            <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/case}
+                            {case time}
+                                {if $vo['isShow']==1}
+                                    <tr>
+                                        <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td>
+                                            <select class='a-ipt time-component' id="{$vo['fieldName']}" v="{$apply[$vo['fieldName']]}"></select>
+                                            {if $vo['timeRelevance']}
+                                                至
+                                                <select class='a-ipt time-component' id="{$vo['timeRelevance']}" v="{$apply[$vo['timeRelevance']]}"></select>
+                                            {/if}
+                                            {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div>{/if}
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/case}
+                            {case file}
+                                {if $vo['isShow']==1}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top:16px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <input type='hidden' id="{$vo['fieldName']}" fileNum="{$vo['fileNum']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}" value="{$apply[$vo['fieldName']]}"/>
+                                        <div id="{$vo['fieldName']}Picker" class="upload-picker">请上传{$vo['fieldTitle']}</div>
+                                        <span id="{$vo['fieldName']}Msg"></span>
+                                        <div id="{$vo['fieldName']}Box"></div>
+                                        {if (int)$vo['fileNum']>1}
+                                        {php}$imgArr = array_filter(explode(',',$apply[$vo['fieldName']]));{/php}
+                                        <div id="{$vo['fieldName']}ImgBox">
+                                            {volist name="$imgArr" id='voo'}
+                                            <div style="width:75px;float:left;margin-right:5px;">
+                                                <a href='__RESOURCE_PATH__/{$voo}' target='_blank'>
+                                                    <img class="{$vo['fieldName']}_step_pic" width="75" height="75" src="__RESOURCE_PATH__/{$voo}" v="{$voo}">
+                                                </a>
+                                                <div style="position:relative;top:-80px;left:60px;cursor:pointer;background: rgba(0,0,0,0.5);width: 18px;height: 18px;text-align: center;border-radius: 50%;" onclick='javascript:delVO(this)' selector="{$vo['fieldName']}">
+                                                    <img src="__ROOT__/wstmart/home/view/default/img/seller_icon_error.png">
+                                                </div>
+                                            </div>
+                                            {/volist}
+                                        </div>
+                                        {else}
+                                        <img id="{$vo['fieldName']}Preview" src="__RESOURCE_PATH__/{$apply[$vo['fieldName']]}" {if $apply[$vo['fieldName']] ==''}style='display:none'{/if} width='150'>
+                                        {/if}
+                                        {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div><br>{/if}
+                                        <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {default /}
+                        {/switch}
+                    {/case}
+                    {default /}
+                {/switch}
+                {/volist}
+                 </table>
+            </form>
+        </div>
+    {/if}
+    {if !empty($nextStep)}
+     <div class='agreement-bottom'>
+        {if !empty($prevStep)}
+        <a href="{:url('home/shops/joinStepNext','id='.$prevStep['flowId'])}" class='btn-cancel'>上一步</a>
+        {else}
+        <a href="{:url('home/shops/join')}" class='btn-cancel'>上一步</a>
+        {/if}
+        <a class='btn-submit'  href='javascript:saveStep({$flowId},{$nextStep['flowId']})'>下一步</a>
+        <div class='wst-clear'></div>
+     </div>
+    {/if}
+</div>
+{/block}
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/js/rsa.js"></script>
+<script charset="utf-8" src="{:WSTProtocol()}map.qq.com/api/js?v=2.exp&key={:WSTConf('CONF.mapKey')}"></script>
+<script type='text/javascript' src='__STATIC__/plugins/webuploader/webuploader.js?v={$v}'></script>
+<script type="text/javascript" src="__STATIC__/plugins/validator/jquery.validator.min.js?v={$v}"></script>
+<script type='text/javascript' src='__STYLE__/js/apply.js?v={$v}'></script>
+<script src="__STATIC__/plugins/layer/laydate.js"></script>
+<script type='text/javascript' src='__STYLE__/js/qrcode.js?v={$v}'></script>
+<script>
+    $(function() {
+        $(".upload-picker").each(function (idx, item) {
+            var id_selector = $(item).prev().attr('id');
+            if(id_selector=='shopImg'){
+                WST.upload({
+                    pick: "#" + id_selector + 'Picker',
+                    formData: {dir: 'shops',isThumb:1},
+                    accept: {extensions: 'gif,jpg,jpeg,png', mimeTypes: 'image/jpg,image/jpeg,image/png,image/gif'},
+                    callback: function (f) {
+                        var json = WST.toJson(f);
+                        if (json.status == 1) {
+                            $('#' + id_selector + 'Msg').empty().hide();
+                            $('#' + id_selector + 'Preview').attr('src', WST.conf.RESOURCE_PATH + "/" + json.savePath + json.thumb).show();
+                            $('#' + id_selector).val(json.savePath + json.name);
+                            $('#msg_' + id_selector).hide();
+                        }
+                    },
+                    progress: function (rate) {
+                        $('#' + id_selector).show().html('已上传' + rate + "%");
+                    }
+                });
+            }else{
+                var fileNumLimit = $(item).prev().attr('fileNum');
+                var uploader = WST.upload({
+                    pick: "#" + id_selector + 'Picker',
+                    formData: {dir: 'shopextras'},
+                    accept: {extensions: 'gif,jpg,jpeg,png', mimeTypes: 'image/jpg,image/jpeg,image/png,image/gif'},
+                    fileNumLimit:fileNumLimit,
+                    callback: function (f,file) {
+                        var json = WST.toJson(f);
+                        if (json.status == 1) {
+                            if(fileNumLimit>1){
+                                $('#' + id_selector + 'ImgBox').empty();
+                                var tdiv = $("<div style='height:75px;float:left;margin:0px 5px;position:relative'><a target='_blank' href='"+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.name+"'>"+
+                                    "<img class='"+id_selector+"_step_pic"+"' height='75' src='"+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.thumb+"' v='"+json.savePath+json.name+"'></a></div>");
+                                var btn = $('<div style="position: absolute;top: -5px;right: 0px;cursor: pointer;background: rgba(0,0,0,0.5);width: 18px;height: 18px;text-align: center;border-radius: 50%;" ><img src="'+WST.conf.ROOT+'/wstmart/home/view/default/img/seller_icon_error.png"></div>');
+                                tdiv.append(btn);
+                                $('#' + id_selector + 'Box').append(tdiv);
+                                $('#msg_' + id_selector).hide();
+                                var imgPath = [];
+                                $('.'+id_selector+'_step_pic').each(function(){
+                                    imgPath.push($(this).attr('v'));
+                                });
+                                $('#' + id_selector).val(imgPath.join(','));
+                                btn.on('click','img',function(){
+                                    uploader.removeFile(file);
+                                    $(this).parent().parent().remove();
+                                    uploader.refresh();
+                                    if($('#'+id_selector+'Box').children().size()<=0){
+                                        $('#msg_' + id_selector).show();
+                                    }
+                                    var imgPath = [];
+                                    $('.'+id_selector+'_step_pic').each(function(){
+                                        imgPath.push($(this).attr('v'));
+                                    });
+                                    $('#' + id_selector).val(imgPath.join(','));
+                                });
+                            }else{
+                                $('#' + id_selector + 'Msg').empty().hide();
+                                $('#' + id_selector + 'Preview').attr('src', WST.conf.RESOURCE_PATH + "/" + json.savePath + json.thumb).show();
+                                $('#' + id_selector).val(json.savePath + json.name);
+                                $('#msg_' + id_selector).hide();
+                                uploader.reset();
+                            }
+                        }
+                    },
+                    progress: function (rate) {
+                        $('#' + id_selector).show().html('已上传' + rate + "%");
+                    }
+                });
+            }
+        });
+
+        if(window.conf.MAP_KEY){
+            var longitude = $('#longitude').val();
+            var latitude = $('#latitude').val();
+            var mapLevel = $('#mapLevel').val();
+            initQQMap(longitude,latitude,mapLevel);
+        }
+
+        $(".time-component").each(function (idx, item) {
+            var id_selector = $(item).attr('id');
+            initTime('#'+id_selector,$('#'+id_selector).attr('v'));
+        });
+
+        $("select[class^='j-']").each(function(idx,item){
+            var id_selector = $(item).attr('id');
+            var class_selector = $(item).attr('class');
+            var datavalue = $(item).attr('data-value');
+            if(datavalue){
+                var areaPath = datavalue.split("_");
+                $('#'+id_selector).val(areaPath[0]);
+                var aopts = {id:id_selector,val:areaPath[0],childIds:areaPath,className:class_selector,isRequire:true}
+                WST.ITSetAreas(aopts);
+            }
+        });
+        $("div[class^=wst-payCode]").click(function(){
+            var payCode = $(this).attr("data");
+            $("div[class^=wst-payCode]").each(function(){
+                $(this).removeClass().addClass("wst-payCode-"+$(this).attr("data"));
+            });
+            $(this).removeClass().addClass("wst-payCode-"+payCode+"-curr");
+            $("#payCode").val(payCode);
+        });
+        if($("div[class^=wst-payCode]").length>0){
+            $("div[class^=wst-payCode]")[0].click();
+        }
+        if($("#totalCatFee").html()!=undefined){
+            changeCatFee();
+        }
+    });
+    function changeArea(obj){
+        var id_selector = $(obj).attr('id');
+        var class_selector = $(obj).attr('class');
+        var value = $("select[id="+id_selector+"]").val();
+        WST.ITAreas({id:id_selector,val:value,isRequire:true,className:class_selector});
+    }
+    function changeCatFee(){
+        var tradeFee = $("#tradeId option:selected").attr("tradeFee");
+        $("#totalCatFee").html(tradeFee);
+    }
+
+    {if isset($out_trade_no)}
+        {if condition="$out_trade_no != '' and $code_url!=''"}
+            var qr = qrcode(10, 'M');
+            qr.addData("{$code_url}");
+            qr.make();
+            $(".wst-qrcode").html(qr.createImgTag());
+        {/if}
+        setInterval(function(){
+            var params = {};
+            params.trade_no = "{$out_trade_no}";
+            $.ajax({
+                url:"{:url('home/weixinpays/getPayStatus')}",
+                data:params,
+                type:"POST",
+                dataType:"json",
+                success:function(data){
+                    if(data.status==1){
+                        location.href = "{:url('home/weixinpays/payAnnualFeeSuccess',array('flowId'=>$flowId))}";
+                    }
+                }
+            });
+        },1500);
+    {/if}
+</script>
+{/block}

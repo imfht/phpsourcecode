@@ -1,0 +1,194 @@
+<div class="row">
+	<div class="col-md-12">
+		<!-- BEGIN VALIDATION STATES-->
+		<div class="portlet box green">
+			<div class="portlet-title">
+				<div class="caption">
+					<i class="fa fa-reorder"></i><?php echo $meta_title?>——<?php echo $this_group['title']?>
+				</div>
+			</div>
+			<div class="portlet-body form">
+				<!-- BEGIN FORM-->
+				<form action="<?php echo $this->url->get(CONTROLLER_NAME."/writeGroup/")?>" enctype="application/x-www-form-urlencoded" method="POST" class="form-horizontal auth-form">
+                    <input type="hidden" name="id" value="<?php echo $this_group['id']?>" />
+                    <div class="form-body">
+						<div class="col-md-offset-3 col-md-9">
+							<button type="submit" class="btn green ajax-post" target-form="auth-form" >确 定</button>
+							<button type="button" class="btn default form_cancel" onclick="javascript:history.back(-1);return false;">返 回</button>
+						</div>
+					</div>
+					<div class="form-body">
+						<div class="alert alert-danger display-hide">
+							<button class="close" data-close="alert"></button>
+							错误，请按规定填写！
+						</div>
+						<div class="alert alert-success display-hide">
+							<button class="close" data-close="alert"></button>
+							成功!
+						</div>
+                        
+                        <h2 class="form-section">
+                            后台功能权限设置
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="access_all" AUTOCOMPLETE="OFF" /> 全选 
+                            </label>
+                        </h2>
+                        <?php foreach($node_list as $node){?>
+                            <div class="acc_top_div <?php if(!empty($node['child'])){?>form-section<?php }?> ">
+                                <div class="form-group form-section">
+                                    <div class="col-md-1 control-label">
+                                        <h4>
+                                            <?php echo $node['title']?>
+                                            <label class="checkbox-inline">
+                                                <input type="checkbox" class="auth_rules rules_all" name="rules[]" value="<?php echo $main_rules[$node['url']]?>" <?php if(in_array($main_rules[$node['url']],explode(",",$this_group['rules']))){?> checked="checked"<?php }?> AUTOCOMPLETE="OFF"/> 
+                                            </label>
+                                        </h4>
+                                    </div>
+                                    <label class="col-md-8"></label>
+                                </div>
+                                <?php foreach($node['child'] as $child){?>                                
+                                    <div class="form-group">
+            							<div class="col-md-2" style="text-align:right;">
+                                            <label class="checkbox-inline">
+                                                <input type="checkbox" class="auth_rules rules_row" name="rules[]" value="<?php echo $auth_rules[$child['url']]?>" <?php if(in_array($auth_rules[$child['url']],explode(",",$this_group['rules']))){?>checked="checked"<?php }?> /> <?php echo $child['title']?> 
+                                            </label>
+                                        </div>
+                                        <?php if(!empty($child['operator'])){?>
+                                            <div class="col-md-10">
+                								<div class="checkbox-list">
+                                                    <?php foreach($child['operator'] as $op){?>                                                
+                    									<label class="checkbox-inline">
+                                                            <input type="checkbox" class="auth_rules" name="rules[]" value="<?php echo $auth_rules[$op['url']]?>" <?php if(in_array($auth_rules[$op['url']],explode(",",$this_group['rules']))){?>checked="checked"<?php }?> AUTOCOMPLETE="OFF" /> <?php echo $op['title']?> 
+                                                        </label>
+                                                    <?php }?>
+                								</div>
+                							</div>  
+                                        <?php }?>
+            						</div>                                    
+                                <?php }?>
+                            </div>
+                        <?php }?>
+                        <h2 class="form-section">
+                            <!--{L('managergroup_form_h2')}-->
+                            <label class="checkbox-inline">
+                                <input type="checkbox" class="access_all" AUTOCOMPLETE="OFF"> 全选
+                            </label>
+                        </h2>             
+					</div>
+					<div class="form-actions fluid">
+						<div class="col-md-offset-3 col-md-9">
+							<button type="submit" class="btn green">确 定</button>
+							<button type="button" class="btn default form_cancel" onclick="javascript:history.back(-1);return false;">返 回</button>
+						</div>
+					</div>
+				</form>
+				<!-- END FORM-->
+			</div>
+			<!-- END VALIDATION STATES-->
+		</div>
+	</div>
+</div>
+
+
+<script>
+
+
+
+jQuery(document).ready(function() {
+    
+         
+    $(".access_all").on("click",function(){
+        var check_status = $(this).is(":checked");
+        $(':checkbox').attr("checked",check_status);
+        if(check_status){
+            $(':checkbox').parent("span").addClass("checked");
+        }else{
+            $(':checkbox').parent("span").removeClass("checked");
+        }
+        
+    });
+    
+    function rules_all_do(){
+        var i = 0;
+            
+        $('.acc_top_div :checkbox').each(function(k,v){
+            if($(this).is(":checked")){
+                i++;
+            }
+        });        
+        if(i == $('.acc_top_div :checkbox').size()){
+            $(".access_all").attr("checked",true);
+            $(".access_all").parent("span").addClass("checked");
+        }else{
+            $(".access_all").attr("checked",false);
+            $(".access_all").parent("span").removeClass("checked");
+        }
+    };
+    rules_all_do();
+    
+    
+    $(".rules_all").on("click",function(){
+        var check_status = $(this).is(":checked");
+        
+        $(this).parents(".acc_top_div").find(":checkbox").attr("checked",check_status);
+        if(check_status){
+            $(this).parents(".acc_top_div").find(":checkbox").parent("span").addClass("checked");            
+        }else{
+            $(this).parents(".acc_top_div").find(":checkbox").parent("span").removeClass("checked");
+        }
+        rules_all_do();
+    });
+    
+    
+    function fules_row_do(checkdom){
+        if(typeof checkdom !== "object"){
+            return false;
+        }
+        
+        var i = 0;
+            
+        checkdom.parents(".acc_top_div").find(".rules_row").each(function(k,v){
+            if($(this).is(":checked")){
+                i++;
+                return;
+            }
+        });
+        
+        if(i > 0){
+            checkdom.parents(".acc_top_div").find(".rules_all").attr("checked",true);
+            checkdom.parents(".acc_top_div").find(".rules_all").parent("span").addClass("checked");
+        }else{
+            checkdom.parents(".acc_top_div").find(".rules_all").attr("checked",false);
+            checkdom.parents(".acc_top_div").find(".rules_all").parent("span").removeClass("checked");
+        }
+        
+        rules_all_do();
+        
+    }
+    
+    $(".rules_row").on("click",function(){
+        var check_status = $(this).is(":checked");
+        
+        $(this).parents(".form-group").find(".checkbox-list").find(":checkbox").attr("checked",check_status);
+        if(check_status){
+            $(this).parents(".form-group").find(".checkbox-list").find(":checkbox").parent("span").addClass("checked");          
+        }else{
+            $(this).parents(".form-group").find(".checkbox-list").find(":checkbox").parent("span").removeClass("checked");
+        }
+        fules_row_do($(this)); 
+    });
+    
+    
+    $(".auth_rules:not(.rules_row):not(.rules_all)").on("click",function(){
+        var check_status = $(this).is(":checked");
+        if(check_status){
+            $(this).parents(".form-group").find(".rules_row").attr("checked",check_status);
+            $(this).parents(".form-group").find(".rules_row").parent("span").addClass("checked");           
+        }
+        fules_row_do($(this).parents(".form-group").find(".rules_row"));
+    });
+    
+    
+});
+
+</script>

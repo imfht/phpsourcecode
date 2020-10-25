@@ -1,0 +1,142 @@
+<?php
+/**
+ * @package     Console.php
+ * @author      Jing <tangjing3321@gmail.com>
+ * @link        http://www.slimphp.net
+ * @version     1.0
+ * @copyright   Copyright (c) SlimCustom.
+ * @date        2017年5月31日
+ */
+
+namespace SlimCustom\Libs\Console;
+
+use SlimCustom\Libs\App;
+
+/**
+ * Console
+ * 
+ * @author Jing <tangjing3321@gmail.com>
+ */
+class Console extends \Clio\Console
+{
+    /**
+     * Commands
+     * 
+     * @var array
+     */
+    protected $commands = [];
+    
+    /**
+     * Init Console
+     */
+    public function __construct()
+    {
+        $this->registerDefaultCommands();
+        $this->resolveCommands();
+    }
+    
+    /**
+     * 注册默认命令到命名集
+     */
+    private function registerDefaultCommands()
+    {
+        $this->commands = array_merge($this->commands, [
+            \SlimCustom\Libs\Console\Commands\Help::class,
+            \SlimCustom\Libs\Console\Commands\App::class
+        ]);
+    }
+    
+    /**
+     * Execute Command
+     * 
+     * @param string $signature
+     * @return number|\Clio\false
+     */
+    public function execute($signature)
+    {
+        // 默认执行help命令
+        if (empty($signature)) {
+            $signature = 'help';
+        }
+        // Get Command And Command Params
+        $tmp = array_filter(explode(' ', $signature));
+        $signature = $tmp[0];unset($tmp[0]);$params = $tmp;
+        // 判断命令是否存在
+        if (! isset($this->commands[$signature])) {
+            throw new \InvalidArgumentException('Invalid Command');
+        }
+        // 注入console对象
+        $command = App::single($this->commands[$signature]['class']);
+        $command->console = $this;
+        // 执行并返回接口
+        return call_user_func_array([
+            $command,
+            $this->commands[$signature]['method']
+        ], $params);
+    }
+    
+    /**
+     * Return Commands
+     * 
+     * @return $this->$commands;
+     */
+    public function getCommands()
+    {
+        return $this->commands;
+    }
+    
+    /**
+     * Resolve Commands
+     */
+    protected function resolveCommands()
+    {
+        $tmp = [];
+        foreach ($this->commands as $key => $class) {
+            $signatures = App::single($class)->signature();
+            $descriptions = App::single($class)->description();
+            if (is_string($signatures)) {
+                $signatures = [$signatures];
+                $descriptions = [$descriptions];
+            }
+            foreach ($signatures as $k => $signature) {
+                $signatureArr = explode(':', $signature);
+                $tmp[$signature] = [
+                    'class' => $class,
+                    'method' => isset($signatureArr[1]) ? $signatureArr[1] : 'handle',
+                    'description' => $descriptions[$k],
+                ];
+            }
+        }
+        $this->commands = $tmp;
+    }
+    
+    /**
+     * Cli App Run
+     */
+    public function run()
+    {
+        ignore_user_abort(false);
+        ob_implicit_flush(1);
+        ini_set('implicit_flush', true);
+    
+        if (strpos(strtolower(PHP_OS), 'win') === 0) {
+            if (function_exists('mb_internal_encoding')) {
+                mb_internal_encoding('UTF-8');
+                mb_http_output('GBK');
+                ob_start('mb_output_handler', 2);
+            }
+            elseif (function_exists('iconv_set_encoding')) {
+                iconv_set_encoding('internal_encoding', 'UTF-8');
+                iconv_set_encoding('output_encoding', 'GBK');
+                ob_start('ob_iconv_handler', 2);
+            }
+        }
+    
+        array_shift($_SERVER['argv']);
+        array_shift($_SERVER['argv']);
+        $rst = $this->execute(implode(' ', $_SERVER['argv']));
+        if ($rst === false) {
+            exit(- 1);
+        }
+    }
+}

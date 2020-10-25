@@ -1,0 +1,119 @@
+<div class="goods-buy clearfix">
+    <form class="form-horizontal  ajax-form" data-type="goods_buy" role="form" action="{:U('Scoreshop/Index/goodsBuy')}" method="post">
+        <input type="hidden" id="goods_id" name="id" value="{$goods['id']}">
+        <input type="hidden" name="address_id" value="">
+
+        <div class="goods-buy-address">
+            <div>
+                <h3>收货地址 
+                    <a class="edit-address pull-right" data-name="addressModal" data-remote="{:U('Scoreshop/Index/editaddress',array('goods_id'=>$goods['id']))}" data-id="{$goods['id']}" data-toggle="modal">
+                        添加新的收货信息
+                    </a>
+                </h3>
+            </div>
+            <div class="address-box">
+            <volist name="address" id="address">
+                <div class="address-li" data-id="{$address.id}">
+                    <span class="title"><span class="address-user">{$address.name}</span> {$address.phone}<i></i></span>
+                    <span class="info">{$address.address}</span>
+                    <span class="edit" style="display: none;">
+                        <a class="edit-address-btn" 
+                           data-toggle="modal"
+                           data-name="addressModal" 
+                           data-remote="{:U('Scoreshop/Index/editaddress',array('id'=>$address['id'],'goods_id'=>$goods['id']))}">
+                           编辑
+                        </a> 
+                        <a class="del-address-btn" data-name="addressModal" data-toggle="modal" data-remote="{:U('Scoreshop/Index/delAddress',array('id'=>$address['id'],'goods_id'=>$goods['id']))}">删除</a>
+                    </span>
+                </div>
+            </volist>
+            <if condition="$address_count eq 0">
+                  <div style="font-size:18px;padding:2em 0;color: #ccc;text-align: center">{:L('_TIP_NO_ADDRESS_')}
+                  </div>
+              </if>
+            </div>
+            <div class="more-address">
+                <span>更多地址</span> <span><i class="icon icon-double-angle-down"></i></span>
+            </div>
+        </div>
+
+        <div class="goods-buy-goodsinfo clearfix">
+            <div><h3>商品信息</h3></div>
+            <div class="goods-img"><img class="img-responsive" src="{$goods.goods_img|getThumbImageById=120,120}"/></div>
+            <div class="goods-info">
+                <h4>{$goods.goods_name}</h4>
+                <div class="need-score">需要积分：<span>{$goods.price}</span></div>
+                <div class="my-score">我的积分：<span>{$score_num}</span></div>
+            </div>
+        </div>
+        
+        <div class="col-sm-offset-3 col-xs-6">
+            <button type="submit" class="btn btn-lg btn-block btn-warning scoreshop-btn">{:L('_SUBMIT_')}</button>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+
+    $('[data-name="addressModal"]').on('click', function() {
+        $('#buyModal').modal('hide');
+    });
+
+    $(function(){
+        $('form[data-type="goods_buy"]').submit(function (e) {
+            e.preventDefault();
+            toast.showLoading();
+            var self = $(this);
+            $.post(self.attr("action"), self.serialize(), function(data){
+                if (data.status) {
+                    toast.success(data.info, '温馨提示');
+                    setTimeout(function () {
+                        window.location.href=data.url;
+                    }, 1000);
+                }else{
+                    toast.error(data.info, '温馨提示');
+                }
+                toast.hideLoading();
+            }, "json");
+            return false;
+        });
+    })
+
+
+    $(function(){
+        //鼠标经过显示编辑删除按钮
+        $('.address-box').on('mouseover','.address-li',function(){
+            $(this).find('.edit').show();
+        });
+        $('.address-box').on('mouseout','.address-li',function(){
+            $(this).find('.edit').hide();
+        });
+    })
+
+
+    $(function(){
+
+        $('.address-box').on('click','.address-li',function(){
+            $('.address-li .title').removeClass('selected');
+            $(this).find('.title').addClass('selected');
+            var address_id = $(this).data('id');
+            $('[name="address_id"]').val(address_id);
+        })
+        //默认选择第一项
+        $('.address-li .title:first').trigger("click");
+    })
+
+    $(function(){
+        //收起展开收货地址
+        $('.more-address').on('click',function(){
+            if($('.address-box').hasClass('in')){
+                $('.address-box').removeClass('in');
+                $(this).find('span:first').text('更多地址');
+                $(this).find('span:eq(1)').html('<i class="icon icon-double-angle-down"></i>');
+            }else{
+                $('.address-box').addClass('in');
+                $(this).find('span:first').text('收起地址');
+                $(this).find('span:eq(1)').html('<i class="icon icon-double-angle-up"></i>');
+            };
+        })
+    })
+</script>

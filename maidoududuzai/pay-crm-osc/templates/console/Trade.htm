@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+<title>{echo admin_title()}</title>
+<!--header-->
+{template _:header}
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+<!--top-->
+{template _main_top}
+<!--nav-->
+{template _main_nav}
+	<div class="position"><h1>交易列表</h1></div>
+	<div class="layui-body admin-body">
+		<div class="admin-content">
+			<div class="searcher">
+				<form name="sch_form" id="sch_form" method="get" action="{echo \befen\get_url()}">
+					<div class="layui-input-inline">
+						<select name="trade_gate" id="trade_gate" class="layui-select">
+							<option value="">支付通道</option>
+							<!--{loop model('Trade')->gates() $key $val}-->
+							<option value="{$key}" <!--{if $key == input('param.trade_gate')}-->selected<!--{/if}-->>{$val}</option>
+							<!--{/loop}-->
+						</select>
+					</div>
+					<div class="layui-input-inline">
+						<input type="text" name="merchant_name" id="merchant_name" class="layui-input" value="{echo input('param.merchant_name')}" placeholder="商户名称">
+					</div>
+					<div class="layui-input-inline">
+						<input type="text" name="time_create" id="time_create" class="layui-input" placeholder="交易时间" value="{echo input('param.time_create')}">
+					</div>
+					<div class="layui-input-inline layui-left-margin"><button type="submit" id="search" class="layui-btn">查询</button></div>
+				</form>
+				<div class="clear"></div>
+			</div>
+			<form name="theform" id="theform" method="post" action="{echo \befen\get_url()}">
+			<table class="layui-table">
+				<thead>
+					<tr>
+						<th>商户名称</th>
+						<th>支付通道</th>
+						<th>支付渠道</th>
+						<th>交易时间</th>
+						<th>交易金额</th>
+						<th>商户交易号</th>
+						<th>交易状态</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!--{loop $list $key $val}-->
+					<tr id="">
+						<td>{$val[merchant_name]}</td>
+						<td>{echo model('Trade')->getGate($val['trade_gate'])}({echo model('Trade')->get_type($val['trade_type'])})</td>
+						<td>{$val[sub_gate]}</td>
+						<td>{echo gsdate('Y-m-d H:i:s', $val['time_create'])}</td>
+						<td>{$val[total_amount]}</td>
+						<td>{$val[out_trade_no]}</td>
+						<!--{if in_array($val['trade_status'], ['SUCCESS', 'TRADE_SUCCESS'])}-->
+						<td class="op"><span class="layui-badge layui-bg-status-1">{echo model('Trade')->getStatus($val['trade_status'])}</span></td>
+						<!--{else}-->
+						<td class="op"><span class="layui-badge layui-bg-status-0">{echo model('Trade')->getStatus($val['trade_status'])}</span></td>
+						<!--{/if}-->
+						<td class="op">
+							<a op="detail" lay-url="{echo url('trade/detail', ['out_trade_no' => $val[out_trade_no]])}" out_trade_no="{$val[out_trade_no]}" class="layui-btn layui-btn-xs layui-btn-normal">详情</a>
+						</td>
+					</tr>
+					<!--{/loop}-->
+				</tbody>
+			</table>
+			</form>
+			<div class="listpages">{$pagenav}</div>
+		</div>
+	</div>
+</div>
+<!--footer-->
+{template _:footer}
+<script type="text/javascript">
+$('#time_create').attr('autocomplete', 'off');
+layui.use('laydate', function(){
+	var laydate = layui.laydate;
+	laydate.render({ 
+		elem: '#time_create',
+		range: '~'
+	});
+});
+$("a[op=detail]").click(function(){
+	$.sideShow('', $(this).attr('lay-url'));
+});
+$('#sch_form input[name=merchant_name]').autoComplete({
+	url: "{echo url('merchant/index')}",
+	field: "",
+	value: "{echo input('param.merchant_name')}",
+	name_hidden: "merchant_id",
+	value_hidden: "{echo input('param.merchant_id')}",
+});
+</script>
+</body>
+</html>

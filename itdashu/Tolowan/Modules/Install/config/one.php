@@ -1,0 +1,53 @@
+<?php
+$settings = array(
+    'formId' => 'adminInstallTest',
+    'form' => array(
+        'action' => staticUrl(),
+        'method' => 'get',
+        'ajax-submit' => '#main',
+        'accept-charset' => 'utf-8',
+        'role' => 'form',
+        'id' => 'adminInstallTest',
+    ),
+    'dbUser' => array(
+        'label' => '数据库用户名',
+        'userOptions' => array(),
+        'error' => '',
+        'description' => '',
+        'field' => 'string',
+        'widget' => 'Text',
+        'value' => 1,
+        'validate' => array(),
+        'attributes' => array(),
+        'required' => true,
+    ),
+    'dbPassword' => array(
+        'label' => '数据库密码',
+        'userOptions' => array(),
+        'error' => '',
+        'description' => '',
+        'field' => 'string',
+        'widget' => 'Password',
+        'value' => 1,
+        'validate' => array(),
+        'attributes' => array(),
+        'required' => true,
+    ),
+    'dbName' => array(
+        'label' => '数据库名',
+        'userOptions' => array(),
+        'error' => '',
+        'description' => '',
+        'field' => 'string',
+        'widget' => 'Text',
+        'value' => 1,
+        'validate' => array(),
+        'attributes' => array(),
+        'required' => true,
+    ),
+    'settings' => array(
+        'settings' => array(
+            'save' => '\Modules\Install\Library\Common::oneSave',
+        ),
+    ),
+);

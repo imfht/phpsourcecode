@@ -1,0 +1,236 @@
+<extend name="Public:base" />
+<block name="javascript">
+<script src="__PUBLIC__/ztree/jquery.ztree.all-3.5.min.js"></script>
+<link  rel="stylesheet" type="text/css" href="__PUBLIC__/ztree/zTreeStyle.css" />
+<link  rel="stylesheet" type="text/css" href="__PUBLIC__/ztree/demo.css" />	
+
+<script>
+$(function(){
+
+	
+	$('.J_SubmitPL').click(function(e){    	
+    	//$('#alert').css({'display':'none'});
+    	$("#dialog").css('display','none');
+		$('.ks-ext-mask').css('display','none');
+		
+    	var zTree = $.fn.zTree.getZTreeObj("category_tree"),
+		
+			nodes = zTree.getSelectedNodes(),
+			treeNode = nodes[0];
+			
+			if(treeNode!=undefined){
+				var isp= nodes[0].isParent;
+			}else{
+				var isp= true;
+			}
+			
+			
+			var id=(treeNode==undefined?0:treeNode.id);
+			
+			var url;
+			
+			if($("input[name='action']").val()=='add'){
+				url='{:U("GoodsCategory/add")}';
+			}else if($("input[name='action']").val()=='edit'){
+				url='{:U("GoodsCategory/edit")}';
+			}
+		
+			$.post(
+				url,
+				{					
+					'id':id,
+					'name':$("input[name='name']").val(),
+					'meta_keyword':$("input[name='meta_keyword']").val(),
+					'meta_description':$("textarea[name='meta_description']").val(),	
+					'sort_order':$("input[name='sort_order']").val()				
+				},
+				function(d){			
+					if($("input[name='action']").val()=='add'){						
+											
+						//有父节点
+				    	if(treeNode){
+				    		treeNode = zTree.addNodes(treeNode, {id:d.id, pId:id, isParent:isp, name:d.name});
+				    	}else{
+				    		treeNode = zTree.addNodes(treeNode, {id:d.id, pId:0, isParent:isp, name:d.name});
+				    	}	
+					}else{
+						
+						if(d.success){
+							nodes[0].name = d.name;
+							zTree.updateNode(nodes[0]);
+						}
+						if(d.err){
+							alert(d.err);
+						}
+						
+						
+					}
+					
+				}
+			);
+    	
+    });
+	
+});
+</script>
+
+<script>
+
+		var setting = {
+			view: {
+				addHoverDom: false,
+				removeHoverDom: false,
+				selectedMulti: false
+			},
+			edit: {
+				enable: true,
+				editNameSelectAll: true,
+				showRemoveBtn: false,
+				showRenameBtn: false
+			},
+			data: {
+				simpleData: {
+					enable: true
+				}
+			}
+		};
+
+	
+	var zNodes ={$list};
+	
+	function add(e) {
+
+		$("input[name='action']").val('add');
+		$('.title').find('span').text('新增分类');	
+		$("#dialog").css({'position' : 'fixed','display' : 'block', 'z-index' : '9999'});
+		
+	}
+	function edit() {
+			$("input[name='action']").val('edit');
+			
+			var zTree = $.fn.zTree.getZTreeObj("category_tree"),
+			nodes = zTree.getSelectedNodes(),
+			treeNode = nodes[0];
+			if (nodes.length == 0) {
+				alert("请先选择一个节点");
+				return;
+			}else{
+				var id=treeNode.id;
+				$.post(
+				'{:U("GoodsCategory/get_info")}',
+				{					
+					'id':id,
+					
+				},
+				function(d){			
+					$("input[name='name']").val(d.name);
+					$("input[name='meta_keyword']").val(d.meta_keyword);
+					$("input[name='sort_order']").val(d.sort_order);
+					$("textarea[name='meta_description']").val(d.meta_description);
+				}
+			);
+				$('.title').find('span').text('编辑分类');	
+				$("#dialog").css({'position' : 'fixed','display' : 'block', 'z-index' : '9999'});
+				
+				
+				
+			}
+	}
+	function remove(e) {
+		if(!confirm('确认要删除吗！！')){
+				return false;
+			}
+			
+			var zTree = $.fn.zTree.getZTreeObj("category_tree"),
+			nodes = zTree.getSelectedNodes(),
+			treeNode = nodes[0];
+			if (nodes.length == 0) {
+				alert("请先选择一个节点");
+				return;
+			}
+			$.post(
+				'{:U("GoodsCategory/del")}',
+				{					
+					'id':treeNode.id,					
+				},
+				function(d){			
+					if(d.err){
+						alert(d.err);
+					}else{						
+						zTree.removeNode(treeNode);
+					}
+					
+					
+				}
+			);
+	}
+	
+		$(document).ready(function(){
+			$.fn.zTree.init($("#category_tree"), setting, zNodes);
+			$("#addParent").bind("click", {isParent:true}, add);
+			$("#edit").bind("click", edit);
+			$("#remove").bind("click", remove);
+			
+			//关闭弹出层
+			$('#dialog').on('click','.ks-ext-close',function(){	
+			    $("#dialog").css('display','none');
+			    $('.ks-ext-mask').css('display','none');
+			    return false;
+			});
+			//关闭弹出层
+			$('#dialog').on('click','.J_Cancel',function(){	
+			    $("#dialog").css('display','none');
+			    $('.ks-ext-mask').css('display','none');
+			    return false;
+			});
+			
+			
+		});
+	
+</script>
+</block>
+
+<block name="content">
+	<link rel="stylesheet" href="__CSS__/dialog.css" />	
+	
+	
+	<div class="ks-ext-mask" style="position: fixed; left: 0px; top: 0px; width: 100%; height: 100%; z-index: 999; display:none"></div>
+	<div id="dialog" class="dialog" style="z-index: 9999; display:none">
+    <div class="ks-contentbox">
+      <div class="title"><span>新增分类</span><a class="ks-ext-close" href="javascript:void(0)">X</a></div>
+      <input type="hidden" name="action" value="" />	
+    	
+   
+        <dl>
+        	<dt>分类名称</dt>
+        	<dd><input type="text" name="name" class="text" /></dd>
+        	<dt>meta关键字</dt>
+        	<dd><input type="text" name="meta_keyword" class="text w400" /></dd>
+        	<dt>meta描述</dt>
+        	<dd><textarea name="meta_description" class="text h50 w400"></textarea></dd>
+        	<dt>排序</dt>
+        	<dd><input type="text" name="sort_order" class="text" /></dd>
+        </dl>
+        
+        
+        <div class="J_DefaultMessage"></div>
+        <div class="bottom">
+        	 <a href="javascript:void(0);" class="J_SubmitPL ncsc-btn ncsc-btn-green">确认</a> 
+        	 <a href="javascript:void(0);" class="J_Cancel ncsc-btn">取消</a> </div>
+      
+    </div>
+  </div>  
+	
+
+	<div class="page-header">
+	<a id="addParent" class="btn btn-primary">新增</a>
+	<a id="edit" class="btn btn-primary">编辑</a>
+	<a id="remove" class="btn btn-primary">删除</a>
+	</div>
+	
+	<div class="row">
+		<div id="category_tree" class="ztree"></div>
+	</div>
+	
+</block>
+

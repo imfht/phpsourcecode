@@ -1,0 +1,19 @@
+#!/bin/bash
+cd libs
+tar zxfv apc-with-php5.5.tar.gz
+cd apc-with-php5.5
+/server/php5.4/bin/phpize --with-php-config=/server/php5.4/bin/php-config
+./configure --with-php-config=/server/php5.4/bin/php-config
+make && make install
+cd ..
+rm -rf apc-with-php5.5
+if [ -f "/server/php5.4/lib/php/extensions/no-debug-non-zts-20100525/apc.so" ];then
+    echo "[apc]">/server/php5.4/etc/conf.d/apc.ini
+    echo "extension=apc.so">>/server/php5.4/etc/conf.d/apc.ini
+    echo "apc.mmap_file_mask=/tmp/apc.XXXXXX">>/server/php5.4/etc/conf.d/apc.ini
+    echo "apc.shm_size=128M">>/server/php5.4/etc/conf.d/apc.ini
+    echo "apc.ttl=3600">>/server/php5.4/etc/conf.d/apc.ini
+    echo "apc.user_ttl=3600">>/server/php5.4/etc/conf.d/apc.ini
+    /server/php5.4/bin/php -m
+fi
+echo "done."

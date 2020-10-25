@@ -1,0 +1,47 @@
+{php}
+	$myapp = \think\Db::name('app') -> column(true,'app_id');
+	$param = [
+		'type'	=>	'search',
+		'q'	=>	input('q'),
+	];
+	$res = \ebcms\Server::store('apps', $param);
+	if (!$res['code']) {
+		$error = $res['msg'];
+	}
+{/php}
+<div class="row">
+	{notempty name='error'}
+		<div class="col-md-12">
+			<div class="alert alert-danger">
+				<h1>发生错误：</h1>
+				<hr>
+				<p>{$error}</p>
+			</div>
+		</div>
+	{else/}
+		{foreach name='res.data' item='vo'}
+			<div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+				<div class="media store-list">
+					<a class="media-left" href="#">
+						<img src="{$vo.logo|thumb}" class="logo" alt="...">
+					</a>
+					<div class="media-body">
+						<h4 class="media-heading">
+							<span class="pull-right text-danger">¥<b>{$vo.price}</b></span>
+							<a href="{$vo.url_full}" target="_blank"><b>{$vo.title}</b></a>
+							{if condition="$vo['version_last']"}
+							<span class="small"><b class="text-muted">v{$vo.version_last|default="1.0.0"}</b></span>
+							{/if}
+						</h4>
+						<p>{$vo.description}</p>
+						{if	condition="isset($myapp[$vo['id']])"}
+							<button class="btn btn-primary btn-xs" disabled>已安装</button>
+						{elseif condition="$vo['version_last']"}
+							<button class="btn btn-primary btn-xs ebcms-go" url="{:url('preins',['app_id'=>$vo['id']])}">安装</button>
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/foreach}
+	{/notempty}
+</div>

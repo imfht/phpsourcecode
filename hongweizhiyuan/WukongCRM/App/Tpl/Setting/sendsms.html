@@ -1,0 +1,117 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px; ">
+		<ul class="nav nav-tabs">
+			<li class="active"><a href="{:U('setting/sendsms')}">{:L('SEND_SMS')}</a></li>
+			<li><a href="{:U('setting/smsrecord')}">{:L('SMS_RECORD')}</a></li>
+			<li><a href="{:U('setting/sendemail')}">{:L('SEND_EMAIL')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />	
+	<notempty name="contacts">
+		<?php $first = 0; ?>
+			<volist name="contacts" id="vo">
+				<if condition="!is_phone($vo['telephone'])">
+					<?php if($first==0){ $first = 1; }else{ $first = 2; } ?>
+					<if condition="$first == 1"><div class="alert alert-warning">{:L('INVALIDATE_NUMBER_HAVE_BEEN_FILTER')}<br/>{:L('DETAILS_SEE_BLOW')}:</if>
+					{$vo['telephone']|trim} &nbsp; {$vo['name']}[{:L('CUSTOMER')}:{$vo['customer_name']}]、	
+				</if>
+			</volist>
+			<if condition="$first != 0"></div></if>
+	</notempty>
+	<div class="row">
+		<div class="span12">
+			<h4>{:L('LEFT_SMS_COUNT')}: <if condition="$current_sms_num lt 100"><font color="red">{:L('CURRENT_SMS_NUM', array($current_sms_num))}  {:L('LEFT_SMS_COUNT_NOTIC')}</font><else />{:L('CURRENT_SMS_NUM', array($current_sms_num))}</if></h4>
+		</div>
+		<div>
+			<div class="span3 warning pull-left" style="background-color:#f5f5f5;">
+				<pre><h4>{:L('OPERATING_TIPS')}</h4>
+{:L('TIPS_ONE')}<span style="color:red">13166337788</span>
+{:L('TIPS_TWO')}
+   <span style="color:red"><br/>13166337788<br/>13166337799</span>
+{:L('TIPS_THREE')}<span style="color:red">{</span><span style="color:red">$name}</span>{:L('INSTEAD')}<span style="color:red">{:L('PHONE_FORMAT')}</span>:
+<span style="color:red">13166337788,{:L('ZHANGSAN')}<br/>13166337799,{:L('LISI')}</span>
+4、<span style="color:red">{:L('TIPS_FOUR')}</span>
+5、<span>{:L('TIPS_FIVE')}</span>
+6、<span>{:L('TIPS_SIX')}</span>
+7、<span>{:L('TIPS_SEVEN')}</span>
+				</pre>
+			</div>
+			<form  action="{:U('setting/sendsms')}" method="post">
+			<div class="pull-left">
+				<div class="pull-left" style="margin-left:30px;">
+					<div class="alert-info alert" style="margin:0px;width:220px;">{:L('INPUT_PHONE_NUMBER')}<br/>&nbsp;{:L('INPUT_NUMBER_TIP')}</div>
+					<div><textarea  name="phoneNum" style="min-height: 500px;width:260px;"><notempty name="contacts">
+						<volist name="contacts" id="vo">
+							<if condition="is_phone($vo['telephone'])">
+								{$vo['telephone']|trim},{$vo['name']},{$vo['customer_name']}<?php echo chr(10);?>
+							</if>
+						</volist>
+					</notempty></textarea></div>
+				</div>
+				<div class="pull-left" style="margin-left:30px;">
+					<p>
+						<select name="template" id="template" style="width:auto;font-size:12px;" onchange="changeContent()">
+							<option>{:L('SELECT_SMS_TPL')}</option>
+							<volist name="templateList" id="v">
+								<option value="{$v['template_id']}" rel="{$v['content']}">{$v['subject']}</option>
+							</volist>
+						</select>
+						<a href="{:U('sms/index')}" style="color:red;">{:L('SETTING')}</a>
+					</p>
+					<div class="alert-info alert" style="margin:0px;width:200px;">{:L('INPUT_SMS_CONTENT')}<br/>&nbsp;{:L('NOTIC')}:<span style="color:red">{:L('PLEASE_READ_OPERATING_TIPS')}!</span></div>
+					<div>
+					<textarea id="smsContent" name="smsContent" placeholder="{:L('INTPUT_CONTENT_HERE')}" style="height: 300px;width:240px;"></textarea>
+					<p>{:L('LEFT_CHARACTER')} <span id="contentCount" style="color:red;">55</span> {:L('LEFT_CHARACTER_TIPS')}</p>
+					<p>
+						<span id="selecttime" style="display:none;">{:L('SELECT_TIME')}<input type="text" id="sendtime" style="width:auto;" onClick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss'})" name="sendtime" class="Wdate"/></span> <br/>
+						<input type="submit" onclick="{:L('SENDING_TIPS')}" class="btn btn-primary" value="{:L('SEND')}"/> &nbsp; 
+						<input type="checkbox" name="settime" value="1" id="settime"/>{:L('REGULARLY_SENT')} &nbsp; <br/>
+					</p>
+					</div>
+				</div>
+			</div>
+			</form>
+			<div class="span3 warning  pull-left" style="background-color:#f5f5f5;">
+				<pre><h4>{:L('USE_INTRODUCE')}</h4>{:L('INTRODUCE')}
+				</pre>
+			</div>
+		</div>
+	</div> <!-- End #main-content -->
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+    $("#smsContent").keydown(function(){
+        var curLength=$("#smsContent").val().length;
+        if(curLength == 55){
+            alert("{:L('SEND_SPLIT_TIPS')}" );
+			$("#contentCount").hide();
+        }else if(curLength < 55){
+            $("#contentCount").html(55-$("#smsContent").val().length);
+			$("#contentCount").show();
+        }else{
+			$("#contentCount").hide();
+		}
+    })
+})
+$("#settime").click(
+	function() {
+		if ($("#settime").prop("checked")==true) {
+			$("#selecttime").show();
+		}else{
+			$("#selecttime").hide();
+		}
+	}	
+);
+
+function changeContent(){
+	var a = $('#template option:selected').attr('rel');
+	if(a){
+		$('#smsContent').html(a);
+	}else{
+		$('#smsContent').html('');
+	}
+	
+}
+</script>
+<include file="Public:footer" />	

@@ -1,0 +1,139 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>列表</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>用户列表</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> 用户列表</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    {:BTN(C_NAME.'/create','','新增','btn btn-primary btn-sm','fa-save')}
+                    {:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-sm delete-all','fa-trash','data-url="'.url(C_NAME.'/delete').'"')}
+                    {include file="public/search" /}
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover table-sort">
+                        <tr>
+                            <th width="35"><input type="checkbox" class="minimal checkbox-toggle"></th>
+                            <th>ID{:table_sort('id')}</th>
+                            <th>头像	</th>
+                            <th>用户名{:table_sort('username')}</th>
+                            <th>姓名{:table_sort('name')}</th>
+                            <th>邮箱{:table_sort('email')}</th>
+                            <th>手机号码{:table_sort('moblie')}</th>
+                            <th>登陆次数{:table_sort('logins')}</th>
+                            <th>状态{:table_sort('status')}</th>
+                            <th width="204">操作</th>
+                        </tr>
+                        {volist name="dataList" id="vo"}
+                        <tr>
+                            <td style="vertical-align:middle"><input type="checkbox" name="id[]" value="{$vo.id}" class="minimal"></td>
+                            <td style="vertical-align:middle">{$vo.id}</td>
+                            <td style="vertical-align:middle"><img src="{$vo->userInfo->avatar}" style="width:50px;border-radius:50%;" /></td>
+                            <td style="vertical-align:middle">
+                                {$vo.username}
+                                {volist name="vo.userGroup" id="vo2"}
+                                <span class="label" style="background:{$vo2.pic}">{$vo2.title}</span>
+                                {/volist}
+                            </td>
+                            <td style="vertical-align:middle">
+                            	<span class="editable" data-pk="{$vo.id}" data-name="name" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.name}</span>
+                            </td>
+                            <td style="vertical-align:middle">{$vo.email}</td>
+                            <td style="vertical-align:middle">{$vo.moblie}</td>
+                            <td style="vertical-align:middle">{$vo.logins}</td>
+                            <td style="vertical-align:middle">
+                            	<span class="editable2" data-type="select" data-pk="{$vo.id}" data-value="{$vo.status}" data-name="status" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{if condition=" $vo.status == 1 "}正常{else /}禁用{/if}</span>
+
+                            </td>
+                            <td style="vertical-align:middle">
+                            	{:BTN(C_NAME.'/authGroup','id='.$vo.id,'授权角色','btn btn-primary btn-xs','fa-edit')}
+                                {:BTN(C_NAME.'/edit','id='.$vo.id,'编辑','btn btn-primary btn-xs','fa-edit')}
+                            	{:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+                <div class="box-footer clearfix">
+                    {$dataList->render()|raw}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+        checkboxClass: 'icheckbox_minimal-blue',
+        radioClass: 'iradio_minimal-blue'
+    });
+
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $(".select2").select2({language:"zh-CN"});
+
+    /*全选-反选*/
+    $('.checkbox-toggle').on('ifChecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("check");
+    });
+    $('.checkbox-toggle').on('ifUnchecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("uncheck");
+    });
+
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            data['actions'] = 'actions';
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+    $('.editable2').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            data['actions'] = 'actions';
+            return data;
+        },
+        source: [
+              {value: 1, text: '正常'},
+              {value: 0, text: '禁用'}
+        ],
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

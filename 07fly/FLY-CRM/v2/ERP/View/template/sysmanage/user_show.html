@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5><i class="fa fa-home"></i>员工管理</h5>
+                    <div class="ibox-tools"><a href="?" class="btn btn-xs btn-danger"><i
+                            class="fa fa-refresh"></i>刷新</a></div>
+                </div>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="panel panel-default ">
+                                <div class="panel-heading">
+                                    <div class="row">
+                                        <div class="col-sm-6">部门管理</div>
+                                        <div class="col-sm-6 text-right"><a class="refresh-tree">刷新</a></div>
+                                    </div>
+                                </div>
+                                <div class="panel-body right_centent" style="">
+                                    <div id="left-tree"
+                                         data-url="#{$smarty.const.ACT}#/sysmanage/Dept/dept_tree_json/"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="ibox float-e-margins">
+                                <div class="ibox-content table-responsive">
+
+                                    <div class="row">
+                                        <form id="pagerForm" method="post" class="form-inline">
+											<input type="hidden" name="dept_id" value="">
+                                            <div class="col-sm-3 m-b-xs">
+                                                <a class="btn btn-info ajax-open add-btn"
+                                                   data-url="#{$smarty.const.ACT}#/sysmanage/User/user_add/"
+                                                   href="javascript:void(0)"><i class="fa fa-plus"></i>添加</a>
+                                            </div>
+                                            <div class="col-sm-9 m-b-xs text-right">
+                                                <div class="input-group pd-b-5">
+                                                    <input type="text" name="keywords" placeholder="输入主题关键字搜索"
+                                                           class="form-control">
+                                                </div>
+                                                <div class="input-group">
+                  <span class="input-group-btn">
+                  <button type="button" class="btn btn-primary ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                  </span></div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <table class="table table-hover sorttable 07fly-table" width="100%">
+                                        <thead>
+                                        <tr>
+                                            <th width="22"><input type="checkbox" group="ids" class="checkboxCtrl"></th>
+                                            <th width="120">帐号</th>
+                                            <th width="80">姓名</th>
+                                            <th width="60">性别</th>
+                                            <th width="120">手机</th>
+                                            <th width="120">QQ</th>
+                                            <th width="150">邮箱</th>
+                                            <th width="120">部门</th>
+                                            <th width="120">职务</th>
+                                            <th width="120">角色</th>
+                                            <th width="80">操作</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                        <tfoot class="ibox-content">
+                                        <tr>
+                                            <td colspan="11" align="center"></td>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script id="tableListTpl" type="text/html">
+    <% for(var i=0;i
+    <list.length;i++) { %>
+    <tr>
+        <td><input name="user_id" class="checkboxCtrlId" value="<%=list[i]['id']%>" type="checkbox"></td>
+        <td><%=list[i]['account']%></td>
+        <td><%=list[i]['name']%></td>
+        <td>
+            <% if(list[i]['gender']==1){%>男<%}else{%>女<%}%>
+        </td>
+        <td><%=list[i]['mobile']%></td>
+        <td><%=list[i]['qicq']%></td>
+        <td><%=list[i]['email']%></td>
+        <td><%=list[i]['dept_name']%></td>
+        <td><%=list[i]['position_name']%></td>
+        <td><%=list[i]['role_name']%></td>
+        <td>
+            <a href="javascript:void(0)" class="ajax-open" data-id="<%=list[i]['id']%>"
+               data-url="#{$smarty.const.ACT}#/sysmanage/User/user_modify/">修改</a>
+            <a href="javascript:void(0)" class="ajax-get" data-id="<%=list[i]['id']%>"
+               data-url="#{$smarty.const.ACT}#/sysmanage/User/user_del/">删除</a>
+        </td>
+    </tr>
+    <% } %>
+</script>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+<link href="#{$smarty.const.APP}#/View/template/js/plugins/bootstrap-treeview/bootstrap-treeview.min.css"
+      rel="stylesheet">
+<script src="#{$smarty.const.APP}#/View/template/js/plugins/bootstrap-treeview/bootstrap-treeview.js"></script>
+<script type="text/javascript">
+    var ajaxUrl = '#{$smarty.const.ACT}#/sysmanage/User/user_show_json/';
+    $(document).ready(function () {
+        window.onload = onLoad();
+
+        //页面加载
+        function onLoad() {
+            $('.searchForm').find("input[name='pid']").val('');
+            var target = $('#left-tree').attr('data-url');
+            $.get(target).success(function (jsonData) {
+                //渲染树
+                $('#left-tree').treeview({
+                    data: jsonData,
+                    levels: 3,
+                    showTags: false,//显示右边tags
+                    showCheckbox: false,//是否显示多选
+                    multiSelect: false,
+                    showBorder: false,
+                    onNodeSelected: function (event, node) {
+                        //设置新增时的父节点
+                        $('.form-inline').find("input[name='dept_id']").val(node.id);
+                        $('.add-btn').attr('data-id', node.id);
+                        turnPage(1);
+                    }
+                });
+            }, "json");
+            turnPage(1);//页面加载时初始化分页
+        }
+
+        //刷新加载-添加
+        $("body").on("click", ".refresh-tree", function () {
+            onLoad();
+            turnPage(1);
+        });
+
+        /*-----页面pannel内容区高度自适应 start-----*/
+        $(window).resize(function () {
+            setCenterHeight();
+        });
+        setCenterHeight();
+
+        function setCenterHeight() {
+            var height = $(window).height();
+            var centerHight = height - 240;
+            $(".right_centent").height(centerHight).css("overflow", "auto");
+        }
+
+        /*-----页面pannel内容区高度自适应 end-----*/
+    });
+
+
+</script>
+</body>
+
+<!-- Mirrored from www.upfine.cn/theme/hplus/table_basic.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:20:01 GMT -->
+</html>

@@ -1,0 +1,210 @@
+<extend name="./default/Base/userbase"/>
+<block name="style">
+<link href="__CSS__/avatar.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="__STATIC__/jcrop/jquery.Jcrop.css" media="all">
+<link rel="stylesheet" type="text/css" href="__STATIC__/uploadify/uploadify.css" media="all">
+
+</block>
+<block name="usermessage">
+
+<div data-url="{:U('Ucenter/doCropAvatar')}" method="post" id="pic" class="update-pic row">
+
+	<div class="upload-area col-lg-8 col-md-8">
+	<div class="file-tips">支持JPG,PNG,GIF，尺寸不小于256*256,真实高清头像更受欢迎！</div>
+	 <input type="file" id="user-pic">
+    <div class="preview hidden" id="preview-hidden"></div>
+	</div>
+
+	<div class="preview-area col-lg-2 col-md-2">
+	
+		<div class="tcrop">头像预览</div>
+		<div class="crop crop128"><img id="crop-preview-128" src="{$userinfo.avatar128}" alt=""></div>
+		<div class="crop crop64"><img id="crop-preview-64" src="{$userinfo.avatar64}" alt=""></div>
+
+		
+	</div>
+	<div class="row"><div class="col-lg-8 col-md-8 avatarbtn">
+	
+			
+		<a class="save-pic btn btn-primary" href="javascript:;">保存</a>
+		<a class="reupload-img  btn btn-default" href="javascript:$('#user-pic').uploadify('cancel','*');">重新上传</a>
+
+
+	</div></div>
+</div>
+</block>
+<block name="script">
+<script src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>
+<script src="__STATIC__/jcrop/jquery.Jcrop.js"></script>
+<script type="text/javascript"> 
+	$(function(){
+		//上传头像(uploadify插件)
+		 var crop;
+         var jcrop_api;
+		var url="{:U('Ucenter/doUploadAvatar')}";
+		var preview = $('.upload-area').children('#preview-hidden');
+		setTimeout(function(){
+		$("#user-pic").uploadify({
+			'queueSizeLimit' : 1,
+			'removeTimeout' : 0.5,
+			"fileObjName"     : "image",
+			'multi'    : false,
+			'swf' 			: _STATIC_+'/uploadify/uploadify.swf',
+			'uploader' 		: "{:U('Ucenter/doUploadAvatar',array('session_id'=>session_id()))}",
+			'buttonText' 	: '<i class="icon-picture"></i>上传头像',
+			'width' 		: '97',
+			'height' 		: '34',
+			'fileTypeExts'	: '*.jpg; *.png; *.gif;',
+			'onUploadSuccess' : function(file, data){
+				var data = $.parseJSON(data);
+				
+				
+				if(data['success'] == 0){
+					layer.statusinfo(data['message'],'error');
+					return;
+				}
+				
+				preview.show().removeClass('hidden');
+				//两个预览窗口赋值
+				$('.crop').children('img').attr('src',data['image']+'?random='+Math.random());
+
+				//绑定需要裁剪的图片
+				var img = $('<img />');
+				preview.append(img);
+				preview.children('img').attr('src',data['image']+'?random='+Math.random());
+				var crop_img = preview.children('img');
+				crop_img.attr('id',"cropbox").show();
+
+				
+				
+				var img = new Image();
+				img.src = data['image']+'?random='+Math.random();
+				var height=$('.upload-area').height();
+				var width=$('.upload-area').width();
+				//根据图片大小在画布里居中
+				img.onload = function(){
+					var img_height = 0;
+					var img_width = 0;
+		            var real_height = img.height;
+					var real_width = img.width;
+		           if(real_height > real_width && real_height > height){
+						var persent = real_height / height;
+						real_height = height;
+						real_width = real_width / persent;
+					}else if(real_width > real_height && real_width > width){
+						var persent = real_width / width;
+						real_width = width;
+						real_height = real_height / persent;
+					}
+
+					
+					if(real_height < height){
+						img_height = (height - real_height)/2;	
+					}
+					if(real_width < width){
+						img_width = (width - real_width)/2;
+					}
+					
+					preview.css({width:(width-img_width)+'px',height:(height-img_height)+'px'});
+					preview.css({paddingTop:img_height+'px',paddingLeft:img_width+'px',paddingRight:(width-img_width)+'px',paddingBottom:(height-img_height)+'px'});			
+				}
+				//裁剪插件
+				
+				//
+				$('#cropbox').Jcrop({
+		            bgColor:'#333',   //选区背景色
+		            bgFade:true,      //选区背景渐显
+		            fadeTime:1000,    //背景渐显时间
+		            allowSelect:true, //是否可以选区，
+		            allowResize:true, //是否可以调整选区大小
+		            aspectRatio: 1,     //约束比例
+		            minSize : [258,258],//可选最小大小
+		            boxWidth:width,
+		            boxHeight : height,	//画布高度
+		            onChange: showPreview,//改变时重置预览图
+		            onSelect: showPreview,//选择时重置预览图
+		            setSelect:[ 0, 0, 258, 258],//初始化时位置
+		            onSelect: updateCoordinate
+		            },function(){
+		            jcrop_api=this;
+		            crop=jcrop_api.tellScaled();
+		            });
+		        
+				
+				function updateCoordinate(c){	
+					 crop = c;
+		         }
+				//提交裁剪好的图片
+				$('.save-pic').click(function(){
+					
+					if($('#preview-hidden').html() == ''){
+						
+						layer.statusinfo('请先上传图片！', 'error');
+					}else{
+
+						var cropurl=$('#pic').data('url');
+
+						 var imageWidth = $('.jcrop-holder img').width();
+			            var imageHeight = $('.jcrop-holder img').height();
+			           var crop2 = crop.x  + ',' + crop.y  + ',' + crop.w  + ',' + crop.h ;
+			                
+			           $(this).attr('disabled','true');
+		                $.post(cropurl, {crop: crop2}, function (data) {
+			               
+		                	
+		                    if (data.success) {
+		                    	
+		                        layer.statusinfo(data.message, 'success',function(){location.reload()});
+		                        
+		                    } else {
+		                    	$(this).removeAttr('disabled');
+		                    	layer.statusinfo(data.message, 'error');
+		                        
+		                    	$('.reupload-img').click();
+		                        
+		                    }
+		                });
+						
+						
+					}
+				});
+				
+				//重新上传,清空裁剪参数
+				var i = 0;
+				$('.reupload-img').click(function(){
+					$('#preview-hidden').find('*').remove();
+					$('#preview-hidden').hide().addClass('hidden').css({'padding-top':0,'padding-left':0});
+				});
+		     }
+		});
+		},3);
+		
+		
+		//预览图
+		function showPreview(coords){
+			
+			
+			var img_width = $('#cropbox').width();
+			var img_height = $('#cropbox').height();
+			  //根据包裹的容器宽高,设置被除数
+			  var rx = 128 / coords.w;
+			  var ry = 128 / coords.h; 
+			  $('#crop-preview-128').css({
+			    width: Math.round(rx * img_width) + 'px',
+			    height: Math.round(ry * img_height) + 'px',
+			    marginLeft: '-' + Math.round(rx * coords.x) + 'px',
+			    marginTop: '-' + Math.round(ry * coords.y) + 'px'
+			  });
+			  rx = 64 / coords.w;
+			  ry = 64 / coords.h;
+			  $('#crop-preview-64').css({
+			    width: Math.round(rx * img_width) + 'px',
+			    height: Math.round(ry * img_height) + 'px',
+			    marginLeft: '-' + Math.round(rx * coords.x) + 'px',
+			    marginTop: '-' + Math.round(ry * coords.y) + 'px'
+			  });
+		}
+	})
+	
+</script>
+</block>

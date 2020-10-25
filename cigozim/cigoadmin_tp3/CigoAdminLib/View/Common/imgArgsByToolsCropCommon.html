@@ -1,0 +1,335 @@
+<extend name="CigoAdminLib@Common:pageContent"/>
+<block name="head-bottom">
+	<style type="text/css">
+		body {
+			padding: 10px 15px;
+		}
+	</style>
+</block>
+<block name="title-tool-bar"></block>
+
+<block name="content">
+	<div id="form" style="max-height: 410px;overflow-y: scroll;margin-bottom: 10px;">
+	</div>
+
+	<div class="form-group btn-group pull-right">
+		<a id="uploadBtn" class="btn btn-success btn-default" href="#" onclick="return false;">
+			上&nbsp;&nbsp;传
+		</a>
+		<a id="cancelBtn" class="btn btn-warning btn-default" href="#" onclick="return false;">
+			取&nbsp;&nbsp;消
+		</a>
+	</div>
+</block>
+
+<block name="js-footer">
+	<script type="text/javascript">
+		var layerUiId = '';
+		var layerIndex = -1;//当前layer索引
+		var pImgUploadConfigBindView; //父界面图片上传配置参数绑定控件
+		var imgUploadConfig;
+		var notifyUploadCallbackFunc;//回调通知上传函数
+
+		$(function () {
+			initEvents();
+		});
+
+		function initEvents() {
+			$('#cancelBtn').click(function () {
+				parent.cigoLayer.close(layerIndex);
+				return false;
+			});
+			$('#uploadBtn').click(function () {
+				if (!makeImgUploadConfig()) {
+					return false;
+				}
+				notifyUploadCallbackFunc();
+				parent.cigoLayer.close(layerIndex);
+
+				return false;
+			});
+		}
+
+		function makeImgUploadConfig() {
+			//根据配置初始化界面
+			if ('crop' in imgUploadConfig) {
+				if (!makeImgUploadCropConfig()) {
+					return false;
+				}
+			}
+			if ('water' in imgUploadConfig) {
+				if (!makeImgUploadWaterConfig()) {
+					return false;
+				}
+			}
+			if ('text' in imgUploadConfig) {
+				if (!makeImgUploadTextConfig()) {
+					return false;
+				}
+			}
+
+			//绑定并保存新配置数据
+			if ('crop' in imgUploadConfig) {
+				pImgUploadConfigBindView.attr('cigo-edit-img-crop-config', JSON.stringify(imgUploadConfig.crop));
+			} else {
+				pImgUploadConfigBindView.removeAttr('cigo-edit-img-ctrltype-crop');
+				pImgUploadConfigBindView.removeAttr('cigo-edit-img-crop-config');
+			}
+			if ('water' in imgUploadConfig) {
+				pImgUploadConfigBindView.attr('cigo-edit-img-water-config', JSON.stringify(imgUploadConfig.water));
+			} else {
+				pImgUploadConfigBindView.removeAttr('cigo-edit-img-ctrltype-water');
+				pImgUploadConfigBindView.removeAttr('cigo-edit-img-water-config');
+			}
+			if ('text' in imgUploadConfig) {
+				pImgUploadConfigBindView.attr('cigo-edit-img-text-config', JSON.stringify(imgUploadConfig.text));
+			} else {
+				pImgUploadConfigBindView.removeAttr('cigo-edit-img-ctrltype-text');
+				pImgUploadConfigBindView.removeAttr('cigo-edit-img-text-config');
+			}
+
+			return true;
+		}
+
+		function makeImgUploadCropConfig() {
+			//获取配置参数
+			var jcropSize = $('#previewImg').attr('jcropSize');
+			jcropSize = eval('(' + jcropSize + ')');
+			//检查必填项目
+			if (
+				(!('w' in jcropSize) || '' === jcropSize.w) ||
+				(!('h' in jcropSize) || '' === jcropSize.h) ||
+				(!('x' in jcropSize) || '' === jcropSize.x) ||
+				(!('y' in jcropSize) || '' === jcropSize.y)
+			) {
+				cigoLayer.msg('参数（截图宽度、截图高度、起点x坐标、起点y坐标）不能为空！', {icon: 5});
+				return false;
+			}
+			//修改上传配置参数
+			imgUploadConfig.crop.ctrlTypeFlag = 'crop';
+			imgUploadConfig.crop.w = jcropSize.w;
+			imgUploadConfig.crop.h = jcropSize.h;
+			imgUploadConfig.crop.x = jcropSize.x;
+			imgUploadConfig.crop.y = jcropSize.y;
+			return true;
+		}
+
+		function makeImgUploadWaterConfig() {
+			//获取配置参数
+			var configNode = $('#water');
+			var alpha = configNode.find('input[name="alpha"]:first').val();
+			var locate = configNode.find('select[name="locate"]:first').select2('data');
+			//修改上传配置参数
+			imgUploadConfig.water.ctrlTypeFlag = 'water';
+			(undefined !== alpha && '' !== alpha)
+				? imgUploadConfig.water.alpha = alpha
+				: delete imgUploadConfig.text.alpha;
+			(undefined !== locate && '' !== locate && locate.length > 0)
+				? imgUploadConfig.water.locate = locate[0].id
+				: delete imgUploadConfig.text.locate;
+
+			return true;
+		}
+
+		function makeImgUploadTextConfig() {
+			//获取配置参数
+			var configNode = $('#text');
+			var text = configNode.find('input[name="text"]:first').val();
+			var locate = configNode.find('select[name="locate"]:first').select2('data');
+			var size = configNode.find('input[name="size"]:first').val();
+			var color = configNode.find('input[name="color"]:first').val();
+			var offset = configNode.find('input[name="offset"]:first').val();
+			var angle = configNode.find('input[name="angle"]:first').val();
+			//修改上传配置参数
+			imgUploadConfig.text.ctrlTypeFlag = 'text';
+			(undefined !== text && '' !== text)
+				? imgUploadConfig.text.text = text
+				: delete imgUploadConfig.text.text;
+			(undefined !== locate && '' !== locate && locate.length > 0)
+				? imgUploadConfig.text.locate = locate[0].id
+				: delete imgUploadConfig.text.locate;
+			(undefined !== size && '' !== size)
+				? imgUploadConfig.text.size = size
+				: delete imgUploadConfig.text.size;
+			(undefined !== color && '' !== color)
+				? imgUploadConfig.text.color = color
+				: delete imgUploadConfig.text.color;
+			(undefined !== offset && '' !== offset)
+				? imgUploadConfig.text.offset = offset
+				: delete imgUploadConfig.text.offset;
+			(undefined !== angle && '' !== angle)
+				? imgUploadConfig.text.angle = angle
+				: delete imgUploadConfig.text.angle;
+
+			return true;
+		}
+
+		function initData(layerId, index, bindConfigView, upArgs, initDataCallbackFunc, uploadCallbackFunc) {
+			layerUiId = layerId;
+			layerIndex = index;
+			pImgUploadConfigBindView = bindConfigView;
+			imgUploadConfig = upArgs;
+			notifyUploadCallbackFunc = uploadCallbackFunc;
+
+			createConfigView(); //创建界面
+			initDataCallbackFunc();//通知界面创建完成
+		}
+
+		function resizeLayer() {
+			parent.cigoLayer.iframeAuto(layerIndex);
+			var node = $('#' + layerUiId, window.parent.document);
+			node.height(node.height() + 23);
+			parent.windowResize();
+		}
+
+		function createConfigView() {
+			//清空配置区域
+			$('#form').empty();
+			//根据配置初始化界面
+			('crop' in imgUploadConfig) ? createCropConfigView() : false;
+			('water' in imgUploadConfig) ? createWaterConfigView() : false;
+			('text' in imgUploadConfig) ? createTextConfigView() : false;
+			//判断是否无配置项
+			if ('' === $('#form').html()) {
+				$('#form').html(
+					'<div class="alert alert-warning" role="alert">未设置图片操作项！</div>'
+				);
+			} else {
+				cigoEditInit($('#form'));
+			}
+		}
+
+		function createCropConfigView() {
+			$('#form').append(
+				'<div id="crop" class="panel panel-primary">' +
+				'   <div class="panel-heading">截图配置</div>' +
+				'   <div class="panel-body">' +
+				'       <div id="previewImgWapper"></div>' +
+				'   </div>' +
+				'</div>'
+			);
+		}
+
+		function initJcrop(imgSrc, imgW, imgH) {
+			var jcropSize = {};
+			//加载待截图上传本地图片
+			$('#previewImgWapper').empty();
+			$('#previewImgWapper').html('<img id="previewImg" src="' + imgSrc + '" style="max-height: 200px;max-width: 300px;" />');
+			//绑定截图尺寸监听
+			$('#previewImgWapper').unbind('cropmove cropend');
+			$('#previewImgWapper').on('cropmove cropend', function (e, s, c) {
+				jcropSize.x = parseInt(c.x);
+				jcropSize.y = parseInt(c.y);
+				jcropSize.w = parseInt(c.w);
+				jcropSize.h = parseInt(c.h);
+				//记录截图数据
+				$('#previewImg').attr('jcropSize', JSON.stringify(jcropSize));
+			});
+			//判断是否等比例截图
+			if (
+				('cropWidth' in imgUploadConfig.crop) && ('' !== imgUploadConfig.crop.cropWidth) &&
+				('cropHeight' in imgUploadConfig.crop) && ('' !== imgUploadConfig.crop.cropHeight)
+			) {
+				/******************* 等比例截图 *************************/
+				var cropRatio = imgUploadConfig.crop.cropWidth / imgUploadConfig.crop.cropHeight;
+				var cropW = imgW;
+				var cropH = Math.round(cropW / cropRatio);
+				//截取高度超出图片高度,重新计算截取尺寸
+				if (cropH > imgH) {
+					cropH = imgH;
+					cropW = Math.round(imgH * cropRatio);
+				}
+				var startX = parseInt((imgW - cropW) / 2);
+				var startY = parseInt((imgH - cropH) / 2);
+				$('#previewImg').Jcrop({
+					setSelect: [startX, startY, cropW, cropH],
+					aspectRatio: cropRatio,
+					boxWidth: $('#previewImgWapper').width(),
+					boxHeight: 260
+				});
+			} else {
+				/******************* 自由尺寸截图 *************************/
+				$('#previewImg').Jcrop({
+					setSelect: [0, 0, imgW / 4, imgH / 4],
+					boxWidth: $('#previewImgWapper').width(),
+					boxHeight: 260
+				});
+			}
+			//重置当前Leyer尺寸
+			resizeLayer();
+		}
+
+		function createWaterConfigView() {
+			$('#form').append(
+				'<div id="water" class="panel panel-primary">' +
+				'   <div class="panel-heading">图片水印配置</div>' +
+				'   <div class="panel-body">' +
+				'       <div class="form-group cigo-edit item-input pull-left" style="width: 50%;" cigo-edit-label="透明度" cigo-edit-type="text" ' +
+				'           cigo-edit-class="form-control" cigo-edit-style="width:90%;" ' +
+				'           cigo-edit-value="' + ((('alpha' in imgUploadConfig.water) && ('' !== imgUploadConfig.water.alpha)) ? imgUploadConfig.water.alpha : '') + '" ' +
+				'           cigo-edit-name="alpha" cigo-edit-placeholder="不填为非透明..."></div>' +
+				'       <div class="cigo-edit item-select pull-left" style="width: 50%; margin-top: 28px;" cigo-edit-label="水印位置" ' +
+				'           cigo-edit-name="locate" cigo-edit-data-select-options=' + makeWaterLocateList() + ' cigo-edit-select-width="200" ' +
+				'           cigo-edit-value="' + ((('locate' in imgUploadConfig.water) && ('' !== imgUploadConfig.water.locate)) ? imgUploadConfig.water.locate : '1') + '" ' +
+				'           cigo-edit-fun-createitem="selectItemWaterLocate"></div>' +
+				'   </div>' +
+				'</div>'
+			);
+		}
+
+		function makeWaterLocateList() {
+			var configList = [
+				{"id": 1, "text": "标识左上角水印", "tip": "IMAGE_WATER_NORTHWEST：标识左上角水印"},
+				{"id": 2, "text": "标识上居中水印", "tip": "IMAGE_WATER_NORTH：标识上居中水印"},
+				{"id": 3, "text": "标识右上角水印", "tip": "IMAGE_WATER_NORTHEAST：标识右上角水印"},
+				{"id": 4, "text": "标识左居中水印", "tip": "IMAGE_WATER_WEST：标识左居中水印"},
+				{"id": 5, "text": "标识居中水印", "tip": "IMAGE_WATER_CENTER：标识居中水印"},
+				{"id": 6, "text": "标识右居中水印", "tip": "IMAGE_WATER_EAST：标识右居中水印"},
+				{"id": 7, "text": "标识左下角水印", "tip": "IMAGE_WATER_SOUTHWEST：标识左下角水印"},
+				{"id": 8, "text": "标识下居中水印", "tip": "IMAGE_WATER_SOUTH：标识下居中水印"},
+				{"id": 9, "text": "标识右下角水印", "tip": "IMAGE_WATER_SOUTHEAST：标识右下角水印"}
+			];
+			return JSON.stringify(configList);
+		}
+
+		function selectItemWaterLocate(item) {
+			return $(
+				'<span title="' + item.tip + '">' + item.text + '</span>'
+			);
+		}
+
+		function createTextConfigView() {
+			$('#form').append(
+				'<div id="text" class="panel panel-primary">' +
+				'   <div class="panel-heading">文字水印配置</div>' +
+				'   <div class="panel-body">' +
+				'       <div class="form-group cigo-edit item-input pull-left" style="width: 50%;" cigo-edit-label="水印文字" cigo-edit-type="text" ' +
+				'           cigo-edit-class="form-control" cigo-edit-style="width:90%;" ' +
+				'           cigo-edit-value="' + ((('text' in imgUploadConfig.text) && ('' !== imgUploadConfig.text.text)) ? imgUploadConfig.text.text : '') + '" ' +
+				'           cigo-edit-name="text" cigo-edit-placeholder="不填将显示系统默认配置水印文字..."></div>' +
+				'       <div class="cigo-edit item-select pull-left" style="width: 50%;clear: right; margin-top: 28px;" cigo-edit-label="水印位置" ' +
+				'           cigo-edit-name="locate" cigo-edit-data-select-options=' + makeWaterLocateList() + ' cigo-edit-select-width="200" ' +
+				'           cigo-edit-value="' + ((('locate' in imgUploadConfig.text) && ('' !== imgUploadConfig.text.locate)) ? imgUploadConfig.text.locate : '1') + '" ' +
+				'           cigo-edit-fun-createitem="selectItemWaterLocate"></div>' +
+				'       <div class="form-group cigo-edit item-input pull-left" style="width: 25%;clear: left;" cigo-edit-label="字体大小" cigo-edit-type="text" ' +
+				'           cigo-edit-class="form-control" cigo-edit-style="width:90%;" ' +
+				'           cigo-edit-value="' + ((('size' in imgUploadConfig.text) && ('' !== imgUploadConfig.text.size)) ? imgUploadConfig.text.size : '') + '" ' +
+				'           cigo-edit-name="size" cigo-edit-placeholder="请输入字体大小..."></div>' +
+				'       <div class="form-group cigo-edit item-input pull-left" style="width: 25%;" cigo-edit-label="字体颜色" cigo-edit-type="text" ' +
+				'           cigo-edit-class="form-control" cigo-edit-style="width:90%;" ' +
+				'           cigo-edit-value="' + ((('color' in imgUploadConfig.text) && ('' !== imgUploadConfig.text.color)) ? imgUploadConfig.text.color : '') + '" ' +
+				'           cigo-edit-name="color" cigo-edit-placeholder="请输入字体颜色..."></div>' +
+				'       <div class="form-group cigo-edit item-input pull-left" style="width: 25%;" cigo-edit-label="水印位移" cigo-edit-type="text" ' +
+				'           cigo-edit-class="form-control" cigo-edit-style="width:90%;" ' +
+				'           cigo-edit-value="' + ((('offset' in imgUploadConfig.text) && ('' !== imgUploadConfig.text.offset)) ? imgUploadConfig.text.offset : '') + '" ' +
+				'           cigo-edit-name="offset" cigo-edit-placeholder="请输入水印相对位移..."></div>' +
+				'       <div class="form-group cigo-edit item-input pull-left" style="width: 25%;" cigo-edit-label="倾斜角度" cigo-edit-type="text" ' +
+				'           cigo-edit-class="form-control" cigo-edit-style="width:90%;" ' +
+				'           cigo-edit-value="' + ((('angle' in imgUploadConfig.text) && ('' !== imgUploadConfig.text.angle)) ? imgUploadConfig.text.angle : '') + '" ' +
+				'           cigo-edit-name="angle" cigo-edit-placeholder="请输入倾斜角度..."></div>' +
+				'   </div>' +
+				'</div>'
+			);
+		}
+	</script>
+</block>

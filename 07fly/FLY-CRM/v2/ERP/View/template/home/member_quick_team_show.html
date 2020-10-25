@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>团队佣金</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body>
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>团队佣金</h1>
+  <span class="iconfont-header icon-shendufenxi"></span>
+</header>
+<div class="hui-center-title" style="margin-top:30px;"></div>
+ <div id="refreshContainer" class="hui-refresh">
+  <div class="hui-refresh-icon"></div>
+  <div class="hui-refresh-content dist-team-order-list">
+   <ul id="list">
+   </ul>
+  </div>
+ </div>	
+<input type="hidden" id="name" name="name" value="#{$name}#">
+<input type="hidden" id="area_id" name="area_id" value="#{$area_id}#">
+<input type="hidden" id="price_order" name="price_order" value="#{$price_order}#">
+<input type="hidden" id="star_val" name="star_val" value="#{$star_val}#">
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui.js" type="text/javascript" charset="utf-8"></script>
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui-refresh-load-more.js" type="text/javascript"></script> 
+<script type="text/javascript" charset="utf-8" >
+
+//加载列表
+var page = 1;
+hui.refresh('#refreshContainer', refresh);
+hui.loadMore(getMore);
+//加载更多
+function getMore(){
+	//请求数据
+	var name 	   = hui('#name').val();
+	var area_id 	= hui('#area_id').val();
+	var price_order = hui('#price_order').val();
+	var star_val 	= hui('#star_val').val();
+	hui.ajax({
+		type : 'POST',
+		url : '#{$smarty.const.ACT}#/home/WxMemberQuickTeam/member_quick_team_json/',
+		data : {pageNum:page},
+		backType:'json',
+		beforeSend : function(){hui.loading();},
+		complete : function(){hui.closeLoading();},
+		success : function(data){
+			if(data.code=='sucess'){
+            //判断加载完毕
+            if(data.list == 'null'){
+                hui.endLoadMore(true, '已经到头了...');
+                return false;
+            }
+				
+            for(var i = 0; i < data.list.length; i++){
+					   var htmltxt='';
+                var li = document.createElement('li');
+						htmltxt		+=    '<div class="ord">订单号：'+data.list[i]['ordernumber']+'<span class="sta">'+data.list[i]['ifpay_name']+'<span></div>';
+						htmltxt		+=    '<div class="hui-row txt">';
+						htmltxt		+=      '<div class="hui-col-2 img"><img src="'+data.list[i]['img1']+'" /></div>';
+						htmltxt		+=      '<div class="hui-col-7">'+data.list[i]['product_name']+'</div>';
+						htmltxt		+=      '<div class="hui-col-3 hui-tr">￥'+data.list[i]['balance']+'<br>'+data.list[i]['member_rate']+'个订单</div>';
+						htmltxt		+=    '</div>';
+						htmltxt		+=    ' <div class="tot">';
+						htmltxt		+=  		'<span class="hui-fl">'+data.list[i]['adt']+'</span><span class="hui-fr">订单返佣金：￥'+data.list[i]['balance_dist']+'</span>';
+						htmltxt		+=    '</div>';
+						li.innerHTML= htmltxt;
+                hui(li).appendTo('#list');
+            }
+			}else{
+				hui.upToast(data.message);
+			}
+			page++;
+        hui.endLoadMore();
+		},
+		error : function(e){
+			console.log(JSON.stringify(e));
+			hui.iconToast('读取消息失败', 'warn');
+		}
+	});
+}
+//下拉刷新
+function refresh(){
+   hui.loading('加载中...');
+	
+	var name 	  	= hui('#name').val();
+	var area_id 	= hui('#area_id').val();
+	var price_order	= hui('#price_order').val();
+	var star_val 	= hui('#star_val').val();
+	
+	//请求数据
+	hui.ajax({
+		type : 'POST',
+		url : '#{$smarty.const.ACT}#/home/WxMemberQuickTeam/member_quick_team_json/',
+		data : {pageNum:1},
+		backType:'json',
+		beforeSend : function(){hui.loading();},
+		complete : function(){hui.closeLoading();},
+		success : function(data){
+			if(data.code=='sucess'){
+            //判断加载完毕
+            if(data.list == 'null'){
+                hui.endLoadMore(true, '已经到头了...');
+                return false;
+            }
+				 var htmltxt='';
+            for(var i = 0; i < data.list.length; i++){ 
+                var li = document.createElement('li');
+						htmltxt		+= '<li>';
+						htmltxt		+=    '<div class="hui-row txt">';
+						htmltxt		+=      '<div class="hui-col-2 img">'+data.list[i]['descendant_one']['photo_img']+'</div>';
+						htmltxt		+=      '<div class="hui-col-5">'+data.list[i]['descendant_one']['account']+'（'+data.list[i]['descendant_one']['type_name']+')<br>团队数:( '+data.list[i]['descendant_cnt']+' )</div>';
+						htmltxt		+=      '<div class="hui-col-5 hui-tr">消费:'+data.list[i]['descendant_money']+ '元<br>'+data.list[i]['descendant_order']+'个订单</div>';
+						htmltxt		+=    '</div>';
+						htmltxt		+=    ' <div class="tot">';
+						htmltxt		+=  		'<span class="hui-fr"><span class="hui-fr">注册时间:'+data.list[i]['descendant_one']['adt']+'</span>';
+						htmltxt		+=    '</div>';
+						htmltxt		+= '</li>';
+            }
+				 page = 2;
+				 hui('#list').html(htmltxt);
+			}else{
+				hui.upToast(data.message);
+			}
+			//结束刷新
+			hui.endRefresh();
+			//重置加载更多状态
+			hui.resetLoadMore();
+		},
+		error : function(e){
+			console.log(JSON.stringify(e));
+			hui.iconToast('读取消息失败', 'warn');
+		}
+	});
+}
+</script>
+</body>
+</html>

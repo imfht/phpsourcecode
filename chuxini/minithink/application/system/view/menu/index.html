@@ -1,0 +1,159 @@
+{extend name="base@:style" /}
+{block name="body"}
+<div class="container-fluid larry-wrapper">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+
+            <!--列表-->
+            <section class="panel panel-padding">
+                <div class="group-button">
+
+                    <button class="layui-btn layui-btn-small modal-catch"
+                            data-params='{"content": ".add-subcat", "title": "添加菜单","type":"1","area":"500px","data":"id=0"}'>
+                        <i class="iconfont">&#xe649;</i> 添加
+                    </button>
+
+                    <button class="layui-btn layui-btn-small layui-btn-danger ajax-all" data-name="checkbox"
+                            data-params='{"url": "allDelete","data":"model=Menu"}'>
+                        <i class="iconfont">&#xe626;</i> 删除
+                    </button>
+
+                </div>
+                <div id="list" class="layui-form"></div>
+
+                <div class="text-right" id="page"></div>
+            </section>
+        </div>
+    </div>
+</div>
+<div class="add-subcat">
+    <form id="form1" class="layui-form layui-form-pane" action="save">
+        <div class="layui-form-item">
+            <label class="layui-form-label">所属模块</label>
+            <div class="layui-input-block">
+                <input type="text" name="module" {neq name="pid" value="0"} readonly {/neq} {eq name="pid" value="0"}required jq-verify="required" jq-error="模块名不能为空" placeholder="请输入模块名(英文)" {/eq} value="{$module_info.module}" autocomplete="off"
+                       class="layui-input ">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">所属菜单</label>
+            <div class="layui-input-block">
+                <input type="text" name="menu" readonly value="{$module_info.name}"  autocomplete="off"
+                       class="layui-input ">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">菜单标题</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" required jq-verify="required" jq-error="标题不能为空" placeholder="请输入菜单标题"
+                       autocomplete="off" class="layui-input ">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">菜单图标</label>
+            <div class="layui-input-inline">
+                <input type="text" name="iconfont" placeholder="请输入菜单图标" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-form-mid layui-word-aux"><a target="_blank" href="demo_unicode">内置图标一览</a>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Url</label>
+            <div class="layui-input-block">
+                <input type="text" name="link" placeholder="请输入能被url函数解析的url，顶级菜单为空" autocomplete="off"
+                       class="layui-input ">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">排序</label>
+            <div class="layui-input-inline">
+                <input type="text" name="orders" required jq-verify="number" value="99" jq-error="只有数字才能排序"
+                       placeholder="数字越小越排在前面" autocomplete="off" class="layui-input ">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-inline">
+                <input type="radio" name="state" title="显示" value="1" checked/>
+                <input type="radio" name="state" title="隐藏" value="0"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">开发者</label>
+            <div class="layui-input-inline">
+                <input type="radio" name="is_dev" title="是" value="1" checked/>
+                <input type="radio" name="is_dev" title="否" value="0"/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" jq-submit jq-filter="submit">立即提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+        <input type="hidden" name="id" value="0"/>
+        <input type="hidden" name="pid" value="{$pid}"/>
+    </form>
+</div>
+{/block}
+
+{block name="each"}
+<script id="list-tpl" type="text/html" data-params='{"url":"{:url("system/menu/getmenus")}","data":"pid={$pid}","dataName":"menuCatData","pageid":"#page"}'>
+    <table id="example" class="layui-table lay-even" data-name="menuCatData" data-tplid="list-tpl">
+        <thead>
+        <tr>
+            <th width="30"><input type="checkbox" id="checkall" data-name="checkbox" lay-filter="check"
+                                  lay-skin="primary"></th>
+            <th width="60">序号</th>
+            <th width="240">菜单标题</th>
+            <th width="100">所属模块</th>
+            <th width="240">url</th>
+            <th width="100">排序</th>
+            <th width="150">状态</th>
+            <th width="150">开发者模式</th>
+            <th width="250">创建时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{# layui.each(d.list, function(index, item){ }}
+        <tr>
+            <td><input type="checkbox" name="checkbox" value="{{ item.id}}" lay-skin="primary"></td>
+            <td>{{ item.id}}</td>
+            <td><i class="iconfont">{{ item.iconfont}}</i> <a href="?pid={{item.id}}">{{ item.name}}</a></td>
+            <td>{{ item.module}}</td>
+            <td>{{ item.link}}</td>
+            <td><input type="text" class="layui-input ajax-blur" name="orders" value="{{ item.orders}}"
+                       data-params='{"url":"changeOrder","data":"model=Menu&id={{ item.id}}"}'></td>
+            <td><input type="checkbox" name="state" lay-skin="switch" lay-text="ON|OFF" {{#if (item.state){
+                       }}checked="checked" {{# } }} lay-filter="ajax"
+                       data-params='{"url":"changeState","data":"model=Menu&id={{item.id}}"}'></td>
+            <td><input type="checkbox" name="is_dev" lay-skin="switch" lay-text="ON|OFF" {{#if (item.is_dev){
+                       }}checked="checked" {{# } }} lay-filter="ajax"
+                       data-params='{"url":"changeDev","data":"id={{item.id}}"}'></td>
+            <td>{{ item.create_time}}</td>
+            <td>
+                <button class="layui-btn layui-btn-mini modal-catch"
+                        data-params='{"content": ".add-subcat","area":"500px","title":"编辑 {{ item.name}}","key":"id={{ item.id}}","type":"1"}'>
+                    <i class="iconfont">&#xe653;</i>编辑
+                </button>
+                <button class="layui-btn layui-btn-mini layui-btn-danger ajax"
+                        data-params='{"url": "forceDelete","confirm":"true","data":"model=Menu&id={{item.id}}"}'>
+                    <i class="iconfont">&#xe626;</i>删除
+                </button>
+            </td>
+
+        </tr>
+        {{# }); }}
+        </tbody>
+
+    </table>
+</script>
+{/block}
+
+{block name="js"}
+<script>
+    layui.use('list');
+</script>
+{/block}

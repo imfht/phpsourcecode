@@ -1,0 +1,106 @@
+
+<!-- 引入基类模板 -->
+<extend name="Public:base" />
+
+<!-- 主体部分 -->
+<block name='content'> 
+
+	<!-- 功能操作区一 -->
+	<div class="layui-form toolbar">
+       <div class="layui-form-item">
+            <div class="layui-inline">
+                <div class="layui-input-inline" style="width: auto;">
+					<button class="layui-btn layui-btn-normal" id="expand"><i class="larry-icon">&#xe8c0;</i> 全部展开</button>
+			    	<button class="layui-btn layui-btn-warm" id="collapse"><i class="larry-icon">&#xe8c1;</i> 全部收起</button>
+					{:W('funcNode/btnAdd',array(添加菜单))}
+               </div>
+           </div>
+       </div>
+	</div>
+
+	<!-- TREE渲染区 -->
+	<!-- <div id="treeList" lay-filter="treeList" ></div>-->
+	
+	<table id="auth-table" class="layui-table" lay-filter="auth-table"></table>
+	
+	<!-- 操作功能区二 -->
+	<script type="text/html" id="toolBar">
+		{:W('funcNode/btnEdit',array(编辑))}
+		{:W('funcNode/btnDel',array(删除))}
+		{:W('funcNode/btnAdd2',array(添加))}
+	</script>
+
+<link rel="stylesheet" type="text/css" href="/Public/Admin/lib/extend/treetable/treetable.css">
+	<script>
+	
+	layui.config({
+		base: '/Public/Admin/' //静态资源所在路径
+	}).extend({
+		treetable: 'extend/treetable/treetable',
+	}).use(['form','table', 'treetable'], function () {
+        var $ = layui.jquery;
+        var form = layui.form;
+        var table = layui.table;
+        var treetable = layui.treetable;
+
+        form.render('select');
+
+        // 渲染表格
+        treetable.render({
+            treeColIndex: 1,
+            treeSpid: 0,
+            treeIdName: 'id',
+            treePidName: 'parent_id',
+            elem: '#auth-table',
+            url: cUrl+'/index',
+            page: false,
+            cols: [[
+                {type: 'id'},
+                {field: 'name', minWidth: 200, title: '权限名称'},
+                {field: 'auth', title: '权限标识'},
+                {field: 'url', title: '菜单url'},
+                {field: 'sort_order', width: 80, align: 'center', title: '排序号'},
+                {
+                    field: 'isMenu', width: 80, align: 'center', templet: function (d) {
+                        if (d.isMenu == 1) {
+                            return '<span class="layui-badge layui-bg-gray">按钮</span>';
+                        }
+                        if (d.parentId == -1) {
+                            return '<span class="layui-badge layui-bg-blue">目录</span>';
+                        } else {
+                            return '<span class="layui-badge-rim">菜单</span>';
+                        }
+                    }, title: '类型'
+                },
+                {templet: '#auth-state', width: 120, align: 'center', title: '操作'}
+            ]],
+            done: function () {
+                layer.closeAll('loading');
+            }
+        });
+
+        //监听工具条
+        table.on('tool(auth-table)', function (obj) {
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值
+
+            if (layEvent === 'edit') { //查看
+                layer.msg('点击了修改');
+            } else if (layEvent === 'del') { //删除
+                layer.msg('点击了删除');
+            }
+        });
+
+        $('#btn-expand').click(function () {
+            treetable.expandAll('#auth-table');
+        });
+
+        $('#btn-fold').click(function () {
+            treetable.foldAll('#auth-table');
+        });
+
+    });
+	
+	</script>
+	
+</block>

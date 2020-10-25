@@ -1,0 +1,342 @@
+<include file="Public/header" />
+ <script>
+      layui.use(['table','form','element'], function(){
+    var table = layui.table,form=layui.form,element = layui.element;
+      form.on('select(school)', function(data){
+        // var a='<{$jscount}>';
+        // alert(a);
+       //$.getJSON("__URL__/get_sel/schoolid"+data.value, function(data){
+        
+        $.post("<{:U('get_sel')}>",{schoolid:data.value},function(data,status){
+          //alert(data);
+          if (data=='') {
+              $("#sel").html('<option value="">尚无选课项目</option>');
+            form.render('select'); //这个很重要
+          } else {
+            var optionstring = "";
+            $.each(data, function(i,item){
+             optionstring += "<option value=\"" + item.seid + "\" >" + item.title + "</option>";
+            });
+            $("#sel").html('<option value=""></option>' + optionstring);
+            form.render('select'); //这个很重要
+
+          }
+        
+       });
+    });
+      table.init('list', {
+        height: 300,
+        page:true//设置高度
+        //支持所有基础参数
+      }); 
+    
+  });
+      function down(){
+    if(confirm("确定要下载该数据到本地么？【请选择！】")){
+    return true;
+    }else{
+    return false;
+    }
+  }
+    </script>
+  <body>
+    <div class="x-nav">
+      <span class="layui-breadcrumb">
+        <a href="">选课数据</a>
+        <a>
+          <cite>数据列表</cite></a>
+      </span>
+      <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);" title="刷新">
+        <i class="layui-icon" style="line-height:30px">ဂ</i></a>
+    </div>
+    <div class="x-body">
+      <div class="layui-row">
+        <form class="layui-form layui-col-md12 x-so" action="__URL__/search" method="post">
+        <div class="layui-form-item">
+        
+          <div class="layui-inline">
+            <div class="layui-input-inline">
+              <select name="schoolid" id="school"  lay-filter="school">
+                  <option value="">请选择学校</option>
+                  <if condition="$Think.session.type eq 2 ">
+                  <option value="1">孝义中学</option>
+                  <option value="2">孝义二中</option>
+                  <option value="3">孝义三中</option>
+                  <option value="4">孝义四中</option>
+                  <option value="5">孝义五中</option>
+                  <option value="6">孝义实验中学</option>
+                  <option value="7">孝义华杰中学</option>
+                  <option value="8">孝义艺苑中学</option>
+                  <else/>
+                  <option value="<{$Think.session.schoolid}>"><{$Think.session.schoolid|getschool}></option>
+                  </if>
+                </select>
+            </div>
+          </div>
+          
+           <div class="layui-inline">
+            <div class="layui-input-inline">
+              <select name="seid" id="sel">
+                  <option value="">请选择选课项目</option>
+                </select>
+            </div>
+          </div>
+          <div class="layui-inline">
+            <div class="layui-input-inline">
+              <input type="text" name="class"  placeholder="请输入班级" autocomplete="off" class="layui-input">
+            </div>
+             <div class="layui-input-inline" style="margin-left: -60px;">
+              <button class="layui-btn"  lay-submit lay-filter="sreach"><i class="layui-icon">&#xe615;</i></button>
+            </div>
+          </div>
+        </div>
+        
+          <!-- <input class="layui-input" placeholder="开始日" name="start" id="start">
+          <input class="layui-input" placeholder="截止日" name="end" id="end"> -->
+         <!--  <input type="text" name="tname"  placeholder="请输入帐号，支持模糊查询" autocomplete="off" class="layui-input" required  lay-verify="required">
+          <button class="layui-btn"  lay-submit lay-filter="sreach"><i class="layui-icon">&#xe615;</i></button> -->
+        </form>
+      </div>
+      <xblock>
+        <a href="<{:U('Data/download')}>" class="layui-btn" onclick="return down();"><i class="fa fa-cloud-download" aria-hidden="true"></i>&nbsp;数据下载</a>
+        <!-- <button class="layui-btn"  onclick=" x_admin_show('添加','__URL__/stuadd');"><i class="layui-icon"></i>添加</button> -->
+        <span class="x-right" style="line-height:40px">共有数据：<span class="layui-badge layui-bg-green"><{$num|default="0"}></span> 条</span>
+      </xblock>
+      <table class="layui-table" lay-filter="list">
+        <thead>
+          <tr>
+            <!-- <th>
+              <div class="layui-unselect header layui-form-checkbox" lay-skin="primary"><i class="layui-icon">&#xe605;</i></div>
+            </th> -->
+            <th lay-data="{field:'sid',width:80}">SID</th>
+            <th lay-data="{field:'stuid',width:150,sort:true}">学(籍)号</th>
+            <th lay-data="{field:'sname',width:80}">姓名</th>
+            <th lay-data="{field:'sex',width:80,sort:true}">性别</th>
+            <th lay-data="{field:'class',width:80,sort:true}">班级</th>
+            <th lay-data="{field:'year',width:80}">入学年</th>
+            <th lay-data="{field:'school',width:80}">学校</th>
+            <th lay-data="{field:'course',width:80,sort:true}">选课</th>
+            <th lay-data="{field:'stime',width:150}">选课时间</th>
+            </tr>
+        </thead>
+        <tbody>
+            <volist name="stusel" id="vo" empty="暂时没有数据">
+              <tr>
+                <!-- <td>
+                  <div class="layui-unselect layui-form-checkbox" lay-skin="primary" data-id='<{$vo.sid}>'><i class="layui-icon">&#xe605;</i></div>
+                </td> -->
+                <td ><{$vo.sid}></td>
+                <td ><{$vo.stuid}></td>
+                <td><{$vo.sname}></td>
+                <td ><{$vo['sex']==1?'男':'女'}></td>
+                <!-- <td ><{$vo['sex']==1?'男':'女'}></td> -->
+                <td ><{$vo.class}></td>
+                <td ><{$vo.year}></td>
+                <td ><{$vo.schoolid|getschool}></td>
+                <!-- <td class="td-status"><span class="layui-btn layui-btn-small "><{$vo['status']==1?'启用':'禁用'}></span></td> -->
+                <td ><{$vo.course}></td>
+                <td ><{$vo.stime|date="Y-m-d H:i:s",###}></td>
+              </tr>
+            </volist>
+        </tbody>
+      </table>
+      <hr>
+      <!-- 图表区域 -->
+      <div class="layui-collapse">
+      <div class="layui-colla-item">
+        <h2 class="layui-colla-title">选课组合数据</h2>
+        <div class="layui-colla-content layui-show">
+            <div style="margin-top: 10px;">
+                <div id="main" style="width: 100%;height:400px;">
+                  
+                </div>
+            </div>
+        </div>
+      </div>
+      <div class="layui-colla-item">
+        <h2 class="layui-colla-title">选课各科数据</h2>
+        <div class="layui-colla-content layui-show">
+              <div style="margin-top: 10px;">
+                  <div id="main1" style="width: 100%;height:400px;">
+                    
+                  </div>
+              </div>
+        </div>
+      </div>
+    </div>
+      <!-- <div style="margin-top: 20px;">
+          <div id="main" style="width: 100%;height:400px;">
+            
+          </div>
+      </div>
+      <hr>
+      <xblock style="background-color: #FF5722; ">
+        <h1>选课数据图表</h1>
+      </xblock>
+      <div style="margin-top: 20px;">
+          <div id="main1" style="width: 100%;height:400px;">
+            
+          </div>
+      </div> -->
+</div>
+<script src="__PUBLIC__/js/echarts.min.js"></script>
+<script>
+ 
+   var myChart = echarts.init(document.getElementById('main'));
+  
+  var option = {
+            color: ['#009688'],
+            title: {
+                text: '选课数据图表'
+            },
+            tooltip : {
+            trigger: 'axis',
+            axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+              }
+            },
+            toolbox: {
+            show: true,
+            right:25,
+            feature: {
+                mark: {
+                    show: true
+                },
+                dataView: {
+                    show: true,
+                    readOnly: false
+                },
+                magicType: {
+                    show: true,
+                    type: ['line', 'bar']
+                },
+                restore: {
+                    show: true
+                },
+                saveAsImage: {
+                    show: true
+                }
+            }
+        },
+            legend: {
+                data:['选课']
+            },
+            xAxis: {
+                //data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
+                data:<{$jscourse}>,
+            },
+            yAxis: {},
+            series: [{
+                   markPoint:{
+                      //data:<{$jscount}>,
+                      //symbol: 'pin', 
+                      data: [
+                        {
+                            name: '最多科目',
+                            type: 'max'
+                        }, 
+                        {
+                            name: '最少科目',
+                            type: 'min'
+                        }, 
+                    ]
+                  },
+                 label: {
+                    normal: {
+                        show: true,
+                        position: 'inside',
+                        fontSize:20,
+                        fontStyle:'oblique',
+                        //fontWeight:'bolder',
+                        }
+                },
+                name: '人数',
+                type: 'bar',
+                //data: [5, 20, 36, 10, 10, 20]
+                data:<{$jscourse_num}>,
+            }]
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+  var myChart1 = echarts.init(document.getElementById('main1'));
+  var option1 = {
+            color: ['#FF5722'],
+            title: {
+                text: '各科对比图'
+            },
+            tooltip : {
+            trigger: 'axis',
+            axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+              }
+            },
+            toolbox: {
+            show: true,
+            right:25,
+            feature: {
+                mark: {
+                    show: true
+                },
+                dataView: {
+                    show: true,
+                    readOnly: false
+                },
+                magicType: {
+                    show: true,
+                    type: ['line', 'bar']
+                },
+                restore: {
+                    show: true
+                },
+                saveAsImage: {
+                    show: true
+                }
+            }
+        },
+            legend: {
+                data:['选课']
+            },
+            xAxis: {
+                //data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
+                data:["物理","化学","生物","政治","历史","地理"],
+            },
+            yAxis: {},
+            series: [{
+                 label: {
+                    normal: {
+                        show: true,
+                        position: 'inside',
+                        fontSize:20,
+                        fontStyle:'oblique',
+                          }
+                  },
+                markPoint:{
+                    //data:<{$jscount}>,
+                    //symbol: 'pin', 
+                    data: [
+                      {
+                          name: '最多科目',
+                          type: 'max'
+                      }, 
+                      {
+                          name: '最少科目',
+                          type: 'min'
+                      }, 
+                  ]
+                },
+                name: '人数',
+                type: 'bar',
+                //data: [5, 20, 36, 10, 10, 20]
+                data:<{$jscount}>,
+            }]
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart1.setOption(option1);
+ 
+
+</script>
+  </body>
+
+</html>

@@ -1,0 +1,480 @@
+<if condition="$field['type'] neq 'hidden'">
+<div class="am-cf am-form-group">
+    <label class="am-u-sm-2 am-form-label">{$field.title|htmlspecialchars}</label>
+    <if condition="$field['name'] == 'action'">
+        <p style="color: #f00;">开发人员注意：你使用了一个名称为action的字段，由于这个字段名称会与form[action]冲突，导致无法提交表单，请换用另外一个名字。</p>
+    </if>
+    <div class="am-u-sm-10 ">
+    <switch name="field.type">
+        <case value="text">
+            <input type="text" name="{$field.name}" value="{$field.value|htmlspecialchars}" class="am-form-field" style="width: 400px"/>
+        </case>
+        <case value="password">
+            <input type="password" name="{$field.name}" value="{$field.value|htmlspecialchars}" class="am-form-field" style="width: 400px"/>
+        </case>
+        <case value="string">
+            <input type="text" name="{$field.name}" value="{$field.value|htmlspecialchars}" class="am-form-field"/>
+        </case>
+        <case value="money">
+            <div class="am-input-group" style="width:200px;">
+                <span class="am-input-group-label">￥</span>
+                <input type="text" name="{$field.name}" value="{$field.value|htmlspecialchars}" class="am-form-field">
+            </div>
+        </case>
+        <case value="num">
+            <input type="text" name="{$field.name}" value="{$field.value|htmlspecialchars}" class="am-form-field" style="width: 80px"/>
+        </case>
+        <case value="label">
+            {$field.value}
+        </case>
+        <case value="readonly">
+            <input type="text" name="{$field.name}" value="{$field.value}" class="am-form-field" placeholder="无需填写" readonly/>
+        </case>
+        <case value="integer">
+            <input type="text" name="{$field.name}" value="{$field.value}" class="am-form-field" />
+        </case>
+        <case value="uid">
+            <input type="text" name="{$field.name}" value="{$field.value}" class="am-form-field" />
+        </case>
+        <case value="select">
+            <php>
+            if($field['extra']){
+                $field['opt'] = parse_field_attr($field['extra']);
+            }
+            </php>
+            <select name="{$field.name}" class="am-form-field" style="width:auto; padding-right: 25px;">
+                <volist name="field.opt" id="option">
+                    <php>
+                    $selected = $field['value']==$key ? 'selected' : '';
+                    </php>
+                    <if condition="is_array($option)">
+                        <option value="{$key}" {$selected}>{$option['title_show']}</option>
+                    <else />
+                        <option value="{$key}" {$selected}>{$option|htmlspecialchars}</option>
+                    </if>
+                </volist>
+            </select>
+        </case>
+        <case value="bool">
+            <php>
+            if($field['extra']){
+                $field['opt'] = parse_field_attr($field['extra']);
+            }
+            </php>
+            <select name="{$field.name}" class="am-form-field" style="width:auto;">
+                <volist name="field.opt" id="option">
+                    <php>
+                    $selected = $field['value']==$key ? 'selected' : '';
+                    </php>
+                    <option value="{$key}" {$selected}>{$option|htmlspecialchars}</option>
+                </volist>
+            </select>
+        </case>
+        <case value="bind">
+            <select name="{$field.name}">
+                <if condition="$field['extra']">
+                {:parse_field_bind($field['extra'],$field['value'],$model['id'])}
+                <else/>
+                {:parse_field_bind($field['opt'],$field['value'],$model['id'])}
+                </if>
+            </select>
+        </case>
+        <case value="linkage">
+            <select name="{$field.name}">
+                <if condition="$data[$field['name']]">
+                <option value="{$data[$field['name']]}">{:get_brand_title($field['name'])}</option>
+                <else/>
+                <option>请选择</option>
+                </if>
+            </select>
+            <script type="text/javascript">
+            <php>
+            $t = explode('|',$field['extra']);
+            </php>
+            $(function(){
+                var data_key = "{$t[1]}";
+                var model    = "{$t[0]}";
+                $('select[name={$t[1]}]').change(function(){
+                    $.ajax({
+                        url     : "{:U('Article/getList')}",
+                        data    : {key:data_key,value:$(this).val(),model:model},
+                        success : function(data){
+                            $('select[name={$field.name}]').html(data);
+                        },
+                        dataType : 'html'
+                    });
+                });
+            })
+            </script>
+        </case>
+        <case value="radio">
+            <php>
+            if($field['extra']){
+                $field['opt'] = parse_field_attr($field['extra']);
+            }
+            </php>
+            <volist name="field.opt" id="option">
+                <php>
+                    $checked = $field['value']==$key ? 'checked' : '';
+                    $inputId = "id_$field[name]_$key";
+                </php>
+                <label for="{$inputId}"> <input id="{$inputId}" name="{$field.name}" value="{$key}" type="radio" {$checked}/> {$option|htmlspecialchars}</label>
+            </volist>
+        </case>
+
+        <case value="picture">
+            <input type="file" id="upload_picture_{$field.name}">
+            <input type="hidden" name="{$field.name}" id="cover_id_{$field.name}" value="{$field['value']}" />
+            <div class="upload-img-box">
+            <if condition="$field['value']">
+                <div class="upload-pre-item"><img src="{$field['value']|get_cover='path'}"/></div>
+            </if>
+            </div>
+            <script type="text/javascript">
+            //上传图片
+            /* 初始化上传插件 */
+            $("#upload_picture_{$field.name}").uploadify({
+                "height"          : 30,
+                "swf"             : "__PUBLIC__/uploadify/uploadify.swf",
+                "fileObjName"     : "download",
+                "buttonText"      : "上传图片",
+                "uploader"        : "{:U('File/uploadPicture',array('session_id'=>session_id()))}",
+                "width"           : 120,
+                'removeTimeout'   : 1,
+                'fileTypeExts'    : '*.jpg; *.png; *.gif;',
+                "onUploadSuccess" : uploadPicture{$field.name},
+                'onFallback' : function() {
+                    alert('未检测到兼容版本的Flash.');
+                }
+            });
+            function uploadPicture{$field.name}(file, data){
+                var data = $.parseJSON(data);
+                var src = '';
+                if(data.status){
+                    $("#cover_id_{$field.name}").val(data.id);
+                    src = data.url || '__ROOT__' + data.path
+                    $("#cover_id_{$field.name}").parent().find('.upload-img-box').html(
+                        '<div class="upload-pre-item"><img src="' + src + '"/></div>'
+                    );
+                } else {
+                    updateAlert(data.info);
+                    setTimeout(function(){
+                        $('#top-alert').find('button').click();
+                        $(that).removeClass('disabled').prop('disabled',false);
+                    },1500);
+                }
+            }
+            </script>
+        </case>
+
+        <case value="pictures">
+            <input type="file" id="upload_pictures_{$field.name}">
+            <input type="hidden" name="{$field.name}" value="{$field['value']}" class="icon {$field.name}" />
+            <div class="upload-img-box">
+                <notempty name="field['value']">
+                    <php>
+                    $photolist = explode(',',$field['value']);
+                    </php>
+                     <volist name="photolist" id="v">
+                        <div class="upload-pre-item">
+                            <img src="__ROOT__{$v|get_cover='path'}" data-id="{$v}"/>
+                            <span class='btn-close btn-close-{$field.name}' title='删除图片'></span>
+                        </div>
+                     </volist>
+                </notempty>
+            </div>
+
+            <script type="text/javascript">
+                //上传图片
+                $(function(){
+                    /* 初始化上传插件*/
+                    $("#upload_pictures_{$field.name}").uploadify({
+                        "height"          : 30,
+                        "swf"             : "__PUBLIC__/uploadify/uploadify.swf",
+                        "fileObjName"     : "download",
+                        "buttonText"      : "上传多图",
+                        "uploader"        : "{:U('File/uploadPicture',array('session_id'=>session_id()))}",
+                        "width"           : 120,
+                        'removeTimeout'   : 1,
+                        'fileTypeExts'    : '*.jpg; *.png; *.gif;',
+                        "onUploadSuccess" : uploadPicture{$field.name},
+                        'onFallback' : function() {
+                            alert('未检测到兼容版本的Flash.');
+                        }
+                    });
+                    $('.btn-close-{$field.name}').click(function(event) {
+                        event.preventDefault();
+                        $(this).parent().remove();
+                        picsbox = $("#upload_pictures_{$field.name}").siblings('.upload-img-box');
+                        picArr = [];
+                        for (var i = 0; i < picsbox.children().length ; i++) {
+                            picArr.push(picsbox.children('.upload-pre-item:eq('+i+')').find('img').attr('data-id'));
+                        };
+                        picStr = picArr.join(',');
+                        $('.icon.{$field.name}').val(picStr);
+                    });
+                })
+                function uploadPicture{$field.name}(file, data){
+                    var data = $.parseJSON(data);
+                    var src = '';
+                    if(data.status){
+                        src = data.url || '__ROOT__' + data.path;
+                        upload_img = "<div class='upload-pre-item'><img src=" + src +" title='点击显示大图' data-id="+data.id+"> <span class='btn-close btn-close-{$field.name}' title='删除图片'></span></div>";
+                        picsbox = $("#upload_pictures_{$field.name}").siblings('.upload-img-box');
+                        picsbox.append(upload_img)
+                        picArr = [];
+                        for (var i = 0; i < picsbox.children().length ; i++) {
+                            picArr.push(picsbox.children('.upload-pre-item:eq('+i+')').find('img').attr('data-id'));
+                        };
+                        picStr = picArr.join(',');
+                        $('.icon.{$field.name}').val(picStr);
+                    } else {
+                        updateAlert(data.info);
+                        setTimeout(function(){
+                            $('#top-alert').find('button').click();
+                            $(that).removeClass('disabled').prop('disabled',false);
+                        },1500);
+                    }
+                }
+            </script>
+        </case>
+
+        <case value="file">
+            <input type="file" id="upload_file_{$field.name}">
+            <input type="hidden" name="{$field.name}" value="{$field['value']}"/>
+            <div class="upload-img-box">
+                <present name="field['value']">
+                    <div class="upload-pre-file"><span class="upload_icon_all"></span>{$field['value']}</div>
+                </present>
+            </div>
+            <script type="text/javascript">
+            //上传图片
+            /* 初始化上传插件 */
+            $("#upload_file_{$field.name}").uploadify({
+                "height"          : 30,
+                "swf"             : "__PUBLIC__/uploadify/uploadify.swf",
+                "fileObjName"     : "download",
+                "buttonText"      : "上传附件",
+                "uploader"        : "{:U('File/upload',array('session_id'=>session_id()))}",
+                "width"           : 120,
+                'removeTimeout'   : 1,
+                "onUploadSuccess" : uploadFile{$field.name},
+                'onFallback' : function() {
+                    alert('未检测到兼容版本的Flash.');
+                }
+            });
+            function uploadFile{$field.name}(file, data){
+                var data = $.parseJSON(data);
+                if(data.status){
+                    var name = "{$field.name}";
+                    $("input[name="+name+"]").val(data.data);
+                    $("input[name="+name+"]").parent().find('.upload-img-box').html(
+                        "<div class=\"upload-pre-file\"><span class=\"upload_icon_all\"></span>" + data.info + "</div>"
+                    );
+                } else {
+                    updateAlert(data.info);
+                    setTimeout(function(){
+                        $('#top-alert').find('button').click();
+                        $(that).removeClass('disabled').prop('disabled',false);
+                    },1500);
+                }
+            }
+            </script>
+        </case>
+
+        <case value="map">
+            <input type="text" name="{$field.name}" value="{$field['value']}" class="am-form-field am-form-map" />
+            <div id="allmap_{$field.name}]" style="width:100%; height:400px;"></div>
+            <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=H6lSjf3ENz02sdnInGFMh8g8"></script>
+            <script type="text/javascript">
+            // 百度地图API功能
+            var map = new BMap.Map("allmap_{$field.name}]");
+            map.centerAndZoom(new BMap.Point(116.404, 39.915), 11);
+            function showInfo(e){
+                $("input[name={$field.name}]").val(e.point.lng + ", " + e.point.lat);
+            }
+            map.addEventListener("click", showInfo);
+            </script>
+        </case>
+
+        <case value="checkbox">
+            <php>
+                $importCheckBox = true;
+            </php>
+            <php>
+                $field['value_array'] = explode(',', $field['value']);
+            </php>
+            <volist name="field.opt" id="option">
+                <php>
+                    $checked = in_array($key,$field['value_array']) ? 'checked' : '';
+                    $inputId = "id_$field[name]_$key";
+                </php>
+                <label for="{$inputId}"> <input type="checkbox" value="{$key}" id="{$inputId}" class="oneplus-checkbox" data-field-name="{$field.name}" {$checked}/> {$option|htmlspecialchars}</label>
+
+            </volist>
+            <input type="hidden" name="{$field.name}" class="oneplus-checkbox-hidden" data-field-name="{$field.name}" value="{$field.value}"/>
+        </case>
+        <case value="editor">
+            {:W('Common/Editor/run',array($field['name'],$field['value']))}
+        </case>
+        <case value="textarea">
+            <textarea name="{$field.name}" class="am-form-field" style="height:120px;">{$field.value|htmlspecialchars}</textarea>
+        </case>
+        <case value="datetime">
+            <php>
+                $importDatetimePicker = true;
+                //默认为当前时间
+                if(!$field['value']){
+                $field['value'] = time();
+                }
+            </php>
+            <input type="hidden" name="{$field.name}" value="{$field.value}"/>
+            <input type="text" data-field-name="{$field.name}" class="time am-form-field" value="{$field.value|time_format}" placeholder="请选择时间" style="width:auto;" />
+        </case>
+        <case value="date">
+            <php>
+                $importDatetimePicker = true;
+                //默认为当前时间
+                if(!$field['value']){
+                $field['value'] = time();
+                }
+            </php>
+            <input type="hidden" name="{$field.name}" value="{$field.value}"/>
+            <input type="text" data-field-name="{$field.name}" class="data am-form-field" value="{$field.value|time_format}" placeholder="请选择时间" style="width:auto;" />
+        </case>
+
+        <!--添加城市选择（需安装城市联动插件,css样式不好处理排版有点怪）-->
+        <case value="city">
+                <style type="text/css">
+        			.am-form-field {
+    				display:inline-block;
+    				width: 120px;
+    				}
+    			</style>
+                <!--修正在编辑信息时无法正常显示已经保存的地区信息-->
+                {:hook('J_China_City',array('province'=>$field['value']['0'],'city'=>$field['value']['1'],'district'=>$field['value']['2'],'community'=>$field['value']['3']))}
+        </case>
+
+        <!--弹出窗口选择并返回值（目前只支持返回ID）开始-->
+        <case value="dataselect">
+            <input type="text" name="{$field.name}" id="{$field.name}" value="{$field.value|htmlspecialchars}" class="am-form-field"/><input class="am-btn am-btn-default" style="margin-left:10px" type="button" value="选择" onclick="openwin('{$field.opt}','600','500')">
+		     <script type="text/javascript">
+					//弹出窗口
+					function openwin(url,width,height){
+					    var l=window.screen.width ;
+					    var w= window.screen.height;
+					    var al=(l-width)/2;
+					    var aw=(w-height)/2;
+					    var OpenWindow=window.open(url,"弹出窗口","toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width="+width+",height="+height+",top="+aw+",left="+al+"");
+					    OpenWindow.focus();
+					if(OpenWindow!=null){ //弹出窗口关闭事件
+					//if(window.attachEvent) OpenWindow.attachEvent("onbeforeunload",   quickOut);
+					if(window.attachEvent) OpenWindow.attachEvent("onunload",   quickOut);
+					}
+					}
+					//关闭触发方法
+					function quickOut()
+					{
+					alert("窗口已关闭");
+					}
+			 </script>
+        </case>
+    	<!--弹出窗口选择并返回值（目前只支持返回ID）结束-->
+
+        <case value="kanban">
+            <div class="boards field_set_list">
+                <volist name="field['opt']" id="item">
+                    <div class="am-panel am-panel-default board">
+                        <div class="am-panel-hd"><span>{$item['name']}</span></div>
+                        <div class="am-panel-bd">
+                            <div class="board-list" data-group="{$key}">
+                                <foreach name="item['list']" item="vo" key="k">
+                                    <div class="board-item">{$vo['title']} [{$vo['name']}]<input type="hidden" name="{$field.name}[{$key}][]" value="{$vo['id']}"/></div>
+                                </foreach>
+                            </div>
+                        </div>
+                    </div>
+                </volist>
+                <span class="am-form-help">（直接拖动进行排序）</span>
+            </div>
+            <script type="text/javascript" charset="utf-8">
+            //拖曳插件初始化
+            $(function(){
+                $('.field_sort_list').boards({drop:function(e){
+                }});
+                $('.field_set_list').boards({drop:function(e){
+                    var group = e.target.closest('.board').find('.board-list').attr('data-group');
+                    e.element.find('input').attr('name','field_sort[' + group + '][]')
+                }});
+            })
+            </script>
+
+        </case>
+    <case value="chosen">
+        <select name="{$field.name}[]" class="chosen-select" multiple="multiple">
+            <php>
+                if( key($field['opt']) === 0){
+            </php>
+            <volist name="field['opt']" id="option">
+                <php>
+                    $selected = in_array(reset($option),$field['value'])? 'selected' : '';
+                </php>
+                <option value="{:reset($option)}" {$selected}>{$option|end|htmlspecialchars}</option>
+            </volist>
+            <php>
+                }else{
+                foreach($field['opt'] as $optgroupkey =>$optgroup){
+            </php>
+            <optgroup label="{$optgroupkey}">
+                <volist name="optgroup" id="option">
+                    <php>
+                        $selected = in_array(reset($option),$field['value'])? 'selected' : '';
+                    </php>
+                    <option value="{:reset($option)}" {$selected}>{$option|end|htmlspecialchars}</option>
+                </volist>
+            </optgroup>
+            <php>
+                }
+                }
+            </php>
+        </select>
+    </case>
+
+        <case value="multiInput">
+            <div class="clearfix" style="{$field['style']}">
+            <php>
+                $field['name'] = is_array($field['name'])?$field['name']:explode('|',$field['name']);
+                foreach($field['name'] as $key=>$val){
+            </php>
+            <switch name="field['config'][$key]['type']">
+                <case value="text">
+                    <input type="text" name="{$val}" value="{$field['value'][$key]|htmlspecialchars}" class=" pull-left am-form-field" style="{$field['config'][$key]['style']}" placeholder="{$field['config'][$key]['placeholder']}"/>
+                </case>
+                <case value="select">
+                    <select name="{$val}" class="pull-left am-form-field" style="{$field['config'][$key]['style']}" >
+                        <php>foreach($field['config'][$key]['opt'] as $key_opt =>$option){</php>
+                        <php>
+                            $selected = $field['value'][$key]==$key_opt ? 'selected' : '';
+                        </php>
+                        <option value="{$key_opt}"{$selected}>{$option|htmlspecialchars}</option>
+                        <php>}</php>
+                    </select>
+                </case>
+            </switch>
+            <php>
+                }
+            </php>
+            </div>
+        </case> 
+        <default/>
+        <span style="color: #f00;">错误：未知字段类型 {$field.type}</span>
+        <input type="hidden" name="{$field.name}" value="{$field.value|htmlspecialchars}"/>
+        </switch>
+        <if condition="$field['subtitle']">
+        <span class="am-form-help">（{$field.subtitle}）</span>
+        </if>
+    </div>
+</div>
+<else/>
+<input type="hidden" name="{$field.name}" value="{$field.value}"/>
+</if>

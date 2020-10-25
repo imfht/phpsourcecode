@@ -1,0 +1,155 @@
+<div class="clearfix">
+	<ul class="nav pull-left">
+		<li class="pull-left">
+			<select style="width:auto" id="field" name="field" onchange="changeCondition()">
+				<option class="word" value="name">{:L('CONTACT_NAME')}</option>
+				<option class="word" value="telephone">{:L('PHONE')}</option>
+				<option class="word" value="qq">QQ</option>
+				<option class="word" value="saltname">{:L('RESPECTFULLY')}</option>
+				<option class="word" value="email">{:L('EMAIL')}</option>
+				<option class="word" value="address">{:L('ADDRESS')}</option>
+				<option class="word" value="post">{:L('POSITION')}</option>
+				<option class="word" value="description">{:L('REMARK')}</option>
+				<option class="date" value="create_time">{:L('CREATE_TIME')}</option>
+				<option class="date" value="update_time">{:L('UPDATE_TIME')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="conditionContent" class="pull-left">
+			<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+				<option value="contains">{:L('CONTAINS')}</option>
+				<option value="not_contain">{:L('NOT_CONTAIN')}</option>
+				<option value="is">{:L('IS')}</option>
+				<option value="isnot">{:L('ISNOT')}</option>						
+				<option value="start_with">{:L('START_WITH')}</option>
+				<option value="end_with">{:L('END_WITH')}</option>
+				<option value="is_empty">{:L('IS_EMPTY')}</option>
+				<option value="is_not_empty">{:L('IS_NOT_EMPTY')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="searchContent" class="pull-left">
+			<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+		</li>
+		<li class="pull-left">
+			<input type="button" onclick="d_changeContent(0)" class="btn" value="{:L('SEARCH')}"/>
+		</li>
+		&nbsp;<a  href="{:U('contacts/add','redirect=customer&redirect_id='.$model_id)}">{:L('NEW_LINK')}</a>
+	</ul>
+</div>
+<empty name="contactsList">
+	<div class="alert">{:L('THERE_IS_NO_DATA')}</div>
+<else/>
+<form id="select_contacts" action="{:U('contacts/checklistdialog')}" method="post">
+	<input type="hidden" name="r" <present name="r">value="{$r}"</present>/>
+	<input type="hidden" name="module" <present name="module">value="{$module}"</present>/> 
+	<input type="hidden" name="id" <present name="model_id">value="{$model_id}"</present>/> 
+	<table class="table table-hover">
+		<thead>
+			<tr>
+				<th>&nbsp;</th>
+				<th width="20%">{:L(NAME)}</th>
+				<th width="25%">{:L(PHONE)}</th>
+				<if condition="C('ismobile') neq 1"><th width="25%">{:L(EMAIL)}</th></if>	
+				<th width="25%">{:L(POSITION)}</th>
+			</tr>
+		</thead>
+		<tfoot id="footer">
+			<tr>
+				<td colspan="6">
+					<div class="row pagination">
+						<div class="span2">{:L('PAGE_COUNT',array($count_num,$total))}</div>
+						<div class="span4">
+							<div><ul id="changepage">
+								<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')}</span></li>
+								<if condition="$total gt 1">
+									<li><a class="page" href="javascript:void(0)" rel="2">{:L('NEXT_PAGE')}</a></li>
+								<else />
+									<li><span>{:L('NEXT_PAGE')}</span></li>
+								</if>
+							</ul></div>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</tfoot>
+		<tbody id="load" class="hide">
+			<tr><td class="tdleft" <if condition="C('ismobile') neq 1">colspan="6"<else />colspan="4"</if> style=" height:300px;text-align:center"><img src="./Public/img/load.gif"></td></tr>
+		</tbody>
+		<tbody id="data">
+			<volist name="contactsList" id="vo">
+				<tr> 
+					<td><input type="checkbox" name="contacts_id[]" value="{$vo.contacts_id}"/></td>
+					<td><a target="_blank" href="{:U('contacts/view','id='.$vo['contacts_id'])}">{$vo.name}</a></td>
+					<td>{$vo.telephone}</td>
+					<if condition="C('ismobile') neq 1"><td>{$vo.email}</td></if>			
+					<td>{$vo.post}</td>
+				</tr>
+			</volist>
+		</tbody>
+	</table>
+</form>
+</empty>
+<script type="text/javascript">
+	function sub(){
+		$('#select_contacts').submit();
+		alert(1);
+	}
+	$('.page').click(function(){
+		var a = $(this).attr('rel');
+		d_changeContent(a);
+	});
+	function d_changeContent(p){
+		$('#data').addClass('hide');
+		$('#load').removeClass('hide');
+		
+		var field = $('#field').val();
+		var condition = $('#condition').val();
+		var asearch = encodeURI($("#search").val());
+		var link = "{:U('contacts/view','id=')}";
+		$.ajax({
+			type:'get',
+			url:'index.php?m=contacts&a=changedialog&r=RContactsCustomer&is_check=1&field='+field+'&search='+asearch+'&condition='+condition+'&p='+p,
+			async:false,
+			success:function(data){
+				var temp = '';
+				if(data.data.list != null){
+					$.each(data.data.list, function(k, v){
+						temp += "<tr><td><input type='checkbox' name='contacts_id[]' value='"+v.contacts_id+"'/></td><td><a target='_blank' href="+link+v.contacts_id+">" + v.name + "</a></td><td>" + v.telephone + "</td>";
+						<if condition="C('ismobile') neq 1">
+							temp += "<td>"+v.email+"</td><td>"+v.post+"</td></tr>";
+						<else />
+							temp += "<td>"+v.post+"</td></tr>";
+						</if>
+					});
+					var changepage = "";
+					if(data.data.p == 1){
+						changepage = "<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')} </span></li>"
+						if(data.data.p < data.data.total){
+							changepage += "<li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>";
+						}else{
+							changepage += "<li><span>{:L('NEXT_PAGE')}</span></li>";
+						}
+					}else if(data.data.p == data.data.total){
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><span>{:L('NEXT_PAGE')}</span></li>"
+					}else{
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>"
+					}
+					$('#p').html(data.data.p);
+					$('#changepage').html(changepage);
+					$('#count').html(data.data.count);
+					$('#total_page').html(data.data.total);
+					$('#data').html(temp);
+					$('.page').click(function(){
+						var a = $(this).attr('rel');
+						d_changeContent(a);
+					});
+				}else{
+					$('#data').html('<tr><td colspan="4">{:L('DID_NOT_FIND_THE_RESULTS_YOU_WANT')}</tr>');
+					$('#footer').addClass('hide');
+				}
+				$('#load').addClass('hide');
+				$('#data').removeClass('hide');
+			},
+			dataType:'json'
+		});		
+	}
+</script>

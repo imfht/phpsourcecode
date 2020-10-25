@@ -1,0 +1,81 @@
+获取mariadb源码，在目录 libs/mariadb-5.5.32.tar.gz
+# 安装前配置
+# 安装依赖
+apt-get install  bison libboost-dev libboost-dbg libncurses5 libncurses5-dev
+#添加用户
+groupadd mysql
+useradd -r -g mysql mysql
+cmake . -DCMAKE_INSTALL_PREFIX=/server/mariadb/ \
+               -DMYSQL_UNIX_ADDR=/tmp/mariadb.sock \
+               -DMYSQL_DATADIR=/server/mariadb/data/ \
+               -DEXTRA_CHARSETS=all \
+               -DDEFAULT_CHARSET=utf8 \
+               -DDEFAULT_COLLATION=utf8_general_ci \
+               -DWITH_INNOBASE_STORAGE_ENGINE=1 \
+               -DWITH_FEDERATED_STORAGE_ENGINE=1 \
+               -DWITH_MYISAMMRG_STORAGE_ENGINE=1 \
+               -DWITH_MYISAM_STORAGE_ENGINE=1 \
+               -DWITHOUT_ARCHIVE_STORAGE_ENGINE=1 \
+               -DWITHOUT_BLACKHOLE_STORAGE_ENGINE=1 \
+               -DWITHOUT_OQGRAPH_STORAGE_ENGINE=1 \
+               -DWITH_EMBEDDED_SERVER=OFF \
+               -DWITH_READLINE=OFF \
+               -DWITH_MYSQLD_LDFLAGS=-ALL-STATIC \
+               -DMYSQL_TCP_PORT=3306
+# 配置结果如果有warring，那么根据提示安装对应的类库，下面只是示例，看具体情况
+#apt-get install  bison libboost-dev libboost-dbg libncurses5 libncurses5-dev
+#cmake成功之后
+make
+make install
+
+# 安装后初始化，下列命令使mysql得到对数据库文件的拥有权。mysql_install_db脚本能刷新授权表
+cd /server/mariadb/
+mkdir log
+chown -R mysql.mysql log
+
+#下面是对存放数据库的文件夹赋予mysql用户
+chown -R mysql.mysql /server/mariadb/data
+
+#下面是在数据库文件夹初始化数据库
+bash scripts/mysql_install_db --user=mysql --basedir=/server/mariadb --datadir=/server/mariadb/data
+
+#把mysql链接加到系统bin目录
+ln -s -f /server/mariadb/bin/* /usr/bin/
+
+#修改support-files/mysql.server文件里面的：
+basedir         = /server/mariadb
+datadir         = /server/mariadb/data
+
+#修改support-files/my-medium.cnf 文件里面的：
+
+［client］
+socket          = /tmp/mariadb.sock
+
+［mysqld］
+socket          = /tmp/mariadb.sock
+log_error = /server/mariadb/log/error.log
+#防止ibdata1文件过大
+innodb_file_per_table
+#注释掉下面两个，关闭bin-log
+#server-id              = 1
+#log_bin
+
+#添加开机启动脚本
+cp support-files/mysql.server /etc/init.d/mysql
+
+#指定配置文件，mysql.server会自动搜索/etc/my.cnf
+cp  support-files/my-medium.cnf /etc/my.cnf
+
+#禁用/etc/mysql 防止mysql里面的my.cnf影响
+mv /etc/mysql /etc/mysql_disable
+
+# 当然用root命令开启的时候，应当使用--user参数，这样才是安全的启动方式。
+/etc/init.d/mysql start --user=mysql
+#./bin/mysqld_safe --basedir=/server/mariadb --datadir=/server/mariadb/data --user=mysql &
+
+#为root和你的用户名设置密码，这需要在你先启动mysql的基础上，否则会报错，说你没有连接到端口：
+#设置root密码
+./bin/mysqladmin -u root password 'NewPassword'
+
+#测试登录
+mysql -uroot -pNewPassword

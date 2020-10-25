@@ -1,0 +1,275 @@
+﻿<!DOCTYPE html>
+<!--[if IE 9]> <html class="ie9 no-focus" lang="zh"> <![endif]-->
+<!--[if gt IE 9]>
+<html class="no-focus" lang="zh">
+<!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <title>截图</title>
+    <meta name="description" content="">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=0">
+    <link rel="stylesheet" href="__STATIC__/libs/jcrop/css/Jcrop.min.css">
+    <link rel="stylesheet" href="__STATIC__/admin/css/bootstrap.min.css">
+    <link rel="stylesheet" href="__STATIC__/admin/css/oneui.css">
+    
+<style type="text/css">
+/* 图片裁剪 */
+.jcrop-active,
+.jcrop-preview-parent{
+    display: inline-block;
+}
+.jcrop-img {
+    width: 100%;
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA3NCSVQICAjb4U/gAAAABlBMVEXMzMz////TjRV2AAAACXBIWXMAAArrAAAK6wGCiw1aAAAAHHRFWHRTb2Z0d2FyZQBBZG9iZSBGaXJld29ya3MgQ1M26LyyjAAAABFJREFUCJlj+M/AgBVhF/0PAH6/D/HkDxOGAAAAAElFTkSuQmCC");
+    text-align: center;
+    line-height: 0;
+}
+.jcrop-preview-parent{
+    width:100px;
+    height:100px;
+    overflow:hidden;
+    float: right;
+}
+</style>
+
+</head>
+<body>
+    
+        
+ <div class="form-group col-md-12 col-xs-12 cut_pic" >
+    
+	 <div style="display:none;">
+	<a class="img-link" href="/public/"> <img class="thumbnail" src="" width="100" /></a>
+    <input type="text" class="js-jcrop-cut-info" value=""><br>
+    <input type="file" class="hidden js-jcrop-file" accept="image/jpg,image/jpeg,image/bmp,image/png,image/gif" value=""><br>
+    截取后的<input type="text" class="js-jcrop-input" id="picurl" name="picurl" value=""><br>
+	原图<input type="text" class="js-oldpic-input" id="oldpic" name="oldpic" value="{$picurl}"></div>
+
+
+			  <!-- Pop In Modal -->
+			  <div class="modal modal-popin fade" tabindex="-1" role="dialog" aria-hidden="true" style="width:100%;">
+				<div class="modal-dialog modal-lg modal-dialog-popin" style="width:100%;">
+				  <div class="modal-content" style="width:100%;">
+					<div class="block block-themed block-transparent remove-margin-b">
+					  <div class="block-header bg-primary-dark">
+						<ul class="block-options">
+						  <li>
+							<button data-dismiss="modal" type="button">
+							  <i class="si si-close"></i>
+							</button>
+						  </li>
+						</ul>
+						<h3 class="block-title">图片裁剪</h3></div>
+					  <div class="block-content push-20">
+						<div class="jcrop-preview-parent" style="display:none;">
+						  <img src="" class="jcrop-preview" />
+						</div>
+						<div class="jcrop-img">
+						  <img src="{$picurl}" data-id="" data-options='{$opt}' class="js-jcrop"  alt=""></div>
+					  </div>
+					</div>
+					<div class="modal-footer">
+					  <span class="pull-left">在图片上拖动,选择选区,点击“
+						<strong>立即裁剪</strong>”按钮</span>
+					  <button class="btn btn-sm btn-default" type="button" data-dismiss="modal">关闭</button>
+					  <button class="btn btn-sm btn-primary js-jcrop-cut-btn" type="button">
+						<i class="fa fa-cut"></i>立即裁剪</button>
+					</div>
+				  </div>
+				</div>
+			  </div>
+</div>
+
+<script src="__STATIC__/js/core/jquery.min.js"></script>
+<script src="__STATIC__/js/core/bootstrap.min.js"></script>
+
+ 
+<script type="text/javascript">
+
+var jcrop_upload_url =   '{:urls("index/attachment/upload")}?dir=images&from=jcrop&module=cms';
+
+jQuery(document).ready(function() {
+
+	$('.cut_pic').each(function(){
+        var jcrop_api         = '';
+        var $self             = $(this);
+        var $jcrop            = $self.find('.js-jcrop');
+        var $options          = ($jcrop.data('options')) || {aspectRatio:1};//
+        var $jcrop_cut_btn    = $self.find('.js-jcrop-cut-btn');
+        var $jcrop_upload_btn = $self.find('.js-jcrop-upload-btn');
+        var $jcrop_file       = $self.find('.js-jcrop-file');
+        var $jcrop_cut_info   = $self.find('.js-jcrop-cut-info');
+        var $jcrop_preview    = $self.find('.jcrop-preview');
+        var $jcrop_input      = $self.find('.js-jcrop-input');
+		var $oldpic			  = $self.find('.js-oldpic-input');
+        var $remove_picture   = $self.find('.remove-picture');
+        var $thumbnail        = $self.find('.thumbnail');
+        var $img_link         = $self.find('.img-link');
+        var $modal            = $self.find('.modal-popin');
+        var $pic_height       = '';
+        // 设置预览图监听
+        $options.onChange    = showPreview;
+        $options.onSelect    = showPreview;
+        $options.boxWidth    = {if IN_WAP===true}300{else /}750{/if};
+        $options.boxHeight   = {if IN_WAP===true}300{else /}750{/if};
+        $options.saveWidth   = $options.saveWidth || null;
+        $options.saveHeight  = $options.saveHeight || null;
+        $options.aspectRatio = $options.aspectRatio || ($options.saveWidth / $options.saveHeight);
+
+//$self.find('.cut_img_btn').click(function(){
+	
+//});
+		//$self.find('.cut_img_btn').click(function(){
+			$modal.modal('show');
+			$jcrop_preview.attr('src',$jcrop.attr('src'));			
+			loadImage( $jcrop.attr('src') , function () {
+				if (jcrop_api != ''){
+						jcrop_api.destroy();
+				}
+				$jcrop.Jcrop($options, function () {
+					jcrop_api   = this;
+					$pic_height = Math.round(jcrop_api.getContainerSize()[1]);
+					//$modal.modal('show');
+				});
+			});
+		//});
+
+		// 加载图片（用于判断图片是否加载完毕）
+        function loadImage(url, callback) {
+            var img = new Image(); //创建一个Image对象，实现图片的预下载
+            img.src = url;
+
+            if(img.complete) { // 如果图片已经存在于浏览器缓存，直接调用回调函数
+                callback.call(img);
+                return; // 直接返回，不用再处理onload事件
+            }
+            img.onload = function () { //图片下载完毕时异步调用callback函数。
+                callback.call(img);//将回调函数的this替换为Image对象
+            };
+        }
+
+        // 实时显示预览图
+        function showPreview(coords)
+        {
+            var ratio = coords.w / coords.h; // 选区比例
+            var rx,ry;
+            var preview_width  = '';
+            var preview_height = '';
+
+            if ((100 / ratio) > $pic_height) {
+                preview_width  = $pic_height * ratio;
+                preview_height = $pic_height;
+            } else {
+                preview_width  = 100;
+                preview_height = 100 / ratio;
+            }
+
+            rx = preview_width / coords.w;
+            ry = (preview_width / ratio) / coords.h;
+
+            if (jcrop_api) {
+                $jcrop_preview.css({
+                    width: Math.round(rx * jcrop_api.ui.stage.width) + 'px',
+                    height: Math.round(ry * jcrop_api.ui.stage.height) + 'px',
+                    marginLeft: '-' + Math.round(rx * coords.x) + 'px',
+                    marginTop: '-' + Math.round(ry * coords.y) + 'px'
+                }).parent().css({
+                    width: preview_width + 'px',
+                    height: preview_height + 'px'
+                });
+            }
+
+            var jcrop_info = [coords.w, coords.h, coords.x, coords.y, $options.saveWidth, $options.saveHeight];
+            $jcrop_cut_info.val(jcrop_info.join(','));
+        }
+
+        // 关闭裁剪框
+        $modal.on('hidden.bs.modal', function (e) {
+
+            $jcrop_cut_info.val('');
+
+			var index = parent.layer.getFrameIndex(window.name);
+			parent.layer.close(index);
+        });
+
+        // 删除图片
+        $remove_picture.click(function () {
+            $(this).parent().hide();
+            $jcrop_input.val('');
+        });
+
+        // 裁剪图片
+        $jcrop_cut_btn.click(function () {
+            var $cut_value = $jcrop_cut_info.val();
+            if ($jcrop.attr('src') == '') {
+                
+				layer.alert('请上传图片');
+                return false;
+            }
+            if ($cut_value != '') {
+                var postdata = {
+                    path: $jcrop_preview.attr('src'),
+					not_rename: 1,
+                    cut: $cut_value
+                };
+                
+				layer.load(1);
+                $.ajax({
+                    url: jcrop_upload_url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: postdata
+                })
+                .done(function(res) {
+                    
+					layer.closeAll();
+                    if (res.code == '1') {
+                        $thumbnail.attr('src', res.thumb || res.src);
+                        $jcrop_input.val(res.id);
+                        $img_link.attr('href', res.src);
+                        $jcrop_cut_info.val('');
+                        $modal.modal('hide');
+						var ckk = 0;
+						$("img",window.parent.document).each(function(e){
+							if($(this).attr('src')==$oldpic.val()){
+								ckk++;
+								$(this).attr('src',res.src)
+							}
+						});
+						var index = parent.layer.getFrameIndex(window.name);
+						parent.layer.close(index);
+                    } else {
+                       
+						layer.alert(res.msg);
+                    }
+                })
+                .fail(function(res) {
+                    
+					layer.closeAll();
+					layer.alert($(res.responseText).find('h1').text() || '请求失败~');
+                });
+            } else {
+                
+				layer.alert('请选择要裁剪的大小');
+            }
+        });
+
+        // 查看大图
+        $(this).magnificPopup({
+            delegate: 'a.img-link',
+            type: 'image',
+            gallery: {
+                enabled: true
+            }
+        });
+
+	});
+
+});
+</script>
+<script type="text/javascript" src="__STATIC__/libs/jcrop/js/Jcrop.min.js"></script>
+<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+</body>
+</html>

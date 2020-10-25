@@ -1,0 +1,120 @@
+<?php
+use \sy\base\Router;
+use \blog\libs\Common;
+$type = Common::option('attachmentType');
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>附件设置 - SYBlog</title>
+	<?php $this->display('common/header'); ?>
+	<style>
+	h5 {
+		padding-left: 0.75rem;
+	}
+	.card-panel .col {
+		margin-top: 1.1rem;
+		margin-bottom: 10px;
+	}
+	</style>
+</head>
+<body>
+	<?php $this->display('common/navbar'); ?>
+	<div class="page-content">
+		<h2 class="title">附件设置</h2>
+		<div class="row">
+				<div class="col s6">
+					<div class="row card-panel">
+						<h5>基本设置</h5>
+						<div class="switch col s12"><label>远程附件<input id="remoteCheck" name="remote" type="checkbox" <?php if ($type !== 'local') echo 'checked'; ?>/><span class="lever"></span></label></div>
+						<div class="input-field col s12">
+							<input type="text" name="format" placeholder="upload/{{date:Y/m/d}}/{{time}}_{{rand:3}}.{{ext}}" value="<?=addslashes(Common::option('attachmentFormat'))?>" />
+							<label>附件名称&nbsp;<a href="<?=Router::createUrl(['index/go/help', 'q' => 'attachment'])?>" target="_blank">帮助?</a></label>
+						</div>
+						<div class="input-field col s12">
+							<input type="text" id="size" placeholder="2m" />
+							<label>附件大小&nbsp;单位K,M,G，服务器限制为<span id="upload_max_filesize"></span></label>
+						</div>
+						<button id="submit" class="waves-effect waves-light btn">保存设置</button>
+					</div>
+					<div id="remote" class="row card-panel">
+						<h5>远程附件</h5>
+						<div class="input-field col s12">
+							<select id="remoteType" class="browser-default" name="remote_type">
+							<?php
+							foreach ($support as $k => $v) {
+								echo '<option value="', $k, '"';
+								if ($k === $type) {
+									echo ' selected';
+								}
+								echo '>', $v, '</option>';
+							}
+							?>
+							</select>
+							<label class="active">远程类型</label>
+						</div>
+						<div class="input-field col s12">
+							<input type="text" name="remote_url" placeholder="例如http://cdn.example.com/" value="<?=addslashes(Common::option('attachmentUrl'))?>" />
+							<label>远程URL&nbsp;<a href="<?=Router::createUrl(['index/go/help', 'q' => 'attachment'])?>" target="_blank">帮助?</a></label>
+						</div>
+						<div class="switch col s12">
+							<label>本地备份<input id="backup" name="backup" type="checkbox" <?php if (Common::option('attachmentBackup') == 1) echo 'checked'; ?>/><span class="lever"></span></label>
+						</div>
+						<div id="backup_name" class="input-field col s12">
+							<input type="text" name="backup_format" placeholder="upload/{{date:Y/m/d}}/{{file}}" value="<?=addslashes(Common::option('attachmentBackupFormat'))?>" />
+							<label>备份文件名称&nbsp;<a href="<?=Router::createUrl(['index/go/help', 'q' => 'attachment'])?>" target="_blank">帮助?</a></label>
+						</div>
+					</div>
+				</div>
+				<div class="col s6">
+					<?php
+					foreach ($support as $enname => $showname) {
+						echo '<div id="setting_', $enname, '" class="remote_setting row card-panel"><h5>', $showname, '</h5>';
+						foreach ($config[$enname] as $one) {
+							$name = $enname . '[' .$one['name'] . ']';
+							switch ($one['type']) {
+								case 'text':
+									echo '<div class="input-field col s12"><input type="text" class="', $enname, '" name="', $name, '" placeholder="', $one['placeholder'], '" value="', addslashes($one['val']), '" /><label>', $one['show'], '</label></div>';
+									break;
+								case 'checkbox':
+									echo '<div class="switch col s12"><label>', $one['show'], '<input name="', $name, '" class="', $enname, '" type="checkbox"';
+									if ($one['checked']) {
+										echo ' checked';
+									}
+									echo ' value="', $one['val'], '"/><span class="lever"></span></label></div>';
+									break;
+								case 'select':
+									echo '<div class="input-field col s12"><select name="', $name, '" class="', $enname, ' browser-default">';
+									foreach ($one['option'] as $k => $v) {
+										echo '<option value="', $k, '"';
+										if ($k === $one['val']) {
+											echo ' selected';
+										}
+										echo '>', $v, '</option>';
+									}
+									echo '</select><label class="active">', $one['show'], '</label></div>';
+									break;
+								default:
+									break;
+							}
+						}
+						echo '</div>';
+					}
+					?>
+					</div>
+			</div>
+		</div>
+	</div>
+	<script>
+	window.sy = {
+		"url": {
+			"submit": "<?=Router::createUrl('admin/option/attachment', 'json')?>"
+		},
+		"phpMaxSize": "<?=ini_get('upload_max_filesize')?>",
+		"optionMaxSize": "<?=Common::option('attachmentSize')?>",
+		"page": "OptionAttachment"
+	};
+	</script>
+	<?php $this->display('common/footer'); ?>
+</body>
+</html>

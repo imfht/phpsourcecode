@@ -1,0 +1,97 @@
+parameters:
+    # 替换原有的extension class
+    grid.twig_extension.class: PHPDish\Bundle\AdminBundle\Twig\DataGridExtension
+
+services:
+  _defaults:
+        autoconfigure: true
+        autowire: true
+        public: false
+
+  phpdish.admin.user:
+        class: PHPDish\Bundle\AdminBundle\Admin\UserAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\User, ~]
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.user, group: 'phpdish.admin.group.user' }
+        public: true
+
+  phpdish.admin.wallet:
+        class: PHPDish\Bundle\AdminBundle\Admin\WalletAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\Wallet, ~]
+        calls:
+            - {method: addChild, arguments: ['@phpdish.admin.payment']}
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.wallet, group: 'phpdish.admin.group.wallet' }
+        public: true
+
+  phpdish.admin.payment:
+        class: PHPDish\Bundle\AdminBundle\Admin\PaymentAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\Payment, PHPDishAdminBundle:Payment]
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.transaction, group: 'phpdish.admin.group.wallet' }
+        public: true
+        calls:
+            - {method: 'setTemplates', arguments: [{inner_list_row2: 'PHPDishAdminBundle:Admin:inner_row_comment.html.twig',base_list_field: 'SonataAdminBundle:CRUD:base_list_field.html.twig'}]}
+
+
+  phpdish.admin.category:
+        class: PHPDish\Bundle\AdminBundle\Admin\CategoryAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\Category, ~]
+        calls:
+            - {method: addChild, arguments: ['@phpdish.admin.post']}
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.category, group: 'phpdish.admin.group.post' }
+        public: true
+
+  phpdish.admin.post:
+        class: PHPDish\Bundle\AdminBundle\Admin\PostAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\Post, ~]
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.post, group: 'phpdish.admin.group.post' }
+        public: true
+
+  phpdish.admin.thread:
+        class: PHPDish\Bundle\AdminBundle\Admin\ThreadAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\Thread, ~]
+        calls:
+            - {method: addChild, arguments: ['@phpdish.admin.topic']}
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.thread, group: 'phpdish.admin.group.forum' }
+        public: true
+
+  phpdish.admin.topic:
+        class: PHPDish\Bundle\AdminBundle\Admin\TopicAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Model\Topic, ~]
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.topic, group: 'phpdish.admin.group.forum' }
+        public: true
+
+  phpdish.admin.friend_link:
+        class: PHPDish\Bundle\AdminBundle\Admin\FriendLinkAdmin
+        arguments: [~, PHPDish\Bundle\CoreBundle\Entity\FriendLink, ~]
+        tags:
+            - { name: sonata.admin, manager_type: orm, label: menu.friend_link, group: 'phpdish.admin.group.site' }
+        public: true
+
+  phpdish_admin.grid_factory:
+      class: PHPDish\Bundle\AdminBundle\GridFactory\GridFactoryAggregate
+
+#  PHPDish\Bundle\AdminBundle\DataGrid\:
+#        resource: '../../DataGrid'
+#        exclude: '../../DataGrid/{GridFactoryAggregate, AbstractGridFactory}.php'
+
+  PHPDish\Bundle\AdminBundle\GridFactory\:
+        resource: '../../GridFactory'
+        exclude: '../../GridFactory/{GridFactoryAggregate, AbstractGridFactory}.php'
+
+  PHPDish\Bundle\AdminBundle\Controller\:
+        resource: '../../Controller'
+
+  # 管理员扩展
+  phpdish_admin.twig_breadcrumb:
+        class: PHPDish\Bundle\AdminBundle\Twig\Breadcrumb
+
+  phpdish_admin.twig_extension.admin:
+       class: PHPDish\Bundle\AdminBundle\Twig\AdminExtension
+       tags: ['twig.extension']
+

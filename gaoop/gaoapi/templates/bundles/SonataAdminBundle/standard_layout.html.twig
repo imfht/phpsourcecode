@@ -1,0 +1,243 @@
+{% extends "@!SonataAdmin/standard_layout.html.twig" %}
+
+{% block stylesheets %}
+    {{ parent() }}
+
+    <link rel="stylesheet" href="{{ asset('css/other/notice/animate.css') }}" xmlns="http://www.w3.org/1999/html"/>
+    <link rel="stylesheet" href="{{ asset('css/other/notice/notice.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('css/backend/main.css') }}"/>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script src="{{ asset('js/other/notice/notice.js') }}"></script>
+{% endblock %}
+
+{% block sonata_top_nav_menu %}
+    {% if app.user and is_granted(sonata_admin.adminPool.getOption('role_admin')) %}
+        <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+                {% block sonata_top_nav_menu_add_block %}
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-plus-square fa-fw" aria-hidden="true"></i> <i
+                                    class="fa fa-caret-down" aria-hidden="true"></i>
+                        </a>
+                        {% include get_global_template('add_block') %}
+                    </li>
+                {% endblock %}
+                {% block sonata_top_nav_menu_user_block %}
+                    {{ render(controller('App\\Controller\\Backend\\DefaultController::AdminUserInfo')) }}
+                {% endblock %}
+                <!-- 全局配置 -->
+                <li>
+                    <a href="#" data-toggle="control-sidebar"><i class="fa fa-gears"></i></a>
+                </li>
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block tab_menu_navbar_header %}
+    <div class="hidden-xs">
+        {% if _breadcrumb is not empty or action is defined %}
+            <ol class="nav navbar-top-links breadcrumb">
+                {% if _breadcrumb is empty %}
+                    {% if action is defined %}
+                        {% for menu in breadcrumbs_builder.breadcrumbs(admin, action) %}
+                            {%- set translation_domain = menu.extra('translation_domain', 'messages') -%}
+                            {%- set label = menu.label -%}
+                            {%- if translation_domain is not same as(false) -%}
+                                {%- set label = label|trans(menu.extra('translation_params', {}), translation_domain) -%}
+                            {%- endif -%}
+
+                            {% if not loop.last %}
+                                <li>
+                                    {% if menu.uri is not empty %}
+                                        <a href="{{ menu.uri }}">
+                                            {% if menu.extra('safe_label', true) %}
+                                                {{- label|raw -}}
+                                            {% else %}
+                                                {{- label|truncate(100) -}}
+                                            {% endif %}
+                                        </a>
+                                    {% else %}
+                                        <span>{{ label|truncate(100) }}</span>
+                                    {% endif %}
+                                </li>
+                            {% else %}
+                                <li class="active"><span>{{ label|truncate(100) }}</span></li>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    {{ _breadcrumb|raw }}
+                {% endif %}
+            </ol>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block sonata_breadcrumb %}
+    {# info 选择框 #}
+    {{ render(controller('App\\Controller\\Backend\\DefaultController::choiceInfo')) }}
+{% endblock sonata_breadcrumb %}
+
+{# 左侧菜单栏 #}
+{% block sonata_left_side %}
+    <aside class="main-sidebar">
+        <section class="sidebar">
+            {% block sonata_side_nav %}
+                {% block sonata_sidebar_search %}
+                    {% if sonata_admin.adminPool.getOption('search') %}
+                        <form action="{{ path('sonata_admin_search') }}" method="GET" class="sidebar-form" role="search">
+                            <div class="input-group custom-search-form">
+                                <input type="text" name="q" value="{{ app.request.get('q') }}" class="form-control" placeholder="{{ 'search_placeholder'|trans({}, 'SonataAdminBundle') }}">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-flat" type="submit">
+                                        <i class="fa fa-search" aria-hidden="true"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </form>
+                    {% endif %}
+                {% endblock sonata_sidebar_search %}
+
+                {% block side_bar_before_nav %} {% endblock %}
+
+                {% block side_bar_nav %}
+                    {{ render(controller('App\\Controller\\Backend\\DefaultController::AdminModule', {sonata_admin: app.request.attributes.get('_sonata_admin')})) }}
+                {% endblock side_bar_nav %}
+
+                {% block side_bar_after_nav %}
+                    <p class="text-center small" style="border-top: 1px solid #444444; padding-top: 10px">
+                        {% block side_bar_after_nav_content %}
+
+                        {% endblock %}
+                    </p>
+                {% endblock %}
+            {% endblock sonata_side_nav %}
+        </section>
+    </aside>
+{% endblock sonata_left_side %}
+
+{% block sonata_wrapper %}
+    {{ parent() }}
+    <!-- 全局配置侧边栏 -->
+    <aside class="control-sidebar control-sidebar-dark">
+        <!-- Create the tabs -->
+        <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
+            <li class="active"><a href="#control-sidebar-general-tab" data-toggle="tab" aria-expanded="false"><i
+                            class="fa fa-wrench"></i></a></li>
+            <li class=""><a href="#control-sidebar-link-tab" data-toggle="tab" aria-expanded="false"><i
+                            class="fa fa-link"></i></a></li>
+            <li class=""><a href="#control-sidebar-settings-tab" data-toggle="tab" aria-expanded="true"><i
+                            class="fa fa-gears"></i></a></li>
+        </ul>
+        <!-- Tab panes -->
+        <div class="tab-content my-tab-content">
+            <!-- Home tab content -->
+            <div class="tab-pane active" id="control-sidebar-general-tab">
+                <h3 class="control-sidebar-heading">General Action</h3>
+                <ul class="control-sidebar-menu" style="margin: 0px">
+                    <li>
+                        <button type="button" class="btn btn-success pull-left general-update-doc"><i
+                                    class="fa fa-fw fa-file-text-o"></i> 更新文档
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.tab-pane -->
+            <!-- Stats tab content -->
+            <div class="tab-pane" id="control-sidebar-link-tab">
+                <h3 class="control-sidebar-heading">Link List</h3>
+                {{ render(controller('App\\Controller\\Backend\\DefaultController::showInfoLink')) }}
+            </div>
+            <!-- /.tab-pane -->
+            <!-- Settings tab content -->
+            <div class="tab-pane" id="control-sidebar-settings-tab">
+                <h3 class="control-sidebar-heading">Settings</h3>
+            </div>
+            <!-- /.tab-pane -->
+        </div>
+    </aside>
+    <!-- The sidebar's background -->
+    <!-- This div must placed right after the sidebar for it to work-->
+    <div class="control-sidebar-bg">
+        <script>
+            $(document).ready(function () {
+                $("#control-sidebar-general-tab .general-update-doc").on("click", function (e) {
+                    $("#control-sidebar-general-tab .general-update-doc").attr('disabled', true);
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ path('admin_general_apidoc_update') }}",
+                        dataType: 'json',
+                        data: {},
+                        success: function (result) {
+                            if (result.success) {
+                                new NoticeJs({
+                                    text: 'API文档更新成功',
+                                    type: 'success',
+                                    position: 'topCenter',
+                                    progressBar: true,
+                                    timeout: 30,
+                                    animation: {
+                                        open: 'animated fadeIn',
+                                        close: 'animated flipOutX'
+                                    }
+                                }).show();
+                            } else {
+                                new NoticeJs({
+                                    text: 'API文档更新失败',
+                                    type: 'error',
+                                    position: 'topCenter',
+                                    progressBar: true,
+                                    timeout: 50,
+                                    animation: {
+                                        open: 'animated fadeIn',
+                                        close: 'animated fadeOut'
+                                    }
+                                }).show();
+                            }
+                            $("#control-sidebar-general-tab .general-update-doc").attr('disabled', false);
+                        },
+                        error: function (e) {
+                            new NoticeJs({
+                                text: '请求失败',
+                                type: 'error',
+                                position: 'topCenter',
+                                progressBar: true,
+                                timeout: 50,
+                                animation: {
+                                    open: 'animated fadeIn',
+                                    close: 'animated fadeOut'
+                                }
+                            }).show();
+                            $("#control-sidebar-general-tab .general-update-doc").attr('disabled', false);
+                        }
+                    });
+                });
+            });
+        </script>
+    </div>
+{% endblock %}
+
+{# 列表页导航菜单 #}
+{% block sonata_admin_content_actions_wrappers %}
+    {% if _actions|replace({ '<li>': '', '</li>': '' })|trim is not empty %}
+        <ul class="nav navbar-nav navbar-right">
+            {% if _actions|split('</a>')|length > 3 %}
+                <li class="dropdown sonata-actions">
+                    <a href="#" class="dropdown-toggle"
+                       data-toggle="dropdown">{{ 'link_actions'|trans({}, 'SonataAdminBundle') }} <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
+                        {{ _actions|raw }}
+                    </ul>
+                </li>
+            {% else %}
+                {{ _actions|raw }}
+            {% endif %}
+        </ul>
+    {% endif %}
+{% endblock sonata_admin_content_actions_wrappers %}

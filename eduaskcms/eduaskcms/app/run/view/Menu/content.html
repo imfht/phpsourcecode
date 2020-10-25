@@ -1,0 +1,67 @@
+{extends file="../base.html"}
+{block name=function}
+
+{/block}
+{block name=base}
+{function menu level=1}
+{foreach $data as $self_id=>$children}
+<div class="menu_level menu_level_{$level} {if !$children}no_child{/if} {if $level>1&&$children}isOpen{/if}">
+    <div class="self clearfix">
+        <i class="lline"></i>
+        <span class="menu_action">
+            {$type=menu($self_id,'type')}
+            {if $type!='Exlink'}
+            <a href="{url($type|cat:'/lists',['parent_id'=>$self_id])}"><i class="fa fa-eye"></i>查看内容</a>
+            <a href="{url($type|cat:'/create',['parent_id'=>$self_id])}"><i class="fa fa-plus"></i>添加内容</a>             
+            {/if}           
+            <a href="{call menu_link id=$self_id}" target="_blank"><i class="fa fa-eye"></i>预览</a>
+        </span>
+        <span class="menu_info clearfix">
+            {$child_count = menu($self_id,'child_count')}
+            <i class="fa  {if $children}{if $level==1}fa-plus-circle{else}fa-minus-circle{/if}{else}fa-minus-circle{/if}  fa-lg left fa-icon"></i>
+            <span class="menu_title left">{menu($self_id,'title')}</span>
+            <span class="menu_id left">〖ID：{$self_id}〗</span>
+            <span class="menu_type left">〖栏目类型：{$mdls.Menu->form.type.options[menu($self_id,'type')]}〗</span>
+            {if $child_count>0}<span class="menu_child_count left">〖子栏目数：{$child_count}〗</span>{/if}
+        </span>
+    </div>
+    {if $children}
+    <div class="menu_children">
+        {call menu data=$children level=$level+1}
+    </div>
+    {/if}
+</div>
+{/foreach}
+{/function}
+<div id="menu_tree">
+    {if menu('threaded')}{$threaded = reset(menu('threaded'))}{else}{$threaded = []}{/if}
+    {if $threaded}
+        {call menu data=$threaded level=1}
+    {/if}
+</div>
+{/block}
+{block name=script}
+<script>
+$('#menu_tree .self').click(function(){
+    var parent = $(this).parent('.menu_level') ;
+    $('#menu_tree').find('.isClick').removeClass('isClick');
+    parent.addClass('isClick');
+    if(parent.hasClass('no_child')) return false ;
+    if(parent.hasClass('isOpen'))
+        parent.removeClass('isOpen').children('.menu_children').hide().end().children('.self').find('.fa-icon').removeClass('fa-minus-circle').addClass('fa-plus-circle')
+    else
+        parent.addClass('isOpen').children('.menu_children').show().end().children('.self').find('.fa-icon').removeClass('fa-plus-circle').addClass('fa-minus-circle')
+}).find('a').click(function(e){
+    e.stopPropagation();
+    if($(this).hasClass('item-action-delete')){
+        var href  = $(this).attr('href') ;
+        layer.confirm('该操作不可逆，请确认删除该栏目及其子栏目？',function(){
+            layer.closeAll();
+            location.href  = href; 
+        })
+        return false ;
+    }
+})
+
+</script>
+{/block}

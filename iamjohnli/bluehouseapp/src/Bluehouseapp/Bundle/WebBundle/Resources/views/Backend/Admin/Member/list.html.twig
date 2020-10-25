@@ -1,0 +1,81 @@
+{% extends "BluehouseappWebBundle:Backend/Admin/layout:layout.html.twig" %}
+{% from 'BluehouseappWebBundle:Macros:misc.html.twig'  import pagination %}
+{% import 'BluehouseappWebBundle:Macros:buttons.html.twig' as buttons %}
+{% block title %}
+    用户管理
+{% endblock %}
+{% block body %}
+    <div class="page-header">
+        <h2>用户管理 <small></small></h2>
+    </div>
+    <ol class="breadcrumb clearfix">
+        <li><a href="{{path('bluehouseapp_members_list', { 'locked':  '0'})}}">可用用户 <span class="label label-success">({{activeCount }})</span></a></li>
+        </li>
+        <li>
+            <a href="{{path('bluehouseapp_members_list', { 'locked':'1'})}}">禁用用户 <span class="label label-danger">({{inactiveCount }})</span></a>
+        </li>
+    </ol>
+    {{ pagination(entities) }}
+    <table class="table  table-striped table-hover table-condensed">
+    <thead>
+    <tr>
+
+        <th>{{bluehouse_resource_sort('username', '用户名') }}</th>
+        <th>{{bluehouse_resource_sort('nickname', '昵称') }}</th>
+        <th>{{bluehouse_resource_sort('email', '信箱') }}</th>
+        <th>头像</th>
+        <th>{{bluehouse_resource_sort('lastLogin', '最后登录时间') }}</th>
+        <th>状态</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+
+        <tbody>
+        {% for entity in entities %}
+            <tr>
+                <td>
+                    <a href="{{ path('user_show', { 'username': entity.username }) }}">
+                    {{entity.username}}
+                    </a>
+                </td>
+                <td>{{entity.nickname}}</td>
+                <td>{{entity.email}}</td>
+                <td>
+                    <a href="{{ path('user_show', { 'username': entity.username }) }}">
+                    {% if entity.avatar %}
+
+                        <img  class="box_avatar" border="0"  align="default" src="{{vich_uploader_asset(entity,'userImage')|imagine_filter('small_image')}}"/>
+
+                    {% else %}
+                        <img src="{{ asset('bundles/bluehouseappweb/images/user_default.png') }}"/>
+
+                    {% endif %}
+                    </a>
+                </td>
+                <td>
+                    {{entity.lastLogin|date('Y-m-d H:i')}}
+                </td>
+                <td>
+                    {% if entity.locked %}
+                        <span class="label label-danger">已禁用</span>
+                    {% else %}
+                        <span class="label label-success">正常</span>
+                    {% endif %}
+                </td>
+                <td>
+
+                        {% if entity.locked %}
+                            {{ buttons.enable(path('bluehouseapp_member_enable',{id:entity.id})) }}
+                         {% else %}
+                             {{ buttons.disable(path('bluehouseapp_member_disable',{id:entity.id})) }}
+                        {% endif %}
+
+                </td>
+            </tr>
+
+        {% endfor %}
+        </tbody>
+
+    </table>
+    {{ pagination(entities) }}
+{% endblock %}

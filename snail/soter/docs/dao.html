@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+        <head>
+                <title>Dao层</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="js/inc.js"></script>
+        </head>
+        <body>
+                <fieldset>
+                        <legend>Dao层</legend>
+                        <ol>
+                                <li>
+                                        <h2 class="title_h2">什么是Dao</h2>
+                                        Dao是一个思想，如果不正确使用就跟Model一样。Dao我们可以想象成一张表，多张表就多个Dao，也可以想成绑定表。什么意思呢？
+                                        <br>比如：现在有张user表，那么我们对应Dao文件就是UserDao.php，那么我们UserDao.php就可以对user表增删改查。
+                                        <br><b class="text_strong">切勿如下操作：</b>
+                                        <br><b class="text_strong">我们有user表和user_vip表，然后只创建一个Dao文件。
+						<br>那就没有意义了，那我们还不如建Model文件，我们要遵守一个Dao文件对应一张表才可以灵活使用与扩展。</b>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">Dao层规范</h2>
+                                        1.Dao类文件都放在<code>application/classes/Dao</code>文件夹里面
+                                        <br>2.Dao必须要继承<code>Soter_Dao</code>抽象类，实现父类抽象方法。
+					<br>3.Dao类内部访问数据库，必须使用<code>$this->getDb()</code>，而不是Sr::db()。
+                                        <br>示例如下：
+                                        <br>2.1.新建Dao文件application/classes/Dao/TestDao.php
+                                        <br>2.2.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Dao_TestDao extends Soter_Dao {
+                                                        
+                                                        public function getTable(){}
+
+                                                        public function getPrimaryKey(){}
+
+                                                        public function getColumns(){}
+                                                }
+                                        </pre>
+                                        可以看到Dao_TestDao需要继承3个方法，<code>getTable</code>、<code>getPrimaryKey</code>和<code>getColumns</code>分别什么意思呢？
+                                        <br>第一个<code>getTable</code>是获取表，比如：我们有个user表，那么函数里面可以有<code>return 'user';</code>。
+                                        <br>第二个<code>getPrimaryKey</code>是获取主键，比如：我们user表定义一个id字段为主键，那么函数里面可以有<code>return 'id';</code>。
+                                        <br>第三个<code>getColumns</code>是获取字段名称数组，比如：我们有user表里面有id、uid和username等等……字段
+                                        <br>示例如下:
+                                        <pre class="brush:php">
+                                               public  function getColumns(){
+                                                        return array(
+                                                                'id',
+                                                                'uid',
+                                                                'username',
+                                                                ……
+                                                        );
+                                                }
+                                        </pre>
+                                        <b class="text_strong">提示：</b>
+                                        <br>以上三个方法都可以自己扩展，但是我们要记得一个Dao文件对应一个表。                                      
+                                </li>                                
+                                <li>
+                                        <h2 class="title_h2">使用Dao层</h2>
+                                        可以在任意地方使用下面的代码加载一个dao层类：
+                                        <br>示例如下：
+                                        <pre class="brush:php">
+                                                Sr::dao('TestDao');
+                                        </pre>
+                                        我们可以看到上面有一个参数，这个是什么意思呢，是加载dao类的时候，不需要前缀<code>Dao_</code>， 
+                                        <br>比如上面的：Dao_TestDao，加载的时候只用Sr::dao('TestDao');
+                                        <br>例如:我们要创建Dao类文件名为ListDao.php，类名就是Dao_ListDao，那么参数就要输入ListDao
+
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">示例一</h2>
+                                        比如有文件：classes/Dao/ArticleUser.php 
+                                        <br>那么ArticleUser.php文件里面的类名就应该是：Dao_ArticleUser。
+                                        <br>那么要加载Dao类如下:
+                                        <pre class="brush:php">
+                                                Sr::dao('ArticleUser');
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">示例二</h2>
+                                        比如有文件：classes/Dao/Vip/User.php 
+                                        <br>那么User.php文件里面的类名就应该是：Dao_Vip_User,也就是下划线代表着文件夹的分隔符。 
+                                        <br>那么要加载Dao类如下:
+                                        <pre class="brush:php">
+                                                Sr::dao('Vip_User');
+                                                //还有另一种方式例如以下
+                                                Sr::dao('Vip/User.php');
+                                                //我们也可以不用带.php后缀,例如以下：
+                                                Sr::dao('Vip/User');
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">创建自己的Dao类</h2>
+                                        下面我们自定义一个加载Dao类
+                                        <br>1.创建<code>test_dao</code>数据库
+                                        <br>2.执行以下sql:
+                                        <pre class="brush:sql">
+                                                create database test_dao CHARACTER SET utf8 COLLATE utf8_general_ci; 
+                                        </pre>
+                                        3.创建<code>users</code>数据表
+                                        <br>4.执行以下sql:
+                                        <pre class="brush:sql">
+                                        DROP TABLE IF EXISTS `users`;
+                                        CREATE TABLE `users` (
+                                                `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标识',
+                                                `uid` int(11) NOT NULL COMMENT '用户id',
+                                                `username` varchar(20) NOT NULL COMMENT '用户名',
+                                                `email` varchar(30) NOT NULL COMMENT '邮箱',
+                                                PRIMARY KEY (`id`)
+                                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+                                        INSERT INTO `users` VALUES ('1', '1', '刘一', '111@qq.com');
+                                        INSERT INTO `users` VALUES ('2', '2', '陈二', '222@qq.com');
+                                        INSERT INTO `users` VALUES ('3', '3', '张三', '333@qq.com');
+                                        INSERT INTO `users` VALUES ('4', '4', '李四', '444@qq.com');
+                                        </pre>
+                                        5.修改数据库配置文件<code>application/config/default/database.php</code>
+                                        <br>6.修改一下代码
+                                        <pre class="brush:php">
+                                                'mysql' => array(
+                                                        'database' => 'test_dao',
+                                                        'masters' => array(
+                                                                'master01' => array(
+                                                                        'hostname' => '127.0.0.1',
+                                                                        'port' => 3306,
+                                                                        'username' => '用户名',
+                                                                        'password' => '密码',
+                                                                )
+                                                        ),
+                                                ),
+                                        </pre>
+                                        详细请看<a href="database.html">数据库手册</a>的“<b>数据库配置信息说明</b>”
+                                        <br>7.新建Dao文件application/classes/Dao/Users.php
+                                        <br>8.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Dao_User extends Soter_Dao {
+
+                                                        public function getColumns() {
+                                                                return array(
+                                                                                'id'//标识
+                                                                                ,'uid'//用户id
+                                                                                ,'username'//用户名
+                                                                                ,'email'//邮箱
+                                                                                );
+                                                        }
+
+                                                        public function getPrimaryKey() {
+                                                                return 'id';
+                                                        }
+
+                                                        public function getTable() {
+                                                                return 'users';
+                                                        }
+
+                                                        //这里我们做一个简单查询，详细可以查看“数据库手册”的“查询数据”和“查询结果集的使用”
+                                                        public function getUserName(){
+                                                                $table = $this->getTable();
+                                                                $username = $this->getDb()->select('username')
+                                                                                ->from($table)
+                                                                                ->limit(0,1)
+                                                                                ->execute()
+                                                                                ->value('username');
+                                                                return $username;
+                                                        }
+
+                                                }
+                                        </pre>
+                                        9.新建控制器文件application/classes/Controller/Welcome.php
+                                        <br>10.输入以下代码：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Controller_Welcome extends Soter_Controller {
+
+                                                        public function do_dao() {
+                                                                $dao = Sr::dao('User');
+                                                                echo $dao->getUserName();
+                                                        }
+                                                }  
+                                        </pre>                                        
+                                        11.浏览器访问：http://127.0.0.1/index.php/Welcome/dao.do
+                                        <br>//将输出：刘一
+                                        <br>为什么会输出“<b>刘一</b>”?
+                                        <br>我们可以从上面例子看Controller_Welcome控制器类，
+                                        <br>在do_dao方法里面做了加载Dao层中的Dao_User类赋值给<b>$dao</b>。
+                                        <br>然后通过<b>$dao</b>输出Dao_User类中的<code>getUserName</code>方法,
+                                        <br><code>getUserName</code>方法，主要是去数据库查询<code>users</code>表查询username字段的第一条数据，最后得到查询结果数据数组中的username字段。
+                                        <br>详细请看<a href="database.html">数据库手册</a>的“<b>查询数据</b>”和“<b>查询结果集的使用</b>”，
+                                        <br>所以浏览器才会显示“<b>刘一</b>”。
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">Dao层实用方法介绍</h2>
+                                        假如我们有这样的数据库，如下：
+                                        <pre class="brush:sql">
+                                                DROP TABLE IF EXISTS `test`;
+                                                CREATE TABLE `test` (
+                                                        `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标识',
+                                                        `username` varchar(20) NOT NULL COMMENT '用户名',
+                                                        `addtime` int(10) NOT NULL COMMENT '添加时间',
+                                                        PRIMARY KEY (`id`)
+                                                ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+                                                INSERT INTO `test` VALUES ('1', '刘一', '1431356499');
+                                                INSERT INTO `test` VALUES ('2', '陈二', '1422806400');
+                                                INSERT INTO `test` VALUES ('3', '张三', '1425312000');
+                                                INSERT INTO `test` VALUES ('4', '李四', '1428076800');
+                                        </pre>
+                                        新建Dao文件application/classes/Dao/Test.php 
+                                        <br>代码如下：
+                                        <pre class="brush:php">
+                                                &lt;?php
+
+                                                class Dao_Test extends Soter_Dao {
+
+                                                        public function getColumns() {
+                                                                return array(
+                                                                                'id'//标识
+                                                                                ,'username'//用户名
+                                                                                ,'addtime'//添加时间
+                                                                                );
+                                                        }
+
+                                                        public function getPrimaryKey() {
+                                                                return 'id';
+                                                        }
+
+                                                        public function getTable() {
+                                                                return 'test';
+                                                        }
+
+                                                }
+
+                                        </pre>
+                                        下面介绍Dao层常用方法：
+                                        <h3 class="title_h3">1.设置Dao中使用的数据库操作对象</h3>
+                                        通过<code>setDb(Soter_Database_ActiveRecord $db)</code>方法，设置Dao中使用的数据库操作对象。
+                                        <br>默认情况下Dao层使用<code>Sr::db()</code>连接数据库，如果我们不再使用<code>Sr::db()</code>连接数据库，
+                                        <br>那么我们可以通过<code>setDb()</code>来设置另外一个数据库。
+					<b><br>然后我们在Dao类内部就可以通过<code>$this->getDb()</code>访问数据库，
+						<br><code>$this->getDb()</code>返回的就是setDb()设置的数据库对象。</b>
+                                        <br>示例如下：
+                                        <pre class="brush:php">
+                                                class Dao_Test extends Soter_Dao {
+
+                                                        public function __construct(){
+                                                                parent::__construct();
+                                                                $dbConfig = array(
+                                                                        'driverType' => 'mysql',
+                                                                        'debug' => true,
+                                                                        'pconnect' => false,
+                                                                        'charset' => 'utf8',
+                                                                        'collate' => 'utf8_general_ci',
+                                                                        'database' => 'test_name',
+                                                                        'tablePrefix' => '',
+                                                                        'tablePrefixSqlIdentifier' => '_tablePrefix_',
+                                                                        //是否开启慢查询记录
+                                                                        'slowQueryDebug' => false,
+                                                                        'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
+                                                                        'slowQueryHandle' => new Soter_Database_SlowQuery_Handle_Default(),
+                                                                        /**
+                                                                        * 是否开启没有满足设置的索引类型的查询记录
+                                                                        */
+                                                                        'indexDebug' => false,
+                                                                        /**
+                                                                        * 索引使用的最小情况，只有小于最小情况的时候才会记录sql到日志
+                                                                        * minIndexType值从好到坏依次是:
+                                                                        * system > const > eq_ref > ref > fulltext > ref_or_null 
+                                                                        * > index_merge > unique_subquery > index_subquery > range 
+                                                                        * > index > ALL 一般来说，得保证查询至少达到range级别，最好能达到ref
+                                                                        * 避免ALL即全表扫描
+                                                                        */
+                                                                        'minIndexType' => 'index',
+                                                                        'indexHandle' => new Soter_Database_Index_Handle_Default(),
+                                                                        'masters' => array(
+                                                                            'master01' => array(
+                                                                                'hostname' => '127.0.0.1',
+                                                                                'port' => 3306,
+                                                                                'username' => 'root',
+                                                                                'password' => '',
+                                                                            )
+                                                                        ),
+                                                                        'slaves' => array()
+                                                                );
+                                                                $db = Sr::db($dbConfig);
+                                                                $this->setDb($db);
+                                                        }
+
+                                                        public function getColumns() {
+                                                                return array(
+                                                                                'id'//标识
+                                                                                ,'username'//用户名
+                                                                                ,'addtime'//添加时间
+                                                                                );
+                                                        }
+
+                                                        public function getPrimaryKey() {
+                                                                return 'id';
+                                                        }
+
+                                                        public function getTable() {
+                                                                return 'test';
+                                                        }
+                                                }
+                                        </pre>
+                                        <h3 class="title_h3">2.添加数据</h3>
+                                        通过<code>insert($data)</code>方法，来添加数据，返回值是插入数据的ID，失败为0。
+                                        <br>$data 必填：需要添加的数据 例如：<code>array('username' => '张三', 'addtime' => time());</code>
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //添加一条username为"张三"，addtime为当前时间戳的数据
+                                                $data = array('username' => '张三', 'addtime' => time());
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->insert($data);
+                                        </pre>
+					<h3 class="title_h3">3.批量添加数据</h3>
+                                        通过<code>insertBatch($data)</code>方法，来批量添加数据，返回值是插入数据中第一条数据的ID，失败为0。
+                                        <br>$data 必填：需要批量添加的数据 例如：<code>array(array('username' => '李四', 'addtime' => time()),array('username' => '张三', 'addtime' => time()));</code>
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //一次添加两条数据
+                                                $data = array(array('username' => '李四', 'addtime' => time()),array('username' => '张三', 'addtime' => time()));
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->insertBatch($data);
+                                        </pre>
+                                        <h3 class="title_h3">4.更新数据</h3>
+                                        通过<code>update($data, $where)</code>方法，来更新数据，返回值是1或者0，1是代表执行成功，0是代表执行失败。
+                                        <br>$data 必填：需要更新的数据 例如：<code>array('username' => '李四', 'addtime' => time());</code>
+                                        <br>$where 必填：可以是$where条件关联数组，还可以是主键值。
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //1.修改主键是1的记录
+                                                $data = array('username' => '王五', 'addtime' => time());
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->update($data, 1);
+
+                                                //2.修改addtime为当前时间戳，条件username为'王五'、id为1的记录
+                                                $data = array('addtime' => time());
+                                                $where = array('id' => 1, 'username' => '王五');
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->update($data, $where);
+                                        </pre>
+					<h3 class="title_h3">5.批量更新数据</h3>
+                                        通过<code>updateBatch($data, $index)</code>方法，来更新数据，返回值是数据库中受到影响的行数。
+                                        <br>$data 必填：需要更新的数据 例如：<code>array(array('id'=>2,'username' => '李四', 'addtime' => time()),array('id'=>3,'username' => '张三', 'addtime' => time()));</code>
+                                        <br>$index 必填：数据中主键或者唯一索引列名称，数据中必须包含这一列，比如上面的id。
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //1.同时修改id主键2对应的数据和id主键是3的数据
+                                                $data = array(array('id'=>2,'username' => '李四', 'addtime' => time()),array('id'=>3,'username' => '张三', 'addtime' => time()));
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->update($data, 'id');
+                                        </pre>
+                                        <h3 class="title_h3">6.获取一条或者多条数据</h3>
+                                        通过<code>find($values, $isRows = false, Array $orderBy = array())</code>方法，我们可以获取一条或者多条数据。
+                                        <br>$values 必填：可以是一个主键的值或者主键的值数组，还可以是where条件
+                                        <br>$isRows 选填：返回多行记录还是单行记录，true：多行，false：单行
+                                        <br>$orderBy 选填：当返回多行记录时，可以指定排序。例如：array('time'=>'desc') 或者 array('time'=>'desc','id'=>'asc')
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //1.获取主键是10的记录
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->find(10);
+
+                                                //2.获取主键是1，2的两条记录
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->find(array(1,2), true);
+                                                
+                                                //3.根据条件获取一条记录
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->find(array('id' => 1));
+
+                                                //4.根据条件获取多条记录
+                                                $where = array('username' => array('刘一', '陈二'));
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->find($where, true);
+
+                                                //5.获取用户名是'刘一'，'陈二'的两条记录,并用addtime排序
+                                                $where = array('username' => array('刘一', '陈二'));
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->find($where, true, array('addtime' => 'asc'));
+                                        </pre>
+                                        <h3 class="title_h3">7.获取多条数据</h3>
+                                        通过<code>findAll($where = null, Array $orderBy = array(), $limit = null, $fields = null)</code>方法，我们可以获取一条或者多条数据。
+                                        <br>$where 选填：where条件数组
+                                        <br>$orderBy 选填：排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+                                        <br>$limit 选填：limit数量，比如：10
+                                        <br>$fields 选填：要搜索的字段，比如：id,name。留空默认*
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //1.查询表所有数据
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->findAll();
+
+                                                //2.查询表中username为"刘一"的所有数据。
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->findAll(array('username' => '刘一'));
+
+                                                //3.查询表中id为1的所有数据，并且按着id倒序排列。
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->findAll(array('id' => 1), array('id' => 'desc'));
+
+                                                //4.查询表中id为1的按着id倒序排列的100条数据。
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->findAll(array('id' => 1), array('id' => 'desc'), 100);
+
+                                                //5.查询表中id为1的按着id倒序排列的100条数据，同时只获取id和username两个字段。
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->findAll(array('id' => 1), array('id' => 'desc'), 100, 'id,username');
+                                        </pre>
+                                        <h3 class="title_h3">8.根据条件获取一个字段的值或者数组</h3>
+                                        通过<code>findCol($col, $where, $isRows = false, Array $orderBy = array())</code>方法，我们可以根据条件获取一个字段的值或者数组。
+                                        <br>$col 必填：字段名称
+                                        <br>$where 必填：可以是一个主键的值或者主键的值数组，还可以是where条件(<b class="text_strong">这个跟find的$values参数一样</b>)
+                                        <br>$isRows 选填：返回多行记录还是单行记录，true：多行，false：单行
+                                        <br>$orderBy 选填：当返回多行记录时，可以指定排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+                                        <br>查询字段数据<b>findCol</b>和<b>find</b>类似，值是获取的是某个字段的值或者数组，示例可以参考<b>find</b>方法。
+                                        <h3 class="title_h3">7.根据条件删除记录</h3>
+                                        通过<code>delete($values, Array $cond = NULL)</code>方法，来删除记录，返回值是1或者0，1是代表执行成功，0是代表执行失败。
+                                        <br>$values 选填：以是一个主键的值或者主键主键的值数组
+                                        <br>$cond 选填：附加的where条件，关联数组
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+                                                //1.删除主键是1的记录
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->delete(1);
+
+                                                //2.记录中username是'刘一'的记录
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->delete(null, array('username' => '刘一'));
+						
+						//3.删除主键是1,2,3的记录,记录中username是'刘一'的记录
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->delete(array(1,2,3), array('username' => '刘一'));
+						
+						//4.删除整个test表数据
+                                                $userDao = Sr::dao('Test');
+                                                $userDao->delete();
+                                        </pre>
+                                        <h3 class="title_h3">9.分页方法</h3>
+                                        通过<code>getPage($page, $pagesize, $url, $fields = '*', Array $where = null, $orderBy = array(), $pageBarOrder = array(1, 2, 3, 4, 5, 6), $pageBarACount = 10)</code>方法，我们可以分页获取数据。
+                                        <br>$page 必填：第几页
+                                        <br>$pagesize 必填：每页多少条
+                                        <br>$url 必填：基础url，里面的{page}会被替换为实际的页码
+                                        <br>$fields 选填：select的字段，全部用*，多个字段用逗号分隔
+                                        <br>$where 选填：where条件，关联数组
+                                        <br>$orderBy 选填：排序字段，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+                                        <br>$pageBarOrder 选填：分页条组成，可以参考<a href="system_functions.html">系统方法手册</a>中分页条方法
+                                        <br>$pageBarACount 选填：分页条a的数量，可以参考<a href="system_functions.html">系统方法手册</a>中分页条方法
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+						//第一页，每页10条      
+						$userDao = Sr::dao('Test');
+						$data=$userDao->getPage(1, 10, 'index.do?p={page}', '*', null, array(), array(1, 2, 3, 4, 5, 6), 10);
+						$rows=$data['items'];
+						$pageBar=$data['page'];
+                                        </pre>
+					getPage方法返回的是形如：array('items'=>array(array(...),...),'page'=>'...')关联数组，
+					<br>items键的值是数据,page是分页条html字符串。
+                                        <h3 class="title_h3">10.SQL搜索</h3>
+                                        通过<code>search($page, $pagesize, $url, $fields, $cond, Array $values = array(), $pageBarOrder = array(1, 2, 3, 4, 5, 6), $pageBarACount = 10)</code>方法，来获取SQL搜索。
+                                        <br>$page 必填：第几页
+                                        <br>$pagesize 必填：每页多少条
+                                        <br>$url 必填：基础url，里面的{page}会被替换为实际的页码
+                                        <br>$fields 选填：select的字段，全部用*，多个字段用逗号分隔
+                                        <br>$cond 必填：SQL语句where后面的部分，不要带limit
+                                        <br>$values 必填：$cond中的问号的值数组，$cond中使用?可以防止sql注入
+                                        <br>$pageBarOrder 选填：分页条组成，可以参考<a href="system_functions.html">系统方法手册</a>中分页条方法
+                                        <br>$pageBarACount 选填：分页条a的数量，可以参考<a href="system_functions.html">系统方法手册</a>中分页条方法
+                                        <br>假如我们Business要调用,如下：
+                                        <pre class="brush:php">
+						//搜索id大于1，每页2条。
+						$userDao = Sr::dao('Test');
+						$userDao->search(1, 2, '#', '*','id>?', array(1));
+						$rows=$data['items'];
+						$pageBar=$data['page'];
+                                        </pre>
+					search方法返回的是形如：array('items'=>array(array(...),...),'page'=>'...')关联数组，
+					<br>items键的值是数据,page是分页条html字符串。
+                                </li>
+                        </ol>
+                </fieldset>
+                <script src="js/inc.foot.js"></script>
+        </body>
+</html>

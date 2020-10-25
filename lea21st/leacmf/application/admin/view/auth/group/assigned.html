@@ -1,0 +1,94 @@
+<extend name="public/base"/>
+<block name="content">
+    <style type="text/css">
+        .rules select {
+            font-size: 12px;
+            border:1px solid #eee;
+            width: 400px;
+            padding: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+    <div class="rules">
+        <div class="" style="width: 400px;float: left;">
+            <div class="form-group">
+                <blockquote class="layui-elem-quote">未分配规则</blockquote>
+                <select multiple="multiple" class="form-control" size="20" style="height: 420px" id="no_rule">
+                    <volist name="no_rule" id="vo">
+                        <option value="{$vo.id}">{$vo.name} [ {$vo.title}]</option>
+                    </volist>
+                </select>
+            </div>
+        </div>
+        <div style="width: 80px;float: left;text-align: center;">
+            <p style="margin-top: 180px;">
+                <button class="layui-btn layui-btn-xs" id="to-right"><i class="fa fa-fw  fa-angle-double-right"></i></button>
+            </p>
+            <p style="margin-top: 20px;">
+                <button class="layui-btn layui-btn-xs" id="to-left"><i class="fa fa-fw  fa-angle-double-left"></i></button>
+            </p>
+        </div>
+        <div style="width: 400px;float: left;">
+            <div class="form-group">
+                <blockquote class="layui-elem-quote">已分配规则</blockquote>
+                <select multiple="multiple" class="form-control" size="20" style="height: 420px" id="have_rule">
+                    <volist name="have_rule" id="vo">
+                        <option value="{$vo.id}">{$vo.name} [ {$vo.title}]</option>
+                    </volist>
+                </select>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <a href="{:url('index')}" class="layui-btn layui-btn-primary "><i class="fa fa-history"></i> 返回</a>
+</block>
+<block name="script">
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var url = "{:url('assigned',['id'=>$info['id']])}";
+            //更新已选未选
+            var updateRules = function () {
+                $.get(url, 'ajax=1', function (data) {
+                    var have_rule = '';
+                    var no_rule = '';
+                    $.each(data.no_rule, function (index, el) {
+                        no_rule += '<option value="' + el.id + '">' + el.name + ' [ ' + el.title + ' ]</option>';
+                    });
+                    $.each(data.have_rule, function (index, el) {
+                        have_rule += '<option value="' + el.id + '">' + el.name + ' [ ' + el.title + ' ]</option>';
+                    });
+                    $('#no_rule').html(no_rule);
+                    $('#have_rule').html(have_rule);
+                });
+            };
+            //更新
+            $('#to-right').click(function () {
+                var no_rule = $('#no_rule').val();
+                if (!no_rule) {
+                    return;
+                }
+                $.post(url, 'operate=add&rules=' + no_rule.join(','), function (data) {
+                    if (data.code == 1) {
+                        updateRules();
+                    } else {
+                        layer.msg(data.msg);
+                    }
+                });
+            });
+            //更新
+            $('#to-left').click(function () {
+                var have_rule = $('#have_rule').val();
+                if (!have_rule) {
+                    return;
+                }
+                $.post(url, 'operate=minue&rules=' + have_rule.join(','), function (data) {
+                    if (data.code == 1) {
+                        updateRules();
+                    } else {
+                        layer.msg(data.msg);
+                    }
+                });
+            });
+        });
+    </script>
+</block>

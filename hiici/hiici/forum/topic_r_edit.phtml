@@ -1,0 +1,83 @@
+<?php 
+
+$auth = @$_SESSION['auth'];
+if (empty($auth)) die('用户未登录！^_^');
+
+if (empty($_GET['reply_id'])) die;
+
+$reply_id = intval($_GET['reply_id']);
+$topic_id = dt_query_one("SELECT topic_id FROM forum_topic_reply WHERE id = $reply_id")['topic_id'];
+
+global $config;
+if (1 > dt_count('forum_topic_reply', "WHERE id = $reply_id AND user_id = ".$auth['id']) 
+	&& 1 > dt_count('forum', "WHERE id = (SELECT forum_id FROM forum_topic WHERE id = $topic_id) AND user_id = ".$auth['id']) 
+	&& !in_array($auth['id'], $config['manager'])
+	&& $city_info['user_id'] != $auth['id']) die('没有权限！^_^');
+
+$reply = dt_query_one("SELECT content FROM forum_topic_reply WHERE id = $reply_id");
+if (!$reply) die('获取reply数据失败！');
+$topic = dt_query_one("SELECT forum_id, title FROM forum_topic WHERE id = $topic_id");
+if (!$topic) die('获取数据失败！');
+
+$forum = dt_query_one("SELECT id, name, kind FROM forum WHERE id = ".$topic['forum_id']);
+if (!$forum) die('获取数据失败！');
+
+?>
+<?php require_once('inc/umediter_text.html'); ?> 
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<?php if (0 != $forum['kind']) { ?>
+			<li><a href="?c=forum&a=forum_list&m_falter=5&kind=<?php echo $forum['kind'] ?>"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> <?php echo dt_query_one("SELECT name FROM forum_kind WHERE id = ".$forum['kind'])['name'] ?></a></li>
+			<?php } ?>
+			<li><a href="?c=forum&a=topic_list&forum_id=<?php echo $forum['id'] ?>"><?php echo $forum['name'] ?></a></li>
+			<li><a href="?c=forum&a=topic_show&topic_id=<?php echo $topic_id ?>"><?php echo $topic['title'] ?></a></li>
+			<li class="active">编辑 </li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="forum-add">
+		<div class="row clearfix">
+			<div class="col-md-12 column">
+				<h3><span class="glyphicon glyphicon-edit"></span> 编辑 [<?php echo $topic['title'] ?>] 的回复</h3>
+				<hr class="solid">
+				<div class="col-md-11 column">
+					<form class="form-horizontal" id="do_topic_r_edit" action="javascript:do_topic_r_edit(<?php echo $reply_id?>)" method="post">
+						<fieldset>
+							<!-- topic_id -->
+							<input type="hidden" name="reply_id" value="<?php echo $reply_id?>"/>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">内容</label>  
+								<div class="col-md-9">
+									<textarea class="form-control input-lg" id="topic_content" name="content" style="width:105%;height:360px" required=""><?php echo $reply['content'] ?></textarea>
+								</div>
+							</div>
+							<!-- token -->
+							<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+							<!-- Button -->
+							<div class="form-group">
+								<label class="col-md-2 control-label"></label>
+								<div class="col-md-2">
+									<button class="btn btn-primary btn-block <?php if (empty($_SESSION['auth'])) echo "disabled"; ?>">保存</button>
+								</div>
+							</div>
+						</fieldset>
+					</form>	
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+var topic_content = UM.getEditor("topic_content");  
+
+$(document).ready(function(){
+});
+
+</script>

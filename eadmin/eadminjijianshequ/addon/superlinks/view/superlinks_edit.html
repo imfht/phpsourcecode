@@ -1,0 +1,153 @@
+{extend name="base" /}
+{block name="body"}
+
+    <!--tab标签-->
+    <div class="layui-tab-brief">
+            <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <form class="layui-form form-container"  data-url="{:addons_url('Superlinks://Superlinks/superlinksEdit')}"   method="post"   localtion-url="{:url('Addon/adminlist',array('name'=>'superlinks'))}">
+                  <input type="hidden" name="id" value="{$info['id']}" />
+                 
+                 <div class="layui-form-item">
+    
+    <label class="layui-form-label">站点名称</label>
+    <div class="layui-input-inline">
+	  <input type="text" name="title" placeholder="请输入友情连接站点名称" required lay-verify="required" autocomplete="off" class="layui-input" value="{$info.title}">
+    </div>
+    
+    <div class="layui-form-mid layui-word-aux">请输入友情连接站点名称</div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">连接类型</label>
+    <div class="layui-input-inline">
+  
+      <input type="radio" name="type" lay-filter="linktype" value="1" title="图片连接" {if condition="$info['type'] eq 1"}checked="checked"{/if} >
+     <input type="radio" name="type" lay-filter="linktype" value="2" title="普通连接" {if condition="$info['type'] eq 2"}checked="checked"{/if} >
+    </div>
+  </div>
+                       <div class="layui-form-item">
+     
+    <label class="layui-form-label">外链地址</label>
+    <div class="layui-input-inline">
+	  <input type="text" name="link" placeholder="请填写带http://的全路径" required lay-verify="required" autocomplete="off" class="layui-input" value="{$info.link}">
+    </div>
+   
+         <div class="layui-form-mid layui-word-aux">请填写带http://的全路径</div>
+  </div>
+		  <div class="layui-form-item" id="img_area" {if condition="$info['type'] eq 2"}style="display:none"{/if}>
+    <label class="layui-form-label">站点图片</label>
+    <div class="layui-input-inline">
+    <button type="button" class="layui-btn" id="image">
+  <i class="layui-icon">&#xe67c;</i>上传图片
+</button>
+	  <input type="hidden" id="cover_id" name="cover_id" value=""/>
+	  <div class="upload-img-box">
+				{notempty name="info['cover_id']"}
+						<div class="upload-pre-item"><img src="{$info.cover_id|get_picture_url}"  width="120" height="120" /></div>
+					{/notempty}
+		</div>
+    </div>
+  </div>
+		
+		<div class="btable-paged" >
+				<div class="layui-main">
+                    <div class="formbtngroup">
+<button  class="layui-btn layui-btn-sm" lay-submit="" type="submit" lay-filter="formadd">更新</button>
+<a href="javascript:;"  class="layui-btn layui-btn-primary layui-btn-sm closebtn">返回</a>
+</div>
+</div>
+        </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{/block}
+{block name="script"}
+<script>
+layui.use(['form', 'upload'],function(){
+	  var form = layui.form
+	  ,$ = layui.jquery
+	  ,upload = layui.upload;
+  var $radio =$('input[name="type"]');
+  
+  form.on('radio(linktype)', function(data){
+	
+	  if(data.value==1){
+		 $("#img_area").show();
+	  }else{
+		 $("#img_area").hide();
+	  } //被点击的radio的value值
+	  
+	  
+	  
+	  
+	  
+	});  
+
+  
+  
+
+  upload.render({
+	    url: '{:es_url("admin/File/pictureUpload")}'
+    ,elem:'#image'
+    ,before: function(input){
+      loading = layer.load(2, {
+        shade: [0.2,'#000']
+      });
+    }
+  ,error: function(index, upload){
+		 
+	    layer.close(loading); //关闭loading
+	  }
+  ,done: function(res, index, upload){
+  	
+	    layer.close(loading); //关闭loading
+	      if(res.id >0){
+	          layer.msg('上传成功', {icon: 1, time: 1000});
+	          $("#cover_id").val(res.id);
+	        	$("#cover_id").parent().find('.upload-img-box').html(
+	        		'<div class="upload-pre-item"><img src="' + res.headpath + '" width="120" height="120" /></div>'
+	        	);
+	          }
+	    }
+  }); 
+  form.on("submit(formadd)",function(data){
+	  var locationurl=$('form').attr('localtion-url');
+	  var url=$('form').data('url');
+	    loading = layer.load(2, {
+		      shade: [0.2,'#000']
+		    });
+		
+	  
+		   // var param = data.field;
+		  
+		   
+		    $.post(url,$('form').serialize(),function(data){
+		    	
+		      if(data.code == 1){
+		        layer.close(loading);
+		        layer.msg(data.msg, {time: 1000}, function(){
+		        	parent.location.reload();
+		        	setTimeout(function(){
+		                layer.closeAll("iframe");
+		            },200);
+		        });
+		      }else{
+		        layer.close(loading);
+		        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+		      }
+		    });
+		    return false;
+	  
+	  
+	  
+	  
+	  
+      
+		
+	})
+
+})
+</script>
+{/block}

@@ -1,0 +1,195 @@
+<!--
+ * @Description: In User Settings Edit
+ * @Author: your name
+ * @Date: 2019-09-06 09:39:15
+ * @LastEditTime: 2019-09-19 09:17:33
+ * @LastEditors: Please set LastEditors
+ -->
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+	<f:layout name="Default" />
+
+	This Template is responsible for creating a table of domain objects.
+
+	If you modify this template, do not forget to change the overwrite settings
+	in /Configuration/ExtensionBuilder/settings.yaml:
+	  Resources:
+		Private:
+		  Templates:
+			List.html: keep
+
+	Otherwise your changes will be overwritten the next time you save the extension in the extension builder
+
+	<f:section name="content">
+		<f:flashMessages />
+		<style>
+			#model_ewm img{width: 100%;height: auto;}
+			#scanModal{margin-top: 5%;}
+		</style>
+		<div class="portlet light ">
+			<div class="portlet-title">
+				<div class="caption">
+					<f:link.action action="new" class="btn btn-info">新增</f:link.action>
+				</div>
+				<div class="actions">
+					<div class="btn-group btn-group-devided">
+						<f:form action="list" name="search" class="form-inline" method="GET">
+							<div class="input-group">
+								<div class="input-icon">
+									<i class="fa fa-search"></i>
+									<f:form.textfield name="keyword" value="{keyword}" class="form-control"
+										placeholder="请输入查询条件" />
+								</div>
+								<span class="input-group-btn">
+									<f:form.submit class="btn btn-success" value="搜" />
+								</span>
+							</div>
+						</f:form>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<div class="table-scrollable">
+						<f:widget.paginate objects="{activities}" as="activitiesPagination" configuration="{settings.paginate}">
+							<table class="tx_projectsystem table table-hover table-light">
+								<thead>
+									<tr class="uppercase">
+										<th>序号</th>
+										<th>活动名称</th>
+										<!-- <th>活动方式</th> -->
+										<th>活动类别</th>
+										<th>活动标签</th>
+										<th>活动地点</th>
+										<th>活动时间</th>
+										<th>活动状态</th>
+										<th class="text-center">操作</th>
+									</tr>
+								</thead> 
+								<tbody>
+									<f:for each="{activitiesPagination}" as="activity" iteration="itemIteration1">
+										<tr>
+											<td>
+												{f:cObject(typoscriptObjectPath:'lib.calc',
+												data:'{itemIteration1.cycle}+({page}-1)*{settings.paginate.itemsPerPage}')}
+											</td>
+											<td><f:link.action action="show" arguments="{activity : activity}" >{activity.name}</f:link.action></td>
+											<!-- <td>
+												<f:for each="{ways}" as="way">
+													<f:if condition="{way.uid}=={activity.way}">
+														{way.name}
+													</f:if>
+												</f:for>
+											</td> -->
+											<td>{activity.types.name}</td>
+											<td>{activity.tagname}</td>
+											<td>{activity.address}</td>
+											<td><small>
+												<f:if condition="{activity.way}==0">
+													<f:then>
+														{activity.sttime->f:format.date(format:'Y-m-d
+														H:i')}--{activity.overtime->f:format.date(format:'Y-m-d H:i')}
+													</f:then>
+													<f:else>
+														<f:for each="{weeks}" as="week">
+															<f:if condition="{week.uid}=={activity.week}">
+																{week.name}
+															</f:if>
+														</f:for>
+														{activity.hour}
+													</f:else>
+												</f:if></small>
+											</td>
+											<td>
+												<f:for each="{sendStat}" as="st">
+													<f:if condition="{st.uid}=={activity.sendstat}">
+														{st.name}
+													</f:if>
+												</f:for>
+											</td>
+											<td class="text-center">
+												<f:link.page pageUid="{settings.syssignpage}" additionalParams="{activity : activity, tab:'signin'}"
+													class="btn btn-success btn-xs">报名管理</f:link.page>
+												<!-- <f:link.page pageUid="{settings.syscheckpage}" additionalParams="{activity : activity, tab:'checkin'}"
+													class="btn btn-success btn-xs">签到管理</f:link.page> -->
+												<f:if condition="{activity.sendstat}==1">
+													<f:then>
+														<a href="javascript:void(0);" downhref="{f:uri.action(action: 'download', arguments: '{activity: activity.uid}')}" onclick="showmodel('{activity.uid}',this)" class="btn btn-success btn-xs" title="生成活动二维码">二维码</a>
+													</f:then>
+													<f:else>
+														<a href="javascript:void(0);" class="btn btn-success btn-xs" title="生成活动二维码" disabled="disabled">二维码</a>
+													</f:else>
+												</f:if>
+												<f:if condition="{activity.sendstat}==0">
+													<f:then>
+														<f:link.action action="send" arguments="{activity : activity,stat:1}"
+															onclick="return confirm('您确定要执行该操作吗?');"
+															class="btn btn-info btn-xs edit">发布</f:link.action>
+													</f:then>
+													<f:else if="{activity.sendstat}==1">
+														<f:link.action action="send" arguments="{activity : activity,stat:2}"
+															onclick="return confirm('您确定要执行该操作吗?');"
+															class="btn btn-info btn-xs edit">下线</f:link.action>
+													</f:else>
+													<f:else>
+														<a href="javascript:;" class="btn btn-info btn-xs disabled">下线</a>
+													</f:else>
+												</f:if>
+												<f:if condition="{activity.sendstat}==1">
+													<f:then>
+														<f:link.action action="edit" arguments="{activity : activity}"
+													class="btn btn-info btn-xs edit">编辑</f:link.action>
+													</f:then>
+													<f:else>
+														<a href="javascript:;" class="btn btn-info btn-xs" disabled="disabled">编辑</a>
+													</f:else>
+												</f:if>
+												<f:link.action action="delete" arguments="{activity : activity}"
+													onclick="return confirm('您确定要删除吗?');"
+													class="btn btn-danger btn-xs delete btn-del">删除</f:link.action>
+											</td>
+										</tr>
+									</f:for>
+								</tbody>
+							</table>
+						</f:widget.paginate>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal fade" id="scanModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		    <div class="modal-dialog">
+		        <div class="modal-content">
+		            <div class="modal-header">
+		                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		                <h4 class="modal-title" id="myModalLabel">活动二维码</h4>
+		            </div>
+		            <div class="modal-body">
+						<div id="model_ewm"></div>
+		            </div>
+		            <div class="modal-footer">
+		                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+		                <a href="javascript:void(0);" class="btn btn-primary" id="downloadQRcode">下载</a>
+		            </div>
+		        </div>
+		    </div>
+		</div>
+		<f:link.action action="ajax" id="ajaxdata" class="hide"></f:link.action>
+		<script type="text/javascript">
+			function showmodel(activity,obj) {
+				var downhref = $(obj).attr('downhref');
+				var url = $("#ajaxdata").attr('href');
+				var data = { flag: "generateQRcode", activity: activity };
+				$.post(url, data, function (data, status) {
+						if (status) {
+							$("#model_ewm").html(data);
+							$("#downloadQRcode").attr("href", downhref);
+						} else {
+							alert('数据提交失败！');
+						}
+					}
+				);
+				setTimeout(function(){
+					$("#scanModal").modal();
+				}, 1000);
+			}
+		</script>
+	</f:section>
+</html>

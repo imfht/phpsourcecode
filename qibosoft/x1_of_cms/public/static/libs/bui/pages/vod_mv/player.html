@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>视频点播</title>
+ </head>
+ <style type="text/css">
+*{
+	padding:0px;
+	margin:0px;
+}
+</style>
+ <body>
+<div class='video1' style='width: 100%;height: 200px'></div>
+
+<script type="text/javascript">
+var weburl = window.location.href;	//var weburl = window.location.href.indexOf("http")==0 ? '' : '../../../../../..';
+weburl = weburl.substring(0,weburl.indexOf('/public/static/')); //方便手机获取真实路径
+document.write('<link rel="stylesheet" href="'+weburl+'/public/static/css/base.css">');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/js/core/jquery.min.js"><\/script>');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/libs/ckplayer/ckplayer.js"><\/script>');
+</script>
+
+<script type='text/javascript'>
+var url_array = [];
+var player1;
+var play_index = 0;	//当前播放第几集
+var play_time = 0; //当前播放的时间,为了给圈主使用的.
+var sync_time = 0; //同步圈主的时间
+function mv_player(urls,ext_info,height) {
+	if(ext_info.index>0){
+		play_index = ext_info.index;
+	}
+	if(ext_info.time>0 && window.parent.in_pc==true){ //手机端不能自动播放
+		sync_time = ext_info.time;
+	}
+	$('.video1').css('height',height);
+	urls.forEach((rs)=>{
+		url_array.push(rs.url);
+	})
+	$('.total_page').html(url_array.length);
+
+	var videoObject = {
+		container: '.video1', //“#”代表容器的ID，“.”或“”代表容器的class
+		variable: 'player1',  //该属性必需设置，值等于下面的new chplayer()的对象
+		//poster:'pic/wdm.jpg',//封面图片
+		loaded: 'loadedHandler1', //当播放器加载后执行的函数	
+		autoplay:true,			  //自动播放
+		video: url_array[play_index], //视频地址
+	};
+	player1 = new ckplayer(videoObject);
+
+	$('.page').html(play_index+1);
+
+	if(typeof(window.parent.api)=='object'){	//在app中因为是file://开头的网址,所以这里要特别处理一下才能播放
+		setTimeout(function(){
+			change_play(play_index);
+		},500);
+	}
+}
+
+function get_now_state(){	//当前播放状态,让圈主发送给会员同步用的
+	return [play_index,play_time];
+}
+
+//监听播放器状态
+function loadedHandler1(){
+	player1.addListener('loadedmetadata', function(){	//视频加载成功,特别要注意,每换一个视频,都会执行一次
+		player1.videoPlay();	//自动播放
+		if(sync_time>0){
+			player1.videoSeek(sync_time);
+			sync_time = 0;
+		}
+	});
+
+	player1.addListener('error', function(time){
+	});
+
+	player1.addListener('play', function(time){
+	});
+
+	player1.addListener('pause', function(time){
+	});
+
+	player1.addListener('time', function(time){		//视频已播放多少时间
+		play_time = parseInt(time);
+		//console.log('time:'+play_time);
+	});
+
+	player1.addListener('ended', function(){	//当前播放完毕,播放下一个
+		play_index++;
+		if(typeof(url_array[play_index])!='undefined'){
+			change_play( play_index );
+		}else{
+			parent.layer.msg('全部播放完了!');
+		}
+	});
+}
+
+function change_play(index){
+	play_index = index;
+	$('.page').html(play_index+1);
+	//parent.layer.msg("请稍候,视频加载中...");
+	player1.newVideo({autoplay:true,video:url_array[index]});
+}
+
+function player_stop(){
+	player1.videoPause();
+}
+
+function player_start(){
+	player1.videoPlay();
+}
+function player_quiet(is_quiet){
+	if(is_quiet==true){
+		player1.videoMute();
+	}else{
+		player1.videoEscMute();
+	}
+}
+
+function full_screen(){
+	player1.fullScreen();
+}
+
+function control(obj){ //接受圈主的指令 此函数主要是给父窗口调用的.
+	var t = obj.type;
+	if(typeof(vod[t])=='function'){
+		vod[t](obj);
+	}
+}
+
+
+var vod = {
+	sync_play:function(obj){	//同步播放
+		if(typeof(obj)=='object'){
+			sync_time = obj.time;
+			if(obj.index!=play_index){
+				change_play(obj.index);
+			}
+			if(sync_time>0){
+				player1.videoSeek(sync_time);
+				sync_time = 0;
+			}
+		}else{
+			var o = {
+				type:'sync_play',
+				index:play_index,
+				time:play_time,
+			};
+			ws_send(o);
+		}	
+	},
+	prev:function(obj){	//上一集
+		if(typeof(obj)=='object'){
+			change_play(obj.index);
+		}else{
+			play_index--;
+			if(play_index<0){
+				play_index = url_array.length-1;
+			}
+			var o = {
+				type:'prev',
+				index:play_index,
+			};
+			ws_send(o);
+		}	
+	},
+	next:function(obj){	//下一集
+		if(typeof(obj)=='object'){
+			change_play(obj.index);
+		}else{
+			play_index++;
+			if(play_index>url_array.length-1){
+				play_index = 0;
+			}
+			var o = {
+				type:'next',
+				index:play_index,
+			};
+			ws_send(o);
+		}	
+	},
+	pause:function(obj){	//暂停
+		if(typeof(obj)=='object'){
+			player_stop();
+		}else{
+			var o = {
+				type:'pause',
+			};
+			ws_send(o);
+		}	
+	},
+	play:function(obj){	//继续播放
+		if(typeof(obj)=='object'){
+			player_start();
+		}else{
+			var o = {
+				type:'play',
+			};
+			ws_send(o);
+		}	
+	},
+	is_quiet:false,
+	quiet:function(obj){	//静音
+		if(typeof(obj)=='object'){
+			if(this.is_quiet==false){
+				this.is_quiet = true;
+				player_quiet(true);
+			}else{
+				this.is_quiet = false;
+				player_quiet(false);
+			}			
+		}else{
+			var o = {
+				type:'quiet',
+			};
+			ws_send(o);
+		}
+	},
+	finish:function(obj){	//结束直播
+		if(typeof(obj)=='object'){
+			window.parent.mod_class.vod_mv.win_player = null;
+			if(window.parent.in_pc==true){
+				var index1 = parent.layer.getFrameIndex(window.name);
+				parent.layer.close(index1);
+			}else{
+				window.parent.$(".iframe_chat").attr("src","about:blank");
+				window.parent.$(".iframe_chat").hide();
+			}			
+		}else{
+			var o = {
+				type:'finish',
+			};
+			ws_send(o);
+			window.parent.mod_class.vod_mv.stop();
+		}	
+	},
+}
+
+
+$(function(){
+	var pause = false;
+	$("#sync_pause").click(function(){
+		if(pause==false){
+			pause = true;
+			vod.pause();
+			$(this).html('取消暂停');
+		}else{
+			pause = false;
+			vod.play();
+			$(this).html('暂停');
+		}
+	});
+
+	var quiet=false;
+	$("#sync_quiet").click(function(){
+		if(quiet){
+			quiet = false;
+			vod.quiet();
+			$(this).html('静音');
+		}else{
+			quiet = true;
+			vod.quiet();
+			$(this).html('取消静音');
+		}
+	});
+});
+
+
+function ws_send(arr){
+	if(window.parent.my_uid==window.parent.quninfo.uid){	//圈主发送指令
+		window.parent.ws_send({
+			type:"qun_to_alluser",      //告诉WS服务器,群发给所有圈子成员
+			tag:"vod_mv_sync_play",		//返回的自定义标志,自己做处理
+			data:arr
+		});
+	}else{	//圈子会员,就自己控制自己
+		control(arr);
+	}
+}
+
+$(function(){
+	if(window.parent.my_uid==window.parent.quninfo.uid){
+		$('.quner_power').show();
+	}
+	window.parent.$(".layui-layer-iframe").removeClass('layer-anim');//解决视频不能全屏的问题
+});
+</script>
+
+<style type="text/css">
+.syscn{
+	margin-top:10px;
+}
+.quner_power{
+	display:none;
+}
+.syscn a{	
+	margin-left:10px;
+	border:1px solid #6ab8c5;
+	border-radius:3px;
+	padding:1px 5px 3px 5px;
+}
+.syscn a:last-child{
+	border:1px solid orange;
+}
+.page{
+	color:red;
+}
+</style>
+<div class="syscn">
+<a><b class="page">1</b>/<i class="total_page">1</i></a>
+<a href="#" class="quner_power" onclick="vod.sync_play();">同步</a><a href="#" class="quner_power" onclick="vod.finish();">结束</a><a href="#" onclick="vod.prev();">上一集</a><a href="#" onclick="vod.next();">下一集</a><a href="#" id="sync_pause" class="quner_power">暂停</a><a href="#" id="sync_quiet" class="quner_power">静音</a> 
+</div>
+ </body>
+</html>

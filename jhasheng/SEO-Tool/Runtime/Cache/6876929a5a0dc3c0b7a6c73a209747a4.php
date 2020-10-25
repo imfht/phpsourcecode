@@ -1,0 +1,84 @@
+<?php if (!defined('THINK_PATH')) exit();?><!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/metinfo.css" />
+<script type="text/javascript" src="__PUBLIC__/js/jquery-1.8.0.js"></script>
+<script type="text/javascript" src="__PUBLIC__/js/cookie.js"></script>
+<script type="text/javascript">
+	var ua = false;
+	var loading = "<img src='__IMG__/loading.gif' />";
+	$(function() {
+		$('table tr').each(function(i, obj) {
+			$(obj).find('td').eq(0).addClass("text");
+			$(obj).find('td').eq(1).addClass("input");
+			$(obj).find('td').eq(1).children('input').addClass('text nonull');
+			$(obj).find('td').eq(1).children('textarea').addClass('textarea gen');
+		});
+		$('input[name=seid]').eq(0).attr('checked', true);
+	})
+	
+</script>
+<style>
+	.indent20{text-indent: 20px;}
+	.ajaxinput{width:50px;}
+</style>
+</head>
+
+<body>
+	<div class="metinfotop">
+		<div class="position">简体中文：网站后台 > <a href="<?php echo U('User/listuser');?>">会员管理</a></div>
+		<div class="return"><a href="">&lt;&lt;返回</a></div>
+	</div>
+	<div class="clear"></div>
+	<table cellpadding="2" cellspacing="1" class="table" >
+		<tr>
+			<td colspan="8" class="centle" style=" height:20px; line-height:20px; font-weight:normal; padding-left:10px;">
+				<div style="float:left;">
+				<a href="<?php echo U('Keyword/add');?>">+添加会员</a>
+				<span style="font-weight:normal; color:#999; padding-left:10px;">排序数值越大越靠前</span>
+				</div>
+				<div class="formright">
+				<form method="POST" style="position:relative; top:2px;" name="filterform" action="" target="_self">
+				&nbsp;搜索引擎
+				<select name="recommend" id="recommend" onChange="handle_form('filterform')">
+					<option value="1" >百度</option>
+					<option value="0" >谷歌</option>
+				</select>
+				&nbsp;网站
+				<select name="top" id="shaix-top" onChange="handle_form('filterform')">
+					<option value="1" >www.youku.com</option>
+					<option value="0" >www.tudou.com</option>
+				</select>
+				</form>
+				<form method="POST" name="search" action="" target="_self">
+					<input name="title" type="text" class="text" id="searchtext" value="请输入关键字。" />				
+					<input type="submit" name="searchsubmit" value="搜索" class="submitmi" />
+				</form>
+				<input type="button" value="一键查询本页" class="submitmi" id="updateall" onclick="updateall()" />
+				</div>
+			</td>
+		</tr>
+	</table>
+	<table cellpadding="2" cellspacing="1" class="table" id="lists">
+		<tr>
+			<td class="list alignleft">会员名</td>
+			<td class="list alignleft">会员昵称</td>
+			<td class="list">所属会员组</td>
+			<td class="list">注册时间</td>
+			<td class="list">帐号状态</td>
+			<td class="list">操作</td>
+		</tr>
+		<?php if(is_array($userlist)): $i = 0; $__LIST__ = $userlist;if( count($__LIST__)==0 ) : echo "" ;else: foreach($__LIST__ as $key=>$vo): $mod = ($i % 2 );++$i;?><tr bgcolor="#ECECEC">
+			<td class="list-text alignleft indent20"><?php echo ($vo["username"]); ?></td>
+			<td class="list-text alignleft indent20"><?php echo ($vo["aliasname"]); ?></td>
+			<td class="list-text"><?php echo ($vo["remark"]); ?>(<?php echo ($vo["name"]); ?>)</td>
+			<td class="list-text" id="keysort_<?php echo ($vo["keyid"]); ?>"><?php echo (date("Y-m-d H:i:s",($vo["regtime"])?($vo["regtime"]):time())); ?></td>
+			<td class="list-text"><?php echo ($vo["userstatus"]); ?></td>
+			<td class="list-text"></td>
+		</tr><?php endforeach; endif; else: echo "" ;endif; ?>
+		<tr bgcolor="#ECECEC"><td colspan="7" style="text-align:center"><?php echo ($page); ?></td></tr>
+	</table>
+</body>
+</html>

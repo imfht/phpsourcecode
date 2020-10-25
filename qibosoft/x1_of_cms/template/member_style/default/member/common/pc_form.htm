@@ -1,0 +1,134 @@
+<form name="" method="post" action="{:request()->url(true)}" class="ajax_post {notempty name='$tab_ext.trigger'} form-trigger {/notempty}  layui-form">
+<div class="MainCont mtop10">
+	<div class="head"><div class="tag">{if ($tab_ext['page_title'])} {$tab_ext.page_title} {elseif (empty($info))}添加{else /}修改{/if}</div></div>
+    <div class="cont">
+	<!-- 功能接口钩子 -->
+	{:hook_listen('template_form_head',$f_array,$info,true)}
+
+{empty name="$tab_ext.group"}
+
+	   <!--这种是最常用的,表单没做分组显示的-->
+	   <table width="100%" border="0" cellspacing="0" cellpadding="0" class="FormTable">
+	   {if $tab_ext.area}
+		<!-- 这一段是地区选择 -->
+		<tr id="form_group_area"> 
+		  <td class='tdL'>地区选择 </td>
+		  <td class="tdR layui-input-inline"> 
+			<div class="ListArea">
+				<select name='province_id' data-title="请选择省份" lay-ignore></select> 
+				<select name='city_id' data-title="请选择城市" lay-ignore></select> 
+				<select name='zone_id' data-title="请选择区域" lay-ignore></select> 
+				<select name='street_id' data-title="请选择街道" lay-ignore></select>
+			</div>
+		  </td>
+		</tr>
+		{/if}
+	     <!-- 参数 field="pic,tit" 代表过滤哪些字段不显示出来 里边支持TP标签 -->
+         {qb:form field="" f_array="$f_array"}
+		  <tr id="form_group_{$rs.name}">
+            <td class="tdL">{$rs.title} </td>
+            <td class="tdR {if in_array($rs['type'],['password','number','money','datetime','date','time','color','icon','select'])}layui-input-inline{else /}layui-input-block{/if}">
+			<div>{$rs.value}</div>
+			{notempty name="$rs.about"}<div>{$rs.about}</div>{/notempty}
+			</td>
+          </tr>
+		{/qb:form}
+          <tr>
+            <td class="tdL"><br/></td>
+            <td class="tdR">
+			{notempty name=":input('id')"}<input type="hidden" name="id" value="{:input('id')}">{/notempty}
+            	<input type="submit" name="Submit" value="提交">
+            </td>
+          </tr>
+         </table>
+
+{else /}
+		
+	<!-- 这是另一种用得很少,针对太多表单,而对他们做分组显示,下面就没做过滤哪些字段不显示的处理了,要自己重新修改做判断处理 -->
+    <div class="layui-tab">
+	  <ul class="layui-tab-title">
+	  	 <!-- 分组标题名称 -->
+		 {volist name="$tab_ext.group" id="rs"}
+			<li class="{eq name='i' value='1'}layui-this{/eq}">{$key}</li>
+		 {/volist}
+	  </ul>
+	  <div class="layui-tab-content">
+	   <!-- 分组表单输入选项 -->
+	   {volist name="$tab_ext.group" id="array"}
+		<div class="layui-tab-item {eq name='i' value='1'}layui-show{/eq}">
+			<table width="100%" border="0" cellspacing="0" cellpadding="0" class="FormTable">
+				{if $tab_ext.area&&$i==1}
+				<!-- 这一段是地区选择 -->
+				<tr id="form_group_area"> 
+				  <td class='tdL'>地区选择 </td>
+				  <td class="tdR layui-input-inline"> 
+					<div class="ListArea">
+						<select name='province_id' data-title="请选择省份" lay-ignore></select> 
+						<select name='city_id' data-title="请选择城市" lay-ignore></select> 
+						<select name='zone_id' data-title="请选择区域" lay-ignore></select> 
+						<select name='street_id' data-title="请选择街道" lay-ignore></select>
+					</div>
+				  </td>
+				</tr>
+				{/if}
+				<!-- 每一组的所有表单 -->
+				{volist name=":fun('field@fields_to_form',fun('field@field_to_table',$array),$info)" id="rs"}
+					<tr id="form_group_{$rs.name}" {if $rs.type=='hidden'}style="display:none;"{/if}> 
+					  <td class='tdL'>{$rs.title} </td>
+					  <td class="tdR {if in_array($rs['type'],['password','number','money','datetime','date','time','color','icon','select'])}layui-input-inline{else /}layui-input-block{/if}"> 
+						<div>{$rs.value}</div>
+						{notempty name="$rs.about"}<div class="layui-form-mid layui-word-aux">{$rs.about}</div>{/notempty}
+					  </td>
+					</tr>
+				{/volist}
+				<tr>
+					<td class="tdL"><br/></td>
+					<td class="tdR">
+					{notempty name=":input('ext_id')"}<input type="hidden" name="ext_id" value="{:input('ext_id')}">{/notempty}
+					{notempty name=":input('ext_sys')"}<input type="hidden" name="ext_sys" value="{:input('ext_sys')}">{/notempty}
+						<input type="submit" name="Submit" value="提交">
+					</td>
+				</tr>
+			</table>
+		</div>
+	   {/volist}
+	  </div>
+	</div>
+	{notempty name=":input('id')"}<input type="hidden" name="id" value="{:input('id')}">{/notempty}
+
+{/empty}
+	
+	<!-- 功能接口钩子 -->
+	{:hook_listen('template_form_foot',$f_array,$info,true)} 
+
+    </div>
+</div>
+</form>
+<div style="height:50px;"></div>
+
+
+<!-- 某些表单的某些选项触发事件,少用 -->
+{notempty name="$tab_ext.trigger"}
+<script type="text/javascript">
+var trigger_config = {
+	{:fun('field@setTrigger',$tab_ext.trigger)}
+}
+</script>
+{/notempty}
+
+<script type="text/javascript">
+var nopower = `{$nopower}`; //没权限的提示
+var in_wap = false;
+var upgroup_url = "{:murl('member/group/index')}?tag={:M('key')}";
+var bind_phone_url = "{:murl('member/yz/mob')}";
+var mp_img_url = "{:purl('weixin/bind/index',[],'index')}?url={:urlencode(get_url('location'))}";//"{:tempdir($webdb.mp_code_img)}";
+</script>
+<!-- 表单常用事件,比如无刷新提交 -->
+<script LANGUAGE="JavaScript" src="__STATIC__/js/form/base.js?c"></script>
+
+<SCRIPT LANGUAGE="JavaScript">
+//地区选择事件
+{php}$info=getArray($info);{/php}
+var default_ckid = ["{$info.province_id}","{$info.city_id}","{$info.zone_id}","{$info.street_id}"];
+var get_area_url = "{:purl('area/api/getlist',[],'index')}";
+</SCRIPT>

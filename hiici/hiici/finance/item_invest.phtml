@@ -1,0 +1,97 @@
+<?php 
+
+if (empty($_GET)) die;
+
+$item_id = intval($_GET['item_id']);
+
+$rs = dt_query("SELECT name, money, revenue, kind, credit_s FROM finance_item WHERE id=$item_id");
+$item = mysql_fetch_array($rs);
+if (empty($item)) {
+	put_info('项目不存在！');
+	header('Location:?c=finance&a=item_list');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/item_kind.php'); ?>
+
+<div class="finance-nav-sub">
+	<div class="container">
+		<ul class="nav navbar-nav">
+			<li>
+			<a href="?c=finance&a=item_list">项目列表</a>
+			</li>
+			<li>
+			<a href="#">转让列表</a>
+			</li>
+
+		</ul>
+	</div>
+</div>
+
+<div class="container finance-item-add" style="padding-top:15px">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<h3><span class="glyphicon glyphicon-edit"></span> 投资意向</h3>
+			<hr class="solid">
+			<div class="alert alert-info">
+				<b>注意：</b>
+				<ol>
+					<li>您正在进行报价操作的是<?php echo $item_id ?>号融资项目“<?php echo $item['name'] ?>”</li>
+					<li>此项目为“<?php echo $item_kind[$item['kind']]['name'] ?>”项目</li>
+					<li>此项目信用评分为：<?php echo $item['credit_s'] ?></li>
+				</ol>
+			</div>
+			<div class="col-md-11 column">
+				<form class="form-horizontal" action="?c=finance&a=do_item_invest" method="post">
+					<fieldset>
+						<!-- item_id -->
+						<input type="hidden" name="item_id" value="<?php echo $item_id ?>"/>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">意向投资额</label>  
+							<div class="col-md-7">
+								<input name="money" type="text" placeholder="500000" class="form-control input-md" required="" value="<?php echo $item['money'] ?>">
+								<span class="help-block">您愿意为这个项目投入的资金量。</span>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="col-md-2 control-label">联系电话</label>  
+							<div class="col-md-7">
+								<input name="phone" type="text" placeholder="158****8888" class="form-control input-md" required="">
+								<span class="help-block">我们的专业人员通过这个号码与您联系。</span>
+							</div>
+						</div>
+
+						<!-- token -->
+						<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+
+						<!-- Button -->
+						<div class="form-group">
+							<label class="col-md-2 control-label"></label>
+							<div class="col-md-2">
+								<button class="btn btn-primary btn-block <?php if (empty($_SESSION['auth'])) echo "disabled"; ?>">提交意向</button>
+							</div>
+							<div class="col-md-5">
+								<a class="btn btn-success btn-block <?php if (!empty($_SESSION['auth'])) echo "disabled"; ?>" type="button" href="javascript:jump_to_login()">登录后提交</a>
+							</div>
+						</div>
+
+					</fieldset>
+				</form>	
+
+
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+function jump_to_login() {
+	setCookie('login_jump', '?c=finance&a=item_invest&item_id=<?php echo $item_id ?>', 365, '/');
+	location = '?c=user&a=login';
+}
+
+</script>

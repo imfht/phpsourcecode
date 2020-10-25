@@ -1,0 +1,103 @@
+{extend name="public:base" /}
+{block name="head"}
+<link href="__PUBLIC__/view_res/mobile/css/uc.css" type="text/css" rel="Stylesheet" />
+{/block} 
+{block name="header"}
+{include file="public/top-nav" /}
+{/block}
+
+{block name="content"}
+<?php use think\Db; ?>
+<div class="exp-item-info clearfix" style="margin-top:0;">
+    <span class="order-status"><?php echo get_order_status_name($order['order']['order_status_id']); ?></span>
+    <span class="order-id">订单号： {$order.order.order_num_alias} </span>
+</div>
+{if condition="$order['order']['address_id'] NEQ 0"}
+<div class="exp-item-info" style="background:url(__RES__/mobile/images/icon/od-exp-bh.png) left top repeat-x #fff;padding:0;padding-top:15px;">
+    <div style="padding:0 10px;">
+        <div class="clearfix">
+            <span class="od-name">{$order.order.shipping_name}</span>
+            <span class="od-tel">{$order.order.shipping_tel}</span>
+        </div>
+        <div class="od-address">
+        	<?php echo get_area_name($order['order']['city_id']).','.get_area_name($order['order']['country_id']).','.$order['order']['address']; ?>
+		</div>
+    </div>
+    <div style="height:15px;background:url(__RES__/mobile/images/icon/od-exp-bh.png) left bottom repeat-x #fff;"></div>
+</div>
+{/if}
+<div class="exp-item-info">
+    <div class="exp-item-caption">物品信息</div>
+    {volist name="order['order_product']" id="d"}
+        <div class="clearfix items" onclick="location = '{:url("goods/detail",array("id"=>$d["goods_id"]))}';">
+            <img class="ucoi-pic" src="IMG_ROOT{$d.image|resize=100,100}">
+            <div class="ucoi-con">
+                <span class="title Elipsis">{$d.name}</span>                        
+                <?php if($option_list=Db::query('select * from '.config('database.prefix').'order_option where order_goods_id='.$d['order_goods_id'].' and order_id='.$d['order_id'])){ ?>
+				<?php foreach ($option_list as $option) { ?>		               
+                &nbsp;<span class="spec"><?php echo $option['name']; ?>: <?php echo $option['value']; ?></span>
+                <?php } ?>
+                <?php } ?>
+               <?php if($order['order']['points_order']==0){ ?>                       
+                <span class="price"><span class="prices">&yen; <?php echo round($d['price'],2); ?></span> x <span class="dcount">{$d.quantity}</span></span>
+               <?php } ?>
+               
+            </div>
+        </div>
+    {/volist}
+</div>
+<div class="exp-item-info">
+    <div class="exp-item-caption">订单信息</div>
+    
+    <div class="exp-payinfo clearfix">
+        <span class="left">订单编号：</span>
+        <span class="right" style="color:#777;">{$order.order.order_num_alias}</span>
+    </div>    
+
+    {if condition="$order['order']['return_points'] NEQ 0"}	
+        <div class="exp-payinfo clearfix">
+            <span class="left">获得积分：</span>
+            <span class="right" style="color:#777;">{$order.order.return_points}</span>
+        </div>
+    {/if}    
+
+   {if condition="$order['order']['points_order'] EQ 0"}	
+        <div class="exp-payinfo clearfix">
+            <span class="left">订单总额：</span>
+            <span class="right prices"><?php echo $order['order_total'][2]['text']; ?></span>
+        </div>
+        {if condition="$order['order']['address_id'] NEQ 0"}
+        <div class="exp-payinfo clearfix">
+            <span class="left">运费：</span>
+            <span class="right prices"><?php echo $order['order_total'][1]['text']; ?></span>
+        </div>
+        {/if}
+   {else/}
+   		<div class="exp-payinfo clearfix">
+            <span class="left">使用积分：</span>
+            <span class="right prices"><?php echo $order['order']['pay_points']; ?></span>
+        </div>
+   {/if}
+</div>
+
+<div class="exp-item-info">
+    <div class="exp-item-caption">订单历史</div>    
+  {volist name="order['order_history']" id="d"}
+    <div class="exp-payinfo clearfix">
+        <span class="left"><?php echo date("Y-m-d H:i:s",$d['date_added']).' '.get_order_status_name($d['order_status_id']); ?> </span>
+        <span class="right">{if condition="!empty($d['comment'])"}留言 : {$d.comment}{/if} </span>
+    </div>
+  {/volist}
+</div>
+
+{/block}
+
+{block name="footer"}
+{include file="public/footer-nav" /}
+{/block}
+
+{block name="script"}
+<script>
+
+</script>
+{/block}

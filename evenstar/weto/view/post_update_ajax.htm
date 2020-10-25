@@ -1,0 +1,107 @@
+<!--{json width:"940",title:"修改帖子"}-->
+<style type="text/css">
+form.update_form dt {width: 5%;}
+form.update_form dd {width: 93%;}
+</style>
+<form action="?post-update-fid-$fid-pid-$pid-ajax-1.htm" method="post" id="update_form_$pid" target="_blank" class="update_form">
+	<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+	<!--{hook common_form_hash_after.htm}-->
+	<dl>
+		<!--{hook post_update_subject_before.htm}-->
+		<!--{if $isfirst}-->
+		<dt>
+			<label for="update_subject_$pid">标题：</label>
+		</dt>
+		<dd style="white-space: nowrap;">
+			<!--{if $typeselect1}-->$typeselect1<!--{/if}-->
+			<!--{if $typeselect2}-->$typeselect2<!--{/if}-->
+			<!--{if $typeselect3}-->$typeselect3<!--{/if}-->
+			<!--{if $typeselect4}-->$typeselect4<!--{/if}-->
+			<input type="text" name="subject" id="update_subject_$pid" value="$thread[subject]" style="width: 600px;" /> <span class="small grey">(200字)</span>
+		</dd>
+		<!--{/if}-->
+		
+		<!--{hook post_update_subject_after.htm}-->
+		
+		<dt><label for="update_message">内容：</label></dt>
+		<dd style="position: relative;"><textarea name="message" id="update_message_$pid" style="width: 855px; height: 400px;">$post[message_html]</textarea></dd>
+		
+		<!--{hook post_update_message_after.htm}-->
+		
+		<dt></dt>
+		<dd>
+			<input type="submit" class="button bigblue" id="update_submit_$pid" value="编辑" />
+			<input type="button" class="button biggrey" value="取消" id="update_cancel_$pid" />
+			<!--{hook post_update_button_end.htm}-->
+		</dd>
+	</dl>
+</form>
+
+<!--{hook post_update_ajax_js_before.htm}-->
+
+<script type="text/javascript">
+
+function delay_execute(dialog, recall) {
+	
+	// hook post_update_delay_execute_start.htm
+	
+	$('#update_message_$pid')[0].focus();
+	
+	// 自动伸缩，自动提交
+	$('#update_message_$pid').keyup(function(e) {
+		if((e.ctrlKey && (e.which == 13 || e.which == 10)) || (e.altKey && e.which == 83)) {
+			$('#update_submit_$pid').trigger('click');
+			return false;
+		}
+	});
+	
+	$('#update_submit_$pid').click(function() {
+		$('div.alert').remove();
+		$('#update_submit_$pid').disable();
+		var postdata = $("#update_form_$pid").serialize();
+		$.post($('#update_form_$pid').attr('action'), postdata,  function(s){
+			$('#update_submit_$pid').enable();
+			
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <= 0) {alert(json.message); return false;}
+			json = json.message;
+			
+			if(json.subject) {
+				$('#update_subject_$pid').alert(json.subject).focus();
+				return false;
+			}
+			if(json.message) {
+				$('#update_message_$pid').parent().alert(json.message);
+				$('#update_message_$pid')[0].focus();
+				return false;
+			}
+			
+			// hook post_update_submit_after_js.htm
+			
+			// 更新当前页面
+<!--{if $isfirst}-->	$('#subject_$tid').html(json.subject_html);	<!--{/if}-->
+ 			$('#message_$pid').html(json.message_html);
+ 		
+ 			// 销毁编辑器
+ 			dialog.set_body('<div class="ok">编辑成功！</div>');
+	 		setTimeout(function() {dialog.close();}, 500);
+			
+		});
+		
+		// hook post_update_ajax_post_after.htm
+				 	
+		return false;
+	});
+	
+	$('#update_cancel_$pid').click(function() {
+		dialog.close();
+	});
+	
+	// hook post_update_delay_execute_end.htm
+	
+	// hook common_form_hash_after_js.htm
+};
+
+</script>
+

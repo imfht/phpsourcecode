@@ -1,0 +1,159 @@
+<include file="Public/header" />
+<include file="Public/accountfooter" />
+<div data-role="page" >
+    <div data-role="header" data-position="fixed" data-tap-toggle="false"data-theme="h">
+      <a href="#sharePanel" style="display:inline-block;margin-top:10px;" ><i class="fa fa-list"></i></a>
+      <h1>详细报表</h1>
+    </div>
+<include file="Public/common" />
+<div data-role="main" class="ui-content">
+<if condition="$accountErrorFlag eq 1">
+    <div class="alert alert-danger alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <strong>Error：</strong><{$accountErrorInfo}>
+    </div>
+  <elseif condition="$accountErrorFlag eq 2"/>
+    <div class="alert alert-success alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <strong>Success：</strong><{$accountErrorInfo}>
+    </div>
+  <elseif condition="$accountErrorFlag eq 3"/>
+   <div class="alert alert-warning alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <strong>Warning:</strong><{$accountErrorInfo}>
+    </div>
+</if>
+    <div data-role="collapsible">
+      <h1>报表查询方式</h1>
+      <p>
+          <form class="form-inline">
+              <button type="button" id="pickTodayMonth" class="btn btn-default btn-sm col-md-2 col-xs-12" onclick="allAccountReport('todayMonth','<{$todayMonth}>');">本月</button>
+              <button class="btn btn-primary btn-sm col-md-2 col-xs-12" type="button" data-toggle="collapse" data-target="#pickMonthDiv" aria-expanded="false" aria-controls="pickMonthDiv">
+              查询月报表  <i class="fa fa-caret-down"></i>
+              </button>
+                  <div class="collapse text-center" id="pickMonthDiv">
+                    <div class="well text-center" >
+                      <font>选择月份:</font>
+                       <input type="text"  id="pickMonthInput"  class="form-control" placeholder="点击选择月份...">
+                       <button type="button" class="btn btn-primary  btn-sm" id="pickMonthBtn" onclick="allAccountReportInput('todayMonth');">查询</button>
+                         <script>
+                            $('#pickMonthInput').datepicker({
+                                  format: "yyyy-mm",
+                                  startView: 0,
+                                  autoclose: true,
+                                  orientation: "bottom auto",
+                            });
+                        </script>
+                    </div>  
+                  </div>
+              <button class="btn btn-danger btn-pink btn-sm  col-md-2 col-xs-12" type="button" data-toggle="collapse" data-target="#pickYearDiv" aria-expanded="false" aria-controls="pickYearDiv">
+              查询年报表  <i class="fa fa-caret-down"></i>
+              </button>
+                <div class="collapse jumbotron col-md-12 col-xs-12 text-center" id="pickYearDiv">
+                  <div class="well text-center" >
+                        <font>选择年份:</font>
+                          <input type="text"  id="pickYearInput"  class="form-control" placeholder="选择年份...">
+                          <button type="button" class="btn btn-danger btn-pink btn-sm"  id="pickYearBtn" onclick="allAccountReportInput('todayYear');">查询</button>
+                       <script>
+                          $('#pickYearInput').datepicker({
+                              format: "yyyy",
+                              autoclose: true,
+                              orientation: "bottom auto",
+                          });
+                      </script>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-default btn-sm col-md-1 col-xs-12" id="pickTodayYearBtn" onclick="allAccountReport('todayYear','<{$todayYear}>');">本年</button>
+                <button type="button" class="btn btn-default btn-sm col-md-1 col-xs-12" id="pickQuarterBtn" onclick="allAccountReport('todayQuarter','<{$todayQuater}>');">本季度</button>
+                <button class="btn  btn-success btn-sm col-md-2 col-xs-12" type="button" data-toggle="collapse" data-target="#pickLenghDiv" aria-expanded="false" aria-controls="pickLenghDiv">
+                日期区间报表  <i class="fa fa-caret-down"></i>
+                </button>
+                  <div class="collapse jumbotron col-md-12 col-xs-12 text-center" id="pickLenghDiv">
+                    <div class="well text-center" >
+                            从  <input type="text"  id="pickLenghInput1"  class="form-control" placeholder="开始日期...">
+                            到  <input type="text"  id="pickLenghInput2"  class="form-control" placeholder="结束日期...">
+                            <button type="button" class="btn btn-success  btn-sm"  id="pickLenghBtn" onclick="allAccountReport('pickLength','<{$todayQuater}>');">查询</button>
+                         <script>
+                            $('#pickLenghInput1').datepicker({
+                                format: "yyyy-mm-dd",
+                                language: "cn",
+                                orientation: "bottom auto",
+                                autoclose: true,
+                                todayHighlight: true
+                            });
+                            $('#pickLenghInput2').datepicker({
+                                format: "yyyy-mm-dd",
+                                language: "cn",
+                                orientation: "bottom auto",
+                                autoclose: true,
+                                todayHighlight: true
+                            });
+                        </script>
+                    </div>
+                  </div>
+          </form>
+       </p>
+    </div>
+    <div id="dataFlagDiv" class=" text-center">
+      <div data-role="navbar">
+        <ul>
+          <li> <a href="#"><font id="dateHeading textspace"></font>  共<font id="countHeading" color="red"></font>笔记账  总消费 <i class="fa fa-rmb"></i><font id="moneyHeading"color="red"></font></a> </li>
+        </ul>
+      </div>
+      <div class="jumbotron" style="display:none">
+          <i class="fa fa-warning fa-2x"></i>
+          <font><strong>无任何记录！</strong></font>
+      </div>
+      <div class="well text-center " id="fade1">
+        <div id="pieShowLg" class="visible-lg" >
+            <canvas id="chart-area1" width="150px" height="150px"/>
+        </div>
+        <div class="list-group col-md-3 visible-lg" id="pieShowItem">
+                    </div>
+        <div id="pieShowXs" class="hidden-lg list-group col-md-3 " >
+            <canvas id="chart-area2" style="width:100px;height:100px;"/>
+        </div>
+      </div>          
+  </div>
+      <div class="panel panel-primary" id="fade2">
+        <div class="dataFlagDiv">
+            <div class="panel-heading ">
+              <font class="panel-title" id="downTitle"></font>
+            </div>
+            <div class="well">
+             <div id="canvas-holder-line" >
+                  <canvas id="chart-area-line" width="300px" heigth="50px"></canvas>
+             </div>
+            </div>        
+        </div>
+      <div class="dataFlagDiv" id="fade3">
+        <div class="panel panel-default" >
+            <div class="panel-heading ">
+              <font class="panel-title" id="downItemTitle"></font>
+            </div>
+         <div data-role="navbar">
+           <ul>
+              <li><a href="#">名称</a></li>
+              <li><a href="#">类别</a></li>
+              <li><a href="#">金额</a></li>
+            </ul>
+         </div>
+         <div id="listItem" class="">
+           
+         </div>
+        </div><!--panel-end-->
+      </div>
+
+        
+</div>     
+<script>
+  $(document).ready(function(){
+    var date=new Date();
+    var month=date.getMonth()+1;
+    var year=date.getFullYear();
+    var todayMonth=year+'-'+month;
+    allAccountReport('todayMonth',todayMonth);
+  });
+</script>
+
+<include file="Public/footer"/>

@@ -1,0 +1,1 @@
+docker run -d -p 23:22 -p 4000:4000 -p 80:80 -v /root/ptimecms:/data hillsdong/ubuntu:lnmp  /usr/sbin/sshd -D

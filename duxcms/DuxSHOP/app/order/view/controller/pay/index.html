@@ -1,0 +1,140 @@
+
+<div class="uk-container">
+    <div class="dux-tip uk-clearfix">
+        <i class="icon fa fa-check"></i>
+        <div class="tip-body">
+            <h1>您已经提交该订单，请尽快支付！</h1>
+            <p>共计：
+                <span class="uk-text-danger">{$totalPrice}</span> 元
+                <!--loop{$currencyAppend as $vo}-->
+                + <span class="uk-text-danger">{$vo.money}</span> {$vo.name}
+                <!--{/if}-->
+            </p>
+        </div>
+    </div>
+    <br>
+    <div class="dux-box">
+        <div class="box-header">
+            订单信息
+        </div>
+        <div class="dux-pay-table">
+        <!--loop{$orderList as $key => $vo}-->
+            <table class="dux-table uk-table  uk-table-responsive  uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                <tr>
+                    <th colspan="4">
+                        单号: {$vo.order_no}
+                        <span class="uk-margin-left">时间: {date('Y-m-d H:i:s', $vo.order_create_time)}</span>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="uk-text-middle" width="70">
+                        <img src="{$vo.order_image}" width="64" height="64">
+                    </td>
+                    <td class="uk-text-middle">
+                            <a href="{url($vo.order_app . '/order/info', ['order_no' => $vo.order_no])}" target="_blank" class="link">{$vo.order_title}</a>
+                    </td>
+                    <td class="uk-text-center uk-text-middle" width="200">
+                        商品价
+                        <p><span class="uk-text-danger">￥{$vo.order_price}</span></p>
+                    </td>
+
+                    <td class="uk-text-center uk-text-middle" width="200">
+                        优惠
+                        <p><span class="uk-text-danger">￥{$vo.pay_discount}</span></p>
+                    </td>
+                    <td class="uk-text-center uk-text-middle" width="200">
+                        实付
+                        <p><span class="uk-text-danger" >{$vo.total_price} 元</span></p>
+                        <!--loop{$vo.pay_currency.append as $vo}-->
+                        <p>{$vo.currency.money} {$vo.name}</p>
+                        <p><span class="uk-text-danger" >+ {$vo.currency.money} {$vo.name}</span></p>
+                        <!--{/loop}-->
+                        <p>(含运费{$vo.delivery_price}元)</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        <!--{/loop}-->
+        </div>
+    </div>
+    <br>
+    <form action="{url('pay')}" data-dux="form-bind" method="post" data-callback="submit"  data-advanced="false">
+    <!--if{$currencyList}-->
+    <div class="dux-box">
+        <div class="box-header">
+            支付抵扣 (多选)
+        </div>
+        <div class="box-body">
+        <ul class="dux-select-list uk-clearfix">
+            <!--loop{$currencyList as $key => $vo}-->
+            <li>
+                <label>
+                    <input type="checkbox" name="currency[]" value="{$key}" checked>
+                    <div class="title title-2">
+                        <p class="uk-text-primary">{$vo.name}</p>
+                        <!--if{$currencyExchange[$key]}-->
+                        <p>{$currencyExchange[$key]['money']}{$currencyExchange[$key]['unit']} 抵扣 {$currencyExchange[$key]['deduct']}元</p>
+                        <!--{/if}-->
+                    </div>
+                </label>
+            </li>
+
+            <!--{/loop}-->
+        </ul>
+        </div>
+    </div>
+    <br>
+    <!--{/if}-->
+
+    <div class="dux-box dux-pay-body">
+        <div class="box-header">
+            请选择支付方式
+        </div>
+        <div class="box-body">
+        <ul class="dux-select-list uk-clearfix">
+            <?php $i = 0; ?>
+            <!--loop{$payList as $type => $vo}-->
+            <?php $i++; ?>
+            <li>
+                <label>
+                    <input type="radio" name="type" data-password="{$vo.password}"  value="{$type}" class="uk-hidden"  {$i == 1 ? 'checked' : ''}>
+                    <div class="title title-2">
+                        <p>{$vo.name}</p>
+                    </div>
+                </label>
+            </li>
+            <!--{/loop}-->
+        </ul>
+        </div>
+        <div class="dux-pay-foot">
+            <input type="hidden" name="order_no" value="{$orderNo}">
+            <input type="password" style="display: none" name="password" class="uk-input uk-width-small pay-password" maxlength="6" minlength="6" placeholder="请输入6位支付密码">
+            <button class="uk-button uk-button-danger" type="submit">立即支付</button>
+        </div>
+    </div>
+</div>
+
+</form>
+
+<script>
+    Do('base',  function () {
+
+        window.submit = function (msg, url) {
+            window.location.href = url;
+        };
+        var initPassword = function() {
+            if($('input[name="type"]:checked').data('password') == 1) {
+                $('.pay-password').show();
+            }else {
+                $('.pay-password').hide();
+            }
+        };
+        $('input[name="type"]').change(function () {
+            initPassword();
+        });
+        initPassword();
+    });
+</script>

@@ -1,0 +1,111 @@
+<extend name="Public/base"/>
+<block name="head">
+	 <link rel="stylesheet" type="text/css" href="__MOBILE__/css/user.css">
+</block>
+<block name="body">
+<div class="container user-center">
+    <div class="row">
+        <div class="col-md-2">
+            <include file="Public:usernav"/>
+        </div>
+        <div class="col-md-10 edit-address">
+        	
+                <div>
+                	<h4><if condition="$user_address.id gt 0 ">编辑<else/>新增</if>收货地址</h4>
+                    <form class="form-horizontal" action="{:U('User/address')}">
+						  <div class="form-group">
+						    <label for="consignee" class="col-xs-12 control-label">收货人<span>*</span></label>
+						    <div class="col-xs-12">
+						      <input type="text" class="form-control" name="consignee" value="{$user_address.consignee}" id="consignee" placeholder="收货人姓名">
+						    </div>
+						  </div>
+						  <div class="form-group">
+						    <label for="mobile" class="col-xs-12 control-label">手机<span>*</span></label>
+						    <div class="col-xs-12">
+						      <input type="mobile" name="mobile" class="form-control" id="mobile" value="{$user_address.mobile}" placeholder="请填写正确的手机号">
+						    </div>
+						  </div>
+						  <div class="form-group user-district">
+						      <label class="col-xs-12 control-label" >所在地区<span>*</span>	</label>
+						      <div class="col-xs-12">
+						        <select class="col-xs-12 form-control" name="province" id="J_province"></select>
+								<select class="col-xs-12 form-control" name="city" id="J_city" style="display:none;"></select>
+								<select class="col-xs-12 form-control" name="district" id="J_district" style="display:none;"></select>
+								<select class="col-xs-12 form-control" name="community" id="J_community" style="display:none;"></select>
+						      </div>
+						  </div>
+						  <div class="form-group">
+						    <label for="address" class="col-sm-2 control-label">详细地址<span>*</span></label>
+						    <div class="col-sm-10">
+						      <input type="text" class="form-control" name="address" id="address" value="{$user_address.address}" placeholder="详细地址">
+						    </div>
+						  </div>
+						  <div class="form-group">
+						    <div class="col-sm-offset-2 col-sm-10">
+						    	<notempty name="user_address.id">
+						    		<input type="hidden" name="id" value="{$user_address.id}">
+						    	</notempty>
+						      <button type="submit" target-form="form-horizontal" class="btn btn-success ajax-post">确认</button>
+						      <a class="btn btn-success ajax-get" href="{:U('User/address',array('method'=>'set_default','id'=>$user_address['id']))}">默认</a>
+						    </div>
+						  </div>
+						</form>                    
+               					
+            </div>
+           
+            </div>
+        </div>
+    </div>
+</div>
+</block>
+<block name="script">
+<script>
+$(function(){
+	
+	var pid=<if condition="$user_address.province neq ''">{$user_address.province}<else />0</if>;  //默认省份id
+	var cid=<if condition="$user_address.city neq ''">{$user_address.city}<else />0</if>;  //默认城市id
+	var did=<if condition="$user_address.district neq ''">{$user_address.district}<else />0</if>;  //默认区县市id
+	var coid=<if condition="$user_address.community neq ''">{$user_address.community}<else />0</if>;  //默认乡镇id
+
+	
+	$.post("{:U('District/getProvince')}", {pid: pid}, function(result){
+		$("#J_province").html(result);
+	});
+
+	$.post('{:U("District/getCity")}', {pid: pid, cid: cid}, function(result){
+		$("#J_city").show().html(result);
+	});
+
+	$.post('{:U("District/getDistrict")}', {cid: cid, did: did}, function(result){
+		$("#J_district").show().html(result);
+	});
+
+	$.post('{:U("District/getCommunity")}', {did: did, coid: coid}, function(result){
+		$("#J_community").show().html(result);
+	});
+
+	$('#J_province').change(function(){
+		var pid_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getCity")}', {pid: pid_g}, function(result){
+			$("#J_city").show().html(result);
+		});
+	});
+	
+	$('#J_city').change(function(){
+		var cid_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getDistrict")}', {cid: cid_g}, function(result){
+			$("#J_district").show().html(result);
+		});
+	});
+
+	$('#J_district').change(function(){
+		var did_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getCommunity")}', {did: did_g}, function(result){
+			$("#J_community").show().html(result);
+		});
+	});
+	heightlight_bottom_nav("{:U('index')}"); 
+	
+});
+</script>
+</block>

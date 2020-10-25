@@ -1,0 +1,120 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header">
+		<h4>{:L('LOG_VIEW')}</h4>
+	</div>
+	<include file="Public:alert"/>
+	<div class="row">
+		<div class="tabbable span12">
+			<ul class="nav nav-tabs">
+				<li class="active"><a href="#tab1" data-toggle="tab">{:L('LOG_INFO')}</a></li>
+				<li><a href="#tab2" data-toggle="tab">{:L('RELATED_ATTACHMENT')}({$log['file_count']})</a></li>
+			</ul>
+			<div class="tab-content">
+				<div class="tab-pane active" id="tab1">
+					<table class="table" border="0" cellspacing="1" cellpadding="0">
+						<thead>
+							<tr>
+								<td colspan="2">
+									<span style="font-size: 14px;">
+										<a href="javascript:void(0)" class="add_file">{:L('DIALOG_ADD_ATTACHMENTS')}</a>&nbsp;|
+										<a href="{:U('log/mylog_edit','id='.$log['log_id'])}">{:L('EDIT')}</a>&nbsp;|
+										<a href="{:U('log/log_delete','redirect=index&id='.$log['log_id'])}">{:L('DELETE')}</a>&nbsp;|
+										<a href="javascript:void(0)" onclick="javascript:history.go(-1)">{:L('RETURN')}</a>
+									</span>
+								</td>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<th colspan="2">{:L('BASIC_INFO')}</th>
+							</tr>
+							<tr>
+								<td class="tdleft" width="15%">{:L('SUBJECT')}:</td>
+								<td>{$log.subject}</td>
+							</tr>
+							<tr>
+								<td class="tdleft">{:L('CREATE_TIME')}:</td>
+								<td><if condition="$log['create_date'] gt 0">{$log.create_date|date="Y-m-d H:i:s",###}</if> &nbsp; <notempty name="log['creator']['user_name']">{:L('CREATOR_ROLE')}：<a class="role_info" rel="{$log.creator.role_id}" href="javascript:void(0)">{$log.creator.user_name}</a></notempty></td>
+							</tr>
+							<tr>
+								<td class="tdleft">{:L('CONTENT')}:</td>
+								<td><if condition="$log.content neq null"><pre>{$log.content}</pre></if></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="tab-pane" id="tab2">
+					<table class="table table-hover">
+						<if condition="$log.file eq null">
+							<tr>
+								<td>{:L('EMPTY_DATA')} </td>
+							</tr>
+						<else /> 
+							<tr>
+								<th>&nbsp;</th>
+								<th>{:L('FILE_NAME')}</th>
+								<th>{:L('SIZE')}</th>
+								<th>{:L('ADDED_BY')}</th>
+								<th>{:L('ADD_TIME')}</th>
+							</tr>
+							<volist name="log.file" id="vo">
+								<tr>
+									<td class="tdleft"><a href="{:U('file/delete','r=RFileLeads&id='.$vo['file_id'])}">{:L('DELETE')}</a></td>
+									<td>
+										<a target="_blank" href="{$vo.file_path}">{$vo.name}</a>
+									</td>
+									<td>
+										{$vo.size}{:L('BYTE')}
+									</td>
+									<td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty>
+									</td>
+									<td>
+										<notempty name="vo.create_date">{$vo.create_date|date="Y-m-d g:i:s a",###}</notempty>
+									</td>
+								</tr>
+							</volist>
+						</if>
+						<tr>
+							<td colspan="5">
+								<a href="javascript:void(0);" class="add_file">{:L('ADD')}</a>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="hide" id="dialog-file" title="{:L('DIALOG_ADD_ATTACHMENTS')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script>
+$("#dialog-file").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeigth: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$(function(){
+	$(".add_file").click(function(){
+		$('#dialog-file').dialog('open');
+		$('#dialog-file').load('{:U("file/add","r=RFileLog&module=log&id=".$log["log_id"])}');
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+});
+</script>
+<include file="Public:footer" />

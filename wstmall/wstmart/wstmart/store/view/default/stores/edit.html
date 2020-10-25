@@ -1,0 +1,134 @@
+{extend name="default/base" /}
+{block name="css"}
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+<link href="__STATIC__/plugins/validator/jquery.validator.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="main"}
+<form name="editForm"  id="editForm" autocomplete="off">
+      <table class='wst-form uinfo-form wst-box-top' >
+        <tr>
+             <td colspan="2">
+               <div class='wst-tips-box'>
+               <div class='icon'></div>
+               <div class='tips'>
+               1.新密码为空，则不修改帐号密码。<br/>
+               2.店铺管理员不能修改角色。</div>
+               <div style="clear:both"></div>
+               </div>
+             </td>
+           </tr>
+        <tr>
+          <th width="100" height='25'>帐号名：</th>
+          <td>
+            <input type="hidden" id="token" value='{:WSTConf("CONF.pwdModulusKey")}'/>
+            <input type='hidden' id='storeId' name='storeId' class="ipt" value='{$object["storeId"]}' />
+            {$object["loginName"]}
+          </td>
+        </tr>
+        <tr>
+          <th style="vertical-align: top;">门店名称<font color='red'>*</font>：</th>
+          <td class="uinfo">
+            <input id="storeName" name="storeName" value="{$object['storeName']}" class="ipt wst-regist-input" tabindex="3" autocomplete="off" type="text" data-rule="门店名称: required;"/>
+            <div class="notic">请认真填写您的门店名称，以确保用户（购买者）线下到店自提时查找。</div>
+          </td>
+        </tr>
+        <tr>
+          <th style="vertical-align: top;">所在地区<font color='red'>*</font>：</th>
+          <td class="uinfo">
+            <select id="areaIdPath_0" class="j-areaIdPath" data-name="areaIdPath" level="0" onchange="WST.ITAreas({id:'areaIdPath_0',val:this.value,isRequire:true,className:'j-areaIdPath'});">
+                  <option value="">-请选择-</option>
+                  {php}
+                  $areas = WSTTable('areas',['isShow'=>1,'dataFlag'=>1,'parentId'=>0],'areaId,areaName',100,'areaSort desc');
+                  foreach($areas as $aky => $area){
+                  {/php}
+                  <option value="{$area['areaId']}">{$area['areaName']}</option>
+                  {php}}{/php}
+              </select>
+              <button type="button" class="btn btn-primary" data-name="areaIdPath" onclick="javascript:mapCity(this)" style="top: 8px;height: 28px;line-height: 28px;font-size: 14px;font-weight: 400;"><i class="fa fa-map-marker"></i>地图定位</button> 
+              <div class="notic">所在地区将直接影响购买者在选择线下自提时的地区筛选，因此请如实认真选择全部地区级。</div>
+          </td>
+        </tr>
+        {if(WSTConf('CONF.mapKey'))}
+            <tr>
+                <th>&nbsp;</th>
+                <td>
+                    <div id="container"  style='width:700px;height:400px'></div>
+                    <input type='hidden' id='mapLevel' class='ipt'  value="{$object['mapLevel']}"/>
+                    <input type='hidden' id='longitude' class='ipt'  value="{$object['longitude']}"/>
+                    <input type='hidden' id='latitude' class='ipt'  value="{$object['latitude']}"/>
+                </td>
+            </tr>
+        {/if}
+        <tr>
+          <th style="vertical-align: top;">详细地址<font color='red'>*</font>：</th>
+          <td class="uinfo">
+            <input id="storeAddress" name="storeAddress" value="{$object['storeAddress']}" class="ipt wst-regist-input" tabindex="3" autocomplete="off" type="text" data-rule="详细地址: required;"/>
+            <div class="notic">请认真填写详细地址，以确保用户（购物者）线下到店自提时能最准确的到达您的门店。</div>
+          </td>
+        </tr>
+        <tr>
+          <th style="vertical-align: top;">联系方式<font color='red'>*</font>：</th>
+          <td class="uinfo">
+            <input id="storeTel" name="storeTel" value="{$object['storeTel']}" class="ipt wst-regist-input" tabindex="3" autocomplete="off" type="text" data-rule="联系方式: required;"/>
+            <div class="notic">请认真填写门店联系电话，方便用户（购物者）通过该电话与您直接取得联系。</div>
+          </td>
+        </tr>
+        <tr>
+           <th width='150'>门店实景图<font color='red'>*</font>：</th>
+           <td>
+            <input type='text' id='storeImg' value="{$object['storeImg']}" class='ipt' value='' style="width: 500px; float: left;" />
+            <div id='storeImgPicker' style='float: left; margin-top:5px;'>上传</div><span id='uploadMsg'></span>
+            <div id='storeImgBox' style='margin-bottom:5px; float: left; height: 30px; margin-left: 5px;'>
+              <span class='weixin'>
+                <img class='img' style='height:16px;width:18px;' src='__STATIC__/images/upload-common-select.png'>
+                <img class='imged'  id='preview'  style='max-height:150px;max-width: 200px; border:1px solid #dadada; background:#fff' src="__RESOURCE_PATH__/{if $object['storeImg']!=''}{$object['storeImg']}{else}{:WSTConf('CONF.goodsLogo')}{/if}">
+              </span>
+            </div>
+           </td>
+        </tr>
+        <tr>
+         <th>门店状态<font color='red'>*</font>：</th>
+         <td  colspan='2' class="layui-form">
+           <label>
+              <input type='radio' id='storeStatus1' class='ipt' name='storeStatus' checked value='1' title='启用'>
+           </label>
+           <label>
+              <input type='radio' id='storeStatus0' class='ipt' name='storeStatus'  value='0' title='关闭'>
+           </label>
+         </td>
+      </tr>
+        <tr>
+           <td colspan='2' class='wst-bottombar'>
+              <button type="button" class="btn btn-primary btn-mright" onclick="javascript:edit({$p})"><i class="fa fa-check"></i>保&nbsp;存</button>
+              <button type="button" class="btn" onclick="javascript:location.href='{:Url(\'store/stores/index\',\'p=\'.$p)}'"><i class="fa fa-angle-double-left"></i>返&nbsp;回</button>
+           </td>
+        </tr>
+      </table>
+    </form>
+   </div>
+</div>
+{/block}
+
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/js/rsa.js"></script>
+<script type='text/javascript' src='__STATIC__/plugins/webuploader/webuploader.js?v={$v}'></script>
+<script type='text/javascript' src='__STORE__/stores/stores.js?v={$v}'></script>
+<script type="text/javascript" src="__STATIC__/plugins/validator/jquery.validator.min.js?v={$v}"></script>
+<script charset="utf-8" src="{:WSTProtocol()}map.qq.com/api/js?v=2.exp&key={:WSTConf('CONF.mapKey')}"></script>
+<script type="text/javascript">
+$(function(){
+  var areaIdPath = "{$object['areaIdPath']}";
+  var areaIdPath = areaIdPath.split("_");
+  $('#areaIdPath_0').val(areaIdPath[0]);
+  var aopts = {id:'areaIdPath_0',val:areaIdPath[0],childIds:areaIdPath,className:'j-areaIdPath',isRequire:true}
+  WST.ITSetAreas(aopts);
+})
+if(window.conf.MAP_KEY){
+    var longitude = $('#longitude').val();
+    var latitude = $('#latitude').val();
+    var mapLevel = $('#mapLevel').val();
+    initQQMap(longitude,latitude,mapLevel);
+}
+</script>
+
+{/block}

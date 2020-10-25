@@ -1,0 +1,80 @@
+<link rel="stylesheet" href="__STATIC__/Huploadify.css">
+
+<div id="upload_pictures_{$addons_data['name']}"></div>
+
+<input type="hidden" name="{$addons_data['name']}" id="{$addons_data['name']}" value="{$addons_data['value']}"/>
+
+<div class="upload-img-box{$addons_data['name']}">
+    {notempty name="$info[$addons_data['name']]"}
+    
+        {assign name="img_ids_list" value="$info[$addons_data['name'] . '_array']" /}
+    
+        {volist name="img_ids_list" id='vo'}
+            <div class="upload-pre-item" style="float:left; margin: 10px;">
+                <div style="cursor:pointer;" class="pic_del"  onclick="picDel{$addons_data.name}(this, {$vo})" ><img src="__STATIC__/uploadify-cancel.png" /></div> 
+                <a target="_blank" href="{$vo|default='0'|get_picture_url}">
+                    <img style="max-width: {$addons_config['maxwidth']};" src="{$vo|default='0'|get_picture_url}"/>
+                </a>
+            </div>
+        {/volist}
+    {/notempty}
+</div>
+
+<script type="text/javascript">
+    
+    var maxwidth = "{$addons_config['maxwidth']}";
+    
+    $("#upload_pictures_{$addons_data['name']}").Huploadify({
+        auto: true,
+        height          : 30,
+        fileObjName     : "file",
+        buttonText      : "上传图片",
+        uploader        : "{:url('File/pictureUpload',array('session_id'=>session_id()))}",
+        width         : 120,
+        removeTimeout	  : 1,
+        fileSizeLimit:"{$addons_config['max_size']}",
+        fileTypeExts	  : "{$addons_config['allow_postfix']}",
+        onUploadComplete : uploadPicture{$addons_data.name}
+    });
+    
+    function uploadPicture{$addons_data.name}(file, data){
+        
+        var data = $.parseJSON(data);
+        
+        var addons_name = "{$addons_data.name}";
+        
+        var img_ids = $("#" + addons_name).val();
+        
+        var add_id = data.id;
+        
+        if(img_ids){ var lastChar = img_ids.charAt(img_ids.length - 1);  if(lastChar != ','){  add_id = img_ids + ',' + add_id; } }
+        
+        $("#" + addons_name).val(add_id);
+        
+        var src = '/upload/picture/' + data.path;
+        
+        $(".upload-img-box" + addons_name).append('<div class="upload-pre-item" style="float:left; margin: 10px;"> <div style="cursor:pointer; " class="pic_del"  onclick="picDel{$addons_data.name}(this,'+data.id+')" ><img src="__STATIC__/uploadify-cancel.png" /></div> <a target="_blank" href="' + src + '"> <img style="max-width: ' + maxwidth + ';" src="' + src + '"/></a></div>');
+    }
+    
+    function picDel{$addons_data.name}(obj, pic_id)
+    {
+        
+        var addons_name = "{$addons_data.name}";
+        
+        var img_ids = $("#" + addons_name).val();
+        
+        
+        if(img_ids.indexOf(",") > 0)
+        {
+            
+            img_ids.indexOf(pic_id) == 0 ? img_ids = img_ids.replace(pic_id + ',', '') : img_ids = img_ids.replace(',' + pic_id, '');
+            
+            $("#" + addons_name).val(img_ids);
+        }else{
+            
+            $("#" + addons_name).val('');
+        }
+        
+        $(obj).parent().remove();
+    }
+</script>

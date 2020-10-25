@@ -1,0 +1,125 @@
+{template nheader.html}
+<div class="page-bar">
+    <ul class="page-breadcrumb mylink">
+        {$menu.link}
+    </ul>
+    <ul class="page-breadcrumb myname">
+        {$menu.name}
+    </ul>
+    <div class="page-toolbar">
+        <div class="btn-group pull-right">
+            <button type="button" class="btn green btn-sm btn-outline dropdown-toggle" data-toggle="dropdown" aria-expanded="false" data-hover="dropdown"> {fc_lang('操作菜单')}
+                <i class="fa fa-angle-down"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" role="menu">
+                {loop $menu.quick $t}
+                <li>
+                    <a href="{$t.url}">{$t.icon} {$t.name}</a>
+                </li>
+                {/loop}
+                <li class="divider"> </li>
+                <li>
+                    <a href="javascript:window.location.reload();">
+                        <i class="icon-refresh"></i> {fc_lang('刷新页面')}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="mytopsearch">
+    <form method="post" class="row" action="" name="searchform" id="searchform">
+        <input name="search" id="search" type="hidden" value="1" />
+        <div class="col-md-12">
+            <label>
+                <select name="data[field]" class="form-control">
+                    {loop $field $t}
+                    <option value="{$t.fieldname}" {if $param.field==$t.fieldname}selected{/if}>{$t.name}</option>
+                    {/loop}
+                </select>
+            </label>
+            <label><i class="fa fa-caret-right"></i></label>
+            <label style="padding-right: 20px;"><input type="text" class="form-control" placeholder="" value="{$param['keyword']}" name="data[keyword]" /></label>
+            <label>{fc_lang('时间段')} ：</label>
+            <label>{dr_field_input('start', 'Date', array('option'=>array('format'=>'Y-m-d','width'=>'100')), (int)$param.start)}</label>
+            <label><i class="fa fa-minus"></i></label>
+            <label style="margin-right:10px">{dr_field_input('end', 'Date', array('option'=>array('format'=>'Y-m-d','width'=>'100')), (int)$param.end)}</label>
+            <label><button type="submit" class="btn green btn-sm" name="submit" > <i class="fa fa-search"></i> {fc_lang('搜索')}</button></label>
+        </div>
+    </form>
+</div>
+
+
+<form action="" method="post" name="myform" id="myform">
+    <div class="portlet mylistbody">
+        <div class="portlet-body">
+            <div class="table-scrollable">
+
+                <table class="mytable table table-striped table-bordered table-hover table-checkable dataTable">
+
+                <thead>
+                <tr>
+                    {if $member.adminid==1}
+                    <th width="20" align="right"></th>
+                    {/if}
+                    <th width="80">{fc_lang('类型')}</th>
+                    <th>{fc_lang('提醒内容')}</th>
+                    <th width="150">{fc_lang('提醒时间')}</th>
+                    <th width="100">{fc_lang('状态')}</th>
+                    <th width="150">{fc_lang('处理人')}</th>
+                    <th width="150">{fc_lang('处理时间')}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {loop $list $t}
+                <tr>
+                    {if $member.adminid==1}
+                    <td align="right"><input name="ids[]" type="checkbox" class="dr_select toggle md-check" value="{$t.id}" /></td>
+                    {/if}
+                    <td>{if $t.type =='system'}
+                        <span class="label label-sm label-danger">{fc_lang('系统')}</span>
+                        {else if $t.type =='content'}
+                        <span class="label label-sm label-warning">{fc_lang('内容')}</span>
+                        {else if $t.type =='app'}
+                        <span class="label label-sm label-info">{fc_lang('应用')}</span>
+                        {else if $t.type =='member'}
+                        <span class="label label-sm label-success">{fc_lang('会员')}</span>
+                        {/if}</td>
+                    <td>
+                        <a href="{dr_url('notice/go', array('id' => $t.id))}">{$t.msg}</a></td>
+                    <td>{dr_date($t.inputtime, NULL, 'red')}</td>
+                    <td>{if $t.status ==0}
+                        <span class="label label-sm label-danger">{fc_lang('未处理')}</span>
+                    {else if $t.status ==1}
+                        <span class="label label-sm label-warning">{fc_lang('已查看')}</span>
+                    {else if $t.status ==2}
+                        <span class="label label-sm label-info">{fc_lang('处理中')}</span>
+                    {else if $t.status ==3}
+                        <span class="label label-sm label-success">{fc_lang('处理完成')}</span>
+                    {/if}
+                    </td>
+                    <td>{if $t.uid}
+                        <a href="javascript:;" onclick="dr_dialog_member('{$t.uid}')">{dr_strcut($t.username, 10)}</a>
+                        {else}
+                        <a href="{dr_url('notice/go', array('id' => $t.id))}" class="btn btn-xs yellow"> <i class="fa fa-send"></i> {fc_lang('立即处理')} </a>
+                        {/if}</td>
+                    <td>{dr_date($t.updatetime, NULL, 'red')}</td>
+                </tr>
+                {/loop}
+                {if $member.adminid==1}
+                <tr class="mtable_bottom">
+                    <th align="right"  ><input class="toggle md-check" name="dr_select" id="dr_select" type="checkbox" onClick="dr_selected()" /></th>
+                    <td colspan="33 ">
+                        <button type="button" class="btn red btn-sm" name="option" onClick="dr_confirm_del_all()"> <i class="fa fa-trash"></i> {fc_lang('删除')}</button>
+                    </td>
+                </tr>
+                {/if}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+</form>
+<div id="pages"><a>{fc_lang('共%s条', $param.total)}</a>{$pages}</div>
+{template nfooter.html}

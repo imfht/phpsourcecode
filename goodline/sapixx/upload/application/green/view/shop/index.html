@@ -1,0 +1,85 @@
+{layout name="layout" /}
+<div id="actionbar">
+    <div class="fn-left  button-group">
+        <a href="{:url('green/shop/add')}" class="button button-blue"><i class="iconfont icon-add_icon"></i>增加</a>
+        {if empty($status)}
+            <button class="button bar" msg="【下架】选择商品" issale="0"><i class="iconfont icon-arrowdown"></i>下架</button>
+            <button class="button bar" msg="【上架】选择商品" issale="1"><i class="iconfont icon-arrowup"></i>上架</button>
+            <button class="button bar" url="{:url('green/shop/delete')}" msg="【删除】选择商品? 可恢复" issale="2"><i class="iconfont icon-lajixiang"></i>删除</button>
+        {else /}
+        {if $status == 'trash'}
+            <button class="button bar" msg="【恢复】选择商品" issale="2"><i class="iconfont icon-affirm_icon"></i>恢复商品</button>
+            <button class="button bar" url="{:url('green/shop/delete')}" msg="【彻底删除】选择的商品吗?建议不要删除" issale="1"><i class="iconfont icon-lajixiang"></i>清空回收站</button>
+        {else /}
+            {if $status == 'off_sale' /}
+                <button class="button bar" msg="【下架】选择商品" issale="0"><i class="iconfont icon-arrowdown"></i>下架</button>
+            {elseif $status == 'on_sale' /}
+                <button class="button bar" msg="【下架】选择商品" issale="1"><i class="iconfont icon-arrowup"></i>上架</button>
+            {/if}
+                <button class="button bar" url="{:url('green/shop/delete')}" msg="【删除】选择商品? 可恢复" issale="0"><i class="iconfont icon-lajixiang"></i>删除</button>
+            {/if}
+        {/if}
+    </div>
+    <div class="fn-right pl5">
+        <form id="form" action="{:url('green/shop/index')}" method="get">
+            <input type="hidden" name="status" value="{$status}" />
+            <input placeholder="请输入商品关键字" class="input w200" type="text" name="keyword" value="{$keyword}" />
+            <input type="submit" value="搜索" class="button button-blue" />
+        </form>
+    </div>
+    <div class="fn-right button-group">
+        <a href="{:url('green/shop/index')}" class="button {if $status == '0'} button-green{/if}">全部商品</a>
+        <a href="{:url('green/shop/index',['status' =>'off_sale'])}" class="button {if $status == 'off_sale' && $status != '0'} button-green{/if}">在售</a>
+        <a href="{:url('green/shop/index',['status' =>'on_sale'])}" class="button {if $status == 'on_sale' && $status != '0'} button-green{/if}">下架</a>
+        <a href="{:url('green/shop/index',['status' =>'trash'])}" class="button {if $status == 'trash' && $status != '0'} button-green{/if}">回收站</a>
+    </div>
+</div>
+<table class="table table-border">
+    <thead>
+        <tr>
+            <th class="fn-tac w80">#</th>
+            <th class="fn-tac w40"><input type="checkbox" onclick="CheckAll(this)"></th>
+            <th class="fn-tac w80">商品名称</th>
+            <th></th>
+            <th class="w100 fn-tar">积分</th>
+            <th class="w140">更新时间</th>
+            <th class="w80 fn-tac">状态</th>
+            <th class="fn-tac w90">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {foreach $lists as $vo}
+        <tr>
+            <td class="fn-tac">{$vo.id}</td>
+            <td class="fn-tac"><input name="ids[]" type="checkbox" value="{$vo.id}"></td>
+            <td class="fn-tac"><img src="{$vo.img}?x-oss-process=style/80" class="w60" /></td>
+            <td><a href="{:url('green/shop/edit',['id'=>$vo.id,'keyword'=>$keyword,'status' => $status,'page' => $page])}">{$vo.name}</a><br /><span class="gray">{$vo.note}</span></td>
+            <td class="fn-tar">{$vo.points}</td>
+            <td>{$vo.update_time|date='Y-m-d H:i'}</td>
+            <td class="fn-tac">
+                {if $vo.is_del}<span class="badge bg-red">回收站</span>{else}
+                {if $vo.is_sale == 1}<span class="badge bg-blue">在售</span>{else}<span class="badge">下架</span>{/if}
+                {/if}
+            </td>
+            <td class="fn-tac">
+                <a class="button isDel" url="{:url('green/shop/delete',['id'=>$vo.id])}" href="javascript:;" title="删除"><i class="iconfont icon-lajixiang"></i>删除</a>
+            </td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+{$lists|raw}
+<script type="text/javascript">
+    Do('base', 'layer', 'tip', 'ztree', function () {
+        $('.isDel').isDel();
+        $(".bar").click(function () {
+            var url = $(this).attr('url');
+            var issale = $(this).attr('issale');
+            if (typeof (url) == 'undefined') {
+                url = '{:url("green/shop/ids_action")}?issale=' + issale;
+            }
+            var msg = $(this).attr('msg');
+            tools_submit({ action: url, msg: msg })
+        })
+    })
+</script>

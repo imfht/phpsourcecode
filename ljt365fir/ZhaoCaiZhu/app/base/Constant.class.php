@@ -1,0 +1,1 @@
+<?php class base_Constant {const PAGE_SIZE="25";const ROOT_DIR="";const TABLE_PREFIX="smpss_";const URL_SUFFIX="html";const URL_FORMAT="-";const REWRITE="1";const COOKIE_KEY="5c24eac7759fd8585d572f4a3865b377";const TEMP_DIR="simpla";const DEFAULT_TITLE="招财猪进销存管理系统";const VERSION="v1.0";const THEME="red";const RATIO="0.5";const TORMB="0.4";const BARCODE="6901234";} ?>

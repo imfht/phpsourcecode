@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>{$web.name} - {$web.title}</title>
+{load href="__PUBLIC__/base/base.css,__PUBLIC__/admin/frame.css,__PUBLIC__/js/do.js,__PUBLIC__/js/package.js" /}
+<script src="__PUBLIC__/base/iconfont.js"></script>
+</head>
+<body>
+<div id="header">
+<div class="logo"></div>
+<div class="toolbar"><ul>
+    <li class="app focus" id="system"><i class="iconfont icon-classify_icon"></i>平台管理</li>
+    <li class="app" id="systemcms"><i class="iconfont icon-computer_icon"></i>网站管理</li>
+    {if !empty($miniapp)}
+        <li class="app" id="{$miniapp.wechat}"><i class="iconfont icon-yingyongyuanma"></i>{$miniapp.name}</li>
+    {/if}
+</ul>
+</div>
+<div class="spacer">
+    <ul>
+        <a href="//www.sapixx.com"><li class="shortcut" tip="Sapi++官网"><i class="iconfont icon-home_icon"></i>官网</li></a>
+        <li class="user focus" rel="layer" tip="退出管理"><i class="iconfont icon-my_icon"></i>用户</li>
+    </ul>
+</div>
+</div>
+<div id="nav"></div>
+<div id="main"><iframe id="iframe" name="iframe" src="{:url('system/admin.miniapp/authorizar')}" frameborder="0"></iframe></div>
+<div id="layer">
+    <div class="item divider password fn-cp"><a href="{:url('system/admin.user/password')}" target="iframe"><i class="iconfont icon-xiugaidenglumima"></i> 修改密码</a></div>
+    <div class="item"><a href="{:url('system/admin.index/logout')}" target="_top"><i class="iconfont icon-shutdown_icon"></i> 退出管理</a></div>
+</div>
+<script id="navtpl" type="text/html">
+{{each list value}}
+<dl><dt><i class="iconfont icon-{{value.icon}}"></i><i class="iconfont icon-arrowdown"></i>{{value.name}}</dt>
+    {literal}
+    {{each value.nav rs}}<dd><a href="{{value.host}}{{rs.url}}" target="iframe"><i class="iconfont icon-{{if rs.icon}}{{rs.icon}}{{else}}arrowright{{/if}}"></i>{{rs.name}}</a></dd>{{/each}}
+    {/literal}
+</dl>
+{{/each}}
+</script>
+<script type = "text/javascript">
+Do('base','layer','tip','tpl',function(){
+    $(".shortcut").powerFloat({showDelay: 100,hoverHold: false,targetMode: "tip",targetAttr: "tip",position: "4-1"});
+    $(".user").powerFloat({eventType:"hover",targetMode:'common',targetAttr:"rel",position:"4-1"});
+    $(".app").click(function(){
+        nav($(this).attr("id"),"{:url('system/admin.index/appmenu')}");
+    });
+    nav($('.toolbar>ul>li:first').attr('id'),"{:url('system/admin.index/appmenu')}")
+});
+function nav(app,url) {
+    $(".app").click(function (){
+        $(".app").removeClass("focus");$(this).addClass("focus");
+    });
+    $.getJSON(url,{app:app},function (data) {
+        $("#nav").html(template('navtpl',{list:data}));
+        $("#nav dd").hide();
+        $("#nav dl:first").find('dd').show();
+        $("#nav dt").click(function(){
+            $("#nav dd").hide("fast");
+            $(this).parent().find('dd').slideToggle('fast');            
+        });
+        $("dd").click(function (){$("dd").removeClass("focus");$(this).addClass('focus');});
+    });
+}
+</script>
+</body>
+</html>

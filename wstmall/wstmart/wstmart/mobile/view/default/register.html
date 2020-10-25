@@ -1,0 +1,130 @@
+{extend name="default/base" /}
+{block name="title"}注册 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/user.css?v={$v}">
+<style>
+body{background:#fff}
+.ui-dialog .ui-dialog-cnt {height: auto;}
+.wst-protocol {
+    overflow: auto;
+    padding: 10px 20px 0 10px;
+    color: #333;
+    font-family: Arial,"宋体",Lucida,Verdana,Helvetica,sans-serif;
+    font-size: 12px;
+}
+.wst-protocol h4{line-height: 30px;margin:0px;}
+.wst-protocol p{line-height: 20px;margin:0px;}
+.wst-protocol strong{margin-right:2px;}
+</style>
+{/block}
+{block name="header"}
+		{php}$mobileRegisterTypeArr = explode(',',WSTConf('CONF.mobileRegisterType'));{/php}
+       <header style="background:#ffffff;" class="ui-header ui-header-positive wst-header">
+       	   <i id="return" class="ui-icon-return" onclick="javascript:history.go(-1)" ></i><h1 id="login-w">注册</h1>
+       </header>
+{/block}
+{block name="footer"}
+		{/* 大加载 */}
+		<div class="ui-loading-block" id="Loadl">
+		    <div class="ui-loading-cnt">
+		        <i class="ui-loading-bright"></i>
+		        <p id="j-Loadl">正在加载中...</p>
+		    </div>
+		</div>
+{/block}
+{block name="main"}
+      {/* 注册页面 */}
+      <input type="hidden" value="{:WSTConf('CONF.pwdModulusKey')}" id="key" autocomplete="off">
+		{if in_array(2,$mobileRegisterTypeArr) && $type==2}
+		  <section class="ui-container" id="login2">
+			 <div class="wst-lo-frame">
+				<div class="frame-head">
+					<h2>手机注册</h2>
+					<span class='tip'>请您填写下边的注册信息注册账号</span>
+				</div>
+				<div class="frame"><span>手机号</span><input id="regName" type="text" placeholder="手机号" onkeyup="javascript:onTesting(this)"></div>
+				<div class="frame"><span>密码</span><input id="regPwd" type="password" placeholder="密码"></div>
+				{/* 获取验证码的验证prompt */}
+				{if(WSTConf('CONF.smsVerfy')==1)}
+				{if (int)WSTConf('CONF.isAddonCaptcha')!=1}
+				<div class="verify">
+					<div>图形验证码</div>
+					<input id="smsVerfy" type="text" placeholder="输入验证码" maxlength="10">
+					<img id='verifyImg3' src="{:url('mobile/users/getVerify')}" onclick='javascript:WST.getVerify("#verifyImg3")'>
+				</div>
+				{/if}
+				{/if}
+				{/* 获取验证码 prompt */}
+				<div class="verify phone">
+					<input id="phoneCode" type="text" placeholder="输入短信验证码" maxlength="8">
+					{if (int)WSTConf('CONF.isAddonCaptcha')!=1}
+					<a class='send' href="javascript:obtainCode()">获取验证码</a>
+					{else}
+					{:hook('mobileDocumentRegistSmsCaptcha')}
+					{/if}
+					
+				</div>
+			</div>
+			<div class="wst-lo-agreement">
+			   <i id="defaults2" class="ui-icon-chooses ui-icon-success-block wst-active" onclick="javascript:inAgree(this,2)"></i>我已阅读并同意<span onclick="javascript:wholeShow('protocol');">《用户注册协议》</span>
+			</div>
+			<div class="wst-lo-button">
+				<button id="regButton" class="button" onclick="javascript:register();">注册</button>
+			</div>
+			  <ul class="ui-row wst-lo-term reg-change">
+				  <li class="ui-col ui-col-50">
+					  {php}if(in_array(1,$mobileRegisterTypeArr)){{/php}<a href="{:url('mobile/users/toRegister')}" class="term">账号注册</a>{php}}{/php}&nbsp;
+				  </li>
+			  </ul>
+		  </section>
+		{/if}
+		{if in_array(1,$mobileRegisterTypeArr) && $type==1}
+			<section class="ui-container" id="login1">
+				<div class="wst-lo-frame">
+					<div class="frame-head">
+						<h2>账号注册</h2>
+						<span class='tip'>请您填写下边的注册信息注册账号</span>
+					</div>
+					<div class="frame"><span>用户名</span><input id="regName2" type="text" placeholder="6位以上数字、字母或下划线" onkeyup="javascript:onTesting(this)"></div>
+					<div class="frame"><span>密码</span><input id="regPwd2" type="password" placeholder="6-16位字符"></div>
+					<div class="frame"><span>确认密码</span><input id="reRegPwd" type="password" placeholder="6-16位字符"></div>
+					<div class="verify">
+						<div>图形验证码</div>
+						<input id="verifyCode" type="text" placeholder="请输入图形验证码" maxlength="10">
+						<img id='verifyImg4' src="{:url('mobile/users/getVerify')}" onclick='javascript:WST.getVerify("#verifyImg4")'>
+					</div>
+				</div>
+				<div class="wst-lo-agreement">
+					<i id="defaults" class="ui-icon-chooses ui-icon-success-block wst-active" onclick="javascript:inAgree(this,1)"></i>我已阅读并同意<span onclick="javascript:wholeShow('protocol');">《用户注册协议》</span>
+				</div>
+				<div class="wst-lo-button">
+					<button id="regButton2" class="button" onclick="javascript:register2();">注册</button>
+				</div>
+				<ul class="ui-row wst-lo-term reg-change">
+					<li class="ui-col ui-col-50">
+						{php}if(in_array(2,$mobileRegisterTypeArr)){{/php}<a href="{:url('mobile/users/toRegister','registertype=2')}" class="term">手机注册</a>{php}}{/php}&nbsp;
+					</li>
+				</ul>
+			</section>
+		{/if}
+{/block}
+{block name="include"}
+{/* 用户注册协议 */}
+<div class="wst-fr-protocol" id="protocol">
+    <div class="title"><span>用户注册协议</span><i class="ui-icon-close-page" onclick="javascript:wholeHide('protocol');"></i><div class="wst-clear"></div></div>
+    <div class="wst-protocol">
+        {$data['articleContent']}
+    </div>
+</div>
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type="text/javascript" src="__STATIC__/js/rsa.js"></script>
+<script type='text/javascript' src='__MOBILE__/js/login.js?v={$v}'></script>
+<script type="text/javascript">
+	function pageSwitch(obj,type){
+		$(obj).addClass('active').siblings('.ui-tab-nav li.switch').removeClass('active');
+		$('#login'+type).show().siblings('section.ui-container').hide();
+	}
+</script>
+{/block}

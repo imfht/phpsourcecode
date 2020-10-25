@@ -1,0 +1,102 @@
+<div class="tipbox tipbox-message mb10">
+    友情提示:<br />
+    1、若商品已产生过交易,没有特殊情况建议不要做回收站清空操作.因为会影响到当前寄卖产品。<br />
+    2、如果确认当前商品或客户寄卖商品已完全交易完成,建议仅作下架或删除到回收站。<br />
+    3、库存产品添加以后,不建议再修改为其他产品,会影响用户委托除价格以外的产品信息。
+</div>
+<div id="actionbar">
+    <div class="fn-left  button-group">
+        <a href="{:url('popupshop/saleHouse/add')}" class="button button-blue"><i class="iconfont icon-add_icon"></i>增加</a>
+        {if empty($status)}
+            <button class="button bar" msg="【下架】选择商品" issale="0"><i class="iconfont icon-arrowdown"></i>下架</button>
+            <button class="button bar" msg="【上架】选择商品" issale="1"><i class="iconfont icon-arrowup"></i>上架</button>
+            <button class="button bar" url="{:url('popupshop/saleHouse/delete')}" msg="【删除】选择商品? 可恢复" issale="2"><i class="iconfont icon-lajixiang"></i>删除</button>
+        {else /}
+        {if $status == 'trash'}
+            <button class="button bar" msg="【恢复】选择商品" issale="2"><i class="iconfont icon-affirm_icon"></i>恢复商品</button>
+            <button class="button bar" url="{:url('popupshop/saleHouse/delete')}" msg="【彻底删除】选择的商品吗?建议不要删除" issale="1"><i class="iconfont icon-lajixiang"></i>清空回收站</button>
+        {else /}
+            {if $status == 'off_sale' /}
+                <button class="button bar" msg="【下架】选择商品" issale="0"><i class="iconfont icon-arrowdown"></i>下架</button>
+            {elseif $status == 'on_sale' /}
+                <button class="button bar" msg="【下架】选择商品" issale="1"><i class="iconfont icon-arrowup"></i>上架</button>
+            {/if}
+                <button class="button bar" url="{:url('popupshop/saleHouse/delete')}" msg="【删除】选择商品? 可恢复" issale="0"><i class="iconfont icon-lajixiang"></i>删除</button>
+            {/if}
+        {/if}
+    </div>
+    <div class="fn-right">
+        <form id="form" action="{:url('popupshop/saleHouse/index')}" method="get">
+            <input type="hidden" name="status" value="{$status}" />
+            <input placeholder="请输入商品关键字" class="input w200" type="text" name="keyword" value="{$keyword}" />
+            <input type="submit" value="搜索" class="button button-blue" />
+        </form>
+    </div>
+    <div class="fn-right button-group">
+        <a href="{:url('popupshop/saleHouse/index')}" class="button {if $status == '0'} button-green{/if}">全部商品</a>
+        <a href="{:url('popupshop/saleHouse/index',['status' =>'off_sale'])}" class="button {if $status == 'off_sale' && $status != '0'} button-green{/if}">上架</a>
+        <a href="{:url('popupshop/saleHouse/index',['status' =>'on_sale'])}" class="button {if $status == 'on_sale' && $status != '0'} button-green{/if}">下架</a>
+        <a href="{:url('popupshop/saleHouse/index',['status' =>'trash'])}" class="button {if $status == 'trash' && $status != '0'} button-green{/if}">回收站</a>
+    </div>
+</div>
+<table class="table table-border">
+    <thead>
+        <tr>
+            <th class="fn-tac w80">#</th>
+            <th class="fn-tac w40"><input type="checkbox" onclick="CheckAll(this)"></th>
+            <th class="fn-tac w80">商品名称</th>
+            <th></th>
+            <th class="w80 fn-tac">状态</th>
+            <th class="w100 fn-tar">成本价</th>
+            <th class="w100 fn-tar">销售价</th>
+            <th class="w140">更新时间</th>
+            <th class="fn-tac w90">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {foreach $lists as $vo}
+        <tr>
+            <td class="fn-tac">{$vo.id}</td>
+            <td class="fn-tac"><input name="ids[]" type="checkbox" value="{$vo.id}"></td>
+            <td class="fn-tac"><img src="{$vo.img}?x-oss-process=style/80" class="w60" /></td>
+            <td>
+                <span class="fn-fb">【{$vo.category.title}】</span>
+                <a href="{:url('popupshop/saleHouse/edit',['id'=>$vo.id,'keyword'=>$keyword,'status' => $status,'page' => $page])}">{$vo.name}</a><br />
+                <span class="gray">{$vo.note}</span>
+            </td>
+            <td class="fn-tac">
+                {if $vo.is_del == 1}
+                    <span class="badge bg-red">回收站</span>
+                {else}
+                    {if $vo.is_sale == 1}
+                        <span class="badge bg-green">上架</span>
+                    {else}
+                        <span class="badge bg-yellow">下架</span>
+                    {/if}
+                {/if}
+            </td>
+            <td class="fn-tar">￥{$vo.cost_price|money}</td>
+            <td class="fn-tar"><span class="red">￥{$vo.sell_price|money}</span></td>
+            <td>{$vo.update_time|date='Y-m-d H:i'}</td>
+            <td class="fn-tac">
+                <a class="button isDel" url="{:url('popupshop/saleHouse/delete',['id'=>$vo.id])}" href="javascript:;" title="删除"><i class="iconfont icon-lajixiang"></i>删除</a>
+            </td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+{$lists|raw}
+<script type="text/javascript">
+    Do('base', 'layer', 'tip', 'ztree', function () {
+        $('.isDel').isDel();
+        $(".bar").click(function () {
+            var url = $(this).attr('url');
+            var issale = $(this).attr('issale');
+            if (typeof (url) == 'undefined') {
+                url = '{:url("popupshop/saleHouse/ids_action")}?issale=' + issale;
+            }
+            var msg = $(this).attr('msg');
+            tools_submit({ action: url, msg: msg })
+        })
+    })
+</script>

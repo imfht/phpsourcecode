@@ -1,0 +1,19 @@
+<?php
+return array(
+	'pn'=>array(
+		'title'=>'默认开始页',
+		'type'=>'text',	
+		'value'=>'1',
+	),
+	'sn'=>array(
+		'title'=>'默认每页采集数量',
+		'type'=>'text',
+		'value'=>'60',
+	),
+	'add_pn'=>array(
+			'title'=>'默认页码递增数量',
+			'type'=>'text',
+			'value'=>'60',
+		),
+);
+?>

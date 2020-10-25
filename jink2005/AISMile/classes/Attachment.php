@@ -1,0 +1,155 @@
+<?php
+/**
+ * MILEBIZ 米乐商城
+ * ============================================================================
+ * 版权所有 2011-20__ 米乐网。
+ * 网站地址: http://www.milebiz.com
+ * ============================================================================
+ * $Author: zhourh $
+ */
+
+class AttachmentCore extends ObjectModel
+{
+	public $file;
+	public $file_name;
+	public $name;
+	public $mime;
+	public $description;
+
+	/** @var integer position */
+	public $position;
+
+	/**
+	 * @see ObjectModel::$definition
+	 */
+	public static $definition = array(
+		'table' => 'attachment',
+		'primary' => 'id_attachment',
+		'multilang' => true,
+		'fields' => array(
+			'file' => 			array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'required' => true, 'size' => 40),
+			'mime' => 			array('type' => self::TYPE_STRING, 'validate' => 'isCleanHtml', 'required' => true, 'size' => 128),
+			'file_name' => 		array('type' => self::TYPE_STRING, 'validate' => 'isGenericName', 'size' => 128),
+
+			// Lang fields
+			'name' => 			array('type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isGenericName', 'required' => true, 'size' => 32),
+			'description' => 	array('type' => self::TYPE_STRING, 'lang' => true, 'validate' => 'isCleanHtml'),
+		),
+	);
+
+	public function delete()
+	{
+		@unlink(_PS_DOWNLOAD_DIR_.$this->file);
+		Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'product_attachment WHERE id_attachment = '.(int)$this->id);
+		return parent::delete();
+	}
+
+	public function deleteSelection($attachments)
+	{
+		$return = 1;
+		foreach ($attachments as $id_attachment)
+		{
+			$attachment = new Attachment((int)$id_attachment);
+			$return &= $attachment->delete();
+		}
+		return $return;
+	}
+
+	public static function getAttachments($id_lang, $id_product, $include = true)
+	{
+		return Db::getInstance()->executeS('
+			SELECT *
+			FROM '._DB_PREFIX_.'attachment a
+			LEFT JOIN '._DB_PREFIX_.'attachment_lang al
+				ON (a.id_attachment = al.id_attachment AND al.id_lang = '.(int)$id_lang.')
+			WHERE a.id_attachment '.($include ? 'IN' : 'NOT IN').' (
+				SELECT pa.id_attachment
+				FROM '._DB_PREFIX_.'product_attachment pa
+				WHERE id_product = '.(int)$id_product.'
+			)'
+		);
+	}
+
+	/**
+	 * deassociate $id_product from the current object
+	 *
+	 * @static
+	 * @param $id_product int
+	 * @return bool
+	 */
+	public static function deleteProductAttachments($id_product)
+	{
+		return Db::getInstance()->execute('
+			DELETE FROM '._DB_PREFIX_.'product_attachment
+			WHERE id_product = '.(int)$id_product);
+	}
+
+	/**
+	 * associate $id_product to the current object.
+	 * 
+	 * @param int $id_product id of the product to associate
+	 * @return boolean true if succed
+	 */
+	public function attachProduct($id_product)
+	{
+		return Db::getInstance()->execute('
+			INSERT INTO '._DB_PREFIX_.'product_attachment 
+				(id_attachment, id_product) VALUES
+				('.(int)$this->id.', '.(int)$id_product.')');
+	}
+
+	/**
+	 * associate an array of id_attachment $array to the product $id_product
+	 * and remove eventual previous association
+	 *
+	 * @static
+	 * @param $id_product
+	 * @param $array
+	 * @return bool
+	 */
+	public static function attachToProduct($id_product, $array)
+	{
+		$result1 = Attachment::deleteProductAttachments($id_product);
+
+		if (is_array($array))
+		{
+			$ids = array();
+			foreach ($array as $id_attachment)
+				if ((int)$id_attachment > 0)
+					$ids[] = array('id_product' => (int)$id_product, 'id_attachment' => (int)$id_attachment);
+
+			Db::getInstance()->update('product', array(
+				'cache_has_attachments' => count($ids) ? 1 : 0
+			), 'id_product = '.(int)$id_product);
+
+			if (!empty($ids))
+				$result2 = Db::getInstance()->insert('product_attachment', $ids);
+
+			return ($result1 && (!isset($result2) || $result2));
+		}
+		return $result1;
+	}
+
+	public static function getProductAttached($id_lang, $list)
+	{
+		$ids_attachements = array();
+		if (is_array($list))
+		{
+			foreach ($list as $attachement)
+				$ids_attachements[] = $attachement['id_attachment'];
+
+			$sql = 'SELECT * FROM `'._DB_PREFIX_.'product_attachment` pa
+					LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (pa.`id_product` = pl.`id_product`'.Shop::addSqlRestrictionOnLang('pl').')
+					WHERE `id_attachment` IN ('.implode(',', array_map('intval', $ids_attachements)).')
+						AND pl.`id_lang` = '.(int)$id_lang;
+			$tmp = Db::getInstance()->executeS($sql);
+			$product_attachements = array();
+			foreach ($tmp as $t)
+				$product_attachements[$t['id_attachment']][] = $t['name'];
+			return $product_attachements;
+		}
+		else
+			return false;
+	}
+}
+

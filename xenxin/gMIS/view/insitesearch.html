@@ -1,0 +1,187 @@
+{include file='header.html'}
+<style type="text/css">
+<!--
+body {
+	margin-left: 5px;
+	margin-top: 1px;
+	margin-right: 5px;
+	margin-bottom: 1px;
+	background-color: #1D3647;
+}
+-->
+</style>
+<table style="border:0px;width:100%;border-collapse:collapse; border-spacing:0px;"> <!-- border="0px" cellpadding="0" cellspacing="0"  -->
+    {if $isheader == 1}
+       <tr>
+        <td valign="top" style="padding:0px;">
+        <table class="login_top_bg" 
+               style="border:0px;width:100%;background-image: url({$rtvdir}/img/login-top-bg-small.png);background-repeat: repeat-x; 
+        	border-collapse:collapse; border-spacing:0px;"> <!-- cellpadding="0" cellspacing="0" width="100%" border="0px"  -->
+          <tr style="padding:0px; background-image:url({$rtvdir}/img/login-top-bg-small-updown.png); background-repeat:repeat-x;">
+            <td width="33%" style="padding:0px;height:27px;">
+            	<a href="{$url}" style="color:#ABCAD3;font-weight:bold;font-size:16px;font-family:Tahoma,Geneva,sans-serif;"
+            		title="HomePage/首頁">
+            		&nbsp;{$agentname} </a>
+            </td>
+            <td width="5%" style="padding:0px;"> <div id="top_notice_div" style="postion:absolute; width:400px; top:20px; left:20px; text-align:center;z-index:99"></div> </td>
+            <td width="62%" style="text-align:right;padding:0px;" class="login-buttom-txt"> {$welcomemsg} </td>
+          </tr>
+        </table>
+        </td>
+      </tr>
+    {/if}
+  <tr>
+    <td valign="top" style="padding:0px;">
+     <table 
+     	style="border:0px;width:100%;height:98%;border-collapse:collapse; border-spacing:0px;border-padding:0px;" 
+     	class="login_bg"> <!-- width="100%" height="98%" border="0px" cellpadding="0" cellspacing="0"  -->
+      <tr>
+        <td width="98%" height="{if $isheader == 0}390px%{else}699px{/if}" align="left" style="padding:0px; 
+        	word-wrap:break-word;white-space:normal;word-break:break-all;">
+
+		{$out_header}
+        {$output}
+        
+        <p style="line-height:20px;width:80%;word-wrap:break-word;white-space:normal;word-break:break-all;">
+        	<span style="size:17px">&nbsp; &nbsp; {$modulepath} </span>
+                <!-- search form-->
+        <div id="iss_form_div" style="text-align:center; margin:0 auto; width:500px;">
+        <form name="issform" id="issform" action="{$rtvdir}/extra/insitesearch.php?sid={$sid}&db={$db}&issubmit=1&tit=InSiteSearch" 
+        	method="post">
+        
+            <input type="text" id="isskw" name="isskw" style="width:70%; font-size:16px;" 
+                                                       placeholer="Searching 搜索..." value="{$isskw}" />
+            &nbsp; <input name="subbtn" type="submit" value="Search搜索"/>
+
+        	<input type="hidden" name="levelcode" value="{$levelcode}"/>
+            <input type="hidden" name="isslastid" id="isslastid" value="{$max_last_id}"/>
+
+            {if $act == 'init'}
+                <script type="text/javascript">
+                    var delaysubmiti = window.setTimeout(function(){
+                            var theform = document.getElementById('issform');
+                            if(theform){
+                                theform.submit();
+                            }
+                            else{
+                                console.log("theform:["+theform+"]");
+                            }
+                        }, 1*1000);
+                </script>
+            {/if}
+
+        </form>
+        </div>
+        <p> </p>
+     	{if true}	
+            <!-- results panel -->     		
+            <div id="fieldset_div" style="padding-left:20px; margin-top:35px;">
+                <!--
+        <fieldset>
+            <legend style="font-size:15px;"> &nbsp;" &nbsp; {$isskw} &nbsp; " &nbsp;</legend>
+                -->
+            <div id="resultdiv" style="text-align:justify; padding-left:30px; 
+                padding-right:35px; float:left; width:60%;">
+            {if count($result_list) > 0}
+            {$ri=0}
+            <p> {$title} 快速扫描 {$tbl_all_count} 个数据源, 找到如下 {$isskw} 相关信息. </p>
+                {foreach $result_list as $k=>$v}
+                    {$tblInfo=preg_split("/$isep/", $k)} 
+                    {foreach $v as $k2=>$v2}
+                        {$v3="<span class='hlkw'>$isskw</span>"}
+                    <p>
+                        <a href="{$ido}&tbl={$tblInfo[1]}&db={$tblInfo[0]}&pnsk{$k2}={$isskw}&oppnsk{$k2}=contains"
+                           onclick="javascript:clickReport('{$k}');";
+                           style="font-size:13px;" target="_blank" id="{$k}-{$ri++}"> {str_ireplace($isskw, $v3, $v2)} </a>
+                        <br/>
+                        {$tblKey=$tblInfo[0]}
+                        {$tblKey=$tblKey|cat:$isep}
+                        {$tblKey=$tblKey|cat:$tblInfo[1]}
+                        <span style="pading-left:20px;">
+                            in位于: {$tblInfo[0]} - {$module_list[$tblKey]['linkname']} ... 
+                        </span>
+                    </p>
+                    {/foreach}
+                
+                {/foreach}
+                <br/>
+                <a href="javascript:void(0);" onclick="javascript:window.history.go(-1);">&larr; Previous 上一页</a>
+                  .... 
+                  <a href="javascript:void(0);" onclick="javascript:(function(lId){
+                        var theform = document.getElementById('issform');
+                        if(theform){
+                            console.log('isslastid:'+lId.substring(4));
+                            theform.isslastid.value = lId.substring(4);
+                        }
+                        else{ console.log('theform:'+theform); }
+                        theform.submit();
+                        })(this.id);" id="iss:{$isslastid}"> Next 下一页 &rarr;</a>
+                <br/><br/>
+            {else}
+                {if $act == 'init'}
+                <p> Wating等待查询中..... </p>
+                {else}
+                <p>{$title} 快速扫描 {$tbl_all_count} 个数据源,</p>
+                <p>
+                Sorry抱歉, No results found for {$isskw} . / 没有找到与 {$isskw} 相关信息.
+                {/if}
+                <br/><br/>
+                <a href="javascript:void(0);" onclick="javascript:window.history.go(-1);">&larr; Previous 上一页</a>
+                </p>
+            {/if}
+
+            <p>
+            查询 {$isskw} 本次耗时 {$time_all_cost} 秒.
+            <!-- {$issout} -->
+            </p>
+   
+            </div>
+
+            <div id="result_div_right" style="float:right; width:28%; margin-right:30px;">
+                <p>Top list...</p>
+            </div>
+    <!--
+        </fieldset>
+    -->
+        </div>
+
+        <br/>
+     	{else}
+            <!-- others -->
+        {/if}
+
+		{$out_footer}
+     
+<iframe name="myiframe_clickreport" id="myiframe_clickreport"
+    style="width:0px; height:0px; border:0px;">
+</iframe>
+
+
+        </td>
+      </tr>
+     </table>
+    </td>
+  </tr>
+ 
+</table>
+<script type="text/javascript">
+var rtvdir = '{$rtvdir}';
+var gmis_sid = '{$sid}';
+//-
+function clickReport(lId){
+   var myiframe = document.getElementById('myiframe_clickreport');
+   if(myiframe){
+       myiframe.src = rtvdir+'/extra/insitesearch.php?sid='+gmis_sid+'&act=clickreport&objid='+lId;
+   }
+   else{
+       console.log('iframe:'+myiframe);
+   }
+}
+</script>
+<style>
+.hlkw{
+    color:red;
+    font-weight:bold;
+}
+</style>
+{include file='footer.html'}

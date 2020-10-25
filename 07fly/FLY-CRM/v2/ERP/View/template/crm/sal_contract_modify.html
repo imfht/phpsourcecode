@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+  <div class="ibox-content">
+    <form class="form-horizontal" method="post" action="#">
+		<input type="hidden" name="contract_id" value="#{$one.contract_id}#">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">合同编号</label>
+        <div class="col-sm-10">
+          <input name="contract_no" class="form-control" type="text" value="#{$one.contract_no}#" required/>
+          <span class="help-block m-b-none"></span> </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">标题</label>
+        <div class="col-sm-10">
+          <input name="title" class="form-control" type="text" value="#{$one.title}#" required/>
+          <span class="help-block m-b-none"></span> </div>
+      </div>
+      <div class="form-group text-left">
+        <label class="col-sm-2 control-label">客户名称</label>
+        <div class="col-sm-10">
+          <select data-placeholder="选择客户名称..." name="customer_id" class="chosen-select customer-chosen-select" style="width: 200px;" tabindex="2">
+            <option value="">请选客户名称</option>           
+					  #{foreach from=$customer key=k item=v}#	  
+            <option value="#{$v.customer_id}#" hassubinfo="true">#{$v.name}#</option>
+					  #{/foreach}#
+          </select>
+        </div>
+      </div>
+      <div class="form-group text-left">
+        <label class="col-sm-2 control-label">客户联系人</label>
+        <div class="col-sm-10">
+          <select data-placeholder="选择客户联系人" name="linkman_id" class="chosen-select linkman-chosen-select" style="width: 200px;" tabindex="2">
+            <option value="">请选选择客户联系人</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group text-left">
+        <label class="col-sm-2 control-label">客户销售机会</label>
+        <div class="col-sm-10">
+          <select data-placeholder="选择客户销售机会" name="chance_id" class="chosen-select chance-chosen-select" style="width: 200px;" tabindex="2">
+            <option value="">请选选择客户销售机会</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">起始日期</label>
+        <div class="col-sm-10">
+          <input name="start_date" class="form-control datepicker" type="text" value="#{$one.start_date}#" />
+          <span class="help-block m-b-none"></span> </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">结束日期</label>
+        <div class="col-sm-10">
+          <input name="end_date" class="form-control datepicker" type="text" value="#{$one.end_date}#" />
+          <span class="help-block m-b-none"></span> </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">合同金额</label>
+        <div class="col-sm-10">
+          <input name="money" class="form-control" type="text" value="#{$one.money}#" />
+          <span class="help-block m-b-none"></span> </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label">介绍</label>
+        <div class="col-sm-10">
+          <textarea name="intro" class="form-control">#{$one.intro}#</textarea>
+        </div>
+      </div>
+      <div class="form-group text-left">
+        <label class="col-sm-2 control-label">我方代表</label>
+        <div class="col-sm-10">
+          <select data-placeholder="选择我方代表..." name="our_user_id" class="chosen-select sys_user-chosen-select" style="width: 200px;" tabindex="2">
+            <option value="">请选我方代表</option>           
+					  #{foreach from=$sys_user key=k item=v}#	  
+            <option value="#{$v.id}#" hassubinfo="true">#{$v.name}#</option>
+					  #{/foreach}#
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-8">
+          <button class="btn btn-w-m btn-info save-form" type="button">保存数据</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- 自定义js --> 
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script> 
+<script>
+$(document).ready(function () {
+	//下拉选择+联动效果
+	$('.chosen-select').chosen({search_contains: true});
+	$(".customer-chosen-select").val("#{$one.customer_id}#").trigger("chosen:updated");
+	var linkman_url="#{$smarty.const.ACT}#/crm/CstLinkman/cst_linkman_select/";
+	var chance_url="#{$smarty.const.ACT}#/crm/CstChance/cst_chance_select/";
+	if("#{$one.customer_id}#"!=""){
+	   findLinkmanChosenSelect('linkman-chosen-select',linkman_url,"#{$one.customer_id}#");
+	   findChanceChosenSelect('chance-chosen-select',chance_url,"#{$one.customer_id}#");
+	 }
+	 
+	$(".linkman-chosen-select").val("#{$one.linkman_id}#").trigger("chosen:updated");
+	$(".chance-chosen-select").val("#{$one.chance_id}#").trigger("chosen:updated");
+	$(".sys_user-chosen-select").val("#{$one.our_user_id}#").trigger("chosen:updated");
+	 
+	
+	//选择用户跳出联系人
+	$('.customer-chosen-select').on('change', function(e, params) {
+		change_val=$(this).val();
+		findLinkmanChosenSelect('linkman-chosen-select',linkman_url,change_val);
+		findChanceChosenSelect('chance-chosen-select',chance_url,change_val);
+	});
+	
+	//数据保存
+	$("body").on("click", ".save-form", function() {
+		FormData=$("form").serialize();
+		$.ajax({
+			type: "POST",
+			url: "#{$smarty.const.ACT}#/crm/SalContract/sal_contract_modify/",
+			data:FormData,
+			dataType:"json",
+			success: function(data){
+				if(data.statusCode=='200'){
+					layer.msg('操作成功', {icon: 1}); 		
+				}
+			},    
+			complete: function() {   
+				setTimeout(function(){
+					//关闭窗口
+					var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+					parent.layer.close(index);
+				 },800);
+   		  },
+		});		
+	});
+});
+</script>
+</body>
+</html>

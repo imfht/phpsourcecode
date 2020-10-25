@@ -1,0 +1,149 @@
+{extend name="./oscshop/admin/view/public/base.html" /}
+{block name="content"}
+<div class="page-header">
+<h1>	
+	移动端
+	<small>
+		<i class="ace-icon fa fa-angle-double-right"></i>
+		{$breadcrumb1}
+	</small>
+	<small>
+		<i class="ace-icon fa fa-angle-double-right"></i>
+		图文回复
+	</small>
+</h1>
+</div>
+	<div class="row">
+	<div class="col-xs-12">	
+	
+        <div class="form-horizontal">
+        
+			{if condition="$Request.param.id"}
+			<input id="nr_id" name="nr_id" type="hidden" value="{$Request.param.id}" />
+			{/if}	
+	          		
+      		<div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-image">
+                <span title="" data-toggle="tooltip" data-original-title="上传360x200的图片">封面</span>
+                </label>
+                
+                <div class="col-sm-10" id="thumb">
+                  <a id="thumb-image" href="#" data-toggle="image" class="img-thumbnail">                 					
+					{if condition="!empty($reply['thumb'])"}	
+						<img src="IMG_ROOT{$reply.thumb|resize=100,100}" />
+					{else/}
+						<img src="__PUBLIC__/image/no_image_100x100.jpg" />
+					{/if}	
+					</a>
+                  <input  type="hidden" name="thumb" value="{$reply.thumb|default=''}" id="input-image" />
+            </div>
+            
+            </div> 		
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left"> * 关键字 </label>
+			<div class="col-sm-10">
+				<div class="clearfix">
+					<input name="keyword" id="keyword" class="col-xs-10 col-sm-10" placeholder="关键字" value="{$reply.keyword|default=''}" type="text">
+				</div>
+			</div>
+			</div>
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left"> * 标题 </label>
+			<div class="col-sm-10">
+				<div class="clearfix">
+					<input name="title" id="title" class="col-xs-10 col-sm-10" placeholder="标题" value="{$reply.title|default=''}" type="text">
+				</div>
+			</div>
+			</div>			
+			
+			<!-- <div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left">  URL </label>
+			<div class="col-sm-10">
+				<div class="clearfix">
+					<input name="url" id="url" class="col-xs-10 col-sm-10" placeholder="URL" value="{$reply.url|default=''}" type="text">
+				</div>
+			</div>
+			</div> -->
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label"> 内容摘要</label>
+				<div class="col-sm-10">
+					<div class="clearfix">
+						<textarea id="description" class="form-control" placeholder="内容摘要" rows="5" name="description">{$reply.description|default=''}</textarea>
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-group">
+                <label class="col-sm-2 control-label" for="input-description">图文内容：</label>
+                <div class="col-sm-10">
+                  <textarea name="content" id="content">{$reply.content|default=''}</textarea>	
+                </div>
+          	</div>
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label">启用</label>
+				<div class="col-sm-10">
+					<label class="radio-inline">
+					<input type="radio" checked="checked" value="1" name="status">是</label>
+					<label class="radio-inline">
+					<input type="radio" value="0" name="status">否</label>
+				</div>
+			</div>	          	
+          	
+          	<div class="form-group">
+				<label class="col-sm-1 control-label no-padding-left"> </label>	
+				<div class="col-sm-11">
+					<input id="send" type="submit" value="提交" class="btn btn-primary" />
+				</div>
+			</div>
+          	
+        </div>
+
+	</div>
+</div>
+{/block}
+{block name="javascript"}
+<script src="__PUBLIC__/js/ckeditor/ckeditor.js"></script> 
+<script>
+
+CKEDITOR.replace('content', {
+	filebrowserImageUploadUrl: '{:url("admin/FileManager/ckupload")}',	
+	toolbar: [
+				[ 'Source', 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat' ],
+				[ 'FontSize', 'TextColor', 'BGColor' ],
+				[ 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock','Image','Format']
+			]	
+});
+
+$(function(){
+	Oscshop.setValue("status", '{$reply.status|default=1}');	
+});
+
+var back_index="{:url('ReplyBackend/news')}";
+
+$('#send').click(function(){
+	
+	var content = CKEDITOR.instances.content.getData();
+
+	$.post(
+		'{$action}',
+		{	
+			nr_id:$('#nr_id').val(),
+			thumb:$('input[name="thumb"]').val(),
+			keyword:$('input[name="keyword"]').val(),
+			title:$('input[name="title"]').val(),
+			description:$('#description').val(),
+			content:content,
+			status:$('input[type=\'radio\']:checked').val()
+		},
+		function(d){
+			art_dialog(d,back_index);
+		}
+	);
+
+});
+</script>
+{/block}

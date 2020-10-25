@@ -1,0 +1,108 @@
+{extend name="default/users/base" /}
+{block name="title"}购买咨询 - 买家中心{__block__}{/block}
+{block name="css"}
+{/block}
+{block name="content"}
+  <div class="wst-user-head"><span>购买咨询</span></div>
+  <div class='wst-user-content'>
+    <table class='wst-order-list'>
+       <thead>
+	      <tr class='head'>
+	         <th width="10%">咨询商品</th>
+	         <th width="20%">商品名称</th>
+	         <th>咨询回复</th>
+	      </tr>
+	   </thead>
+	   <tbody id='loadingBdy'>
+	       <tr id='loading' class='empty-row' style='display:none'>
+	            <td colspan='4'><img src="__STYLE__/img/loading.gif">正在加载数据...</td>
+	       </tr>
+       </tbody>
+       <script id="tblist" type="text/html">
+       {{# for(var i = 0; i < d.length; i++){ }}
+       <tbody class="j-order-row">
+         <tr>
+             <td width="10%" class="tc g_bd">
+                 <a href="{{WST.U('home/goods/detail','goodsId='+d[i].goodsId)}}" target="_blank" class="gc_a">
+                   <img class="gImg" src="__RESOURCE_PATH__/{{d[i].goodsImg}}" width="60" height="60">
+                 </a>
+             </td>
+             <td width="20%" class="pd10 g_bd">
+                <a href="{{WST.U('home/goods/detail','goodsId='+d[i].goodsId)}}" target="_blank" class="gc_a">{{d[i].goodsName}}</a>
+             </td>
+             <td class="pd10 g_bd" style="vertical-align:top">
+                <div class="my_consultbox">
+                  <span class="my_consult line-break">我的咨询：{{d[i].consultContent}}</span>
+                  <span class="consult_time c999 line-break">{{d[i].createTime}}</span>
+                  <div class="wst-clear"></div>
+                </div>
+                {{# if(WST.blank(d[i].reply)!=''){  }}
+                  <div class="gc_replytit">
+                    商家回复：
+                  </div>
+                  <div>
+                      {{d[i].reply}}
+                  </div>
+                  <div class="c999">{{d[i].replyTime}}</div>
+                {{# }else{  }}
+                  <div class="gc_replytit">(暂无回复)</div>
+                {{# }  }}
+                
+             </td>
+          </tr>
+       </tbody>
+       {{# } }}
+       </script>
+       <tr class='empty-row'>
+            <td colspan='4' id='pager' align="center" style='padding:5px 0px 5px 0px'>&nbsp;</td>
+       </tr>
+    </table>
+  </div>
+{/block}
+{block name="js"}
+<script>
+    var WST_CURR_PAGE = 1;
+$(function(){
+  myConsultByPage({$p});
+})
+function gDetail(id){
+  return WST.U('home/goods/detail',{goodsId:id});
+}
+function myConsultByPage(p){
+  $('#loading').show();
+  var params = {};
+  params = WST.getParams('.s-query');
+  params.key = $.trim($('#key').val());
+  params.page = p;
+  $.post(WST.U('home/goodsconsult/myConsultByPage'),params,function(data,textStatus){
+    $('#loading').hide();
+      var json = WST.toJson(data);
+      $('.j-order-row').remove();
+      if(json.status==1){
+        json = json.data;
+        if(params.page>json.last_page && json.last_page >0){
+               myConsultByPage(json.last_page);
+               return;
+            }
+          var gettpl = document.getElementById('tblist').innerHTML;
+          laytpl(gettpl).render(json.data, function(html){
+            $(html).insertAfter('#loadingBdy');
+            $('.gImg').lazyload({ effect: "fadeIn",failurelimit : 10,skip_invisible : false,threshold: 200,placeholder:window.conf.RESOURCE_PATH+'/'+WST.conf.GOODS_LOGO});
+          });
+          laypage({
+            cont: 'pager', 
+            pages:json.last_page, 
+            curr: json.current_page,
+            skin: '#e23e3d',
+            groups: 3,
+            jump: function(e, first){
+              if(!first){
+                myConsultByPage(e.curr);
+              }
+            } 
+        });
+        }  
+  });
+}
+</script>
+{/block}

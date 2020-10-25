@@ -1,0 +1,163 @@
+{extend name="./oscshop/admin/view/public/base.html" /}
+{block name="content"}
+<div class="page-header">
+		<h1>
+			{$breadcrumb2}
+			<small>
+				<i class="ace-icon fa fa-angle-double-right"></i>
+				{$crumbs}
+			</small>
+		</h1>
+</div>	
+	<ul class="nav nav-tabs">
+		
+	  <li class="active"><a href="#tab-member" data-toggle="tab">会员资料</a></li>
+	 
+	  <li><a href="#tab-shipping" data-toggle="tab">收货地址</a></li>
+	  
+	</ul>
+
+	<form class="form-horizontal" id="validation-form"  method="post" action='{:url("MemberBackend/edit")}'>	
+	<div class="tab-content">		
+		<input name="uid" type="hidden" value="{$Request.param.id}" />		
+		<div class="tab-pane active" id="tab-member">
+			<table class="table table-binfoed">
+				<tr>
+				    <td>ID</td>
+				    <td>{$data.info.uid}</td>
+				</tr>
+	
+				<tr>
+					<td>用户名</td>
+					<td>
+					{if condition="$data['info']['reg_type'] NEQ 'weixin'"}
+						{$data.info.username}
+					{else/}
+						{$data.info.nickname}
+					{/if}
+									
+					</td>
+				</tr>
+				
+				{if condition="$data['info']['wechat_openid']"}
+				<tr>
+					<td>微信openid</td>
+					<td>				
+					{$data.info.wechat_openid}					
+					</td>
+				</tr>
+				{/if}
+				
+				<tr>
+					<td>密码</td>
+					<td><input id="pwd" name="password" type="text" style="width:400px;" value="<?php echo think_ucenter_decrypt($data['info']['password'],config('PWD_KEY')); ?>" /></td>
+				</tr>
+				<tr>
+				    <td>电子邮件</td>
+				    <td><input name="email" type="text" style="width:400px;" value="{$data.info.email|default=''}" /></td>
+				    
+				</tr>
+				
+				<tr>
+				    <td>联系电话</td>
+				    <td><input name="telephone" type="text" style="width:400px;" value="{$data.info.telephone|default=''}" /></td>
+				  
+				</tr> 
+					
+				<tr>
+					<td>用户组</td>
+					<td><select class="form-control" name="groupid">							
+						{volist name="group" id="group" }
+							<option {if condition="$data['info']['groupid'] EQ $group['id'] "} selected="selected"{/if} value="{$group.id}">{$group.title}</option>
+						{/volist}				
+						</select>	
+					</td>
+				</tr>
+					
+				<tr>
+					<td>登录IP地址</td>
+					<td>{$data.info.lastip}</td>
+				</tr>  
+				<tr>
+					<td>登录次数</td>
+					<td>{$data.info.loginnum}</td>
+				</tr>
+				<tr>
+					<td>创建时间</td>
+					<td>{$data.info.regdate|date="Y-m-d",###}</td>
+				</tr>
+				<tr>
+					<td>最近登录时间</td>
+					<td>
+						{if condition="empty($data['info']['lastdate'])"}
+							无
+						{else/}
+							{$data.info.lastdate|date="Y-m-d",###}
+						{/if}
+					</td>
+				</tr>
+				<tr>
+					<td>状态</td>
+					<td>	
+							<label class="radio-inline">
+							<input type="radio" checked="checked" value="1" name="checked">审核通过</label>
+							<label class="radio-inline">
+							<input type="radio" value="0" name="checked">未通过审核</label>
+					</td>
+				</tr>
+				</table>
+				<div class="form-group">
+				
+				<div style="margin-left:20px;">
+					<input name="send" type="submit" value="提交" class="btn btn-primary" />
+				</div>
+			</div>
+		</div>
+		
+		<div class="tab-pane" id="tab-shipping">
+            <table class="table table-binfoed">
+          {volist name="data.address" id="vo"}
+          <tr>
+            <td>收货人姓名: {$vo.name}</td>          
+            <td>所在地:</td>
+            <td>
+            	<?php echo get_area_name($vo['province_id']); ?>，
+            	<?php echo get_area_name($vo['city_id']); ?>，
+            	<?php echo get_area_name($vo['country_id']); ?>
+            </td>         
+            <td>地址:</td>
+            <td>{$vo.address}</td>        
+          	<td>联系电话:</td>
+          	<td>{$vo.telephone}</td>
+          </tr>
+          {/volist}  
+        </table>        
+      </div>	
+	
+	</div>
+	</form>	
+	
+{/block}
+{block name="javascript"}
+
+<script>
+$(function(){	
+	
+	{if condition="$Request.param.id"}
+			Oscshop.setValue("checked", {$data.info.checked|default=1});		
+	{/if}
+	
+	$('.btn').click(function(){		
+		
+		if($('#pwd').val()==''){
+			alert('密码必填');
+			return false;
+		}
+		if($('#pwd').val().length<6){
+			alert('密码长度必须大于等于6位！！');
+			return false;
+		}
+	});		
+});
+</script>							
+{/block}

@@ -1,0 +1,269 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'任务详情','search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a onclick="go_return_url();" class="btn btn-sm btn-primary">返回</a>
+			</div>
+			<div class="pull-right">
+				<eq name="is_accept" value="1">
+					<a onclick="accept({$task_log_id})" class="btn btn-sm btn-primary">接受</a>
+					<a onclick="reject({$task_log_id});" class="btn btn-sm btn-danger">不接受</a>
+				</eq>
+				<eq name="is_weixin" value="true">							
+				<eq name="task_working.status" value="1">
+					<a onclick="sign({$task_log_id})" class="btn btn-sm btn-primary">签到</a>
+				</eq>
+				<eq name="task_working.status" value="2">
+					<a onclick="finish({$task_log_id})" class="btn btn-sm btn-primary">完成</a>
+				</eq>
+				</eq>
+			</div>
+		</div>
+	</div>
+	
+	<form method='post' id="form_data" name="form_data" enctype="multipart/form-data"   class="well form-horizontal">
+		<input type="hidden" id="ajax" name="ajax" value="0">		
+		<input type="hidden" id="executor" name="executor" value="{$vo.executor}">
+		<input type="hidden" id="opmode" name="opmode" value="add">
+
+		<div class="form-group">
+			<label class="col-sm-2 col-xs-4 control-label" for="name">客户：</label>
+			<div class="col-sm-10 col-xs-8">
+				<p class="form-control-static">
+					{$vo.name}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-xs-4 control-label" for="name">发起人：</label>
+			<div class="col-xs-8">
+				<p class="form-control-static">
+					{$vo.user_name}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-xs-4 control-label" for="name">发起时间：</label>
+			<div class="col-xs-8">
+				<p class="form-control-static">
+					{$vo.create_time|to_date}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-xs-4 control-label" for="name">执行人：</label>
+			<div class="col-xs-8">
+				<p class="form-control-static">
+					{$vo.executor|show_contact}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-xs-4 control-label" for="name">参与人：</label>
+			<div class="col-xs-8">
+				<p class="form-control-static">
+					{$vo.actor|show_contact}
+				</p>
+			</div>
+		</div>		
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 col-xs-6 control-label" for="request_arrive_time">要求到达时间：</label>
+			<div class="col-sm-8 col-xs-6">
+				<p class="form-control-static">
+					{$vo.request_arrive_time|substr=0,16}
+				</p>
+			</div>
+		</div>
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 col-xs-6 control-label" for="request_finish_time">要求完成时间：</label>
+			<div class="col-sm-8 col-xs-6">
+				<p class="form-control-static">
+					{$vo.request_finish_time|substr=0,16}
+				</p>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="content">任务说明：</label>
+			<div class="col-xs-10">
+					<div class="task_content">
+						{$vo.content}
+					</div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/view',array('add_file'=>$vo['add_file'],'mode'=>'show'))}
+			</div>
+		</div>
+	</form>
+
+	{:W('PageHeader',array('name'=>'任务执行情况','search'=>'N'))}
+	<div class="ul_table border-bottom">
+		<ul>
+			<li class="thead">
+				<span class="col-10">执行人</span>				
+				<span class="col-8">状态</span>				
+				<span class="col-12">签到时间</span>
+				<span class="col-25">签到位置</span>				
+				<span class="col-12">完成时间</span>
+				<span class="col-25">完成位置</span>				
+			</li>
+			<volist name="task_log" id="item">
+				<li class="tbody">
+					<span class="col-9">&nbsp;{$item.executor_name}</span>
+					<span class="col-9">&nbsp;{$item.status|task_status}</span>
+					<span class="col-12">&nbsp;{$item.arrive_time|to_date|substr=0,16}</span>
+					<span class="col-28">&nbsp;{$item.arrive_location}</span>
+					<span class="col-12"> &nbsp;{$item.finish_time|to_date|substr=0,16}</span>
+					<span class="col-28">&nbsp;{$item.finish_location}</span>
+				</li>
+			</volist>
+		</ul>
+	</div>
+</block>
+<block name="js">
+	<script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+	<script type="text/javascript">
+	  wx.config({
+	    debug: false,
+	    appId: '{$signPackage.appId}',
+	    timestamp: '{$signPackage.timestamp}',
+	    nonceStr: '{$signPackage.nonceStr}',
+	    signature: '{$signPackage.signature}',
+	    jsApiList: [
+	       'getLocation',
+	    ]
+	  });
+		$(function() {
+			show_content();
+		});
+
+		function popup_actor() {
+			winopen("{:U('popup/task')}", 730, 574);
+		}
+
+		function accept($task_log_id) {
+			sendAjax("{:U('accept')}", 'task_log_id=' + $task_log_id, function(data) {
+				if (data.status) {
+					ui_alert(data.info, function() {
+						location.reload(true);
+					});
+				}
+			});
+		}
+
+		function sign($task_log_id) {
+			wx.getLocation({
+			    success: function (res) {
+			       $("#latitude").val(res.latitude); // 纬度，浮点数，范围为90 ~ -90
+			       $("#longitude").val(res.longitude) ; // 经度，浮点数，范围为180 ~ -180。
+					sendAjax("{:U('sign')}",'task_log_id=' + $task_log_id+'&lng='+res.longitude+'&lat='+res.latitude, function(data) {
+						if (data.status) {
+							ui_alert(data.info, function() {
+								location.reload(true);
+							});
+						} else {
+							ui_error(data.info);
+						}
+					});
+			    },
+				fail:function(res){
+					ui_error('签到失败');
+					return false;
+				}
+			});			
+		}
+
+		function finish($task_log_id) {
+			wx.getLocation({
+			    success: function (res) {
+			       $("#latitude").val(res.latitude); // 纬度，浮点数，范围为90 ~ -90
+			       $("#longitude").val(res.longitude) ; // 经度，浮点数，范围为180 ~ -180。
+					sendAjax("{:U('finish')}",'task_log_id=' + $task_log_id+'&lng='+res.longitude+'&lat='+res.latitude, function(data) {
+						if (data.status) {
+							ui_alert(data.info, function() {
+								location.reload(true);
+							});
+						} else {
+							ui_error(data.info);
+						}
+					});
+			    },
+				fail:function(res){
+					ui_error('失败');
+					return false;
+				}
+			});
+		}
+
+		function reject() {
+			winopen("{:U('reject','task_id='.$vo['id'])}", 730, 540);
+		}
+
+		function save_log() {
+			$status_name = $(".task_todo .tab-pane.active").attr('id');
+			if ($status_name == "forword") {
+				if ($(".address_list span").length == 0) {
+					ui_error('请选择要转交的人');
+					return false;
+				} else {
+					$("#forword_executor").val("");
+					$("#actor_wrap span.address_list span").each(function() {
+						$("#forword_executor").val($("#forword_executor").val() + $(this).find("b").text() + '|' + $(this).attr("data") + ";");
+					});
+				}
+			}
+			$form_name = "form_data_" + $status_name;
+			var vars = $("#" + $form_name).serialize();
+			if (check_form($form_name)) {
+				if ($status_name == "working") {
+					sendAjax("{:U('save_log')}", vars, function(data) {
+						if (data.status) {
+							ui_alert(data.info, function() {
+								location.reload(true);
+							});
+						} else {
+							ui_error(data.info);
+						}
+					});
+				}
+
+				if ($status_name == "finish") {
+					ui_confirm('选择完成以后不能修改了,是否提交?', function() {
+						sendAjax("{:U('save_log')}", vars, function(data) {
+							if (data.status) {
+								ui_alert(data.info, function() {
+									location.reload(true);
+								});
+							} else {
+								ui_error(data.info);
+							}
+						});
+					});
+				}
+
+				if ($status_name == "forword") {
+					ui_confirm('选择转发以后不能修改了,是否继续修改了?', function() {
+						sendAjax("{:U('save_log')}", vars, function(data) {
+							if (data.status) {
+								ui_alert(data.info, function() {
+									location.reload(true);
+								});
+							} else {
+								ui_error(data.info);
+							}
+						});
+					});
+				}
+			}
+		}
+
+		$(document).ready(function() {
+
+		});
+	</script>
+</block>

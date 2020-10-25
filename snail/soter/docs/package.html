@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Soter拓展包</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>Soter拓展包</legend>
+			<ol>
+				<li><h2 class="title_h2">“包”概念</h2>
+					Soter里面有一个重要的概念“包”，一个“包”在Soter里面代表着一个功能的集合，
+					<br>一个完整的程序我们可以看作一个“包”。一个“包”有自己的<b>classes</b>类目录、
+					<br><b>config</b>配置目录、<b>functions</b>函数文件目录、<b>library</b>第三方类库目录。细心的你也许发现了，
+					<br>我们的application就是一个典型的“包”。
+				</li>
+				<li><h2 class="title_h2">classes 类目录规范</h2>
+					一个“包”有自己的classes类目录，那么这个classes类目录里面的文件夹名称、类文件名称、
+					<br>类名称都是对应的，大小写敏感，“类名称”表示着文件的“路径”。
+					<br>1.比如有文件：classes/Misc/UiTools.php
+					<br>那么UiTools.php文件里面的类名就应该是：Misc_UiTools
+					<br>2.比如有文件：classes/Web/Http/Client.php
+					<br>那么Client.php文件里面的类名就应该是：Web_Http_Client,也就是类名中的下划线
+					<br>代表着文件夹的分隔符，“类名称”表示着文件的“路径”。
+				</li>
+				<li><h2 class="title_h2">library 类库目录规范</h2>
+					一个“包”有自己的library库类目录，这个一般用来存放第三方类库文件，library目录中有个classes类目录。
+					<br>library/classes目录下的文件名和类名是对应的。
+					<br>比如有类文件：library/classes/User.php
+					<br>那么User.php文件里面的类名就应该是：User
+				</li>
+				<li><h2 class="title_h2">functions 目录规范</h2>
+					一个“包”有自己的functions目录，这个一般用来存放自定义的函数文件。
+					<br>函数文件名称没有特殊要求，加载函数文件使用Sr::functions('函数文件名称')，参数不需要.php后缀，大小写敏感。
+				</li>
+				<li><h2 class="title_h2">config 目录规范</h2>
+					一个“包”有自己的config目录，这里一般用来存放自定义配置的文件。
+					<br>config里面可以有四个目录default、development、production、testing（没有可以自己新建）。
+					<br>它们的含义分别是：
+					<br>1.default      ：默认环境
+					<br>2.development  ：开发环境
+					<br>3.production   ：产品环境
+					<br>4.testing      ：测试环境
+					<br>它们的作用是什么呢。
+					<br>下面进行说明：
+					<br>首先我们提出一个问题：
+					<br>我们开发的时候和产品环境以及测试的时候使用的配置一般是不一样的，特别是数据库信息。
+					<br>那么怎么解决环境变化的时候，我们的配置文件不需要改动就能适应环境呢？
+					<br>答：配置目录可以自动切换到对应环境即可。
+					<br>当我们使用Sr::config('database_config')加载database_config.php这个配置文件。
+					<br>会发生什么呢，Sr::config()方法会先去“当前环境”的目录里面去找database_config.php，
+					<br>如果没有找到，就去“默认环境”default目录里面去找database_config.php。
+					<br>那么我们只要在每个环境下配置一个对应环境的database_config.php配置文件即可，
+					<br>当环境变化的时候自动加载对应环境目录下的配置文件。
+					<br><b>提示：</b>
+					<br>“当前环境”可以通过入口文件里面进行设置，在入口文件里面我们可以看到下面的配置:
+					<pre class="brush:php">
+					//设置运行环境
+					->setEnvironment(($env = (($cliEnv = Sr::getOpt('env')) ? $cliEnv : Sr::arrayGet($_SERVER, 'ENVIRONMENT'))) ? Sr::config()->getServerEnvironment($env) : Sr::ENV_DEVELOPMENT)
+					</pre>
+					上面一句很长，什么作用呢？作用就是：
+					<br>1.先看看是不是命令行模式而且指定了env环境参数，有就设置当前环境为$env参数的值
+					<br>2.再看有没有$_SERVER['ENVIRONMENT']变量指定了环境参数，有就设置当前环境为$env参数的值
+					<br>3. 1和2都没找到的话，setEnvironment设置的就是环境值：Sr::ENV_DEVELOPMENT
+					<br>4. 1或者2找到了，就通过Sr::config()->getServerEnvironment($env)获取环境值。
+					<br>5. <b class="text_strong">$env的值可以是：development production testing 
+						<br>分别代表着：开发环境、产品环境、测试环境 , 
+						<br>分别对应的config目录下面的：development目录、production目录、testing目录。</b>
+					<br>当我们通过setEnvironment设置了“当前环境”之后，Sr::config()方法会优先去“当前环境”的目录里面去找配置文件，
+					<br>如果没有找到，就去“默认环境”default目录里面去找。
+					<br><b class="text_strong">一般情况下如果我们的配置文件和环境无关，我们把文件放在default目录里面即可。</b>
+				</li>
+				<li><h2 class="title_h2">“包”存放目录</h2>
+					Soter的“包”默认是都存放在application/packages/目录下面，一个包一个目录。
+
+				</li>
+				<li><h2 class="title_h2">注册“包”</h2>
+					一个“包”只有通过入口文件里面注册之后，“包”才能对外提供功能。
+					<br>可以通过入口文件里面的下面配置注册包：
+					<pre class="brush:php">
+						//注册拓展包
+						->addPackages(array(
+							SOTER_PACKAGES_PATH . 'misc',
+						))
+					</pre>
+					为了方便表示路径，这里SOTER_PACKAGES_PATH的是入口文件里面定义的一个宏变量，
+					<br>自己完全可以修改成其它绝对路径。
+					<br>addPackages参数是个数组，元素是“包”的路径，注册一个或者多个包，
+					<br>只要把“包的路径”写到这个数组里面就可以了。
+					<br>上面的例子注册了一个misc包。
+				</li>
+				<li><h2 class="title_h2">使用“包”</h2>
+					当我们注册了一个“包”之后，我们就可以使用包里面的功能了。
+					<br>我们可以：
+					<br>1、Sr::config()加载“包”里面的配置文件。
+					<br>2、直接new或者Sr::factory()实例化“包”classes目录里面的类，“包”library里面的类。
+					<br>3、Sr::functions()加载“包”functions里面的函数文件
+					<br>提示：
+					<br>在“包”内部：
+					<br>1.可以通过Sr::config()加载“包”自己的config下面的配置。
+					<br>2.可以通过Sr::functions()加载“包”自己的functions下面的函数文件。
+					<br>3.可以通过Sr::factory()实例化“包”自己classes目录里面的类，“包”自己library里面的类。
+				</li>
+				<li><h2 class="title_h2">查找顺序</h2>
+					对于主项目，Hmvc子项目，拓展包，类库。
+					<br>1.类（控制器，模型，类库等）的查找的顺序是：
+					<br>Hmvc子项目[classes->类库classes->拓展包classes->拓展包类库classes]
+					<br>->主项目[classes->类库classes->拓展包classes->拓展包类库classes]
+					<br>2.配置文件,查找的顺序是：
+					<br>Hmvc子项目当前环境配置目录->Hmvc子项目default配置目录
+					<br>->Hmvc子项目类库当前环境配置目录->Hmvc子项目类库default配置目录
+					<br>->Hmvc子项目拓展包当前环境配置目录->Hmvc子项目拓展包default配置目录
+					<br>->主项目当前环境配置目录->主项目default配置目录
+					<br>->主项目类库当前环境配置目录->主项目类库default配置目录
+					<br>->主项目拓展包当前环境配置目录->主项目拓展包default配置目录
+					<br>3.函数文件,查找的顺序是：
+					<br>Hmvc子项目functions目录->Hmvc子项目类库functions目录->Hmvc子项目拓展包functions目录
+					<br>->主项目functions目录->主项目类库functions目录->主项目拓展包functions目录
+					<br><b class="text_strong">所以为了避免了解这么复杂的顺序，保证名称唯一就行了，但是了解了顺序就能合理的利用配置类库等。</b>
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

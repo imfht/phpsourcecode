@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>视频点播</title>
+<meta name="viewport"   content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"/>
+<!--<link rel="stylesheet" href="/public/static/libs/bui/pages/zhibo/dplayer/DPlayer.min.css">-->
+<style type="text/css">
+body {
+    padding: 0;
+    margin: 0;
+}
+.dplayer-full-in-icon {
+    display: none!important
+}
+</style>
+<!--<script src="https://cdn.jsdelivr.net/npm/flv.js/dist/flv.min.js"></script> 
+<script src="https://cdn.jsdelivr.net/npm/hls.js/dist/hls.min.js"></script> -->
+<script type="text/javascript" src="../zhibo/dplayer/flv.min.js"></script> 
+<script type="text/javascript" src="../zhibo/dplayer/hls.min.js"></script>
+<script type="text/javascript" src="../zhibo/dplayer/DPlayer.min.js?v=f32"></script>
+<link rel="stylesheet" href="../zhibo/dplayer/DPlayer.min.css">
+</head>
+<body>
+<script type="text/javascript">
+var weburl = window.location.href;	//var weburl = window.location.href.indexOf("http")==0 ? '' : '../../../../../..';
+weburl = weburl.substring(0,weburl.indexOf('/public/static/')); //方便手机获取真实路径
+document.write('<link rel="stylesheet" href="'+weburl+'/public/static/css/base.css">');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/js/core/jquery.min.js"><\/script>');
+
+var parents;
+if(window.parent.frames['iframe_msg']!=undefined){
+	parents = window.parent.frames['iframe_msg'];
+}else{
+	parents = window.parent;
+}
+</script>
+
+<div id="warp" style="width:100%;height:200px;">
+	<div id="dplayer" style="width:100%;height:100%;"></div>
+</div>
+<script type="text/javascript">
+var url_array = [];
+var player1;
+var play_index = 0;	//当前播放第几集
+var play_time = 0; //当前播放的时间,为了给圈主使用的.
+var sync_time = 0; //同步圈主的时间
+
+var dp;
+function player(urls , ext_info, height, only_sound, in_pc) {
+	if(ext_info.index>0){
+		play_index = ext_info.index;
+	}
+	if(ext_info.time>0 && parents.in_pc==true){ //手机端不能自动播放
+		sync_time = ext_info.time;
+	}
+	urls.forEach((rs)=>{
+		url_array.push(rs.url);
+	})
+	$('.total_page').html(url_array.length);
+	$('.page').html(play_index+1);
+
+    if (typeof(height) == 'undefined' || height == '') {
+        height = '200px';
+    } else {
+        height = parseFloat(height).toString() + 'px';
+    }
+
+    document.getElementById('warp').style.setProperty('height', height);
+     
+    dp = new DPlayer({
+            container: document.getElementById('dplayer'),
+            live: false,
+            volume: 1,
+			preload:true,
+            autoplay: true,
+            video: {
+                url: url_array[play_index],
+                type: 'auto',
+                pic: './player_bg.jpg',
+				thumbnails: '/public/static/index/default/logo.png',
+            },
+    });
+
+	dp.on('error', function() {
+		console.log('player error');
+	});
+	dp.on('loadeddata', function() {
+		console.log('player loadeddata');
+	});
+	dp.on('ended', function() {
+		play_index++;
+		if(typeof(url_array[play_index])!='undefined'){
+			change_play( play_index );
+		}else{
+			parents.layer.msg('全部播放完了!');
+		}
+	});
+	$('.dplayer-video-wrap').click(function(){
+		dp.play();
+		$(this).off('click');
+	});
+}
+
+function get_now_state(){	//当前播放状态,让圈主发送给会员同步用的
+	return [play_index,dp.video.currentTime];
+}
+
+function change_play(index){
+	play_index = index;
+	$('.page').html(play_index+1);
+
+	dp.switchVideo({
+		url: url_array[index],
+		//pic: 'http://qb.net/public/uploads/images/20191222/1_201912220815434e1a4.jpeg',
+		//thumbnails: 'https://x1.php168.com/public/uploads/images/20180419/14371cf45a6028e868288bd81c216c6c.jpeg',
+	});
+	dp.play();
+}
+
+function player_stop(){	//dp.toggle(): 切换播放和暂停
+	dp.pause();
+}
+function player_seek(time){
+	dp.seek(time)
+}
+function player_start(){
+	dp.play();
+}
+function player_quiet(is_quiet){
+	if(is_quiet==true){
+		dp.volume(0);
+	}else{
+		dp.volume(1);
+	}
+}
+
+function full_screen(){
+	dp.fullScreen.request('web');	//dp.fullScreen.cancel('web');
+}
+
+function control(obj){ //接受圈主的指令 此函数主要是给父窗口调用的.
+	var t = obj.type;
+	if(typeof(vod[t])=='function'){
+		vod[t](obj);
+	}
+}
+
+
+var vod = {
+	sync_play:function(obj){	//同步播放
+		if(typeof(obj)=='object'){
+			sync_time = obj.time;
+			if(obj.index!=play_index){
+				change_play(obj.index);
+			}
+			if(sync_time>0){
+				player_seek(sync_time);
+				sync_time = 0;
+			}
+		}else{
+			var o = {
+				type:'sync_play',
+				index:play_index,
+				time:play_time,
+			};
+			ws_send(o);
+		}	
+	},
+	prev:function(obj){	//上一集
+		if(typeof(obj)=='object'){
+			change_play(obj.index);
+		}else{
+			play_index--;
+			if(play_index<0){
+				play_index = url_array.length-1;
+			}
+			var o = {
+				type:'prev',
+				index:play_index,
+			};
+			ws_send(o);
+		}	
+	},
+	next:function(obj){	//下一集
+		if(typeof(obj)=='object'){
+			change_play(obj.index);
+		}else{
+			play_index++;
+			if(play_index>url_array.length-1){
+				play_index = 0;
+			}
+			var o = {
+				type:'next',
+				index:play_index,
+			};
+			ws_send(o);
+		}	
+	},
+	pause:function(obj){	//暂停
+		if(typeof(obj)=='object'){
+			player_stop();
+		}else{
+			var o = {
+				type:'pause',
+			};
+			ws_send(o);
+		}	
+	},
+	play:function(obj){	//继续播放
+		if(typeof(obj)=='object'){
+			player_start();
+		}else{
+			var o = {
+				type:'play',
+			};
+			ws_send(o);
+		}	
+	},
+	is_quiet:false,
+	quiet:function(obj){	//静音
+		if(typeof(obj)=='object'){
+			if(this.is_quiet==false){
+				this.is_quiet = true;
+				player_quiet(true);
+			}else{
+				this.is_quiet = false;
+				player_quiet(false);
+			}			
+		}else{
+			var o = {
+				type:'quiet',
+			};
+			ws_send(o);
+		}
+	},
+	finish:function(obj){	//结束直播
+		if(typeof(obj)=='object'){
+			parents.mod_class.vod_mv.win_player = null;
+			if(parents.in_pc==true){
+				if( typeof(parents.in_pc_qun)=='boolean' && parents.in_pc_qun==true ){	//在PC圈子风格里
+					window.parent.$("#iframe_play").attr("src","about:blank");
+					window.parent.$("#iframe_play").hide();
+					if(typeof(window.parent.close_play)=='function'){
+						window.parent.close_play();
+					}
+				}else{	//单独的PC聊天界面里
+					var index1 = window.parent.layer.getFrameIndex(window.name);
+					window.parent.layer.close(index1);
+				}			
+			}else{
+				parents.$(".iframe_chat").attr("src","about:blank");
+				parents.$(".iframe_chat").hide();
+			}			
+		}else{
+			var o = {
+				type:'finish',
+			};
+			ws_send(o);
+			parents.mod_class.vod_mv.stop();
+		}	
+	},
+}
+
+
+$(function(){
+	var pause = false;
+	$("#sync_pause").click(function(){
+		if(pause==false){
+			pause = true;
+			vod.pause();
+			$(this).html('取消暂停');
+		}else{
+			pause = false;
+			vod.play();
+			$(this).html('暂停');
+		}
+	});
+
+	var quiet=false;
+	$("#sync_quiet").click(function(){
+		if(quiet){
+			quiet = false;
+			vod.quiet();
+			$(this).html('静音');
+		}else{
+			quiet = true;
+			vod.quiet();
+			$(this).html('取消静音');
+		}
+	});
+});
+
+
+function ws_send(arr){
+	if(parents.my_uid==parents.quninfo.uid){	//圈主发送指令
+		parents.ws_send({
+			type:"qun_to_alluser",      //告诉WS服务器,群发给所有圈子成员
+			tag:"vod_mv_sync_play",		//返回的自定义标志,自己做处理
+			data:arr
+		});
+	}else{	//圈子会员,就自己控制自己
+		control(arr);
+	}
+}
+
+$(function(){
+	if(parents.my_uid==parents.quninfo.uid){
+		$('.quner_power').show();
+	}
+	parents.$(".layui-layer-iframe").removeClass('layer-anim');//解决视频不能全屏的问题
+});
+
+</script>
+<style type="text/css">
+.about{
+	padding:5px;
+	font-size:14px;
+	color:#888;
+}
+.tt{
+	color:orange;
+}
+.more{
+	color:blue;
+}
+
+</style>
+<!--<div class="about"><span class="tt fa fa-bullhorn">介绍：</span><span class="cnt"></span><span class="more">[详情]</span></div>-->
+<script type="text/javascript">
+$(function(){
+	$(".about .cnt").html(parents.mod_class.zhibo.dataUrls.title);
+	$(".about .more").click(function(){
+		var about = parents.mod_class.zhibo.dataUrls.about;
+		about = about.replace(/\r\n/g,"<br>");
+		//about = about.replace(/ /g,"&nbsp;");
+		parents.layer.open({
+			type: 1,
+			title:false,
+			shift: 1,
+			area:['98%','300px'],
+			content: '<style type="text/css">.layui-layer-setwin{ top:250px !important;}</style><div style="padding:10px;">' + about + '</content>',
+		});
+	});
+});
+</script>
+
+
+<style type="text/css">
+.syscn{
+	margin-top:7px;
+}
+.quner_power{
+	display:none;
+}
+.syscn a{	
+	margin-left:10px;
+	border:1px solid #6ab8c5;
+	border-radius:3px;
+	padding:1px 5px 3px 5px;
+}
+.syscn a:last-child{
+	border:1px solid orange;
+}
+.page{
+	color:red;
+}
+</style>
+<div class="syscn">
+<a><b class="page">1</b>/<i class="total_page">1</i></a>
+<!--<a href="#" class="quner_power" onclick="vod.sync_play();">同步</a>--><a href="#" class="quner_power" onclick="vod.finish();">结束</a><a href="#" onclick="vod.prev();">上一集</a><a href="#" onclick="vod.next();">下一集</a><a href="#" id="sync_pause" class="quner_power">暂停</a><!--<a href="#" id="sync_quiet" class="quner_power">静音</a>-->
+</div>
+
+
+</body>
+</html> 

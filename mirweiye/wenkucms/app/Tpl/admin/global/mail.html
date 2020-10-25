@@ -1,0 +1,113 @@
+<include file="public:top" />
+<!--网站设置-->
+<body class="body">
+<fieldset class="layui-elem-field layui-field-title" style="margin-top:0px;">
+    <legend>{$menuid|getmenuname}</legend>
+</fieldset>
+<style type="text/css">
+    .red {color: #FF5722!important;}
+    .green {color: #5FB878!important;}
+</style>
+<form class="layui-form layui-form-pane" action="">
+     <input type="hidden" name="setting[mail_server][mode]" value="smtp"/>
+     <div class="layui-form-item">
+        <label class="layui-form-label">服务器</label>
+        <div class="layui-input-inline">
+            <input type="text" name="setting[mail_server][host]" placeholder="请输入" class="layui-input" value="{:C('wkcms_mail_server.host')}">
+        </div>
+        <div class="layui-form-mid layui-word-aux">SMTP服务器地址,可登录163邮箱、126邮箱或其他邮箱的设置中获得</div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">端口号</label>
+        <div class="layui-input-inline">
+            <input type="number" name="setting[mail_server][port]" placeholder="请输入" class="layui-input" value="{:C('wkcms_mail_server.port')}">
+        </div>
+        <div class="layui-form-mid layui-word-aux">SMTP服务器的端口号,每个邮箱不同，邮箱设置中有说明</div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">发件人邮箱</label>
+        <div class="layui-input-inline">
+            <input type="text" name="setting[mail_server][from]" placeholder="请输入" class="layui-input" value="{:C('wkcms_mail_server.from')}">
+        </div>
+        <div class="layui-form-mid layui-word-aux">发件人的完整邮箱,例如:qizhixiong@163.com</div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">登录账号</label>
+        <div class="layui-input-inline">
+            <input type="text" name="setting[mail_server][auth_username]" placeholder="请输入" class="layui-input" value="{:C('wkcms_mail_server.auth_username')}">
+        </div>
+        <div class="layui-form-mid layui-word-aux">一般为登录邮箱的用户名</div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">登录密码</label>
+        <div class="layui-input-inline">
+            <input type="text" name="setting[mail_server][auth_password]" placeholder="请输入" class="layui-input" value="{:C('wkcms_mail_server.auth_password')}">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">发送测试</label>
+        <div class="layui-input-inline">
+            <input type="text" id="J_email" lay-verify="email" class="layui-input" value="">
+        </div>
+        <div class="layui-form-mid layui-word-aux" id="J_mail_test_tip">测试发送，填写收件方的完整邮箱地址</div>
+    </div> 
+
+    <div class="layui-form-item">
+        <label class=""></label>
+        <div class="layui-input-block">
+        <button class="layui-btn" lay-submit="" lay-filter="upbtn">提交保存</button>
+        <a class="layui-btn layui-btn-normal" id="J_mail_test">发送测试邮件</a>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+//Demo
+layui.use(['layer','jquery','form'], function () {
+   // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form;
+
+
+    //发送测试邮件
+    var ajax_mail_test= "{:U('global/ajax_mail_test')}";
+    $(function(){
+        $(document).on('click','#J_mail_test', function(){
+            var email = $('#J_email').val();
+            if(email == ''){
+                $('#J_mail_test_tip').addClass('red').html('{:L('please_input')}{:L('test_email')}');
+                return false;
+            }
+            var loading = layer.load(1, {shade: [0.1, '#fff']});
+            $.getJSON(ajax_mail_test, {email:email}, function(result){
+            layer.close(loading);
+                if(result.status == 1){
+                    $('#J_mail_test_tip').removeClass('red').addClass('green').html('{:L('send_test_email_successed')}');
+                }else{
+                    $('#J_mail_test_tip').addClass('red').html('{:L('send_test_email_failured')}');
+                }
+            });
+        });
+    });
+
+
+  // 提交
+    form.on('submit(upbtn)', function (data) {
+        // 提交到方法 默认为本身
+        $.post("{:u('global/edit')}",data.field,function(res){
+            if(res.status.status ==  1){
+                layer.msg(res.status.info,{time:1800},function(){
+                  location.href = "{:u('global/index')}&type=mail&menuid={$menuid}";
+                });
+            }else{
+                layer.msg(res.status.info,{time:1800});
+                // $('.verify_img').click();
+            }
+        });
+        return false;
+    });
+ 
+});
+</script>
+</body>
+</html>

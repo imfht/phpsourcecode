@@ -1,0 +1,180 @@
+<form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+    <div class="layui-tab-item layui-show" id="order-refund-detail"></div>
+    <script id="order-refund-detail_tpl" type="text/html">
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>退款信息</legend>
+        </fieldset>
+        <table class="layui-table">
+            <tbody>
+            <tr>
+                <td width="100">订单号：</td>
+                <td>{{ d.order.order_no }}</td>
+                <td width="100">退款单号</td>
+                <td>{{ d.refund.refund_no }}</td>
+                <td width="100">退款类型</td>
+                <td>{{ d.refund.refund_type_text }}</td>
+            </tr>
+            <tr>
+                <td>退款商品：</td>
+                <td>{{ d.order_goods.goods_title }}</td>
+                <td>申请金额</td>
+                <td>￥{{ d.refund.amount }}（含运费￥{{ d.refund.delivery_price }}）</td>
+                <td>退款状态</td>
+                <td>{{ d.refund.status_text }}</td>
+            </tr>
+            </tbody>
+        </table>
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>退款记录</legend>
+        </fieldset>
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th width="150" style="text-align: center;">时间</th>
+                <th width="60">角色</th>
+                <th width="100">操作用户</th>
+                <th width="120">操作类型</th>
+                <th>备注</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{# layui.each(d.log, function(index, item){ }}
+            <tr>
+                <td style="text-align: center;">{{ item.created_at }}</td>
+                <td>{{ item.user_type }}</td>
+                <td>{{ item.username }}</td>
+                <td>{{ item.action }}</td>
+                <td>
+                    {{# if(item.note){ }}
+                    {{# layui.each(item.note, function(i, v){ }}
+                    【{{ v.title }}：{{ v.info }}】
+                    {{# }); }}
+                    {{# } }}
+                    {{# if(item.image){ }}
+                    {{# layui.each(item.image, function(k, url){ }}
+                    <a target="_blank" href="{{ url }}"><img src="{{ url }}" width="30" height="30"></a>
+                    {{# }); }}
+                    {{# } }}
+                </td>
+            </tr>
+            {{# }); }}
+            </tbody>
+        </table>
+        {{# if((d.refund.refund_type == 2 || d.refund.refund_type == 3) && d.refund.status == 0 && d.address){ }}
+        <div class="layui-form-item">
+            <label class="layui-form-label">退货地址</label>
+            <div class="layui-input-block" style="width: 400px;">
+                <select name="address_id">
+                    <option value=""></option>
+                    {{# layui.each(d.address, function(index, item){ }}
+                    <option value="{{ item.id }}">{{ item.full_name }},{{ item.tel }},{{ item.prov_name }}{{ item.city_name }}{{ item.area_name }}{{ item.address }}</option>
+                    {{# }); }}
+                </select>
+            </div>
+        </div>
+        {{# } }}
+        <div class="layui-form-item">
+            <label class="layui-form-label">备注</label>
+            <div class="layui-input-block" style="width: 400px;">
+                <textarea name="note" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                {{# if(d.refund.refund_type == 1){ }}
+                {{# if(d.refund.status == 0){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">同意</button>
+                <button class="layui-btn layui-btn-danger" lay-submit="" lay-filter="refused">拒绝</button>
+                {{# } }}
+                {{# if(d.refund.status == 6){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">确认打款</button>
+                {{# } }}
+                {{# } }}
+
+                {{# if(d.refund.refund_type == 2){ }}
+                {{# if(d.refund.status == 0){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">同意退货</button>
+                <button class="layui-btn layui-btn-danger" lay-submit="" lay-filter="refused">拒绝</button>
+                {{# } }}
+                {{# if(d.refund.status == 3){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">确认收货</button>
+                <button class="layui-btn layui-btn-danger" lay-submit="" lay-filter="refused">拒绝收货</button>
+                {{# } }}
+                {{# if(d.refund.status == 6){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">确认打款</button>
+                {{# } }}
+                {{# } }}
+
+                {{# if(d.refund.refund_type == 3){ }}
+                {{# if(d.refund.status == 0){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">同意换货</button>
+                <button class="layui-btn layui-btn-danger" lay-submit="" lay-filter="refused">拒绝</button>
+                {{# } }}
+                {{# if(d.refund.status == 3){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">确认收货</button>
+                <button class="layui-btn layui-btn-danger" lay-submit="" lay-filter="refused">拒绝收货</button>
+                {{# } }}
+                {{# if(d.refund.status == 5){ }}
+                <button class="layui-btn" lay-submit="" lay-filter="approve">发货</button>
+                {{# } }}
+                {{# } }}
+            </div>
+        </div>
+        <input type="hidden" name="id" value="{{ d.refund.id }}"/>
+    </script>
+</form>
+<script type="text/html" template lay-done="layui.data.sendParams(d.params)"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['helper', 'admin', 'table', 'laytpl'], function () {
+            var helper = layui.helper,
+                admin = layui.admin,
+                laytpl = layui.laytpl,
+                form = layui.form,
+                $ = layui.jquery,
+                api_action_url = layui.setter.apiHost + '/order/refund';
+
+            //详情
+            function get_detail() {
+                admin.req({
+                    url: api_action_url + "/detail",
+                    data: {id: params.id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            laytpl($('#order-refund-detail_tpl').html()).render(result.data, function (html) {
+                                $('#order-refund-detail').html(html);
+                            })
+                            form.render();
+                        } else {
+                            layer.msg(result.msg);
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败，请刷新页面重试！');
+                    }
+                });
+            }
+
+            get_detail();
+
+            //监听同意按钮
+            form.on('submit(approve)', function (data) {
+                form_data = data.field;
+                form_data['type'] = 'approve';
+                if (helper.ajax(api_action_url + "/action_save", form_data, false)) {
+                    get_detail();
+                }
+                return false;
+            });
+            //监听拒绝按钮
+            form.on('submit(refused)', function (data) {
+                form_data = data.field;
+                form_data['type'] = 'refused';
+                if (helper.ajax(api_action_url + "/action_save", form_data, false)) {
+                    get_detail();
+                }
+                return false;
+            });
+        });
+    }
+</script>

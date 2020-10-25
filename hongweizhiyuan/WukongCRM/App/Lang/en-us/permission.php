@@ -1,0 +1,55 @@
+<?php
+	return array(
+	'ADD_THE_MODULE_SUCCESSFULLY'=>'Add the module successfully!',
+	'ADD_MODULE_FAILED_PLEASE_CONTACT_YOUR_ADMINISTRATOR'=>'Add module failed, please contact your administrator!',
+	'MODULE_WAS_REMOVED_SUCCESSFULLY'=>'Modules are deleted successfully!',
+	'MODULE_WAS_REMOVED_FAILURE'=>'Failed to delete module!',
+	'MODULE_WAS_REMOVED_FAILURE_PLEASE_CONTACT_YOUR_ADMINISTRATOR'=>'Failed to delete module, please contact your administrator!',
+	'MODULE_MODIFICATION_OF_SUCCESS'=>'Module modification of success!',
+	'COUNTLESS_ACCORDING_TO_THE_CHANGE_FAILED_TO_MODIFY_MODULE'=>'Countless according to the change, failed to modify module',
+	'MODIFY_THE_ERROR_PLEASE_CONTACT_YOUR_ADMINISTRATOR'=>'Modify the error, please contact your administrator!',
+	'URL_NOT_EMPTY'=>"The URL can't be empty",
+	'ADD_OPERATION_IS_SUCCESSFUL'=>'Add operation is successful!',
+	'ADD_OPERATION_IS_FAILURE'=>'Add operation fails!',
+	'OPERATION_IS_CHANGED'=>'Permission to modify success',
+	'COUNTLESS_ACCORDING_TO_THE_CHANGE_OPERATION_CHANGE_FAILURE'=>'Countless, according to the change operation change failure',
+	'MODIFIED_FAILURE_PARAMETER_ERROR'=>'Modified failure, parameter error!',
+	'DELETE FAILED'=>'Delete failed!',
+	'PLEASE_SELECT_ITEMS_TO_DELETE'=>'Please select items to delete',
+	'OPERATION_SAVE_FAILED'=>'Operation save failed!',
+	'OPERATION_SAVE_SUCCESSED'=>'Operation successfully saved!',
+	'SAVE_FAILED_PARAMETER_ERRORS'=>'Save failed,Parameter error',
+	'PART_OF_THE_AUTHORIZATION_FAILED'=>'Part of the authorization failed!',
+	'MODIFY_THE_SUCCESS'=>'Part of the authorization failed!',
+	'PLEASE_RETRY_AFTER_LOGIN_AGAIN'=>'Please retry after login again!',
+	'PLEASE_CHOOSE_TO_AUTHORIZE_JOBS'=>'Please choose to authorize jobs!',
+	'CHOOSE_TO_VIEW_THE_CONTENT'=>'Choose to view the content',
+	'RIGHTS_MANAGEMENT'=>'Rights management',
+	'PERMISSIONS_MANAGEMENT_MODULE'=>'Permissions management module',
+	'ACCORDING_TO_THE_MODULE_OPERATION'=>'According to the module operation',
+	'ADD_OPERATION'=>'Add operation',
+	'ADD_THE_MODULE'=>'Add the module',
+	'THE_OPERATION_NAME'=>'The operation name',
+	'PARAMETER'=>'parameter',
+	'DESCRIBE'=>'describe',
+	'EDIT'=>'editor',
+	'POST_AUTHORIZATION'=>'Post authorization',
+	'ACCORDING_TO_POST_AUTHORIZATION'=>'According to post authorization',
+	'EDIT_OPERATION'=>'Edit operation',
+	'SURE_TO_DELETE_THE_OPERATION'=>'"Sure delete" + name + "?"',
+	'DELETE_THE_SELECTED'=>'Delete the selected',
+	'announcement manager'=>'Announcement of the management',
+	'ALL SEND EMAIL AND SMS'=>'Mass email, text messaging',
+	'MARKETING'=>'marketing',
+	'USER'=>'user',
+	'CREATE'=>'create',
+	'BROWSE'=>'browse',
+	'VISIBLE'=>'visible',
+	'MODULE'=>'module'
+	
+	
+	
+	);
+	
+	
+	

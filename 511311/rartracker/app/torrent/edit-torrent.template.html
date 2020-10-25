@@ -1,0 +1,158 @@
+<div class="text-center" ng-show="!vm.notFoundMessage">
+	<h2 translate="TORRENTS.EDIT"></h2>
+</div>
+
+<div ng-show="vm.notFoundMessage" class="alert alert-warning" role="alert">{{ vm.notFoundMessage }}</div>
+
+<loading-indicator hide="vm.torrent || vm.notFoundMessage"></loading-indicator>
+
+<div class="row row-centered" ng-hide="vm.notFoundMessage">
+	<div class="col-md-9 col-centered" ng-show="vm.torrent">
+	<form ng-submit="vm.updateTorrent()">
+		<table class="table table-striped" cellpadding="15">
+			<tr>
+				<td style="width: 150px;" class="text-right tdBold alignMiddle" translate="TORRENTS.NAME"></td>
+				<td class="text-left">
+					<input type="text" class="form-control" ng-value="vm.torrent.name" readonly />
+				</td>
+			</tr>
+			<tr>
+				<td class="text-right tdBold" translate="TORRENTS.NFO"></td>
+				<td class="text-left">
+					<textarea class="form-control" ng-model="vm.torrent.descr" on-paste-text="vm.stripNfo()" rows="12"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.CATEGORY"></td>
+				<td class="text-left">
+					<select class="form-control" ng-model="vm.torrent.category" ng-options="i.id as i.text for i in vm.categories">
+					</select>
+				</td>
+			</tr>
+			<tr ng-show="vm.torrent.category == 8">
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.TV_CHANNEL"></td>
+				<td class="text-left">
+					<select class="form-control" ng-model="vm.torrent.tv_kanalid" ng-options="i.id as i.namn for i in vm.tvChannels" ng-change="vm.updatePrograms()">
+					</select>
+				</td>
+			</tr>
+			<tr ng-show="vm.torrent.category == 8">
+				<td class="text-right tdBold" translate="TORRENTS.TV_PROGRAM"></td>
+				<td class="text-left">
+					<select class="form-control" ng-model="vm.torrent.tv_programid" ng-options="i.id as i.program for i in vm.tvPrograms">
+					</select>
+					<div ng-show="vm.torrent.tv_programid == 1">
+						<strong>{{ 'TORRENTS.TV_PROGRAM_NAME' | translate }}:</strong>
+						<input type="text" class="form-control" ng-model="vm.torrent.programTitle" />
+						<strong>{{ 'TORRENTS.TV_AIR_DATE' | translate }}:</strong>
+						<select class="form-control" ng-model="vm.torrent.programDate" ng-options="i as i for i in vm.tvDates">
+						</select>
+						<strong>{{ 'TORRENTS.TV_AIR_TIME' | translate }}:</strong>
+						<input type="text" class="form-control" ng-model="vm.torrent.programTime" style="width: 100px;" pattern="\d{2}:\d{2}" />
+					</div>
+				</td>
+			</tr>
+			<tr ng-show="vm.currentUser.class >= 6">
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.SECTION"></td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent.section" uib-btn-radio="'new'" translate="TORRENTS.NEW"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.section" uib-btn-radio="'archive'" translate="TORRENTS.ARCHIVE"></label>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.IMDB_URL"></td>
+				<td class="text-left">
+					<div class="input-group">
+						<input type="text" class="form-control" ng-model="vm.torrent.imdbUrl" placeholder="http://" ng-change="vm.fetchImdbInfo()"/>
+						<span class="input-group-btn">
+							<input type="text" class="form-control" style="width: 270px;" ng-model="vm.torrent.imdbInfo" readonly />
+						</span>
+						<span class="input-group-btn">
+							&nbsp; <button type="button" ng-disabled="vm.torrent.imdbid == 0" ng-click="vm.removeImdb()" style="margin-left: 4px;" class="btn btn-default btn-xs" translate="TORRENTS.REMOVE_IMDB"></button>
+						</span>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-right tdBold alignMiddle">P2P</td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent.p2p" uib-btn-radio="1" translate="BUTTONS.YES"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.p2p" uib-btn-radio="0" translate="BUTTONS.NO"></label>
+					</div>
+				</td>
+			</tr>
+			<tr ng-show="[4,5,6,7,15].indexOf(vm.torrent.category) != -1">
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.SWE_SUBTITLES"></td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent.swesub" uib-btn-radio="2" translate="BUTTONS.YES"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.swesub" uib-btn-radio="1" translate="SUBTITLES.SEPARATE_FILE"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.swesub" uib-btn-radio="0" translate="BUTTONS.NO"></label>
+					</div>
+				</td>
+			</tr>
+			<tr ng-show="[1,2,3,4,5,6,7,13,15].indexOf(vm.torrent.category) != -1">
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.SWE_AUDIO"></td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent.sweaudio" uib-btn-radio="1" translate="BUTTONS.YES"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.sweaudio" uib-btn-radio="0" translate="BUTTONS.NO"></label>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-right tdBold alignMiddle">3D</td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent['3d']" uib-btn-radio="1" translate="BUTTONS.YES"></label>
+						<label class="btn btn-default" ng-model="vm.torrent['3d']" uib-btn-radio="0" translate="BUTTONS.NO"></label>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-right tdBold alignMiddle" translate="GENERAL.ANONYMOUS"></td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent.ano_owner" uib-btn-radio="1" translate="BUTTONS.YES"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.ano_owner" uib-btn-radio="0" translate="BUTTONS.NO"></label>
+					</div>
+				</td>
+			</tr>
+			<tr ng-show="vm.currentUser.class >= 8">
+				<td class="text-right tdBold alignMiddle" translate="TORRENTS.FREE_LEECH"></td>
+				<td class="text-left">
+					<div class="btn-group">
+						<label class="btn btn-default" ng-model="vm.torrent.frileech" uib-btn-radio="1" translate="BUTTONS.YES"></label>
+						<label class="btn btn-default" ng-model="vm.torrent.frileech" uib-btn-radio="0" translate="BUTTONS.NO"></label>
+					</div>
+				</td>
+			</tr>
+		</table>
+		<hr />
+		<div class="text-center">
+			<input type="submit" class="btn btn-primary" value="{{ 'TORRENTS.SAVE_CHANGES' | translate }}" />
+		</div>
+		</form>
+		<br />
+		<uib-alert style="text-align: center;" type="{{ vm.alert.type }}" close="vm.closeAlert()" ng-show="vm.alert != null">
+		 	{{ vm.alert.msg }}
+		</uib-alert>
+
+		<div>
+			<div class="text-center">
+				<h2 translate="TORRENTS.DELETE"></h2>
+			</div>
+			<form ng-submit="vm.deleteTorrent()">
+				<delete-torrent model="vm.deleteVars" related-torrents="::vm.relatedTorrents" torrent="::vm.torrent"></delete-torrent>
+				<hr />
+				<div class="text-center">
+					<input type="submit" class="btn btn-primary" value="{{ 'TORRENTS.DELETE' | translate }}" />
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+<br />

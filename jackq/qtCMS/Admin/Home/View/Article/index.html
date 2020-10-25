@@ -1,0 +1,135 @@
+<div class="Item hr">
+    <span class="fr">现有文章<b>{$rows_count}</b>个
+         <if condition="$isHavedOnlyOne eq false">
+             <button class="btn add_article" >添加文章</button>
+         </if>
+    </span>
+    <div class="current">  文章列表<if condition="$category neq null">[{$category['name']}]</if></div>
+</div>
+<div>
+
+</div>
+        <table width="40%" border="0" cellspacing="0" cellpadding="0" class="tab" >
+            <tr>
+                <td>文章标题</td>
+                <td><input type="text" name="article[title]" class="input" value="{$title}"></td>
+               <!-- <td>首页幻灯片</td>
+                <td>
+                    <select name="article[is_slide]">
+                        <option value="">请选择...</option>
+                        <option value="1">是</option>
+                        <option value="2">否</option>
+                    </select>
+                </td>-->
+                <td>
+                    <input class="input_button" type="button" onclick="article_search()" value="搜索" />
+                    <input class="input_button" type="button" onclick="article_clean()" value="清空" />
+                </td>
+                <input type="hidden" name="article[category_id]" value="{$Think.session.cate_id}"/>
+            </tr>
+        </table>
+
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" class="tab">
+        <thead>
+        <tr>
+            <td>文章标题</td>
+            <td>所属栏目</td>
+            <td>幻灯片</td>
+            <td width="150px">发布时间</td>
+            <td width="150px">操作</td>
+        </tr>
+        </thead>
+        <tbody>
+        <volist name="articles" id="article">
+            <tr>
+                <td>{:simple_substr($article['title'],50,150)}</td>
+                <td align="center">
+                    {$article['category']['name']}
+                </td>
+                <td align="center">
+                    <if condition="$article['is_slide'] eq 1"><img src="__PUBLIC__/images/admin/ok.gif" /></if>
+                    <if condition="$article['is_slide'] eq 2"><img src="__PUBLIC__/images/admin/error.gif" /> </if>
+                </td>
+                <td>
+                    {:date('Y-m-d H:i:s', $article['public_time'])}
+                </td>
+                <td align="center">
+                    [ <a href="{:U('Article/edit', array('id' => $article['id']))}">编辑</a> ]
+                    [ <a href="javascript:void(0);" value="{:U('Article/delete', array('id' => $article['id']))}"  class="del">删除</a> ]
+                </td>
+            </tr>
+        </volist>
+        </tbody>
+    </table>
+
+
+<div class="page">
+    {$page}
+</div>
+<script type="text/javascript">
+    $(function(){
+        $(".del").click(function(){
+            var del_link = $(this).attr("value");
+            popup.confirm('确定删除？','温馨提示',function(action){
+                if(action == 'ok'){
+                    $.getJSON(del_link, function(json){
+                        if (json.status) {
+                            popup.success(json.info);
+                            setTimeout(function(){
+                                popup.close("asyncbox_success");
+                            },2000);
+                        } else {
+                            popup.error(json.info);
+                            setTimeout(function(){
+                                popup.close("asyncbox_error");
+                            },2000);
+                        }
+
+                        setTimeout(function(){
+                            top.window.location.reload();
+                        },1000);
+                    });
+                }
+            });
+
+            return false;
+        });
+
+        $(".add_article").click(function(){
+            location.href="{:U('Article/add')}"
+        });
+    });
+
+    function article_search(){
+
+        var title = $("input[name='article[title]']").val();
+        var is_slide = $("select[name='article[is_slide]").val();
+        if((title==null||title=="") && (is_slide==null||is_slide=="")){
+            alert("查询字段不能为空！");
+            return false;
+        }
+        var url = '__ACTION__' ;
+        var cate_id = '{$Think.session.cate_id}';
+        if(cate_id!=""&&cate_id!=null){
+            url +="/category_id/"+cate_id;
+        }
+        if(title!=""&&title!=null){
+            url +="/title/"+title;
+        }
+        if(is_slide!=""&&is_slide!=null){
+            url +="/is_slide/"+is_slide;
+        }
+       location.href=url+".html";
+
+    }
+
+    function article_clean(){
+        var url = '__ACTION__' ;
+        var cate_id = '{$Think.session.cate_id}';
+        if(cate_id!=""&&cate_id!=null){
+            url +="/category_id/"+cate_id;
+        }
+        location.href=url+".html";
+    }
+</script>
+<include file="Article/javascript" />

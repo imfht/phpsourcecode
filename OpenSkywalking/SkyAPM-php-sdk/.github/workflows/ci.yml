@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-version: ['7.0', '7.1', '7.2', '7.3', '7.4']
+        skywalking-version: ['8.1.0-es6', '8.0.1-es6', '8.0.0-es6']
+    name: PHP ${{ matrix.php-version }} Test on SW ${{ matrix.skywalking-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Checkout GRPC
+        uses: actions/checkout@v2
+        with:
+          ref: v1.31.x
+          repository: grpc/grpc
+          path: grpc
+          submodules: true
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: curl, json
+          tools: php-config, phpize, composer
+
+      - name: Install library
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl libcurl4-openssl-dev nginx
+          sudo apt-get install -y build-essential autoconf libtool pkg-config cmake
+          sudo apt-get install -y autoconf automake libtool curl make g++ unzip
+          sudo apt-get install -y php${{ matrix.php-version }}-fpm
+
+      - name: Start docker-compose
+        run: |
+          sudo sed -i "s/VERSION/${{ matrix.skywalking-version }}/g" e2e/docker-compose.yml
+          docker-compose -f e2e/docker-compose.yml up -d
+          docker ps
+
+      - name: Build GRPC
+        run: |
+          cd /home/runner/work/SkyAPM-php-sdk/SkyAPM-php-sdk/grpc/third_party/protobuf
+          ./autogen.sh && ./configure
+          make -j$(nproc) && make -j$(nproc) check && sudo make install && sudo make clean && sudo ldconfig
+          cd /home/runner/work/SkyAPM-php-sdk/SkyAPM-php-sdk/grpc
+          mkdir -p cmake/build
+          cd cmake/build
+          cmake ../.. -DBUILD_SHARED_LIBS=ON -DgRPC_INSTALL=ON
+          make -j$(nproc) && sudo make install && make clean && sudo ldconfig
+          cd /home/runner/work/SkyAPM-php-sdk/SkyAPM-php-sdk
+          sudo rm -fr /home/runner/work/SkyAPM-php-sdk/SkyAPM-php-sdk/grpc
+
+      - name: Build SkyWalking-PHP
+        run: |
+          cd /home/runner/work/SkyAPM-php-sdk/SkyAPM-php-sdk
+          phpize
+          ./configure
+          make -j$(nproc)
+          sudo make install
+          sudo make clean
+
+      - name: Start FPM and Nginx
+        run: |
+          sudo cp e2e/99-skywalking.ini /etc/php/${{ matrix.php-version }}/cli/conf.d/
+          sudo cp e2e/99-skywalking.ini /etc/php/${{ matrix.php-version }}/fpm/conf.d/
+          sudo cp e2e/nginx.conf /etc/nginx/conf.d/
+          sudo sed -i "s/VERSION/${{ matrix.php-version }}/g" /etc/nginx/conf.d/nginx.conf
+          sudo cp e2e/index.php /var/www/html/
+          sudo systemctl restart php${{ matrix.php-version }}-fpm
+          sudo nginx -s reload
+
+
+      - name: E2E tests
+        run: |
+          cd e2e
+          composer install
+          php e2e.php
+          sudo cat /tmp/skywalking-php.log
+
+  publish:
+    needs: [build]
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Publish Dokcer image
+        if: github.event_name == 'push'
+        uses: elgohr/Publish-Docker-Github-Action@2.13
+        with:
+          name: skyapm/skywalking-php
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tag_names: true
+          dockerfile: docker/Dockerfile

@@ -1,0 +1,178 @@
+<?php
+
+$items = dt_query("SELECT id, kind, name, money, revenue, term, status, invest, lmcy_id, c_at FROM finance_item WHERE audited = 'Y' ORDER BY c_at DESC LIMIT 8");
+if (!$items) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+//其他信息
+$issue_PTGGs = dt_query("SELECT id, title FROM finance_issue WHERE kind = 'PTGG'  ORDER BY c_at DESC LIMIT 5");
+$issue_HKGGs = dt_query("SELECT id, title FROM finance_issue WHERE kind = 'HKGG' ORDER BY c_at DESC LIMIT 5");
+$issue_MTBDs = dt_query("SELECT id, title FROM finance_issue WHERE kind = 'MTBD' ORDER BY c_at DESC LIMIT 5");
+if (!$issue_PTGGs || !$issue_HKGGs || !$issue_MTBDs) {
+	put_info('获取信息数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/item_kind.php'); ?>
+<?php require_once('finance/inc/item_status.php'); ?>
+<?php require_once('finance/inc/index_carousel.php'); ?>
+<div class="carousel slide" id="carousel-1">
+	<ol class="carousel-indicators">
+		<?php foreach ($index_carousel as $key => $i_c) { ?>
+		<li class="<?php echo $i_c['active'] ?>" data-slide-to="<?php echo $key ?>" data-target="#carousel-1"> </li>
+		<?php } ?>
+	</ol>
+	<div class="carousel-inner">
+		<?php foreach ($index_carousel as $key => $i_c) { ?>
+		<div class="item <?php echo $i_c['active'] ?>">
+			<a href="<?php echo s_url($i_c['link_url']) ?>"><div style="background-image:url('<?php echo $i_c['img_url'] ?>')"></div></a>
+		</div>
+		<?php } ?>
+	</div> <a class="left carousel-control" href="#carousel-1" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a> <a class="right carousel-control" href="#carousel-1" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a>
+</div>
+<div class="finance-index-login">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-9 column">
+				<h3>8-14%预期年化，第三方担保，百元起投，投标次日计息，理财从恒信资本开始！</h3>
+			</div>
+			<div class="col-md-3 column">
+				<div class="pull-right">
+					<?php if(empty($_SESSION['auth'])) { ?>
+					<a href="?c=user&a=register" class="btn btn-warning btn-lg">立即注册</a>
+					<a href="javascript:jump_to_login()" class="btn btn-primary btn-lg">登录</a>
+					<?php } else { ?>
+					<a href="?c=finance&a=item_my_invest" class="btn btn-primary btn-lg"><?php echo $_SESSION['auth']['name'] ?></a>
+					<?php } ?>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="container">
+	<div class="row clearfix about-icon" style="margin-bottom:60px">
+		<div class="col-md-4 column">
+			<i class="icon-about icon-about-safety"></i>
+			<h3>事无巨细</h3>
+			<p class="desc">细节都关乎生死。对每一个项目我们都进行360度全方位尽职调查及超严格风险控制。您只需安心投资。</p>
+		</div>
+		<div class="col-md-4 column">
+			<i class="icon-about icon-about-extre"></i>
+			<h3>追求极致</h3>
+			<p class="desc">对于极致的追求是恒信资本一直以来秉承的信念，极致透明安全、极致体验。在这里我们为您准备好一切。</p>
+		</div>
+		<div class="col-md-4 column">
+			<i class="icon-about icon-about-easy"></i>
+			<h3>理财随心</h3>
+			<p class="desc">在恒信资本，我们提供了高质量的不同期限、不同利率、不同用途的借款项目，随心选择。</p>
+		</div>
+	</div>
+	<div class="row finance-item-well">
+		<div class="col-md-3 column">
+			累计融资
+			<span class="amount">1,129,280,641.79</span>
+		</div>
+		<div class="col-md-3 column">
+			预期收益
+			<span class="amount">72,859,373.62</span>
+		</div>
+		<div class="col-md-3 column">
+			已还本金
+			<span class="amount">323,975,800.00</span>
+		</div>
+		<div class="col-md-3 column">
+			发放收益
+			<span class="amount">15,195,380.52</span>
+		</div>
+	</div>
+	<div class="row clearfix">
+		<div class="col-md-9 column" style="border-right: 1px solid #ccc">
+			<div style="padding-bottom:20px;margin-bottom:20px;border-bottom: 1px dashed #bbb;position:relative">
+				<h3 style="font-size:18px">最新项目</h3>
+				<a href="#" class="btn btn-primary" style="position:absolute;right:0;top:5px">债权转让项目</a>
+			</div>
+
+			<?php while($item = mysql_fetch_array($items)) { ?>
+			<div class="finance-item-well">
+				<div class="row clearfix">
+					<div class="col-md-8 column">
+						<h4 style="font-size:16px"> <a href="<?php echo s_url('?c=finance&a=item_show&item_id='.$item['id']) ?>"><?php echo $item['name'] ?></a> </h4>
+						<span class="label label-info"><?php echo $item_status[$item['status']]['name'] ?></span>
+						<span class="label label-default"><span class="glyphicon glyphicon-retweet"></span> <?php echo $item_kind[$item['kind']]['name'] ?></span>
+						<a href="<?php echo s_url('?c=finance&a=item_list_cond&lmcy_id='.$item['lmcy_id']) ?>"><span class="label label-success"><span class="glyphicon glyphicon-th-large"></span> <?php echo dt_query_one('SELECT name FROM finance_lmcy WHERE id = '.$item['lmcy_id'])['name'] ?></span></a>
+						<div class="row clearfix" style="margin-top:25px">
+							<div class="col-md-3 column">
+								<a class="btn btn-default btn-lg btn-block" href="<?php echo s_url('?c=finance&a=item_show&item_id='.$item['id']) ?>">查看详情</a>
+							</div>
+							<div class="col-md-9 column">
+								<div class="progress progress-striped active" style="margin-bottom:5px;height:16px;width:180px">
+									<div class="progress-bar progress-bar-success" style="width: <?php $p_b_w = (time() - $item['c_at'])/(31*24*3600); echo ($p_b_w < 1) ? $p_b_w * 100 : 100; ?>%">
+										<span class="sr-only"></span>
+									</div>
+								</div>
+								<p style="margin-top:5px"> 项目<?php echo $item_status[$item['status']]['name'] ?>，融资金额 <span class="important"><?php echo $item['money'] ?></span> 元 </p>
+
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 column">
+						<div class="finance-item-stamp status-<?php echo $item['status'] ?>"></div>
+						<ul class="list-unstyled">
+							<li> <span class="info-item">融资金额</span> <?php echo $item['money'] ?> </li>
+							<li> <span class="info-item">年化收益</span>  <span class="important"><?php echo $item['revenue'] ?>%</span> </li>
+							<li> <span class="info-item">融资期限</span>  <?php echo $item['term'] ?> 个月 </li>
+							<li> <span class="info-item">意向投资</span>  <span style="font-size:15px"><?php echo $item['invest'] ?> 人</span> </li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<?php } ?>
+			<p style="text-align:center"> <a href="<?php echo s_url('?c=finance&a=item_list') ?>" class="btn btn-warning btn-lg">查看更多项目</a> </p>
+		</div>
+		<div class="col-md-3 column">
+			<section class="finance-issue-section">
+				<a href="<?php echo s_url('?c=finance&a=issue_list&kind=4') ?>" class="pull-right">更多</a>
+				<h3>媒体报道</h3>
+				<ul class="list-unstyled">
+					<?php while($issue_MTBD = mysql_fetch_array($issue_MTBDs)) { ?>
+					<li><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$issue_MTBD['id']) ?>"><?php echo $issue_MTBD['title']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</section>
+			<section class="finance-issue-section">
+				<a href="<?php echo s_url('?c=finance&a=issue_list&kind=3') ?>" class="pull-right">更多</a>
+				<h3>还款公告</h3>
+				<ul class="list-unstyled">
+					<?php while($issue_HKGG = mysql_fetch_array($issue_HKGGs)) { ?>
+					<li><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$issue_HKGG['id']) ?>"><?php echo $issue_HKGG['title']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</section>
+			<section class="finance-issue-section">
+				<a href="<?php echo s_url('?c=finance&a=issue_list&kind=2') ?>" class="pull-right">更多</a>
+				<h3>平台公告</h3>
+				<ul class="list-unstyled">
+					<?php while($issue_PTGG = mysql_fetch_array($issue_PTGGs)) { ?>
+					<li><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$issue_PTGG['id']) ?>"><?php echo $issue_PTGG['title']; ?></a></li>
+					<?php } ?>
+				</ul>
+			</section>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	auto_c_h(0.35);
+});
+
+function jump_to_login() {
+	setCookie('login_jump', '?c=finance&a=index', 365, '/');
+	location = '?c=user&a=login';
+}
+</script>

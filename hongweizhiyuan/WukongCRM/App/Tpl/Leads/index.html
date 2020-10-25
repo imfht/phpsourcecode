@@ -1,0 +1,474 @@
+<include file="Public:header" />
+<script src="__PUBLIC__/js/PCASClass.js" type="text/javascript"></script>
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li class="active">
+			<a href="{:U('leads/index')}"><img src="__PUBLIC__/img/task_checked2.png"/>&nbsp; {:L('LEADS')}</a>
+		  </li>
+		  <li><a href="{:U('leads/analytics')}"><img src="__PUBLIC__/img/tongji.png"/> &nbsp;{:L('STATISTICS')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=13" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />
+	<p class="view"><b>{:L('VIEW_NAV')}</b>
+	<img src=" __PUBLIC__/img/by_owner.png"/> <a href="{:U('leads/index')}" <if condition="$Think.get.by eq null">class="active"</if>>{:L('ALL')}</a> |
+	<a href="{:U('leads/index','by=me')}" <if condition="$Think.get.by eq 'me'">class="active"</if>>{:L('MY_RESPONSIBLE')}</a> |
+	<a href="{:U('leads/index','by=sub')}" <if condition="$Think.get.by eq 'sub'">class="active"</if>>{:L('SUBORDINATE_RESPONSIBLE')}</a> | 
+	<a href="{:U('leads/index','by=subcreate')}" <if condition="$Think.get.by eq 'subcreate'">class="active"</if>>{:L('SUBORDINATE_CREATE')}</a> | 
+	<a href="{:U('leads/index','by=transformed')}" <if condition="$Think.get.by eq 'transformed'">class="active"</if>>{:L('CONVERTED_LEADS')}</a> |
+	<a href="{:U('leads/index','by=public')}" <if condition="$Think.get.by eq 'public'">class="active"</if>>{:L('LEADS_POOL')}</a>  &nbsp;  &nbsp; 
+	<img src="__PUBLIC__/img/by_time.png"/> 
+	<a href="{:U('leads/index','by=today')}" <if condition="$Think.get.by eq 'today'">class="active"</if>>{:L('CONTACT_TODAY')}</a> | 
+	<a href="{:U('leads/index','by=week')}" <if condition="$Think.get.by eq 'week'">class="active"</if>>{:L('CONTACT_THIS_WEEK')}</a> | 
+	<a href="{:U('leads/index','by=month')}" <if condition="$Think.get.by eq 'month'">class="active"</if>>{:L('CONTACT_THIS_MONTH')}</a> |
+	<a href="{:U('leads/index','by=d7')}" <if condition="$Think.get.by eq 'd7'">class="active"</if>>{:L('NON_CONTACT_SEVEN_DAYS')}</a> | 
+	<a href="{:U('leads/index','by=d15')}" <if condition="$Think.get.by eq 'd15'">class="active"</if>>{:L('NON_CONTACT_FIFTEEN_DAYS')}</a> | 
+	<a href="{:U('leads/index','by=d30')}" <if condition="$Think.get.by eq 'd30'">class="active"</if>>{:L('NON_CONTACT_THIRTY_DAYS')}</a> | 	
+	<a href="{:U('leads/index','by=add')}" <if condition="$Think.get.by eq 'add'">class="active"</if>>{:L('RECENTLY_CREATED')}</a> | 
+	<a href="{:U('leads/index','by=update')}" <if condition="$Think.get.by eq 'update'">class="active"</if>>{:L('RECENTLY_MODIFIED')}</a>  &nbsp;  &nbsp; 
+	<a href="{:U('leads/index','by=deleted')}" <if condition="$Think.get.by eq 'deleted'">class="active"</if>><img src="__PUBLIC__/img/task_garbage.png"/> {:L('RECYCLE_BIN')}</a>
+	</p>
+	<div class="row">		
+		<div class="span12">
+			<ul class="nav pull-left">
+				<if condition="$Think.session.admin eq 1 or $Think.get.by neq 'deleted'">
+					
+					<li class="pull-left">
+					<div class="btn-group pull-left">
+						<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+							&nbsp;{:L('BATCH_OPERATION')}
+							<span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a id="delete">{:L('BATCH_DELETE')}</a></li>
+							<if condition="$Think.get.by eq 'public'">
+							<li><a id="batch_receive" href="javascript:void(0)">{:L('BATCH_RECEIVE')}</a></li>
+							<li><a id="batch_assign" href="javascript:void(0)">{:L('BATCH_ASSIGN')}</a></li>
+							<elseif condition="$Think.get.by neq 'deleted' and $Think.get.by neq 'transformed'" />
+							<li><a id="remove" href="javascript:void(0)">{:L('BATCH_LEADS_INTO_THE_POOL')}</a></li>
+							</if>
+						</ul>
+					</div> &nbsp;&nbsp; 
+					</li>
+				</if>
+				<li class="pull-left">
+					<form class="form-inline" id="searchForm"  action="index.php" method="get">
+						<ul class="nav pull-left">
+							<li class="pull-left">
+								<select style="width:auto" id="field" onchange="changeCondition()" name="field">
+									<option class="" value="">{:L('SEARCH_OPTION')}</option>
+									<volist name="field_list" id="v">
+										<option class="{$v['form_type']}" value="{$v[field]}" rel="leads">{$v[name]}</option>
+									</volist>
+									<if condition="$Think.get.by neq 'public'"><option class="role" value="owner_role_id">{:L('OWNER_ROLE')}</option></if>
+									<option class="date" value="create_time">{:L('CREATE_TIME')}</option>
+									<option class="date" value="update_time">{:L('UPDATE_TIME')}</option>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li id="conditionContent" class="pull-left">
+								<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+									<option value="contains">{:L('CONTAINS')}</option>
+									<option value="not_contain">{:L('NOT_CONTAIN')}</option>
+									<option value="is">{:L('IS')}</option>
+									<option value="isnot">{:L('ISNOT')}</option>						
+									<option value="start_with">{:L('START_WITH')}</option>
+									<option value="end_with">{:L('END_WITH')}</option>
+									<option value="is_empty">{:L('IS_EMPTY')}</option>
+									<option value="is_not_empty">{:L('IS_NOT_EMPTY')}</option>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li id="searchContent" class="pull-left"><input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;</li>
+							<li class="pull-left"><input type="hidden" name="m" value="leads"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" id="dosearch" class="btn"> <img src="__PUBLIC__/img/search.png"/>{:L('SEARCH')}</button> &nbsp;</li>
+							<li class="pull-left">
+								<div class="btn-group" style="margin-right:5px;">
+									<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+										<img src="__PUBLIC__/img/sms.png"></i>&nbsp;{:L('SEND_SMS')}
+										<span class="caret"></span>
+									</a>
+									
+									<ul class="dropdown-menu">
+										<li><a id="all_send"  href="javascript:void(0)">{:L('ALL_SEND')}</a></li>
+										<li><a id="page_send" href="javascript:void(0)">{:L('PAGE_SEND')}</a></li>
+										<li><a id="check_send" href="javascript:void(0)">{:L('CHECK_SEND')}</a></li>
+									</ul>
+								</div>
+								<div class="btn-group">
+									<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+										<img src="__PUBLIC__/img/email.png">&nbsp;{:L('SEND_EMAIL')}
+										<span class="caret"></span>
+									</a>
+									
+									<ul class="dropdown-menu">
+										<li><a id="all_send_email"  href="javascript:void(0)">{:L('ALL_SEND')}</a></li>
+										<li><a id="page_send_email" href="javascript:void(0)">{:L('PAGE_SEND')}</a></li>
+										<li><a id="check_send_email" href="javascript:void(0)">{:L('CHECK_SEND')}</a></li>
+									</ul>
+								</div>
+							</li>
+						</ul>
+						<input type="hidden" name="act" id="act" value="search"/>
+					</form>
+				</li>				
+			</ul>
+			<div class="pull-right">					
+				<a href="{:U('leads/add')}" class="btn btn-primary"><i class="icon-plus"></i>&nbsp; {:L('CREATE_LEADS')}</a>&nbsp;
+				<div class="btn-group">
+					<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><i class="icon-wrench"> </i>&nbsp; {:L(LEADS_TOOLS)} <span class="caret"></span></button>
+					<ul class="dropdown-menu">
+						<li><a href="javascript:return(0);" id="import_excel"  class="link"><i class="icon-upload"></i>{:L('IMPORT_LEADS')}</a></li>
+						<li><a href="javascript:void(0);" id="excelExport" class="link"><i class="icon-download"></i>{:L('EXPORT_LEADS')}</a></li>
+					</ul>
+				</div>
+			</div>	
+		</div>
+		<div class="span12">				
+			<form id="form1" action="" method="post">
+			<input type="hidden" name="owner_id" id="hidden_owner_id" value="0"/>
+			<input type="hidden" name="message" id="hidden_message" value="0"/>
+			<input type="hidden" name="sms" id="hidden_sms" value="0"/>
+			<input type="hidden" name="email" id="hidden_email" value="0"/>
+			<table class="table table-hover table-striped table_thead_fixed">
+				<empty name="leadslist">
+					<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+				<else/>
+					<thead>						
+						<tr id="childNodes_num">
+							<th><input type="checkbox" id="check_all"/></th>
+                            <volist name="field_array" id="vo">
+								<if condition="C('ismobile') eq 1 and $i  elt 1">
+									<th>{$vo.name}</th>
+								<elseif condition="C('ismobile') neq 1"/>
+									<th>{$vo.name}</th>
+								</if>
+								
+                            </volist>
+							<if condition="$Think.get.by neq 'public'"><th>{:L('OWNER_ROLE')}</th></if>
+							<th>{:L('CREATOR_ROLE')}</th>
+							<th>
+								<if condition="$_GET['asc_order'] == 'create_time'">
+									<a href="{:U('leads/index','desc_order=create_time&'.$parameter)}">
+										{:L('CREATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<elseif condition="$_GET['desc_order'] == 'create_time'"/>
+									<a href="{:U('leads/index','asc_order=create_time&'.$parameter)}">
+										{:L('CREATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<else/>
+									<a href="{:U('leads/index','desc_order=create_time&'.$parameter)}">{:L('CREATE_TIME')}</a>
+								</if>
+							</th>
+							<if condition="$_GET['asc_order'] == 'have_time' and ($Think.get.by neq 'public' && $Think.get.by neq 'deleted')">
+								<th>
+									<a href="{:U('leads/index','desc_order=have_time&'.$parameter)}">
+										{:L('DEADLINE')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								</th>
+							<elseif condition="$_GET['desc_order'] == 'have_time' and ($Think.get.by neq 'public' && $Think.get.by neq 'deleted')"/>
+								<th>
+									<a href="{:U('leads/index','asc_order=have_time&'.$parameter)}">
+										{:L('DEADLINE')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								</th>
+							<elseif condition="$Think.get.by neq 'public' && $Think.get.by neq 'deleted'"/>
+								<th>
+									<a href="{:U('leads/index','desc_order=have_time&'.$parameter)}">{:L('DEADLINE')}</a>
+								</th>
+							</if>
+							<if condition="$Think.get.by eq 'transformed'">
+								<th>{:L('CONVERT_TO_CUSTOMER')}</th>
+								<th>{:L('CONVERT_TO_CONTACTS')}</th>
+							<else/>
+								<th>{:L('OPERATING')}</th>
+							</if>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr>
+							<if condition="$Think.get.by eq 'transformed'">
+								<td id="td_colspan">{$page}</td>
+							<elseif condition="$Think.get.by eq 'deleted'" />
+								<td id="td_colspan">{$page}</td>
+							<else />
+								<td id="td_colspan">{$page}</td>
+							</if>							
+						</tr>
+					</tfoot>
+					<tbody>
+						<volist name="leadslist" id="vo">
+							<tr>
+								<td>
+									<input name="leads_id[]" class="check_list" type="checkbox" value="{$vo.leads_id}"/> 
+								</td>
+                                <volist name="field_array" id="v">
+									<if condition="C('ismobile') eq 1 and $i  elt 1">
+										<td>
+											<if condition="$v['field'] eq 'name'">
+											<a href="{:U('leads/view', 'id='.$vo['leads_id'])}">
+											<span style="color:#{$v['color']}">{$vo[$v['field']]}</span></a>
+											<elseif condition="$v['field'] eq 'nextstep_time' and $vo[$v['field']] lt (strtotime(date('Y-m-d'))+86400)  and $vo[$v['field']] egt 0 and  $vo[$v['field']] gt (strtotime(date('Y-m-d')))"/>
+												<span style="color:green">{$vo[$v['field']]|date='Y-m-d',###}</span>
+											<elseif condition="$v['field'] eq 'nextstep_time' and $vo[$v['field']] lt strtotime(date('Y-m-d')) and $vo[$v['field']] gt 0" />
+												<span style="color:red">{$vo[$v['field']]|date='Y-m-d',###}</span>
+											<elseif condition="$v['form_type'] eq 'datetime' and $vo[$v['field']] gt 0" />
+												<span style="color:#{$v['color']}">{$vo[$v['field']]|date='Y-m-d',###}</span>
+											<else />
+												<span style="color:#{$v['color']}"><notempty name="vo[$v['field']]">{$vo[$v['field']]}</notempty></span>
+											</if>
+										</td>
+									<elseif condition="C('ismobile') neq 1"/>
+										<td>
+											<if condition="$v['field'] eq 'name'">
+											<a href="{:U('leads/view', 'id='.$vo['leads_id'])}">
+											<span style="color:#{$v['color']}">{$vo[$v['field']]}</span></a>
+											<elseif condition="$v['field'] eq 'nextstep_time' and $vo[$v['field']] lt (strtotime(date('Y-m-d'))+86400)  and $vo[$v['field']] egt 0 and  $vo[$v['field']] gt (strtotime(date('Y-m-d')))"/>
+												<span style="color:green">{$vo[$v['field']]|date='Y-m-d',###}</span>
+											<elseif condition="$v['field'] eq 'nextstep_time' and $vo[$v['field']] lt strtotime(date('Y-m-d')) and $vo[$v['field']] gt 0" />
+												<span style="color:red">{$vo[$v['field']]|date='Y-m-d',###}</span>
+											<elseif condition="$v['form_type'] eq 'datetime' and $vo[$v['field']] gt 0" />
+												<span style="color:#{$v['color']}">{$vo[$v['field']]|date='Y-m-d',###}</span>
+											<else />
+												<span style="color:#{$v['color']}"><notempty name="vo[$v['field']]">{$vo[$v['field']]}</notempty></span>
+											</if>
+										</td>
+									</if>
+                                </volist>
+								<if condition="$Think.get.by neq 'public'">
+								<td>
+									<a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a>
+								</td>
+								</if>
+								<td>{$vo.creator.user_name}</a></td>
+								<td>{$vo.create_time|date='Y-m-d',###}</td>
+								<if condition="$Think.get.by neq 'public' && $Think.get.by neq 'deleted'">
+									<td>
+										<if condition="$vo['days'] gt 7 ">
+											<font color="blue">{$vo.days}{:L('DAYS')}
+										<elseif condition="$vo['days'] elt 7 and $vo['days'] gt 0" /><font color="red">{$vo.days}{:L('DAYS')}</font>
+										<elseif condition="isset($vo['days'])"/>
+											 <font color="red">{$vo.days}{:L('DAYS')}</font>
+										<else/>
+											 {$vo.days}
+										</if>
+									</td>
+								</if>
+								<if condition="$Think.get.by neq 'transformed'"><td>
+									<a href="{:U('leads/view', 'id=' . $vo['leads_id'])}">{:L('VIEW')}</a>&nbsp; </if>
+								<if condition="($Think.get.by neq 'transformed') and ($Think.get.by neq 'deleted')">
+									<a href="{:U('customer/add','leads_id='.$vo['leads_id'])}">{:L('CONVERT')}</a>&nbsp; </if>
+								<if condition="($Think.get.by neq 'transformed') and ($Think.get.by neq 'deleted')"><a href="{:U('leads/edit', 'id=' . $vo['leads_id'])}">{:L('EDIT')}</a>&nbsp; </if>
+								<if condition="($Think.get.by neq 'transformed') and ($Think.get.by eq 'public')"><a href="{:U('leads/receive', 'id=' . $vo['leads_id'])}">{:L('RECEIVE')}</a>&nbsp; </if>
+								<if condition="($Think.get.by neq 'transformed') and ($Think.get.by eq 'public')">
+									<a rel="{$vo['leads_id']}" class="fenpei" href="javascript:void(0)">{:L('ASSIGN')}</a>&nbsp; 
+								</if>&nbsp;
+								<if condition="($Think.get.by neq 'transformed') and ($Think.get.by eq 'deleted')"><a href="{:U('leads/revert', 'id=' . $vo['leads_id'])}">{:L('RESET')}</a>&nbsp; </if>
+								<if condition="$Think.get.by neq 'transformed'">&nbsp; </td></if>
+								<if condition="$Think.get.by eq 'transformed'">
+									<td><notempty name="vo.customer_id"><a href="{:U('customer/view', 'id=' . $vo['customer_id'])}">{$vo.customer_name}</a></notempty></td>
+									<td><notempty name="vo.contacts_id"><a href="{:U('contacts/view', 'id=' . $vo['contacts_id'])}">{$vo.contacts_name}</a></notempty></td>
+								</if>
+							</tr>
+						</volist>
+					</tbody>
+				</empty>	
+			</table>	
+			</form>	
+		</div>		
+	</div>
+</div>
+<div class="hide" id="dialog-import" title="{:L('IMPORT_DATA')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('USER_INFO')}">loading...</div>
+<div class="hide" id="dialog-fenpei" title="{:L('LEADS_ASSIGN')}">loading...</div>
+<div class="hide" id="dialog-assign" title="{:L('LEADS_ASSIGN')}">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+$("#dialog-import").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-fenpei").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100],
+	buttons: {
+		"Ok": function () {
+			$('#fenpei_form').submit();	
+			$(this).dialog("close");
+		},
+		"Cancel": function () {
+			$(this).dialog("close");
+		}
+	}
+});
+$("#dialog-assign").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100],
+	buttons: {
+		"Ok": function () {
+			var owner_role_id = $('input[name="owner_role_id"]').val();
+			var message_alert = $('input:checkbox[name="message_alert"]:checked').val();
+			var sms_alert = $('input:checkbox[name="sms_alert"]:checked').val();
+			var email_alert = $('input:checkbox[name="email_alert"]:checked').val();
+			
+			$("#hidden_owner_id").val(owner_role_id);
+			$("#hidden_message").val(message_alert);
+			$("#hidden_sms").val(sms_alert);
+			$("#hidden_email").val(email_alert);
+			
+			$("#form1").attr('action', '{:U("leads/batchassign")}');
+			$("#form1").submit();
+			$(this).dialog("close");
+		},
+		"Cancel": function () {
+			$(this).dialog("close");
+		}
+	}
+});
+$(function(){
+<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+</if>
+	
+	$("#excelExport").click(function(){
+		if(confirm("{:L('CONFIRM_EXPORT_LEADS')}")){
+			$("#act").val('excel');	
+			$("#searchForm").submit();
+		}
+	})	
+	
+	$("#check_all").click(function(){
+		$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+	});
+	$('#delete').click(function(){
+		if(confirm("{:L('CONFIRM_DELETE')}")){
+			<if condition="$Think.session.admin eq 1 and $Think.get.by eq 'deleted'">
+				$("#form1").attr('action', '{:U("leads/completedelete")}');
+				$("#form1").submit();
+			<else />
+				$("#form1").attr('action', '{:U("leads/delete")}');
+				$("#form1").submit();
+			</if>
+		}
+	});
+	$('#remove').click(function(){
+		if(confirm("{:L('CONFIRM_PUT_LEADS_INTO_THE_POOL')}")){
+			$("#form1").attr('action', '{:U("leads/remove")}');
+			$("#form1").submit();
+		}
+	});
+	$('#batch_receive').click(function(){
+		if(confirm("{:L('CONFIRM_BATCH_RECEIVE_LEADS')}")){
+			$("#form1").attr('action', '{:U("leads/batchReceive")}');
+			$("#form1").submit();
+		}
+	});
+	$('#batch_assign').click(function(){
+		$('#dialog-assign').dialog('open');
+		$('#dialog-assign').load('{:U("leads/assigndialog")}');
+	});
+	$('#transform').click(function(){
+		$("#form1").attr('action', '{:U("leads/transform")}');
+		$("#form1").submit();
+	});	
+	$("#import_excel").click(function(){
+		$('#dialog-import').dialog('open');
+		$('#dialog-import').load('{:U("leads/excelimport")}');
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	$(".fenpei").click(function(){
+		$id = $(this).attr('rel');
+		$('#dialog-fenpei').dialog('open');
+		$('#dialog-fenpei').load('{:U("leads/fenpei","id=")}'+$id);
+	});
+	$("#check_send").click(function(){
+		var id_array = new Array();
+		$("input[class='check_list']:checked").each(function(){  
+			id_array.push($(this).val());
+		});
+		if(id_array.length == 0){
+			alert("{:L('PLEASE_CHOOSE_THE_LEADS')}");
+		}else{
+			var leads_ids = id_array.join(",");
+			window.open("{:U('setting/sendSms', 'model=leads&leads_ids=')}"+leads_ids);
+		}
+	});
+	$("#check_send_email").click(function(){
+		var id_array = new Array();
+		$("input[class='check_list']:checked").each(function(){  
+			id_array.push($(this).val());
+		});
+		if(id_array.length == 0){
+			alert("{:L('PLEASE_CHOOSE_THE_LEADS')}");
+		}else{
+			var leads_ids = id_array.join(",");
+			window.open("{:U('setting/sendemail', 'model=leads&leads_ids=')}"+leads_ids);
+		}
+	});
+	
+	$("#page_send").click(function(){
+		var id_array = new Array();
+		$("input[class='check_list']").each(function(){
+			id_array.push($(this).val());
+		});
+		if(id_array.length == 0){
+			alert("{:L('PLEASE_CHOOSE_THE_LEADS')}");
+		}else{
+			var leads_ids = id_array.join(",");
+			window.open("{:U('setting/sendSms', 'model=leads&leads_ids=')}"+leads_ids);
+		}
+	});
+	$("#page_send_email").click(function(){
+		var id_array = new Array();
+		$("input[class='check_list']").each(function(){
+			id_array.push($(this).val());
+		});
+		if(id_array.length == 0){
+			alert("{:L('PLEASE_CHOOSE_THE_LEADS')}");
+		}else{
+			var leads_ids = id_array.join(",");
+			window.open("{:U('setting/sendemail', 'model=leads&leads_ids=')}"+leads_ids);
+		}
+	});
+	
+	$("#all_send").click(function(){
+		$("#act").val('sms');
+		$("#searchForm").submit();
+	});
+	$("#all_send_email").click(function(){
+		window.open("{:U('setting/sendemail', 'model=leads&leads_ids=all')}");
+	});
+	
+	$("#dosearch").click(function(){
+		result = checkSearchForm();
+		if(result) $("#act").val('search');$("#searchForm").submit();
+	});
+});
+<if condition="$leadslist neq null">
+	$nodes_num = document.getElementById("childNodes_num").children.length;
+	$("#td_colspan").attr('colspan',$nodes_num);
+</if>
+</script>
+<include file="Public:footer" />

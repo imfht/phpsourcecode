@@ -1,0 +1,335 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    {include file="common@public/head"/}
+    <link href="__CSS__/ucenter.min.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+<div id="main-container" class="container">
+    <div class="register">
+    
+        {if condition="$step eq 'start'"}
+        <div class="register_body clearfix">
+       
+            <div class="col-xs-12">
+                <form action="{:url('register')}" method="post">
+                    <ul id="reg_nav" class="nav nav-tabs nav-justified">
+                        {php}if(check_reg_type('username')){{/php}
+                        <li {if condition="$regSwitch[0] eq 'username'"}class="active"{/if}>
+                            <a href="#username_reg" data-toggle="tab">{:lang('_REGISTER_USERNAME_')}</a>
+                        </li>
+                        {php}}{/php}
+                        {php}if(check_reg_type('email')){{/php}
+                        <li {if condition="$regSwitch[0] eq 'email'"}class="active"{/if}>
+                            <a href="#email_reg" data-toggle="tab">{:lang('_REGISTER_EMAIL_')}</a>
+                        </li>
+                        {php}}{/php}
+                        {php}if(check_reg_type('mobile')){{/php}
+                        <li {if condition="$regSwitch[0] eq 'mobile'"}class="active"{/if}>
+                            <a href="#mobile_reg" data-toggle="tab">{:lang('_REGISTER_PHONE_')}</a>
+                        </li>
+                        {php}}{/php}
+                    </ul>
+
+                    <div class="tab-content">
+                        {notempty name="invite_user"}
+                            <div class="alert alert-info" style="padding: 5px;margin-bottom: 10px;letter-spacing: 2px;">{:lang('_USER_')} {$invite_user['nickname']} {:lang('_REGISTER_INVITE_')}{:config('WEB_SITE')}，{:lang('_REGISTER_INFORMATION_FILL_OUT_')}~</div>
+                            <input type="hidden" name="code" value="{$code}">
+                        {else /}
+                            {if condition="$open_invite_register"}
+                                <div class="alert alert-info" style="padding: 5px;margin-bottom: 10px;letter-spacing: 2px;">    {:lang('_USER_INVITE_FIRST_')}
+                                    <strong>
+                                        <a data-type="ajax" data-url="{:url('ucenter/Member/inCode')}" data-title="{:lang('_INVITE_CODE_INPUT_')}" data-toggle="modal">
+                                            {:lang('_INVITE_CODE_INPUT_')}
+                                        </a>
+                                    </strong>，{:lang('_REGISTER_INFORMATION_FILL_OUT_')}~
+                                </div>
+                            {/if}
+                        {/notempty}
+
+                        {// 只有一个身份时不显示身份选择框，仅显示隐藏域 }
+                        {if condition="count($role_list)==1"}
+                            <input id="name" type="hidden" name="role" value="{$role_list[0]['id']}">
+                        {else /}
+                            <div class="form-group">
+                                <input id="name" type="hidden" name="role" value="{$role_list[0]['id']}">
+                                <label for="role" class=".sr-only col-xs-12" style="display: none"></label>
+                                <div class="clearfix"></div>
+                                <ul id="role-list" class="nav nav-justified nav-pills">
+                                    {volist name="role_list" id="role"}
+                                    <li>
+                                        <a onclick="$('#name').val({$role.id});$('#role-list li').removeClass('active');$(this).parent().addClass('active');">
+                                            <i class="icon-user"></i> {$role.title} 
+                                        </a>
+                                    </li>
+                                    {/volist}
+                                </ul>
+                                <script>
+                                    $(function(){
+                                        $('#role-list li').first().addClass('active');
+                                    })
+                                </script>
+                            </div>
+                        {/if}
+
+                        {volist name="regSwitch" id="vo"}
+
+                            {switch name="vo"}
+
+                                {case value="username"}
+                                    <!--用户名注册-->
+                                    <div class="tab-pane {if condition='$key eq 0'}active in{/if}" id="username_reg">
+                                        <div class="form-group">
+                                            
+                                            <input type="text" id="username" class="form-control form_check new-input" check-type="Username" check-url="{:url('ucenter/member/checkAccount')}"
+                                                   placeholder="{:lang('_PLACEHOLDER_USERNAME_INPUT_')}"  value="" name="username">
+                                            <input type="hidden" name="reg_type" value="username">
+                                            
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </div>
+
+                                    <!--用户名注册end-->
+                                {/case}
+                                {case value="email"}
+                                    <!--邮箱注册-->
+                                    <div class="tab-pane {if condition='$key eq 0'}active in{/if}" id="email_reg">
+
+                                        <div class="form-group">
+                                            <input type="text" id="email" class="form-control form_check new-input" check-type="UserEmail" check-url="{:url('ucenter/member/checkAccount')}" {if condition='$key neq 0'}disabled="disabled"{/if}
+                                                   placeholder="{:lang('_PLACEHOLDER_EMAIL_INPUT_')}" name="username">
+                                            <input type="hidden" name="reg_type" value="email" 
+                                            {if condition='$key neq 0'}disabled="disabled"{/if}>
+                                            
+                                            <div class="clearfix"></div>
+                                        </div>
+
+                                        {php}if(modC('EMAIL_VERIFY_TYPE', 0, 'USERCONFIG') == 2){{/php}
+                                        <div class="form-group row">
+                                            <div class="col-xs-8">
+                                                <input type="text" class="form-control new-input pull-left" placeholder="{:lang('_VERIFY_CODE_')}" {if condition='$key neq 0'}disabled="disabled"{/if} name="reg_verify">
+                                            </div>
+                                            <div class="col-xs-4">
+                                                <a class="btn btn-block btn-danger" data-role="getVerify">
+                                                    {:lang('_EMAIL_VERIFY_')}
+                                                </a>
+                                           </div> 
+                                            <div class="clearfix"></div>
+                                        </div>
+                                        {php}}{/php}
+
+                                    </div>
+                                    <!--邮箱注册end-->
+                                {/case}
+                                {case value="mobile"}
+                                    <!--手机注册-->
+                                    <div class="tab-pane {if condition='$key eq 0'}active in{/if}" id="mobile_reg">
+
+                                        <div class="form-group">
+                                            
+                                            <input type="text" id="mobile" class="form-control form_check new-input" check-type="UserMobile" check-url="{:url('ucenter/member/checkAccount')}" {if condition='$key neq 0'}disabled="disabled"{/if} 
+                                                   placeholder="{:lang('_PLACEHOLDER_PHONE_')}" .
+                                            errormsg="{:lang('_ERROR_PHONE_INPUT_')}" name="username">
+
+                                            <input type="hidden" name="reg_type" value="mobile" {if condition='$key neq 0'}disabled="disabled"{/if}>
+                                            
+                                            <div class="clearfix"></div>
+                                        </div>
+
+                                        {php}if(modC('MOBILE_VERIFY_TYPE', 0, 'USERCONFIG') == 1){{/php}
+
+                                        <div class="form-group row">
+                                            <div class="col-xs-8">
+                                                <input type="text" class="form-control new-input pull-left" placeholder="{:lang('_VERIFY_CODE_')}" name="reg_verify" {if condition='$key neq 0'}disabled="disabled"{/if}>
+                                            </div>
+                                            <div class="col-xs-4">
+                                                <a class="btn btn-block btn-danger" data-role="getVerify">{:lang('_PHONE_VERIFY_')}</a>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </div>
+                                        {php}}{/php}
+                                    </div>
+                                    <!--手机注册end-->
+                                {/case}
+                            {/switch}
+                        {/volist}
+                        {eq name="nicknameSwitch" value='1'}
+                        <div class="form-group">
+                            <input type="text" id="nickname" class="form-control form_check new-input" check-type="Nickname"  check-url="{:url('ucenter/member/checkNickname')}" placeholder="请输入昵称" name="nickname">
+                            <div class="clearfix"></div>
+                        </div>
+                        {/eq}
+                        <div class="form-group">
+                            <div class="password_block input-group">
+                                <input type="password" id="inputPassword" class="form-control new-input" check-length="6,30"  placeholder="请输入密码"  name="password">
+                                <span class="input-group-addon">
+                                    <a href="javascript:void(0);" id="change_show"><i class="icon icon-eye-open"></i></a>
+                                </span>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="form-group">
+                            <div class="password_block input-group">
+                                <input type="password" class="form-control new-input" check-length="6,30"  placeholder="再次输入密码" name="confirm_password">
+                                <span class="input-group-addon">
+                                    <a href="javascript:void(0);" id="change_show"><i class="icon icon-eye-open"></i></a>
+                                </span>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        {if condition="check_verify_open('reg')"}
+                            <div class="form-group row">
+                                <div class="col-xs-8">
+                                    <input type="text" id="verifyCode" class="form-control new-input" placeholder="验证码"
+                                           errormsg="请填写正确的验证码" nullmsg="请填写验证码" datatype="*5-5" name="verify">
+                                </div>
+                                <div class="col-xs-4 lg_lf_fm_verify">
+                                    <img class="verifyimg reloadverify img-responsive" alt="点击切换"
+                                         src="{:captcha_src(1)}"
+                                         style="cursor:pointer; height:32px">
+                                </div>
+                                <div class="col-xs-12 Validform_checktip text-warning lg_lf_fm_tip"></div>
+                                <div class="clearfix"></div>
+                            </div>
+                        {/if}
+                        <button type="button" data-type="submit" class="btn btn-block btn-warning btn-lg">提 交</button>
+                        <div class="existing-account">
+                            已有账户， <a href="{:url('ucenter/Member/login')}" title="" style="color: #607D8B;">点此登录</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {/if}
+        {if condition="$step neq 'start' and $step neq 'finish'"}
+        <div class="register_step">
+             {:widget('RegStep/view')}
+        </div>
+        {/if}
+        {if condition="$step eq 'finish'"}
+            <div class="register-finish">
+                <div class="intro">
+                    <div class="avatar">
+                    <span>
+                        <img class="img-circle" src="{$user_info.avatar64}" />
+                    </span>
+                    <span style="font-size:18px;">
+                        {$user_info.nickname}
+                    </span>
+                    </div>
+                    <div class="font">
+                        <span>感谢您注册 {:modC('WEB_SITE_NAME','MuuCmf开源管理框架','Config')} ，希望你玩的愉快！</span> 
+                    </div>
+                        <a class="btn btn-block btn-warning btn-lg" href="{:url('ucenter/Config/index')}" title="">完善个人资料</a> 
+                        <a class="btn btn-block btn-warning btn-lg" href="{:url('index/Index/index')}" title="">前往首页</a></span>
+                </div>
+            </div>
+        {/if}
+    </div>
+</div>
+{include file="common@public/js"/}
+{block name="script"}
+    <script type="text/javascript">
+        $(function(){
+            
+            $('button[data-type="submit"]').click(function(){
+                toast.showLoading();
+                var self = $("form");
+                $.post(self.attr("action"), self.serialize(), success, "json");
+                return false;
+
+                function success(data) {
+                    if (data.code) {
+                        toast.success(data.msg, '温馨提示');
+                        setTimeout(function () {
+                            window.location.href = data.url
+                        }, 10);
+                    } else {
+                        toast.error(data.msg, '温馨提示');
+                        //刷新验证码
+                        $(".reloadverify").click();
+                    }
+                    toast.hideLoading();
+                }
+            });
+
+            $('#username').blur(function(){
+                var text = jQuery.trim($(this).val());
+                if (text != null && text != '') {
+                    $('#nickname').val(text);
+                }
+            });
+
+            $('#change_show').click(function(){
+
+                var obj = $(this);
+                if ($(obj).html().trim() == '<i class="icon icon-eye-open"></i>') {
+                    $(obj).html('<i class="icon icon-eye-close"></i>');
+                    $(obj).parents('.password_block').find('input').attr('type', 'text');
+                } else {
+                    $(obj).html('<i class="icon icon-eye-open"></i>');
+                    $(obj).parents('.password_block').find('input').attr('type', 'password');
+                }
+            });
+        });
+
+        $(function () {
+            var verifyimg = $(".verifyimg").attr("src");
+            $(".reloadverify").click(function () {
+                if (verifyimg.indexOf('?') > 0) {
+                    $(".verifyimg").attr("src", verifyimg + '&random=' + Math.random());
+                } else {
+                    $(".verifyimg").attr("src", verifyimg.replace(/\?.*$/, '') + '?' + Math.random());
+                }
+            });
+        });
+
+        $(function () {
+            $("[data-role='getVerify']").click(function () {
+                var $this = $(this);
+                toast.showLoading();
+                var account = $this.parents('.tab-pane').find('[name="username"]').val();
+                var type = $this.parents('.tab-pane').find('[name="reg_type"]').val();
+                $.post("{:url('ucenter/verify/sendVerify')}", {account: account, type: type, action: 'member'}, function (res) {
+                    if (res.code == 200) {
+                        DecTime.obj = $this
+                        DecTime.time = "{: modC('SMS_RESEND','60','USERCONFIG')}";
+                        $this.attr('disabled',true)
+                        DecTime.dec_time();
+
+                        toast.success(res.msg);
+                    }
+                    else {
+                        toast.error(res.msg);
+                    }
+                    toast.hideLoading();
+                })
+            })
+            $('#reg_nav li a').click(function(){
+                $('.tab-pane').find('input').attr('disabled',true);
+                $('.tab-pane').eq($("#reg_nav li a").index(this)).find('input').attr('disabled',false);
+            })
+            $("[type='submit']").click(function () {
+                $(this).parents('form').submit();
+            })
+        })
+
+        var DecTime = {
+            obj:0,
+            time:0,
+            dec_time : function(){
+                if(this.time > 0){
+                    this.obj.text(this.time--+'S')
+                    setTimeout("DecTime.dec_time()",1000)
+                }else{
+                    this.obj.text("{:lang('_PHONE_VERIFY_')}")
+                    this.obj.attr('disabled',false)
+                }
+
+            }
+        }
+
+    </script>
+{/block}   
+</body>
+</html>

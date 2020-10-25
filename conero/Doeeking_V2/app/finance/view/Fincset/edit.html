@@ -1,0 +1,205 @@
+{include file="public/tpl/head.html" /}
+<body>
+    <ol class="breadcrumb">
+    <li><a href="/conero/finance/fincset/fast.html">财务登账</a></li>
+    <li class="active">记账</li>
+    </ol>
+    <div class="container-flud">
+        <div class="row">
+        <div class="col-md-1"></div><!--.col-md-1 左边留白-->
+        <div class="col-md-10" id="fincset_main">
+        <form method="POST" action="/conero/finance/fincset/save.html" role="form">
+            <div class="panel panel-info">
+            <div class="panel-heading"><span class="glyphicon glyphicon-edit"></span> 编辑</div>
+            <div class="panel-body">                
+                <p>
+                    <a href="javascript:void(0)" class="btn btn-link helper_link" dataid="2week" title="刷新或获取记录">最近两周登账记录</a>     
+                    <a href="javascript:void(0)" class="btn btn-link helper_link" dataid="export">数据导出</a>                
+                    <a href="javascript:void(0)" class="btn btn-link helper_link" dataid="import">导入数据</a>                                                  
+                </p>                
+                <div class="input-group input-group-sm">
+                <input type="text" class="form-control" placeholder="搜索结果作图..." id="search_ipter">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">选择 <span class="caret"></span></button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu" id="get_search_key">
+                    <li><a href="javascript:void(0);" dataid="master">事务甲方</a></li>
+                    <li><a href="javascript:void(0);" dataid="use_date">日期</a></li>
+                    <li><a href="javascript:void(0);" dataid="name">名称</a></li>
+                    <li class="divider"></li>
+                    <li><a href="javascript:void(0);" dataid="figure">金额</a></li>
+                    <li><a href="javascript:void(0);" dataid="plus_desc">用途</a></li>
+                    <li><a href="javascript:void(0);" dataid="sider">事务乙方</a></li>
+                    <li><a href="javascript:void(0);" dataid="explanin">详情</a></li>
+                    </ul>
+                </div><!-- /btn-group -->
+                </div><!-- /input-group -->
+            </div><!--头部状态显示器-->
+            <table class="table" id="fset_form_list">
+                <tr><th>序号</th><th>事务甲方</th><th>日期</th><th>名称</th><th>类型</th><th>金额</th><th>用途</th><th>事务乙方</th><th>详情</th></tr>
+                <tr dataid="1"><td class="rowno">1</td>        
+                    <td>
+                        {$pages.masterSelector}
+                        <input name="master" type="hidden">
+                    </td>
+                    <td><input type="text" name="use_date" class="form-control input-sm" onchange="app.useDateListener(this)" value="{php}echo sysdate('date');{/php}" required></td>
+                    <td><input type="text" name="name" class="form-control input-sm" onchange="app.nameListener(this)" required></td>
+                    <td>
+                        <select name="type" class="form-control input-sm" required>
+                            <option value="OU" selected>支出</option>
+                            <option value="IN">收入</option>
+                        </select>
+                    </td>
+                    <td><input type="text" name="figure" class="form-control input-sm" required></td>
+                    <td>
+                        <!--<input type="text" name="purpose" class="form-control input-sm">-->
+                        {$pages.purposeSelector}
+                    </td>
+                    <td>
+                        <div class="input-group input-group-sm">                            
+                        <input type="text" name="sider" class="form-control" onchange="app.siderListener(this)" required>
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="app.siderToggler(this)">切换</button>
+                        </span>
+                        </div><!-- /input-group -->
+                    </td>
+                    <td><input type="text" name="explanin" onkeydown="app.explaninHelper(this)" onchange="app.explaninListener(this)" class="form-control input-sm"></td>
+                </tr>
+            </table>            
+            <div class="panel-footer">
+                <p class="text-right">                    
+                    <button type="button" class="btn btn-success" id="form_reset_btn"><span class="glyphicon glyphicon-refresh"></span></button>
+                    <button type="button" class="btn btn-success" id="row_add_btn"><span class="glyphicon glyphicon-plus"></span></button>
+                    <button type="button" class="btn btn-warning" id="row_del_btn"><span class="glyphicon glyphicon-minus"></span></button>
+                    <button type="submit" class="btn btn-info" id="row_save_btn"><span class="glyphicon glyphicon-ok"></span> 保存</button>
+                </p>
+            </div>
+            </div>
+        </form>
+        <div class="panel panel-success hidden" id="search_mkchart_panel">
+            <div class="panel-heading"><a href="javascript:void(0);" onclick="app.panelToggle(this)"><h4>最近两周登账记录(37)</h4></a></div>
+            <div class="panel-body hidden" style="min-height: 400px;">                
+            </div>
+        </div>
+        {// 今日新增/修改}
+        {$pages.todayRpt|default=""}
+        <div class="panel panel-success" id="search_form_list_ajax">
+            <div class="panel-heading">
+                <div class="row">
+                <a href="javascript:void(0);" class="col-md-3" onclick="app.panelToggle(this)">
+                    <h4>财务搜索</h4>
+                </a>
+                <div class="col-md-9">
+                    <div class="input-group input-group-sm">
+                    <input type="text" name="search_input" class="form-control" placeholder="搜索值...">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">选择 <span class="caret"></span></button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu" id="select_sflakey_btn">
+                        <li><a href="javascript:void(0);" dataid="master">事务甲方</a></li>
+                        <li><a href="javascript:void(0);" dataid="use_date">日期</a></li>
+                        <li><a href="javascript:void(0);" dataid="name">名称</a></li>
+                        <li class="divider"></li>
+                        <li><a href="javascript:void(0);" dataid="figure">金额</a></li>
+                        <li><a href="javascript:void(0);" dataid="plus_desc">用途</a></li>
+                        <li><a href="javascript:void(0);" dataid="sider">事务乙方</a></li>
+                        <li><a href="javascript:void(0);" dataid="explanin">详情</a></li>
+                        </ul>
+                    </div><!-- /btn-group -->
+                    </div><!-- /input-group -->
+                </div>
+                </div>
+            </div>
+            <div class="panel-body hidden" style="min-height: 400px;">                
+            </div>
+        </div>
+        </div><!--.col-md-10-->                
+        <div class="col-md-1"></div>
+        </div><!--col-md-1 右边留白-->        
+    </div>
+    <!-- Modal 数据导出 -->
+    <div class="modal fade" id="export_controll" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="myModalLabel">数据导出</h4>
+        </div>
+        <div class="modal-body">
+            <form method="POST" role="form" action="/conero/finance/fincset/save.html">         
+                <input type="hidden" name="formid" value="expdata4edit">
+                <div class="form-group">
+                    <label>导出选择</label>
+                    <label class="checkbox-inline">
+                        <input type="radio" name="exptype" value="all" required> 全部
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="radio" name="exptype" value="filter" checked required> 条件筛选
+                    </label>
+                </div>  
+                <div class="form-group filter">
+                    <label for="expctl_sudate_ipter">起始日期</label>
+                    <input type="text" class="form-control" id="expctl_sudate_ipter" name="sudate" placeholder="为空时表时间不做筛选...">
+                </div>
+                <div class="form-group filter">
+                    <label for="expctl_eudate_ipter">截止日期</label>
+                    <input type="text" class="form-control" id="expctl_eudate_ipter" name="eudate" value="{php}echo sysdate('date');{/php}">
+                </div>
+                <div class="form-group filter">
+                    <label>其他条件</label>
+                    <div class="input-group">
+                    <span class="input-group-addon">
+                        <select name="skey">
+                            <option></option>
+                            <option value="master">事务甲方</option>
+                            <option value="name">名称</option>
+                            <option value="type">类型</option>
+                            <option value="figure">金额</option>
+                            <option value="plus_desc">用途</option>
+                            <option value="sider">事务已方</option>
+                            <option value="explainin">详情</option>
+                        </select>
+                    </span>
+                    <input type="text" name="svalue" class="form-control">
+                    </div><!-- /input-group -->
+                </div>
+                <div class="form-group">
+                    <label>排序</label>
+                    <div class="input-group">
+                    <span class="input-group-addon">
+                        <select name="okey">
+                            <option value="master">事务甲方</option>
+                            <option value="master" selected>日期</option>
+                            <option value="name">名称</option>
+                            <option value="type">类型</option>
+                            <option value="figure">金额</option>
+                            <option value="plus_desc">用途</option>
+                            <option value="sider">事务已方</option>
+                            <option value="explainin">详情</option>
+                        </select>
+                    </span>
+                    <select name="ovalue" class="form-control">
+                        <option value="asc">升序</option>
+                        <option value="desc" selected>降序</option>
+                    </select>
+                    </div><!-- /input-group -->
+                </div>
+                <div class="form-group">
+                    <label>文件格式</label>
+                    <label class="checkbox-inline">
+                        <input type="radio" name="format" value="csv" required> scv
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="radio" name="format" value="cro" checked required> cro
+                    </label>
+                </div>                                
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="export_save_btn">导出数据</button>
+        </div>
+        </div>
+    </div>
+    </div>
+    <!-- #Modal 数据导出 -->
+</body>
+</html>

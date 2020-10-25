@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta content="IE=EmulateIE7" http-equiv="X-UA-Compatible">
+<title>我的订单--<!--{$mallname}--></title>
+<!--{include(file='static.html')}-->
+</head>
+<body>
+<!--{include(file='head.html')}-->
+   <!--主体内容-->
+	<div class="container">
+    <!--左侧菜单-->
+		<div class="per_left">
+            <!--{include(file='userleft.html')}-->
+        </div>
+        <!--左侧菜单end-->
+        <div class="per_right">
+        	<div class="per_right_cont2">
+            	<h3>我的订单</h3>
+				<div class="order_list">
+					<div>
+						<p class="sn3">
+							显示：<select name="ordertime" id="ordertime" onchange="topage(1)">
+								<option value="30">30天以内的订单</option>
+								<option value="40">更早的订单</option>
+							</select>
+						</p>
+						<p class="sn2">
+							<a href="javascript:void(0);" onclick="getTrade('run',this);return false;" class="on" id="a_run">进行中</a>
+							<a href="javascript:void(0);" onclick="getTrade('finish',this);return false;" id="a_finish">已完成</a>
+							<a href="javascript:void(0);" onclick="getTrade('cancel',this);return false;" id="a_cancel">已作废</a>
+						</p>
+					</div>
+					<div id="fororder"></div>
+                </div>
+            </div>
+        </div>
+        <div class="clear"></div>
+	</div>
+<!--主体内容 end-->
+<!--{include(file='foot.html')}-->
+</body>
+</html>
+<script type="text/javascript">
+function cancel(tradeid) {
+	if(jConfirm("确认作废吗？","订单作废",function(con){
+		if(con) {
+			$.post("<!--{url('index','mytrade','cancel')}-->",{tradeid:tradeid},function(data){
+				if(data == "success") {
+					$("#tr_"+tradeid).remove();
+				} else {
+					jAlert("错误，请刷新后重新执行","错误");
+				}
+			});
+		}
+	}));
+}
+function getTrade(type,obj,page) {
+	!page && (page = 1);
+	$(obj).addClass("on").siblings().removeClass("on");
+	var getdata = {type:type,ordertime:$('#ordertime').val(),page:page};
+	$.get("<!--{url('index','mytrade','getTrade')}-->",getdata,function(data){
+		$("#fororder").html(data);
+	});
+}
+function topage(page) {
+	var $obj  = $(".sn2").find("a.on").eq(0);
+	var type  = $obj.attr("id").replace('a_','');
+	getTrade(type,$obj,page);
+}
+getTrade('run',$("#a_run")[0]);
+</script>

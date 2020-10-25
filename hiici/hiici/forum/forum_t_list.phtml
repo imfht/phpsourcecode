@@ -1,0 +1,63 @@
+<?php 
+
+$page = @intval($_GET['page']);
+$search = @filter_var($_GET['search'], FILTER_SANITIZE_STRING);
+
+if (empty($page)) $page = 1;
+$limit = 27;
+
+$cond = "WHERE city = $forum_city AND topic_limit != 1 AND kind != 0";
+if (!empty($search)) {
+	$cond .= " AND name LIKE '%$search%'";
+	$v_p_search = '&search='.$search;
+}
+
+$forums = dt_query("SELECT * FROM forum $cond ORDER BY today_up_c DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$forums) die('获取数据失败！');
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active">我要发布</li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-list-search">
+	<div class="row clearfix">
+		<div class="col-md-4 col-xs-2 column">
+		</div>
+		<div class="col-md-4 col-xs-8 column">
+			<form id="search" action="javascript:location='?c=forum&a=forum_t_list&search='+$('input#forum_t_list_search').val()">	
+				<div class="input-group">
+					<input id="forum_t_list_search" class="form-control" type="text" placeholder="搜索" value="<?php echo $search ?>">
+					<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+				</div>
+			</form>	
+		</div>
+	</div>
+</div>
+<div class="container index-forum">
+	<h3 class="hidden-xs"><a href="#"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 我要发布 <small>>></small></a></h3>
+	<?php while($forum = mysql_fetch_array($forums)) { ?>
+	<div class="col-md-2 col-sm-3 col-xs-4 column">
+		<a target="_blank" href="<?php echo s_url('?c=forum&a=topic_add&forum_id='.$forum['id']) ?>">
+			<div class="row forum-item">
+				<div class="forum-info">
+					<h4> <?php echo $forum['name'] ?> <?php if (date('Ymd', time()) == $forum['today']) echo '<b class="badge">'.$forum['today_reply_c'].'</b>' ?></h4>
+					<p style="display:none"><?php echo $forum['intro'] ?></p>
+				</div>
+			</div>
+		</a>
+	</div>
+	<?php } ?>
+</div>
+<div class="container">
+	<?php pagination('forum', $cond, $page, $limit, '?c=forum&a=forum_t_list&page=', $v_p_search) ?>
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+	$('li#forum_t_list').addClass('active');
+});
+</script>

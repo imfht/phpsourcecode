@@ -1,0 +1,139 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<h3 class="title">{lang admin.module.view.header}</h3>
+				</div>
+				<div class="widget-content">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="http://www.ilinei.com/module.do?SN={$setting[SN]}&query={$query}" class="btn btn-small btn-primary">{lang admin.module.view.site}</a>
+							<span class="muted">{lang admin.module.view.tips}</span>
+						</div>
+					</div>
+					
+					<hr/>
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="150">{lang admin.module.view.th.id}</th>
+								<th>{lang admin.module.view.th.name}</th>
+								<th width="500">{lang admin.module.view.th.sn}</th>
+								<th width="100">{lang admin.module.view.th.version}</th>
+					            <th width="160">{lang admin.module.view.th.author}</th>
+					            <th width="90">{lang admin.module.view.th.operate}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!--{loop $modules $loop $module}-->
+							<tr>
+								<td>{$module[id]}</td>
+								<td>{$module[name]}</td>
+								<td class="f12">{$module[sn]}</td>
+								<td>{$module[version]}</td>
+								<td>{$module[author]}</td>
+								<td>
+									<!--{if $module['checked']}-->
+										<!--{if $module['state'] == 'installed'}-->
+											<!--{if $module['update']}-->
+											<button type="button" class="btn btn-mini btn-success btn-update" data="{$module[id]}">{lang admin.module.view.td.operation.update}</button>
+											<!--{else}-->
+											<button type="button" class="btn btn-mini btn-danger btn-uninstall" data="{$module[id]}">{lang admin.module.view.td.operation.uninstall}</button>
+											<!--{/if}-->
+										<!--{else}-->
+										<button type="button" class="btn btn-mini btn-primary btn-install" data="{$module[id]}">{lang admin.module.view.td.operation.install}</button>
+										<!--{/if}-->
+									<!--{else}-->
+										<span class="f12 text-error">{lang admin.module.message.error.sn}</span>
+									<!--{/if}-->
+								</td>
+							</tr>
+							<!--{/loop}-->
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+function module_install(btn){
+	$.dialog({submit:'{lang admin.module.view.td.operation.install}', message:'{lang admin.module.message.install}', callback:function(){
+		$('#modal_dialog .btn-primary').click(function(){
+			$(btn).text('{lang admin.module.view.td.operation.installing}');
+			
+			$.getJSON("{$ADMIN_SCRIPT}/admin/module/_install&rnd=" + Math.random(), {id:$(btn).attr('data')}, function(data){
+				if(data.success == true){
+					$(btn).removeClass('btn-primary btn-install').addClass('btn-danger btn-uninstall').text('{lang admin.module.view.td.operation.uninstall}');
+					$(btn).unbind('click').click(function(){
+						module_uninstall(this);
+					});
+				}else $(btn).text('{lang admin.module.view.td.operation.install}');
+				
+				if(data.message) $.dialog({message:data.message});
+				else $('#modal_dialog').modal('hide').remove();
+			});
+		});
+	}});
+}
+
+function module_update(btn){
+	$.dialog({submit:'{lang admin.module.view.td.operation.update}', message:'{lang admin.module.message.update}', callback:function(){
+		$('#modal_dialog .btn-primary').click(function(){
+			$(btn).text('{lang admin.module.view.td.operation.updating}');
+			
+			$.getJSON("{$ADMIN_SCRIPT}/admin/module/_update&rnd=" + Math.random(), {id:$(btn).attr('data')}, function(data){
+				if(data.success == true){
+					$(btn).removeClass('btn-success btn-update').addClass('btn-danger btn-uninstall').text('{lang admin.module.view.td.operation.uninstall}');
+					$(btn).unbind('click').click(function(){
+						module_uninstall(this);
+					});
+				}else $(btn).text('{lang admin.module.view.td.operation.update}');
+				
+				if(data.message) $.dialog({message:data.message});
+				else $('#modal_dialog').modal('hide').remove();
+			});
+		});
+	}});
+}
+
+function module_uninstall(btn){
+	$.dialog({submit:'{lang admin.module.view.td.operation.uninstall}', message:'{lang admin.module.message.uninstall}', callback:function(){
+		$('#modal_dialog .btn-primary').click(function(){
+			$(btn).text('{lang admin.module.view.td.operation.uninstalling}');
+			
+			$.getJSON("{$ADMIN_SCRIPT}/admin/module/_uninstall&rnd=" + Math.random(), {id:$(btn).attr('data')}, function(data){
+				if(data.success == true){
+					$(btn).removeClass('btn-danger btn-uninstall').addClass('btn-primary btn-install').text('{lang admin.module.view.td.operation.install}');
+					$(btn).unbind('click').click(function(){
+						module_install(this);
+					});
+				}else $(btn).text('{lang admin.module.view.td.operation.uninstall}');
+				
+				if(data.message) $.dialog({message:data.message});
+				else $('#modal_dialog').modal('hide').remove();
+			});
+		});
+	}});
+}
+
+$(function(){
+	$('.btn-install').click(function(){
+		module_install(this);
+	});
+	
+	$('.btn-update').click(function(){
+		module_update(this);
+	});
+	
+	$('.btn-uninstall').click(function(){
+		module_uninstall(this);
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

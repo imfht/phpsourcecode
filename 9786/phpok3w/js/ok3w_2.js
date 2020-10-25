@@ -1,0 +1,1 @@
+document.writeln("全站顶部<br>全站顶部<br>全站顶部");

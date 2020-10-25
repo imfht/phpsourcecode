@@ -1,0 +1,212 @@
+		<link href="skins/black.css" rel="stylesheet" />
+		<script  type="text/javascript" src="jquery-1.7.1.min.js"></script>
+		<script  type="text/javascript" src="artDialog.js"></script>
+		<script  type="text/javascript" src="iframeTools.js"></script>
+<a class="on" href="javascript:exportCsv();"><em>导出</em></a>
+exportCvs函数如下
+
+
+
+
+<script type="text/javascript" language="javascript">
+var search_uri = "search.php";
+var event = "event";
+var processed_count = 0;    // 已处理的数据条数
+var index = 1;
+var iii   = 0;
+var ajaxmark = 1;
+var win = $.dialog.parent;    // 顶层页面window对象
+var count_arr = new Array(100);
+var type_arr = new Array();
+function exportCsv()
+{
+    $('#loading').html('');
+    tip();
+    $.post(search_uri, function(json){
+        var return_arr = eval('(' + json + ')');
+        var num = return_arr['total'];
+        var processnum = return_arr['processnum'];
+        if(num == 0){
+            poptip.title('系统消息');
+            poptip.content('查询结果为空，不能进行数据导出');
+        }
+        else
+        {
+            poptip.close();
+
+            for (var i in return_arr['cntarr']){
+                if (return_arr['cntarr'][i] != 0){
+                    count_arr[i] = return_arr['cntarr'][i];
+                }
+
+            }
+            var ii=0;
+            for (var i in count_arr){
+                  type_arr[ii]=i;
+                  ii++;
+            }
+            exportCsvConfirm(num, processnum);
+        }
+    });
+}
+function exportCsvConfirm(num, processnum)
+{
+	
+    var msg = '需要导出的数据有 <span style="color: red">' + num + '</span> 行，可能会占用您较多时间来进行导出。<br />您还需要继续吗？';
+    $.dialog.confirm(msg, function () {
+        $('#loading').html('');
+        processed_count = 0;
+        index = 1;
+        win.$('#process_bg').hide().width('0%').show();
+        win.$('#process_num').html('0');
+        $.dialog.through({
+            title: '数据导出进度',
+            content: win.document.getElementById('processbar'),
+            lock: true,
+            opacity: '.1'
+        },
+        function(){
+                window.location.reload();
+        });
+        win.$('#progress_info').show().text('正在导出数据，请耐心等待，请勿关闭窗口...');
+        excel_export2(num, processnum);
+    });
+}
+function excel_export2(num, processnum){
+      tabletype=type_arr[iii];
+      num = count_arr[tabletype];
+      if(typeof(tabletype)=='undefined'&&typeof(num)=='undefined'){
+            return false;
+      }
+      if(ajaxmark==1){
+            index = 1;
+            ajaxmark=2;
+            retrun_var = excel_export_ajax(index, num, processnum, tabletype);
+
+            if(typeof(retrun_var)=='undefined'){            
+                  iii++;
+                  excel_export2(num, processnum);
+                  if(iii>100){
+                        return false;
+                  }
+            }else if(retrun_var=='success'){
+                  return false;
+            }
+            return false;
+      }else{
+            //setTimeout(excel_export2(num, processnum),3000);
+            //setInterval(_excel_export2(num, processnum),3000);
+            setTimeout(_excel_export2(num, processnum),3000);
+      }
+}
+function _excel_export2(num, processnum){
+       return function(){
+             excel_export2(num, processnum);
+       }
+}
+/* 执行导出 */
+function excel_export(num, processnum){
+    var retrun_var = 'ss';
+    for (var i in count_arr){
+        num = count_arr[i];
+        tabletype = i;
+        index = 1;
+        retrun_var = excel_export_ajax(index, num, processnum, tabletype);
+
+        if(typeof(retrun_var)=='undefined'){
+            //alert('xxxx');
+            setTimeout(function(){exit;},5000);
+        }
+        if (retrun_var == 'success')
+        {
+            return false;
+        }
+    }
+
+    return false;
+}
+/* AJAX，递归调用 */
+function excel_export_ajax(index, num, processnum, tabletype)
+{
+    $.ajax({
+        url: "run.php?index="+index+ "&total=" + num + '&tabletype=' + tabletype,
+        type: 'GET',
+        success: function(data)
+        {
+            ++processed_count;
+            ++index;
+            // 更新进度条
+            var process_num = parseInt((processed_count / processnum) * 100);
+            if (process_num >= 100)
+            {
+                process_num = 100;
+            }
+            update_process(process_num);
+            //alert(processed_count+'--'+processnum);
+            if (processed_count >= processnum)
+            {
+                backup_compress();
+                return 'success';
+            }
+            if (data == '0'){
+                ajaxmark=1;
+                return false;
+            }
+
+            excel_export_ajax(index, num, processnum, tabletype);
+        }
+    });
+}
+/* 更新进度条 */
+function update_process(process_num)
+{
+    win.$('#process_bg').show().width(process_num + '%');
+    win.$('#process_num').html(process_num);
+}
+/* 备份文件执行压缩 */
+function backup_compress()
+{
+    win.$('#progress_info').text('正在生成压缩文件...');
+    $.ajax({
+        url: "<?php echo WEB_URL;?>/index.php?q=onlinesea/compress/event/<?php echo $event;?>",
+        success: function(msg){
+            win.$('#process_bg').show().width('100%');
+            win.$('#process_num').html('100');
+            win.$('#progress_info').html('导出数据完成。  <a href="' + msg + '" style="color: #006699; text-decoration: underline">下载文件</a>');
+        }
+    });
+}
+function tip()
+{
+    poptip = $.dialog.through({
+        id: 'tip',
+        title: '系统消息',
+        content: '正在统计总数，请勿关闭窗口  <img src="http://images.cnblogs.com/loading_s.gif" />',
+        width: 300,
+        height: 100,
+        icon: 'system',
+        lock: true,
+        opacity: .1
+    },
+    function(){
+        window.location.reload();
+    });
+    poptip.show();
+}
+function packetDelete(url,msg)
+{
+    $.dialog.confirm(msg, function () {
+        $.post(url, function(data){
+          if(data == '1'){
+              $.dialog('删除成功', function(){window.location.reload();});
+          }
+          else if(data == '2'){
+            $.dialog('删除失败', function(){window.location.reload();});
+          }
+          else if(data == '3'){
+            $.dialog('文件不存在，或者已删除', function(){window.location.reload();});
+          }
+      });
+     });
+}
+</script>

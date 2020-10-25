@@ -1,0 +1,185 @@
+<extend name="Layout/ins_popup" />
+<block name="content">
+
+	<div class="panel panel-default ">
+		<div class="panel-heading clearfix">
+			<div class="pull-left">
+				<label>
+					<input class="ace"  type="radio" id="rb_dept" name="type" value="dept" >
+					<span class="lbl">部门</span> </label>
+
+				<label class="hidden">
+					<input  class="ace"  type="radio" id="rb_rank" name="type" value="rank">
+					<span class="lbl">职级</span> </label>
+
+				<label>
+					<input  class="ace"  type="radio" id="rb_position" name="type" value="position">
+					<span class="lbl">职位</span> </label>
+			</div>
+			<div class="pull-right">
+				<a  onclick="save();" class="btn btn-sm btn-primary">确定</a>
+				<a  onclick="myclose();" class="btn btn-sm btn-default">关闭</a>
+			</div>
+		</div>
+		<div class="panel-body">
+			<div class="col-28 pull-left">
+				<div class="">
+					<b>地址簿</b>
+				</div>
+				<div class="popup_tree_menu" >
+					<div id="dept" class="hidden" style="height:200px;">
+						{$list_dept}
+					</div>
+					<div id="position" class="hidden" style="height:200px;">
+						{$list_position}
+					</div>
+					<div id="personal" class="hidden" style="height:200px;">
+						<ul class="tree_menu">
+							<volist name="list_personal" id="vo">
+								<li>
+									<a class="" node="{$key}"><i class="icon level1"></i><span>{$vo}</span></a>
+								</li>
+							</volist>
+						</ul>
+					</div>
+				</div>
+				<div>
+					<div id="addr_list" style="width:100%;height:210px;"></div>
+				</div>
+			</div>
+			<div class="col-34 pull-right">
+				<div>
+					<b style="padding-left: 60px;">执行人</b><span id="rc_count"></span>
+				</div>
+				<div class="clearfix" style="margin-bottom: 15px;">
+					<label class="col-4 pull-left text-right" ><a onclick="add_address('rc');" class="btn btn-sm btn-primary"> <i class="fa fa-angle-double-right"></i> </a> </label>
+					<div class="col-28 pull-right">
+						<div id="rc" style="width:100%;height:200px;overflow:hidden">
+							<select size="6" style="height:100%;width:100%;"></select>
+						</div>
+					</div>
+				</div>
+				<div>
+					<b  style="padding-left: 60px;">参与人</b><span id="cc_count"></span>
+				</div>
+				<div class="clearfix" style="margin-bottom: 15px;">
+					<label class="col-4 pull-left text-right" ><a onclick="add_address('cc');" class="btn btn-sm btn-primary"> <i class="fa fa-angle-double-right"></i></a></label>
+					<div class="col-28 pull-right">
+						<div id="cc" style="width:100%;height:200px;overflow:hidden">
+							<select size="6" style="height:100%;width:100%;"></select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function save() {
+			$html = $("#rc select").html();
+			var re = new RegExp("dept_", "g");
+			var arr = $html.match(re);
+			if (arr != null) {
+				$dept_count = arr.length;
+				$total_count = $("#rc select option").length;
+				if ($dept_count != $total_count) {
+					ui_error('部门和人员不能同时选择');
+					return false;
+				}
+			}
+			
+			$("#rc select option").each(function(i) {
+				//email = ($(this).html().split(";")[1].split("&")[0]);
+				data = $(this).val();
+				name = jQuery.trim($(this).text());
+				name = name.replace(/<.*>/, '');
+				html_string = conv_inputbox_item(name, data);
+				$("#executor_wrap .address_list", parent.document).append(html_string);
+			});
+			
+			$("#cc select option").each(function(i) {
+				//email = ($(this).html().split(";")[1].split("&")[0]);
+				data = $(this).val();
+				name = jQuery.trim($(this).text());
+				name = name.replace(/<.*>/, '');
+				html_string = conv_inputbox_item(name, data);
+				$("#actor_wrap .address_list", parent.document).append(html_string);
+			});			
+			myclose();
+		}
+
+		function showdata(result) {
+			$("#addr_list").html("");
+			for (s in result.data) {
+				var id = result.data[s].id;
+				var position_name = result.data[s].position_name;
+				var emp_no = result.data[s].emp_no;
+				var name = result.data[s].name;
+				//var name = name + "/" + position_name + "&lt;" + email + "&gt;";
+				var html_string = conv_address_item(name, id);
+				$("#addr_list").append(html_string);
+			}
+		}
+
+
+		$(document).ready(function() {
+
+			$("#rb_{$type}").prop('checked', true);
+			// 选择用户默认选择的类型
+
+			$("#{$type}").removeClass("hidden");
+
+			$("input[name='type']").on('click', function() {
+				$("input[name='type']").each(function() {
+					$("#" + $(this).val()).addClass("hidden");
+				});
+				$("#" + $(this).val()).removeClass("hidden");
+			});
+
+			$(".tree_menu  a").click(function() {
+				$(".tree_menu a").attr("class", "");
+				var type = $("input[name='type']:checked").val();
+				$(this).attr("class", "active");
+				sendAjax("{:U('read')}", "type=" + type + "&id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+				//禁止连接生效
+			});
+
+			$(document).on("dblclick", "#addr_list label", function() {
+				$text = $(this).text();
+				$val = $(this).find("input").val();
+				if ($("#rc select option[value='" + $val + "']").val() == undefined) {
+					$("<option></option>").val($val).text($text).appendTo("#rc select");
+					$("#rc_count").text("(" + $("#rc select option").length + ")");
+				};
+			});
+
+			$("#rc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#rc_count").text("(" + $("#rc select option").length + ")");
+			});
+			$("#cc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#cc_count").text("(" + $("#cc select option").length + ")");
+			});	
+		});
+		//最终确认
+
+		function add_address(name) {
+			$("input:checked[name='addr_id']").each(function() {
+				$(this).prop('checked', false);
+				$val = $(this).val();
+				if ($("#" + name + " select option[value='" + $val + "']").val() == undefined) {
+					$text = $(this).parents("label").find("span").text();
+					$("<option></option>").val($val).text($text).appendTo("#" + name + " select");
+					$("#" + name + "_count").text("(" + $("#" + name + " select option").length + ")");
+				};
+			});
+		}
+
+		//-->
+	</script>
+</block>

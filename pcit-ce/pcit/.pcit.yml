@@ -1,0 +1,469 @@
+#
+# @see https://docs.ci.khs1994.com/usage/
+# @see http://www.ruanyifeng.com/blog/2016/07/yaml.html
+#
+
+kind: PcitConfig
+apiVersion: config.ci.khs1994.com/v1alpha1
+
+x-8.0.0beta4-job: &8.0.0beta4-job
+  jobs:
+    - PHP_VERSION: 8.0.0beta4
+      NGINX_VERSION: 1.15.8
+      REDIS_VERSION: 6.0.2
+      MYSQL_VERSION: 5.7.29
+
+# 不支持变量
+language: php
+
+# git 设置
+clone:
+  git:
+    # image: plugins/git
+    depth: 25 # default 25
+    # recursive: true
+    # skip_verify: false
+    # tags: false
+    # submodule_override:
+    #   hello-world: https://github.com/octocat/hello-world.git
+    hosts:
+      - "git.t.khs1994.com:192.168.199.100"
+    disable: false
+
+# 工作目录
+# 不支持变量
+workspace: # or workdir
+  base: /app
+  # path: .
+  path: pcit
+
+# 缓存设置
+# 不支持变量
+cache:
+  - cache
+  - .php_cs.cache
+  - .psalm
+  # - vendor
+
+# 构建步骤
+steps:
+  before_install:
+    env:
+      - k=v
+    run: ["echo init script", "echo $k"]
+
+  platform: uname -a
+
+  install:
+    image: khs1994/php:7.4.9-composer-alpine
+    run:
+      - pwd
+      - composer config -g cache-dir /tmp/pcit_cache/composer
+      - composer config -g repo.packagist composer https://mirrors.aliyun.com/composer
+      - /opt/pcit/toolkit/pcit-retry -t 2 --sleep 15 -- composer install --ansi --ignore-platform-reqs
+      # - composer update
+
+  script: &script
+    image: khs1994/php:${PHP_VERSION}-fpm-alpine
+    pull: true # default is false # 不支持变量
+    privileged: true # default is false # 不支持变量
+    env:
+      - CI_REDIS_HOST=redis
+      - CI_REDIS_PORT=6379
+      - CI_REDIS_DATABASE=15
+      - CI_MYSQL_HOST=mysql
+      - CI_MYSQL_PORT=3306
+      - CI_MYSQL_USERNAME=root
+      - CI_MYSQL_PASSWORD=test
+      - CI_MYSQL_DATABASE=test
+      - CI_WEBHOOKS_TOKEN=pcit
+    run:
+      - pwd
+      - echo "${NEW_ENV}" || true
+      - echo "zend_extension=xdebug" > ${PHP_INI_DIR}/conf.d/docker-php-ext-xdebug.ini
+      # 服务初始化需要时间，这里延迟执行
+      # - sleep 30
+      - /opt/pcit/toolkit/pcit-wait-for-it mysql:3306 -- echo 'mysql is run'
+      - /opt/pcit/toolkit/pcit-wait-for-it redis:6379 -- echo 'redis is run'
+      - vendor/bin/phpunit
+    if: # 不支持变量
+      # platform: linux/amd64
+      # platform: [ linux/*, windows/amd64 ]
+
+      # status: changed
+      # status: [ failure, success, changed ]
+
+      event: [push, pull_request, tag]
+
+      # branch: master
+      # branch: prefix/*
+      # branch: [master, develop]
+      # branch:
+      #   include: [ master, release/* ]
+      #   exclude: [ release/1.0.0, release/1.1.* ]
+      # tag: 7.1.*
+      # ^[0-9.]+$     1.2.0
+      # ^[0-9.]+      1.2.0-rc
+      # ^v([0-9.]+)$  v1.2.3
+
+  test-codecov:
+    << : *script
+    run:
+      - pwd
+      - echo "${NEW_ENV}" || true
+      - echo "zend_extension=xdebug" > ${PHP_INI_DIR}/conf.d/docker-php-ext-xdebug.ini
+      - echo "xdebug.mode=coverage" >> ${PHP_INI_DIR}/conf.d/docker-php-ext-xdebug.ini
+      # - |
+      #   export XDEBUG_MODE=coverage
+      - /opt/pcit/toolkit/pcit-wait-for-it mysql:3306 -- echo 'mysql is run'
+      - /opt/pcit/toolkit/pcit-wait-for-it redis:6379 -- echo 'redis is run'
+      - vendor/bin/phpunit --coverage-clover=coverage.xml
+    if:
+      status: success
+
+  windows_only:
+    image: bash
+    if:
+      platform: windows/amd64
+    run: echo "Only run on Windows amd64"
+
+  master_branch_only:
+    image: bash
+    if:
+      branch: master
+    run:
+      - echo "Only run on master branch"
+
+  dev_branch_only:
+    image: bash
+    if:
+      branch:
+        include: dev
+    run:
+      - echo "Only run on dev branch"
+
+  master_branch_exclude:
+    image: bash
+    if:
+      branch:
+        exclude: master
+    run:
+      - echo "Don't run on master branch"
+
+  dont_run_on_nightly:
+    if:
+      jobs:
+        exclude:
+        - PHP_VERSION: nightly
+          NGINX_VERSION: 1.15.8
+          REDIS_VERSION: 6.0.2
+          MYSQL_VERSION: 5.7.29
+    run: echo "don't run on php nightly version"
+
+  plugin-demo:
+    image: pcit/demo
+    with:
+      var: "1"
+      var_array:
+        - a=1
+        - b=2
+      var_obj:
+        k1: v1
+        k2: v2
+
+  php-cs-fixer:
+    image: khs1994/php-cs-fixer
+    run: php-cs-fixer fix
+
+  # psalm: composer run psalm || true
+
+  validate: ./bin/pcit validate
+
+  sami:
+    image: khs1994/sami
+    if:
+      << : *8.0.0beta4-job
+      status: success
+    run:
+      - sami update .sami.php
+
+  gitee_pages:
+    image: pcit/pages
+    if:
+      << : *8.0.0beta4-job
+      status: success
+      event: ["push"]
+    with:
+      keep_history: true
+      target_branch: gh-pages
+      git_url: gitee.com/pcit-ce/sami-docs
+      local_dir: build
+      email: ${EMAIL}
+      username: khs1994
+      git_token: ${GITEE_TOKEN}
+      message: "commit by pcit"
+
+  compile_phar:
+    if:
+      status: success
+    run:
+      - echo "[Phar]" >> /usr/local/etc/php/conf.d/phar.ini
+      - echo "phar.readonly = Off" >> /usr/local/etc/php/conf.d/phar.ini
+      - rm -rf vendor/pcit/*
+      - composer compile:dump
+      - ls -la vendor/bin
+      - composer compile:pcit
+      - composer compile:pcitd
+      - ls -lah *.phar
+      - php pcit.phar
+      - php pcitd.phar
+      - mkdir phar_dist
+      - cp -a *.phar phar_dist
+      - chmod +x phar_dist/*
+
+  validate_by_phar:
+    if:
+      status: success
+    run: |
+      ./phar_dist/pcit.phar validate
+      ./phar_dist/pcit.phar validate .pcit
+      ./phar_dist/pcit.phar validate .
+
+  s3:
+    image: pcit/s3
+    if:
+      << : *8.0.0beta4-job
+      status: success
+      event: ["push"]
+    with:
+      region: ${S3_REGION}
+      access_key_id: ${S3_ACCESS_KEY_ID}
+      secret_access_key: ${S3_SECRET_ACCESS_KEY}
+      bucket: ${S3_BUCKET}
+      acl: public-read
+      local_dir: phar_dist
+      upload_dir: pcit-nightly
+      # endpoint: https://storage.khs1994.com
+      endpoint: ${S3_ENTRYPOINT}
+      use_path_style_endpoint: true
+
+  upload_artifact:
+    # 暂不支持 download artifact
+    image: pcit/upload-artifact
+    if:
+      << : *8.0.0beta4-job
+      status: success
+      event: ["push"]
+    with:
+      path: phar_dist
+      name: pcit-nightly
+
+  github-releases:
+    image: pcit/github-release
+    if:
+      << : *8.0.0beta4-job
+      status: success
+      event: push
+    with:
+      token: ${GITHUB_TOKEN}
+      # files: pcit.phar
+      files:
+        - pcit.phar
+        - pcitd.phar
+      repo: pcit-ce/pcit-release
+      overwrite: true
+      draft: false
+      prerelease: true
+      # target_commitish: 508c7456a3c9f778c378b94e95bd0f61056f1fe1
+      target_commitish: refs/tags/nightly
+      note: release nightly
+      title: nightly
+      checksum:
+        - sha256
+        - adler32
+
+  codecov:
+    image: pcit/codecov
+    shell: bash
+    if:
+      status: success
+    # please set env in with
+    env:
+      # - CODECOV_TOKEN=XXX
+      - PCIT_OS_NAME=linux
+      - VCS_COMMIT_ID=${PCIT_COMMIT}
+      - VCS_BRANCH_NAME=${PCIT_BRANCH}
+      - VCS_PULL_REQUEST=${PCIT_PULL_REQUEST}
+      - VCS_SLUG=${PCIT_REPO_SLUG}
+      - VCS_TAG=${PCIT_TAG}
+      - CI_BUILD_URL=${PCIT_JOB_WEB_URL}
+      - CI_BUILD_ID=${PCIT_BUILD_ID}
+      - CI_JOB_ID=${PCIT_JOB_ID}
+    run:
+      # - bash <(curl -s https://codecov.io/bash) -e PHP_VERSION,PCIT_OS_NAME -n PCIT-${PCIT_JOB_ID} -K
+      # -K           Remove color from the output
+      - bash <(curl -s https://codecov.io/bash) -e PHP_VERSION,PCIT_OS_NAME -n PCIT-${PCIT_JOB_ID}
+
+  after_success:
+    if:
+      status: success
+    run: echo "build success"
+
+  after_failure:
+    if:
+      status: failure
+    run:
+      - echo "build failure"
+
+  after_changed:
+    if:
+      status: changed
+    run: echo "build changed"
+
+  ping: ["ping -c 5 git.khs1994.io"]
+
+  cron_only:
+    run: ["echo only run on cron event"]
+    if:
+      event: cron
+
+  coding_openapi:
+    image: ecoding/apidoc-publisher
+    env:
+      - ACCESS_TOKEN=${CODING_OPENAPI_TOKEN}
+      - APIDOC_TEAM=pcit
+      - APIDOC_PROJECT=pcit
+      - APIDOC_ID=1
+      - APIDOC_RELEASE_TYPE=file
+      - PCIT_URL=https://ci2.khs1994.com:10000
+    run:
+      - curl -fsSL ${PCIT_URL}/api/openapi?coding=true -o /opt/data.txt
+      # - cp openapi/openapi.yaml /opt/data.txt
+      - sh /my_shell/api_doc_release.sh
+    if:
+      << : *8.0.0beta4-job
+      status: success
+      event: push
+      branch: master
+
+  use_pcit_toolkit:
+    run: |
+      /opt/pcit/toolkit/pcit-retry -t 2 --sleep 5 'echo "y u no work"; false'
+    if:
+      status: success
+
+# 配置服务
+services:
+  mysql:
+
+  # mysql:
+  #   image: mysql:${MYSQL_VERSION}
+  #   environment:
+  #     - MYSQL_DATABASE=test
+  #     - MYSQL_ROOT_PASSWORD=test
+  #   # 不支持变量
+  #   entrypoint: [ "mysqld" ]
+  #   # 不支持变量
+  #   command: [ "--character-set-server=utf8mb4", "--default-authentication-plugin=mysql_native_password" ]
+
+  # postgresql:
+  #   image: postgres:${POSTGRESQL_VERSION}-alpine
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_DB=test
+
+  redis:
+
+  # redis:
+  #   image: redis:${REDIS_VERSION}-alpine
+  #   command: ["--bind", "0.0.0.0"]
+
+  # mongodb:
+  #   image: mongo:${MONGODB_VERSION}
+  #   command: [ --smallfiles ]
+
+  custom_service:
+    image: alpine
+    env:
+    - KKKK=${PCIT_JOB_ID}
+    command:
+    - sh
+    - -c
+    - |
+      sleep 360000
+
+# 变量矩阵
+# 不支持变量
+jobs:
+  PHP_VERSION:
+    # - 7.4.8
+    # - 7.3.20
+    - nightly
+    - 8.0.0beta4
+    - 7.2.32
+    # - 7.1.26
+  NGINX_VERSION:
+    - 1.15.8
+  REDIS_VERSION:
+    - 6.0.2
+  MYSQL_VERSION:
+    - 5.7.29
+    # - 8.0.15
+  # MONGODB_VERSION:
+  # - 4.1.4
+  # POSTGRESQL_VERSION:
+  # - 10.5
+  # 排除以上 jobs 矩阵中的某些 job
+  exclude:
+  - PHP_VERSION: 7.2.32
+    NGINX_VERSION: 1.15.8
+    REDIS_VERSION: 6.0.2
+    MYSQL_VERSION: 5.7.29
+  # 向以上 jobs 矩阵添加新的 job
+  include:
+  - PHP_VERSION: 8.0.0beta4
+    MYSQL_VERSION: 8.0.20
+    REDIS_VERSION: 6.0.2
+    NEW_ENV: new_env
+
+# 不支持变量
+# jobs:
+#   include:
+#     - PHP_VERSION: 7.2.32
+#       MYSQL_VERSION: 5.7.29
+#       REDIS_VERSION: 6.0.2
+#     - PHP_VERSION: 7.1.26
+#       MYSQL_VERSION: 5.7.29
+#       REDIS_VERSION: 6.0.2
+
+# 不支持变量
+platform:
+  - linux/amd64
+  - linux/arm64
+
+# 分支设置
+# 不支持变量
+# branch:  refs/heads/{branch-name}
+# branch:  refs/heads/feature/*
+# pr:      refs/pull/2/merge
+# pr:      refs/pull/2/head
+# tag:     refs/tags/{tag-name}
+branches:
+  include: [master, dev]
+  # include: [ master, release/*, refs/tags/1.1.* ]
+  # exclude: [ release/1.0.0, release/1.1.* ]
+
+# 网络相关配置
+networks:
+  # 自定义 hosts
+  hosts:
+    - "git.khs1994.com:127.0.0.1"
+    - "docker.khs1994.com:127.0.0.1"
+    - "git.khs1994.io:127.0.0.1"
+    - "var.khs1994.io:${MY_HOST}"
+
+# 指定构建步骤的默认镜像
+# 若使用变量，请在 settings 页面将变量设为 public,否则 pull_request 将不能运行
+# 如果只在 push 触发，则无需设为 public
+image: khs1994/php:8.0.0beta4-composer-alpine
+# registry: ghcri.io

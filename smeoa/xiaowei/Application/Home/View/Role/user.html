@@ -1,0 +1,161 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	<style>
+		.sub_left_menu{
+			height:500px;
+			overflow-y: scroll;
+		}
+	</style>
+{:W('PageHeader/search',array('name'=>'权限分配','search'=>'S'))}
+<div class="operate panel panel-default">
+	<div class="panel-body">
+		<div class="pull-right">
+			<a onclick="save()" class="btn btn-sm btn-primary">保存</a>
+		</div>
+	</div>
+</div>
+<!-- 列表显示区域  -->
+<div class="row">
+	<form id="form_data" name="form_data" method="post" >
+		<div class="col-sm-8 sub_left_menu">
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th class="text-center col-4"><label class="inline pull-left">
+							<input class="ace" type="checkbox" name="id-toggle-all" id="id-toggle-all" />
+							<span class="lbl"></span></label></th>
+						<th>
+						<nobr>
+							员工编号
+						</nobr></th>
+						<th>
+						<nobr>
+							姓名
+						</nobr></th>
+						<th>
+						<nobr>
+							部门
+						</nobr></th>
+						<th class="hidden">
+						<nobr>
+							职级
+						</nobr></th>
+						<th>
+						<nobr>
+							职位
+						</nobr></th>
+						<th>
+						<nobr>
+							状态
+						</nobr></th>
+					</tr>
+				</thead>
+				<tbody class="tbody">
+					<volist name="user_list" id="data">
+						<tr id="{$data.id}">
+							<td class="text-center col-3"><label class="inline pull-left">
+								<input class="ace" type="checkbox" name="emp_id[]" value="{$data.id}" />
+								<span class="lbl"></span></label></td>
+							<td>
+							<nobr>
+								{$data.emp_no}
+							</nobr></td>
+							<td>
+							<nobr>
+								{$data.name}
+							</nobr></td>
+							<td>
+							<nobr>
+								{$data.dept_name}
+							</nobr></td>
+						
+							<td>
+							<nobr>
+								{$data.position_name}
+							</nobr></td>
+							<td>
+							<nobr>
+								{$data.is_del|status}
+							</nobr></td>
+						</tr>
+					</volist>
+				</tbody>
+			</table>
+		</div>
+		<div class="col-sm-4 sub_content">
+			<input type="hidden" name="id" id="id">
+			<input type="hidden" name="pid" id="pid" value="">
+			<input type="hidden" name="ajax" id="ajax" value="0">
+			<input type="hidden" name="opmode" id="opmode" value="">
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>&nbsp;</th>
+						<th>名称</th>
+					</tr>
+				</thead>
+				<tbody>
+					<volist name="role_list" id="data">
+						<tr id="{$data.id}">
+							<td class="col-4"><label class="inline pull-left ">
+								<input class="ace" type="checkbox" id="role_{$data.id}" name="role_list[]" value="{$data.id}"/>
+								<span class="lbl"></span></label></td>
+							<td>{$data.name}</td>
+						</tr>
+					</volist>
+				</tbody>
+			</table>
+		</div>
+	</form>
+</div>
+
+</block>
+<block name="js">
+<script type="text/javascript">
+	function btn_search() {
+		sendForm("form_search", "__SELF__");
+		$("#form_search").submit();
+	}
+
+	function key_search() {
+		if (event.keyCode == 13) {
+			sendForm("form_search", "__SELF__");
+			return false;
+		}
+	}
+
+	function save() {
+		if ($("input:checked[name='emp_id[]']").length < 1) {
+			ui_error("请选择用户");
+			return false;
+		};
+		if ($("input:checked[name='role_list[]']").length < 1) {
+			ui_error("请选择权限");
+			return false;
+		};
+		sendForm("form_data", "{:U('set_role')}");
+	}
+
+	function showdata(result) {
+		$("input[name='role_list[]']").each(function() {
+			$(this).prop('checked', false);
+		});
+		for (var s in result.data) {
+			$("#role_" + result.data[s].role_id).prop('checked', true);
+		}
+	}
+
+
+	$(document).ready(function() {
+		set_return_url();
+		$(".sub_left_menu tbody tr").click(function() {
+			$(".sub_left_menu  tr").attr("class", "");
+			$(this).attr("class", "active");
+			sendAjax("{:U('get_role_list')}", "id=" + $(this).attr("id"), function(data) {
+				showdata(data);
+			});
+		});
+	}); 
+</script>
+
+</block>

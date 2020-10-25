@@ -1,0 +1,106 @@
+<extend name="Base/common"/>
+<block name="style">
+    <link href="__CSS__/about.css" type="text/css" rel="stylesheet">
+</block>
+<block name="body">
+<div class="about-header">
+    <if condition="$data.cover neq 0">
+        <div class="cover" style="background-image: url('{$data.cover|getThumbImageById=1600,900}'); background-position: 50% 50%;"></div>
+    </if>
+    <div class="title text-center">
+        <h2>{$data.title}</h2>
+    </div>
+</div>
+<div id="main-container" class="container">
+    <div class="">
+        <div class="about-nav-box">
+            <div class="nav nav-primary nav-justified-cum">
+                <volist name="cat_list" id="cat_list">
+                    <if condition="$cat_list.id eq 1 ">
+                        <li class="active">
+                    <else />
+                        <li>
+                    </if>
+                    <if condition="$cat_list.id eq 1 ">
+                        <a href="{:U('about/index/index')}" class="">
+                        <i class="icon-group"></i>
+                    <else />
+                        <a href="{:U('about/index/category',array('cid'=>$cat_list['id']))}" class="">
+                        <i class="icon-chat-dot"></i>
+                    </if>
+                        <span>{$cat_list.title}</span>
+                        </a>
+                    </li>
+                </volist>
+            </div>
+        </div>
+        <div class="common_block_border">
+            <div>{$data.content}</div>
+            <div class="feedback">
+                <img src="__IMG__/share-idea.jpg" title="反馈" data-toggle="modal" data-target="#myModal"/>
+            </div>
+        </div>
+    </div>
+        
+    <div class="feedback-modal modal fade" id="myModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+              <h4 class="modal-title">分享您的想法</h4>
+            </div>
+            <div class="modal-body">
+              <p>您的邮箱</p>
+              <p><input class="form-control" type="text" placeholder="请输入有效的Email" name="email"></p>
+              <p>您的想法</p>
+              <p><textarea class="form-control" rows="3" placeholder="可以输入多行文本" id="feedbackContent"></textarea></p>
+            </div>
+            <div class="modal-footer">
+              <button id="feedbackAjaxPost" type="button" class="btn btn-primary">发送</button>
+            </div>
+          </div>
+        </div>
+    </div>
+    </div>
+    <script>
+        function feedbackPost() {
+            $("#feedbackAjaxPost").unbind('click');
+            $("#feedbackAjaxPost").click(function () {
+
+                    var $this = $(this);
+                    $this.text("提交中...");
+
+                    var email = $("input[name$='email']").val();
+                    var content = $("#feedbackContent").val();
+
+                    if(!patterns.Email.test(email)){
+                        toast.error('输入正确的邮箱地址');
+                        return;
+                    }
+                    if(content.length==0){    
+                        toast.error('内容不能为空');
+                        return;
+                    }  
+
+                    $.post(U('About/Index/feedBack'), {email: email,content: content}, function (msg) {
+                        if (msg.status) {
+                            toast.success(msg.info, '发送成功');
+                            $this.text("发送完成");
+                            $this.addClass("disabled");
+                            $this.attr("disabled",'disabled');
+
+                            //隐藏对话框
+                        } else {
+                            toast.error(msg.info, '发送失败');
+                            $this.text("发送");
+                        }
+                    }, 'json');
+                })
+        }
+        feedbackPost();
+    </script>
+    <script src="__ZUI__/lib/prettify/prettify.js"></script>
+    <script>
+        window.prettyPrint();
+    </script>
+</block>

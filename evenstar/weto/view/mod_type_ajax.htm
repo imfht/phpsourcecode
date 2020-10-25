@@ -1,0 +1,68 @@
+<!--{json width:"550",title:"主题分类"}-->
+
+<form action="?mod-type-fid-$fid-fid_tids-$fid_tids-ajax-1.htm" method="post" id="mod_type_form">
+	<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+	<dl>
+		<dt><label>主题：</label></dt>
+		<dd>$threads (篇)</dd>
+		
+		<dt><label for="typeid">主题分类：</label></dt>
+		<dd>
+		<!--{if $typeselect1 || $typeselect2 || $typeselect3 || $typeselect4}-->
+			<!--{loop $forum[types] $cateid $types}-->
+				<!--{if $cateid == 1 && $typeselect1}-->$typeselect1<!--{/if}-->
+				<!--{if $cateid == 2 && $typeselect2}-->$typeselect2<!--{/if}-->
+				<!--{if $cateid == 3 && $typeselect3}-->$typeselect3<!--{/if}-->
+				<!--{if $cateid == 4 && $typeselect4}-->$typeselect4<!--{/if}-->
+			<!--{/loop}-->
+		<!--{/if}-->
+		</dd>
+	
+		<dt><label for="type_comment">版主备注：</label></dt>
+		<dd>
+			<textarea name="comment" id="type_comment" style="width: 350px; height: 40px;" onkeyup="if(this.value.length > 64) {alert('最多只能输入64个字符。'); return false;}">$modlog[comment]</textarea>
+		</dd>
+		
+		<dt><label>通知作者：</label></dt>
+		<dd><input type="checkbox" name="systempm" value="1" checked="checked" /></dd>
+		
+		<dt>&nbsp;</dt>
+		<dd>
+			<input type="submit" class="button bigblue" id="mod_type_submit" value="确定" />
+			<input type="button" class="button biggrey" value="关闭" id="mod_type_cancel" />
+		</dd>
+	</dl>
+</form>
+
+<script type="text/javascript">
+
+// 延迟执行的脚本，约定名字为：delay_execute()
+function delay_execute(dialog, recall) {
+	$('#mod_type_submit').focus();
+	$('#mod_type_submit').click(function() {
+		$('#mod_type_submit').disable();
+		var postdata = $("#mod_type_form").serialize();
+		$.post($('#mod_type_form').attr('action'), postdata,  function(s){
+			$('#mod_type_submit').enable();
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <= 0) {
+				dialog.set_body('<div class="error">'+json.message+'！</div>');
+				return false;
+			}
+			dialog.set_body('<div class="ok">'+json.message+'！</div>');
+			setTimeout(function(){
+ 				dialog.close(true);
+	 			if(recall) recall();
+	 		}, 1000);
+		  });
+		return false;
+	});
+	
+	$('#mod_type_cancel').click(function() {
+		dialog.close(true);
+	});
+	
+	$("#typeid option[value='{$thread[typeid]}']").attr('selected', 'selected');
+}
+</script>

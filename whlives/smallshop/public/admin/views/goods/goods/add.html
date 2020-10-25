@@ -1,0 +1,345 @@
+<form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+    <fieldset class="layui-elem-field">
+        <legend>基础信息</legend>
+        <div class="layui-field-box">
+            <div class="layui-form-item">
+                <label class="layui-form-label">商品名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="title" lay-verify="required" lay-reqText="名称不能为空" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">副标题</label>
+                <div class="layui-input-block">
+                    <input type="text" name="subtitle" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">商家</label>
+                <div class="layui-input-inline">
+                    <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/seller/seller/select" lay-done="layui.form.render();">
+                        <select name="seller_id" lay-filter="seller_id" lay-verify="required" lay-reqText="请选择商家">
+                            <option value=""></option>
+                            {{# layui.each(d.data, function(index, item){ }}
+                            <option value="{{ index }}" {{# if(index== d.params.seller_id){ }}selected{{# } }}>{{ item }}</option>
+                            {{# }); }}
+                        </select>
+                    </script>
+                </div>
+                <label class="layui-form-label">运费模板</label>
+                <div class="layui-input-inline">
+                    <select name="delivery_id" lay-verify="required" lay-reqText="请选择运费模板">
+                        <option value=""></option>
+                    </select>
+                </div>
+                <label class="layui-form-label">品牌</label>
+                <div class="layui-input-inline">
+                    <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/system/brand/select" lay-done="layui.form.render();">
+                        <select name="brand_id" lay-verify="required" lay-reqText="请选择品牌">
+                            <option value=""></option>
+                            {{# layui.each(d.data, function(index, item){ }}
+                            <option value="{{ index }}" {{# if(index== d.params.brand_id){ }}selected{{# } }}>{{ item }}</option>
+                            {{# }); }}
+                        </select>
+                    </script>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">商品图片</label>
+                <div class="layui-input-inline">
+                    <button type="button" class="layui-btn layui-btn-sm plupload_btn is_callback" id="goods_image">选择图片</button>
+                </div>
+            </div>
+            <div class="layui-form-item layui-hide">
+                <div class="layui-input-block" id="goods_image_list"></div>
+                <script id="goods_image_tpl" type="text/html">
+                    <div class="goods_image">
+                        <li><a href="{{ d.url }}" target="_blank"><img src="{{ d.url }}"></a></li>
+                        <li>
+                            <i class="sm_iconfont icon-jiantouarrow506 image_move_left"></i>&nbsp;&nbsp;<i class="sm_iconfont icon-jiantouarrow484 image_move_right"></i>&nbsp;&nbsp;<i class="sm_iconfont icon-dustbin_icon image_delete"></i>
+                        </li>
+                        <input type="hidden" name="image[{{ d.index }}]" value="{{ d.url }}">
+                    </div>
+                </script>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">货号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="sku_code" lay-verify="required" lay-reqText="货号不能为空" autocomplete="off" class="layui-input" value="">
+                </div>
+                <label class="layui-form-label">排序</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="position" lay-verify="number" lay-reqText="排序只能是数字" autocomplete="off" class="layui-input" value="999">
+                </div>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset id="attribute" class="layui-elem-field layui-hide"></fieldset>
+    <script id="attribute_tpl" type="text/html">
+        <legend>属性</legend>
+        <div class="layui-field-box">
+            {{# layui.each(d, function(index, item){ }}
+            {{# if(item.input_type == 'checkbox'){ }}
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{ item.title }}</label>
+                <div class="layui-input-block">
+                    {{# layui.each(item.value, function(i, v){ }}
+                    <input type="checkbox" name="attribute[{{ item.id }}][]" lay-skin="primary" value="{{ v.id }}" title="{{ v.value }}" {{# if(v.is_checked== 1){ }} checked {{# } }}>
+                    {{# }); }}
+                </div>
+            </div>
+            {{# } else if(item.input_type == 'radio'){ }}
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{ item.title }}</label>
+                <div class="layui-input-block">
+                    {{# layui.each(item.value, function(i, v){ }}
+                    <input type="radio" name="attribute[{{ item.id }}]" value="{{ v.id }}" title="{{ v.value }}" {{# if(v.is_checked== 1){ }} checked {{# } }}>
+                    {{# }); }}
+                </div>
+            </div>
+            {{# } else if(item.input_type == 'select'){ }}
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{ item.title }}</label>
+                <div class="layui-input-inline">
+                    <select name="attribute[{{ item.id }}]">
+                        <option value=""></option>
+                        {{# layui.each(item.value, function(i, v){ }}
+                        <option value="{{ v.id }}" {{# if(v.is_checked== 1){ }} selected {{# } }}>{{ v.value }}</option>
+                        {{# }); }}
+                    </select>
+                </div>
+            </div>
+            {{# } else if(item.input_type == 'text'){ }}
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{ item.title }}</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="attribute[{{ item.id }}]" value="{{ item.value || '' }}" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            {{# } }}
+            {{# }); }}
+        </div>
+    </script>
+    <fieldset class="layui-elem-field goods_spec layui-hide"></fieldset>
+    <script id="spec_tpl" type="text/html">
+        <legend>规格</legend>
+        <div class="layui-field-box">
+            {{# layui.each(d, function(index, item){ }}
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{ item.title }}</label>
+                <div class="input_list" id="spec_{{ item.id }}">
+                    {{# layui.each(item.value, function(i, v){ }}
+                    <div class="layui-input-inline">
+                        <input type="checkbox" lay-filter="goods_spec" lay-skin="primary" value="" title="{{ v.value }}" data-id="{{ v.id }}" data-name="{{ item.title }}" {{# if(v.is_checked== 1){ }} checked {{# } }}>
+                        <input type="text" class="layui-input spec_alias" autocomplete="off" value="{{ v.alias }}">
+                        {{# if(item.type == 1){ }}
+                        <br>
+                        <button type="button" class="layui-btn layui-btn-xs plupload_btn is_callback" id="spec_{{ v.id }}" callback_fun="spec_image">选择图片</button>
+                        {{# } }}
+                        <a href="{{ v.image }}" target="_blank"><img src="{{ v.image }}" class="{{# v.image || 'layui-hide'}}"></a>
+                        <input type="hidden" value="{{ v.image }}">
+                    </div>
+                    {{# }); }}
+                </div>
+            </div>
+            {{# }); }}
+            <div id="goods_spec_table">
+            </div>
+        </div>
+    </script>
+    <fieldset class="layui-elem-field">
+        <legend>描述</legend>
+        <div class="layui-field-box">
+            <div class="layui-form-item">
+                <script type="text/html" template>
+                    <div id="editor_content">
+                        {{ d.params.content || '' }}
+                    </div>
+                    <textarea name="content" id="content" class="layui-hide"></textarea>
+                </script>
+            </div>
+        </div>
+    </fieldset>
+    <div class="layui-form-item">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="id" value="">
+            <input type="hidden" name="category_id" value=""/>
+            <input type="button" lay-submit lay-filter="form-submit" value="确认" class="layui-btn">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<script type="text/html" template lay-done="layui.data.sendParams(d.params)"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/plupload/plupload.full.min.js"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/plupload/i18n/zh_CN.js"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/wangeditor/wangEditor.min.js"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/xss.min.js"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['helper', 'admin', 'form', 'laytpl', 'plupload', 'goods_sku'], function () {
+            var helper = layui.helper,
+                admin = layui.admin,
+                form = layui.form,
+                layer = layui.layer,
+                laytpl = layui.laytpl,
+                $ = layui.$,
+                goods_sku = layui.goods_sku,
+                plupload = layui.plupload;
+
+            layui.link(layui.setter.base + 'style/goods.css?v=' + (admin.v + '-1'));
+
+            helper.editor_create();//创建一个编辑器
+
+            //监听店铺选择
+            form.on('select(seller_id)', function (data) {
+                get_delivery(data.value);
+            });
+
+            //根据店铺刷新配送方式
+            function get_delivery(seller_id, default_id) {
+                if (!default_id) default_id = 0;
+                admin.req({
+                    url: layui.setter.apiHost + '/goods/delivery/select',
+                    data: {seller_id: seller_id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            var html = '<option value=""></option>';
+                            $.each(result.data, function (index, item) {
+                                var selected = '';
+                                if (index == default_id) {
+                                    selected = 'selected';
+                                }
+                                html += '<option value="' + index + '" ' + selected + '>' + item + '</option>';
+                            })
+                            $('[name="delivery_id"]').html(html);
+                            form.render('select');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('配送方式获取失败');
+                    }
+                });
+            }
+
+            //图片回调
+            var all_goods_image_num = 0;
+            var plupload_callback_obj = {
+                goods_image: function (res) {
+                    if (res.url) {
+                        var index = $("#goods_image_list > div").length;
+                        res['index'] = index;
+                        laytpl($('#goods_image_tpl').html()).render(res, function (html) {
+                            $('#goods_image_list').append(html).parent().removeClass('layui-hide');
+                        })
+                    }
+                    //验证数量
+                    if (res.file_num) {
+                        var new_goods_image_num = all_goods_image_num + res.file_num;
+                        if (new_goods_image_num > 5) {
+                            layer.msg('商品主图最大多不能超过5张')
+                            return false;
+                        }
+                        all_goods_image_num = new_goods_image_num;
+                    }
+                    return true;
+                },
+                spec_image: function (res) {
+                    if (res.url) {
+                        $("#" + res.id_name).parent().find('img').attr('src', res.url).removeClass('layui-hide');
+                        $("#" + res.id_name).parent().find('a').attr('href', res.url);
+                        $("#" + res.id_name).parent().find('[type="hidden"]').val(res.url);
+                        goods_sku.Creat_Table();
+                    }
+                    return true;
+                }
+            }
+            plupload.set_callback_obj(plupload_callback_obj);
+
+            //图片删除或位置移动
+            $('#goods_image_list').on('click', '.sm_iconfont', function () {
+                var obj = $(this).closest('.goods_image');
+                if ($(this).hasClass('image_move_left')) {
+                    //左移
+                    var to_index = obj.prev().index();
+                    $('#goods_image_list .goods_image:eq(' + to_index + ')').before(obj);
+                } else if ($(this).hasClass('image_move_right')) {
+                    //右移
+                    var to_index = obj.next().index();
+                    $('#goods_image_list .goods_image:eq(' + to_index + ')').after(obj);
+                } else if ($(this).hasClass('image_delete')) {
+                    //删除
+                    obj.remove();
+                }
+            })
+
+            //加载属性
+            function get_attribute(goods_id) {
+                if (!goods_id) goods_id = 0;
+                admin.req({
+                    url: layui.setter.apiHost + '/goods/goods/get_attribute',
+                    data: {category_id: params.category_id, goods_id: goods_id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            laytpl($('#attribute_tpl').html()).render(result.data, function (html) {
+                                $('#attribute').append(html).removeClass('layui-hide');
+                            })
+                            form.render();
+                        }
+                    },
+                    error: function () {
+                        layer.msg('属性获取失败');
+                    }
+                });
+            }
+
+            get_attribute(params.id);
+
+            //加载规格
+            function get_spec(goods_id) {
+                if (!goods_id) goods_id = 0;
+                admin.req({
+                    url: layui.setter.apiHost + '/goods/goods/get_spec',
+                    data: {category_id: params.category_id, goods_id: goods_id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            laytpl($('#spec_tpl').html()).render(result.data.spec, function (html) {
+                                $('.goods_spec').append(html).removeClass('layui-hide');
+                            })
+                            if (result.data.goods_sku) {
+                                //回填默认sku数据
+                                goods_sku.saveLastTableData(result.data.goods_sku);
+                                goods_sku.Creat_Table();
+                            }
+                            plupload.upload();//初始化图片上传
+                            form.render();
+                        }
+                    },
+                    error: function () {
+                        layer.msg('规格获取失败');
+                    }
+                });
+            }
+
+            get_spec(params.id);
+
+            //批量设置值
+            $('.goods_spec').on('click', '.batch_set_value', function () {
+                goods_sku.batchSetValue();
+            })
+
+            //编辑时回填运费模板
+            if (params.seller_id) {
+                get_delivery(params.seller_id, params.delivery_id);
+            }
+            //回填图片
+            if (params.goods_image) {
+                var item_goods_image = params.goods_image;
+                for (j = 0, len = item_goods_image.length; j < len; j++) {
+                    plupload_callback_obj['goods_image'].call(this, {url: item_goods_image[j], file_num: 1})
+                }
+            }
+
+        })
+    };
+</script>

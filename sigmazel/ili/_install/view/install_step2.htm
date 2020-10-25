@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!--{template /_install/view/meta}-->
+</head>
+<body>
+	<!--{template /_install/view/head}-->
+
+	<div class="install">
+		<div class="box-mini input">
+			<div class="left left-max">
+				<p class="head">进度</p>
+				<form action="index.php" method="post">
+					<input type="hidden" name="formsubmit" value="yes" />
+					<table width="90%">
+						<tr>
+							<td><textarea class="process" rows="18" cols="65"
+									readonly="readonly">执行SQL中……</textarea></td>
+						</tr>
+						<tr>
+							<td><br />
+								<button type="button" class="button-sliver" disabled="disabled">下一步：选择模板</button>
+							</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+		var start = 0;
+		
+		function ajax_data(){
+			$.getJSON('install.php?ac=data&rnd' + Math.random(), {start:start}, function(data){
+				if(data.LIST.length > 0){
+					start += data.LIST.length;
+					for(var i = 0; i < data.LIST.length; i++){
+						var line = data.LIST[i];
+						
+						if(line.indexOf('CREATE') != -1) $('.process').append("\r\n创建表" + line.replace('CREATE:', ''));
+						else $('.process').append("\r\n插入数据" + line.replace('INSERT:', ''));
+						
+						$('.process').scrollTop(10000);  
+					}
+					
+					setTimeout(ajax_data, 500);
+				}else{
+					$('.button-sliver').attr('disabled', false).removeClass('button-sliver').click(function(){
+						location.href = 'install.php?ac=step3';
+					});
+				}
+			});
+		}
+		
+		setTimeout(ajax_data, 200);
+		</script>
+	</div>
+</body>
+</html>

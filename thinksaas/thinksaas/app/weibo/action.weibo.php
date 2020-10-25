@@ -1,0 +1,396 @@
+<?php
+defined('IN_TS') or die('Access Denied.');
+
+class weiboAction extends weibo{
+
+    /*
+     * 首页
+     */
+    public function index(){
+
+        //dump($GLOBALS);
+
+        $page = isset($_GET['page']) ? intval($_GET['page']) : '1';
+
+        $url = tsUrl('weibo','index',array('page'=>''));
+
+        $lstart = $page*20-20;
+
+        $arrWeibo = $this->findAll('weibo',array(
+            'isaudit'=>0,
+        ),'uptime desc',null,$lstart.',20');
+        foreach($arrWeibo as $key=>$item){
+            $arrWeibo[$key]['user'] = aac('user')->getOneUser($item['userid']);
+            $arrWeibo[$key]['content'] = tsTitle($item['content']);
+        }
+
+
+        $weiboNum = $this->findCount('weibo',array(
+            'isaudit'=>0,
+        ));
+
+        $pageUrl = pagination($weiboNum, 20, $page, $url);
+
+
+        #热门唠叨
+        $arrHotWeibo = $this->findAll('weibo',null,'count_comment desc',null,10);
+
+        foreach($arrHotWeibo as $key=>$item){
+            $arrHotWeibo[$key]['content'] = tsTitle($item['content']);
+            $arrHotWeibo[$key]['user'] = aac('user')->getOneUser($item['userid']);
+        }
+
+
+        $title = '唠叨';
+        include template('index');
+    }
+
+    /*
+     * 发布唠叨
+     */
+    public function add(){
+
+        $js = intval($_GET['js']);
+
+        $userid = aac('user')->isLogin(1);
+
+        //判断用户是否存在
+        if(aac('user')->isUser($userid)==false) getJson('不好意思，用户不存在！',$js);
+
+        //判断发布者状态
+        if(aac('user')->isPublisher()==false) getJson('不好意思，你还没有权限发布内容！',$js);
+
+        //发布时间限制
+        if(aac('system')->pubTime()==false) getJson('不好意思，当前时间不允许发布内容！',$js);
+
+        $content = trim($_POST['content']);
+
+        if($content == '') {
+            getJson('内容不能为空',$js);
+        }
+
+        $isaudit = 0;
+
+        if($GLOBALS['TS_USER']['isadmin']==0){
+            //过滤内容开始
+            aac('system')->antiWord($content,$js);
+            //过滤内容结束
+        }
+
+        $weiboid = $this->create('weibo',array(
+            'userid'=>$userid,
+            'locationid'=>aac('user')->getLocationId($userid),
+            'content'=>$content,
+            'isaudit'=>$isaudit,
+            'addtime'=>date('Y-m-d H:i:s'),
+            'uptime'=>date('Y-m-d H:i:s'),
+        ));
+
+        $daytime = date('Y-m-d 00:00:01');
+        $count_weibo = $this->findCount('weibo',"`userid`='$userid' and `addtime`>'$daytime'");
+
+        #每日前三条给积分
+        if($count_weibo<4){
+            aac('user') -> doScore($GLOBALS['TS_URL']['app'], $GLOBALS['TS_URL']['ac'], $GLOBALS['TS_URL']['ts']);
+        }
+
+        getJson('发布成功！',$js,2,tsurl('weibo','show',array('id'=>$weiboid)));
+		
+    }
+
+	/*
+	 *展示唠叨内容
+	 */
+    public function show(){
+        $weiboid = intval($_GET['id']);
+
+        $strWeibo = $this->getOneWeibo($weiboid);
+
+        if($weiboid==0 || $strWeibo==''){
+            ts404();
+        }
+
+        if($strWeibo['isaudit']==1){
+            tsNotice('内容审核中...');
+        }
+
+        //comment
+        $page = isset($_GET['page']) ? intval($_GET['page']) : '1';
+        $url = tsUrl('weibo','show',array('id'=>$weiboid,'page'=>''));
+        $lstart = $page*20-20;
+
+        $arrComment = $this->findAll('weibo_comment',array(
+            'weiboid'=>$weiboid,
+        ),'addtime desc',null,$lstart.',20');
+
+        foreach($arrComment as $key=>$item){
+            $arrComment[$key]['content'] = tsTitle($item['content']);
+            $arrComment[$key]['user']=aac('user')->getOneUser($item['userid']);
+        }
+
+        $commentNum = $this->findCount('weibo_comment',array(
+            'weiboid'=>$weiboid,
+        ));
+
+        $pageUrl = pagination($commentNum, 20, $page, $url);
+
+
+
+        //他的更多唠叨
+        $arrWeibo = $this->findAll('weibo',array(
+            'userid'=>$strWeibo['userid'],
+        ),'addtime desc',null,20);
+
+        $weiboNum = $this->findCount('weibo',array(
+            'userid'=>$strWeibo['userid'],
+        ));
+
+        if($weiboNum<20){
+
+            $num = 20-$weiboNum;
+            $userid = $strWeibo['userid'];
+            $arrNewWeibo = $this->findAll('weibo',"`userid`!='$userid'",'addtime desc',null,$num);
+
+            $arrWeibo = array_merge($arrWeibo, $arrNewWeibo);
+
+        }
+
+        foreach($arrWeibo as $key=>$item){
+            $arrWeibo[$key]['content'] = tsTitle($item['content']);
+        }
+
+
+        if($strWeibo['content']==''){
+            $title = $strWeibo['user']['username'].'的唠叨('.$strWeibo['weiboid'].')';
+        }else{
+            $title = cututf8($strWeibo['content'],0,100,false);
+        }
+
+        include template('show');
+    }
+	
+	
+	/*
+	 * 发布唠叨图片
+	 */
+	public function photo(){
+
+		$userid = intval($GLOBALS['TS_USER']['userid']);
+
+		if($userid==0){
+			echo 0;exit;//请登录
+		}
+
+
+		$content = tsClean($_POST['content']);
+
+		if($GLOBALS['TS_USER']['isadmin']==0){
+			//过滤内容开始
+			aac('system')->antiWord($content);
+			//过滤内容结束
+		}
+
+		$weiboid = $this->create('weibo',array(
+			'userid'=>$userid,
+			'content'=>$content,
+			'isaudit'=>0,
+			'addtime'=>date('Y-m-d H:i:s'),
+			'uptime'=>date('Y-m-d H:i:s'),
+		));
+
+		// 上传图片开始
+		$arrUpload = tsUpload ( $_FILES ['filedata'], $weiboid, 'weibo', array ('jpg','gif','png','jpeg' ) );
+		if ($arrUpload) {
+			$this->update ( 'weibo', array (
+					'weiboid' => $weiboid 
+			), array (
+					'path' => $arrUpload ['path'],
+					'photo' => $arrUpload ['url'] 
+			) );
+			
+			echo 3;exit;
+			
+		}else{
+			
+			echo 2;exit;
+
+		}
+	}
+	
+	/*
+	 * 回复唠叨，添加评论
+	 */
+	public function addcomment(){
+
+		//用户是否登录
+		$userid = aac('user')->isLogin();
+
+        //判断发布者状态
+        if(aac('user')->isPublisher()==false) tsNotice('不好意思，你还没有权限发布内容！');
+
+        //发布时间限制
+        if(aac('system')->pubTime()==false) tsNotice('不好意思，当前时间不允许发布内容！');
+
+		$weiboid = intval($_POST['weiboid']);
+		$touserid = intval($_POST['touserid']);
+		$content = trim($_POST['content']);
+
+		if($content == ''){
+			tsNotice('内容不能为空');
+		}
+
+		if($GLOBALS['TS_USER']['isadmin']==0){
+			//过滤内容开始
+			aac('system')->antiWord($content);
+			//过滤内容结束
+		}
+
+		$commentid = $this->create('weibo_comment',array(
+			'userid'=>$userid,
+			'touserid'=>$touserid,
+			'weiboid'=>$weiboid,
+			'content'=>$content,
+			'addtime'=>date('Y-m-d H:i:s'),
+		));
+
+		//计算评论总数
+		$commentNum = $this->findCount('weibo_comment',array(
+			'weiboid'=>$weiboid,
+		));
+
+		$this->update('weibo',array(
+			'weiboid'=>$weiboid,
+		),array(
+			'count_comment'=>$commentNum,
+		));
+		
+		$strWeibo = $this->find('weibo',array(
+			'weiboid'=>$weiboid,
+		));
+		
+		if($strWeibo['userid'] != $userid){
+			$msg_userid = '0';
+			$msg_touserid = $strWeibo['userid'];
+			$msg_content = '你的唠叨新增一条回复，快去看看给个回复吧^_^';
+            $msg_tourl = tsUrl('weibo','show',array('id'=>$weiboid));
+			aac('message')->sendmsg($msg_userid,$msg_touserid,$msg_content,$msg_tourl);
+		}
+
+
+
+        $daytime = date('Y-m-d 00:00:01');
+        $count_comment = $this->findCount('weibo_comment',"`userid`='$userid' and `addtime`>'$daytime'");
+
+        #每日前1条给积分
+        if($count_comment<2){
+            aac('user') -> doScore($GLOBALS['TS_URL']['app'], $GLOBALS['TS_URL']['ac'], $GLOBALS['TS_URL']['ts']);
+        }
+
+
+		tsHeaderUrl(tsUrl('weibo','show',array('id'=>$weiboid)));
+	}
+	
+	/*
+	 * 删除评论
+	 */
+	public function deletecomment(){
+		$userid = aac('user')->isLogin();
+	
+		$commentid = intval($_GET['commentid']);
+		
+		$strComment = $this->find('weibo_comment',array(
+			'commentid'=>$commentid,
+		));
+	
+		if($GLOBALS['TS_USER']['isadmin']==1 || $strComment['userid']==$userid){
+			
+			
+			$this->delete('weibo_comment',array('commentid'=>$commentid));
+			
+			//统计
+			$count_comment = $this->findCount('weibo_comment',array(
+				'weiboid'=>$strComment['weiboid'],
+			));
+			
+			$this->update('weibo',array(
+				'weiboid'=>$strComment['weiboid'],
+			),array(
+				'count_comment'=>$count_comment,
+			));
+			
+			tsHeaderUrl(tsUrl('weibo','show',array('id'=>$strComment['weiboid'])));
+			
+			
+		}else{
+			tsNotice('非法操作！');
+		}
+	}
+	
+	/*
+	 * 删除唠叨 
+	 */
+	public function deleteweibo(){
+		$userid = aac('user')->isLogin();
+
+		$weiboid = intval($_GET['weiboid']);
+
+		$strWeibo = $this->find('weibo',array(
+			'weiboid'=>$weiboid,
+		));
+
+		if($userid == $strWeibo['userid'] || $GLOBALS['TS_USER']['isadmin']==1){
+			$this->delete('weibo',array(
+				'weiboid'=>$weiboid,
+			));
+			
+			$this->delete('weibo_comment',array(
+				'weiboid'=>$weiboid,
+			));
+			
+			//删除图片
+			if($strWeibo['photo']){
+				unlink('uploadfile/weibo/'.$strWeibo['photo']);
+			}
+			
+			tsHeaderUrl(tsUrl('weibo'));
+			
+		}else{
+			tsNotice('非法操作！');
+		}
+	}
+
+    /*
+     * 后台管理入口
+     * */
+    public function admin(){
+
+        if($GLOBALS['TS_USER']['isadmin']==1){
+            include 'app/'.$GLOBALS['TS_URL']['app'].'/admin.'.$GLOBALS['TS_URL']['app'].'.php';
+            $appAdmin = $GLOBALS['TS_URL']['app'].'Admin';
+            $newAdmin = new $appAdmin($GLOBALS['db']);
+            #$newAdmin->$GLOBALS['TS_URL']['mg']();
+
+            $amg = $GLOBALS['TS_URL']['mg'];
+            $newAdmin->$amg();
+
+        }else{
+            ts404();
+        }
+    }
+
+    /*
+     * 我的社区入口
+     * */
+    public function my(){
+        if($GLOBALS['TS_USER']){
+            include 'app/'.$GLOBALS['TS_URL']['app'].'/my.'.$GLOBALS['TS_URL']['app'].'.php';
+            $appMy = $GLOBALS['TS_URL']['app'].'My';
+            $newMy = new $appMy($GLOBALS['db']);
+            $myFun = $GLOBALS['TS_URL']['my'];
+            $newMy->$myFun();
+        }else{
+            ts404();
+        }
+    }
+
+}

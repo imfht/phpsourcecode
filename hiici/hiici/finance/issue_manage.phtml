@@ -1,0 +1,108 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+global $config;
+if (!in_array($auth['id'], $config['manager'])) die('用户权限不够!');
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+$kind_filter = @intval($_COOKIE['issue_manage_kind_filter']);
+
+$cond = '';
+
+switch ($kind_filter) {
+case 2:
+	$cond = "WHERE kind = 'PTGG'";
+	break;
+case 3:
+	$cond = "WHERE kind = 'HKGG'";
+	break;
+case 4:
+	$cond = "WHERE kind = 'MTBD'";
+	break;
+}
+
+if (empty($page)) { $page = 1; }
+$limit = 20;
+
+$issues = dt_query("SELECT id, title, kind, c_at FROM finance_issue $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$issues) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/nav_sub_im.html') ?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column" style="margin-top:20px">
+			<div class="finance-filter-well">
+				<ul id="kind_filter" class="nav nav-pills">
+					<li class="disabled"> <a href="#">公告类别</a> </li>
+					<li class=""><a href="javascript:do_kind_filter(1)">全部</a></li>
+					<li class=""><a href="javascript:do_kind_filter(2)">平台公告</a></li>                       
+					<li class=""><a href="javascript:do_kind_filter(3)">还款公告</a></li>                       
+					<li class=""><a href="javascript:do_kind_filter(4)">媒体报道</a></li>                       
+					<a class="btn btn-default" href="?c=finance&a=issue_add">发布公告</a>
+				</ul>
+			</div>
+
+			<table class="table">
+				<thead>
+					<tr>
+						<th>公告名称</th>
+						<th>类型</th>
+						<th>时间</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php while($issue = mysql_fetch_array($issues)) { ?>
+				<tr id="<?php echo $issue['id']; ?>">
+					<td><a href="?c=finance&a=issue_show&issue_id=<?php echo $issue['id']; ?>"><?php echo $issue['title']; ?></a></td>
+					<td><?php echo $issue['kind']; ?></td>
+					<td><?php echo date('Y-m-d', $issue['c_at']) ?></td>
+					<td>
+						<a class="btn btn-default btn-sm" href="?c=finance&a=issue_edit&issue_id=<?php echo $issue['id'] ?>">编辑</a>
+						<a class="btn btn-default btn-sm" href="javascript:do_issue_del(<?php echo $issue['id'] ?>)">删除</a>
+					</td>
+				</tr>
+				<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('finance_issue', $cond, $page, $limit, '?c=finance&a=issue_manage&page=') ?>
+		</div>
+
+
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#finance_im').addClass('active');
+	$('li#im_gggl').addClass('active');
+	var kind_filter = ('' == getCookie('issue_manage_kind_filter')) ? 1 : getCookie('issue_manage_kind_filter');
+	$('ul#kind_filter').find('li:eq('+kind_filter+')').addClass('active');
+});
+
+function do_kind_filter(mark) {
+	setCookie('issue_manage_kind_filter', mark, 365, '/');
+	location = '?c=finance&a=issue_manage';
+}
+function do_issue_del(issue_id) {
+	if (!confirm (" O_O 确定要删除吗！")) return;
+
+	$.get('?c=finance&a=do_issue_opr&opr=1&issue_id='+issue_id, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('tr#'+issue_id).remove();
+	});
+}
+</script>

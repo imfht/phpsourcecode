@@ -1,0 +1,151 @@
+<div class="clearfix">
+	<ul class="nav pull-left">
+		<li class="pull-left">
+			<select style="width:auto" name="field" id="field" onchange="changeCondition()">
+				<option class="all" value="all">{:L('ANY FIELD')}</option>
+				<option class="word" value="name">{:L('RECEIVABLES NAME')}</option>
+				<option class="contract" value="contract_id">{:L('CONTRACT NUMBER')}</option>
+				<option class="customer" value="customer_id">{:L('CUSTOMER')}</option>
+				<option class="number" value="price">{:L('AMOUNT OF RECEIVING')}</option>
+				<option class="date" value="pay_time">{:L('RECEIVING TIME')}</option>
+				<option class="receivables_status" value="status">{:L('STATUS')}</option>
+				<option class="word" value="description">{:L('DESCRIPTION')}</option>
+				<option class="role" value="owner_role_id">{:L('OWNER_ROLE')}</option>
+				<option class="role" value="creator_role_id">{:L('CREATOR_ROLE')}</option>						
+				<option class="date" value="create_time">{:L('CREATE_TIME')}</option>
+				<option class="date" value="update_time">{:L('UPDATE_TIME')}</option>	
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="conditionContent" class="pull-left">
+			<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+				<option value="contains">{:L('CONTAINS')}</option>
+				<option value="not_contain">{:L('NOT_CONTAIN')}</option>
+				<option value="is">{:L('IS')}</option>
+				<option value="isnot">{:L('ISNOT')}</option>						
+				<option value="start_with">{:L('START_WITH')}</option>
+				<option value="end_with">{:L('END_WITH')}</option>
+				<option value="is_empty">{:L('IS_EMPTY')}</option>
+				<option value="is_not_empty">{:L('IS_NOT_EMPTY')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="searchContent" class="pull-left"><input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;</li>
+		<li class="pull-left"><input type="hidden" name="m" value="finance"/><input type="hidden" name="t" value="receivables"/>
+		<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+		<li class="pull-left">
+			<button type="button" class="btn" onclick="d_changeCondition(0)">{:L('SEARCH')}</button>
+		</li>
+		&nbsp;<a target="_blank" href="{:U('finance/add','t=receivables')}">{:L('ADD RECEIVABLES')}</a>
+	</ul>
+</div>
+<empty name="receivablesList">
+	<div class="alert">{:L('EMPTY_TPL_DATA')}</div>
+<else/>
+	<table class="table table-hover">
+		<if condition="$receivablesList eq null">
+			<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+		<else/>
+			<thead>
+				<tr> 
+					<th></th>
+					<th>{:L('RECEIVABLES')}</th>
+					<th>{:L('CUSTOMER')}</th>
+					<th>{:L('AMOUNT OF RECEIVING')}</th>
+					<if condition="C('ismobile') eq 1"><th>{:L('RECEIVING TIME')}</th></if>
+				</tr>
+			</thead> 
+			<tfoot id="footer">
+				<tr>
+					<td colspan="5">
+						<div class="row pagination">
+							<div class="span2">{:L('PAGE_COUNT',array($count_num,$total))}</div>
+							<div class="span4">
+								<div><ul id="changepage">
+									<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')}</span></li>
+									<if condition="1 lt $total">
+										<li><a class="page" href="javascript:void(0)" rel="2">{:L('NEXT_PAGE')}</a></li>
+									<else />
+										<li><span>{:L('NEXT_PAGE')}</span></li>
+									</if>
+								</ul></div>
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tfoot>
+			<tbody id="load" class="hide">
+				<tr><td class="tdleft" <if condition="C('ismobile') neq 1">colspan="5"<else />colspan="4"</if> style=" height:300px;text-align:center"><img src="./Public/img/load.gif"></td></tr>
+			</tbody>
+			<tbody id="data">
+				<volist name="receivablesList" id="vo">
+					<tr>
+						<td><input type="radio" name="receivables" value="{$vo.receivables_id}"/></td>
+						<td>{$vo.name}</td>
+						<td>{$vo.customer_name}</td>
+						<td>{$vo.price}</td>
+						<if condition="C('ismobile') eq 1"><td>{$vo.pay_time|date="Y-m-d",###}</td></if>
+					</tr>
+				</volist>
+			</tbody>
+		</if>
+	</table>
+<script type="text/javascript">
+	$('.page').click(function(){
+		a = $(this).attr('rel');
+		d_changeCondition(a);
+	});
+	function d_changeCondition(p){
+		$('#data').addClass('hide');
+		$('#load').removeClass('hide');
+		
+		field = $('#field').val();
+		condition = $('#condition').val();
+		asearch = $("#search").val();
+		$.ajax({
+			type:'get',
+			url:'index.php?m=finance&a=changecontent&t=receivables&field='+field+'&search='+asearch+'&condition='+condition+'&p='+p,
+			async:false,
+			success:function(data){
+				temp = '';
+				if(data.data.list != null){
+					$.each(data.data.list, function(k, vo){
+						temp += '<tr><td><input type="radio" name="receivables" value="'+vo.receivables_id+'"/></td><td>'+vo.name+'</td><td>'+vo.customer_name+'</td><td>'+vo.price+'</td>';
+						
+						<if condition="C('ismobile') eq 1">
+							temp += '<td>'+vo.pay_time+'</td>';
+						</if>
+						temp += '</tr>';
+					});
+					changepage = "";
+					if(data.data.p == 1){
+						changepage = "<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')} </span></li>";
+						if(data.data.p < data.data.total){
+							changepage += "<li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>";
+						}else{
+							changepage += "<li><span>{:L('NEXT_PAGE')}</span></li>";
+						}
+					}else if(data.data.p == data.data.total){
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><span>{:L('NEXT_PAGE')}</span></li>";
+					}else{
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>";
+					}
+					$('#p').html(data.data.p);
+					$('#changepage').html(changepage);
+					$('#count').html(data.data.count);
+					$('#total_page').html(data.data.total);
+					$('#data').html(temp);
+					$('.page').click(function(){
+						a = $(this).attr('rel');
+						d_changeCondition(a);
+					});
+				}else{
+					$('#data').html('<tr><td colspan="4">{:L('NOT_FIND_THE_RESULTS_YOU_WANT')}</tr>');
+					$('#footer').addClass('hide');
+				}
+				$('#load').addClass('hide');
+				$('#data').removeClass('hide');
+			},
+			dataType:'json'
+		});		
+	}
+</script>
+</empty>

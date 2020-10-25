@@ -1,0 +1,160 @@
+
+<include file="mobile/Public/header" />
+
+
+<style>
+    .margin-top-section{margin-top: 1.5rem;}
+    .addaddress-article .linear-input{padding: 1.2rem;padding-left: 7rem}
+    .linear-select{
+        appearance: button;
+        -webkit-appearance: button;
+        -moz-appearance:button;
+    }
+    .select-section .linear-right img{
+        transform: rotate(90deg);
+        -ms-transform: rotate(90deg);		/* IE 9 */
+        -webkit-transform: rotate(90deg);	/* Safari and Chrome */
+        -o-transform: rotate(90deg);		/* Opera */
+        -moz-transform: rotate(90deg);		/* Firefox */
+    }
+</style>
+<header class="color-main vertical-box">
+    <span class="header-title">新增收货地址</span>
+    <div class="header-left vertical-box">
+        <img class="img-btn" src="__IMG__/back.png" onclick="history.back()">
+    </div>
+    <div class="header-right vertical-box">
+        <img class="img-btn" src="__IMG__/home.png" onclick="window.location.href='{:U('shop/index/index')}'">
+    </div>
+</header>
+<article class="addaddress-article">
+    <section class="linear-section margin-top-section">
+        <span class="linear-title vertical-box">收货人</span>
+        <input class="name-input linear-input border-box" type="text" value="" placeholder="请输入收货人的姓名">
+    </section>
+    <section class="linear-section">
+        <span class="linear-title vertical-box">手机号码</span>
+        <input class="phone-input linear-input border-box" type="text" value="" placeholder="请输入收货人的手机号码">
+    </section>
+
+
+    <section class="select-section linear-section">
+        <span class="linear-title vertical-box"><span>所在地区</span></span>
+        <select class="select-address first-select linear-select linear-input white-tips-font">
+            <option>请选择</option>
+        </select>
+        <span class="linear-right vertical-box"><span>
+            <img src="__IMG__/go.png">
+        </span></span>
+    </section>
+
+    <section class="select-section linear-section">
+        <span class="linear-title vertical-box"><span>所在城市</span></span>
+        <select class="select-address second-select linear-select linear-input white-tips-font">
+            <option>请选择</option>
+        </select>
+        <span class="linear-right vertical-box"><span>
+            <img src="__IMG__/go.png">
+        </span></span>
+    </section>
+
+    <section class="select-section linear-section">
+        <span class="linear-title vertical-box"><span>所在区域</span></span>
+        <select class="select-address third-select linear-select linear-input white-tips-font">
+            <option>请选择</option>
+        </select>
+        <span class="linear-right vertical-box"><span>
+            <img src="__IMG__/go.png">
+        </span></span>
+    </section>
+
+
+    <section class="linear-section last-liner-section">
+        <span class="linear-title vertical-box">详细地址</span>
+        <input class="address-input linear-input border-box" type="text" value="" placeholder="请输入详细地址">
+    </section>
+    <!--<section class="linear-section last-liner-section linear-noinput">
+        <p>设为默认地址</p>
+        <p class="white-tips-font small-text">注：每次下单时会使用该地址</p>
+        <span class="linear-right vertical-box"><span>
+
+        </span></span>
+    </section>-->
+    <footer class="btn-footer footer-one-btn margin-top-section clearfix border-box">
+<!--        <button class="color-disable" onclick="history.back()">删除</button>-->
+        <button class="saveBtn color-primary">保存并使用</button>
+    </footer>
+</article>
+<include file="mobile/Public/footer" />
+<script>
+    //'jquery' or 'zepto' 脚本入口,按情况选择加载
+    var address = <php>echo (empty($address)?'null':json_encode($address))</php>;
+    var id = '';
+    seajs.use('jquery', function () {
+        $(document).ready(function () {
+//            seajs.use('js/selectaddress.js');
+	        define(function (require,exports,module) {
+		        require('js/selectaddress.js');
+		        if(address!=null)
+		        {
+			        id = address.id;
+			        $('.name-input').val(address.name)
+			        $('.phone-input').val(address.phone)
+			        $(".select-address.first-select ").find("option:contains('"+address.province+"')").attr("selected",true);
+			        $(".select-address.first-select ").val() !="请选择" && $(".select-address.first-select ").trigger('change');
+			        $(".select-address.second-select ").find("option:contains('"+address.town+"')").attr("selected",true);
+			        $(".select-address.second-select ").val() !="请选择" &&  $(".select-address.second-select ").trigger('change');
+			        $(".select-address.third-select ").find("option:contains('"+address.city+"')").attr("selected",true);
+			        $(".select-address.third-select ").val() !="请选择" &&  $(".select-address.third-select ").trigger('change');
+
+			        $('.address-input').val(address.address)
+		        }
+	        });
+            seajs.use('jquery_cookie', function () {
+
+
+                $('.saveBtn').click(function () {
+                    var name = $('.name-input').val().trim();
+                    var phone = $('.phone-input').val().trim();
+                    var province = $('.select-address.first-select').children(":selected").text();
+                    var town = ($('.select-address.second-select').children(":selected").text()=="请选择")?"":$('.select-address.second-select').children(":selected").text();
+                    var city = $('.select-address.third-select').children(":selected").text();
+                    var address = $('.address-input').val().trim();
+                    if((name=='')||(phone=='')){
+                        alert('请填写收货人信息');
+                        return
+                    }
+                    if((province=='请选择')||(city=='请选择')){
+                        alert('请选择收货地址');
+                        return
+                    }
+                    if(address==''){
+                        alert('请填写详细地址信息');
+                        return
+                    }
+                    var data = {
+	                    id : id,
+                        name:name,
+                        phone:phone,
+                        address:address,
+                        province:province,
+                        town:town,
+                        city:city
+                    };
+                    $.post('{:U('shop/index/addaddress')}',data, function (ret) {
+		                console.log(ret)
+                        if(ret.status==1){
+                            $.cookie('freshen_add_data','true');
+                            history.back()
+                        }
+		                else{
+	                        alert(ret.info);
+                        }
+                    })
+                })
+            });
+        })
+    });
+</script>
+</body>
+</html>

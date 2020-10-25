@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,initial-scale=1.0,user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- intoHead Start -->
+    {include file="common/intohead" /}
+    <!-- /intoHead End -->
+
+    {load href="__BASE__/css/layout.css" /}
+</head>
+<body class="mainbody">
+<!--导航栏-->
+{include file="common/position" /}
+<!--/导航栏-->
+
+<div class="line10"></div>
+
+<div id="floatHead" class="toolbar-wrap" style="height: 52px;">
+    <div class="toolbar">
+        <div class="box-wrap">
+            <a class="menu-btn"></a>
+            <div class="l-list">
+                <ul class="icon-list">
+                    <li><a class="add" href="{:url('admin/access/manager/add')}"><i></i><span>新增管理</span></a></li>
+                    <li><a class="all" href="#" ><i></i><span>全选</span></a></li>
+                    <li><a data-ids="" id="btnDelete" class="isAllowed" data-url="{:url('admin/access/delUser')}"><i></i>批量删除</a></li>
+                </ul>
+            </div>
+            <!-- <div class="r-list">
+                <form action="" method="post">
+                    <input name="keyword" type="text" placeholder="手机/用户名称" id="txtKeywords" class="keyword">
+                    <button id="lbtnSearch" class="btn-search" type="submit">查询</button>
+                </form>
+            </div> -->
+        </div>
+    </div>
+</div>
+
+<!--列表-->
+<div class="table-wrap member-info-table" style="width:100%;hegiht:auto;float:left;border: 1px solid #ececec;">
+    {notempty name="list"}
+    <div class="table-container">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" class="ltable">
+            <thead>
+            <tr class="odd_bg">
+                <th>选择</th>
+                <th>用户头像</th>
+                <th>用户登录名</th>
+                <th>用户昵称</th>
+                <th>手机号码</th>
+                <th>注册时间</th>
+                <th>登录时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {volist name="list" id="vo" key="k"}
+            <tr>
+                <td><span class="td check-option r1 checkall" style="width: 4%;"><input type="checkbox" name="id[]"  value="{$vo.id}"></span></td>
+                <td><img src="{$vo.avatar|cdn_img_url|default='__BASE__/images/default.jpg'}" width="40" height="40" alt="用户头像"></td>
+                <td>{$vo.username|default='暂未填写'}</td>
+                <td>{$vo.nickname|default='暂未填写'}</td>
+                <td>{$vo.mobile}</td>
+                <td>{$vo.register_time}</td>
+                <td>{$vo.login_time}</td>
+                <td>
+                    {switch name="vo.status"}
+                    {case value="1"}启用{/case}
+                    {case value="0"}禁用{/case}
+                    {default /}未知
+                    {/switch}
+                </td>
+                <td align="center">
+                    [<a href="javascript:;" data-url="{:url('admin/member/groupAuth',array('id'=>$vo['id']))}" group-url="{:url('admin/member/groupAuth')}" class="btn-xs btn-link UserGroupAuth">授权</a>]
+                    [<a href="{:url('admin/access/manager/edit', ['id'=>$vo.id])}" class="check_a btn-xs btn-link" style="background: #fff;border: none;cursor: pointer;">编辑</a>]
+                    [<a href="javascript:;" data-url="{:url('admin/access/manager/delete', ['id'=>$vo.id])}" class="check_a btn-xs btn-link isConfirm" style="background: #fff;border: none;cursor: pointer;">删除</a>]
+                </td>
+            </tr>
+            {/volist}
+            </tbody>
+        </table>
+
+    </div>
+    <div class="line20"></div>
+    <!--数据分页-->
+    <div class="page-bootstrap">{$list->render()}</div>
+    {else /}
+    <!--空数据提示-->
+    {include file="common/empty" /}
+    <!--/空数据提示-->
+    {/notempty}
+</div>
+<!--/列表-->
+
+
+<script>
+    //点击所有授权的弹窗
+    $(".UserGroupAuth").on("click", function() {
+        var a = $(this).attr("data-url");
+        parent.layer.open({
+            type: 2,
+            title:"后台权限管理",
+            area:  ['580px','480px'],
+            closeBtn: 1,
+            content: a,
+            success: function(b, d) {
+                layer.iframeAuto(d);
+                var c = parent.layer.getChildFrame("body", d);
+                c.find(".btnOK").on("click", function() {
+                    var b = c.find("#GroupForm").serializeArray(),
+                        e = c.find("#uid").val();
+                    $.post(a, {
+                        fromData: b,
+                        uid: e
+                    }, function(a) {
+                        parent.layer.msg(a.info, {
+                            time: 2E3
+                        });
+                        a.url && "" != a.url && setTimeout(function() {
+                            location.href = a.url
+                        }, 2E3);
+                        "" == a.url && setTimeout(function() {
+                            location.href = a.url
+                        }, 1E3)
+                    })
+                    setTimeout(function(){
+                        window.location.reload();
+                    },1000)
+                    parent.layer.close(d);
+                });
+                c.find(".btnCancel,.close").on("click", function() {
+                    parent.layer.close(d)
+                })
+            }
+        })
+
+    })
+</script>
+</body>
+</html>
+

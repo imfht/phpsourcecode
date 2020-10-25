@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SESSION托管</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>SESSION托管</legend>
+			<ol>
+				<li><h2 class="title_h2">介绍</h2>
+					当我们的网站为了减少压力，程序采用分布式，同时部署在多个服务器上的时候，
+					<br>那么我们就不能采用普通的文件作为session的存储，这时候我们需要使用一个中心服务器存储session数据，
+					<br>比如：memcache，mysql，mongodb等。Soter里把这种采用非默认文件存储的方式称为SESSION托管。
+					<br>Soter支持多种SESSION托管方式，分布是：memcache、memcached、redis、mongodb、mysql。
+				</li>
+				<li><h2 class="title_h2">session相关设置</h2>
+					我们在入口文件里面可以看到下面的配置：
+					<pre class="brush:php">
+						/* 设置session信息 */
+						->setSessionConfig(array(
+						    'autostart' => false,
+						    'cookie_path' => '/',
+						    'cookie_domain' => Sr::server('HTTP_HOST'),
+						    'session_name' => 'SOTER',
+						    'lifetime' => 3600,
+						))
+					</pre>
+					可以看到我们可以设置session的一些基本信息，下面对每个部分说明一下：
+					<br>1.<b>autostart</b> 是否自动启动session，true自动，false不自动。
+					<br>2.<b>cookie_path</b>  cookie中session_id的路径，一般保持 / 即可。
+					<br>3.<b>cookie_domain</b>  cookie中session_id的作用域域名，一般保持当前域名即可。
+					<br>4.<b>session_name</b>  cookie中session_id的cookie名称。
+					<br>5.<b>lifetime</b>  cookie中session_id的过期时间。
+				</li>
+				<li><h2 class="title_h2">设置托管方式</h2>
+					在入口文件里面我可以看到下面的配置：
+					<pre class="brush:php">
+						/**
+						* 设置session托管类型
+						* 1.setSessionHandle可以直接传入Soter_Session类对象
+						* 2.setSessionHandle也可以传入配置文件名称，配置文件里面要返回一个Soter_Session类对象。
+						*/
+					        //->setSessionHandle('session')
+					</pre>
+					默认情况下setSessionHandle被注释掉了，也就是采用php默认的session处理，如果要启用托管取消前面的注释即可，
+					<br>然后传递我们的参数，参数可以是Soter_Session类对象，也可以传入配置文件名称，配置文件里面要返回一个Soter_Session类对象。
+					<br>下面对每种托管方式进行说明：
+					<h3 class="title_h3">1.memcache</h3>
+					memcache托管方式采用的是session.save_handler管理机制，需要php安装memcache拓展支持。
+					<br>配置方式如下：
+					<pre class="brush:php">
+					        ->setSessionHandle(new Soter_Session_Memcache(array('path' => 'tcp://127.0.0.1:11211')))
+					</pre>
+					<h3 class="title_h3">2.memcached</h3>
+					memcached托管方式采用的是session.save_handler管理机制，需要php安装memcached拓展支持。
+					<br>配置方式如下：
+					<pre class="brush:php">
+					        ->setSessionHandle(new Soter_Session_Memcached(array('path' => '127.0.0.1:11211')))
+					</pre>
+					<h3 class="title_h3">3.redis</h3>
+					redis托管方式采用的是session.save_handler管理机制，需要php安装redis拓展支持。
+					<br>配置方式如下：
+					<pre class="brush:php">
+					        ->setSessionHandle(new Soter_Session_Redis(array('path' => 'tcp://127.0.0.1:6379')))
+					</pre>
+					3.1、还可以使用多个redis服务器并且制定权重比如：
+					<br>tcp://host1:6379?weight=1, tcp://host2:6379?weight=2
+					<br>3.2、还可以通过在tcp://127.0.0.1:6379后面加参数，定义更多的功能，
+					<br>可用的参数及含义如下：
+					<br>格式：tcp://127.0.0.1:6379?weight=值1&参数2=值2&参数3=值3
+					<br>参数列表：
+					<br>weight(整数): 权重，当指定了多个服务器的时候.比如：tcp://host1:6379?weight=1, tcp://host2:6379?weight=2
+					<br>timeout (浮点数): 单位秒. 默认86400秒.
+					<br>persistent (整数, 1 或 0): defines if a persistent connection should be used. (experimental setting)
+					<br>prefix (字符串, 默认"PHPREDIS_SESSION:"):sesson id 前缀.
+					<br>auth (字符串, 默认：空):认证密码，避免特殊字符影响可以需要使用urlencode()处理一下.
+					<br>database (整数): 使用数据库的序号.
+					<h3 class="title_h3">4.mongodb</h3>
+					mongodb托管方式采用的是php自定义注册session处理实现的，Soter_Session_Mongodb类实现了这个功能，
+					<br>使用的时候，我们需要通过配置告诉它mongodb的连接信息。
+					<br>配置方式如下：
+					<pre class="brush:php">
+					        ->setSessionHandle(new Soter_Session_Mongodb(
+								array(
+									'host' => '127.0.0.1', //mongodb主机地址
+									'port' => 27017, //端口
+									'user' => 'root',
+									'password' => '',
+									'database' => 'local', //   MongoDB 数据库名称
+									'collection' => 'sessions', //   MongoDB collection名称
+									'persistent' => false, // 是否持久连接
+									'persistentId' => 'SoterMongoSession', // 持久连接id
+									// 是否支持 replicaSet
+									'replicaSet' => false,
+								)
+							    ))
+					</pre>
+					<h3 class="title_h3">5.mysql</h3>
+					mysql托管方式采用的是php自定义注册session处理实现的，Soter_Session_Mysql类实现了这个功能，
+					<br>使用的时候，我们需要通过配置告诉它mysql的连接信息。
+					<br>配置方式如下：
+					<pre class="brush:php">
+					        ->setSessionHandle(new Soter_Session_Mysql(
+							array(
+								//如果使用数据库配置里面的组信息，这里可以设置group组名称，没有就留空
+								//设置group组名称后，下面连接的配置不再起作用，group优先级大于下面的连接信息
+								'group' => '',
+								 //表全名，不包含前缀
+								'table' => 'session_handler_table',
+								//表前缀，如果有使用数据库配置组里面的信息
+								//这里可以设置相同的数据库配置组里面的前缀才能正常工作
+								'table_prefix' => '', 
+								//连接信息
+								'hostname' => '127.0.0.1',
+								'port' => 3306,
+								'username' => 'root',
+								'password' => 'admin',
+								'database' => 'test',
+							    )
+						    ))
+					</pre>
+					存储session的表结构如下：
+					<pre class="brush:php">
+						CREATE TABLE `session_handler_table` (
+						`id` varchar(255) NOT NULL,
+						`data` mediumtext NOT NULL,
+						`timestamp` int(255) NOT NULL,
+						PRIMARY KEY (`id`),
+						UNIQUE KEY `id` (`id`,`timestamp`),
+						KEY `timestamp` (`timestamp`)
+						) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+					</pre>
+				</li>
+			</ol>
+
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

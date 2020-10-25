@@ -1,0 +1,140 @@
+{extend name="$LAYOUT_HOME_BASE" /}
+{block name="title"}{$catName} - 团购商品 - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="meta"}
+<meta name="description" content="{$seoGrouponDesc}">
+<meta name="Keywords" content="{$seoGrouponKeywords}">
+{/block}
+{block name="css"}
+<link href="__ROOT__/addons/groupon/view/home/index/css/list.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="top"}
+	{include file="$LAYOUT_HOME_TOP" /}
+{/block}
+{block name="shop_apply"}
+	{include file="$LAYOUT_HOME_SHOP_APPLY" /}
+{/block}
+{block name="header"}
+	{include file="$LAYOUT_HOME_HEADER" /}
+{/block}
+{block name="main"}
+
+{/* 已筛选的条件 */}
+<input type="hidden" id="cat" class="sipt" value='{$grouponCatId}'/>
+<div class="groupon-head">
+   <div class="item" style="border-left:2px solid #df2003;padding-left: 8px;">
+      <a class="link" href="{:url('home/index/index')}">首页</a>
+      <i class="arrow">&gt;</i>
+   </div>
+      <div class="wst-lfloat" style='line-height: 22px;'>团购活动 </div>
+      <div class="wst-clear"></div>
+</div>
+{/* 筛选条件  */}
+<div class="groupon-selector">
+    <div class='selector-head'>分类：</div>
+    <ul class='selector-item'>
+    <li><a href="{:addon_url('groupon://goods/lists')}" {if $grouponCatId==0}class='curr'{/if}>全部商品分类</a></li>
+    {volist name="$catList" id='vo'}
+      <li><a href="{:addon_url('groupon://goods/lists','catId='.$vo['catId'])}" {if $grouponCatId==$vo['catId']}class='curr'{/if}>{$vo['catName']}</a></li>
+    {/volist}
+    </ul>
+    <div class="wst-clear"></div>
+</div>
+
+
+{/* 商品展示  */}
+<div class="wst-container" id='groupon-container' sc="{:date('Y-m-d H:i:s')}">
+	<div class='goods-main'>
+	   <div class="goods-list">
+	      {volist name='goodsPage["data"]' id='vo'}
+	      <div class="goods" sv="{$vo['startTime']}" ev="{$vo['endTime']}" st="{$vo['status']}">
+	      	<div class="img"><a target='_blank' href="{:addon_url('groupon://goods/detail','id='.$vo['grouponId'])}"><img title="{$vo['goodsName']}" alt="{$vo['goodsName']}" class='goodsImg2' data-original="__RESOURCE_PATH__/{$vo['goodsImg']}"/></a></div>
+	      	<div class='goods-txt'>
+	      	    <div class="p-name">
+	      	    <a target='_blank' href="{:addon_url('groupon://goods/detail','id='.$vo['grouponId'])}"  title="{$vo['goodsName']}">{$vo['goodsName']}</a>
+	      	    </div>
+	      		<div class="p-price">
+	      		<span class='groupon-price'><em>￥</em>{$vo['grouponPrice']}</span>
+	      		<span class='market-price'>￥{$vo['marketPrice']}</span>
+	      		</div>
+	      		<div class="p-hsale">
+	      			<div class="sale-num"><span class="wst-fred">{$vo['zhekou']}折</span></div>
+		      		<a class="p-add-cart" style="display:none;" target='_blank' href="{:addon_url('groupon://goods/detail','id='.$vo['grouponId'])}">马上参团</a>
+	      		</div>
+	      		<div class='wst-clear'></div>
+	      		<div class='saleNum'>已售{$vo["orderNum"]}件</div>
+                <div class='countDown groupon-showTime'>截止：{$vo['endTime']}</div>
+	      		<div class='wst-clear'></div>
+	      	</div>
+	      </div>
+	      
+	      {/volist}
+	     <div class='wst-clear'></div>
+	   	</div>
+	   	<div >
+	  		<div id="wst-pager"></div>
+		</div>
+		
+	</div>
+	<div class='wst-clear'></div>
+	<div style="height: 50px;"></div>
+</div>
+{include file="$LAYOUT_HOME_RIGHT_CART"/}
+{/block}
+{block name="footer"}
+	{include file="$LAYOUT_HOME_FOOTER" /}
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/home/index/js/time.js?v={$v}'></script>
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/home/index/js/list.js?v={$v}'></script>
+<script type='text/javascript'>
+laypage({
+    cont: 'wst-pager',
+    pages: {$goodsPage["last_page"]}, //总页数
+    skip: true, //是否开启跳页
+    skin: '#e23e3d',
+    groups: 3, //连续显示分页数
+    curr: function(){ //通过url获取当前页，也可以同上（pages）方式获取
+        var page = location.search.match(/page=(\d+)/);
+        return page ? page[1] : 1;
+    }(), 
+    jump: function(e, first){ //触发分页后的回调
+        if(!first){ //一定要加此判断，否则初始时会无限刷新
+        	var nuewurl = WST.splitURL("page");
+        	var ulist = nuewurl.split("?");
+        	if(ulist.length>1){
+        		location.href = nuewurl+'&page='+e.curr;
+        	}else{
+        		location.href = '?page='+e.curr;
+        	}
+            
+        }
+    }
+});
+
+
+
+var total = {$goodsPage["last_page"]};
+function page(t){
+	var page = location.search.match(/page=(\d+)/);
+	var curr = 1;
+	if(page && page.length>1){ //说明当前url上有page参数
+		curr = page[1]; // 当前页
+	}
+	var nuewurl = WST.splitURL("page"); // 当前url
+	var ulist = nuewurl.split("?"); // 将传递的参数与url分开
+	// 说明当前有参数. 需要带着参数一起传递
+	var url = (ulist.length>1)?nuewurl+'&page=':'?page=';
+
+	if(t=='prev'){ // 上一页
+		if(curr<=1)return;
+		curr = parseInt(curr)-1;
+		location.href = url+curr;
+	}else{ // 下一页
+		if(curr>=total)return;
+		curr = parseInt(curr)+1;
+		location.href = url+curr;
+	}
+	
+}
+</script>
+{/block}

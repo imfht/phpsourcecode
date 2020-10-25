@@ -1,0 +1,101 @@
+<extend name="Public/base"/>
+<block name="content">
+<h3 class="col-md-8">采集管理</h3>
+<div class="row">
+    <div class="col-lg-12">
+    	<div class="panel panel-default">
+       		<div class="panel-heading ">
+				<h5 class="inline" id="c-info">链接列表</h5>
+       			<div class="btn-group pull-right">
+					<a class="btn  btn-success" style="display:none" id="ruku" href="<{:addons_url('Collect://Collect/start',array('id'=>$_GET['id']))}>">入库</a>
+					<a class="btn  btn-success" id="start" href="#">开始</a>
+					<a class="btn  btn-danger" id="stop" href="#">停止</a>
+	         	</div>      			
+       		</div>
+    		<div class="table-responsive">
+        		<table class="table table-striped table-bordered table-hover">           
+            		<thead>
+                		<tr> 
+                            <th>列表ID</th>
+            				<th>音乐名称</th>
+							<th>播放地址</th>
+            				<th>状态</th>
+                         	<!--th class="text-center">操作</th-->
+                    	</tr>
+                	</thead>
+                    <tbody id="item-show">
+                    </tbody>
+                </table>
+    		</div>
+    		<!-- 结束 表格 -->
+    		<div class="panel-footer">
+				<div class="row">
+					<div class="page">
+						
+					</div>
+				</div>
+            </div>    		
+    	</div>
+	</div>
+</div>
+</block>
+<block name="script">
+<script type="text/javascript"  src="__JS__/other.js"></script>
+<script type="text/javascript">
+var status=false, id = <{$_GET['id']}>, itemid = 1,rulename='';
+var $doc = $('#c-info');
+$('#start').click(function(){	
+	$doc.text('正在收集信息，请稍后...').addClass('text-purple');
+	$.post("<{:addons_url('Collect://Collect/start')}>",{id:id},function(data){
+		if (data.status){
+			rulename = data.rulename;
+			loop(data.p,0);
+		}else{
+			$doc.text(data.info);
+		}	
+	});
+})
+
+$('#stop').click(function(){
+	status=false;
+});
+
+function loop(p,listid){
+	var listid =  parseInt(listid);
+	$doc.html('正在采集['+rulename+']分页<b style="color:red;">【'+p+'】</b>第<b style="color:red;">'+(listid+1)+'</b>数据....');
+	if(status){
+		$.post("<{:addons_url('Collect://Collect/getlist')}>",{p:p,listid:listid,id:id},function(data){
+			if (data.status){
+				if (p ==data.p ){
+					if(data.status == 1 ){
+						var info = "成功";
+					}else{
+						var info = '<b style="color:red;">失败</b>';
+					}
+					var item = 	'<tr>'+			
+						'<td>'+itemid+'</td>'+
+						'<td class="m-name">'+data['title']+'</td>'+
+						'<td class="m-name">'+data['playUrl']+'</td>'+
+						'<td class="info">'+info+'</td>'+
+					'</tr>'				
+					$('#item-show').prepend(item);
+					++itemid;
+				}
+				loop(data.p,data.listid);
+				window.onbeforeunload = function(){ return "正在采集数据，请不要关闭！" }
+			}else{
+				itemid =  itemid-1;
+				$doc.text('数据采集完毕共采集到数据'+itemid+'条');
+				$('#ruku').show();
+				$('#start').hide();
+				$('#stop').hide();
+				window.onbeforeunload = function(){ return null }
+			}
+			
+		});
+	}
+}
+</script>
+</block>	
+
+

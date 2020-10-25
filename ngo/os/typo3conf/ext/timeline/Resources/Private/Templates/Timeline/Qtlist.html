@@ -1,0 +1,104 @@
+﻿{namespace ngoos=Jykj\Siteconfig\ViewHelpers}
+<f:layout name="Default"/>
+
+<f:section name="content">
+<link rel="stylesheet" type="text/css" href="{f:uri.resource(path:'Css/timeliner.css')}" />
+<link rel="stylesheet" type="text/css" href="{f:uri.resource(path:'Css/jquery.fancybox.css')}" />
+<style>
+.timeliner-body {font-size: 62.5%;margin: 0;padding: 0;}
+.timeliner-body h2 {font-size: 18px;font-weight: 400;margin: 5px 0;letter-spacing: .1em;}
+.timeliner-body a:link,.timeliner-body a:visited {color: #7097af;text-decoration: none;}a:hover {color: #7DBADF;}
+.timeliner-body a img {border: none;}
+.timeliner-body p {margin: 0 0 50px 8px;font-size: 14px;font-weight: 400;line-height: 1.6em;}
+.timeliner-body .lead {font-size: 2em;margin-bottom: 40px;}
+.timeliner-body .clear {clear: both;line-height: 0;font-size: 0;}
+</style>
+
+<h3 class="c-font-uppercase c-font-white c-font-bold">
+    <span class="c-theme-font">公益大事记</span>
+</h3>
+<div class="timeliner-body">
+  <div id="timeline" class="timeline-container">
+    <!--<button class="timeline-toggle">+ expand all</button>-->
+    <br class="clear">
+    <!-- START 大事记内容!以年为单位划分大事记，内容由js返回 -->
+    <div id="showTimeLine"></div>
+  </div>
+</div>
+<script type="text/javascript" src="{f:uri.resource(path:'JavaScript/timeliner.js')}"></script>
+<script type="text/javascript" src="{f:uri.resource(path:'JavaScript/jquery.fancybox.pack.js')}"></script>
+<script>
+    $(document).ready(function() {
+    	
+    	// BEGIN: Fancybox
+    	var ContentFancybox = function () {
+
+    		var _initInstances = function () {
+    			// init fancybox
+    			$("[data-lightbox='fancybox']").fancybox();
+    		};
+
+    		return {
+
+    			//main function to initiate the module
+    			init: function () {
+    				_initInstances();
+    			}
+
+    		};
+    	}();
+    	// END: Fancybox
+    	
+    	
+		ContentFancybox.init();
+    	
+        $.timeliner({});
+        $('.fancybox').fancybox();
+    });
+</script>
+<script type="text/javascript">
+    var year="";
+    var sHtml="";
+    <f:for each="{timelines}" as="vo" iteration="iterator">
+        var newyear = '<f:format.date format="Y">{vo.eventdate}</f:format.date>';
+        if(newyear!=year){
+            if(sHtml.length==0){
+                sHtml='<div class="timeline-wrapper"><h2 class="timeline-time"><span><f:format.date format="Y">{vo.eventdate}</f:format.date></span></h2>';
+            }else{
+                sHtml= sHtml+'</div><div class="timeline-wrapper"><h2 class="timeline-time"><span><f:format.date format="Y">{vo.eventdate}</f:format.date></span></h2>';
+            }
+            sHtml = sHtml+
+            '<dl class="timeline-series">'+
+                '<dt id="{iterator.index}" class="timeline-event"><f:format.date format="m月d日">{vo.eventdate}</f:format.date><a style="padding-left:20px;">{vo.title}</a>'+
+                '</dt>'+
+                '<dd class="timeline-event-content" id="{iterator.index}EX">'+
+                    '<f:if condition="{ngoos:getImgUrlFromContent(content:vo.bodytext)}">'+
+                        '<div class="media">'+
+                        '  <a class="fancybox" href="{ngoos:getImgUrlFromContent(content:vo.bodytext)}"><img src="{ngoos:getImgUrlFromContent(content:vo.bodytext)}" width="100%" height="auto" alt="title"></a>'+
+                        '</div>'+
+                    '</f:if>'+
+                    '<p><f:format.raw>{vo.bodytext -> f:format.stripTags()}</f:format.raw></p><br class="clear">'+
+                '</dd> '+
+            '</dl> ';
+            year = newyear;
+        }else{
+            sHtml = sHtml+
+            '<dl class="timeline-series">'+
+                '<dt id="{iterator.index}" class="timeline-event"><f:format.date format="m月d日">{vo.eventdate}</f:format.date><a style="padding-left:20px;">{vo.title}</a>'+
+                '</dt>'+
+                '<dd class="timeline-event-content" id="{iterator.index}EX">'+
+                    '<f:if condition="{ngoos:getImgUrlFromContent(content:vo.bodytext)}">'+
+                        '<div class="media">'+
+                        '<a class="fancybox" href="{ngoos:getImgUrlFromContent(content:vo.bodytext)}"><img src="{ngoos:getImgUrlFromContent(content:vo.bodytext)}" width="100%" height="auto" alt="title"></a>'+
+                        '</div>'+
+                    '</f:if>'+
+                    '<p><f:format.raw>{vo.bodytext -> f:format.stripTags()}</f:format.raw></p><br class="clear">'+
+                '</dd> '+
+            '</dl> ';
+        }
+  </f:for>
+  sHtml = sHtml + '</div>';
+  //alert(sHtml);
+  document.getElementById('showTimeLine').innerHTML=sHtml;
+</script>
+</f:section>

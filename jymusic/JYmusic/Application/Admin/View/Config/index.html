@@ -1,0 +1,147 @@
+<extend name="Public/base"/>
+<block name="content">
+<h3 class="col-md-8">配置列表</h3>
+<div class="col-md-4">
+	<div class="input-group mb-lg">
+    	<input type="text" name="title" class="form-control" value="<{:I('title')}>" placeholder="请输入菜单名称">
+    	<span class="input-group-addon">    		
+        	<a class="fa-search fa" href="javascript:;" id="search" url="__SELF__"></a> 
+    	</span>
+	</div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+    	<div class="panel panel-default">
+    		<div class="panel-heading">
+    			<div class="row">
+            		<ul class="nav nav-pills col-md-6">
+            			<present name="Think.get.group">
+            			<li><a href="<{:U('index')}>">全部</a></li>
+            			<else/>
+            			<li class="active"><a href="javascript:vod(0);">全部</a></li>
+            			</present>			
+            			<foreach name="group" item="vo">
+            				
+            			<neq name="group_id" value="$key">			
+            				<li><a href="<{:U('index?group='.$key)}>"><{$vo}></a><li>
+            				<else/>
+            				<li class="active"><a href="javascript:vod(0);"><{$vo}></a><li>
+            			</neq>
+            			</li>
+            			</foreach>	
+            		</ul>
+                	<div class="text-right col-md-6">
+            			<a class="btn btn-success" href="<{:U('add')}>">新 增</a>
+            			<button class="btn btn-danger  url="javascript:;" target-form="ids">删 除</button>
+            			<button class="btn btn-success list_sort" url="<{:U('sort?group='.I('group'),'','')}>">排序</button>
+    				</div>
+				</div>        
+			</div>	
+			<div class="table-responsive">
+				<div class="tab-pane active" >
+					<table class="table table-bordered table-striped">
+            			<thead>
+            				<tr>      	
+            					<th style="width: 5%" class="check-all">
+                              		<div data-toggle="tooltip" data-title="全选" class="checkbox c-checkbox">
+                                 		<label>
+                                    		<input type="checkbox">
+                                    		<span class="fa fa-check"></span>
+                                 		</label>
+                              		</div>
+                           		</th> 
+            					<th>ID</th>
+            					<th>名称</th>
+            					<th>标题</th>
+            					<th>分组</th>
+            					<th>类型</th>
+            					<th class='text-center'>操作</th>
+            				</tr>
+            			</thead>
+            			<tbody>
+            				<notempty name="list">
+            				<volist name="list" id="config">
+            					<tr>
+            						<td>
+                              		<div class="checkbox c-checkbox">
+                                 		<label>
+                                    	<input type="checkbox" class="ids" value="<{$config.id}>" name="id[]">
+                                    	<span class="fa fa-check"></span>
+                                 		</label>
+                              		</div>
+                           			</td>
+            						<td><{$config.id}></td>
+            						<td><a href="<{:U('edit?id='.$config['id'])}>"><{$config.name}></a></td>
+            						<td><{$config.title}></td>
+            						<td><{$config.group|get_config_group}></td>
+            						<td><{$config.type|get_config_type}></td>
+            						<td class='text-center'>
+            						<a class="btn btn-labeled btn-sm " href="<{:U('edit?id='.$config['id'])}>"><em class="fa fa-edit"></em></a>
+    	                            <a class="btn btn-labeled btn-sm " href="<{:U('del?id='.$config['id'])}>"><em class="fa fa-times"></em></a>
+            						</td>
+            					</tr>
+            				</volist>
+            				<else/>
+            				<td colspan="6" class="text-center"> aOh! 暂时还没有内容! </td>
+            				</notempty>
+            			</tbody>
+        			</table>
+           		</div>
+           	</div>
+    		<!-- 结束 表格 -->
+    		<div class="panel-footer">
+    			<div class="row">
+					<ul class="pagination">
+					<{$_page}>
+					</ul>
+				 </div>
+            </div>    		
+    	</div>
+	</div>
+</div>
+</block>
+
+<block name="script">
+<script type="text/javascript">
+highlight_subnav("<{:U('Config/group')}>","<{:U('Config/index')}>");
+$(function(){
+	//搜索功能
+	$("#search").click(function(){
+		var url = $(this).attr('url');
+        var query  = $('.search-form').find('input').serialize();
+        query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g,'');
+        query = query.replace(/^&/g,'');
+        if( url.indexOf('?')>0 ){
+            url += '&' + query;
+        }else{
+            url += '?' + query;
+        }
+		window.location.href = url;
+	});
+	//回车搜索
+	$(".search-input").keyup(function(e){
+		if(e.keyCode === 13){
+			$("#search").click();
+			return false;
+		}
+	});
+	//点击排序
+	$('.list_sort').click(function(){
+		var url = $(this).attr('url');
+		var ids = $('.ids:checked');
+		var param = '';
+		if(ids.length > 0){
+			var str = new Array();
+			ids.each(function(){
+				str.push($(this).val());
+			});
+			param = str.join(',');
+		}
+
+		if(url != undefined && url != ''){
+			window.location.href = url + '/ids/' + param;
+		}
+	});
+});
+</script>
+</block>

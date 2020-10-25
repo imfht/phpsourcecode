@@ -1,0 +1,158 @@
+<extend name="Public:common" />
+
+<block name="breadcrumb">
+ 
+
+
+                        <div id="page-breadcrumb">
+                            <a href="{:U('Addons/adminList',array('name'=>'SuperLinks'))}" id="parentname" title="友情链接管理">
+                                <i class="glyph-icon icon-dashboard"></i>
+                                友情链接管理
+                            </a>
+                           
+                            <span class="current" id="activeaname">
+                                <if condition="$_GET['_action'] eq 'add'">新增<else/>编辑</if>友情连接
+                            </span>
+                        </div>
+                        
+                        
+                    
+
+</block>
+<block name="main">
+    <form action="{:addons_url('SuperLinks://SuperLinks/update',array('navTabId'=>'SuperLinks'))}" url="{:U('Addons/adminList',array('name'=>'SuperLinks'))}" id="j_custom_form" class="col-md-12  form-validate" method="post" callback="TabAjaxDone" noEnter>
+      
+      <input type="hidden" name="id" value="{$info.id}" readonly/>
+        <div class="form-row">
+<div class="form-label col-md-2 text-right">
+<label>站点名称：</label></div>
+<div class="form-input col-md-5">
+					<input type="text" name="title" value="{$info.title}">
+		<div class="font-yellow mrg10T">请输入友情连接站点名称</div>
+                                      </div>
+        </div>
+		<div class="form-row">
+<div class="form-label col-md-2 text-right">
+<label>连接类型：</label></div>
+<div class="form-input col-md-5">
+				  <if condition="$_GET['_action'] eq 'add'">
+					<label class="ilabel"><input type="radio" class="j-icheck" name="type" value="1" checked="checked">图片连接</label>
+					<label class="ilabel"><input type="radio" class="j-icheck"  name="type" value="2">普通连接</label>
+				  <else/>
+					<label class="ilabel"><input type="radio" class="j-icheck"  name="type" value="1" <if condition="$info.type eq 1">checked="checked"</if> >图片连接</label>
+					<label class="ilabel"><input type="radio" class="j-icheck"  name="type" value="2" <if condition="$info.type eq 2">checked="checked"</if> >普通连接</label>
+				  	
+				  </if>
+			
+                                      </div>
+        </div>
+		<div class="form-row">
+<div class="form-label col-md-2 text-right">
+<label>外链地址：</label></div>
+<div class="form-input col-md-5">
+					<input type="text" class="form-control" name="link" value="{$info.link}">
+			<div class="font-yellow mrg10T">请填写带http://的全路径</div>
+                                      </div>
+        </div>
+		<div class="form-row">
+<div class="form-label col-md-2 text-right">
+<label>站点图片：</label></div>
+<div class="form-input col-md-5">
+					<input type="file" id="upload_picture">
+					<input type="hidden" id="cover_id" name="cover_id" value="{$info.cover_id}"/>
+					<div class="upload-img-box">
+					<notempty name="info['cover_id']">
+						<div class="upload-pre-item"><img src="{$info.cover_id|get_cover='path'}"/></div>
+					</notempty>
+					</div>
+				
+                                      </div>
+        </div>
+       
+ 
+	  <div class="actionBar">
+		<div class="form-input mrg20B text-right">
+           <button type="submit" class="btn medium bg-blue">保存</button>
+           
+           <button type="button" url="{:U('Addons/adminList',array('name'=>'SuperLinks'))}" class="btn-close btn medium bg-red mrg15L">取消</button>
+       </div>    
+		</div>
+    </form>
+
+
+<script type="text/javascript">
+
+(function(){
+	var url = "{$current}";
+	$("#subnav").find("a[href='" + url + "']").parent().addClass("current");
+setTimeout(function(){	
+	//上传文件
+	/* 初始化上传插件 */
+	$("#download-file").uploadify({
+        "height"          : 30,
+        "swf"             : "__STATIC__/uploadify/uploadify.swf",
+        "fileObjName"     : "download",
+        "buttonText"      : "<span class='button-content'><i class='glyph-icon icon-file-o'></i> 上传文件</span>",
+        "uploader"        : "{:U('File/upload',array('session_id'=>session_id()))}",
+        "width"           : 120,
+        'removeTimeout'   : 1,
+        "onUploadSuccess" : uploadSuccess
+    });
+  	//上传图片
+    /* 初始化上传插件 */
+	$("#upload_picture").uploadify({
+        "height"          : 30,
+        "swf"             : "__STATIC__/uploadify/uploadify.swf",
+        "fileObjName"     : "Picture",
+        "buttonText"      : "<span class='button-content'><i class='glyph-icon icon-picture-o'></i> 上传图片</span>",
+        "uploader"        : "{:U('File/uploadPicture',array('session_id'=>session_id()))}",
+        "width"           : 120,
+        'removeTimeout'	  : 1,
+        'fileTypeExts'	  : '*.jpg; *.png; *.gif;',
+        "onUploadSuccess" : uploadPicture
+    });
+},3);
+	/* 文件上传成功回调函数 */
+    function uploadSuccess(file, data){
+    	var data = $.parseJSON(data);
+        if(data.status){
+        	$("input[name=file]").val(data.data);
+        	$("input[name=file]").parent().find('.upload-img-box').html(
+        		"<div class=\"uplaod-pre-file\">" + data.info + "</div>"
+        	);
+        } else {
+        	alertmsg.error(data.info);
+        }
+    }
+   
+
+	function uploadPicture(file, data){
+    	var data = $.parseJSON(data);
+    	if(data.status){
+        	$("#cover_id").val(data.id);
+        	$("#cover_id").parent().find('.upload-img-box').html(
+        		'<div class="upload-pre-item"><img src="' + data.path + '" width="120" height="120" onclick="imgpop(this)"/></div>'
+        	);
+        } else {
+        	 alertMsg.error(data.info);
+        }
+    }
+
+    var $radio = $('input[name="type"]');
+    $radio.on('ifChanged', function(event) {
+        var $target = $(event.target);
+        var checked = $target.prop('checked');
+        var value   = $target.val();
+        if(value==1){
+        	$("#img_area").show();
+        }else{
+        	$("#img_area").hide();
+        }
+        //alertMsg.info('选择了：' + value);
+        
+    });
+    
+})();
+
+</script>
+</block>

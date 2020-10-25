@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF8">
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>{$page_title}</title>
+    <meta name="description" content="{$keywords}">
+    <meta name="keywords" content="{$description}">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" href="/animated_favicon.gif" type="image/gif">
+    <link href="/themes/new/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="/themes/new/css/head_foot.css" rel="stylesheet" type="text/css">
+    <script src="/themes/new/js/jquery-1.11.3.js"></script>
+    <script src="/themes/new/js/bootstrap.min.js"></script>
+    <script src="/themes/new/js/main.js"></script>
+    <style>
+        *{
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+            box-sizing: content-box;
+        }
+    </style>
+</head>
+<body class="page-index">
+<!-- 头部start-->
+<style>
+    .wrap{width: 1210px;overflow: hidden;margin: 0 auto;}
+    .forpwd a{color:#555;text-decoration: none; }
+    .forpwd a:hover{color: #0089FD;}
+    .not{
+        width:300px;border-radius: 2px;-webkit-border-radius: 2px;
+    }
+    .jiakuang{border-radius: 10px; border: 1px solid #ddd;box-shadow: 0px 0px  10px #aaa;padding:10px;width: 450px;padding: 40px 30px;margin:0px auto; background-color: white;}
+    #div_geetest_lib{width:300px;margin: 30px auto;}
+    body{background-color: #EBF8FF;}
+    #submit_button{ cursor: pointer;height:48px;line-height: 48px; width: 288px;border: 1px solid #FFFFF0;
+        background-color: #0089FD; border-radius: 4px;font-size: 20px;color: #FFFFF0;}
+    .glyphicon{left: 14px;top: 35px;font-size: 14px;}
+</style>
+
+<div class="">
+    <div class="bg-img">
+        <div class="wrap clearfix" style="padding: 200px 0px;">
+
+            <form method="post" action="/public/login" onsubmit="return false" class="jiakuang">
+                <div class="text-center" style="margin-bottom: 45px;">
+                    <img alt="{$config.shop_name}" src="/{$config.shop_logo}" height="77">
+                </div>
+                <div class="box not" id="notice" style="display: none">
+                    <div class="alert alert-danger notice_msg" role="alert"></div>
+                </div>
+                <div class="box" style="width:300px;border-radius: 2px;-webkit-border-radius: 2px;margin: 0px auto;">
+                    <span class="glyphicon glyphicon-user"></span>
+                    <input type="text" class="form-control pname" name="name" placeholder="用户名/邮箱dd" style="width: 237px;padding-left: 50px;" value="{$nickname}">
+                </div>
+                <div class=" box" style="width:300px;border-radius: 2px;-webkit-border-radius: 2px;margin: 0px auto;margin-bottom: 30px;">
+                    <span class="glyphicon glyphicon-lock"></span>
+                    <input type="password" class="form-control password" name="password" placeholder="密码" style="width: 237px;padding-left: 50px;">
+                </div>
+
+                <div class="box" id="div_geetest_lib">
+                    <div id="captcha" style="display: none"></div>
+                    <script src="http://static.geetest.com/static/tools/gt.js"></script>
+                    <script>
+                        var check_code={$check_code};
+                        if(check_code==1){
+                            $('#captcha').removeAttr('style');
+                        }
+                        var handler = function (captchaObj) {
+                            // 将验证码加到id为captcha的元素里
+                            captchaObj.appendTo("#captcha");
+                        };
+                        $.ajax({
+                            // 获取id，challenge，success（是否启用failback）
+                            url: "?c=login&a=code&rand="+Math.round(Math.random()*100),
+                            type: "get",
+                            dataType: "json", // 使用jsonp格式
+                            success: function (data) {
+                                // 使用initGeetest接口
+                                // 参数1：配置参数，与创建Geetest实例时接受的参数一致
+                                // 参数2：回调，回调的第一个参数验证码对象，之后可以使用它做appendTo之类的事件
+                                　$('.change').val(data.challenge);
+                                initGeetest({
+                                    gt: data.gt,
+                                    challenge: data.challenge,
+                                    product: "float", // 产品形式
+                                    offline: !data.success
+                                }, handler);
+                            }
+                        });
+                        $(function(){
+                            $("#submit_button").click(function(){
+                                $('.notice_msg').html('');
+                                $('#notice').attr('style','display:none');
+                                var name=$('.pname').val();
+                                var password=$('.password').val();
+                                var change= $('.geetest_challenge').val();
+                                var validate= $('.geetest_validate').val();
+                                var seccode= $('.geetest_seccode').val();
+                                //$('#captcha').removeAttr('style');
+                                var type=$("#captcha").attr("style");
+                                if(typeof(type)==="undefined"){
+                                    if(!change||!validate||!seccode){
+                                        $('.notice_msg').html('请完成验证码');
+                                        $('#notice').removeAttr('style');
+                                        return;
+                                    }
+                                }
+
+                                if(!name&&!password){
+                                    $('.notice_msg').html('请填写完整登陆信息');
+                                    $('#notice').removeAttr('style');
+                                    return;
+                                }
+                                $.post('',{'name':name,'password':password,'change':change,'validate':validate,'seccode':seccode},function(data){
+                                         var redirect='{$redirect}';
+                                         if(data.code==1){
+                                             window.location.href=$(".redirect").val();
+                                         }else if(data.code==2){
+                                             $("#captcha").removeAttr("style");
+                                         }else{
+                                             $('.notice_msg').html(data.msg);
+                                             $('#notice').removeAttr('style');
+                                             return;
+                                         }
+                                });
+                            })
+                        })
+
+                    </script>
+                </div>
+
+                <div class="box"  style="width:300px;margin: 0px auto;margin-bottom: 30px;">
+                    <button id="submit_button">确定</button>
+                    <input type="hidden" value="{$redirect}" class="redirect">
+                    <input type="hidden" value="" class="change">
+                    <input type="hidden" value="" class="validate">
+                    <input type="hidden" value="" class="seccode">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

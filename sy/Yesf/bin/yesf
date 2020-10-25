@@ -1,0 +1,119 @@
+#!/usr/bin/env php
+<?php
+//Composer
+require(__DIR__ . '/../vendor/autoload.php');
+
+//从命令行读取参数
+$opt = getopt('a:c:skrfhd', ['app:', 'config:', 'help', 'start', 'kill', 'reload', 'force', 'develop']);
+
+//判断功能
+if (isset($opt['s']) || isset($opt['start'])) {
+	$action = 'start';
+} elseif (isset($opt['k']) || isset($opt['kill'])) {
+	$action = 'kill';
+} elseif (isset($opt['r']) || isset($opt['reload'])) {
+	$action = 'reload';
+} else {
+	$action = 'help';
+}
+
+//帮助
+if ($action === 'help') {
+	echo <<<EOT
+Usage: yesf [options] [args...]
+
+Options:
+	-s, --start Start a Yesf application
+	-k, --kill Kill a running Yesf application
+	-r, --reload Reload a running Yesf application
+	-h, --help Show Yesf help
+
+Arguments:
+	-a, --app The application path
+	-c, --config Config of application
+	-f, --force Is it forced to close (default not), use in -k/--kill
+	-d, --develop Set environment to "develop" to enable debug mode
+
+Examples:
+	yesf -s -a ./application -c ./application/config/env.ini
+	yesf -s --app ./application -c CONFIG_YACONF
+	yesf -k -f -a ./application
+	yesf -r -a /path/to/application
+
+EOT;
+} else {
+	//应用所在目录
+	if (isset($opt['app'])) {
+		$path = realpath($opt['app']);
+	} elseif (isset($opt['a'])) {
+		$path = realpath($opt['a']);
+	} else {
+		$path = realpath('./application');
+	}
+	if ($path === false) {
+		echo "Application path not found";
+		exit;
+	}
+	define("APP_PATH", $path . '/');
+
+	$project_config = require(APP_PATH . 'config/Project.php');
+	$server_config = require(APP_PATH . 'config/Server.php');
+	if (!$server_config['pid']) {
+		echo "Pid path not found";
+		exit;
+	}
+
+	$pid_file = $server_config['pid'] . $project_config['name'] . '_master.pid';
+	if ($action === 'kill') {
+		if (!file_exists($pid_file)) {
+			echo "Pid file not found";
+			exit;
+		}
+		$pid = file_get_contents($pid_file);
+		if (isset($opt['f']) || isset($opt['force'])) {
+			system("kill -9 $pid");
+		} else {
+			system("kill -15 $pid");
+		}
+	}
+	if ($action === 'reload') {
+		if (!file_exists($pid_file)) {
+			echo "Pid file not found";
+			exit;
+		}
+		$pid = file_get_contents($pid_file);
+		system("kill -USR1 $pid");
+	}
+	if ($action === 'start') {
+		//配置
+		if (isset($opt['config'])) {
+			$config = $opt['config'];
+		} elseif (isset($opt['c'])) {
+			$config = $opt['c'];
+		} else {
+			$config = './application/Config/env.ini';
+		}
+		switch ($config) {
+			case 'CONFIG_YACONF':
+				$config = new Yesf\Config\Adapter\Yaconf();
+				break;
+			case 'CONFIG_QCONF':
+				$config = new Yesf\Config\Adapter\QConf();
+				break;
+			default:
+				$config = realpath($config);
+		}
+		if ($config === false) {
+			echo "Config is invalid";
+			exit;
+		}
+		if (isset($opt['d']) || isset($opt['develop'])) {
+			define('APP_ENV', 'develop');
+		}
+		
+		//初始化
+		$app = new Yesf\Yesf();
+		$app->setEnvConfig($config);
+		$app->run();
+	}
+}

@@ -1,0 +1,377 @@
+######################
+#### DEPENDENCIES ####
+######################
+<INCLUDE_TYPOSCRIPT: source="FILE:EXT:fluid_styled_content/Configuration/TypoScript/setup.typoscript">
+
+
+################
+#### HELPER ####
+################
+<INCLUDE_TYPOSCRIPT: source="FILE:EXT:backsite/Configuration/TypoScript/Helper/DynamicContent.typoscript">
+
+<INCLUDE_TYPOSCRIPT: source="FILE:EXT:backsite/Configuration/TypoScript/menu.typoscript">
+
+<INCLUDE_TYPOSCRIPT: source="FILE:EXT:backsite/Configuration/TypoScript/plugin.typoscript">
+
+##############
+#### PAGE ####
+##############
+page = PAGE
+page {
+    typeNum = 0
+    shortcutIcon = {$page.favicon.file}
+
+    10 = FLUIDTEMPLATE
+    10 {
+        # Template names will be generated automatically by converting the applied
+        # backend_layout, there is no explicit mapping necessary anymore.
+        #
+        # BackendLayout Key
+        # subnavigation_right_2_columns -> SubnavigationRight2Columns.html
+        #
+        # Backend Record
+        # uid: 1 -> 1.html
+        #
+        # Database Entry
+        # value: -1 -> None.html
+        # value: pagets__subnavigation_right_2_columns -> SubnavigationRight2Columns.html
+        templateName = TEXT
+        templateName {
+            cObject = TEXT
+            cObject {
+                data = pagelayout
+                required = 1
+                case = uppercamelcase
+                split {
+                    token = pagets__
+                    cObjNum = 1
+                    1.current = 1
+                }
+            }
+            ifEmpty = Default
+        }
+        templateRootPaths {
+            0 = EXT:backsite/Resources/Private/Templates/Page/
+            1 = {$page.fluidtemplate.templateRootPath}
+        }
+        partialRootPaths {
+            0 = EXT:backsite/Resources/Private/Partials/Page/
+            1 = {$page.fluidtemplate.partialRootPath}
+        }
+        layoutRootPaths {
+            0 = EXT:backsite/Resources/Private/Layouts/Page/
+            1 = {$page.fluidtemplate.layoutRootPath}
+        }
+        dataProcessing {
+            10 = TYPO3\CMS\Frontend\DataProcessing\FilesProcessor
+            10 {
+                references.fieldName = media
+            }
+            20 = TYPO3\CMS\Frontend\DataProcessing\MenuProcessor
+            20 {
+                levels = 2
+                includeSpacer = 1
+                as = mainnavigation
+            }
+        }
+        
+        variables {
+            pageTitle = TEXT
+            pageTitle.data = page:title
+
+            pageSubTitle = TEXT
+            pageSubTitle.data = page:subtitle
+
+            pageId = TEXT
+            pageId.data = page:uid
+
+            siteTitle = TEXT
+            siteTitle.data = TSFE:tmpl|setup|sitetitle
+
+            BASEURL = TEXT
+            BASEURL.value = getIndpEnv:TYPO3_SITE_URL
+
+            USERUID = TEXT
+            USERUID.data = TSFE:fe_user|user|uid
+
+            EMAIL = TEXT
+            EMAIL.data = TSFE:fe_user|user|email
+
+            USER = TEXT
+            USER.data = TSFE:fe_user|user|username
+
+            USERNAME = TEXT
+            USERNAME.data = TSFE:fe_user|user|name
+
+            GROUP = TEXT
+            GROUP.data = TSFE:fe_user|user|usergroup
+
+            rootPage = TEXT
+            rootPage.data = leveluid:0
+
+            logoFile = TEXT
+            logoFile.value = {$page.logo.file}
+            logoHeight = TEXT
+            logoHeight.value = {$page.logo.height}
+            logoWidth = TEXT
+            logoWidth.value = {$page.logo.width}
+
+            bannerFile = TEXT
+            bannerFile.data = page:media
+
+            themeCopyright = TEXT
+            themeCopyright.value = {$page.theme.copyright.enable}
+            themeCopyrightText = TEXT
+            themeCopyrightText.data = date:U
+            themeCopyrightText.strftime = %Y
+            themeCopyrightText.wrap = &copy;| {$page.theme.copyright.text}
+
+            sys_language_uid = TEXT
+            sys_language_uid.data = TSFE:sys_language_uid
+
+            searchKeyword = TEXT
+            searchKeyword.data = GP:tx_indexedsearch|sword
+        }
+        
+    }
+
+    meta {
+        viewport = {$page.meta.viewport}
+        robots = {$page.meta.robots}
+        apple-mobile-web-app-capable = {$page.meta.apple-mobile-web-app-capable}
+        description = {$page.meta.description}
+        description {
+            override.field = description
+        }
+        author = {$page.meta.author}
+        author {
+            override.field = author
+        }
+        keywords = {$page.meta.keywords}
+        keywords {
+            override.field = keywords
+        }
+        X-UA-Compatible = {$page.meta.compatible}
+        X-UA-Compatible {
+            attribute = http-equiv
+        }
+
+        # OpenGraph Tags
+        og:title {
+            attribute = property
+            field = title
+        }
+        og:site_name {
+            attribute = property
+            data = TSFE:tmpl|setup|sitetitle
+        }
+        og:description = {$page.meta.description}
+        og:description {
+            attribute = property
+            field = description
+        }
+        og:image {
+            attribute = property
+            stdWrap.cObject = FILES
+            stdWrap.cObject {
+                references {
+                    data = levelfield:-1, media, slide
+                }
+                maxItems = 1
+                renderObj = COA
+                renderObj {
+                    10 = IMG_RESOURCE
+                    10 {
+                        file {
+                            import.data = file:current:uid
+                            treatIdAsReference = 1
+                            width = 1280c
+                            height = 720c
+                        }
+                        stdWrap {
+                            typolink {
+                                parameter.data = TSFE:lastImgResourceInfo|3
+                                returnLast = url
+                                forceAbsoluteUrl = 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    includeCSSLibs {
+
+    }
+
+    includeCSS {
+        font = {$page.includePath.crmcss}fonts.css
+        fontawesome = {$page.includePath.crmcss}font-awesome/css/font-awesome.min.css
+        simplelineicons = {$page.includePath.crmcss}simple-line-icons/simple-line-icons.min.css
+        bootstrap = {$page.includePath.crmcss}bootstrap/css/bootstrap.min.css
+        bootstrap-datepicker = {$page.includePath.crmcss}bootstrap-datepicker/css/bootstrap-datepicker3.min.css
+        bootstrap-colorpicker = {$page.includePath.crmcss}bootstrap-colorpicker.min.css
+        #bootstrap-switch = {$page.includePath.globalcss}plugins/bootstrap-switch/css/bootstrap-switch.min.css
+
+        #daterangepicker = {$page.includePath.globalcss}plugins/bootstrap-daterangepicker/daterangepicker.min.css
+        #datepicker3 = {$page.includePath.globalcss}plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css
+        #timepicker = {$page.includePath.globalcss}plugins/bootstrap-timepicker/css/bootstrap-timepicker.min.css
+        datetimepicker = {$page.includePath.crmcss}bootstrap-datetimepicker.min.css
+        #fileinput = {$page.includePath.globalcss}plugins/bootstrap-fileinput/bootstrap-fileinput.css
+
+        #daterangepicker = {$page.includePath.globalcss}plugins/bootstrap-daterangepicker/daterangepicker.min.css
+        #morris = {$page.includePath.globalcss}plugins/morris/morris.css
+        #fullcalendar = {$page.includePath.globalcss}plugins/fullcalendar/fullcalendar.min.css
+
+        #components-md = {$page.includePath.globalcss}css/components-md.css
+        pluginsmd = {$page.includePath.crmcss}plugins-md.css
+
+        profile = {$page.includePath.crmcss}profile.min.css
+        select2 = {$page.includePath.crmcss}select2.min.css
+        #select2bootstrap = {$page.includePath.globalcss}plugins/select2/css/select2-bootstrap.min.css
+        #sweetalert = {$page.includePath.globalcss}plugins/bootstrap-sweetalert/sweetalert.css
+
+        #layout = {$page.includePath.layoutscss}layout2/css/layout.css
+        #blue = {$page.includePath.layoutscss}layout2/css/themes/blue.min.css
+        #dark = {$page.includePath.layoutscss}layout2/css/themes/dark.min.css
+        #default = {$page.includePath.layoutscss}layout2/css/themes/default.min.css
+        #grey = {$page.includePath.layoutscss}layout2/css/themes/grey.min.css
+        #light = {$page.includePath.layoutscss}layout2/css/themes/light.min.css
+        #custom = {$page.includePath.layoutscss}layout2/css/custom.min.css
+        crm = {$page.includePath.crmcss}crm.css
+        file = {$page.includePath.crmcss}file.css
+    }
+
+    includeJSLibs {
+
+    }
+
+    includeJS {
+        jquery = {$page.includePath.scripts}jquery.min.js
+        bootstrap = {$page.includePath.scripts}bootstrap.min.js
+        cookie = {$page.includePath.scripts}js.cookie.min.js
+        backstretch = {$page.includePath.scripts}jquery.backstretch.min.js
+        datepicker = {$page.includePath.scripts}bootstrap-datepicker.min.js
+    }
+
+    includeJSFooterlibs {
+
+    }
+
+    includeJSFooter {
+        index = {$page.includePath.scripts}index.js
+        #jquery.slimscroll = {$page.includePath.globaljs}plugins/jquery-slimscroll/jquery.slimscroll.min.js
+        #jquery.blockui = {$page.includePath.globaljs}plugins/jquery.blockui.min.js
+        bootstrap-switch = {$page.includePath.scripts}bootstrap-switch.min.js
+        validate = {$page.includePath.scripts}jquery.validate.min.js
+        additional-methods = {$page.includePath.scripts}additional-methods.min.js
+        select2 = {$page.includePath.scripts}select2.min.js
+
+        moment = {$page.includePath.scripts}moment.min.js
+        daterangepicker = {$page.includePath.scripts}daterangepicker.min.js
+        datepicker = {$page.includePath.scripts}bootstrap-datepicker.min.js
+        timepicker = {$page.includePath.scripts}bootstrap-timepicker.min.js
+        datetimepicker = {$page.includePath.scripts}bootstrap-datetimepicker.min.js
+        bootstrap-colorpicker = {$page.includePath.scripts}bootstrap-colorpicker.min.js
+
+        daterangepicker = {$page.includePath.scripts}daterangepicker.min.js
+        morris = {$page.includePath.scripts}morris.min.js
+        raphael = {$page.includePath.scripts}raphael-min.js
+
+        fullcalendar = {$page.includePath.scripts}fullcalendar.min.js
+        timeline = {$page.includePath.scripts}horizontal-timeline.min.js
+        #jquery.flot = {$page.includePath.globaljs}plugins/flot/jquery.flot.min.js
+        #jquery.flot.resize = {$page.includePath.globaljs}plugins/flot/jquery.flot.resize.min.js
+        #jquery.flot.categories = {$page.includePath.globaljs}plugins/flot/jquery.flot.categories.min.js
+        easypiechart = {$page.includePath.scripts}jquery.easypiechart.min.js
+        sparkline = {$page.includePath.scripts}jquery.sparkline.min.js
+        
+        fileinput = {$page.includePath.scripts}bootstrap-fileinput.js
+        sweetalert = {$page.includePath.scripts}sweetalert.min.js
+        bootstrap-growl={$page.includePath.scripts}jquery.bootstrap-growl.min.js
+        inputmask = {$page.includePath.scripts}jquery.inputmask.bundle.min.js
+
+        app = {$page.includePath.scripts}app.min.js
+        components-date-time-pickers = {$page.includePath.scripts}components-date-time-pickers.min.js
+        dashboard = {$page.includePath.scripts}dashboard.min.js
+        ui-bootstrap-growl={$page.includePath.scripts}ui-bootstrap-growl.min.js
+
+        layout = {$page.includePath.scripts}layout.min.js
+        quicksidebar = {$page.includePath.scripts}quick-sidebar.min.js
+        quick-nav = {$page.includePath.scripts}quick-nav.min.js
+        datepicker = {$page.includePath.scripts}datepicker.js
+        common = {$page.includePath.scripts}common.js
+    }
+}
+
+
+################
+#### CONFIG ####
+################
+config {
+    absRefPrefix = auto
+    no_cache = {$config.no_cache}
+    uniqueLinkVars = 1
+    pageTitleFirst = 1
+    linkVars = L
+    prefixLocalAnchors = {$config.prefixLocalAnchors}
+    renderCharset = utf-8
+    metaCharset = utf-8
+    doctype = html5
+    removeDefaultJS = {$config.removeDefaultJS}
+    inlineStyle2TempFile = 1
+    admPanel = {$config.admPanel}
+    debug = 0
+    cache_period = 86400
+    sendCacheHeaders = {$config.sendCacheHeaders}
+    intTarget =
+    extTarget =
+    disablePrefixComment = 1
+    index_enable = 1
+    index_externals = 1
+    index_metatags = 1
+    headerComment = {$config.headerComment}
+
+    // Set the headTag again and get an automatic baseURL if config.baseURL is not set
+    htmlTag_stdWrap {
+        setContentToCurrent = 1
+        cObject = COA
+        cObject {
+            10 = LOAD_REGISTER
+                10 {
+                    newLine.char = 10
+                    tagEnd {
+                    current = 1
+                    split.max = 2
+                    split.token = <html
+                    split.returnKey = 1
+                }
+            }
+
+            20 = TEXT
+            20 {
+                value = <html {register:tagEnd}
+                wrap = |{register:newLine}
+                insertData = 1
+            }
+
+            40 = TEXT
+            40 {
+                data = getIndpEnv:TYPO3_SITE_URL
+                override = {GLOBAL:TYPO3_CONF_VARS|FE|baseURL}
+                wrap = <base href="|">{register:newLine}
+                insertData = 1
+            }
+        }
+    }
+    
+    // Disable Image Upscaling
+    noScaleUp = 1
+
+    // Compression and Concatenation of CSS and JS Files
+    compressJs = {$config.compressJs}
+    compressCss = {$config.compressCss}
+    concatenateJs = {$config.concatenateJs}
+    concatenateCss = {$config.concatenateCss}
+}

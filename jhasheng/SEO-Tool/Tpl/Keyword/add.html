@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/css/metinfo.css" />
+<script type="text/javascript" src="__PUBLIC__/js/jquery-1.8.0.js"></script>
+<script type="text/javascript" src="__PUBLIC__/js/cookie.js"></script>
+<script type="text/javascript">
+$(function() {
+	$('table tr').each(function(i, obj) {
+			$(obj).find('td').eq(0).addClass("text");
+		if (i != 1) {
+			$(obj).find('td').eq(1).addClass("input");
+			$(obj).find('td').eq(1).children('input').addClass('text nonull');
+			$(obj).find('td').eq(1).children('textarea').addClass('textarea gen');
+		}
+	});
+	$(':input[value=1]').attr("checked",true);
+})
+
+function getkeys(){
+	var webid = $('#webid').val();
+	var seid = $(':input[name=seid]:checked').val();
+	$.post("{:U('Keyword/ajax')}",{action:"getkeys",webid:webid,seid:seid},function(data){
+		$('#keywords').val(data);
+		$('#keywords').show();
+		$('div.key').remove();
+	});
+	
+}
+
+function dokeys(){
+	var keys = $('#keywords').val();
+	var arr = keys.split(new RegExp('[,，、]'));
+	$('div.key').remove();
+	var html = "<div class='key'>";
+	for(var i = 0; i < arr.length; i++){
+		html += "<span class='checked'><input type='hidden' name='key[]' value='"+arr[i]+"'>"+arr[i]+"</span>";
+	}
+	html += "</div>";
+	$('#keywords').hide();
+	$('#ktd').append(html);
+	
+	$('div.key span').toggle(function(){
+		$(this).removeAttr('class').find('input').remove();
+	},function(){
+		$(this).addClass('checked');
+		var txt = $(this).html();
+		$(this).append("<input type='hidden' name='key[]' value='"+txt+"'>");
+	});	
+}
+
+function clearkeys(){
+	var keys = $('#keywords').val("");
+	$('#webid').unbind();
+}
+</script>
+<style type="text/css">
+
+.key span{
+	border:1px solid #CDCDCD;
+	padding:3px 5px;
+	margin:3px;
+	width:80px;
+	display:block;
+	float:left;
+	height:20px;
+	line-height:20px;
+	text-align:center;
+	overflow:hidden;
+	cursor:pointer;
+}
+.checked{
+	border:1px solid red !important;
+}
+.abnt {
+	border: 1px solid black;
+	padding: 3px;
+	font-size: 12px;
+}
+
+* {
+	font-family: "Segoe UI","Microsoft YaHei",Arial,sans-serif;
+	font-size: 12px;
+}
+</style>
+</head>
+<body>
+	<div class="metinfotop">
+		<div class="position">简体中文：网站后台 > <a href="{:U('Keyword/lists')}">关键词管理</a> > 添加关键词</div>
+		<div class="return"><a href="">&lt;&lt;返回</a></div>
+	</div>
+	<div class="clear"></div>
+	<form action="{$url}" method="post">
+		<table cellpadding="2" cellspacing="1" style="width:700px;" class="table">
+			<tr>
+				<td width="120">网站地址：</td>
+				<td><select name="webid" id="webid" onchange="getkeys()">
+						<volist name="list" id="list">
+						<option value="{$list.webid}">{$list.webname|substr=0,12}({$list.weburl})</option>
+						</volist>
+				</select></td>
+			</tr>
+			<tr>
+				<td>添加方式：</td>
+				<td>
+					<input type="radio" name="method" value="1" onclick="getkeys()" />从关键词中提取
+					<input type="radio" name="method" value="2" onclick="clearkeys()"/>自定义添加
+					<a onclick="dokeys()" class="abnt">处理关键词</a>
+				</td>
+			</tr>
+			<tr>
+				<td>网站关键词：</td>
+				<td id="ktd"><textarea name="keywords" cols="40" rows="6" id="keywords"></textarea></td>
+			</tr>
+			<tr>
+				<td colspan="2" style="text-align:center"><input type="reset" class="submit" value="重新填写">
+				<input type="submit" class="submit" name="submit" value="添加关键词"></td>
+			</tr>
+		</table>
+	</form>
+</body>
+</html>

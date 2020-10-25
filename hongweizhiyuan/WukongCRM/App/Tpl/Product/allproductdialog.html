@@ -1,0 +1,130 @@
+<div>
+	<ul class="nav pull-left">
+		<li class="pull-left">
+			&nbsp;&nbsp;
+			<select id="field" style="width:auto" onchange="changeCondition()" name="field">
+				<option class="word" value="name">{:L('PRODUCT_NAME')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="conditionContent" class="pull-left">
+			<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">	
+				<option value="contains">{:L('INCLUDE')}</option>
+				<option value="is">{:L('YES')}</option>
+				<option value="start_with">{:L('BEGINNING_CHARACTER')}</option>
+				<option value="end_with">{:L('TERMINATION_CHARACTER')}</option>
+				<option value="is_empty">{:L('MANDATORY')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="searchContent" class="pull-left">
+			<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+		</li>
+		<li class="pull-left">
+			<input type="hidden" name="m" value="product"/>
+			<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+			<button type="submit" onclick="d_changeCondition(0)" class="btn">{:L('SEARCH')}</button>
+		</li>
+	</ul>
+</div>
+<p>&nbsp;</p>
+<empty name="list">
+	<div class="alert">{:L('THERE_IS_NO_DATA')}</div>
+<else/>
+<table class="table table-hover">
+	<thead>
+		<tr>
+			<th>&nbsp;</th>
+			<th>{:L('PRODUCT_NAME')}</th>
+			<th>{:L('PRODUCT_CATEGORY')}</th>
+	</thead>
+	<tfoot id="footer">
+		<tr>
+			<if condition="C('ismobile') neq 1"><td colspan="6"><else /><td colspan="4"></if>
+				<div class="row pagination">
+					<div class="span2"><span id="count">{$count_num}</span> {:L('RECORDS')} <span id="p">1</span>/<span id="total_page">{$total}</span> {:L('PAGE')}</div>
+					<div class="span4">
+						<div><ul id="changepage">
+							<li><span class='current'>{:L('FIRST_PAGE')}</span></li><li><span>« {:L('THE_PREVIOUS_PAGE')}</span></li>
+							<if condition="1 lt $total">
+								<li><a class="page" href="javascript:void(0)" rel="2">{:L('THE_NEXT_PAGE')} »</a></li>
+							<else />
+								<li><span>{:L('THE_NEXT_PAGE')} »</span></li>
+							</if>
+						</ul></div>
+					</div>
+				</div>
+			</td>
+		</tr>
+	</tfoot>
+	<tbody id="load" class="hide">
+		<tr><td class="tdleft" <if condition="C('ismobile') neq 1">colspan="6"<else />colspan="4"</if> style=" height:300px;text-align:center"><img src="./Public/img/load.gif"></td></tr>
+	</tbody>
+	<tbody id="data">
+		<volist name="list" id="vo">
+			<tr>
+				<td>
+					<input type="radio" name="product_id" value="{$vo.product_id}"/>
+					<input type="hidden" value="{$vo.standard}"/>
+					<input type="hidden" value="{$vo.suggested_price}"/>
+				</td>
+				<td>{$vo.name}</td>
+				<td>{$vo.category_name}</td>
+			</tr>
+		</volist>
+	</tbody>
+</table>
+<script type="text/javascript">
+	$('.page').click(function(){
+		var a = $(this).attr('rel');
+		d_changeCondition(a);
+	});
+	function d_changeCondition(p){
+		$('#data').addClass('hide');
+		$('#load').removeClass('hide');
+		
+		var field = $('#field').val();
+		var condition = $('#condition').val();
+		var search = encodeURI($("#search").val());
+		$.ajax({
+			type:'get',
+			url:'index.php?m=product&a=changecontent&field='+field+'&search='+search+'&condition='+condition+'&p='+p,
+			async:false,
+			success:function(data){
+				var temp = '';
+				if(data.data.list != null){
+					$.each(data.data.list, function(k, v){
+						temp += '<tr><td><input type="radio" name="product_id" value="'+v.product_id+'"/></td><td>'+v.name+'</td><td>'+v.category_name+'</td></tr>';
+					});
+					changepage = "";
+					if(data.data.p == 1){
+						changepage = "<li><span class='current'>{:L('FIRST_PAGE')}</span></li><li><span>« {:L('THE_PREVIOUS_PAGE')} </span></li>";
+						if(data.data.p < data.data.total){
+							changepage += "<li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('THE_NEXT_PAGE')} »</a></li>";
+						}else{
+							changepage += "<li><span>{:L('THE_NEXT_PAGE')} »</span></li>";
+						}
+					}else if(data.data.p == data.data.total){
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('FIRST_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>« {:L('THE_PREVIOUS_PAGE')}</a></li><li><span>{:L('THE_NEXT_PAGE')} »</span></li>";
+					}else{
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('FIRST_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>« {:L('THE_PREVIOUS_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('THE_NEXT_PAGE')} »</a></li>";
+					}
+					$('#p').html(data.data.p);
+					$('#changepage').html(changepage);
+					$('#count').html(data.data.count);
+					$('#total_page').html(data.data.total);
+					$('#data').html(temp);
+					$('.page').click(function(){
+						var a = $(this).attr('rel');
+						d_changeCondition(a);
+					});
+				}else{
+					$('#data').html('<tr><td colspan="4">{:L('DIDNOT_FIND_THE_RESULTS_YOU_WANT')}</tr>');
+					$('#footer').addClass('hide');
+				}
+				$('#load').addClass('hide');
+				$('#data').removeClass('hide');
+			},
+			dataType:'json'
+		});		
+	}
+</script>
+</empty>

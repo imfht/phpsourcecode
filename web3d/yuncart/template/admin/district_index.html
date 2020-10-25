@@ -1,0 +1,168 @@
+<!--{include(file='head.html')}-->
+
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<div id="main_c" >
+			<form name="seaform" id="seaform" action="" method="post">
+				<div class="bt_bk">
+					<span class="btn">
+						<a href="javascript:void(0);" onclick="$.oper.refresh();return false;">刷新</a>
+						<a href="javascript:void(0);" onclick="$.oper.remove();return false;">移除</a>
+						<a href="<!--{url('admin','district','districtadd')}-->">添加</a>
+					</span>
+					<span class="state_tip"></span>
+				</div>
+			</form>
+			
+			<table class="tableStyle2" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr align="center">
+						<th width="5%">
+							<input type="checkbox" value="1" name="allselect" id="allselect" autocomplete="off" onclick="$.oper.selectall()"/>
+						</th>
+						<th width="15%">操作</th>
+						<th width="30%">地区名称</th>
+						<th width="30%">邮编</th>
+						<th width="20%">排序</th>
+					</tr>
+				</thead>
+			</table>
+			<div style="height:600px;overflow:scroll;margin:0;padding:0">
+				<table class="tableStyle" style="border-top:none;" border="0" cellspacing="0" cellpadding="0">
+				<tbody id="listtbody">
+					<!--{foreach $districts district}-->
+					<tr align="center" id="tr_<!--{$district.districtid}-->" class="level_0">
+						<td width="5%"><input type="checkbox" value="<!--{$district.districtid}-->" name="singleselect" autocomplete="off"/></td>
+						<td width="15%">
+							<a href="javascript:void(0);" onclick="$.oper.remove(<!--{$district.districtid}-->);return false;" class="remove"></a>
+						</td>
+						<td  width="30%" align="left">
+							<img src="template/admin/images/plus.gif" width="9" height="9" onclick="District.toggle(this)"/>
+							<span onclick="$.oper.edit(this,'district','<!--{$district.districtid}-->')" title="点击修改分类名称" onmouseover="$.oper.bgcolor(this,'on')" onmouseout="$.oper.bgcolor(this,'off')"><!--{$district.district}--></span>
+						</td>
+						<td width="30%" align="left">
+							<span onclick="$.oper.edit(this,'zipcode','<!--{$district.districtid}-->')" title="点击修改邮编" onmouseover="$.oper.bgcolor(this,'on')" onmouseout="$.oper.bgcolor(this,'off')"><!--{def($district.zipcode,'--')}--></span>
+						</td>
+						<td width="20%" align="left">
+							<span onclick="$.oper.edit(this,'order','<!--{$district.districtid}-->')" title="点击修改分类排序" onmouseover="$.oper.bgcolor(this,'on')" onmouseout="$.oper.bgcolor(this,'off')"><!--{$district.order}--></span>
+						</td>
+					</tr>
+					<!--{/foreach}-->
+				</tbody>
+				<tbody id="fordistrict" class="none">
+					<tr align="center" id="tr_{districtid}" class="level_{level}">
+						<td width="5%"><input type="checkbox" value="{districtid}" name="singleselect" autocomplete="off"/></td>
+						<td width="15%">
+							<a href="javascript:void(0);" onclick="$.oper.remove('{districtid}');return false;" class="remove"></a>
+						</td>
+						<td  width="30%" align="left" style="padding-left:0px">
+							<img src="template/admin/images/plus.gif" width="9" height="9" onclick="District.toggle(this)"/>
+							<span onclick="$.oper.edit(this,'district','{districtid}')" title="点击修改分类名称" onmouseover="$.oper.bgcolor(this,'on')" onmouseout="$.oper.bgcolor(this,'off')" class='forname'></span>
+						</td>
+						<td width="30%" align="left" style="padding-left:0px">
+							<span onclick="$.oper.edit(this,'zipcode','{districtid}')" title="点击修改邮编" onmouseover="$.oper.bgcolor(this,'on')" onmouseout="$.oper.bgcolor(this,'off')" class='forzipcode'></span>
+						</td>
+						<td width="20%" align="left" style="padding-left:0px">
+							<span onclick="$.oper.edit(this,'order','{districtid}')" title="点击修改分类排序" onmouseover="$.oper.bgcolor(this,'on')" onmouseout="$.oper.bgcolor(this,'off')" class='fororder'>}</span>
+						</td>
+					</tr>
+				</tbody>
+				</table>
+			</div>
+			</div>
+		</div>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+<!--{include(file='foot.html')}-->
+<script type="text/javascript">
+var District = {
+	obj:null,
+	tr:null,
+	level:0,
+	next:null,
+	toggle:function(obj) {
+		this.obj	= $(obj);
+		this.tr		= this.obj.parent().parent();
+		this.level	= parseInt(this.tr.attr("class").replace("level_","")) || 0;
+		this.next	= this.obj.parents("tr").nextAll("tr");
+		this.pid	= parseInt(this.tr.attr("id").replace("tr_","")) || 0;
+		this.doit();
+	},
+	doit:function() {//改变加减符号
+		var src = this.obj.attr("src");
+		if(src.indexOf("minus") !== -1) {
+			this.obj.attr("src","template/admin/images/plus.gif");
+			this.level < 2 && this.hideDis();
+		} else {
+			this.obj.attr("src","template/admin/images/minus.gif");
+			this.level < 2 && this.showDis();
+		}
+	},
+	hideDis:function() {
+		this.setNext('hide');
+	},
+	showDis:function() {
+		var exist = this.setNext('show');
+		if(!exist) {//没有被隐藏，从服务器获取
+			this.getDis();
+		}
+	},
+	getDis:function() {
+		var _this = this;
+		$.get("util.php?action=district",{pid:_this.pid},function(data){
+			if(data == "failure") {
+				jAlert("发生错误,请刷新页面后重新执行该操作");
+				return false;
+			} else {
+				var $html = $("#fordistrict").clone();
+				var level = _this.level + 1;
+				var m	  = '';
+				for(var i in data) {
+					$html.find(".forname").text(data[i]['district']);
+					$html.find(".fororder").text(data[i]['order']);
+					$html.find(".forzipcode").text(data[i]['zipcode']?data[i]['zipcode']:'--');
+					html = $html.html().replace(/{districtid}/gm,data[i]['districtid'])
+									   .replace(/{level}/gm,level)
+									   .replace(/0px/gm,level*30+"px");
+					if(level == 2) {
+						html = html.replace(/plus\.gif/gm,"minus.gif");
+					}
+					m += html;
+				}
+				if(m) {
+					_this.tr.after(m);
+				}
+			}
+		},"json");
+	},
+	setNext:function(func) {
+		var _this = this,exist = false;
+		this.next.each(function() {
+			var $this	 = $(this);
+			var thelevel = parseInt($this.attr("class").replace("level_","")) || 0;
+			if(thelevel > _this.level) {//级别小
+				if(func == 'hide') {
+					$this.hide();
+				} else if(func == 'show') {
+					if(thelevel == _this.level + 1) { //第二级
+						if(thelevel != 2) {
+							$this.find("img").attr("src","template/admin/images/plus.gif");
+						}
+						$this.show();
+					} 
+				}
+				exist = true;
+			} else {
+				return false;
+			}
+		});
+		return exist;
+	}
+};
+$(function(){
+	$.oper.init("<!--{url('admin','district','districtsave')}-->");
+});
+</script>

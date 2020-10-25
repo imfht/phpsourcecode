@@ -1,0 +1,248 @@
+{extend name="public:base" /}
+{block name="head"}
+<script>
+	function changeQty(increase) {
+	    var qty = parseInt($('.select_number').find("input").val());
+	    if ( !isNaN(qty) ) {
+	        qty = increase ? qty+1 : (qty >{$goods.minimum}?qty-1:{$goods.minimum});
+	        $('.select_number').find("input").val(qty);
+	    }
+	}		
+</script>
+{/block}
+{block name="content"}
+<div id="goods-info">
+		<div  class="allWrap">
+		<div id="left-content">
+			
+			<div class="product-view">
+			<div id="gallery">
+				<div class="product-image">
+					<div class="large-image"> 
+	                  <a href="/public/uploads/{$goods.image}" class="cloud-zoom" id="zoom1" rel="" > 
+	                    <img src="IMG_ROOT{$goods.image|resize=300,300}"> 
+	                  </a> 
+	                </div>
+	                
+	                <div class="flexslider flexslider-thumb">
+	                    <ul class="previews-list slides">                     
+	                       	{volist name="image" id="image"}
+		                       <li>
+		                        <a href="/public/uploads/{$image.image}" title="" class="cloud-zoom-gallery" rel="useZoom: 'zoom1', smallImage: 'IMG_ROOT{$image.image|resize=300,300}'">
+		                          <img src="IMG_ROOT{$image.image|resize=75,75}" alt = "Thumbnail 1"/>
+		                        </a>
+		                       </li>
+	                      {/volist}
+	                    </ul>
+	                </div>
+				</div>
+			</div>
+		</div>
+		
+		</div>
+		<div id="right-content">
+			<div id="info">
+				<dl>
+					<dt>{$goods.name}</dt>					
+					<dd><span>价格：</span>￥{$goods.price}</dd>
+					<dd><span>货号：</span>{$goods.model}</dd>
+					<dd><span>产地：</span>{$goods.location}</dd>
+					{if condition="$goods['subtract']"}
+					<dd><span>数量：</span>{$goods.quantity}{$goods.sku}</dd>
+					{/if}
+					{if condition="!empty($discount)"}
+						<?php $disc=0; ?>
+						{volist name="discount" id="v"}
+						<?php $disc+=1; ?>
+						{if condition="$disc eq 1"}						
+							<dd><span>折扣：</span><?php echo $v['quantity'].$goods['sku'].' 或更多 ￥'.$v['price']; ?></dd>
+						{else/}
+							<dd><span></span><?php echo $v['quantity'].$goods['sku'].' 或更多 ￥'.$v['price']; ?></dd>
+						{/if}
+							
+						{/volist}	
+					
+					{/if}
+					
+					
+				</dl>
+				
+				
+				  {if condition="$options"}	
+			      <div class="options">
+			        <h2>可选项</h2>			        
+			        {volist name="options" id="option"}				        
+				        {if condition="$option['type'] eq 'select' "}			        	
+				        <div class="boss_check">
+					        <div class="box-check">	
+						        <div id="option-{$option.goods_option_id}" class="option">
+						          <div class="title_text"><b>{$option.name}:</b>
+							          {if condition="$option['required'] eq 1"}
+							          	<span class="required">*</span>
+							          	{/if}
+						          </div>
+						          <select name="option[{$goods.goods_id},{$option.option_id}]">
+						            <option value=""> --- 请选择 --- </option>
+						            {volist name="$option['goods_option_value']" id="option_value" }	
+							            <option title="数量{$option_value.quantity}" value="{$option_value.option_value_id}">{$option_value.name}							            
+								            {if condition="$option_value['goods_price'] neq '0.00' "}		
+							            		({$option_value.price_prefix}￥{$option_value.price})
+							            	{/if}
+							            </option>
+						            {/volist}
+						          </select>
+						        </div>
+					         </div>
+				         </div>
+				        {/if}   
+			  
+						{if condition="$option['type'] eq 'radio' "}
+							<div class="boss_check">
+								<div class="box-check">
+							        <div id="option-{$option.goods_option_id}">
+							          <p><b>{$option.name}:</b>						      
+								          	{if condition="$option['required'] eq 1"}
+								          	<span class="required">*</span>
+								          	{/if}						          
+							          </p>
+							          {volist name="$option['goods_option_value']" id="option_value" }					          									          	
+							          <label for="option-value-{$option_value.goods_option_value_id}">								          	
+							          	<input  class="option" type="radio" name="option[{$goods.goods_id},{$option.option_id}]" value="{$option_value.option_value_id}" id="option-value-{$option_value.goods_option_value_id}" />								          	       										          	
+								          
+								          	{if condition="!empty($option_value['image'])"}			
+									          	<a title="数量{$option_value.quantity}" href="/public/uploads/{$option_value.image}" class="cloud-zoom-gallery" rel="useZoom: 'zoom1', smallImage: 'IMG_ROOT{$option_value.image|resize=300,300}'">
+									          		<img src="IMG_ROOT{$option_value.image|resize=30,30}" />									          										          
+									          	</a>
+								          	 {/if}
+								          	<span title="数量{$option_value.quantity}">{$option_value.name}</span> 						          
+								            {if condition="$option_value['goods_price'] neq '0.00' "}		
+								            	({$option_value.price_prefix}￥{$option_value.price})
+								            {/if}								            
+							          </label>
+							          <br />
+							          {/volist}
+							        </div>
+								</div>
+							</div>	
+					     {/if}						        
+		        
+				        {if condition="$option['type'] eq 'checkbox' "}	
+						<div class="box-check">
+					        <div id="option-{$option.goods_option_id}" class="option">
+					          <p><b>{$option.name}:</b>
+						          {if condition="$option['required'] eq 1"}
+									   <span class="required">*</span>
+								  {/if}	
+					          </p>		        
+					          {volist name="$option['goods_option_value']" id="option_value" }	
+						          <input type="checkbox" name="option[{$goods.goods_id},{$option.option_id}][]" value="{$option_value.option_value_id}" id="option-value-{$option_value.goods_option_value_id}" />
+						          <label for="option-value-{$option_value.goods_option_value_id}">
+							           {if condition="!empty($option_value['image'])"}			
+							          	<a title="数量{$option_value.quantity}" href="/public/uploads/{$option_value.image}" class="cloud-zoom-gallery" rel="useZoom: 'zoom1', smallImage: 'IMG_ROOT{$option_value.image|resize=300,300}'">
+							          		<img src="IMG_ROOT{$option_value.image|resize=30,30}" />									          										          
+							          	</a>
+						          	   {/if}
+							          <span title="数量{$option_value.quantity}">{$option_value.name}</span> 						          
+							           {if condition="$option_value['goods_price'] neq '0.00' "}		
+							            	({$option_value.price_prefix}￥{$option_value.price})
+							           {/if}
+						          </label>
+						          <br />
+					          {/volist}
+					        </div>
+				        </div>											       
+				       {/if}
+		        				      
+		        {/volist}
+		      </div>
+		      {/if}
+				
+				{if condition="is_module_install('member')"}
+				<div class="add-to-box">                       
+	            	<div class="add-to-cart">
+		                <div class="pull-left">
+			                <div class="select_number">	
+								<input class="text" type="text" id="quantity" value="{$goods.minimum}" size="2" name="quantity">
+								<button class="increase" onclick="changeQty(1); return false;">+</button>
+								<button class="decrease" onclick="changeQty(0); return false;">-</button>
+							</div>
+							<input type="hidden" value="{$goods.goods_id}" size="2" name="goods_id">
+		                </div> 					
+		                <div class="pull-left">
+			                <button id="button-cart" class="button btn-cart" data-loading-text="Loading..." type="button">
+								<span>加入购物车</span>
+							</button>					              
+		            	</div>
+	          		</div>							
+				</div>	
+				{/if}
+				<div class="clearfix">
+					<br />
+				</div>
+			</div>
+			
+			<div id="description">
+				<h2>商品详情</h2>
+				<div>
+					{if condition="!empty($mobile_description)"}
+						{volist name="mobile_description" id="mobile" }
+							<img src="IMG_ROOT{$mobile.image|resize=630}" />
+						{/volist}
+					{else/}
+						{$goods.description|htmlspecialchars_decode}
+					{/if}
+				</div>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+	</div>
+</div>		
+{/block}
+{block name="javascript"}
+<link rel="stylesheet" href="__PUBLIC__/font-awesome/css/font-awesome.min.css" />		
+<link href="__PUBLIC__/js/flexslider/flexslider.css" rel="stylesheet" type="text/css"> 	
+<link href="__PUBLIC__/js/cloud-zoom/cloud-zoom.css" rel="stylesheet" type="text/css" />
+<script src="__PUBLIC__/js/cloud-zoom/cloud-zoom.js"></script>
+<script src="__PUBLIC__/js/flexslider/jquery.flexslider.js"></script>
+{if condition="is_module_install('member')"}
+<script>
+$(function(){
+	
+$('#button-cart').bind('click', function() {
+
+	$.ajax({
+		url: "{:url('/add')}",
+		type: 'post',
+		data: $('input[type=\'text\'],input[type=\'hidden\'],input[type=\'radio\']:checked,input[type=\'checkbox\']:checked,select'),
+		dataType: 'json',
+		success: function(json) {
+			$('.box-check').removeClass('text-error');			
+			$('.text-danger').remove();	
+			if(json){						
+				if(json.error){
+					if (json['goods_option_id']) {
+				         
+				         var id=json['goods_option_id'];
+				         
+				            var element = $('#option-'+id);
+				
+				            if (element.parent().hasClass('box-check')) {
+				              element.parent().addClass('text-error').after('<div class="text-danger">' + json.error + '</div>');
+				            } else {
+				              element.after('<div class="text-danger">' + json.error+ '</div>');
+				            }
+				          
+					}
+					alert(json.error);
+				}else if(json.success){
+					alert(json.success);
+					$('#cart a').text(json.total);
+				}
+			}
+		}
+	});	
+});
+});	
+</script>
+{/if}
+{/block}

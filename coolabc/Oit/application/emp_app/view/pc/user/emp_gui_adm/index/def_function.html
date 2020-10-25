@@ -1,0 +1,132 @@
+<script language="javascript">
+    $(document).ready(function () {
+        console.log("-- emp_app/view/pc/user/emp_gui_adm/index/def_function.html");
+        // 主页面
+        var page_obj = {
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}'
+        };
+        var index = new Page(page_obj);
+
+        index.base().page_register(page_obj);
+        // 关闭tab的时候，销毁page对象
+
+        // 测试组件全部完成
+//        for (var i in index.gui_build_state) {
+//            if (index.gui_build_state.hasOwnProperty(i)) {
+//                index.gui_build_state[i] = true;
+//            }
+//        }
+
+        // 脚本事件
+        if (typeof index.Script != "undefined" && typeof index.Script.adm != "undefined") {
+            index.event._func_show = function () {
+                if (typeof index.Script.adm.main != "undefined") {
+                    index.Script.adm.main();
+                }
+                if (typeof index.Script.adm.init_win != "undefined") {
+                    index.Script.adm.init_win();
+                }
+            };
+        }
+
+        index.gui_build_state.Def_Function = true;
+
+        // 初始数据
+        index.event._init_data = function () {
+            index.event.refresh_data();
+        };
+
+        // 左侧检索数据
+        index.event.lmt_data= function () {
+
+        };
+
+        // 搜索数据
+        index.event.search_data = function () {
+            var temp_arr = index.data.Table_data;
+            console.log(temp_arr);
+            // 有没有搜索内容
+            var search_value = index.MG_Search.searchbox('getValue');
+            var search_name = index.MG_Search.searchbox('getName');
+            var all = ['emp_id', 'name', 'telephone'];
+            var id_name = ['emp_id', 'name'];
+            console.log(search_value);
+            console.log(search_name);
+            var search_field = [];
+            if (search_value != '' && !isNull(temp_arr)) {
+                if (search_name == 'all') {
+                    search_field = all;
+                } else if (search_name == 'id_name') {
+                    search_field = id_name;
+                }
+                temp_arr = temp_arr.$like_contains(search_field, search_value);
+            }
+            console.log(temp_arr);
+
+            // 载入数据
+            index.datagrid().load_data({
+                grid_id: 'MG',
+                data: temp_arr,
+                select_first: true,
+            })
+        };
+
+        // 刷新数据
+        // 树结点改变时、首次加载数据完成时
+        index.event.refresh_data = function () {
+            var temp_arr = index.data.Table_data;
+            // 树结点选择
+            var temp_catalogs = [];
+            var dis_sub_catalog = $('#emp__emp_adm__show_child_dept').is(":checked");
+//            console.log('dis_sub_catalog: ' + dis_sub_catalog);
+            var curr_cat_id = index.Tree_View.chg_tree_id;
+            var catalogs = index.data.Tree_View;
+
+            var tree_id = 'dept_id';
+            var tree_parent_id = 'parent_dept_id';
+//            console.log(index.data.Tree_View);
+            if (!isNull(temp_arr)) {
+                // 当前选择的目录
+//                console.log('curr_cat_id: ' + curr_cat_id);
+                // 是否显示子目录产品
+                if (dis_sub_catalog == true) {
+                    temp_catalogs = json_root_all_sub(catalogs, [curr_cat_id], tree_id, tree_parent_id);
+                    temp_catalogs = temp_catalogs.$json_col(tree_id);
+                } else {
+                    temp_catalogs.push(curr_cat_id);
+                }
+                // 过滤产品的目录
+                 temp_arr = temp_arr.$json_intersect('dept_id', temp_catalogs);
+            }
+//            console.log(temp_arr);
+
+            // 传入获取选项的值
+            var lmt_ele_val = index.lmt().left_lmt_choose("Left_Lmt").left_lmt_val();
+            temp_arr = index.lmt().left_lmt_filter(lmt_ele_val, temp_arr);
+
+            // 载入数据
+            index.datagrid().load_data({
+                grid_id: 'MG',
+                data: temp_arr,
+                select_first: true,
+            })
+        };
+
+        // 树自定义方法-改变时执行
+        index.Tree_View.page_tree_para_chg = function () {
+            console.log("page_tree_para_chg: " + index.Tree_View.chg_tree_id);
+
+        };
+
+        index.event._create_voucher = function () {
+            console.log("_create_voucher: " + ' -----');
+        };
+
+        index.event._func_show = function () {
+            console.log("_func_show: " + ' -----');
+        }
+    });
+</script>
+

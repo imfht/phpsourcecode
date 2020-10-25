@@ -1,0 +1,320 @@
+{extend name="$LAYOUT_HOME_BASE" /}
+{block name="title"}{$goods['goodsName']} - 团购商品 - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="meta"}
+<meta name="description" content="{$goods['goodsName']}">
+<meta name="Keywords" content="{$goods['goodsSeoKeywords']},{$seoGrouponKeywords}">
+{/block}
+{block name="css"}
+<link href="__ROOT__/addons/groupon/view/home/index/css/goods.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="top"}
+	{include file="$LAYOUT_HOME_TOP" /}
+{/block}
+{block name="shop_apply"}
+	{include file="$LAYOUT_HOME_SHOP_APPLY" /}
+{/block}
+{block name="header"}
+	{include file="$LAYOUT_HOME_HEADER" /}
+{/block}
+{block name="main"}
+<div class='wst-w' style='border-bottom:1px solid #eeeeee;'>
+<div class='wst-filters'>
+   <div class='item' style="border:1px solid transparent;border-left:2px solid #df2003;padding-left: 8px">
+      <a class='link' href="{:url('home/index/index')}">首页</a>
+      <i class="arrow"></i>
+   </div>
+   {volist name=":WSTPathGoodsCat($goods['goodsCatId'])" id='vo' length='1'}
+   <div class='wst-lfloat'>
+   	<div class='item dorpdown'>
+     <div class='drop-down'>
+        <a class='link' href='{:Url("/addon/groupon-goods-lists",["catId"=>$vo["catId"]])}'>{$vo['catName']}</a>
+     </div>
+     <div class="dorp-down-layer">
+         {volist name=":WSTGoodsCats($vo['parentId'])" id='vo2'}
+         <div class="{$vo['parentId']>0?'cat2':'cat1'}"><a href='{:Url("/addon/groupon-goods-lists","catId=".$vo2["catId"])}'>{$vo2['catName']}</a></div>
+         {/volist}
+	</div>
+	</div>
+   </div>
+   {/volist}
+   <div class='wst-clear'></div>
+</div>
+</div>
+<div class='wst-w'>
+   <div class='wst-container'>
+      <div class='goods-img-box'>
+          <div class="goods-img spec-preview" id="preview">
+          	<img title="{$goods['goodsName']}" alt="{$goods['goodsName']}" src="__RESOURCE_PATH__/{:WSTImg($goods['goodsImg'])}" class="cloudzoom" data-cloudzoom="zoomImage:'__RESOURCE_PATH__/{$goods['goodsImg']}'" height="350" width="350">
+          </div>
+          <div class="goods-pics">
+            <a class="prev">&lt;</a>
+            <a class="next">&gt;</a>
+            <div class="items">
+               <ul>
+               {volist name="$goods['gallery']" id='vo'}
+                   <li><img title="{$goods['goodsName']}" alt="{$goods['goodsName']}" class='cloudzoom-gallery' src="__RESOURCE_PATH__/{:WSTImg($vo)}" data-cloudzoom="useZoom: '.cloudzoom', image:'__RESOURCE_PATH__/{:WSTImg($vo)}', zoomImage:'__RESOURCE_PATH__/{$vo}' " width="60" height="60"></li>
+               {/volist}
+			   </ul>	
+			</div>
+         </div>
+      </div>
+      <div class='intro'>
+          <h2>{$goods['goodsName']}</h2>
+          <div class='summary'>
+          	<div class="infol">
+             <div class='item'>
+               <div class='dt'>市场价：</div>
+               <div class='dd market-price' id='j-market-price'><em>￥</em>{$goods['marketPrice']}</div>
+             </div>
+             <div class='item'>
+               <div class='dt'><img src='__ROOT__/addons/groupon/view/home/index/img/icon_wstmart_tg.png' style='margin-right:15px;width:35px;'/></div>
+               <div class='dd price' id='j-shop-price'>￥{$goods['grouponPrice']}</div>
+               <div class='wst-clear'></div>
+             </div>
+             <div class='item'>
+                <div class='dt'>商品评分：</div>
+                <div class='dd'>
+                  {for start="0" end="$goods['scores']['totalScores']"}
+                  <img src="__STATIC__/plugins/raty/img/star-on.png">
+                  {/for}
+                  {for start="1" end="6-$goods['scores']['totalScores']"}
+                  <img src="__STATIC__/plugins/raty/img/star-off.png">
+                  {/for}
+                  <div class='appraise'>累计评价：<span class='appraise-num'>{$goods['appraiseNum']}</span>
+                  </div>
+                </div>
+             </div>
+             <div class='item'>
+                <div class='dt'>商品编号：</div>
+                <div class='dd'>{$goods['goodsSn']}</div>
+             </div>
+             <div class='item'>
+                <div class='dt'>运费：</div>
+                <div class='dd'>{if $goods['isFreeShipping']==1}免运费{else}系统计算{/if}</div>
+             </div>
+             </div>
+             <div class="infor">
+             	<div id='qrcode' style='width:125px;height:125px;margin-left:48px;'></div>
+             	<div style='text-align: center;'>微信端扫购有惊喜</div>
+             </div>
+             <div class='wst-clear'></div>
+          </div>
+          <div class='groupon-time-box'>
+               <div class='dd' id='groupon-time' sc='{:date("Y-m-d H:i:s")}' sv='{$goods["startTime"]}' ev='{$goods["endTime"]}'>
+               {if $goods['status']==-1}
+               团购活动已结束
+               {else}
+               正在计算团购时间...
+               {/if}
+               </div>
+          </div>
+          <div class='groupon-desc'>
+          	<div class='dt'>团购说明：</div>
+          	<div class='dd'>{$goods['grouponDesc']}</div>
+          	<div class='wst-clear'></div>
+          </div>
+          <div class='spec'>
+             {if !empty($goods['spec'])}
+             {volist name="$goods['spec']" id='vo'}
+             <div class='item'>
+               <div class='dt'>{$vo['name']}：</div>
+               <div class='dd'>
+               {volist name="$vo['list']" id='vo2'}
+                  {if $vo2['itemImg']!=''}
+                  <div class='j-option img j-selected' data-val="{$vo2['itemId']}" style='height:28px;padding:0px;'><img class="cloudzoom-gallery" width="28" height="28" src="__RESOURCE_PATH__/{:WSTImg($vo2['itemImg'])}" data-cloudzoom="useZoom: '.cloudzoom', image:'__RESOURCE_PATH__/{:WSTImg($vo2['itemImg'])}', zoomImage:'__RESOURCE_PATH__/{$vo2['itemImg']}' "  title="{$vo2['itemName']}" alt="{$vo2['itemName']}"/><i></i></div>
+                  {else}
+                  <div class='j-option j-selected' data-val="{$vo2['itemId']}">{$vo2['itemName']}<i></i></div>
+                  {/if}
+               {/volist}
+               </div>
+               <div class='wst-clear'></div>
+             </div>
+             {/volist}
+             {/if}
+          </div>
+          <div class='buy'>
+             <div class='item'>
+                <div class='dt'>数量：</div>
+                <div class='dd'>
+	                <a href='#none' class='buy-btn' id='buy-reduce' style='color:#ccc;' onclick='javascript:WST.changeIptNum(-1,"#buyNum","#buy-reduce,#buy-add")'>-</a>
+	                <input type='text' data-min='1' data-max='{$goods['canBuyNum']}' id='buyNum' class='buy-num' value='1' data-min='1' autocomplete="off" onkeyup='WST.changeIptNum(0,"#buyNum","#buy-reduce,#buy-add")' onkeypress="return WST.isNumberKey(event);" maxlength="3"/>
+	                <a href='#none' class='buy-btn' id='buy-add' onclick='javascript:WST.changeIptNum(1,"#buyNum","#buy-reduce,#buy-add")'>+</a>
+                    &nbsp; &nbsp;（商品库存：<span id='goods-stock'>{$goods['grouponNum']}</span>&nbsp;{$goods['goodsUnit']}，已团购{$goods['orderNum']}{$goods['goodsUnit']}，每人限购{$goods['limitNum']}{$goods['goodsUnit']}）
+                </div>
+             </div>
+             <div class='item'>
+                <div class='dt'>服务：</div>
+                <div class='dd'>服务由  <a href='{:Url("home/shops/home","shopId=".$shop["shopId"])}' target='_blank'>{$shop['shopName']}</a> 发货并提供 售后服务。</div>
+             </div>
+             <div class='item' style='padding-left:75px;margin-top:20px;'>
+               {if $goods['read'] || $goods['status']==-1 || $goods['status']==0 }
+                 <a id='buyBtn' href='javascript:void(0);' class='buyBtn un-buy'>立即参团</a>
+               {else}
+                 <a id='buyBtn' href='javascript:addCart(1,"#buyNum")' class='buyBtn'>立即参团</a>
+               {/if}
+               <div class="wst-favorite">
+               {if ($goods['favGood']>0)}
+                 <a href='javascript:void(0);' onclick='WST.cancelFavorite(this,0,{$goods["goodsId"]},{$goods['favGood']})' class='favorite j-fav'>已关注</a>
+               {else}
+                 <a href='javascript:void(0);' onclick='WST.addFavorite(this,0,{$goods["goodsId"]},{$goods["goodsId"]})' class='favorite j-fav2 j-fav3'>关注商品</a>
+               {/if}
+               </div>
+             </div>
+             <?php if(!(Request()->isSsl())){?> 
+          <div class="bshare-custom icon-medium-plus" style='margin-top:5px;float:right'>
+            <a title="分享到QQ空间" class="bshare-qzone"></a>
+            <a title="分享到新浪微博" class="bshare-sinaminiblog"></a>
+            <a title="分享到QQ好友" class="bshare-qqim"></a>
+            <a title="分享到微信" class="bshare-weixin"></a>
+          </div>
+          <script type="text/javascript" charset="utf-8" src="http://static.bshare.cn/b/buttonLite.js#style=-1&pophcol=2&lang=zh"></script>
+          <script type="text/javascript" charset="utf-8" src="http://static.bshare.cn/b/bshareC0.js"></script>
+          <script type="text/javascript">         
+          bShare.addEntry({  
+            url:  '{$shareInfo["link"]}',
+            title:'{$shareInfo["title"]}',
+            summary:'{$shareInfo["desc"]}',
+              pic: '{$shareInfo["imgUrl"]}'
+          });
+          </script>
+          <?php } ?>
+             <div style="clear: both;"></div>
+          </div>
+      </div>
+      <div class='wst-clear'></div>
+   </div>
+</div>
+<div class='wst-w'>
+   <div class='wst-container'>
+       <div class='wst-side'>
+           <div class='shop-intro'>
+                <div class='title'>{$shop['shopName']}</div>
+                <div class='body'>
+                    <div class='totalScore'><img class="shopsImg" data-original="__RESOURCE_PATH__/{$shop['shopImg']}" title="{$shop['shopName']}" style="width:75px;height:75px;"></div>
+                    <div class='itemScore'>商品评价：{if ($shop['scores']['goodsScore']!=0)}{$shop['scores']['goodsScore']}{else /}5{/if}</div>
+                    <div class='itemScore'>服务评分：{if ($shop['scores']['serviceScore']!=0)}{$shop['scores']['serviceScore']}{else /}5{/if}</div>
+                    <div class='itemScore'>物流速度：{if ($shop['scores']['timeScore']!=0)}{$shop['scores']['timeScore']}{else /}5{/if}</div>
+                </div>
+                <div class='footer'>
+                   <a class="home" href='{:Url("home/shops/home","shopId=".$shop["shopId"])}' target='_blank'>进店逛逛</a>
+                   {if ($goods['favShop']>0)}
+                   <a class="j-fav" href='javascript:void(0);' onclick='WST.cancelFavorite(this,1,{$shop["shopId"]},{$goods['favShop']})'>已关注</a>
+                   {else}
+                   <a class="j-fav2" href='javascript:void(0);' onclick='WST.addFavorite(this,1,{$shop["shopId"]},{$goods['favShop']})'>关注店铺</a>
+                   {/if}
+                   <div class='wst-clear'></div>
+                </div>
+           </div>
+		   <div class="goods-side">
+				<div class="guess-like">
+					<div class="title">猜你喜欢</div>
+					{wst:goods type='best' cat="$goods['goodsCatId']" num='3'}
+					<div class="item">
+						<div class="img"><a target='_blank' href="{:Url('home/goods/detail','id='.$vo['goodsId'])}"><img title="{$vo['goodsName']}" alt="{$vo['goodsName']}" data-original="__RESOURCE_PATH__/{:WSTImg($vo['goodsImg'])}" class="goodsImg" /></a></div>
+						<div class="p-name"><a class="wst-hide wst-redlink">{$vo['goodsName']}</a></div>
+						<div class="p-price">￥{$vo['shopPrice']}<span class="v-price">￥{$vo['marketPrice']}</span></div>
+					</div>
+					{/wst:goods}
+				</div>
+				<div class="hot-goods">
+					<div class="title">热销商品</div>
+					{wst:goods type='hot' num='3'}
+					<div class="item">
+						<div class="img"><a target='_blank' href="{:Url('home/goods/detail','id='.$vo['goodsId'])}"><img title="{$vo['goodsName']}" alt="{$vo['goodsName']}" data-original="__RESOURCE_PATH__/{:WSTImg($vo['goodsImg'])}" class="goodsImg" /></a></div>
+						<div class="p-name"><a class="wst-hide wst-redlink">{$vo['goodsName']}</a></div>
+						<div class="p-price">￥{$vo['shopPrice']}<span class="v-price">￥{$vo['marketPrice']}</span></div>
+					</div>
+					{/wst:goods}
+				</div>
+			</div>
+		</div>
+		<div class='goods-desc'>
+		    <div id='tab' class="wst-tab-box">
+				<ul id='goodsTabs' class="wst-tab-nav">
+				   <li>商品介绍</li>
+				   <li>商品评价<span class='appraise-num'>（{$goods['appraiseNum']}）</span></li>
+           {if $goods['read'] || $goods['status']==-1 || $goods['status']==0 }
+                 <a id='addCart2' href='javascript:void(0);' class='un-buy'>立即参团</a>
+           {else}
+                 <a id='addCart2' href='javascript:addCart(1,"#buyNum")'>立即参团</a>
+           {/if}
+				</ul>
+			    <div class="wst-tab-content" style='width:99%;margin-bottom: 10px;min-height:1312px;'>
+			       <div class="wst-tab-item" style="position: relative;">
+			       <ul class='wst-attrs-list'>
+                {volist name="$goods['attrs']" id="vo"}
+                  <li title='{$vo['attrVal']}'>{$vo['attrName']}：{$vo['attrVal']}</li>
+                {/volist}
+             </ul>
+             {$goods['goodsDesc']|htmlspecialchars_decode}
+			       </div>
+             <script id="tblist" type="text/html">
+               {{# for(var i = 0; i < d.length; i++){ }}
+               <div class="appraises-box">
+                <div class="wst-appraises-left">
+                  <p class="app-content">
+                    {{d[i]['content']}}
+                  </p>
+                  {{#  if(WST.blank(d[i]['images'])!=''){ var img = d[i]['images'].split(','); var length = img.length;  }}
+                  <div id="img-file-{{i}}">
+                  {{#  for(var g=0;g<length;g++){  }}
+                         <img src="__RESOURCE_PATH__/{{img[g].replace('.','_thumb.')}}" layer-src="__RESOURCE_PATH__/{{img[g]}}"  style="width:80px;height:80px;" />
+                  {{#  } }}
+                  </div>
+                  {{# }  }}
+                  {{# if(d[i]['shopReply']!='' && d[i]['shopReply']!=null){ }}
+                  <div class="reply-box">
+                     <p class="reply-content"><a href="javascript:void(0)" onclick="goShop({{d[i]['shopId']}})">{{d[i]['shopName']}}</a>：{{d[i]['shopReply']}}</p>
+                     <p class="reply-time">{{d[i]['replyTime']}}</p>
+                 </div>
+                 {{# } }}
+
+               </div>
+               <div class="wst-appraises-right">
+                <div class="goods-spec-box">
+                    {{d[i]['goodsSpecNames']}}
+                </div>
+                <div class="appraiser">
+                    【{{d[i]['loginName']}}】
+                </div>
+               </div>
+             <div class="wst-clear"></div>
+              </div> 
+               {{# } }}
+               </script>
+			       <div class="wst-tab-item" style="position: relative;display:none;">
+                <div id='ga-box'></div>
+                <div id='pager' style='text-align:center;'></div>
+			       </div>
+		    </div>
+		</div>	
+		<div class='wst-clear'></div>
+	</div>
+	<div class='wst-clear'></div>
+</div>
+{include file="$LAYOUT_HOME_RIGHT_CART"/}
+{/block}
+{block name="footer"}
+	{include file="$LAYOUT_HOME_FOOTER" /}
+{/block}
+{block name="js"}
+<script>
+var goodsInfo = {grouponId:{$goods['grouponId']},id:{$goods['goodsId']}}
+</script>
+<script type='text/javascript' src='__STYLE__/js/cloudzoom.js?v={$v}'></script>
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/home/index/js/time.js?v={$v}'></script>
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/home/index/js/goods.js?v={$v}'></script>
+<script type='text/javascript' src='__STYLE__/js/qrcode.js?v={$v}'></script>
+<script>
+$(function(){
+	var qr = qrcode(10, 'M');
+	var url = '{:url("wechat/goods/detail","","html",true)}?goodsId={$goods["goodsId"]}';
+	qr.addData(url);
+	qr.make();
+	$('#qrcode').html(qr.createImgTag());
+});
+function goShop(id){
+  location.href=WST.U('home/shops/home','shopId='+id);
+}
+</script>
+{/block}

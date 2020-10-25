@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+        <head>
+                <title>输出</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="js/inc.js"></script>
+        </head>
+        <body>
+                <fieldset>
+                        <legend>输出</legend>
+                        <ol>
+                                <li>
+                                        <h2 class="title_h2">重定向</h2>
+                                        通过<code>Sr::redirect($url, $msg = null, $time = 3, $view = null)</code>方法，进行重定向。
+                                        <br>参数说明：
+                                        <br>$url 必填：是跳转到的地址
+                                        <br>$msg 选填：是跳转的时候的提示信息
+                                        <br>$time 选填：是提示信息显示多久后跳转，单位秒
+                                        <br>$view 选填：是视图的名称不含后缀,使用视图显示提示信息,视图里面可以直接使用$url,$msg,$time三个变量
+                                        <br>示例如下:
+                                        <br>1.直接跳转到百度
+                                        <pre class="brush:php">
+                                                Sr::redirect("http://www.baidu.com/");
+                                        </pre>
+                                        2.跳转到百度,并显示提示信息
+                                        <pre class="brush:php">
+                                                Sr::redirect("http://www.baidu.com/",'正在跳转...');
+                                        </pre>
+                                        3.跳转到百度,并使用视图<b>(view/message.php)</b>显示提示信息 
+                                        <pre class="brush:php">
+                                                Sr::redirect("http://www.baidu.com/",'正在跳转...',3,'message');
+                                        </pre>
+                                        新建<code>view/message.php</code>内容如下：
+                                        <pre class="brush:xml">
+                                                &lt;!DOCTYPE html&gt;
+                                                &lt;html&gt;
+                                                    &lt;head&gt;
+                                                        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+                                                        &lt;title&gt;&lt;/title&gt;
+                                                    &lt;/head&gt;
+                                                    &lt;body&gt;
+                                                        &lt;?php
+                                                        echo $msg.'&lt;br/&gt;'.$time."秒后跳转到".$url;
+                                                        ?&gt;
+                                                    &lt;/body&gt;
+                                                &lt;/html&gt;
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">输出提示信息</h2>
+                                        通过<code>Sr::message($msg, $url = null, $time = 3, $view = null)</code>方法，输出操作后的提示信息。
+                                        <br>参数说明：
+                                        <br>$msg 必填：是提示信息
+                                        <br>$url 选填：是跳转到的地址
+                                        <br>$time 选填：是提示信息显示多久后跳转，单位秒
+                                        <br>$view 选填：是视图的名称不含后缀,使用视图显示提示信息,视图里面可以直接使用$url,$msg,$time三个变量
+                                        <br>示例如下:
+                                        1.提示添加成功
+                                        <pre class="brush:php">
+                                                Sr::message("添加成功");
+                                        </pre>
+                                        2.提示添加成功,并使用视图<b>(view/message.php)</b>显示提示信息，5秒后跳转到列表页
+                                        <pre class="brush:php">
+                                                Sr::message("添加成功",'http://www.baidu.com/',5,'message');
+                                        </pre>
+                                        新建<code>view/message.php</code>内容如下：
+                                        <pre class="brush:xml">
+                                                &lt;!DOCTYPE html&gt;
+                                                &lt;html&gt;
+                                                    &lt;head&gt;
+                                                        &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"&gt;
+                                                        &lt;title&gt;&lt;/title&gt;
+                                                    &lt;/head&gt;
+                                                    &lt;body&gt;
+                                                        &lt;?php
+                                                        echo $msg.'&lt;br/&gt;'.$time."秒后跳转到".$url;
+                                                        ?&gt;
+                                                    &lt;/body&gt;
+                                                &lt;/html&gt;
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">json输出</h2>
+                                        通过<code>Sr::json()</code>方法,来输出json格式。
+                                        <br>默认有三个参数：
+                                        <br>$code：状态码
+                                        <br>$message：信息
+                                        <br>$data：数据
+                                        <br>示例如下：
+                                        <pre class="brush:php">
+                                                //输出json
+                                                echo Sr::json(200, 'success', array('添加成功'));
+                                                //上面将输出：{"code":200,"message":"success","data":["\u6dfb\u52a0\u6210\u529f"]}
+                                        </pre>
+                                        当然，我们也可以自定义json输出格式内容。
+                                        <br>我们可以从入口文件里面看到<code>->setOutputJsonRender</code>方法，<code>->setOutputJsonRender</code>方法就是来自定义json输出格式内容。
+                                        <br>示例如下：
+                                        <pre class="brush:php">
+                                                ->setOutputJsonRender(function() {
+                                                        $args = func_get_args();
+                                                        $code = Sr::arrayGet($args, 0, '');
+                                                        $message = Sr::arrayGet($args, 1, '');
+                                                        $data = Sr::arrayGet($args, 2, '');
+                                                        return @json_encode(array('code' => $code, 'message' => $message, 'data' => $data));
+                                                })
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">生成控制器方法的url</h2>
+                                        通过Sr::url()方法，生成控制器方法的url。
+                                        <br>示例如下
+                                        <pre class="brush:php">
+                                                echo Sr::url('Welcome/index.do');
+                                                //参数是：控制器方法
+                                                //上面将会输出:/index.php/Welcome/index.do
+                                                
+                                                $data = array('a' => '1', 'd' => '2');
+                                                echo Sr::url('Welcome/index.do', $data);
+                                                //我们可以看到多了个第二参数，作用是get传递的参数数组，键值对，键是参数名，值是参数值。
+                                                //上面将会输出:/index.php/Welcome/index.do?a=1&d=2
+
+                                                //我们还可以去掉入口文件名称
+                                                Sr::config()->setIsRewrite(true);
+                                                echo Sr::url('Welcome/index.do');
+                                                //上面将会输出:/Welcome/index.do
+                                                //我们默认是不去除的，需要到入口文件去配置。
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取入口文件所在目录url路径</h2>
+                                        通过Sr::urlPath()方法，获取入口文件所在目录url路径，只能在web访问时使用，在命令行下面会抛出异常。
+                                        <br>示例如下
+                                        <pre class="brush:php">
+                                                echo Sr::urlPath('public');
+                                                //上面将会输出:/public/
+                                                
+                                                echo Sr::urlPath('public/css/style.css', false);
+                                                //上面将会输出:/public/css/style.css
+                                                //我们可以看到多了个第二参数，作用是如果为true的话，最后多加/符号，默认是true。
+                                        </pre>
+
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">设置cookie</h2>
+                                        通过<b>Sr::setCookie()</b>方法;我们可以方便的设置cookie。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                Sr::setCookie('user_id',20);
+                                                //第一个参数 必填： cookie的名称
+                                                //第二个参数 必填： cookie的值
+
+                                                Sr::setCookie('user_id',20,30);
+                                                //第三个参数 可选： cookie的有效期时间
+                                                //30将设定 cookie 30秒后失效。如果未设定，cookie将会在会话结束后（一般是浏览器关闭）失效。
+
+                                                Sr::setCookie('user_id',20,30,'/');
+                                                //第四个参数 可选： Cookie在服务器端的有效路径
+                                                //如果该参数设为'/'的话，cookie就在整个cookie的域名内有效，如果设为'/foo/'，cookie 就只在cookie的域名下的/foo/目录及其子目录内有效，例如/foo/bar/。默认值为设定cookie的当前目录。
+
+                                                Sr::setCookie('user_id',20,30,'/','example.com');
+                                                //第五个参数 可选： 规定cookie的域名
+                                                //要使cookie 能在如 example.com域名下的所有子域都有效的话，该参数应该设为'.example.com'。虽然.并不必须的，但加上它会兼容更多的浏览器。如果该参数设为www.example.com的话，就只在www子域内有效。
+
+                                                Sr::setCookie('user_id',20,30,'/','example.com',0);
+                                                //第六个参数 可选： 规定是否通过安全的HTTPS连接来传输cookie
+                                        </pre>
+                                        <b class="text_strong">提示:</b>
+                                        <br>如果我们要设置cookie的key前缀可以到入口文件里面的<code>->setCookiePrefix('')</code>方法设置。
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">设置原生cookie</h2>
+                                        通过<b>Sr::setCookieRaw()</b>方法;我们可以方便的设置原生cookie。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                Sr::setCookieRaw('user_id',20);
+                                                //第一个参数 必填： cookie的名称
+                                                //第二个参数 必填： cookie的值
+
+                                                Sr::setCookieRaw('user_id',20,30);
+                                                //第三个参数 可选： cookie的有效期时间
+                                                //30将设定 cookie 30秒后失效。如果未设定，cookie将会在会话结束后（一般是浏览器关闭）失效。
+
+                                                Sr::setCookieRaw('user_id',20,30,'/');
+                                                //第四个参数 可选： Cookie在服务器端的有效路径
+                                                //如果该参数设为'/'的话，cookie就在整个cookie的域名内有效，如果设为'/foo/'，cookie 就只在cookie的域名下的/foo/目录及其子目录内有效，例如/foo/bar/。默认值为设定cookie的当前目录。
+
+                                                Sr::setCookieRaw('user_id',20,30,'/','example.com');
+                                                //第五个参数 可选： 规定cookie的域名
+                                                //要使cookie 能在如 example.com域名下的所有子域都有效的话，该参数应该设为'.example.com'。虽然.并不必须的，但加上它会兼容更多的浏览器。如果该参数设为www.example.com的话，就只在www子域内有效。
+
+                                                Sr::setCookieRaw('user_id',20,30,'/','example.com',0);
+                                                //第六个参数 可选： 规定是否通过安全的HTTPS连接来传输cookie
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">设置session</h2>
+                                        通过<b>Sr::sessionSet($key, $value)</b>方法;我们可以方便的设置session。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+						//1.设置单个session
+						Sr::sessionSet('username', '张三');
+						//第一个参数 必填： session的键值，也可以是一个键值对数组一次设置多个session，此时不需要第二个参数。 
+						//第二个参数 选填： session的值
+
+						//2.设置多个session
+						$arr = array('username'=>'张三', 'user_id'=>'1');
+						Sr::sessionSet($arr);
+						//3.$key支持多级，比如$key是user.id,那么设置的就是$_SESSION['user']['id']=$value。
+						Sr::sessionSet('user.id', '张三');
+                                        </pre>
+                                </li>
+				<li>
+                                        <h2 class="title_h2">销毁session</h2>
+                                        通过<b>Sr::sessionUnset($key = null)</b>方法;我们可以方便的销毁session。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+						$key支持多级
+						比如$key是user.id,那么销毁的就是$_SESSION['user']['id']。
+						Sr::sessionUnset('user.id');
+						如果$key是null，那么销毁的就是$_SESSION变量。
+						Sr::sessionUnset();
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">开启session</h2>
+                                        通过<b>Sr::sessionStart()</b>方法;我们可以方便的开启session。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                Sr::sessionStart();
+                                        </pre>
+                                </li>
+                        </ol>
+                </fieldset>
+                <script src="js/inc.foot.js"></script>
+        </body>
+</html>

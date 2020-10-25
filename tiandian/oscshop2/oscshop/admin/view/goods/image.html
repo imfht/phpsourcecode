@@ -1,0 +1,164 @@
+{extend name="public:base" /}
+{block name="content"}	
+<div class="page-header">
+	<h1>
+		{$breadcrumb1}
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$breadcrumb2}
+		</small>
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$crumbs}
+		</small>			
+
+	</h1>
+</div>
+	<div class="row">
+	<div class="col-xs-12">	
+		<div class="panel-body">
+        <form  method="post" enctype="multipart/form-data" id="form-goods" class="form-horizontal">
+
+          <ul class="nav nav-tabs">
+          	
+          	<li class="active"><a href="#tab-data" data-toggle="tab">{$crumbs}</a></li>
+           
+          </ul>
+          <div class="tab-content">
+          		
+	       	<!-- 关联 START -->
+	          	<div class="tab-pane active" id="tab-data">	          		
+	         
+	          		<div class="table-responsive">
+	          			
+	          		
+	                	<table id="images" class="table table-striped table-bordered table-hover">
+		                  <thead>
+		                    <tr>
+		                      <td class="text-left">商品图片</td>
+		                      <td class="text-right">选项排序</td>
+		                      <td></td>
+		                    </tr>
+		                  </thead>
+		                	 <tbody>
+			                     <?php $image_row = 0; ?>
+			                     <?php if(isset($goods_images)){ ?>
+				                    <?php foreach ($goods_images as $goods_image) { ?>
+					                    <tr id="gallery-image-row<?php echo $image_row; ?>">
+					                      <td class="text-left"><a href="#" id="thumb-image<?php echo $image_row; ?>" data-toggle="image" class="img-thumbnail"><img src="/<?php echo resize($goods_image['image'],100,100); ?>" /></a><input type="hidden" name="goods_image[<?php echo $image_row; ?>][image]" value="<?php echo $goods_image['image']; ?>" id="input-image<?php echo $image_row; ?>" /></td>
+					                      <td class="text-right"><input type="text" name="goods_image[<?php echo $image_row; ?>][sort_order]" value="<?php echo $goods_image['sort_order']; ?>" class="form-control" /></td>
+					                      <td class="text-left">
+					                      	<input type="hidden" name="table" value="goods_image" />
+									
+													<input type="hidden" name="goods_id" value="{$Request.param.id}" />
+													
+													<input type="hidden" name="pk_id" value="goods_image_id" />
+													
+													<input type="hidden" name="id" value="<?php echo $goods_image['goods_image_id']; ?>" />
+													
+													<input type="hidden" name="key" value="<?php echo $image_row; ?>" />
+							                      	
+							                      	<button type="button" bid="gallery-image-row<?php echo $image_row; ?>" class="btn save btn-primary"><i class="fa fa-floppy-o"></i></button>
+							                      	<button type="button" bid="gallery-image-row<?php echo $image_row; ?>" class="btn del btn-danger"><i class="fa fa-trash"></i></button>
+							                      </td>
+							                    </tr>
+						                    <?php $image_row++; ?>
+						                    <?php } ?>
+						                 <?php } ?>
+					                  </tbody>
+							          </table>
+							          <div><a  onclick="addImage();" class="add_image btn btn-primary ">添加图片</a></div>
+                
+                  				</div>          		
+	          	
+        						</div>
+          </div>
+        </form>
+	</div>
+	</div>
+</div>
+{/block}
+{block name="javascript"}
+<script>	
+
+	var image_row = '<?php echo $image_row; ?>';
+
+	function addImage() {
+		html  = '<tr id="gallery-image-row' + image_row + '">';
+		html += '  <td class="text-left"><a href="#" id="thumb-image' + image_row + '"data-toggle="image" class="img-thumbnail"><img src="__PUBLIC__/image/no_image_100x100.jpg" /><input type="hidden" name="goods_image[' + image_row + '][image]" value="" id="input-image' + image_row + '" /></td>';
+		html += '  <td class="text-right"><input type="text" name="goods_image[' + image_row + '][sort_order]" value="'+image_row+'" class="form-control" /></td>';
+		html += '  <td class="text-left">';
+		
+		html += '<input type="hidden" name="table" value="goods_image" />';
+  		
+  		html += '<input type="hidden" name="goods_id" value="{$Request.param.id}" />';
+  		
+  		html += '<input type="hidden" name="pk_id" value="goods_image_id" />';
+  							
+		html += '<input type="hidden" name="id" value="" />';
+		
+		html += '<input type="hidden" name="key" value="' + image_row + '" />';
+		
+		html += '<button type="button"  bid="gallery-image-row' + image_row + '"  class="btn save btn-primary"><i class="fa fa-floppy-o"></i></button>';
+		html += '<button type="button"  bid="gallery-image-row' + image_row + '"  class="btn del btn-danger"><i class="fa fa-trash"></i></button>';
+		html += '</td>';
+		
+		html += '</tr>';
+		
+		$('#images tbody').append(html);
+		
+		image_row++;
+	}
+
+
+	
+$('.save').live('click', function() {
+	
+	var id='#'+$(this).attr('bid');	
+	
+	$.post(
+		"{:url('Goods/ajax_eidt')}",
+		$(id+' input[type=\'text\'],'+id+' input[type=\'hidden\']'),
+		function(d){
+			
+			if(d.success){
+				
+				alert(d.success);
+				
+				if(d.id){
+					$(id).find('input[name=\'id\']').val(d.id);
+				}
+				
+			}else if(d.error){
+				alert(d.error);
+			}
+		}
+	);
+
+});	
+$('.del').live('click', function() {
+	var f=confirm('确认要删除吗？');
+	
+	if(f==false){
+		return false;
+	}
+	
+	var id='#'+$(this).attr('bid');	
+	
+	$.post(
+		"{:url('Goods/ajax_del')}",
+		$(id+' input[type=\'hidden\']'),
+		function(d){
+			if(d.success){				
+				alert(d.success);
+				$(id).remove();
+			}else if(d.error){
+				alert(d.error);
+				$(id).remove();
+			}
+		}
+	);
+
+});	
+</script>
+{/block}

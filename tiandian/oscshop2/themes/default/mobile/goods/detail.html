@@ -1,0 +1,420 @@
+{extend name="public:base" /}
+
+{block name="head"}
+<link href="__PUBLIC__/view_res/mobile/css/product.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/lib/weui.min.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/css/jquery-weui.min.css" type="text/css" rel="Stylesheet" />
+<script src="__PUBLIC__/jquery-weui/dist/js/jquery-weui.min.js"></script>
+<script src="__PUBLIC__/jquery-weui/dist/js/swiper.min.js"></script>
+
+<style>
+	.swiper-container {
+	    width: 100%;
+	}
+	.swiper-container img {
+	    display: block;
+	    width: 100%;
+	}
+	.option_name{margin-left:5px;}
+	      
+	/*重载jquery-weui.min.css中样式*/  
+	label > * {
+	  pointer-events: auto;
+	}	
+</style>
+{/block} 
+
+{block name="header"}
+{include file="public/top-nav" /}
+{/block}
+
+{block name="content"}
+
+<div class="swiper-container">
+      <!-- Additional required wrapper -->
+      <div class="swiper-wrapper">
+        <!-- Slides -->
+        {volist name="image" id="image"}            
+            <div class="swiper-slide"><img src="IMG_ROOT{$image.image|resize=400,400}" /></div>
+      	{/volist}        
+      </div>
+      <!-- If we need pagination -->
+      <div class="swiper-pagination"></div>
+</div>
+
+<div id="container">
+<a class="uc-add-like">收藏</a>
+
+	<input type="hidden" value="{$goods.minimum}" name="quantity">
+	<input id="goods_id" type="hidden" value="{$goods.goods_id}" name="goods_id">
+	
+	<p class="vpd-title" style='height:auto;'>
+           {$goods.name}
+    </p>
+    {if condition="isset($points_goods) AND ($points_goods EQ 'points')"}
+    	<input type="hidden" value="points" name="pay_type">
+	    <dl class="pd-dsc clearfix">
+	        <dt>积分：</dt>
+	        <dt class="prices" data-price="{$goods.pay_points|round=2}" id="pd-market-price">{$goods.pay_points|round=2}</dt>
+	   	</dl>
+   	{else/}
+	   	<dl class="pd-dsc clearfix">
+	        <dt>零售价：</dt>
+	        <dt class="prices" data-price="{$goods.price|round=2}" id="pd-market-price">&yen;{$goods.price|round=2}</dt>
+	   	</dl>
+   	{/if}
+   	<dl class="pd-dsc clearfix" id="product_stock_wrap">
+        <dt>库存量：</dt>
+        <dt id="pd-stock">{$goods.quantity}</dt>
+    </dl>
+    
+    {if condition="!empty($discount)"}
+    <dl class="pd-dsc clearfix" id="product_stock_wrap">
+            <dt>批发价：</dt>
+            {volist name="discount" id="v"}
+            	<br />
+            	<dt id="pd-stock"> {$v.quantity}{$goods.sku} 或更多 &yen; {$v.price}</dt>
+            {/volist}
+    </dl>
+	{/if}
+    
+    {if condition="$options"}	
+			      <div class="options">
+			        <h2>可选项</h2>			        
+			        {volist name="options" id="option"}				        
+				        {if condition="$option['type'] eq 'select' "}			        	
+				        <div class="boss_check">
+					        <div class="box-check">	
+						        <div id="option-{$option.goods_option_id}" class="option">
+						          <div class="title_text"><b>{$option.name}:</b>
+							          {if condition="$option['required'] eq 1"}
+							          	<span class="required">*</span>
+							          	{/if}
+						          </div>
+						          <select name="option[{$goods.goods_id},{$option.option_id}]">
+						            <option value=""> --- 请选择 --- </option>
+						            {volist name="$option['goods_option_value']" id="option_value" }	
+							            <option title="数量{$option_value.quantity}" value="{$option_value.option_value_id}">{$option_value.name}							            
+								            {if condition="$option_value['goods_price'] neq '0.00' "}		
+							            		({$option_value.price_prefix}￥{$option_value.price})
+							            	{/if}
+							            </option>
+						            {/volist}
+						          </select>
+						        </div>
+					         </div>
+				         </div>
+				        {/if}   
+			  
+						{if condition="$option['type'] eq 'radio' "}
+							<div class="boss_check">
+								<div class="box-check">
+							        <div id="option-{$option.goods_option_id}">
+							          <p><b>{$option.name}:</b>						      
+								          	{if condition="$option['required'] eq 1"}
+								          	<span class="required">*</span>
+								          	{/if}						          
+							          </p>
+							          {volist name="$option['goods_option_value']" id="option_value" }		
+							          {if condition="!empty($option_value['image'])"}			
+							          	<a title="数量{$option_value.quantity}" href="/uploads/{$option_value.image}">
+							          		<img src="IMG_ROOT{$option_value.image|resize=30,30}" />									          										          
+							          	</a>
+						          	 {/if}			          									          	
+							          <label for="option-value-{$option_value.goods_option_value_id}">								          	
+							          	<input  class="option" type="radio" name="option[{$goods.goods_id},{$option.option_id}]" value="{$option_value.option_value_id}" id="option-value-{$option_value.goods_option_value_id}" />									          	
+								          	<span class="option_name" title="数量{$option_value.quantity}">{$option_value.name}</span> 						          
+								            {if condition="$option_value['goods_price'] neq '0.00' "}		
+								            	({$option_value.price_prefix}￥{$option_value.price})
+								            {/if}								            
+							          </label>
+							          <br />
+							          {/volist}
+							        </div>
+								</div>
+							</div>	
+					     {/if}						        
+		        
+				        {if condition="$option['type'] eq 'checkbox' "}	
+						<div class="box-check">
+					        <div id="option-{$option.goods_option_id}" class="option">
+					          <p><b>{$option.name}:</b>
+						          {if condition="$option['required'] eq 1"}
+									   <span class="required">*</span>
+								  {/if}	
+					          </p>		        
+					          {volist name="$option['goods_option_value']" id="option_value" }	
+				         		   {if condition="!empty($option_value['image'])"}			
+							          	<a title="数量{$option_value.quantity}" href="/uploads/{$option_value.image}">
+							          		<img src="IMG_ROOT{$option_value.image|resize=30,30}" />									          										          
+							          	</a>
+					          	   {/if}
+						          <input type="checkbox" name="option[{$goods.goods_id},{$option.option_id}][]" value="{$option_value.option_value_id}" id="option-value-{$option_value.goods_option_value_id}" />
+						          <label for="option-value-{$option_value.goods_option_value_id}">
+							           
+							          <span title="数量{$option_value.quantity}">{$option_value.name}</span> 						          
+							           {if condition="$option_value['goods_price'] neq '0.00' "}		
+							            	({$option_value.price_prefix}￥{$option_value.price})
+							           {/if}
+						          </label>
+						          <br />
+					          {/volist}
+					        </div>
+				        </div>											       
+				       {/if}
+		        				      
+		        {/volist}
+		      </div>
+		      {/if}
+    
+    
+</div>   
+
+<header class="Thead" id="vpd-detail-header">产品详情</header>
+    <div id="vpd-content" class="notload">下拉加载详细介绍</div>   	
+    
+    {if condition="!isset($points_goods)"}
+	   	<header class="Thead">随便逛逛</header>   	
+	   	{if condition="isset($related_goods)"}
+	    <div id="pd-recoment">
+	        <div class='pd-box clearfix'>
+	            {volist name="related_goods" id="d"}
+	                <a class="slist-item" href="{:url('goods/detail',array('id'=>$d['goods_id']))}">
+	                    <div class='pd-box-inner'>
+	                        <img src="IMG_ROOT{$d.image|resize=120,120}" alt='{$d.name}'/>
+	                        <p class='Elipsis'>{$d.name}</p>                        
+	                    </div>
+	                </a>
+	            {/volist}
+	        </div>
+	    </div>
+		{/if}
+	
+	{/if}
+	
+{/block}
+
+{block name="footer"}
+
+{if condition="isset($points_goods)"}
+	<div id="appCartWrap" class="clearfix" style="padding: 0 10px;">
+		<a class="button" id="buy-button" style="width: 100%;" data-add="0" >立即兑换</a>  
+	</div>
+{else/}
+<div id="appCartWrap" class="clearfix">    
+	<a class="button" id="addcart-button"  data-add="1">加入购物车</a>   
+	<a class="button" id="buy-button" data-add="0" >立即购买</a>  
+	<a id="toCart" href="{:url('cart/index')}"><i>
+		{if condition="session('mobile_total')"}
+			{$Think.session.mobile_total}
+		{else/}
+			0
+		{/if}
+		</i></a>
+</div>
+{/if}
+
+{/block}
+
+{block name="script"}
+<script>
+$(function(){
+	
+	$(".swiper-container").swiper({
+        loop: true,
+        autoplay: 3000
+      });
+    
+    /**
+     * 商品介绍是否已经加载标记
+     * @type Boolean
+     */
+    var contentLoaded = false;
+    /**
+     *加载商品详情
+     */
+    $(window).scroll(function () {
+        var totalheight = parseFloat($(window).height()) + parseFloat($(window).scrollTop()) - 5;
+        if ($(window).height() <= totalheight && !contentLoaded) {
+            $('#vpd-content').html('');
+            contentLoaded = true;
+            
+            $.showLoading();
+            // ajax 加载商品详情
+            $.ajax({
+                url: "{:url('goods/get_description',array('id'=>$goods['goods_id']))}",
+              	dataType: 'html',
+                success: function (data) {
+    
+                    $('#vpd-content').html(data);
+                    $('#vpd-detail-header').show();
+                    $('.notload').removeClass('notload');
+                    $('#vpd-content').fadeIn();
+                    // 调整图片
+                    $('#vpd-content img').each(function () {
+                        $(this).on('load', function () {
+                            if ($(this).width() >= document.body.clientWidth) {
+                                $(this).css('display', 'block');
+                            }
+                            $(this).height('auto');
+                        });
+                    });
+                    $('#vpd-content').find('div').width('auto');
+                },
+                error: function () {
+                    
+                }
+            });
+			setTimeout(function (){
+		        $.hideLoading();		     
+		    }, 500);
+        }
+    });
+    /**
+     *加入购物车
+     */
+    $('#buy-button,#addcart-button').bind('click', function() {		
+    	
+		var type=$(this).attr('data-add');			
+			
+		$.ajax({
+				url: "{:url('cart/add')}",
+				type: 'post',
+				data: $('#container input[type=\'hidden\'],#container input[type=\'radio\']:checked,#container input[type=\'checkbox\']:checked,#container select'),
+				
+				dataType: 'json',
+				success: function(json) {
+					$('.box-check').removeClass('text-error');
+					$('.text-danger').remove();
+					if (json.error) {
+					
+				       if (json['goods_option_id']) {
+				         
+				         var id=json['goods_option_id'];
+				         
+				            var element = $('#option-'+id);
+				
+				            if (element.parent().hasClass('box-check')) {
+				              element.parent().addClass('text-error').after('<div class="text-danger">' + json.error + '</div>');
+				            } else {
+				              element.after('<div class="text-danger">' + json.error+ '</div>');
+				            }
+				            $.toast(json.error,"forbidden");				        
+						}else{						
+							$.toast(json.error,"forbidden");	
+						}
+						if(json.url){
+							setTimeout(function (){
+						        location.href=json.url;
+						    }, 1000);
+						}
+					}	
+					
+					if (json.success) {
+						<?php if(!isset($points_goods)){ ?>
+							$.toast("已加入购物车");						
+							$('#toCart').find('i').text(json.total);
+							
+							if(type==0){							
+							setTimeout(function (){
+						        location = "{:url('cart/index')}";
+						    }, 1000);							
+						}
+						<?php }else{ ?>
+							$.showLoading();
+							if(type==0){							
+							setTimeout(function (){
+						        location = "{:url('cart/index',array('type'=>'points'))}";
+						    }, 1000);							
+						}
+						<?php } ?>
+						
+						
+					}
+				
+			}
+		});	
+	});
+	 /**
+     *加入收藏
+     */
+	$('.uc-add-like').bind('click', function() {
+		
+		var goods_id=$('#goods_id').val();
+		$.post(
+			"{:url('goods/add_wish')}",
+			{id:goods_id},
+			function(d){
+				if(d){					
+					if(d.error){
+						$.toast(d.error,"forbidden");	
+					}else if(d.success){
+						$.toast(d.success);
+					}					
+				}
+			}
+		);
+	}); 
+
+
+});
+</script>
+{if condition="in_wechat()"}
+<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>    
+<script type="text/javascript">
+wx.config({
+    debug: false,            
+    appId: '{$signPackage.appId}',
+    timestamp: {$signPackage.timestamp},
+    nonceStr: '{$signPackage.nonceStr}',
+    signature: '{$signPackage.signature}',            
+    jsApiList: [
+    'checkJsApi',
+    'onMenuShareTimeline',
+    'onMenuShareAppMessage'
+    ]
+});	
+        
+wx.ready(function(){
+	
+		var is_agent = '<?php echo user("is_agent"); ?>';
+        var site_url='<?php echo request()->domain(); ?>';
+        if(is_agent==1){        	
+        	var url =site_url+'/mobile/goods/agent_share/osc_aid/'+'<?php echo hashids()->encode(user("uid")); ?>'+'/id/'+'<?php echo input("param.id") ?>';
+        }else{
+        	var url = '<?php echo request()->url(true); ?>';
+        }           
+   
+        //获取“分享到朋友圈”按钮点击状态及自定义分享内容接口
+        wx.onMenuShareTimeline({
+            title: '{$goods.name}',
+            link: url, 
+            imgUrl: site_url+'{$goods.image|resize=100,100}',
+            success: function () {
+               pvShareCallback(url,'分享到朋友圈');
+            }
+        });
+        //获取“分享给朋友”按钮点击状态及自定义分享内容接口
+        wx.onMenuShareAppMessage({
+            title: '{$goods.name}',
+            desc: '{$goods.name}',
+            link: url,
+            imgUrl: site_url+'IMG_ROOT{$goods.image|resize=100,100}',
+            success: function () {
+              pvShareCallback(url,'分享给朋友');
+            }
+        });
+        function pvShareCallback(url,type) {
+        	
+            $.post("{:url('Index/add_share')}", {
+                url: url,
+                uid:'<?php echo user("uid"); ?>',
+                type:type                    
+            });
+        }  
+        
+});	        
+         	        
+</script> 
+{/if}
+{/block}

@@ -1,0 +1,94 @@
+<include file="public:top" />
+<!--编辑菜单-->
+<form class="layui-form layui-form-pane" action="" style="padding:20px;">
+	<input type="hidden" name="uid" value="{$info.uid}" />
+  <div class="layui-form-item">
+    <label class="layui-form-label">用户名</label>
+    <div class="layui-input-block">
+       <input type="text" class="layui-input" value="{$info.username} - 用户名不能修改" disabled="disabled">
+    </div>
+  </div>
+ 
+  <div class="layui-form-item">
+    <label class="layui-form-label">会员邮箱</label>
+    <div class="layui-input-block">
+      <input type="text" name="email" id="email" lay-verify="email" placeholder="请输入"  value="{$info.email}"  class="layui-input" >
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">登录密码</label>
+    <div class="layui-input-block">
+      <input type="password" name="password" id="password" placeholder="不修改则留空" class="layui-input" >
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">重复密码</label>
+    <div class="layui-input-block">
+      <input type="password" name="repassword" id="repassword" placeholder="不修改则留空" class="layui-input" >
+    </div>
+  </div>
+   
+  <div class="layui-form-item">
+    <label class="layui-form-label">用户组</label>
+    <div class="layui-input-block">
+      <select name="roleid" id="roleid">
+      	<volist name="role" id="vo">
+			<option value="{$vo.id}" <if condition="$info['roleid'] eq $vo['id']">selected</if>>{$vo.name}</option>
+		</volist>
+	  </select>
+    </div>
+  </div>
+  <div class="layui-form-item"  pane="">
+    <label class="layui-form-label">{:L('enabled')}</label>
+    <div class="layui-input-block">
+      <input type="radio" title="{:L('yes')}" name="status" value="1" <if condition="$info.status eq 1">checked</if>>
+      <input type="radio" title="{:L('no')}" name="status" value="0" <if condition="$info.status eq 0">checked</if>>
+    </div>
+  </div>
+  <div class="layui-form-item">
+        <label class=""></label>
+        <div class="layui-input-block">
+        <button class="layui-btn" lay-submit="" lay-filter="upbtn">提交保存</button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+layui.use(['layer','jquery','form','element'], function () {
+   // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form, element = layui.element;
+  	  
+    // 提交
+    form.on('submit(upbtn)', function (data) {
+    	var emailvalue = $("#email").val();
+    	//验证邮箱是否存在
+    	$.post("{:U('user/ajax_check_email', array('id'=>$info['uid']))}",{email:emailvalue},function(res){
+            if(res.status ==  0){
+                layer.msg(res.msg,{time:1800},function(){
+                	return false;
+                });
+            }else{
+                // 提交添加
+		        $.post("{:U('user/edit')}",data.field,function(res){
+		            if(res.status ==  1){
+		                layer.msg(res.msg,{time:1800},function(){
+		                    //关闭弹层后刷新父页面
+		                    window.parent.location.reload();
+		                    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引  
+		                    parent.layer.close(index); 
+		                });
+		            }else{
+		                layer.msg(res.msg,{time:1800},function(){
+		                    return false;
+		                });
+		            }
+		        });
+		        return false;
+		        // 添加END
+            }
+        });
+        return false;
+    });
+});
+</script>

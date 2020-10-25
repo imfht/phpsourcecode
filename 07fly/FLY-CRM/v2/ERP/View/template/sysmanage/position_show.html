@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+
+<div class="wrapper wrapper-content animated fadeInRight">
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="ibox float-e-margins">
+				<div class="ibox-title">
+					<h5><i class="fa fa-home"></i> 职务管理</h5>
+				</div>
+				<div class="ibox-content">
+					<div class="row">
+						<div class="col-md-3">
+							<div class="panel panel-default ">
+								<div class="panel-heading">
+									<div class="row">
+										<div class="col-sm-6">职务管理</div>
+										<div class="col-sm-6 text-right"><a class="refresh-tree">刷新</a></div>
+									</div>
+								</div>
+								<div class="panel-body right_centent" style="">
+									<div id="left-tree" data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_tree_json/"> </div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-9">
+							<div class="ibox float-e-margins">
+								<div class="ibox-content table-responsive">
+									<div class="row">
+										<form id="pagerForm" method="post" class="form-inline searchForm">
+											<input type="hidden" name="pid" value="">
+											<div class="col-sm-3 m-b-xs">
+												<a class="btn btn-default refresh-tree"> <i class="fa fa-refresh"> </i>刷新</a>
+												<lqf_link> <a class="btn btn-info ajax-open add-btn" data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_add/" data-title="用户"><i class="fa fa-plus"></i>添加</a> </lqf_link>
+											</div>
+											<div class="col-sm-9 m-b-xs text-right">
+												<div class="input-group">
+													<input type="text" name="keywords" placeholder="输入主题关键字搜索" class="form-control">
+												</div>
+												<div class="input-group">
+                                                    <span class="input-group-btn">
+                                                    <button type="button" class="btn btn-primary ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                                                    </span>
+												</div>
+											</div>
+										</form>
+									</div>
+									<table class="table table-hover 07fly-table" data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_json/">
+										<thead>
+										<tr>
+											<th width="22"><input type="checkbox" group="ids" class="checkboxCtrl"></th>
+											<th width="100">职务名称</th>
+											<th width="200">职务描述</th>
+											<th width="60">排序</th>
+											<th width="60">启用</th>
+											<th width="80">操作</th>
+										</tr>
+										</thead>
+										<tbody>
+										</tbody>
+										<tfoot class="ibox-content">
+										<tr>
+											<td colspan="11" align="center"></td>
+										</tr>
+										</tfoot>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+
+<link href="#{$smarty.const.APP}#/View/template/js/plugins/bootstrap-treeview/bootstrap-treeview.min.css" rel="stylesheet">
+<script src="#{$smarty.const.APP}#/View/template/js/plugins/bootstrap-treeview/bootstrap-treeview.js"></script>
+
+<script id="tableListTpl" type="text/html">
+	<% for(var i=0;i<list.length;i++) {
+	visible='';
+	if(list[i]['visible']=='1') visible='checked';
+	%>
+	<tr>
+		<td><input name="user_id" class="checkboxCtrlId" value="<%=list[i]['id']%>" type="checkbox"></td>
+		<td><%=list[i]['name']%></td>
+		<td><%=list[i]['desc']%></td>
+		<td><input type="text" name="sort" value="<%=list[i]['sort']%>" class="form-control w50 ajax-sort" data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_modify_sort/" data-id="<%=list[i]['id']%>" size="5"></td>
+		<td>
+			<input name="visible" class="ajax-checkbox" type="checkbox"   data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_modify_visible/"  data-id="<%=list[i]['id']%>" <%=visible%> >
+		</td>
+		<td>
+			<p>
+				<lqf_link><a class="ajax-open" data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_modify/id/<%=list[i]['id']%>/">修改</a></lqf_link>
+				<lqf_link><a class="ajax-get confirm" data-url="#{$smarty.const.ACT}#/sysmanage/Position/position_del/id/<%=list[i]['id']%>/">删除</a></lqf_link>
+			</p>
+		</td>
+	</tr>
+	<% } %>
+</script>
+<script type="text/javascript">
+	var ajaxUrl = '#{$smarty.const.ACT}#/sysmanage/Position/position_json/';
+	$(document).ready(function () {
+		window.onload=onLoad();
+		//页面加载
+		function onLoad() {
+			$('.searchForm').find("input[name='pid']").val('');
+			var target = $('#left-tree').attr('data-url');
+			$.get(target).success(function (jsonData) {
+				//渲染树
+				$('#left-tree').treeview({
+					data: jsonData,
+					levels: 3,
+					showTags: false,//显示右边tags
+					showCheckbox: false,//是否显示多选
+					multiSelect: false,
+					showBorder: false,
+					onNodeSelected: function (event, node) {
+						//设置新增时的父节点
+						$('.searchForm').find("input[name='pid']").val(node.id);
+						$('.add-btn').attr('data-id',node.id);
+						turnPage(1);
+					}
+				});
+			}, "json");
+			turnPage(1);//页面加载时初始化分页
+		}
+		//刷新加载-添加
+		$("body").on("click", ".refresh-tree", function () {
+			onLoad();
+			turnPage(1);
+		});
+
+		/*-----页面pannel内容区高度自适应 start-----*/
+		$(window).resize(function () {
+			setCenterHeight();
+		});
+		setCenterHeight();
+		function setCenterHeight() {
+			var height = $(window).height();
+			var centerHight = height - 240;
+			$(".right_centent").height(centerHight).css("overflow", "auto");
+		}
+		/*-----页面pannel内容区高度自适应 end-----*/
+	});
+
+</script>

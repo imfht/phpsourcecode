@@ -1,0 +1,165 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-puzzle-piece"></i> {{ text_list }}</h3>
+      </div>
+      <div class="panel-body">
+        <fieldset>
+          <legend>{{ text_type }}</legend>
+          <div class="well">
+            <div class="input-group">
+              <select name="type" class="form-control">
+                {% for category in categories %}
+                  {% if type == category.code %}
+                    <option value="{{ category.href }}" selected="selected" data-code="{{ category.code }}">{{ category.text }}</option>
+                  {% else %}
+                    <option value="{{ category.href }}" data-code="{{ category.code }}">{{ category.text }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select> <span class="input-group-addon"><i class="fa fa-filter"></i> {{ text_filter }}</span>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="feature-pro-wrapper">
+        	<legend>更多特色功能</legend>
+          <div class="row"></div>
+        </fieldset>
+        <div class="hidden pro-36-img"><img src="view/image/v3.7-pro.jpg" class="img-responsive"></div>
+        <div id="extension"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% if categories %}
+  <script type="text/javascript"><!--
+  $('select[name="type"]').on('change', function() {
+  	var code = $(this).find("option:selected").data("code"), html = '';
+  	$('.feature-pro-wrapper').hide().find('.row').html('');
+
+    $.ajax({
+  	  url: 'index.php?route=extension/extension/module/feature_pro_msg&user_token={{ user_token }}',
+  	  dataType: 'json',
+  	  type: 'post',
+  	  success: function(data) {
+  	  	if (typeof data[code] != 'undefined') {
+            for (var i=0; i < data[code].length; i++) {
+		  	  	html += '<div class="col-sm-4"><div class="list" data-href="' + data[code][i].href + '" data-btn="' + data[code][i].btn + '"><div class="title">' + data[code][i].name + '</div><div class="inner" title=' + data[code][i].description + '>' + data[code][i].description + '</div></div></div>'
+  	  		}
+	  	  	$('.feature-pro-wrapper').show().find('.row').html(html);
+  	  	}
+  	  },
+  	  error: function(xhr, ajaxOptions, thrownError) {
+  		  alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+  	  }
+    });
+
+	  $.ajax({
+		  url: $('select[name="type"]').val(),
+		  dataType: 'html',
+		  beforeSend: function() {
+			  $('.fa-filter').addClass('fa-circle-o-notch fa-spin');
+			  $('.fa-filter').removeClass('fa-filter');
+			  $('select[name=\'type\']').prop('disabled', true);
+		  },
+		  complete: function() {
+			  $('.fa-circle-o-notch').addClass('fa-filter');
+			  $('.fa-circle-o-notch').removeClass('fa-circle-o-notch fa-spin');
+			  $('select[name=\'type\']').prop('disabled', false);
+		  },
+		  success: function(html) {
+			  $('#extension').html(html);
+		  },
+		  error: function(xhr, ajaxOptions, thrownError) {
+			  alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+
+		  }
+	  });
+  });
+
+  $(document).on('click', '.feature-pro-wrapper .list', function(event) {
+    var href = $(this).data('href'), btn = $(this).data('btn') != 'undefined' ? $(this).data('btn') : '查看 DEMO';
+  	layer.open({
+  	  type: 1,
+  	  title: '{{ text_shop_pro36 }}',
+  	  skin: 'pro-wrapper-img',
+  	  shadeClose: true,
+  	  area: ['340px', '440px'],
+  	  btn: ['购买专业版', btn],
+      btnAlign: 'c',
+  	  content: $('.pro-36-img').html(),
+  	  yes: function(index, layero) {
+        window.open("https://shop.opencart.cn/opencart3.7-pro-wechat-solution.html");
+        layer.closeAll();
+      },
+      btn2: function(index, layero) {
+        layer.closeAll();
+        if (href != '') return window.open(href);
+      }
+  	});
+  });
+
+  $('select[name="type"]').trigger('change');
+
+  $('#extension').on('click', '.btn-success', function(e) {
+	  e.preventDefault();
+
+	  var element = this;
+
+	  $.ajax({
+		  url: $(element).attr('href'),
+		  dataType: 'html',
+		  beforeSend: function() {
+			  $(element).button('loading');
+		  },
+		  complete: function() {
+			  $(element).button('reset');
+		  },
+		  success: function(html) {
+			  $('#extension').html(html);
+		  },
+		  error: function(xhr, ajaxOptions, thrownError) {
+			  alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		  }
+	  });
+  });
+
+  $('#extension').on('click', '.btn-danger, .btn-warning', function(e) {
+	  e.preventDefault();
+
+	  if (confirm('{{ text_confirm }}')) {
+		  var element = this;
+
+		  $.ajax({
+			  url: $(element).attr('href'),
+			  dataType: 'html',
+			  beforeSend: function() {
+				  $(element).button('loading');
+			  },
+			  complete: function() {
+				  $(element).button('reset');
+			  },
+			  success: function(html) {
+				  $('#extension').html(html);
+			  },
+			  error: function(xhr, ajaxOptions, thrownError) {
+				  alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			  }
+		  });
+	  }
+  });
+  //--></script>
+{% endif %}
+
+{{ footer }}

@@ -1,0 +1,85 @@
+{include file="common/head"/}
+<div class="fly-case-header">
+    <p class="fly-case-year">不要因为走得太远，就忘了当初为什么出发。</p>
+</div>
+<div class="layui-container body-container">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md8 content detail">
+            {volist name="$list" id="vo"}
+            <div class="layui-card team">
+                <div class="layui-card-header" style="{$vo.title_style}">
+                    <div class="team-avatar">
+                        <img src="{$vo.thumb}">
+                    </div>
+                    {$vo.title}
+                </div>
+                <div class="layui-card-body">
+                    {$vo.info|raw}
+                </div>
+            </div>
+            {/volist}
+        </div>
+        <div class="layui-col-md4 content detail">
+            <div class="layui-card">
+                <div class="layui-card-header" style="color: #FF5722">捐赠名单</div>
+                <div class="layui-card-body">
+                    <div class="dlist">
+                    </div>
+                    <div id="laypage-main" style="text-align: center;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{include file="common/footer"/}
+<script>
+    layui.config({
+        version: "3.0.0"
+        ,base: '__HOME__/mods/' //这里实际使用时，建议改成绝对路径
+    }).extend({
+        fly: 'index'
+    }).use(['fly', 'laypage', 'layer'], function() {
+        var laypage = layui.laypage, layer = layui.layer,$= layui.jquery;
+        load_page(1);
+        function load_page(curr) {
+            $(".layui-table tbody").html('');
+            var o = {};
+            o.act = 'page_show';
+            o.curr = curr;
+            $("#page_curr").val(curr);
+            $.post('{:url("home/donation/donationList")}', o, function(data){
+                console.log(data);
+                if(data.code > 0) {
+                    pages = data.count;
+                    var html= '';
+                    $.each(data.data,function(k,v){
+                        html+='<dd>';
+                        html+='<a href="javascript:;">'+v.name+'</a>';
+                        html+='<span class="pull-right" style="color: #FF5722"> ￥'+v.money+'</span>';
+                        html+='</dd>';
+                    });
+                    $('.dlist').html(html);
+                    laypage.render({
+                        elem:'laypage-main',//容器。值可以传入元素id或原生DOM或jquery对象
+                        count:pages,////得到总页数
+                        limit: 15,//每页显示的条数
+                        curr: curr, //初始化当前页(非常重要)
+                        layout: ['prev', 'next'] ,
+                        jump:function(obj, first) {
+                            if(!first) {
+                                load_page(obj.curr);
+                            }
+                        }
+                    });
+                } else {
+                    layer.alert(data.msg);
+                }
+            }, 'json');
+        }
+    });
+
+</script>
+</body>
+</html>

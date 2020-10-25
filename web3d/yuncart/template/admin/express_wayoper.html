@@ -1,0 +1,356 @@
+<!--{include(file='head.html')}-->
+<div id="wrap">
+	<!--{include('left.html')}-->
+	<div id="maincont">
+		<b class="b1"></b><b class="b2"></b><b class="b3"></b><b class="b4"></b>
+		<form action="<!--{url('admin','express','waysave')}-->" method="post" name="submitform" id="submitform">
+		<div id="main_c">
+		<!--{if $opertype == "edit"}-->
+			<ul class="bk">
+				<li>
+					<label><em>*</em>配送方式名称：</label>
+					<p>
+						<input class="input_tx" value="<!--{$way.name}-->" name="name" id="name" type="text" />
+					</p>
+				</li>
+				<li>
+					<label><em>*</em>地区费用类型：</label>
+					<p>
+						<input value="gene"	name="feetype" type="radio" id="feetype_gene" onclick="Fee.feetype(this)"
+							<!--{if $way.feetype =="gene"}-->checked<!--{/if}-->/> 统一设置
+						<input value="self"	name="feetype" type="radio" id="feetype_self" onclick="Fee.feetype(this)"
+							<!--{if $way.feetype =="self"}-->checked<!--{/if}-->/> 指定配送地区和费用
+					</p>
+				</li>
+			</ul>
+			
+			<ul class="bk  <!--{if $way.feetype != "gene"}-->none<!--{/if}-->" id="feetypetb2" >
+				<li>
+					<label>默认配送费用：</label>
+					<p>
+						<input class="input_tx mini" type="text" value="<!--{$way.price / 100}-->" name="price2" id="price2" /> 元
+					</p>
+				</li>
+			</ul>
+
+			<div id="feetypetb" <!--{if $way.feetype != "self"}-->class="none"<!--{/if}-->>
+			<ul class="bk">
+				<li>
+					<label>启用默认费用：</label>
+					<p>
+						<input type="checkbox" value="1" onclick="Fee.defaultfee(this)" id="defaultfee" name="defaultfee" <!--{if $way.defaultfee}-->checked<!--{/if}--> />
+						注意：未启用默认费用时，不在指定配送地区的顾客不能使用本配送方式下订单.
+					</p>
+				</li>
+				<li id="defaulttr" <!--{if !$way.defaultfee}-->class="none"<!--{/if}-->>
+					<label>默认配送费用：</label>
+					<p>
+						<input class="input_tx mini" type="text" value="<!--{$way.price / 100}-->" name="price1" id="price1" /> 元
+					</p>
+				</li>
+			</ul>
+			
+			<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+					<thead>
+						<tr>
+							<th>操作</th>
+							<th width="50%">运送到</th>
+							<th>费用（元）</th>
+						</tr>
+					</thead>
+					<tbody id="cityfeetb">
+						<!--{foreach $provs prov}-->
+						<tr align="center">
+							<td>
+								<a href="javascript:void(0);" onclick="delCityFee(this);return false;" class="del"></a>
+							</td>
+							<td>
+									<span class="left"  style="padding-left:2px;width:90%;text-align:left;">
+									<!--{preg_replace("/\d+\|/","",$prov.province)}-->
+									<input type='hidden' value='<!--{$prov.province}-->' name='hideprov[]'>
+									</span>
+									<span class="right" style="padding-right:5px;">
+									<a href="javascript:void(0);" onclick="Fee.edit(this);return false;" class="edit"></a></span>
+							</td>
+							<td>
+								<input type="text" value="<!--{$prov.price / 100}-->" class="input_tx mini" name="price[]" />
+							</td>
+							</tr>
+						<!--{/foreach}-->
+					</tbody>
+			</table>
+			
+
+			<ul class="bk">
+				<li>
+					<label></label>
+					<p>
+						<a href="javascript:void(0);" onclick="Fee.set();return false;" class="bt_style2">指定城市</a>
+					</p>
+				</li>
+			</ul>
+			</div>
+
+			<ul class="bk">
+				<li>
+					<label>描述：</label>
+					<p>
+						<textarea name="desc" class="text_tx"><!--{$way.desc}--></textarea>
+					</p>
+				</li>
+			</ul>
+		<!--{elseif $opertype=="add"}-->
+			<ul class="bk">
+				<li>
+					<label><em>*</em>配送方式名称：</label>
+					<p>
+						<input class="input_tx" value="" name="name" id="name" type="text" />
+					</p>
+				</li>
+				<li>
+					<label><em>*</em>地区费用类型：</label>
+					<p>
+						<input value="gene"	name="feetype" type="radio" id="feetype_gene" onclick="Fee.feetype(this)" checked/> 统一设置
+						<input value="self"	name="feetype" type="radio" id="feetype_self" onclick="Fee.feetype(this)"/> 指定配送地区和费用
+					</p>
+				</li>
+			</ul>
+			
+			<ul class="bk" id="feetypetb2">
+				<li>
+					<label><em>*</em>默认配送费用：</label>
+					<p>
+						<input class="input_tx mini" type="text" value="" name="price2" id="price2" /> 元
+					</p>
+				</li>
+			</ul>
+
+			<div id="feetypetb" class="none">
+			<ul class="bk">
+				<li>
+					<label>启用默认费用：</label>
+					<p>
+						<input type="checkbox" value="1" name="defaultfee" id="defaultfee" checked onclick="Fee.defaultfee(this)"/>
+						注意：未启用默认费用时，不在指定配送地区的顾客不能使用本配送方式下订单.
+					</p>
+				</li>
+				<li id="defaulttr">
+					<label>默认配送费用：</label>
+					<p>
+						<input class="input_tx mini" type="text" value="" name="price1" id="price1"/> 元
+					</p>
+				</li>
+			</ul>
+			
+			<table class="tableStyle" border="0" cellspacing="0" cellpadding="0">
+					<thead>
+						<tr>
+							<th>操作</th>
+							<th width="50%">运送到</th>
+							<th>费用（元）</th>
+						</tr>
+					</thead>
+					<tbody id="cityfeetb"></tbody>
+			</table>
+			
+
+			<ul class="bk">
+				<li>
+					<label></label>
+					<p>
+						<a href="javascript:void(0);" onclick="Fee.set();return false;" class="bt_style2">指定城市</a>
+					</p>
+				</li>
+			</ul>
+			</div>
+
+			<ul class="bk">
+				<li>
+					<label>描述：</label>
+					<p>
+						<textarea name="desc" class="text_tx"></textarea>
+					</p>
+				</li>
+			</ul>
+		<!--{/if}-->
+			<div class="bt_bk2">
+					<input type="hidden" value="<!--{$opertype}-->" name="opertype" />
+					<input type="hidden" value="<!--{def($wayid)}-->" name="wayid" />
+					<a href="javascript:void(0);" class="btn" onclick="jssubmit('expressway');return false;"><span>保存</span></a>
+			</div>
+		</div>
+		</form>
+		<b class="b4b"></b><b class="b3b"></b><b class="b2b"></b><b class="b1b"></b>
+	</div>
+</div>
+
+<table class="none">
+	<tbody id="forcity">
+		<tr align="center">
+			<td>
+				<a href="javascript:void(0);" onclick="Fee.del(this);return false;" class="del"></a>
+			</td>
+			<td>
+				<span class="left"  style="padding-left:2px;width:90%;text-align:left;">未添加区域</span>
+				<span class="right" style="padding-right:5px;">
+					<a href="javascript:void(0);" onclick="Fee.edit(this);return false;" class="edit"></a>
+				</span>
+			</td>
+			<td>
+				<input type="text" value="" class="input_tx mini" name="price[]" />
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+
+<div id="targetBox" class="none">
+	<h1>设置模版</h1>
+	<!--{foreach $groups key group}-->
+	<div class='listcity'>
+		<span class="leftcheck">
+			<input type="checkbox" value="1" id="group_<!--{$key}-->" autocomplete="off"/><label><!--{$group.t}--></label></span>
+		<span class="rightcheck">
+		<!--{foreach $group.c key2 c}-->
+			<input type="checkbox" value="<!--{$key2}-->" id="city_<!--{$key2}-->" autocomplete="off"/><label><!--{$c}--></label>
+		<!--{/foreach}-->
+		</span>
+    </div>
+	<!--{/foreach}-->
+	<div class="btn">
+		<a href="javascript:void(0);" onclick="Fee.oksure();return false;"	class="bt_style2">确定</a>
+		<a href="javascript:void(0);" onclick="Fee.okcancel();return false;" class="bt_style2">取消</a>
+	</div>
+	<script type="text/javascript">
+		var ele = "input[type='checkbox']";
+		$("#targetBox "+ele).click(function(){
+			var $this = $(this),check = $this.prop("checked");
+			var $parent = $this.parent();
+			if($parent.hasClass("leftcheck")) {
+				$parent.next().find(ele).prop("checked",check);
+			} else {
+				if(check) {
+					groupcheck = true;
+					$parent.find(ele).each(function(){
+						if(!$(this).prop("checked")) {
+							groupcheck = false;
+						}
+					});
+					$parent.prev().find(ele).prop("checked",groupcheck);
+				} else {
+					$parent.prev().find(ele).prop("checked",false);
+				}
+			}
+		});
+	</script>
+</div>
+
+<!--{include(file='foot.html')}-->
+<script type="text/javascript">
+var Fee = {
+	city:$("#forcity"),
+	citytb:$("#cityfeetb"),
+	targetBox:$("#targetBox"),
+	set:function() {
+		this.citytb.append(this.city.clone().html());
+	},
+	del:function(obj) {
+		$(obj).parent().parent().remove();
+	},
+	edit:function(obj) {
+		var $tar = $(obj);
+		$tar.addClass("thelastclick");
+		var offset		= $tar.offset(),
+			left		= offset.left,
+			top			= offset.top,
+			xwidth		= this.targetBox.width(),
+			xleft		= (left - xwidth/2) + "px",
+			xtop		= (top+40) + "px";
+		$("input[type='hidden']",this.citytb).each(function(){
+			var val = $(this).val();
+			if(val) {
+				cityarr = val.split(",");
+				for(var i in cityarr) {
+					if(!cityarr[i]) continue;
+					temparr = cityarr[i].split("|");
+					$("#city_"+temparr[0]).prop("disabled",true);
+				}
+				
+			}
+		});
+		$("input[type='hidden']",$tar.parent().prev()).each(function(){
+			var val = $(this).val();
+			if(val) {
+				cityarr = val.split(",");
+				var $city,len = 0;
+				for(var i in cityarr) {
+					if(!cityarr[i]) continue;
+					temparr = cityarr[i].split("|");
+					$("#city_"+temparr[0]).prop("disabled",false).prop("checked",true);
+				}
+			}
+		});
+		this.setCity();
+		this.targetBox.show().css({left:xleft,top:xtop});		
+	},
+	setCity:function () {
+		var fele = "input[type='checkbox']",
+			$ele = $(".rightcheck",this.targetBox),
+			len  = $ele.length;
+		for(var i = 0;i<len;i++){
+			var $curele = $ele.eq(i),
+				$myele	= $(fele,$curele),
+				$myg	= $curele.prev().find(fele),
+				mylen	= $myele.length;
+			var gdisabled = gchecked = true;
+			for(var j=0;j<mylen;j++) {
+				var $curele2 = $(fele,$curele).eq(j);
+				if(!$curele2.prop("disabled")) {
+					gdisabled = false;
+				}
+				if(!$curele2.prop("checked")) {
+					gchecked = false;
+				}
+				if(!gdisabled && !gchecked) break;
+			}
+			$myg.prop("disabled",gdisabled).prop("checked",gchecked);
+		}
+	},
+	okcancel:function() {
+		$("input[type='checkbox']",this.targetBox).prop("disabled",false).prop("checked",false);
+		this.targetBox.hide();
+	},
+	oksure:function() {
+		var txt = val = "";
+		this.targetBox.find("input[type='checkbox']:checked").each(function(){
+			var $this = $(this),id = $this.attr("id");
+			if(id.indexOf("group_") === -1) {
+				val += $this.val()+ "|" + $this.next().text() +",";
+				txt += $this.next().text()+",";
+			}
+		});
+		val = val.substring(0,val.length-1);
+		txt = txt.substring(0,txt.length-1);
+		!txt && (txt = '未添加区域');
+		var $ele = $(".thelastclick");
+		$ele.parent().prev().html(txt+"<input type='hidden' value='"+val+"' name='hideprov[]'>");
+		$ele.removeClass("thelastclick");
+		$("input[type='checkbox']",this.targetBox).prop("disabled",false).prop("checked",false);
+		this.targetBox.hide();
+	},
+	defaultfee:function(obj) {
+		var func = $(obj).prop("checked") ? "show" : "hide";
+		$("#defaulttr")[func]();
+	},
+	feetype:function(obj) {
+		var $obj = $(obj);
+		if($obj.val() == "self") {
+			$("#feetypetb").show();
+			$("#feetypetb2").hide();
+		} else if($obj.val() == "gene") {
+			$("#feetypetb").hide();
+			$("#feetypetb2").show();
+		}
+	}
+}
+</script>

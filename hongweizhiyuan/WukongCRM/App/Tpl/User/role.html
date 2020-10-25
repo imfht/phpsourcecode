@@ -1,0 +1,216 @@
+<include file="Public:header" />
+	<link rel="stylesheet" href="__PUBLIC__/css/treeview/jquery.treeview.css" type="text/css">
+	<script type="text/javascript" src="__PUBLIC__/js/treeview/jquery.treeview.js"></script>
+	<script type="text/javascript" src="__PUBLIC__/js/treeview/jquery.treeview.edit.js"></script>
+	
+	<script type="text/javascript">
+		$(function() {
+			$("#browser").treeview();
+			$("#add").click(function() {
+				var branches = $("<li><span class='folder'>New Sublist</span><ul>" +
+					"<li><span class='file'>Item1</span></li>" +
+					"<li><span class='file'>Item2</span></li></ul></li>").appendTo("#browser");
+				$("#browser").treeview({
+					add: branches
+				});
+				branches = $("<li class='closed'><span class='folder'>New Sublist</span><ul><li><span class='file'>Item1</span></li><li><span class='file'>Item2</span></li></ul></li>").prependTo("#folder21");
+				$("#browser").treeview({
+					add: branches
+				});
+			});
+		})
+	</script>
+	
+	<style type="text/css">
+.ztree li span.button.add {margin-left:2px; margin-right: -1px; background-position:-144px 0; vertical-align:top; *vertical-align:middle}
+	</style>
+	<div class="container">
+		<div class="page-header">
+			<h4>{:L('STRUCTURE')} -
+				<small>
+				<a href="{:U('user/department')}" <if condition="ACTION_NAME eq 'department' or ACTION_NAME eq 'role'">class="active"</if>>{:L('STRUCTURE')}</a> | 	
+				<a href="{:U('user/index','status=1')}" <if condition="ACTION_NAME eq 'index' and $Think.get.status neq '0'">class="active"</if>>{:L('USER_MGR')}</a> | 
+				<a href="{:U('user/index', 'status=0')}" <if condition="ACTION_NAME eq 'index' and $Think.get.status eq '0'">class="active"</if>>{:L('INACTIVE_USER')}</a>
+				</small>
+			</h4>
+		</div>
+		<include file="Public:alert" />
+		
+		<div class="row">
+			<form action="{:U('user/department_delete')}" method="post" onsubmit="return confirm('{:L('CONFIRM_DELETE')}')">
+			<div class="span12">
+				<div class="bulk-actions align-left">
+					<a href="{:U('user/department')}" <if condition="ACTION_NAME eq 'department'">class="active"</if>>{:L('DEPARTMENT_TREE')}</a> | 
+					<a href="{:U('user/role')}" <if condition="ACTION_NAME eq 'role'">class="active"</if>>{:L(SUPERIOR_SUBORDINATE_TREE)}</a>
+					<div class="pull-right">
+						<if condition="session('?admin')">
+							<a id="add_department" class="btn btn-primary"><i class="icon-plus"></i>&nbsp; {:L('ADD_DEPARTMENT')}</a>&nbsp;
+							<a id="add_role" class="btn btn-primary"><i class="icon-plus"></i>&nbsp; {:L('ADD_POSITION')}</a>
+						</if>
+						&nbsp; <a class="btn btn-primary" href="{:U('user/add')}"><i class="icon-plus"></i>&nbsp; {:L('ADD_USER')}</a>
+					</div>
+				</div>
+			</div>
+			<div class="span12">
+				{$tree_code}
+			</div> 
+		</div>
+		</form>
+	</div>
+	<div id="dialog-message2" class="hide" title="{:L('ADD_DEPARTMENT')}">loading...</div>	
+	<div id="dialog-message3" class="hide" title="{:L('ADD_POSITION')}">loading...</div>	
+	<div id="dialog-authorize" class="hide" title="{:L('MODULE_ACCESS_MGR')}">loading...</div>	
+	<div id="dialog-message5" class="hide" title="{:L('USER_MGR')}">loading...</div>	
+	<div id="dialog-message6" class="hide" title="{:L('EDIT_POSITION_INFO')}">loading...</div>	
+
+<script type="text/javascript">
+	<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=600;</if>
+	$('#dialog-message2').dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight:400,
+		position :["center",100],
+		buttons: {
+			"{:L('OK')}": function () {
+				$('#department_add').submit();
+				$(this).dialog("close");
+			},
+			"{:L('CANCEL')}": function () {
+				$(this).dialog("close");
+			}
+		}
+	});	
+	$('#dialog-message3').dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight:400,
+		position :["center",100],
+		buttons: {
+			"{:L('OK')}": function () {
+				$('#role_add').submit();
+				$(this).dialog("close");
+			},
+			"{:L('CANCEL')}": function () {
+				$(this).dialog("close");
+			}
+		}
+	});
+	$('#dialog-authorize').dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight:400,
+		position :["center",100],
+		buttons: {}
+	});
+	$('#dialog-message5').dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight:400,
+		position :["center",100]
+	});
+	$('#dialog-message6').dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight:400,
+		position :["center",100],
+		buttons: {
+			"{:L('OK')}": function () {
+				var $position_id = $('#position_id').val();
+				var $name =  $('#name').val();
+				var $description = $('#description').val();
+				var $department_id = $('#department_id  option:selected').val();
+				var $parent_id =  $('#parent_id  option:selected').val();
+				
+				$.get('{:U("user/roleedit")}',{position_id:$position_id,name:$name,description:$description,department_id:$department_id,parent_id:$parent_id, auth:1}, function(data){
+					alert(data.data);
+					$('#dialog-authorize').dialog('close');
+				}, 'json');
+			
+				$(this).dialog("close");
+			},
+			"{:L('CANCEL')}": function () {
+				$(this).dialog("close");
+			}
+		}
+	});
+	
+	$(function(){
+		$(".treeview .file").hover(function(){
+			rel = $(this).attr('rel');
+			$('#control_file' + rel).show();
+		},function(){
+			rel = $(this).attr('rel');
+			$('#control_file' + rel).hide();
+		});
+		$(".treeview .folder").hover(function(){
+			rel = $(this).attr('rel');
+			$('#control_folder' + rel).show();
+		},function(){
+			rel = $(this).attr('rel');
+			$('#control_folder' + rel).hide();
+		});
+		$("#check_all").click(function(){
+			$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+		});
+		$("#add_department").click(function(){
+			$('#dialog-message2').dialog('open');$('#dialog-message2').load('{:U("user/department_add")}');
+		});
+		$("#add_role").click(function(){
+			$('#dialog-message3').dialog('open');$('#dialog-message3').load('{:U("user/role_add")}');
+		});
+		$(".user").click(function(){
+			$('#dialog-message5').dialog('open');
+			$id = $(this).attr('rel');
+			$('#dialog-message5').load('{:U("user/user_role_relation","by=role_user&role_id=")}'+$id);
+		});
+		$(".permission").click(function(){
+			$('#dialog-authorize').dialog('open');
+			id = $(this).attr('rel');
+			$('#dialog-authorize').load('{:U("permission/user_authorize","position_id=")}'+id);
+		});
+		$(".position_edit").click(function(){
+			$('#dialog-message6').dialog('open');
+			id = $(this).attr('rel');
+			$('#dialog-message6').load('{:U("user/roleedit","id=")}'+id);
+		});
+		$(".position_delete").click(function(){
+			if(confirm("{:L('CONFIRM_TO_DELETE_POSITION')}")){
+				id = $(this).attr('rel');
+				window.location="{:U('user/role_delete','id=')}"+id;
+			}
+		});
+	});
+	function changeContent(){
+		a = $("#select1  option:selected").val();
+		if(a=='1'){
+			window.location.href="{:U('user/index')}";
+		}else if(a=='2'){
+			window.location.href="{:U('user/index', 'status=0')}";
+		}else if(a=='3'){
+			window.location.href="{:U('user/index', 'status=-1')}";
+		}else if(a=='4'){
+			window.location.href="{:U('user/department')}";
+		}else if(a=='5'){
+			window.location.href="{:U('user/role')}";
+		}
+	} 
+	
+	function deleteRole(id,name){
+		var v = confirm("{:L('CONFIRM_TO_DELETE_POSTION_PARAM')}");
+		if(v == true){
+			window.location="{:U('User/role_delete','id=')}"+id;
+		}
+	}
+	function searchDepartment(){
+		var objCategory=document.getElementById("department");
+		var id=objCategory.options[objCategory.selectedIndex].value;
+		window.location="{:U('User/role','department_id=')}"+id;
+	}
+	
+</script>
+<include file="Public:footer" />	

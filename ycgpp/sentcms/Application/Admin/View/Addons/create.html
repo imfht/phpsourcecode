@@ -1,0 +1,305 @@
+{extend name="Public/base"/}
+{block name="style"}
+	<link rel="stylesheet" href="__JS__/codemirror/codemirror.css">
+	<link rel="stylesheet" href="__JS__/codemirror/theme/ambiance.css">
+	<style>
+		.CodeMirror,#preview_window{
+			width:580px;
+			height:500px;
+			max-width: 100%;
+		}
+		#preview_window textarea{
+			display: none;
+		}
+	</style>
+{/block}
+
+{block name="body"}
+<div class="main-box clearfix">
+	<header class="main-box-header clearfix">
+		<div class="pull-left">
+			<h2>新增插件</h2>
+		</div>
+	</header>
+
+	<div class="main-box-body clearfix">
+		<form id="form" action="{:U('Addons/build')}" method="post" class="form form-horizontal">
+			<div class="form-group">
+				<label class="col-lg-2 control-label">标识名</label>
+				<div class="col-lg-6">
+					<input type="text" class="form-control" name="info[name]" value="Example">
+					<span class="help-block">（请输入插件标识）</span>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">插件名</label>
+				<div class="col-lg-6">
+					<input type="text" class="form-control" name="info[title]" value="示例">
+					<span class="help-block">（请输入插件名）</span>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">版本</label>
+				<div class="col-lg-6">
+					<input type="text" class="form-control" name="info[version]" value="0.1">
+					<span class="help-block">（请输入插件版本）</span>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">作者</label>
+				<div class="col-lg-6">
+					<input type="text" class="form-control" name="info[author]" value="无名">
+					<span class="help-block">（请输入作者）</span>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">描述</label>
+				<div class="col-lg-6">
+					<input type="text" class="form-control" name="info[description]" value="这是一个临时描述">
+					<span class="help-block">（请输入描述）</span>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">是否启用</label>
+				<div class="col-lg-8 col-sm-10">
+					<div class="radio radio-nice radio-inline">
+						<input type="radio" name="info[status]" id="display-0" value="1" selected/>
+						<label for="display-0">是</label>
+					</div>
+					<div class="radio radio-nice radio-inline">
+						<input type="radio" name="info[status]" id="display-1" value="0" />
+						<label for="display-1">否</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">是否需要配置</label>
+				<div class="col-lg-8 col-sm-10">
+					<div class="checkbox-nice checkbox-inline">
+						<input type="checkbox" name="has_config" id="has_config" value="1" />
+						<label for="has_config"></label>
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-group has_config hidden">
+				<label class="col-lg-2 control-label"></label>
+				<div class="col-lg-6">
+					<textarea class="form-control" name="config">
+&lt;?php
+    return array(
+        'random'=>array(//配置在表单中的键名 ,这个会是config[random]
+        'title'=>'是否开启随机:',//表单的文字
+        'type'=>'radio',		 //表单的类型：text、textarea、checkbox、radio、select等
+        'options'=>array(		 //select 和radion、checkbox的子选项
+            '1'=>'开启',		 //值=>文字
+            '0'=>'关闭',
+        ),
+        'value'=>'1',			 //表单的默认值
+   ),
+);
+                    </textarea>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">是否需要外部访问</label>
+				<div class="col-lg-8 col-sm-10">
+					<div class="radio radio-nice radio-inline">
+						<input type="radio" name="id_has_outurl_1" id="id_has_outurl_1-0" value="1" selected/>
+						<label for="id_has_outurl_1-0">是</label>
+					</div>
+					<div class="radio radio-nice radio-inline">
+						<input type="radio" name="id_has_outurl_1" id="id_has_outurl_1-1" value="0" />
+						<label for="id_has_outurl_1-1">否</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">实现的钩子方法</label>
+				<div class="col-lg-3">
+					<select name="hook[]" class="form-control"  multiple="multiple" size="10">
+					{volist name="addons_opt" id="vo"}
+						<option value="{$vo}">{$vo}</option>
+					{/volist}
+					</option>
+				</select>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-lg-2 control-label">是否需要后台列表</label>
+				<div class="col-lg-8 col-sm-10">
+					<div class="checkbox-nice checkbox-inline">
+						<input type="checkbox" name="has_adminlist" id="has_adminlist" />
+						<label for="has_adminlist"></label>
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-group has_adminlist hidden">
+				<label class="col-lg-2 control-label"></label>
+				<div class="col-lg-6">
+					<textarea name="admin_list" class="form-control" row="4">
+'model'=>'Example',		//要查的表
+		'fields'=>'*',			//要查的字段
+		'map'=>'',				//查询条件, 如果需要可以再插件类的构造方法里动态重置这个属性
+		'order'=>'id desc',		//排序,
+		'list_grid'=>array( 		
+			//这里定义的是除了id序号外的表格里字段显示的表头名和模型一样支持函数和链接
+            'cover_id|preview_pic:封面',
+            'title:书名',
+            'description:描述',
+            'link_id|get_link:外链',
+            'update_time|time_format:更新时间',
+            'id:操作:[EDIT]|编辑,[DELETE]|删除'
+        ),
+					</textarea>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<div class="col-lg-offset-2 col-lg-10">
+					<button class="btn btn-primary" type="button" id="btn">预 览</button>
+					<button class="btn btn-success submit-btn ajax-post" type="submit" target-form="form-horizontal">确 定</button>
+					<button class="btn btn-danger btn-return" onclick="javascript:history.back(-1);return false;">返 回</button>
+				</div>
+			</div>
+	</form>
+</div>
+</div>
+
+<!-- 模态框声明 -->
+<div class="modal fade" id="myModal" tabindex="-1">
+	<!-- 窗口声明 -->
+	<div class="modal-dialog">
+		<!-- 内容声明 -->
+		<div class="modal-content">
+			<div class="modal-header">
+				<button class="close" data-dismiss="modal"><span>&times;</span></button>
+				<h4 class="modal-title">预览插件主文件</h4>
+			</div>
+			<div class="modal-body">
+				<div id="preview_window"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+{/block}
+{block name="script"}
+	<script type="text/javascript" src="__JS__/codemirror/codemirror.js"></script>
+	<script type="text/javascript" src="__JS__/codemirror/xml.js"></script>
+	<script type="text/javascript" src="__JS__/codemirror/javascript.js"></script>
+	<script type="text/javascript" src="__JS__/codemirror/clike.js"></script>
+	<script type="text/javascript" src="__JS__/codemirror/php.js"></script>
+
+
+	<script type="text/javascript">
+		function bindShow(radio_bind, selectors){
+			$(radio_bind).click(function(){
+				$(selectors).toggleClass('hidden');
+			})
+		}
+
+		//配置的动态
+		bindShow('#has_config','.has_config');
+		bindShow('#has_adminlist','.has_adminlist');
+
+		$('#btn').on('click', function () {
+			var preview_url = '{:U("preview")}';
+			var codemirror = $('.CodeMirror');
+			$('#myModal').modal({
+				show : true,
+			});
+			return false;
+		});
+
+		$('#myModal').on('shown.bs.modal', function () {
+			$.ajax({ 
+			   type: "POST",
+			   url : '{:U("preview")}',
+			   data: $('#form').serialize(),
+			   success : function (data){
+			   		var codemirror_option = {
+						lineNumbers   :true,
+						matchBrackets :true,
+						mode          :"application/x-httpd-php",
+						indentUnit    :4,
+						gutter        :true,
+						fixedGutter   :true,
+						indentWithTabs:true,
+						readOnly	  :true,
+						lineWrapping  :true,
+						height		  :500,
+						enterMode     :"keep",
+						tabMode       :"shift",
+						theme: "ambiance"
+					};
+
+					$("#preview_window").html('<textarea></textarea>');
+					var preview_window = $("#preview_window").find("textarea");
+					var editor = CodeMirror.fromTextArea(preview_window[0], codemirror_option);
+					editor.setValue(data);
+					$(window).resize();
+			   }
+			});
+		});
+
+		$('.ajax-post_custom').click(function(){
+	        var target,query,form;
+	        var target_form = $(this).attr('target-form');
+	        var check_url = '{:U('checkForm')}';
+			$.ajax({
+			   type: "POST",
+			   url: check_url,
+			   dataType: 'json',
+			   async: false,
+			   data: $('#form').serialize(),
+			   success: function(data){
+			    	if(data.status){
+    			        if( ($(this).attr('type')=='submit') || (target = $(this).attr('href')) || (target = $(this).attr('url')) ){
+				            form = $('.'+target_form);
+				            if ( form.get(0).nodeName=='FORM' ){
+				                target = form.get(0).action;
+				                query = form.serialize();
+				            }else if( form.get(0).nodeName=='INPUT' || form.get(0).nodeName=='SELECT' || form.get(0).nodeName=='TEXTAREA') {
+				                query = form.serialize();
+				            }else{
+				                query = form.find('input,select,textarea').serialize();
+				            }
+				            $.post(target,query).success(function(data){
+				                if (data.status==1) {
+				                    if (data.url) {
+				                        updateAlert(data.info + ' 页面即将自动跳转~','alert-success');
+				                    }else{
+				                        updateAlert(data.info + ' 页面即将自动刷新~');
+				                    }
+				                    setTimeout(function(){
+				                        if (data.url) {
+				                            location.href=data.url;
+				                        }else{
+				                        	location.reload();
+				                        }
+				                    },1500);
+				                }else{
+				                    updateAlert(data.info);
+				                }
+				            });
+				        }
+			    	}else{
+			    		updateAlert(data.info);
+					}
+			   }
+			});
+	        return false;
+	    });	
+	</script>
+{/block}

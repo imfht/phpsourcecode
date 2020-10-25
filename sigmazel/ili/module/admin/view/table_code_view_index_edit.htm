@@ -1,0 +1,827 @@
+<?php
+$tmp =
+<<<EOF
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<form method="post" action="{\$ADMIN_SCRIPT}/{$table[IDENTITY]}/{\$dispatches[method]}&id={\$_var[gp_id]}&page={\$_var[page]}&psize={\$_var[psize]}{\$search[querystring]}" onsubmit="javascript:return check_form(this);">
+			<input type="hidden" name="formsubmit" value="yes" />
+EOF;
+
+$code .= $tmp;
+
+if(count($table['FILES']) <= 3){
+	foreach($table['FILES'] as $key => $file){
+		$name = $key + 1;
+		
+		$code .= "
+			<input type=\"hidden\" name=\"hdnFile0{$name}\" value=\"\"/>";
+		
+		unset($name);
+	}
+}
+
+$tmp = 
+<<<EOF
+
+		   
+			<div class="well widget">
+		   		<div class="widget-header">
+					<p class="text">* {lang admin.validate.require}</p>
+				</div>
+				<div class="widget-content">
+				<fieldset>
+EOF;
+
+$code .= $tmp;
+
+foreach ($table['JOINS'] as $key => $join){
+	if($key == 'user' || $key == 'category') continue;
+	
+	$name = strtolower($key);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	$name_upper = strtoupper($key);
+	
+	if($key == 'group'){
+		$tmp = 
+<<<EOF
+
+					<label>等级 *</label>
+					<select name="sltGroupID">
+				        <option value="0">=等级=</option>
+				        <!--{loop \$groups \$loop \$group}-->
+						<option value="{\$group[GROUPID]}"{if \$group['GROUPID'] == \${$table[IDENTITY]}['GROUPID']} selected="selected"{/if}>{\$group[CNAME]}</option>
+						<!--{/loop}-->
+			        </select>
+			        <span class="help-inline">{$table[CNAME]}的等级。</span>
+					
+EOF;
+	}else{
+		$tmp = 
+<<<EOF
+
+					<label>{$join} *</label>
+					<select name="slt{$name}ID">
+				        <option value="0">={$join}=</option>
+				        <!--{loop \${$key}_list \$loop \${$key}}-->
+						<option value="{\${$key}[{$name_upper}ID]}"{if \${$key}['{$name_upper}ID'] == \${$table[IDENTITY]}['{$name_upper}ID']} selected="selected"{/if}>{\${$key}[TITLE]}</option>
+						<!--{/loop}-->
+			        </select>
+			        <span class="help-inline">{$table[CNAME]}的{$join}。</span>
+					
+EOF;
+	}
+	
+	$code .= $tmp;
+	
+	unset($name);
+}
+
+foreach ($table['COLUMNS'] as $key => $column){
+	//不需要验证的字段！
+	if(	$column['identity'] == 'HITS' 
+		|| $column['identity'] == 'UP' 
+		|| $column['identity'] == 'DOWN' 
+		|| $column['identity'] == 'ATTENT' 
+		|| $column['identity'] == 'VIEWS' 
+		|| $column['identity'] == 'ADDRESS' 
+		|| $column['identity'] == 'AGENT' 
+		|| $column['identity'] == 'STATUS' 
+		|| $column['identity'] == 'ISAUDIT' 
+		|| $column['identity'] == 'CREATETIME' 
+		|| $column['identity'] == 'AUDITID' 
+		|| $column['identity'] == 'AUDITTIME' 
+		|| $column['identity'] == 'CITYID' 
+		|| $column['identity'] == 'COUNTYID') continue;
+	
+	$name = strtolower($column['identity']);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	
+	//地区
+	if($column['identity'] == 'PROVINCEID'){
+		$tmp = 
+<<<EOF
+
+					<label>所在地区 *</label>
+					<select name="sltProvinceId">
+				        <option value="0">=省份=</option>
+				        <!--{loop \$provinces \$key \$province}-->
+						<option value="{\$province[DISTRICTID]}" {if \$province['DISTRICTID'] == \${$table[IDENTITY]}['PROVINCEID']}selected="selected"{/if}>{\$province[CNAME]}</option>
+						<!--{/loop}-->
+			        </select>
+			        <select name="sltCityId">
+				        <option value="0">=市=</option>
+				        <!--{loop \$cities \$key \$city}-->
+						<option value="{\$city[DISTRICTID]}" {if \$city['DISTRICTID'] == \${$table[IDENTITY]}['CITYID']}selected="selected"{/if}>{\$city[CNAME]}</option>
+						<!--{/loop}-->
+			        </select>
+			        <select name="sltCountyId">
+				        <option value="0">=区/县=</option>
+				        <!--{loop \$counties \$key \$county}-->
+						<option value="{\$county[DISTRICTID]}" {if \$county['DISTRICTID'] == \${$table[IDENTITY]}['COUNTYID']}selected="selected"{/if}>{\$county[CNAME]}</option>
+						<!--{/loop}-->
+			        </select>
+
+EOF;
+		$code .= $tmp;
+		continue;
+	}
+	
+	if($column['identity'] == 'GENDER'){
+		$code .= "
+					<label>性别 *</label>
+					<label class=\"checkbox inline\">
+						<input class=\"fancy\" name=\"rdoGender\" type=\"radio\" value=\"1\" {if \${$table[IDENTITY]}['GENDER'] != 2}checked=\"checked\"{/if}/> 男
+					</label>
+					<label class=\"checkbox inline\">
+						<input class=\"fancy\" name=\"rdoGender\" type=\"radio\" value=\"2\" {if \${$table[IDENTITY]}['GENDER'] == 2}checked=\"checked\"{/if}/> 女
+					</label>
+					<span class=\"help-inline\">{$table[CNAME]}的性别。</span>
+					";
+		continue;
+	}
+	
+	if($column['type'] == 'varchar'){
+		if($column['length'] < 15){
+			$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input input-small\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，{$column[length]}字以内。</span>
+					";
+		}elseif($column['length'] > 15 && $column['length'] < 25){
+			$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，{$column[length]}字以内。</span>
+					";
+		}elseif($column['length'] > 25 && $column['length'] < 35){
+			$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input input-large\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，{$column[length]}字以内。</span>
+					";
+		}elseif($column['length'] > 35 && $column['length'] < 55){
+			$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input input-xlarge\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，{$column[length]}字以内。</span>
+					";
+		}elseif($column['length'] > 55 && $column['length'] < 105){
+			$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input input-xxlarge\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，{$column[length]}字以内。</span>
+					";
+		}else{
+			$code .= "
+					<label>{$column[name]} *</label>
+					<textarea class=\"span6\" rows=\"3\" cols=\"45\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\">{\${$table[IDENTITY]}[{$column[identity]}]}</textarea>
+					<br/>
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，{$column[length]}字以内。</span>
+					";
+		}
+	}elseif($column['type'] == 'int'){
+		$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input input-small\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，整数。</span>
+					";
+	}elseif($column['type'] == 'decimal'){
+		$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" class=\"input input-small\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\" maxlength=\"{$column[length]}\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/> 
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，浮点数。</span>
+					";
+	}elseif($column['type'] == 'datetime'){
+		if($column['identity'] == 'BEGINTIME'){
+			$code .= "
+					<label>开始时间 *</label>
+					<input type=\"text\" name=\"txtBeginTime\" maxlength=\"16\" class=\"input-medium input-time\" value=\"{\${$table[IDENTITY]}[BEGINTIME]}\"/>
+					<span class=\"help-inline\">{$table[CNAME]}的开始时间。</span>
+					";
+		}elseif($column['identity'] == 'ENDTIME'){
+			$code .= "
+					<label>结束时间 *</label>
+					<input type=\"text\" name=\"txtEndTime\" maxlength=\"16\" class=\"input-medium input-time\" value=\"{\${$table[IDENTITY]}[ENDTIME]}\"/>
+					<span class=\"help-inline\">{$table[CNAME]}的结束时间。</span>
+					";
+		}elseif($column['identity'] == 'BEGINDATE'){
+			$code .= "
+					<label>开始时间 *</label>
+					<input type=\"text\" name=\"txtBeginDate\" maxlength=\"16\" class=\"input-medium input-date\" value=\"{\${$table[IDENTITY]}[BEGINDATE]}\"/>
+					<span class=\"help-inline\">{$table[CNAME]}的开始时间。</span>
+					";
+		}elseif($column['identity'] == 'ENDDATE'){
+			$code .= "
+					<label>结束时间 *</label>
+					<input type=\"text\" name=\"txtEndDate\" maxlength=\"16\" class=\"input-medium input-date\" value=\"{\${$table[IDENTITY]}[ENDDATE]}\"/>
+					<span class=\"help-inline\">{$table[CNAME]}的结束时间。</span>
+					";
+		}else{
+			$code .= "
+					<label>{$column[name]} *</label>
+					<input type=\"text\" name=\"txt{$name}\" maxlength=\"16\" class=\"input-medium input-date\" value=\"{\${$table[IDENTITY]}[{$column[identity]}]}\"/>
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}。</span>
+					";
+		}
+	}elseif($column['type'] == 'tinyint'){
+		$code .= "
+					<label>{$column[name]} *</label>
+					<label class=\"checkbox inline\">
+						<input class=\"fancy\" name=\"rdo{$name}\" type=\"radio\" value=\"0\" {if \${$table[IDENTITY]}['{$column[identity]}'] != 1}checked=\"checked\"{/if}/> 是
+					</label>
+					<label class=\"checkbox inline\">
+						<input class=\"fancy\" name=\"rdo{$name}\" type=\"radio\" value=\"1\" {if \${$table[IDENTITY]}['{$column[identity]}'] == 1}checked=\"checked\"{/if}/> 否
+					</label>
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}。</span>
+					";
+	}elseif($column['type'] == 'text'){
+		$code .= "
+					<label>{$column[name]} *</label>
+					<textarea class=\"span10\" rows=\"12\" cols=\"45\" name=\"txt{$name}\" placeholder=\"输入{$column[name]}...\">{\${$table[IDENTITY]}[{$column[identity]}]}</textarea>
+					<br/>
+					<span class=\"help-inline\">{$table[CNAME]}的{$column[name]}，不限字数。</span>
+					";
+	}
+	
+	unset($name);
+}
+
+if(count($table['FILES']) > 0 && count($table['FILES']) <= 3){
+	$file_arr = array();
+	
+	if(count($table['FILES']) == 3) $file_arr = array('大图', '小图', '图标');
+	elseif(count($table['FILES']) == 2) $file_arr = array('大图', '小图');
+	else $file_arr = array('图片');
+	
+	$code_file = implode('、', $file_arr);
+	
+	$tmp = 
+<<<EOF
+
+					<hr/>
+					<label>{$code_file} (注：双击图片可删除！)</label>
+					<table class="swfupload">
+						<tr>
+							<td width="240" valign="top" align="center">
+								<p class="img" id="up_file01">
+									<!--{if is_array(\${$table[IDENTITY]}['FILE01'])}-->
+									<img src="{\${$table[IDENTITY]}[FILE01][0]}" data="{\${$table[IDENTITY]}[FILE01][4]}" width="240" style="width:240px;" border="0"/>
+									<!--{else}-->
+									<img src="static/images/no-picture.jpg" data="" width="240" style="width:240px;" />
+									<!--{/if}-->
+								</p>
+								<hr/>
+								<div class="upload-button"><span id="swfu_file01"></span></div>
+								<p class="hep-inline">宽800px</p>
+							</td>
+							<td width="30"></td>
+EOF;
+	
+	$code .= $tmp;
+	
+	if(count($table['FILES']) > 1){
+		$tmp = 
+<<<EOF
+	
+							<td width="10" style="border-left:1px solid #ccc;"></td>
+							<td width="30"></td>
+							<td width="240" valign="top" align="center">
+								<p class="img" id="up_file02">
+									<!--{if is_array(\${$table[IDENTITY]}['FILE02'])}-->
+									<img src="{\${$table[IDENTITY]}[FILE02][0]}" data="{\${$table[IDENTITY]}[FILE02][4]}" width="240" style="width:240px;" border="0"/>
+									<!--{else}-->
+									<img src="static/images/no-picture.jpg" data="" width="240" style="width:240px;" />
+									<!--{/if}-->
+								</p>
+								<hr/>
+								<div class="upload-button"><span id="swfu_file02"></span></div>
+								<p class="hep-inline">宽640px</p>
+							</td>
+							<td width="30"></td>
+EOF;
+	
+		$code .= $tmp;
+	}
+	
+	if(count($table['FILES']) > 2){
+		$tmp = 
+<<<EOF
+							<td width="10" style="border-left:1px solid #ccc;"></td>
+							<td width="30"></td>
+							<td width="200" valign="top" align="center">
+								<p class="img" id="up_file03">
+									<!--{if is_array(\${$table[IDENTITY]}['FILE03'])}-->
+									<img src="{\${$table[IDENTITY]}[FILE03][0]}" data="{\${$table[IDENTITY]}[FILE03][4]}" width="200" style="width:200px;" border="0"/>
+									<!--{else}-->
+									<img src="static/images/no-picture.jpg" data="" width="200" style="width:200px;" />
+									<!--{/if}-->
+								</p>
+								<hr/>
+								<div class="upload-button"><span id="swfu_file03"></span></div>
+								<p class="hep-inline">400px * 400px</p>
+							</td>
+EOF;
+		$code .= $tmp;
+	}
+	
+	$code .= "
+						</tr>
+				   </table>";
+}elseif(count($table['FILES']) > 3){
+	$tmp = 
+<<<EOF
+
+					
+					<h5>{lang admin.validate.swfupload}({lang admin.validate.swfupload.limit}{$table[FILENUM]}{lang admin.validate.swfupload.unit})</h5>				
+					<hr/>
+					<div id="divFileUploadButton" class="upload-button"><span id="spnButtonPlaceholder"></span></div>
+					<div id="divFileProgressContainer" class="upload-progress"></div>
+	            	<div id="divThumbnails">
+	            	<table class="table" style="width:auto;">
+	            		<thead>
+	            			<tr>
+		            			<th width="60">{lang admin.validate.swfupload.th.pic}</th>
+		            			<th>{lang admin.validate.swfupload.th.name}</th>
+		            			<th width="60">{lang admin.validate.swfupload.th.no}</th>
+		            			<th width="80">{lang admin.validate.swfupload.th.delete}</th>
+	            			</tr>
+	            		</thead>
+	            		<tbody id="tbl_body_column">
+	            		<!--{loop \${$table[IDENTITY]}_files \$key \$image}-->
+	            		<tr>
+			            	<td>
+			            		<input type="hidden" name="hdnImagePath[]" value="{\$image[4]}" />
+			            		<a href="{\$image[3]}" target="_blank"><img class="image" src="{\$image[0]}" width="80" style="width:80px;" border="0" /></a>
+			            	</td>
+			            	<td>
+			            		<span class="imageTitle">{\$image[1]}<!--{if \$image[5]}--><br/>[{\$image[5]}px * {\$image[6]}px]<!--{/if}--></span>
+			            	</td>
+			            	<td>
+				            	<input type="text" class="input-mini" name="txtImageDisplayOrder[]" value="{echo \$key + 1;}" size="4" />
+			            	</td>
+			            	<td>
+			            		<a class="btn btn-mini btn-delete" href="javascript:void(null);" onclick="removeImage(this)">{lang admin.operation.delete}</a>
+			            	</td>
+			            </tr>
+	            		<!--{/loop}-->
+	            		<tr id="tbl_no_record" {if count(\${$table[IDENTITY]}_files) > 0}style="display:none;"{/if}>
+	            			<td colspan="4">{lang admin.validate.swfupload.empty}</td>
+	            		</tr>
+		            	<tr style="display:none;">
+			            	<td>
+			            		<input type="hidden" name="hdnImagePath[]" value="" />
+			            		<img class="image" width="80" style="width:80px;" src="" />
+			            	</td>
+			            	<td>
+				            	<span class="imageTitle"></span>
+			            	</td>
+			            	<td>
+				            	<input type="text" name="txtImageDisplayOrder[]" value="" class="input-mini" />
+			            	</td>
+			            	<td>
+			            		<a class="btn btn-mini btn-delete" href="javascript:void(null);" onclick="removeImage(this)">{lang admin.operation.delete}</a>
+			            	</td>
+			            </tr>
+			            </tbody>
+			        </table>
+			        </div>
+			        
+EOF;
+	$code .= $tmp;
+}
+
+$tmp = 
+<<<EOF
+
+					
+			        <hr />
+					<!--{if \$dispatches['method'] == '_add'}-->
+					<button type="submit" class="btn btn-small btn-primary" {\$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+					<!--{elseif \$dispatches['method'] == '_update'}-->
+					<button type="submit" class="btn btn-small btn-primary" {\$dispatches[operations][edit]}>{lang admin.operation.submit}</button>
+					<!--{/if}-->
+					<button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+					<button type="button" class="btn btn-small" onclick="javascript:location.href='{\$ADMIN_SCRIPT}/{$table[IDENTITY]}&page={\$_var[page]}&psize={\$_var[psize]}{\$search[querystring]}';">{lang admin.operation.go.back}</button>
+					</fieldset>
+				</div>
+			</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['HTMLEDITOR']){
+	$code .= "
+<script type=\"text/javascript\" src=\"editor/kindeditor.js\"></script>
+<script type=\"text/javascript\" src=\"editor/lang/zh_CN.js\"></script>
+";
+}
+
+if(count($table['FILES']) > 0){
+	$code .= "
+<script type=\"text/javascript\" src=\"static/plugins/swfupload.js\"></script>
+<script type=\"text/javascript\" src=\"static/plugins/swfupload_handlers.js\"></script>
+<script type=\"text/javascript\" src=\"static/plugins/swfupload_images.js\"></script>
+";
+}
+
+$tmp = 
+<<<EOF
+
+<script>
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['HTMLEDITOR']){
+	$tmp = 
+<<<EOF
+
+var editorConfig = {
+	resizeType : 0, 
+	items : ['source', '|', 'fontname', 'fontsize', 'forecolor', 'hilitecolor', 'bold', 'italic', 'underline', 'justifyleft', 'justifycenter', 'justifyright', 'image']
+};
+
+EOF;
+	$code .= $tmp;
+	
+	foreach ($table['COLUMNS'] as $key => $column){
+		$name = strtolower($column['identity']);
+		$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+		
+		if($column['type'] == 'text'){
+			$code .= "
+var editor_{$name};";
+		}
+	}
+}
+
+if(count($table['FILES']) > 0 && count($table['FILES']) <= 3){
+	foreach($table['FILES'] as $key => $file){
+		$name = $key + 1;
+		$code_data .= "
+var swfu_file0{$name} = null;";
+		
+		unset($name);
+	}
+	
+	$tmp = 
+<<<EOF
+
+swfupload_params.limit = 1;
+swfupload_params.uploaded = 0;
+
+function fileQueueError(file, errorCode, message) {
+	if (errorCode === SWFUpload.QUEUE_ERROR.QUEUE_LIMIT_EXCEEDED) {
+		$.dialog({message:'{lang admin.validate.swfupload.lang.limit}'});
+	}else{
+		$.dialog({message:'{lang admin.validate.swfupload.echo.fail}'});
+	}
+}
+
+function uploadSuccess(file, serverData) {
+	if(serverData.substring(0, 7) === "FILEID:") {
+		var tempArr = serverData.split('|');
+		var photoPath = formatFilePath(serverData.substring(7));
+		
+		$('#up_' + tempArr[5] + ' img').attr('src', photoPath).attr('data', serverData.substring(7));
+	}else $.dialog({message:serverData});
+}
+
+function createSwfUpload(file, title){
+	var swf_config = {
+		upload_url: "{\$ADMIN_SCRIPT}/{$table[IDENTITY]}/_upload&file=" + file + "&_SALT={\$_var[current][SALT]}",
+		
+		file_size_limit : "200KB", 
+		file_types : "*.jpg;*.bmp;*.gif;*.png",
+		file_types_description : "JPG Images",
+		file_upload_limit : "0",
+		
+		file_queue_error_handler : fileQueueError,
+		file_dialog_complete_handler : fileDialogComplete,
+		upload_progress_handler : uploadProgress,
+		upload_error_handler : uploadError,
+		upload_success_handler : uploadSuccess,
+		upload_complete_handler : uploadComplete,
+		
+		button_image_url : "static/images/swfupload/swfupload.png",
+		button_placeholder_id : "swfu_" + file,
+		button_width: 120,
+		button_height: 18,
+		button_text : '{lang admin.validate.swfupload.lang.button.choice}' + title + '({lang admin.validate.swfupload.lang.button.size.200})',
+		button_text_style : '',
+		button_text_top_padding: 0,
+		button_text_left_padding: 18,
+		
+		flash_url : "static/swfupload.swf", 
+		debug: false
+	};
+	
+	return new SWFUpload(swf_config);
+}
+EOF;
+	$code .= $tmp;
+}elseif(count($table['FILES']) > 3){
+	$code .= "
+var swfu;
+";
+}
+
+$tmp = 
+<<<EOF
+
+function check_form(frm){
+EOF;
+
+$code .= $tmp;
+
+foreach ($table['COLUMNS'] as $key => $column){
+	//不需要验证的字段！
+	if(	$column['identity'] == 'HITS' 
+		|| $column['identity'] == 'UP' 
+		|| $column['identity'] == 'DOWN' 
+		|| $column['identity'] == 'ATTENT' 
+		|| $column['identity'] == 'VIEWS' 
+		|| $column['identity'] == 'ADDRESS' 
+		|| $column['identity'] == 'AGENT' 
+		|| $column['identity'] == 'STATUS' 
+		|| $column['identity'] == 'ISAUDIT' 
+		|| $column['identity'] == 'CREATETIME' 
+		|| $column['identity'] == 'AUDITID' 
+		|| $column['identity'] == 'AUDITTIME' 
+		|| $column['identity'] == 'CITYID' 
+		|| $column['identity'] == 'COUNTYID' 
+		|| $column['identity'] == 'GENDER') continue;
+	
+	$name = strtolower($column['identity']);
+	$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+	
+	//地区
+	if($column['identity'] == 'PROVINCEID'){
+		$code .= "
+	if(frm.sltProvinceId.selectedIndex == 0){
+   		$(frm.sltProvinceId).next('.help-inline').css('color', 'red');
+    	frm.sltProvinceId.focus();
+    	return false;
+   	}
+    
+    if(frm.sltCityId.selectedIndex == 0){
+   		$(frm.sltCityId).next('.help-inline').css('color', 'red');
+    	frm.sltCityId.focus();
+    	return false;
+   	}
+    
+    if(frm.sltCountyId.selectedIndex == 0){
+   		$(frm.sltCountyId).next('.help-inline').css('color', 'red');
+    	frm.sltCountyId.focus();
+    	return false;
+   	}
+   	";
+		continue;
+	}
+	
+	//手机号码
+	if($column['identity'] == 'MOBILE'){
+		$code .= "
+	if(frm.txtMobile.value.trim().length == 0 && frm.txtWeixin.value.trim().length == 0){
+    	$(frm.txtMobile).next('.help-inline').css('color', 'red');
+    	frm.txtMobile.focus();
+    	return false;
+    }
+    ";
+		continue;
+	}
+	
+	if($column['type'] == 'varchar'){
+		$code .= "
+	if(frm.txt{$name}.value.trim().length == 0){
+    	$(frm.txt{$name}).next('.help-inline').css('color', 'red');
+    	frm.txt{$name}.focus();
+    	return false;
+    }
+    ";
+	}elseif($column['type'] == 'int'){
+		$code .= "
+	if(frm.txt{$name}.value.trim().length == 0 || !frm.txt{$name}.value.trim().isInt()){
+    	$(frm.txt{$name}).next('.help-inline').css('color', 'red');
+    	frm.txt{$name}.focus();
+    	return false;
+    }
+    ";
+	}elseif($column['type'] == 'decimal'){
+		$code .= "
+	if(frm.txt{$name}.value.trim().length == 0 || !frm.txt{$name}.value.trim().isNumber()){
+    	$(frm.txt{$name}).next('.help-inline').css('color', 'red');
+    	frm.txt{$name}.focus();
+    	return false;
+    }
+    ";
+	}elseif($column['type'] == 'datetime'){
+		if($column['identity'] == 'BEGINTIME'){
+			$code .= "
+	if(frm.txtBeginTime.value.trim().length == 0){
+    	$(frm.txtBeginTime).next('.help-inline').css('color', 'red');
+    	frm.txtBeginTime.focus();
+    	return false;
+    }
+    ";
+		}elseif($column['identity'] == 'ENDTIME'){
+			$code .= "
+	if(frm.txtEndTime.value.trim().length == 0){
+    	$(frm.txtEndTime).next('.help-inline').css('color', 'red');
+    	frm.txtEndTime.focus();
+    	return false;
+    }
+    ";
+		}elseif($column['identity'] == 'BEGINDATE'){
+			$code .= "
+	if(frm.txtBeginDate.value.trim().length == 0){
+    	$(frm.txtBeginDate).next('.help-inline').css('color', 'red');
+    	frm.txtBeginDate.focus();
+    	return false;
+    }
+    ";
+		}elseif($column['identity'] == 'ENDDATE'){
+			$code .= "
+	if(frm.txtEndDate.value.trim().length == 0){
+    	$(frm.txtEndDate).next('.help-inline').css('color', 'red');
+    	frm.txtEndDate.focus();
+    	return false;
+    }
+    ";
+		}else{
+			$code .= "
+	if(frm.txt{$name}.value.trim().length == 0){
+    	$(frm.txt{$name}).next('.help-inline').css('color', 'red');
+    	frm.txt{$name}.focus();
+    	return false;
+    }
+    ";
+		}
+	}
+	
+	unset($name);
+}
+
+if(count($table['FILES']) <= 3){
+	foreach($table['FILES'] as $key => $file){
+		$name = $key + 1;
+		$code .= "
+	frm.hdnFile0{$name}.value = $('#up_file0{$name} img').attr('data') ? $('#up_file0{$name} img').attr('data') : '';";
+		
+		unset($name);
+	}
+}
+
+$tmp = 
+<<<EOF
+
+	
+    return true;
+}
+
+$(function(){
+	$('.fancy').uniform();
+	
+	$('.input-date').datepicker({format:'yyyy-mm-dd'});
+	$('.input-time').datetimepicker({format: 'yyyy-mm-dd hh:ii', autoclose:true, todayBtn:true});
+	
+	$('fieldset input,textarea').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+EOF;
+
+$code .= $tmp;
+
+if($table['CODE']['DISTRICT']){
+	$tmp = 
+<<<EOF
+
+	
+	$("select[name='sltProvinceId']").change(function(){
+		$("select[name='sltCityId']").get(0).options.length = 1;
+		$("select[name='sltCountyId']").get(0).options.length = 1;
+		
+		if($(this).val() - 0 == 0) return;
+		
+		$.getJSON('{\$ADMIN_SCRIPT}/{$table[IDENTITY]}/_cities', {provinceid:$(this).val()}, function(data){
+			var sltOfCity = $("select[name='sltCityId']").get(0);
+			for(var i = 0; i < data.length; i++) sltOfCity.options[i + 1] = new Option(data[i].CNAME, data[i].DISTRICTID);
+		});
+	});
+	
+	$("select[name='sltCityId']").change(function(){
+		$("select[name='sltCountyId']").get(0).options.length = 1;
+		if($(this).val() - 0 == 0) return;
+		
+		$.getJSON('{\$ADMIN_SCRIPT}/{$table[IDENTITY]}/_counties', {cityid:$(this).val()}, function(data){
+			var sltOfCounty = $("select[name='sltCountyId']").get(0);
+			for(var i = 0; i < data.length; i++) sltOfCounty.options[i+1] = new Option(data[i].CNAME, data[i].DISTRICTID);
+		});
+	});
+	
+EOF;
+	
+	$code .= $tmp;
+}
+
+if(count($table['FILES']) > 0 && count($table['FILES']) <= 3){
+	$tmp = 
+<<<EOF
+
+	$('.swfupload img').dblclick(function(){
+		$(this).attr({src:'static/images/no-picture.jpg', data:''});
+	});
+	
+EOF;
+	$code .= $tmp;
+	
+	if(count($table['FILES']) == 3){
+		$code .= "
+	swfu_file01 = createSwfUpload('file01', '大图');
+	swfu_file02 = createSwfUpload('file02', '小图');
+	swfu_file03 = createSwfUpload('file03', '图标');";
+	}elseif(count($table['FILES']) == 2){
+		$code .= "
+	swfu_file01 = createSwfUpload('file01', '大图');
+	swfu_file02 = createSwfUpload('file02', '小图');";
+	}else{
+		$code .= "
+	swfu_file01 = createSwfUpload('file01', '大图');";
+	}
+}elseif(count($table['FILES']) > 3){
+	$tmp = 
+<<<EOF
+
+	swfupload_params.limit = {$table[FILENUM]};
+	swfupload_params.uploaded = {echo count(\${$table[IDENTITY]}_files);};
+	
+	swfu = new SWFUpload({
+		upload_url: "{\$ADMIN_SCRIPT}/{$table[IDENTITY]}/_upload&_SALT={\$_var[current][SALT]}",
+		
+		file_size_limit : "300KB", 
+		file_types : "*.jpg;*.bmp;*.gif;*.png",
+		file_types_description : "JPG Images",
+		file_upload_limit : "0",
+		
+		file_queue_error_handler : fileQueueError,
+		file_dialog_complete_handler : fileDialogComplete,
+		upload_progress_handler : uploadProgress,
+		upload_error_handler : uploadError,
+		upload_success_handler : uploadSuccess,
+		upload_complete_handler : uploadComplete,
+		
+		button_image_url : "static/images/swfupload/swfupload.png",
+		button_placeholder_id : "spnButtonPlaceholder",
+		button_width: 120,
+		button_height: 18,
+		button_text : '{lang admin.validate.swfupload.lang.button}({lang admin.validate.swfupload.lang.button.size.300})',
+		button_text_style : '',
+		button_text_top_padding: 0,
+		button_text_left_padding: 18,
+		
+		flash_url : "static/swfupload.swf",
+		
+		custom_settings : {
+			upload_target : "divFileProgressContainer"
+		},
+		
+		debug: false
+	});
+	
+EOF;
+
+	$code .= $tmp;
+}
+
+if($table['CODE']['HTMLEDITOR']){
+	foreach ($table['COLUMNS'] as $key => $column){
+		$name = strtolower($column['identity']);
+		$name = strtoupper(substr($name, 0, 1)).substr($name, 1);
+		
+		if($column['type'] == 'text'){
+			$code .= "
+	editor_{$name} = KindEditor.create('textarea[name=\"txt{$name}\"]', kind_editor_onfig);";
+		}
+	}
+}
+
+$tmp = 
+<<<EOF
+
+
+});
+</script>
+<!--{template /module/admin/view/foot}-->
+EOF;
+
+$code .= $tmp;
+?>

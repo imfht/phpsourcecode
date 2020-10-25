@@ -1,0 +1,195 @@
+<!-- record 按钮菜单 修改 -->
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_form_toolbar" style="top: 0px; left: 0px;">
+    <div style="padding:5px;border:1px solid #ddd">
+        <div style="padding:5px;border:1px solid #ddd">
+            <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_cancel" href="#" class="easyui-linkbutton"
+               data-options="iconCls:'icon-cancel'">{:lang('关闭')}</a>
+            <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_init" href="#" class="easyui-linkbutton"
+               data-options="iconCls:'icon-bef'">{:lang('初始化')}</a>
+            <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_open" href="#" class="easyui-linkbutton"
+               data-options="iconCls:'icon-add'">{:lang('新窗口打开')}</a>
+            <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_save" href="#" class="easyui-linkbutton"
+               data-options="iconCls:'icon-save'">{:lang('保存')}</a>
+            <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_save_other" href="#" class="easyui-linkbutton"
+               data-options="iconCls:'icon-save'">{:lang('另存为')}</a>
+            <a href="#" class="easyui-menubutton"
+               data-options="menu:'#{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_fun_menu',iconCls:'icon-fun'">{:lang('功能')}</a>
+        </div>
+
+        <div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_fun_menu" style="width:150px;">
+            <div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_change_table_id_val"
+                 data-options="iconCls:'icon-edit'">
+                {:lang('脚本使用说明')}
+            </div>
+            <div data-options="iconCls:'icon-edit_note'">{:lang('重点库文件说明')}</div>
+            <div class="menu-sep"></div>
+            <div>{:lang('模板文件')}</div>
+        </div>
+    </div>
+
+    <div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_body" data-options="region:'center'; fit:true">
+        <!-- 表单 -->
+        <div style="padding:5px 5px 5px 5px" data-options="fit:true">
+            <form id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_form" method="post" data-options="fit:true">
+                <input type="hidden" name="obj_id" value="{$obj_id}">
+                <textarea id="code" name="code" data-options="fit:true">{$code}</textarea>
+
+                <div style="font-size: 13px; width: 300px; height: 30px;">
+                    <p>{:lang('按键/提示信息')}: <span id="command-display"></span></p>
+
+                    <p>{:lang('样式风格')}:
+                        <select id="script_theme_select">
+                            <option selected>default</option>
+                            <option>erlang-dark</option>
+                            <option>icecoder</option>
+                            <option>night</option>
+                            <option>eclipse</option>
+                        </select>
+                    </p>
+                    <p>{:lang('编辑器类型')}: <select id="script_editor_select">
+                        <option selected>vim</option>
+                        <option>sublime</option>
+                    </select>
+                    </p>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+
+    <!-- 窗口 -->
+    <div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_card_fun_win"></div>
+</div>
+<script language="javascript">
+    $(document).ready(function () {
+        var script_obj = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}'
+        });
+        script_obj.father = new Page({
+            Module: '{$Think.P_M}',
+            Controller: '{$Think.P_C}',
+            Action: '{$Think.P_A}'
+        });
+
+        // 初始化脚本编辑器
+        // 初始化编辑器风格
+        var theme_init = "night", editor_type = 'vim';
+        if ("{$theme}" != "") {
+            theme_init = "{$theme}";
+        }
+        ;
+        if ("{$editor_type}" != "") {
+            editor_type = "{$editor_type}";
+        }
+        ;
+        $("#script_theme_select").val(theme_init);
+        $("#script_editor_select").val(editor_type);
+        var editor_config = {
+            'vim': {
+                lineNumbers: true,
+                mode: "text/x-csrc",
+                keyMap: "vim",
+                matchBrackets: true,
+                showCursorWhenSelecting: true,
+                theme: theme_init
+            },
+            'sublime': {
+                lineNumbers: true,
+                mode: "javascript",
+                keyMap: "sublime",
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                showCursorWhenSelecting: true,
+                theme: theme_init
+            }
+        };
+
+        function set_editor(choose_editor_type) {
+            var editor = '';
+            switch (choose_editor_type) {
+                case 'vim':
+                    editor = CodeMirror.fromTextArea(document.getElementById("code"), editor_config.vim);
+                    break;
+                case 'sublime':
+                    editor = CodeMirror.fromTextArea(document.getElementById("code"), editor_config.sublime);
+                    break;
+                default:
+                // code
+            }
+            return editor;
+        }
+
+        var editor = set_editor(editor_type);
+        // editor.setOption("theme", theme_init);
+
+        var commandDisplay = document.getElementById('command-display');
+        var keys = '';
+        CodeMirror.on(editor, 'vim-keypress', function (key) {
+            keys = keys + key;
+            commandDisplay.innerHTML = keys;
+        });
+        CodeMirror.on(editor, 'vim-command-done', function (e) {
+            keys = '';
+            commandDisplay.innerHTML = keys;
+        });
+
+        // 风格切换 - 用户习惯性参数
+        $("#script_theme_select").bind("change", function () {
+            var theme = $(this).val();
+            editor.setOption("theme", theme);
+//        $.post(_url + '/set_user_para_id', { para_id: 'script_theme', para_value: theme}, function(){});
+        });
+        $("#script_editor_select").bind("change", function () {
+            editor.save();
+            var editor_type = $(this).val();
+            // 切换editor_type
+            $('.CodeMirror').remove();
+            editor = set_editor(editor_type);
+            editor.refresh();
+//        $.post(_url + '/set_user_para_id', { para_id: 'editor_type', para_value: editor_type}, function(){});
+        });
+
+        // 绑定处理按钮
+        // 关闭按钮
+        script_obj.linkbutton().win_close('cancel');
+
+        // 初始化脚本
+        var init_src = "{:url('pdu_app/pdu_gui_csp_prog/init')}";
+        var init_mode = "{$init_mode}";
+        $(script_obj.CA + "init").bind("click", function () {
+            $.post(init_src, {init_mode: init_mode}, function (data) {
+                $("#code").text(data);
+                editor.getDoc().setValue(data);
+                editor.refresh();
+            });
+        });
+
+        // 打开另一个窗口
+        $(script_obj.CA + "open").bind("click", function () {
+
+        });
+
+        // 保存
+        var save_src = "{:url('@pdu_app/pdu_gui_csp_prog/save')}";
+        $(script_obj.CA + "save").bind("click", function () {
+            // 先编辑器保存 - 写入到textarea
+            editor.save();
+            $.post(save_src, $(script_obj.CA + 'form').serialize(), function (data) {
+//                $.messager.alert(lang.prompt, data.msg);
+                if (data.code == 1) {
+                    commandDisplay.innerHTML = data;
+                } else {
+                    commandDisplay.innerHTML = data;
+                }
+            });
+        });
+
+        CodeMirror.commands.save = function () {
+            $(script_obj.CA + "save").click();
+        };
+
+    });
+</script>

@@ -1,0 +1,203 @@
+<script type="text/javascript">
+	$(document).ready(function(){
+
+		$.formValidator.initConfig({
+			formid:"userForm1",
+			onerror:function(msg){
+			},
+			onsuccess:function(){
+				if ($('#homepage_banner').val() == ''){
+					$("#alert_box").jk_alert({msg: "请上传认证页面主图", type: 'danger', show_time: 8000});
+                	return false;
+				}
+			}
+		}); 
+		$("#shop_name").formValidator({empty:false, onshow:"请输入店铺名称", onfocus:"店铺名称将显示在认证页面及微站，长度（2-40个字）", oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			if (val.length >= 2 && val.length <= 40){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+		$("#telephone").formValidator({empty:false,onshow:"请输入店铺联系电话",onfocus:"店铺联系电话显示在微站，长度（2-40个数字）",oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			if (val.length >= 2 && val.length <= 40){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+		
+		
+
+
+		var imagename = "{$info['qr_code']}";
+		var fullbackuptab = $('#config_upload_process').html5uploader({
+			fileTypeExts:'image/jpeg,image/png,image/jpg', //支持上传的后缀名，多个用逗号隔开, 填写mime类型
+			auto:true,  //是否自动上传
+			removeTimeout:3000,  //上传成功后，进度条多少毫秒后消失
+			url:"{:U('Merchant/add_merchant_ad')}",
+			input_file_id:'input-file-config',  //上传控件的id
+			
+			onCheckFileTypeExts:function(){   //文件类型不对的回调函数
+				$("#alert_box").jk_alert({msg:'文件类型错误!', type:'danger', show_time:8000});
+			},
+			onSelect: function(file){
+				
+			},
+			onUploadStart:function(){  //开始上传的回调函数
+				
+			},
+			onInit:function(){  //初始化的回调函数
+				//美化上传框
+				$('#input-file-config').ace_file_input({no_file:'点击选择文件 ...', btn_choose:'上传', btn_change:'修改', droppable:false});
+			},
+			onUploadComplete:function(){   //上传完成的回调函数
+				//$("#alert_box_config").jk_alert({msg:'上传完成，正在升级，请稍候...', type:'success', show_time:8000});
+			
+			},
+			onUploadSuccess:function(file, responseText){  //上传成功的回调函数
+				var data = JSON.parse(responseText);
+				if ( 1 == data.ret) { 
+					location.reload();
+					
+				}else{
+					$("#alert_box").jk_alert({msg: data.msg, type:'danger', show_time:12000});
+				}
+			
+			},
+			onUploadError:function(file, responseText){
+				$("#alert_box").jk_alert({msg:responseText.msg, type:'danger', show_time:8000});
+			}
+		});
+		
+		
+
+
+
+
+	});
+	
+	function del_ad(id){
+		
+		if (id == '' && id != 0){
+			$("#alert_box"+id).jk_alert({msg: '请选择要删除的图片', type:'danger', show_time:12000});
+			return false;
+		}
+		
+		showdialog({
+			'title':'提示',
+			'message':'您确定要删除这个广告吗？',
+			'okfunction':function(){
+				$.ajax({ 
+		            url: "{:U('Merchant/del_merchant_ad')}",  
+		            data:{'id': id},
+		            dataType:'json',
+		            type:'POST',
+		            success: function(data){
+		                if (data.ret == 1){
+		                    
+		                    location.reload();
+		                }else{
+		                    $("#alert_box"+id).jk_alert({ msg: data.msg, type: 'danger', show_time: 3500 });
+		                }
+		            }
+		        });
+			}
+		})
+		
+	}
+
+</script>
+
+
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+			<div class="tabbable">
+				<nav class="navbar navbar-default abc" role="navigation">
+					<div class="container-fluid">
+						<!-- Brand and toggle get grouped for better mobile display -->
+						<div class="navbar-header">
+							<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+							<span class="sr-only"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							</button>
+						</div>
+
+						<!-- Collect the nav links, forms, and other content for toggling -->
+						<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+							<ul class="nav navbar-nav">
+								<li >
+									<a href="{:U('Merchant/auth_set')}">
+										<i class="blue icon-cloud bigger-110"></i>
+										认证设置
+									</a>
+								</li>
+								<li >
+									<a href="{:U('Merchant/page_set')}">
+										<i class="green icon-cog bigger-110"></i>
+										页面设置
+									</a>
+								</li>
+								<li class="active">
+									<a  href="#">
+										<i class="red icon-list bigger-110"></i>
+										广告设置
+									</a>
+								</li>
+								
+
+							</ul>
+						</div><!-- /.navbar-collapse -->
+					</div><!-- /.container-fluid -->
+				</nav>
+				<div class="tab-content">
+					<div class="tab-pane active">
+						<div id="status-pane" class="form-horizontal">
+							<div class="row">
+								<div class="col-xs-12">
+									<!-- PAGE CONTENT BEGINS -->
+									<div  class="col-xs-10 col-sm-12 padding0" style="margin-bottom:0px;">
+										<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+											上传广告图片： 
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<div id="config_upload_process" ></div>
+											</div>
+
+										</div>
+										<div class="col-sm-6">
+											<p class="help-block dp">png/jpg/jpeg图片，小于2MB，分辨率建议宽度640px，高度960px</p>
+										</div>
+									</div>
+									<div style="clear:both;"></div>
+									<div id="alert_box"></div>
+									<div class="hr hr-24" style="margin-top: 0px;"></div>
+
+									<volist name="list" id="vo" >
+										<div class="col-sm-3 col-md-3">
+											<div class="thumbnail">
+												<img src="__PUBLIC__/upload/merchant_ad/{$vo.image}" style="height:330px;">
+												<div class="caption">
+
+													
+													<p><button type="button" onClick="del_ad({$key})" class="btn btn-danger" style="width:100%;"><i class=" icon-remove bigger-110"></i>删除</button></p>
+													<p><div id="alert_box{$key}"></div></p>
+												</div>
+											</div>
+										</div>
+									</volist>
+								</div><!-- /.col -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>	
+		</div>
+	</div>
+</div>

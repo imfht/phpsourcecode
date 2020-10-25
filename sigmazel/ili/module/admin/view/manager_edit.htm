@@ -1,0 +1,154 @@
+<!--{template /module/admin/view/head}-->
+<script type="text/javascript" src="static/plugins/jquery.ztree.js"></script>
+<link href="static/zTreeStyle/zTreeStyle.css" rel="stylesheet" type="text/css">
+
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<form method="post" action="{$ADMIN_SCRIPT}/admin/manager/{$dispatches[method]}&id={$_var[gp_id]}&page={$_var[page]}&psize={$_var[psize]}" onsubmit="javascript:return check_form(this);">
+			<input type="hidden" name="formsubmit" value="yes" />
+			<input type="hidden" name="hdnCategoryIdString" value="{$category_id_string}"/>
+			
+			<div class="well widget">
+				<div class="widget-header">
+					<p class="text">* {lang admin.validate.require}</p>
+				</div>
+				<div class="widget-content">
+					<fieldset>
+						<label>{lang admin.manager_edit.view.username.label} *</label>
+						<input type="text" class="input-large" name="txtUserName" placeholder="{lang admin.manager_edit.view.username.placeholder}..." maxlength="30" value="{$manager[USERNAME]}" /> 
+						<span class="help-inline">{lang admin.manager_edit.view.username.tips}</span>
+						
+						<label>{lang admin.manager_edit.view.passwd.label}</label>
+						<input type="text" class="input-large" name="txtPassword" placeholder="{lang admin.manager_edit.view.passwd.placeholder}..." maxlength="30" value="" /> 
+						<span class="help-inline">
+						<!--{if $dispatches['method'] == '_update'}-->{lang admin.manager_edit.view.passwd.tips.update}<!--{else}-->{lang admin.manager_edit.view.passwd.tips}<!--{/if}-->
+						</span>
+						
+						<label>{lang admin.manager_edit.view.role.label} *</label>
+						<select name="sltRole">
+		            		<option value="0">{lang admin.manager_edit.view.role.select}</option>
+		            		<!--{loop $roles $role}-->
+		            		<option value="{$role[ROLEID]}" {if $manager['ROLEID'] == $role['ROLEID']}selected="selected"{/if}>{$role[CNAME]}</option>
+		            		<!--{/loop}-->
+		            	</select>
+						<span class="help-inline">{lang admin.manager_edit.view.role.tips}</span>
+						
+						<label>{lang admin.manager_edit.view.realname.label} *</label>
+						<input type="text" class="input-large" name="txtRealName" placeholder="{lang admin.manager_edit.view.realname.placeholder}..." maxlength="50" value="{$manager[REALNAME]}" /> 
+						<span class="help-inline">{lang admin.manager_edit.view.realname.tips}</span>
+						
+						<label>{lang admin.manager_edit.view.mobile.label}</label>
+						<input type="text" class="input-large" name="txtMobile" placeholder="{lang admin.manager_edit.view.mobile.placeholder}..." maxlength="30" value="{$manager[MOBILE]}" /> 
+						<span class="help-inline">{lang admin.manager_edit.view.mobile.tips}</span>
+						
+						<label>{lang admin.manager_edit.view.email.label}</label>
+						<input type="text" class="input-large" name="txtEmail" placeholder="{lang admin.manager_edit.view.email.placeholder}..." maxlength="100" value="{$manager[EMAIL]}" /> 
+						<span class="help-inline">{lang admin.manager_edit.view.email.tips}</span>
+						
+						<label>{lang admin.manager_edit.view.remark.label}</label>
+						<textarea class="span6" rows="3" name="txtComment">{$manager[COMMENT]}</textarea>
+						<span class="help-inline">{lang admin.manager_edit.view.remark.tips}</span>
+						
+						<hr/>
+						<label>{lang admin.manager_edit.view.category.label}</label>
+						<div id="divTree" class="ztree"></div>
+						
+						<hr/>
+						
+						<!--{if $dispatches['method'] == '_add'}-->
+						<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+						<!--{elseif $dispatches['method'] == '_update'}-->
+						<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</button>
+						<!--{/if}-->
+						<button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+						<button type="button" class="btn btn-small" onclick="javascript:location.href='{$ADMIN_SCRIPT}/admin/manager&page={$_var[page]}&psize={$_var[psize]}';">{lang admin.operation.go.back}</button>
+					</fieldset>
+				</div>
+            </div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+var setting = {
+	check: {
+		enable: true
+	},
+	data: {
+		simpleData: {
+			enable: true
+		}
+	},
+	callback: {
+		onClick: onClick
+	}
+};
+
+setting.check.chkboxType = { "Y" : "ps", "N" : "ps" };
+
+var zTreeObj;
+
+{code $loopcount = 0;}
+var zNodes = [
+    {loop $categories $key $category}
+	{id:{$category[CATEGORYID]}, pId:{$category[PARENTID]}, name:'{$category[CNAME]}', checked:{echo strexists($category_id_string, ','.$category[CATEGORYID].',') ? 'true' : 'false';}}
+	{if count($categories) != $loopcount + 1},{/if}
+	{code $loopcount = $loopcount + 1;}
+	{/loop}
+];
+
+function onClick(event, treeId, treeNode, clickFlag) {
+	
+}
+
+function check_form(frm){
+	if(frm.txtUserName.value.trim().length == 0){
+		$(frm.txtUserName).next('.help-inline').css('color', 'red');
+    	frm.txtUserName.focus();
+    	return false;
+    }
+    
+    if(frm.txtPassword.value.trim().length > 0){
+		if(!frm.txtPassword.value.isAnsi()){
+			$(frm.txtPassword).next('.help-inline').css('color', 'red');
+			frm.txtPassword.focus();
+			return false;
+		}
+	}
+	
+	if(frm.sltRole.selectedIndex < 1){
+		$(frm.sltRole).next('.help-inline').css('color', 'red');
+		frm.sltRole.focus();
+		return false;
+	}
+	
+	if(frm.txtRealName.value.trim().length == 0){
+    	$(frm.txtRealName).next('.help-inline').css('color', 'red');
+    	frm.txtRealName.focus();
+    	return false;
+    }
+	
+	frm.hdnCategoryIdString.value = '';
+	
+	var nodes = zTreeObj.getCheckedNodes(true);
+	for(var i = 0 ; i < nodes.length; i++) if(nodes[i].checked) frm.hdnCategoryIdString.value += ',' + nodes[i].id;
+    
+    return true;
+}
+
+$(function(){
+	$.fn.zTree.init($("#divTree"), setting, zNodes);
+	zTreeObj = $.fn.zTree.getZTreeObj("divTree");
+	
+	$('.fancy').uniform();
+	
+	$('fieldset input,textarea,select').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

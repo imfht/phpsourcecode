@@ -1,0 +1,90 @@
+<include file="public:top" />
+<!--编辑菜单-->
+<form class="layui-form layui-form-pane" action="" style="padding:20px;">
+  <div class="layui-form-item">
+    <label class="layui-form-label">{:L('role_name')}</label>
+    <div class="layui-input-block">
+      <input type="text" name="name" id="name" lay-verify="name" placeholder="请输入" class="layui-input">
+    </div>
+  </div>
+ 
+  <div class="layui-form-item">
+    <label class="layui-form-label">{:L('role_score')}</label>
+    <div class="layui-input-block">
+      <input type="number" name="score" id="score" lay-verify="score" placeholder="请输入" class="layui-input" >
+    </div>
+  </div>
+  <div class="layui-form-item"  pane="">
+    <label class="layui-form-label">{:L('enabled')}</label>
+    <div class="layui-input-block">
+      <input type="radio" title="{:L('yes')}" name="status" value="1"  checked="checked">
+      <input type="radio" title="{:L('no')}" name="status" value="0">
+    </div>
+  </div>
+  <div class="layui-form-item"  pane="">
+    <label class="layui-form-label">{:L('role_admin')}</label>
+    <div class="layui-input-block">
+      <input type="radio" title="{:L('yes')}" name="isAdmin" value="1"  checked="checked">
+      <input type="radio" title="{:L('no')}" name="isAdmin" value="0">
+    </div>
+  </div>
+  <div class="layui-form-item">
+        <label class=""></label>
+        <div class="layui-input-block">
+        <button class="layui-btn" lay-submit="" lay-filter="upbtn">提交保存</button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+layui.use(['layer','jquery','form','element'], function () {
+   // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form, element = layui.element;
+    //验证表单
+    form.verify({
+      name: function(value, item){ //value：表单的值、item：表单的DOM对象
+        if(!new RegExp("^[a-zA-Z0-9_\u4e00-\u9fa5\\s·]+$").test(value)){
+          return '用户组名称不能有特殊字符';
+        }
+        if(/(^\_)|(\__)|(\_+$)/.test(value)){
+          return '用户组名首尾不能出现下划线\'_\'';
+        }
+        if(/^\d+\d+\d$/.test(value)){
+          return '用户组不能全为数字';
+        }
+      }
+    });    
+    // 提交
+    form.on('submit(upbtn)', function (data) {
+        var namevalue = $("#name").val();
+        //验证邮箱是否存在
+        $.post("{:u('user_role/ajax_check_name')}&name="+namevalue,function(res){
+            if(res.status ==  0){
+                layer.msg(res.msg,{time:1800},function(){
+                    return false;
+                });
+            }else{
+                // 提交添加
+                $.post("{:U('user_role/add')}",data.field,function(res){
+                    if(res.status ==  1){
+                        layer.msg(res.msg,{time:1800},function(){
+                            // 关闭弹层后刷新父页面
+                            window.parent.location.reload();
+                            var index = parent.layer.getFrameIndex(window.name); //获取窗口索引  
+                            parent.layer.close(index); 
+                        });
+                    }else{
+                        layer.msg(res.msg,{time:1800},function(){
+                            return false;
+                        });
+                    }
+                });
+                return false;
+                // 添加END
+            }
+        });
+        return false;
+    });
+});
+</script>

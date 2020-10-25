@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="screen-orientation" content="portrait">
+<meta name="x5-orientation" content="portrait">
+<meta name="format-detection" content="telephone=no">
+<meta name="viewport" content="width=320 ,initial-scale=1,maximum-scale=1, minimum-scale=1,user-scalable=no">
+<title>付款给商家</title>
+<link rel="stylesheet" href="/public/system/pay_qrcode/css.css">
+<script type="text/javascript" src="/public/layer/mobile/layer.js"></script>
+<script type="text/javascript" src="//cdn.tryyun.net/js/jquery.min.js"></script>
+<script type="text/javascript" src="//res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+<!--
+<script src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
+<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/2.0.1/weui.min.css">
+<script type="text/javascript" src="//cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
+<script>var vConsole = new VConsole();</script>
+-->
+</head>
+<body class="pay_page" onload="init_page()">
+<div class="head">
+	<div class="container">
+		<ul class="merchant_info clearfix">
+			<li><img src="/public/system/pay_qrcode/mch_log.png"></li>
+			<li>{echo $merchant['merchant_name']}</li>
+		</ul>
+	</div>
+	<div class="amount_box">
+		<div class="amount_input">
+			<span class="fl">支付金额：</span>
+			<span class="amount fr rmb_icon" id="amount" style="position:relative;"></span>
+		</div>
+	</div>
+</div>
+<div class="border_line"></div>
+<div class="m-cell xun_remark">
+	<div class="cell-item">
+		<div class="cell-left">备注信息：</div>
+		<div class="cell-right">
+			<input type="text" id="remark" name="remark" class="cell-input" placeholder="备注信息最长30字" autocomplete="off">
+		</div>
+	</div>
+</div>
+<p class="showTips" style="bottom:7.4rem;"></p>
+<div id="fullbg"></div>
+<table id="keyboard" style="height:7.4rem;display:table;">
+	<tbody>
+		<tr>
+			<td class="num">1</td>
+			<td class="num">2</td>
+			<td class="num">3</td>
+			<td rowspan="2" class="del"></td>
+		</tr>
+		<tr>
+			<td class="num">4</td>
+			<td class="num">5</td>
+			<td class="num">6</td>
+		</tr>
+		<tr>
+			<td class="num">7</td>
+			<td class="num">8</td>
+			<td class="num">9</td>
+			<td rowspan="2" class="complete">支付</td>
+		</tr>
+		<tr>
+			<td class="num dot">.</td>
+			<td class="num" colspan="2">0</td>
+		</tr>
+	</tbody>
+</table>
+<script type="text/javascript">
+var total_amount = '';
+var trink = '<span id="trink">|</span>';
+$('.num').click(function(e){
+	if(check_amount($(this), total_amount)) {
+		return false;
+	}
+	total_amount += $(this).text().toString();
+	if(parseFloat(total_amount) > 0) {
+		$('.complete').addClass('input')
+	}
+	$('#amount').text(total_amount);
+	$('#amount').append(trink);
+});
+$('.del').click(function(e){
+	if(!total_amount) return false;
+	total_amount = total_amount.substr(0, total_amount.length - 1);
+	$('#amount').text(total_amount);
+	$('#amount').append(trink);
+	if(total_amount && parseFloat(total_amount) > 0) {
+		$('.complete').addClass('input');
+	}else{
+		$('.complete').removeClass('input');
+	}
+});
+function init_page() {
+	total_amount = '';
+	$('#amount').html(trink);
+	$('.complete').removeClass('input');
+	document.getElementById('amount').click();
+}
+function check_amount(object, input_amount) {
+	if(input_amount.length >= 5) {
+		return true;
+	}
+	if(/^\d+\.\d{2}$/.test(input_amount)) {
+		return true;
+	}
+	if(/^0$/.test(input_amount) && '.' != object.text().toString()) {
+		return true;
+	}
+	if(/^0\.0$/.test(input_amount) && '0' == object.text().toString()) {
+		return true;
+	}
+	if((/\./.test(input_amount) || '' == input_amount) && '.' == object.text().toString()) {
+		return true;
+	}
+	return false;
+}
+</script>
+{php}include \befen\view('Pay_Qrcode_' . request()->controller());{/php}
+</body>
+</html>

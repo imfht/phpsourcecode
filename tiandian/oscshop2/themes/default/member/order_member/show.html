@@ -1,0 +1,247 @@
+{extend name="public:member" /}
+{block name="content"}
+<?php use think\Db; ?>
+ 
+	<div class="page-header">
+		<h1>
+			{$breadcrumb2}
+			<small>
+				<i class="ace-icon fa fa-angle-double-right"></i>
+				{$crumbs}
+			</small>
+		</h1>
+	</div>	
+	<ul class="nav nav-tabs">
+		
+	  <li class="active"><a href="#tab-order" data-toggle="tab">订单详情</a></li>
+	 {if condition="$data['order']['shipping_method']"}
+	  <li><a href="#tab-shipping" data-toggle="tab">收货地址</a></li>
+	 {/if}
+	  <li><a href="#tab-product" data-toggle="tab">商品清单</a></li>
+	  
+	  <li><a href="#tab-history" data-toggle="tab">订单历史</a></li>          
+	  
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane active" id="tab-order">
+			<table class="table table-bordered">
+				
+				<tr>
+					<td>订单编号</td>
+					<td>{$data.order.order_num_alias}</td>
+				</tr>
+				 <tr>
+		            <td>支付方式</td>
+		            <td>
+		            	{switch name="data.order.payment_code"}    
+							{case value="alipay"}支付宝{/case}   
+							{case value="weixin"}微信支付{/case}
+							{case value="points"}积分兑换{/case}
+						{/switch}
+		            </td>
+		          </tr>
+				<tr>
+					<td>会员名称</td>
+					<td>					
+						
+							{$data.order.username}
+						
+					</td>
+				</tr>
+				<tr>
+				    <td>电子邮件</td>
+				    <td>{$data.order.email}</td>
+				</tr>
+				  <tr>
+				    <td>联系电话</td>
+				    <td>{$data.order.telephone}</td>
+				</tr> 
+				<?php if($data['order']['points_order']==0){ ?>
+				<tr>
+				    <td>合计金额</td>
+				    <td>
+				    	￥{$data.order.total}
+				    </td>
+				</tr>
+				<?php }elseif($data['order']['points_order']==1){ ?>
+				<tr>
+				    <td>兑换积分</td>
+				    <td>
+				    	{$data.order.pay_points}
+				    </td>
+				</tr>	
+				<?php } ?>
+				<tr>
+				    <td>订单状态</td>
+				    <td id="order-status"> <?php echo get_order_status_name($data['order']['order_status_id']); ?></td>
+				</tr>     
+				<tr>
+					<td>IP地址</td>
+					<td>{$data.order.ip}</td>
+				</tr>  
+				<tr>
+					<td>用户系统</td>
+					<td>{$data.order.user_agent}</td>
+				</tr>
+				<tr>
+					<td>下单时间</td>
+					<td>{$data.order.date_added|date='Y/m/d H:i:s',###}</td>
+				</tr>
+				<tr>
+					<td>修改时间</td>
+					<td>{$data.order.date_modified|date='Y/m/d H:i:s',###}</td>
+				</tr>
+				</table>
+		</div>
+		{if condition="$data['order']['shipping_method']"}
+		<div class="tab-pane" id="tab-shipping">
+            <table class="table table-bordered">
+          <tr>
+            <td>收货人姓名</td>
+            <td>{$data.order.shipping_name}</td>
+          </tr>
+                  
+          <tr>
+            <td>所在地</td>
+            <td>
+            	<?php echo get_area_name($data['order']['shipping_province_id']); ?>，
+            	<?php echo get_area_name($data['order']['shipping_city_id']); ?>，
+            	<?php echo get_area_name($data['order']['shipping_country_id']); ?>
+            </td>
+          </tr>
+          
+          <tr>
+            <td>地址</td>
+            <td>{$data.order.address}</td>
+          </tr>
+         
+         
+           <tr>
+          	<td>货运方式</td>
+          	<td><?php echo get_shipping_name($data['order']['shipping_method']); ?></td>
+          </tr>
+          <tr>
+          	<td>联系电话</td>
+          	<td>{$data.order.shipping_tel}</td>
+          </tr>
+          
+        </table>        
+      </div>
+      {/if}
+      <div id="tab-product" class="tab-pane">
+       <table class="table table-bordered">
+          <thead>
+            <tr>
+              <td class="left">商品品名</td>
+              <td class="left">型号</td>
+              <td class="right">数量</td>
+              <?php if($data['order']['points_order']==0){ ?>
+              <td class="right">价格</td>              
+              <td class="right">总计</td>
+              <?php } ?>
+            </tr>
+          </thead>
+          
+          <?php if($data['order']['points_order']==0){ ?>
+          
+          <tbody>
+          	<?php if(isset($data['order_product'])&&is_array($data['order_product'])){ ?>
+	            <?php foreach ($data['order_product'] as $product) { ?>
+	            <tr>
+	              <td class="left">
+	              	<a><?php echo $product['name']; ?></a>
+	              	<?php if($option_list=Db::query('select * from '.config('database.prefix').'order_option where order_goods_id='.$product['order_goods_id'].' and order_id='.$product['order_id'])){ ?>
+					<?php foreach ($option_list as $option) { ?>
+	                <br />
+	                &nbsp;<small> - <?php echo $option['name']; ?>: <?php echo $option['value']; ?></small>
+	                <?php } ?>
+	                <?php } ?>
+	              </td>
+	              <td class="left"><?php echo $product['model']; ?></td>
+	              <td class="right">	              	
+	              	<?php echo $product['quantity']; ?>
+	              </td>
+	              
+	              <td class="right">￥
+	              <?php echo $product['price']; ?>
+	              </td>
+	              <td class="right">￥<?php echo $product['total']; ?></td>
+	            </tr>
+	            <?php } ?>
+            <?php } ?>
+    
+          </tbody>
+          <?php if(isset($data['order_total'])&&is_array($data['order_total'])){ ?>
+	          <?php foreach ($data['order_total'] as $totals) { ?>
+	          <tbody>
+	            <tr>
+	              <?php if($totals['code']=='shipping'){ ?>	
+	              	<td colspan="4" class="right"><?php echo $totals['title']; ?>:</td>
+	              	<td class="right">￥
+	                	<?php echo $totals['value']; ?>
+	                </td>
+	              <?php }else{ ?>	
+		              <td colspan="4" class="right"><?php echo $totals['title']; ?>:</td>
+		              
+		              <td class="right"><?php echo $totals['text']; ?></td>
+	              <?php } ?>
+	              
+	              
+	            </tr>
+	          </tbody>
+	          <?php } ?>
+          <?php } ?>
+          
+          <?php }elseif($data['order']['points_order']==1){ ?>
+          	<tbody>
+          	<?php if(isset($data['order_product'])&&is_array($data['order_product'])){ ?>
+	            <?php foreach ($data['order_product'] as $product) { ?>
+	            <tr>
+	              <td class="left">
+	              	<a href="{:url('Goods/edit',array('id'=>$product['goods_id']))}"><?php echo $product['name']; ?></a>
+	              	<?php if($option_list=Db::query('select * from '.config('database.prefix').'order_option where order_goods_id='.$product['order_goods_id'].' and order_id='.$product['order_id'])){ ?>
+					<?php foreach ($option_list as $option) { ?>
+	                <br />
+	                &nbsp;<small> - <?php echo $option['name']; ?>: <?php echo $option['value']; ?></small>
+	                <?php } ?>
+	                <?php } ?>
+	              </td>
+	              <td class="left"><?php echo $product['model']; ?></td>
+	              <td class="right">	              	
+	              	<?php echo $product['quantity']; ?>
+	              </td>
+	              
+	            </tr>
+	            <?php } ?>
+            <?php } ?>
+    
+          </tbody>
+          
+	          <tbody>
+	            <tr>	             
+		              <td colspan="2" class="right">积分: <?php echo $data['order']['pay_points']; ?> </td>
+		              
+		              <td class="right"></td>	              
+	            </tr>
+	          </tbody>
+	     
+          <?php } ?>	
+        </table>
+  
+      </div>
+	
+	
+		 <div id="tab-history" class="tab-pane">
+        <div id="history"></div>
+ 
+      </div>	
+		
+	</div>
+{/block}
+{block name="javascript"}
+<script>	
+
+$('#history').load('<?php echo url("OrderMember/history",array("id"=>input("param.id"))); ?>');
+
+</script>
+{/block}

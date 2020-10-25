@@ -1,0 +1,538 @@
+<!--{template /module/admin/view/ilinei_frame_tag}-->
+
+<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/admin/file/_ilinei&frame=content&do=design&file={$_var[gp_file]}&path={$_var[gp_path]}" method="post">
+    <input type="hidden" name="formsubmit" value="yes" />
+</form>
+
+<link href="static/css/parser.css?v={$setting[Version]}" rel="stylesheet" type="text/css"/>
+
+<script type="text/javascript" src="static/js/jquery.js?v={$setting[Version]}"></script>
+<script type="text/javascript" src="static/js/jquery.parser.js?v={$setting[Version]}"></script>
+
+<script>
+    //当前页面类型
+    var page_type = '{$GLOBALS[_ILINEI_TYPE]}';
+
+    //TAG列表
+    var blocks = new Array();
+
+    blocks['blank'] = {key:'blank', name:'{lang admin.ilinei.frame_parser.view.button.blank}', params:{}};
+    blocks['blank'].file = {type:'string', value:''};
+    blocks['block'] = {key:'blank', name:'{lang admin.ilinei.frame_parser.view.button.block}', params:{}};
+    blocks['block'].file = {type:'string', value:''};
+
+    {loop $blocks $loop $block}
+    blocks['{$block[key]}'] = {key:'{$block[key]}', name:'{$block[name]}', params:{}};
+    {loop $block[params] $key $param}
+    blocks['{$block[key]}'].params.{$param[id]} = {type:'{$param[type]}', value:'{$param[value]}', readonly:'{$param[readonly]}'};
+    {/loop}
+    {/loop}
+
+    //顶部添加TAG
+    function block_add(){
+        var message = $('#txt_tag_operate').val() + '<div id="div_tag_list">'  + $('#txt_tag_type').val() + '</div>';
+
+        $.dialog({
+            width:500,
+            height:220,
+            title:'{lang admin.ilinei.frame_parser.view.block.tag}',
+            message:message,
+            button:{cancel:'{lang admin.ilinei.frame_parser.view.dialog.button.cancel}', submit:'{lang admin.ilinei.frame_parser.view.dialog.button.add}'},
+            callback:function(){
+                //不显示操作-删除
+                $('#_dialog .-ilinei-operate .btn-delete').remove();
+                //默认操作-添加
+                $('#_dialog .-ilinei-operate .btn-add-prev').addClass('btn-choice');
+
+                //绑定操作-事件
+                $('#_dialog .-ilinei-operate .btn').unbind('click').click(function(){
+                    $('#_dialog .-ilinei-operate .btn').removeClass('btn-choice');
+                    $(this).addClass('btn-choice');
+
+                    $('#div_tag_list').html($('#txt_tag_type').val());
+
+                    //重新绑定-TAG-事件
+                    tag_bind_event();
+                });
+
+                //重新绑定-TAG-事件
+                tag_bind_event();
+            }, submit:function(){
+                var button_operate = $('#_dialog .-ilinei-operate .btn-choice').attr('rel');
+                var button_tag = $('#_dialog .-ilinei-tag .btn-choice').attr('rel');
+
+                var columns = new Array();
+                if(button_tag == 'column-1'){
+                    columns.push($("#tag-column-1 input[name='txt_column1']").val());
+                }else if(button_tag == 'column-2'){
+                    columns.push($("#tag-column-2 input[name='txt_column1']").val());
+                    columns.push($("#tag-column-2 input[name='txt_column2']").val());
+                }else if(button_tag == 'column-3'){
+                    columns.push($("#tag-column-3 input[name='txt_column1']").val());
+                    columns.push($("#tag-column-3 input[name='txt_column2']").val());
+                    columns.push($("#tag-column-3 input[name='txt_column3']").val());
+                }
+
+                if(page_type == 'page'){
+                    if(button_operate == 'prev') $('body').prepend(block_get_template(columns, 'body_prev', 'body_prev[]'));
+                    else $('body').append(block_get_template(columns, 'body_next', 'body_next[]'));
+                }else{
+                    if(button_operate == 'prev') $(block_get_template(columns, 'body_prev', 'body_prev[]')).insertBefore('.-ilinei-block-prev');
+                    else $(block_get_template(columns, 'body_next', 'body_next[]')).insertBefore('.-ilinei-block-next');
+                }
+
+                $.dialog({close:true});
+
+                block_bind_event();
+            }
+        });
+    }
+
+    //绑定TAG事件
+    function block_bind_event(){
+        //在编辑小图标后加上名称
+        $('.-ilinei-block').each(function(index, item){
+            //TAG的名称
+            if(!blocks[$(item).attr('key')]) return;
+            $('.-ilinei-icon-text', item).text(blocks[$(item).attr('key')].name);
+        });
+
+        //TAG鼠标经过
+        $('.-ilinei-block').unbind('hover').hover(function(){
+            $(this).addClass('-ilinei-block-hover');
+        }, function(){
+            $(this).removeClass('-ilinei-block-hover');
+        });
+
+        //TAG点击编辑小图标
+        $('.-ilinei-block .-ilinei-icon-img').unbind('click').click(function(){
+            var tag = $(this).parent().parent();
+            var tag_name = $(tag).attr('tag');
+            var tag_rel = $(tag).attr('rel');
+            var tag_key = $(tag).attr('key');
+
+            var message = $('#txt_tag_operate').val() + $('#txt_tag_list').val();
+
+            $.dialog({
+                width:850,
+                height:320,
+                title:tag_name + '{lang admin.ilinei.frame_parser.view.block.tag}',
+                message:message,
+                button:{cancel:'{lang admin.ilinei.frame_parser.view.dialog.button.cancel}', submit:'{lang admin.ilinei.frame_parser.view.dialog.button.submit}'},
+                callback:function(){
+                    //空TAG操作-删除，不能添加
+                    if(tag_key == 'blank' || $(tag).hasClass('-ilinei-column-item')) $('#_dialog .-ilinei-operate .add').remove();
+
+                    $('#_dialog .-ilinei-tag .btn').removeClass('btn-choice');
+
+                    //绑定操作-事件
+                    $('#_dialog .-ilinei-operate .btn').unbind('click').click(function(){
+                        $('#_dialog .-ilinei-operate .btn').removeClass('btn-choice');
+                        $(this).addClass('btn-choice');
+
+                        //TAG删除
+                        if($(this).attr('rel') == 'delete'){
+                            $.dialog({message:'<p class="-ilinei-tips">{lang admin.ilinei.frame_parser.view.dialog.message.delete}</p>', button:{cancel:'{lang admin.ilinei.frame_parser.view.dialog.button.cancel}', submit:'{lang admin.ilinei.frame_parser.view.dialog.button.delete}'}, submit:function(){
+                                $(tag).remove();
+                            }});
+
+                            return;
+                        }
+
+                        //空TAG不能添加TAG
+                        if(tag_key == 'blank'){
+                            $.dialog({message:'<p class="-ilinei-tips">{lang admin.ilinei.frame_parser.view.dialog.message.level}</p>'});
+                            return;
+                        }
+
+                        $('#div_tag_list').html($('#txt_tag_type').val());
+
+                        //重新绑定TAG-事件
+                        tag_bind_event();
+                    });
+
+                    //重新绑定TAG-事件
+                    tag_bind_event();
+
+                    //初始化当前TAG的表单
+                    block_form_init(tag);
+                }, submit:function(){
+                    var rel = $('#_dialog .-ilinei-tag .btn-choice').attr('rel');
+
+                    //如果是添加TAG
+                    if(rel == 'column-1' || rel == 'column-2' || rel == 'column-3'){
+                        var button_operate = $('#_dialog .-ilinei-operate .btn-choice').attr('rel');
+                        var button_tag = $('#_dialog .-ilinei-tag .btn-choice').attr('rel');
+
+                        var columns = new Array();
+                        if(button_tag == 'column-1'){
+                            columns.push($("#tag-column-1 input[name='txt_column1']").val());
+                        }else if(button_tag == 'column-2'){
+                            columns.push($("#tag-column-2 input[name='txt_column1']").val());
+                            columns.push($("#tag-column-2 input[name='txt_column2']").val());
+                        }else if(button_tag == 'column-3'){
+                            columns.push($("#tag-column-3 input[name='txt_column1']").val());
+                            columns.push($("#tag-column-3 input[name='txt_column2']").val());
+                            columns.push($("#tag-column-3 input[name='txt_column3']").val());
+                        }
+
+                        if(tag_rel == 'body_prev' || tag_rel == 'body_next') var textarea = tag_rel + '[]';
+                        else if(button_operate == 'prev') var textarea = tag_rel + '_prev[]';
+                        else var textarea = tag_rel + '_next[]';
+
+                        if(button_operate == 'prev') $(block_get_template(columns, tag_rel, textarea)).insertBefore(tag);
+                        else $(block_get_template(columns, tag_rel, textarea)).insertAfter(tag);
+
+                        block_bind_event();
+                    }else{
+                        //表单提交修改TAG属性
+                        block_form_submit(tag, rel);
+
+                        //嗯，能看到这块说明你很了不起。
+                        var tag_content = $(tag).prop("outerHTML");
+
+                        $.post('{$ADMIN_SCRIPT}/admin/file/_parse&file={$_var[gp_file]}&path={$_var[gp_path]}&rnd=' + Math.random(), {content: tag_content}, function(data){
+                            //没有什么意思，只是更酷一些
+                            setTimeout(function(){
+                                $('> .-ilinei-block-content', tag).html(data);
+
+                                block_bind_event();
+                            }, 200);
+                        });
+                    }
+                }
+            });
+        });
+
+        //TAG鼠标经过
+        $('.-ilinei-columns').unbind('hover').hover(function(){
+            $(this).addClass('-ilinei-columns-hover');
+        }, function(){
+            $(this).removeClass('-ilinei-columns-hover');
+        });
+
+        //TAG点击编辑小图标
+        $('.-ilinei-columns .-ilinei-column-icon').unbind('click').click(function(){
+            var tag = $(this).parent();
+            var tag_rel = $(tag).attr('rel');
+
+            var message = $('#txt_tag_operate').val() + '<div id="div_tag_list">'  + $('#txt_tag_type').val() + '</div>';
+
+            $.dialog({
+                width:500,
+                height:220,
+                title:'{lang admin.ilinei.frame_parser.view.block.tag}',
+                message:message,
+                button:{cancel:'{lang admin.ilinei.frame_parser.view.dialog.button.cancel}', submit:'{lang admin.ilinei.frame_parser.view.dialog.button.add}'},
+                callback:function(){
+                    //删除TAG类型
+                    $('#_dialog .-ilinei-tag').empty();
+
+                    //绑定事件
+                    $('#_dialog .-ilinei-operate .btn').unbind('click').click(function(){
+                        $('#_dialog .-ilinei-operate .btn').removeClass('btn-choice');
+                        $(this).addClass('btn-choice');
+
+                        //TAG删除
+                        if($(this).attr('rel') == 'delete'){
+                            $.dialog({message:'<p class="-ilinei-tips">{lang admin.ilinei.frame_parser.view.dialog.message.delete}</p>', button:{cancel:'{lang admin.ilinei.frame_parser.view.dialog.button.cancel}', submit:'{lang admin.ilinei.frame_parser.view.dialog.button.delete}'}, submit:function(){
+                                $(tag).remove();
+                            }});
+
+                            return;
+                        }
+
+                        $('#div_tag_list').html($('#txt_tag_type').val());
+
+                        //重新绑定事件
+                        tag_bind_event();
+                    });
+
+                    $('#_dialog .tag').hide();
+                    $('#tag-column-' + $(tag).attr('columns')).show();
+
+                    if($(tag).attr('columns') - 0 == 2){
+                        var width1 = $('.-ilinei-column', tag).eq(0).attr('width');
+                        var width2 = $('.-ilinei-column', tag).eq(1).attr('width');
+
+                        $("#tag-column-" + $(tag).attr('columns') + " input[name='txt_column1']").val(width1.replace('%', ''));
+                        $("#tag-column-" + $(tag).attr('columns') + " input[name='txt_column2']").val(width2.replace('%', ''));
+                    }else if($(tag).attr('columns') - 0 == 3){
+                        var width1 = $('.-ilinei-column', tag).eq(0).attr('width');
+                        var width2 = $('.-ilinei-column', tag).eq(1).attr('width');
+                        var width3 = $('.-ilinei-column', tag).eq(1).attr('width');
+
+                        $("#tag-column-" + $(tag).attr('columns') + " input[name='txt_column1']").val(width1.replace('%', ''));
+                        $("#tag-column-" + $(tag).attr('columns') + " input[name='txt_column2']").val(width2.replace('%', ''));
+                        $("#tag-column-" + $(tag).attr('columns') + " input[name='txt_column3']").val(width2.replace('%', ''));
+                    }
+                }, submit:function(){
+                    //选中了操作按钮
+                    if($('#_dialog .-ilinei-tag .btn-choice').length > 0){
+                        var button_operate = $('#_dialog .-ilinei-operate .btn-choice').attr('rel');
+                        var button_tag = $('#_dialog .-ilinei-tag .btn-choice').attr('rel');
+
+                        var columns = new Array();
+                        if(button_tag == 'column-1'){
+                            columns.push($("#tag-column-1 input[name='txt_column1']").val());
+                        }else if(button_tag == 'column-2'){
+                            columns.push($("#tag-column-2 input[name='txt_column1']").val());
+                            columns.push($("#tag-column-2 input[name='txt_column2']").val());
+                        }else if(button_tag == 'column-3'){
+                            columns.push($("#tag-column-3 input[name='txt_column1']").val());
+                            columns.push($("#tag-column-3 input[name='txt_column2']").val());
+                            columns.push($("#tag-column-3 input[name='txt_column3']").val());
+                        }
+
+                        if(tag_rel == 'body_prev' || tag_rel == 'body_next') var textarea = tag_rel + '[]';
+                        else if(button_operate == 'prev') var textarea = tag_rel + '_prev[]';
+                        else var textarea = tag_rel + '_next[]';
+
+                        if(button_operate == 'prev') $(block_get_template(columns, tag_rel, textarea)).insertBefore(tag);
+                        else $(block_get_template(columns, tag_rel, textarea)).insertAfter(tag);
+
+                        block_bind_event();
+                    }else{
+                        //重新定义栏宽度
+                        var columns = $(tag).attr('columns') - 0;
+
+                        if(columns == 2){
+                            $('.-ilinei-column', tag).eq(0).attr('width', $("#tag-column-2 input[name='txt_column1']").val() + '%');
+                            $('.-ilinei-column', tag).eq(1).attr('width', $("#tag-column-2 input[name='txt_column2']").val() + '%');
+                        }else if(columns == 3){
+                            $('.-ilinei-column', tag).eq(0).attr('width', $("#tag-column-3 input[name='txt_column1']").val() + '%');
+                            $('.-ilinei-column', tag).eq(1).attr('width', $("#tag-column-3 input[name='txt_column2']").val() + '%');
+                            $('.-ilinei-column', tag).eq(2).attr('width', $("#tag-column-3 input[name='txt_column3']").val() + '%');
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    //绑定TAG按钮事件
+    function tag_bind_event(){
+        $('#_dialog .-ilinei-tag .btn').unbind('click').click(function(){
+            $('#_dialog .-ilinei-tag .btn').removeClass('btn-choice');
+            $(this).addClass('btn-choice');
+
+            $('#_dialog .tag').hide();
+
+            $('#tag-' + $(this).attr('rel')).show();
+            if($("#tag-" + $(this).attr('rel') + " input[name='rdo_theme']:checked").length == 0){
+                $("#tag-" + $(this).attr('rel') + " input[name='rdo_theme']").eq(0).attr("checked",true);
+            }
+        });
+    }
+
+    //初始化当前TAG的表单
+    function block_form_init(tag){
+        //当前TAG标识号
+        var tag_key = $(tag).attr('key');
+
+        //当前TAG焦点
+        $('#_dialog .-ilinei-tag .tag-' + tag_key).addClass('btn-choice');
+
+        //显示当前TAG表单
+        $('#tag-' + tag_key).show();
+
+        //引用块
+        var tag_file = $(tag).attr('file');
+        $("#tag-" + tag_key + " input[name='rdoBlock']").removeAttr('checked');
+        $("#tag-" + tag_key + " input[name='rdoBlock'][value='" + tag_file + "']").attr("checked",true);
+
+        var block = blocks[tag_key];
+        if(!block) return;
+
+        for(var p in block.params){
+            var param = block.params[p];
+            if(param.readonly) continue;
+
+            if(param.type == 'string' || param.type == 'number'){
+                $("#tag-" + tag_key + " input[name='txt_" + p + "']").val($(tag).attr(p));
+            }else if(param.type == 'checkbox'){
+                if($(tag).attr(p) == 'true') $("#tag-" + tag_key + " input[name='cbx_" + p + "']").attr('checked', true);
+                else $("#tag-" + tag_key + " input[name='cbx_" + p + "']").removeAttr('checked');
+            }else if(param.type == 'page'){
+                $("#tag-" + tag_key + " select[name='slt_" + p + "']").val($(tag).attr(p));
+            }
+        }
+
+        var theme = $(tag).attr('theme');
+        if(typeof(theme) == 'undefined') theme = '';
+
+        //模板
+        $("#tag-" + tag_key + " input[name='rdo_theme']").removeAttr('checked');
+        $("#tag-" + tag_key + " input[name='rdo_theme'][value='" + theme + "']").attr("checked",true);
+    }
+
+    //表单提交修改TAG属性
+    function block_form_submit(tag, rel){
+        var block_old = blocks[$(tag).attr('ref')];
+        var block_new = blocks[rel];
+
+        if(block_old.key != block_new.key){
+            for(var p in block_old.params){
+                $(tag).removeAttr(p);
+            }
+        }
+        if(!blocks[rel]) return '';
+
+        $(tag).attr('key', rel);
+
+        if(rel == 'blank'){
+            $(tag).attr('file', '');
+            return;
+        }
+
+        if(rel == 'block'){
+            $(tag).attr('file', $("#tag-block input[name='rdoBlock']:checked").val());
+            return;
+        }
+
+        var params = block_new.params;
+
+        for(var p in params){
+            var param = params[p];
+            if(param.readonly) continue;
+
+            if(param.type == 'string' || param.type == 'number'){
+                $(tag).attr(p, $("#tag-" + rel + " input[name='txt_" + p + "']").val());
+            }else if(param.type == 'checkbox'){
+                if($("#tag-" + rel + " input[name='cbx_" + p + "']:checked").length > 0) $(tag).attr(p, 'true');
+                else $(tag).removeAttr(p);
+            }else if(param.type == 'page'){
+                $(tag).attr(p, $("#tag-" + rel + " select[name='slt_" + p + "']").val());
+            }
+        }
+
+        $(tag).attr('theme', $("#tag-" + rel + " input[name='rdo_theme']:checked").val());
+    }
+
+    function block_get_template(columns, rel, textarea){
+        var tag_tpl = '';
+
+        tag_tpl += "<textarea name=\"" + textarea + "\" style=\"display:none;\"></textarea>";
+        tag_tpl += "<p class=\"-ilinei-icon\">";
+        tag_tpl += "<span class=\"-ilinei-icon-img\"></span>";
+        tag_tpl += "<span class=\"-ilinei-icon-text\"></span>";
+        tag_tpl += "</p>";
+        tag_tpl += "<div class=\"-ilinei-block-content\"></div>";
+        tag_tpl += "</div>";
+
+        //一栏
+        if(columns.length < 2){
+            tag_tpl = "<div class=\"-ilinei-block\" key=\"blank\" rel=\"" + rel + "\" ref=\"blank\">" + tag_tpl;
+            return tag_tpl;
+        }
+
+        //两栏
+        if(columns.length == 2) {
+            var tag_column = '';
+
+            tag_column += '<div class="-ilinei-columns" columns="2" rel="' + rel + '">';
+            tag_column += '<span class="-ilinei-column-icon"></span>';
+            tag_column +='<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            tag_column += '<tr>';
+            tag_column += '<td class="-ilinei-column" width="' + columns[0] + '%">';
+            tag_column += "<div class=\"-ilinei-block -ilinei-column-item\" cols=\"2\" col=\"1\" key=\"blank\" rel=\"" + rel + "\" ref=\"blank\">" + tag_tpl;
+            tag_column += '</td>';
+            tag_column += '<td class="-ilinei-column" width="' + columns[1] + '%">';
+            tag_column += "<div class=\"-ilinei-block -ilinei-column-item\" cols=\"2\" col=\"2\" key=\"blank\" rel=\"" + rel + "\" ref=\"blank\">" + tag_tpl;
+            tag_column += '</td>';
+            tag_column += '</tr>';
+            tag_column += '</table>';
+            tag_column += '</div>';
+
+            return tag_column;
+        }
+
+        //三栏
+        if(columns.length == 3){
+            var tag_column = '';
+
+            tag_column += '<div class="-ilinei-columns" columns="3" rel="' + rel + '">';
+            tag_column += '<span class="-ilinei-column-icon"></span>';
+            tag_column +='<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            tag_column += '<tr>';
+            tag_column += '<td class="-ilinei-column" width="' + columns[0] + '%">';
+            tag_column += "<div class=\"-ilinei-block -ilinei-column-item\" cols=\"3\" col=\"1\" key=\"blank\" rel=\"" + rel + "\" ref=\"blank\">" + tag_tpl;
+            tag_column += '</td>';
+            tag_column += '<td class="-ilinei-column" width="' + columns[1] + '%">';
+            tag_column += "<div class=\"-ilinei-block -ilinei-column-item\" cols=\"3\" col=\"2\" key=\"blank\" rel=\"" + rel + "\" ref=\"blank\">" + tag_tpl;
+            tag_column += '</td>';
+            tag_column += '<td class="-ilinei-column" width="' + columns[2] + '%">';
+            tag_column += "<div class=\"-ilinei-block -ilinei-column-item\" cols=\"3\" col=\"3\" key=\"blank\" rel=\"" + rel + "\" ref=\"blank\">" + tag_tpl;
+            tag_column += '</td>';
+            tag_column += '</tr>';
+            tag_column += '</table>';
+            tag_column += '</div>';
+
+            return tag_column;
+        }
+    }
+
+    function block_get_textarea(tag){
+        var key = $(tag).attr('key');
+        if(!blocks[key]) return '';
+
+        var block = '';
+        block += 'key="' + key + '" ';
+
+        if($(tag).hasClass('-ilinei-column-item')){
+            block += 'cols="' + $(tag).attr('cols') + '" ';
+            block += 'col="' + $(tag).attr('col') + '" ';
+            block += 'width="' + $(tag).parent().attr('width') + '" ';
+        }
+
+        if(key == 'blank') return '{' + 'block ' + block + 'file=""}';
+        if(key == 'block') return '{' + 'block ' + block + 'file="' + $(tag).attr('file') + '"}';
+
+        var params = blocks[key].params;
+        for(var p in params){
+            var param = params[p];
+            if(param.readonly) continue;
+
+            block += p + '="' + $(tag).attr(p) + '" ';
+        }
+
+        block += 'theme="' + $(tag).attr('theme') + '"';
+        block = '{' + 'block ' + block + '}';
+
+        return block;
+    }
+
+    //顶部保存TAG
+    function save(){
+        $.dialog({message:'<p class="-ilinei-tips">{lang admin.ilinei.frame_parser.view.submit.message}</p>', button:{cancel:'{lang admin.ilinei.frame_parser.view.dialog.button.cancel}', submit:'{lang admin.ilinei.frame_parser.view.dialog.button.save}'}, submit:function(){
+            $('#frm_grid textarea').remove();
+
+            $('.-ilinei-block').each(function(index, item){
+                $('> textarea', item).val(block_get_textarea(item));
+                $('#frm_grid').append($('> textarea', item));
+            });
+
+            $('#frm_grid').submit();
+        }});
+    }
+
+    $(function(){
+        //生成TAG的序号缓存
+        $('.-ilinei-block').each(function(index, item){
+            var ref = $(item).attr('key');
+            if(!ref){
+                var tag_file = $(item).attr('file');
+                ref = typeof(tag_file) == 'undefined' ? 'blank' : (tag_file ? 'block' : 'blank');
+            }
+
+            $(item).attr('key', ref);
+            $(item).attr('ref', ref);
+
+            if($(item).parent().hasClass('-ilinei-column')){
+                $(item).addClass('-ilinei-column-item');
+            }
+        });
+
+        block_bind_event();
+    });
+</script>

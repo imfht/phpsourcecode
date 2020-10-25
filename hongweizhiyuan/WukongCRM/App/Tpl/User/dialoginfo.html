@@ -1,0 +1,81 @@
+<table class="table">
+	<thead>
+		<tr>
+			<th colspan="4">{:L('BASIC_INFO')}</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td width="15%" class="tdleft">{:L('USERNAME')}</td>
+			<td width="35%">
+				{$user.name}<volist name="categoryList" id="temp"><if condition="$temp.category_id eq $user['category_id']">（{$temp.name}）</if></volist>
+			</td>
+			<if condition="C('ismobile') eq 1"></tr><tr></if>
+			<td width="15%" class="tdleft">{:L('SEX')}</td>
+			<td width="35%"><if condition="$user['sex'] eq 1">{:L('MALE')}<elseif condition="$user['sex'] eq 2"/>{:L('FEMALE')}<else />{:L('UNKNOW')}</if></td>
+		</tr>
+		<tr>
+			<td class="tdleft">{:L('DEPARTMENT')}</td>
+			<td>{$user.role.department_name}</td>
+			<if condition="C('ismobile') eq 1"></tr><tr></if>
+			<td class="tdleft">{:L('POSITION')}</td>
+			<td>{$user.role.role_name}</td>
+		</tr>
+		<tr>
+			<td class="tdleft">{:L('TELPHONE')}</td>
+			<td><if condition="C('ismobile') eq 1"><a href="tel:{$user.telephone}">{$user.telephone}</a><else />{$user.telephone}</if></td>
+			<if condition="C('ismobile') eq 1"></tr><tr></if>
+			<td class="tdleft">{:L('EMAIL')}</td>
+			<td>{$user.email}</td>
+		</tr>
+		<tr>
+			<th colspan="4">{:L('MESSAGE')}</th>
+		</tr>
+		<tr>
+			<td class="tdleft">{:L('CONTENT')}</td>
+			<td colspan="3">
+				<textarea rows="5" class="span4" id="content" name="content"></textarea>
+			</td>
+		</tr>
+		<tr>
+			<td>&nbsp;</td>
+			<td colspan="3">
+				<input class="btn btn-primary" id="send" name="send" type="button" value="{:L('SEND')}"/>&nbsp; &nbsp;<input class="btn btn-primary" id="close" name="close" type="button" value="{:L('CANCEL')}"/>&nbsp; &nbsp;<span id="result"></span>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<script type="text/javascript">
+	$('#close').click(
+		function(){
+			$('#dialog-role-info').dialog('close');
+		}
+	);
+	$('#send').click(
+		function(){			
+			to_role_id = {$user.role.role_id};
+			content = $('#content').val();
+			if(content!=''){
+				$("#result").html('<span style="color:red">{:L("SENDING_MESSAGE")}</span>');
+				$("#send").attr('disabled', "disabled");
+				$.post('{:U("message/ajaxsend")}',
+					{
+						to_role_id:to_role_id,
+						content:content
+					},
+					function(data){
+						if(data.status == 1){
+							$("#result").html('<span style="color:green">{:L("SEND_SUCCESS")}</span>');
+							$("#send").attr('disabled', false);
+							$("#content").val("");
+						} else if(data.status == 0) {
+							$("#result").html('<span style="color:red">{:L("SEND_FAILED")}</span>');
+						}
+					},
+				'json');
+			} else {
+				$("#result").html('<span style="color:red">{:L("NEED_CONTENT")}</span>');
+			}
+		}
+	);
+</script>

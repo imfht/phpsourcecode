@@ -1,0 +1,400 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{fc_lang('%s后台管理中心', SITE_NAME)}</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<link rel="stylesheet" href="{THEME_PATH}admin/css/bootstrap.css" />
+<link rel="stylesheet" href="{THEME_PATH}admin/css/bootstrap-responsive.css" />
+<link rel="stylesheet" href="{THEME_PATH}admin/css/style.css" />
+<link rel="stylesheet" href="{THEME_PATH}admin/css/font-awesome/css/font-awesome.css" />
+<link rel="stylesheet" href="{THEME_PATH}admin/css/table_form.css" />
+<script type="text/javascript">var siteurl = "{SITE_PATH}{SELF}";var memberpath = "{MEMBER_PATH}";</script>
+<script type="text/javascript" src="{THEME_PATH}js/{SITE_LANGUAGE}.js"></script>
+<script type="text/javascript" src="{THEME_PATH}js/jquery.min.js"></script>
+<script type="text/javascript" src="{THEME_PATH}js/jquery.artDialog.js?skin=default"></script>
+<script type="text/javascript" src="{THEME_PATH}js/validate.js"></script>
+<script type="text/javascript" src="{THEME_PATH}js/admin.js"></script>
+<script type="text/javascript" src="{THEME_PATH}js/dayrui.js"></script>
+<script type="text/javascript">
+function init_iframe() {
+    if ($('#navigation').height() >= 80) {
+        $(".dr_module_menu").remove();
+        $("#dr_select_module").show();
+    }
+}
+$(function(){
+    init_iframe();
+    setTimeout('init_iframe()', 500);
+    var hei = $("body").height() - 120;
+    $("#left_nav").attr("style", "height:"+hei+"px");
+    /*
+	if ($(window).width() <= 1024) {
+		if ($('.main-nav').width() > 600 && is_member_hide == 0) {
+            $("#dr_top_nav").hide();
+        }
+		$("#dr_search_submit").hide();
+	} else if ($(window).width() < 1400) {
+		if ($('.main-nav').width() > 800 && is_member_hide == 0) {
+            $("#dr_top_nav").hide();
+        }
+	}
+	*/
+	$("#dr_select_site, #dr_select_module").bind({
+		'mouseover':function(){
+			$(this).addClass("open");
+		},
+		'mouseout':function(){
+			$(this).removeClass("open");
+		}
+	});
+	$("#dr_member").bind({
+		'mouseover':function(){
+			$(this).addClass("open");
+		},
+		'mouseout':function(){
+			$(this).removeClass("open");
+		}
+	});
+    $('.toggle-nav').click(function(e){
+        e.preventDefault();
+        hideNav();
+    });
+    wSize();
+    $(".toggle-subnav").click(function (e) {
+        e.preventDefault();
+        var $el = $(this);
+        $el.parents(".subnav").toggleClass("subnav-hidden").find('.subnav-menu,.subnav-content').slideToggle("fast");
+        $el.find("i").toggleClass("icon-angle-down").toggleClass("icon-angle-right");
+    
+        if($("#left").hasClass("mobile-show") || $("#left").hasClass("sidebar-fixed")){
+            getSidebarScrollHeight();
+            $("#left").getNiceScroll().resize().show();
+        }
+    });
+	{if $member.adminid == 1}
+	$.getScript("http://www.dayrui.com/index.php?c=sys&m=version&fc={DR_LICENSE_ID}&id={DR_VERSION_ID}&admin={SELF}");
+	{/if}
+	$("#sitelist li").click(function(){
+		var id=$(this).attr('id');
+		art.dialog.confirm("<font color=red><b>{fc_lang('是否要切换站点？')}</b></font>", function(){
+			// ajax提交验证
+			$.ajax({type: "POST",dataType:"json", url: "{dr_url('site/select')}", data: {id: id},
+				success: function(data) {
+					if (data.status == 1) {
+						//验证成功
+						dr_tips(data.code, 3, 1);
+                        setTimeout('top.location.reload(true)', 2000);
+					} else {
+						dr_tips(data.code, 5);
+					}
+					return true;
+				},
+				error: function(HttpRequest, ajaxOptions, thrownError) {
+
+				}
+			});
+			return true;
+		});
+	});
+});
+function getSidebarScrollHeight(){
+    var $el = $("#left"),
+    $w = $(window),
+    $nav = $("#navigation");
+    var height = $w.height();
+
+    if(($nav.hasClass("navbar-fixed-top") && $w.scrollTop() == 0) || $w.scrollTop() == 0) height -= 40;
+
+    if($el.hasClass("sidebar-fixed") || $el.hasClass("mobile-show")){
+        $el.height(height);
+    }
+}
+// 隐藏和现实左侧菜单按钮
+function hideNav(){
+
+    $("#left").toggle("left").toggleClass("forced-hide");
+    if($("#left").attr("class") != "forced-hide") {
+        $("#main").css("margin-left", 180);
+        $("#left").attr("class", "");
+    } else {
+        $("#left").attr("class", "forced-hide");
+        $("#main").css("margin-left", 0);
+    }
+    if ($("#left").attr("class") != "forced-hide") {
+        $("#main").css("margin-left", 0);
+    } else {
+        $("#main").css("margin-left", 180);
+    }
+    if($('.dataTable').length > 0){
+        var table = $.fn.dataTable.fnTables(true);
+        if ( table.length > 0 ) {
+            $(table).each(function(){
+                if($(this).hasClass("dataTable-scroller")){
+                    $(this).dataTable().fnDraw();
+                }
+            });
+            $(table).dataTable().fnAdjustColumnSizing();
+        }
+    }
+
+    if($(".calendar").length > 0){
+        $(".calendar").fullCalendar("render");
+    }
+}
+// 强制隐藏左侧菜单按钮
+function hideNavShow(){
+
+    $("#left").hide("200");
+    $("#left").attr("class", "");
+    $("#main").css("margin-left", 0);
+
+    if($('.dataTable').length > 0){
+        var table = $.fn.dataTable.fnTables(true);
+        if ( table.length > 0 ) {
+            $(table).each(function(){
+                if($(this).hasClass("dataTable-scroller")){
+                    $(this).dataTable().fnDraw();
+                }
+            });
+            $(table).dataTable().fnAdjustColumnSizing();
+        }
+    }
+
+    if($(".calendar").length > 0){
+        $(".calendar").fullCalendar("render");
+    }
+}
+// 强制显示左侧菜单按钮
+function hideNavHide(){
+
+    $("#left").show("200");
+    $("#left").attr("class", "forced-hide");
+    $("#main").css("margin-left", 180);
+
+    if($('.dataTable').length > 0){
+        var table = $.fn.dataTable.fnTables(true);
+        if ( table.length > 0 ) {
+            $(table).each(function(){
+                if($(this).hasClass("dataTable-scroller")){
+                    $(this).dataTable().fnDraw();
+                }
+            });
+            $(table).dataTable().fnAdjustColumnSizing();
+        }
+    }
+
+    if($(".calendar").length > 0){
+        $(".calendar").fullCalendar("render");
+    }
+}
+
+if(!Array.prototype.map)
+	Array.prototype.map = function(fn,scope) {
+	  var result = [],ri = 0;
+	  for (var i = 0,n = this.length; i < n; i++){
+		if(i in this){
+		  result[ri++]  = fn.call(scope ,this[i],i,this);
+		}
+	}
+	return result;
+};
+
+var getWindowSize = function(){
+	return ["Height","Width"].map(function(name){
+	  return window["inner"+name] ||
+		document.compatMode === "CSS1Compat" && document.documentElement[ "client" + name ] || document.body[ "client" + name ]
+	});
+}
+window.onload = function (){
+	if(!+"\v1" && !document.querySelector) { // for IE6 IE7
+	  document.body.onresize = resize;
+	} else { 
+	  window.onresize = resize;
+	}
+	function resize() {
+		wSize();
+		return false;
+	}
+}
+function wSize(){
+	var str=getWindowSize();
+	var strs= new Array(); //定义一数组
+	strs=str.toString().split(","); //字符分割
+	var heights = strs[0]-80,Body = $('body');$('#rightMain').height(heights);
+}
+function _M(mid, sid, url, name) {
+	$('.main-nav > li, .dropdown-menu > li').removeClass("active");
+	$('#_M_'+mid).addClass("active");
+	$(".d_menu").hide();
+	$("#D_M_"+mid).show();
+	_MP(sid, url);
+}
+function _MP(id, url) {
+	$("#rightMain").attr('src', url);
+	$(".subnav-menu > li").removeClass("dropdown");
+	$("#_MP_"+id).addClass("dropdown");
+    $("#_MP_"+id).parent().show();
+    $("#_MP_"+id).parent().parent().attr('class', 'subnav');
+    if (url.indexOf('http') == -1) {
+        dr_loading();
+    }
+}
+function _MAP(mid, sid, url) {
+	$('.main-nav > li').removeClass("active");
+	$('#_M_'+mid).addClass("active");
+	$(".d_menu").hide();
+	$("#D_M_"+mid).show();
+	dr_clear_map();
+	_MP(sid, url);
+}
+function logout(){
+	if (confirm("{fc_lang('您确定要退出吗？')}"))
+	top.location = '{dr_url("login/logout")}';
+	return false;
+}
+function dr_get_map() {
+	$("#dr_backdrop").show();
+	$("#modal-map").show();
+}
+function dr_clear_map() {
+	$("#dr_backdrop").hide();
+	$("#modal-map").hide();
+}
+function dr_loading() {
+	$('.page-loading').remove();
+	$('body').append('<div class="page-loading"><img src="{THEME_PATH}admin/images/loading-mini.gif"/>&nbsp;&nbsp;<span>{fc_lang('数据加载中...')}</span></div>');
+}
+</script>
+</head>
+<body scroll="no" style="overflow:hidden">
+<div class="modal hide" id="modal-map" aria-hidden="true">
+    <div class="modal-header">
+        <button onClick="dr_clear_map()" class="close" type="button">×</button>
+        <h3 id="user-infos"><i class="icon-sitemap"></i> {fc_lang('后台地图')}</h3>
+    </div>
+    <div class="modal-body">
+        <div class="row-fluid">
+           {$sitemap}
+        </div>
+    </div>
+</div>
+<div id="navigation">
+    <div class="container-fluid" style="padding-right:3px">
+        <a href="{SITE_URL}" id="brand" target="_blank">{SYS_NAME}</a>
+        <a href="javascript:;" class="toggle-nav" rel="tooltip" data-placement="bottom"><i class="icon-reorder"></i></a>
+        <ul class="main-nav">
+            {php $mark = $i=0;}
+            {loop $top $id $t}
+                <li id="_M_{$t.id}" {if $t.hd}style="display:none"{/if} class="{if $i==0}active{/if}{if $t.mark && $t.mark!='myspace' && $t.mark!='myapp'} dr_module_menu{/if}">
+                    <a href="javascript:_M({$t.id},'{$t.select}','{$t.selurl}','{$t.name}')">
+                        <i class="{$t.icon}"></i> <span>{$t.name}</span>
+                    </a>
+                </li>
+            {php $i++;$mark=1;}
+            {/loop}
+            {if $mark}
+            <li id="dr_select_module" style="display:none">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+                    <i class="icon-table"></i> <span>{fc_lang('内容')}</span>
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    {php $i=0;}
+                    {loop $top $id $t}
+                    {if $t.mark && $t.mark!='myspace' && $t.mark!='myapp'}
+                    <li id="_M_{$id}">
+                        <a href="javascript:_M({$t.id},'{$t.select}','{$t.selurl}','{$t.name}')">
+                            <i class="{$t.icon}"></i> <span>{$t.name}</span>
+                        </a>
+                    </li>
+                    {php $i++;}
+                    {/if}
+                    {/loop}
+
+                </ul>
+            </li>
+            {/if}
+            {if count($mysite)>1}
+            <li id="dr_select_site" class="">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                   <i class="icon-th-large"></i> <span>{fc_lang('站点切换')}</span>
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" id="sitelist" style="max-height: 420px;overflow-y: auto;overflow-x:none;">
+                    {loop $mysite $sid $name}
+                    <li id="{$sid}"><a href="javascript:;" {if $sid==SITE_ID}style="color:blue"{/if}><i class="icon-circle-arrow-right"></i> {$name}</a></li>
+                    {/loop}
+                </ul>
+            </li>
+            {/if}
+        </ul>
+        <div class="user">
+        	<ul class="icon-nav" id="dr_top_nav">
+                <li class="dropdown">
+                    <a class="dropdown-toggle" href="{SITE_URL}" target="_blank" title="{SITE_NAME}" id="site_homepage"><i class="icon-home"></i></a>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" href="{dr_url('home/clear')}" title="{fc_lang('更新数据')}" target="right"><i class="icon-trash"></i></a>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" href="{dr_url('home/cache')}" title="{fc_lang('更新全站缓存')}" target="right"><i class="icon-refresh"></i></a>
+                </li>
+                {if $ci->is_auth('admin/route/index')}
+                <li class="dropdown">
+                    <a class="dropdown-toggle" href="{dr_url('route/index')}" title="{fc_lang('生成伪静态')}" target="right"><i class="icon-compass"></i></a>
+                </li>
+                {/if}
+                <li class="dropdown">
+                    <a class="dropdown-toggle" href="javascript:;" onClick="dr_get_map()" title="{fc_lang('后台地图')}"><i class="icon-sitemap"></i></a>
+                </li>
+            </ul>
+            <div class="dropdown" id="dr_member">
+                <a data-toggle="dropdown" class="dropdown-toggle" href="javascript:;">{dr_strcut($admin['username'], 8)}&nbsp;<img style="width:27px;height:27px;border-radius:50px;" src="{dr_avatar($admin.uid)}" /></a>
+                <ul class="dropdown-menu pull-right">
+                    <li><a href="{SITE_URL}index.php?s=member&c=api&m=member" target="_blank" id="site_member"><i class="icon-user"></i> {fc_lang('会员中心')}</a></li>
+                    <li><a href="javascript:;" onClick="logout();"><i class="icon-signout"></i> {fc_lang('退出系统')}</a></li>
+					<li><div class="dr_hr"></div></li>
+                    {if $ci->is_auth('admin/check/index')}
+                    <li><a href="{dr_url('check/index')}" target="right"><i class="icon-zoom-out"></i> {fc_lang('系统体检')}</a></li>
+                    {/if}
+                    <li><a href="javascript:;" onClick="dr_get_map()"><i class="icon-sitemap"></i> {fc_lang('后台地图')}</a></li>
+                    <li><a href="{dr_url('home/clear')}" target="right"><i class="icon-trash"></i> {fc_lang('更新数据')}</a></li>
+                    {if $ci->is_auth('admin/route/index')}
+                    <li><a href="{dr_url('route/index')}" target="right"><i class="icon-compass"></i> {fc_lang('生成伪静态')}</a></li>
+					{/if}
+                    <li><a href="{dr_url('home/cache')}" target="right"><i class="icon-refresh"></i> {fc_lang('更新全站缓存')}</a></li>
+                    <li><div class="dr_hr"></div></li>
+                    <li><a href="http://www.dayrui.com/" target="_blank"><i class="icon-cloud"></i> {fc_lang('官方网站')}</a></li>
+                    <li><a href="http://i.dayrui.com/index.php?c=my&m=v2" target="_blank"><i class="icon-comment"></i> {fc_lang('技术支持')}</a></li>
+                    <li><a href="http://help.dayrui.com/" target="_blank"><i class="icon-book"></i> {fc_lang('帮助中心')}</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid" id="content">
+    <div id="left">
+        <form action="http://help.dayrui.com/index.php" method="get" target="_blank" class="search-form" style="margin:9px 0 0;">
+        	<input name="c" type="hidden" value="search" />
+			<input name="m" type="hidden" value="index" />
+            <div class="search-pane">
+                <input type="text" name="keyword" placeholder="{fc_lang('搜索帮助...')}" />
+                <button type="submit" id="dr_search_submit" title="{fc_lang('搜索帮助...')}"><i class="icon-search"></i></button>
+            </div>
+        </form>
+        <div id="left_nav">
+        {$left}
+        </div>
+    </div>
+    <div id="main">
+        <iframe name="right" id="rightMain" src="{dr_url('home/main')}" frameborder="false" scrolling="auto" style="border:none; margin-bottom:0px;" width="100%" height="auto" allowtransparency="true"></iframe>
+        <div style="background-color:#EEEEEE; height:30px; padding-top:8px; text-align:right; padding-right:10px;margin-top: -5px;">
+            <span style="float:left;padding-left:10px"><a href="javascript:;" class="toggle-nav" rel="tooltip" data-placement="bottom"><i class="icon-reorder"></i></a></span>
+        &copy; 2011-{date('Y')}&nbsp;&nbsp;<strong><a class="fine-cms" href="{SITE_URL}" target="_blank">{DR_NAME}</a></strong>&nbsp;v{DR_VERSION} ({DR_UPDATE})&nbsp;&nbsp;<span id="finecms_version"></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+    </div>
+</div>
+<div id="dr_backdrop" class="modal-backdrop in hide"></div>
+</body>
+</html>

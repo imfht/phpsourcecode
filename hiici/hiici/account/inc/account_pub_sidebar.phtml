@@ -1,0 +1,46 @@
+<?php 
+
+if (empty($auth)) die('空auth!^_^');
+
+$account = dt_query_one("SELECT * FROM account WHERE id = ".$auth['id']);
+if (!$account) {
+	//初始化account
+	$rs = dt_query("INSERT INTO account (id, password, m_at, c_at) VALUES (".$auth['id'].", (SELECT password FROM user WHERE id = ".$auth['id']."), ".time().", ".time().")");
+	if (!$rs) die('新建account数据失败！');
+
+	global $config;
+	if ($config['n_u_pay']) if (!account_pay($config['n_u_pay'], '新用户获赠', 1)) die('充值失败！^_^');
+
+	//跳回用户空间
+	header('Location:?c=center');
+	die();
+}
+
+?>
+<section>
+<h3>可用余额：<?php echo $account['$'] ?> (元)</h3>
+<hr style="border-top:1px dashed #555">
+<table class="table">
+	<thead>
+		<tr>
+			<th>状态</th>
+			<th class="text-right">金额（元）</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>可用</td>
+			<td class="text-right"><b><?php echo $account['$'] ?></b></td>
+		</tr>
+		<tr>
+			<td>冻结</td>
+			<td class="text-right"><b><?php echo $account['l_$'] ?></b></td>
+		</tr>
+		<hr>
+		<tr>
+			<td>合计</td>
+			<td class="text-right"><b><?php echo ($account['$'] + $account['l_$']) ?></b></td>
+		</tr>
+	</tbody>
+</table>
+</section>

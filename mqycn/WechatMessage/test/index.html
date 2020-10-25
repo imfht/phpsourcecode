@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>WechatMessage 在线测试</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href="https://cdn.bootcss.com/mdbootstrap/4.6.0/css/mdb.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/vue/2.5.21/vue.js"></script>
+    <!--[if lt IE 9]>
+        <script>alert('本系统仅支持IE9以上版本,如果是极速浏览器请切换到极速模式');</script>
+        <style>body{display:none;}</style>
+    <![endif]-->
+</head>
+
+<body style="background:#999;font-family:'Microsoft Yahei';">
+    <div class="container mt-3" id="wechat-message">
+        <div class="card mb-3">
+            <div class="card-header">
+                WechatMessage 调试工具
+            </div>
+            <div class="card-body text-center">
+                <a class="btn btn-success" target="_blank" href="https://gitee.com/mqycn/WechatMessage">最新源码</a>
+                <a class="btn btn-danger" target="_blank" href="http://www.miaoqiyuan.cn/">作者博客</a>
+                <a class="btn btn-warning" target="_blank" href="https://mp.weixin.qq.com/debug/cgi-bin/sandbox?t=sandbox/login">微信测试帐号</a>
+                <a class="btn btn-info" target="_blank" href="http://www.miaoqiyuan.cn/p/wechat-message">项目介绍</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="card">
+                    <div class="card-header">
+                        接口测试：{{ name }}
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">发 送 者</span>
+                            </div>
+                            <input type="text" v-model="user.from" class="form-control" placeholder="请输入消息发送者（即用户）">
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">接 受 者</span>
+                            </div>
+                            <input type="text" v-model="user.to" class="form-control" placeholder="请输入消息接受者（即本公众号）">
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">接口地址</span>
+                            </div>
+                            <select class="custom-select" v-model="api.url">
+                                <option :value="item.url" v-for="item in apis" :key="item.url">{{ item.name }}</option>
+                            </select>
+                        </div>
+                        <div class="input-group mb-3" v-if="items.content">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">消息内容</span>
+                            </div>
+                            <input type="text" v-model="values.content" class="form-control" placeholder="请输入测试的消息内容">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.media_id">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">媒体编号</span>
+                            </div>
+                            <input type="text" v-model="values.media_id" class="form-control" placeholder="如需要测试下载，请查看日志">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.media_thumb_id">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">缩 略 图</span>
+                            </div>
+                            <input type="text" v-model="values.media_thumb_id" class="form-control" placeholder="如需要测试下载，请查看日志">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.image">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">图片地址</span>
+                            </div>
+                            <input type="text" v-model="values.image" class="form-control" placeholder="请输入测试的图片地址">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.title">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">分享标题</span>
+                            </div>
+                            <input type="text" v-model="values.title" class="form-control" placeholder="请输入分享页面的标题">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.description">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">分享描述</span>
+                            </div>
+                            <input type="text" v-model="values.description" class="form-control" placeholder="请输入分享页面的简单描述">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.url">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">分享网址</span>
+                            </div>
+                            <input type="text" v-model="values.url" class="form-control" placeholder="请输入分享页面的网址">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.format">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">语音格式</span>
+                            </div>
+                            <select class="custom-select" v-model="values.format">
+                                <option value="amr">AMR格式</option>
+                                <option value="mp3">MP3格式</option>
+                            </select>
+                        </div>
+                        <div class="input-group mb-3" v-if="items.recognition">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">识别结果</span>
+                            </div>
+                            <input type="text" v-model="values.recognition" class="form-control" placeholder="请输入测试的语音识别结果">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.location_x">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">位置纬度</span>
+                            </div>
+                            <input type="text" v-model="values.location_x" class="form-control" placeholder="请输入定位位置的纬度信息">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.location_y">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">位置经度</span>
+                            </div>
+                            <input type="text" v-model="values.location_y" class="form-control" placeholder="请输入定位位置的经度信息">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.scale">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">缩放级别</span>
+                            </div>
+                            <input type="text" v-model="values.scale" class="form-control" placeholder="请输入定位位置的地图缩放比例">
+                        </div>
+                        <div class="input-group mb-3" v-if="items.label">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">定位结果</span>
+                            </div>
+                            <input type="text" v-model="values.label" class="form-control" placeholder="请输入定位位置的识别信息">
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">请求正文</span>
+                            </div>
+                            <textarea class="form-control" style="height:280px;font-size:14px;font-family:consolas 'Microsoft Yahei';background:#FAFAFA;" :value="request" readonly></textarea>
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">请求地址</span>
+                            </div>
+                            <input type="text" class="form-control" v-bind:value="api.url" readonly>
+                            <div class="input-group-prepend">
+                                <button type="button" class="btn btn-primary btn-lg" @click="send">立即测试</button>
+                            </div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">请求结果</span>
+                            </div>
+                            <textarea class="form-control" style="height:200px;font-size:14px;font-family:consolas 'Microsoft Yahei';background:#FAFAFA;" :value="api.result" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="card">
+                    <div class="card-header">
+                        消息类型
+                    </div>
+                    <div class="card-body">
+                        <message-type :is-active="active==type.type" :info="type" @active="setActive" v-for="type in types" :key="type.index"></message-type>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    var messageType = {
+        data: {},
+        add: function(type, name, items) {
+            var props = [],
+                data = {},
+                info = [];
+            Object.keys(items).map(function(item) {
+                props.push(items[item]);
+                data[item] = items[item];
+            });
+            this.data[type] = {
+                type: type,
+                name: name,
+                item: props,
+                data: data
+            };
+        }
+    };
+    messageType.add('event', '用户订阅', {
+        Event: 'subscribe'
+    });
+    messageType.add('text', '文本消息', {
+        Content: 'content'
+    });
+    messageType.add('image', '图片消息', {
+        PicUrl: 'image',
+        MediaId: 'media_id'
+    });
+    messageType.add('voice', '语音消息', {
+        MediaId: 'media_id',
+        Format: 'format',
+        Recognition: 'recognition'
+    });
+    messageType.add('video', '视频消息', {
+        MediaId: 'media_id',
+        ThumbMediaId: 'media_thumb_id'
+    });
+    messageType.add('link', '分享消息', {
+        Title: 'title',
+        Description: 'description',
+        Url: 'url'
+    });
+    messageType.add('location', '地理位置', {
+        Location_X: 'location_x',
+        Location_Y: 'location_y',
+        Scale: 'scale',
+        Label: 'label'
+    });
+
+    var apiList = {
+        data: [],
+        add: function(url) {
+            this.data.push({
+                name: url,
+                url: location.protocol + '//' + location.hostname + location.pathname.replace('/test/', '/') + url
+            });
+        }
+    };
+    apiList.add('demo/message.php');
+
+    Vue.component('message-type', {
+        template: [
+            '<div class="mb-2">',
+            '   <button type="button" class="btn btn-block" @click="active" :class="[isActive?\'btn-primary\':\'btn-dark\']">测试{{ info.name }}</button>',
+            '</div>'
+        ].join(''),
+        props: ['info', 'isActive'],
+        methods: {
+            active: function() {
+                this.$emit('active', this.info.type);
+            }
+        }
+    });
+
+    var $vm = new Vue({
+        el: '#wechat-message',
+        data: {
+            types: messageType.data,
+            active: false,
+            values: {
+                content: 'WechatMessage 文本消息测试',
+                image: 'https://gitee.com/logo-black.svg',
+                media_id: 'rW-uj7re3sypp_VpPiRpRfunIjUHc91f7QsVh8UTOD9Xj15x-E9AtSR2aORtfxgm',
+                format: 'amr',
+                recognition: 'WechatMessage，优雅的处理微信消息',
+                media_thumb_id: 'awItFnlmBbw1UtMHXNzoci2_qHK-0kXoM83Zs_mmmFXkzdWGwxjBT0tHjATpP3qJ',
+                title: 'WechatMessage',
+                description: '微信消息处理类，可以 优雅的处理 微信消息',
+                url: 'https://gitee.com/mqycn/',
+                location_x: 39.875462,
+                location_y: 116.458412,
+                scale: 15,
+                label: '北京市朝阳区潘家园'
+            },
+            apis: apiList.data,
+            api: {
+                url: apiList.data[0].url,
+                result: ''
+            },
+            user: {
+                from: 'o9iuB595usWWPkj34zuM25GHdzpo',
+                to: 'gh_f3e010455602'
+            }
+        },
+        computed: {
+            activeData: function() {
+                return this.types[this.active];
+            },
+            name: function() {
+                return this.activeData.name;
+            },
+            items: function() {
+                var items = this.activeData.item,
+                    result = {},
+                    checker = function(name) {
+                        result[name] = this.activeData.indexOf(name);
+                    };
+                Object.keys(this.values).map(function(name) {
+                    result[name] = items.indexOf(name) != -1;
+                });
+                return result;
+            },
+            request: function() {
+                var request = {},
+                    xml = [],
+                    data = this.activeData.data,
+                    values = this.values;
+
+                request.ToUserName = this.user.to;
+                request.FromUserName = this.user.from;
+                request.CreateTime = parseInt(new Date().getTime() / 1000);
+                request.MsgType = this.active;
+                Object.keys(data).map(function(name) {
+                    request[name] = data[name] in values ? values[data[name]] : data[name];
+                });
+                request.MsgId = new Date().getTime();
+
+                xml.push('<xml>');
+                Object.keys(request).map(function(name) {
+                    xml.push('\t<' + name + '><![CDATA[' + request[name] + ']]></' + name + '>');
+                });
+                xml.push('</xml>');
+                return xml.join("\n");
+            }
+        },
+        methods: {
+            setActive: function(activeKey, onCreated) {
+                if (this.active != activeKey || onCreated) {
+                    this.active = activeKey;
+                    this.api.result = '请点击测试按钮';
+                }
+            },
+            send: function() {
+                var that = this;
+                $.ajax({
+                    url: that.api.url,
+                    type: 'post',
+                    dataType: 'text',
+                    data: that.request,
+                    success: function(xml) {
+                        that.api.result = xml.replace(/<([^>]*)>(\d+|<!\[CDATA\[[\s\S]*?\]\]>)<\/\1>/gi, function($0) {
+                            return '\n\t' + $0;
+                        }).replace('</xml>', '\n</xml>');
+                    }
+                });
+            }
+        },
+        created: function() {
+            this.setActive(Object.keys(messageType.data)[0], true);
+        }
+    });
+    </script>
+    <!--[if lt IE 10]>
+        <link href="https://cdn.bootcss.com/twitter-bootstrap/3.4.0/css/bootstrap.min.css" rel="stylesheet">
+        <script>
+        var fixIE9 = {
+            render: function(){
+                $('.card').addClass('panel panel-default');
+                $('.col-sm').addClass('col-sm-3');
+                $('.input-group-prepend').addClass('input-group-addon');
+                $('.custom-select').addClass('form-control').height(20);
+                $('.input-group-text').removeClass('input-group-text');
+                $('.input-group-prepend .btn-lg').parent().parent().find('.form-control').height(40);
+            }
+        };
+        $vm.$watch('active', fixIE9.render);
+        fixIE9.render();
+        </script>
+    <![endif]-->
+</body>
+
+</html>

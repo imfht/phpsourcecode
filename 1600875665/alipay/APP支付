@@ -1,0 +1,173 @@
+至于支付接口的接口包文件自己下吧，这个我就不提供地址链接了，这个支付接口我用的是异步回调，好像现在版本的支付宝同步回调只能用来跳转页面用了，哎，不说了，看代码吧。
+
+做这个支付宝支付我总共用到了三个控制器：
+
+1：支付宝支付控制器。
+
+2：支付宝支付配置参数控制器。
+
+3：支付宝回调地址控制器。
+
+好了，首先创建个支付宝支付的控制器，是由上个页面选择好支付方式之后确认支付后需要经过的控制器(这里选择的是支付宝支付),代码 如下：
+
+复制代码
+  <?php
+ namespace app\mobile\controller;
+  use app\mobile\model\Goods;
+  use app\mobile\model\OrderGoods;
+  use think\Controller;
+  
+  class Pay extends Controller
+ {
+      public function pay_order()
+     {
+         $res = new OrderGoods();
+         //获取订单号
+         $where['id'] = input('post.order_sn');
+         $reoderSn = input('post.order_sn');
+        //查询订单信息
+         $order_info = $res->where($where)->find();
+         //获取支付方式
+        $pay_type = input('post.pay_type');//微信支付 或者支付宝支付
+         //获取支付金额
+         $money = input('post.totle_sum');
+         //判断支付方式
+         switch ($pay_type) {
+             case 'ali';//如果支付方式为支付宝支付
+ 
+                 //更新支付方式为支付宝
+                $type['pay_type'] = 'ali';
+                 $res->where($where)->update($type);
+
+                 //实例化alipay类
+                $ali = new Alipay(); 
+
+                 //异步回调地址
+                 $url = 'XXXXXXXXXXXXXXXXXX/Callback/aliPayBack';
+              
+                 $array = $ali->alipay('商品名称', $money,$reoderSn,  $url);
+                 
+                if ($array) {
+                    return $array;
+                 } else {
+                     echo json_encode(array('status' => 0, 'msg' => '对不起请检查相关参数!@'));
+                 }
+                 break;
+             case 'wx';
+               
+               break;
+       }
+    }
+ }
+然后又创建了一个Alipay控制器，写支付宝配置参数，代码如下：
+
+按 Ctrl+C 复制代码
+
+class AliPay extends Controller
+{
+
+    protected $appId = '';//支付宝AppId
+    protected $rsaPrivateKey = '';//支付宝私钥
+    protected $aliPayRsaPublicKey = '';//支付宝公钥
+    private $seller = '';
+
+    /*
+     * 支付宝支付
+     */
+    public function aliPay($body, $total_amount, $product_code, $notify_url)
+    {
+        /**
+         * 调用支付宝接口。
+         */
+        /*import('.Alipay.aop.AopClient', '', '.php');
+        import('.Alipay.aop.request.AlipayTradeAppPayRequest', '', '.php');*/
+        Loader::import('Alipay\aop\AopClient', EXTEND_PATH);
+        Loader::import('Alipay\aop\request\AlipayTradeAppPayRequest', EXTEND_PATH);
+
+        $aop = new \AopClient();
+
+        $aop->gatewayUrl = "https://openapi.alipay.com/gateway.do";
+        $aop->appId = $this->appId;
+        $aop->rsaPrivateKey = $this->rsaPrivateKey;
+        $aop->format = "json";
+        $aop->charset = "UTF-8";
+        $aop->signType = "RSA2";
+        $aop->alipayrsaPublicKey = $this->aliPayRsaPublicKey;
+        $request = new \AlipayTradeAppPayRequest();
+        $arr['body'] = $body;
+        $arr['subject'] = $body;
+        $arr['out_trade_no'] = $product_code;
+        $arr['timeout_express'] = '30m';
+        $arr['total_amount'] = floatval($total_amount);
+        $arr['product_code'] = 'QUICK_MSECURITY_PAY';
+        
+        $json = json_encode($arr);
+        $request->setNotifyUrl($notify_url);
+        $request->setBizContent($json);
+
+        $response = $aop->sdkExecute($request);
+        return $response;
+
+    }
+
+
+    function createLinkstring($para)
+    {
+        $arg = "";
+        while (list ($key, $val) = each($para)) {
+            $arg .= $key . "=" . $val . "&";
+        }
+        //去掉最后一个&字符
+        $arg = substr($arg, 0, count($arg) - 2);
+
+        //如果存在转义字符，那么去掉转义
+        if (get_magic_quotes_gpc()) {
+            $arg = stripslashes($arg);
+        }
+
+        return $arg;
+    }
+
+
+    function argSort($para)
+    {
+        ksort($para);
+        reset($para);
+        return $para;
+    }
+}
+ 
+
+Alipay支付demo我放在extend目录下了，用这种方法来实现支付宝支付的话，上面的那个支付宝配置参数控制器的内容除了支付宝Appid，支付宝公钥，私钥，收款人账号，其他的照搬下来就行了，现在已经写了两个控制器了，接下来还有一个异步回调地址。这个异步回调有点坑了，支付成功有时候就是不回调，先上代码吧
+
+
+  <?php
+  namespace app\mobile\controller;
+  use app\mobile\model\OrderGoods;
+  use app\mobile\model\IntegralRecord;
+  use app\admin\model\SystemSettings;
+  use app\mobile\model\Members;
+  use think\Controller;
+  use think\Request;
+  use think\Db;
+ 
+ class Callback extends Controller
+ {
+     /*
+      * 支付宝支付回调修改订单状态
+      */
+     public function aliPayBack()
+     {
+ 
+         if ($_POST['trade_status'] == 'TRADE_SUCCESS') {//如果支付成功
+             //===============修改订单状态===========================//
+             $order = new OrderGoods();//实例化
+             $orderSn = $_POST['out_trade_no'];//获取订单号
+                 $where['order_sn'] = $orderSn;
+                 $data1['type'] = 2;
+             $order->where($where)->update($data1);//修改订单状态
+             echo 'success';
+             exit;
+         }
+     }
+ }

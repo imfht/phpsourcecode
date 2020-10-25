@@ -1,0 +1,109 @@
+<!--{template /module/admin/view/head}-->
+<style type="text/css">
+body {background:#fff;}
+.award p {text-align:center;}
+.award .title {margin:80px auto 40px auto; width:500px; font-size:72px;}
+.award .username {margin:20px auto; width:360px; height:60px; font-size:48px; color:red; line-height:60px; border:2px solid #ccc; border-radius:4px;}
+.award .button .btn {font-size:28px;}
+.award .num {padding-left:20px; font-size:32px;}
+.award .num span {display:inline-block; padding:15px; background:red; font-size:36px; color:#fff; border:1px solid red; border-radius:30px;}
+
+#main_content.container-fluid {background:#fff;}
+</style>
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<div class="row-fluid">
+			<div class="award">
+				<form>
+				<table width="500" align="center">
+					<tr>
+						<td colspan="2">
+							<p class="title">
+								{lang poll.index_award.view.title}
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<p class="username">XXXXXXXXXXX</p>
+							<br/><br/>
+						</td>
+					</tr>
+					<tr>
+						<td width="200" align="right" class="button">
+							<a class="btn btn-flat btn-large btn-warning">{lang poll.index_award.view.button.start}</a>
+						</td>
+						<td class="num">
+							{lang poll.index_award.view.award.prev}<span>{echo count($award_votes) + 0;}</span>{lang poll.index_award.view.award.num}
+						</td>
+					</tr>
+				</table>
+				<br/><br/>
+				<table class="table table-bordered" align="center" style="width:auto;">
+					<thead>
+						<th width="40">{lang poll.index_award.view.th.no}</th>
+						<th width="150">{lang poll.index_award.view.th.mobile}</th>
+						<th width="300">{lang poll.index_award.view.th.award}</th>
+					</thead>
+					<tbody id="award_body">
+					<!--{loop $award_votes $key $poll_vote}-->
+					<tr>
+						<td>{echo $key + 1;}</td>
+						<td>{$poll_vote[MOBILE]}</td>
+						<td>{$poll_vote[AWARD]}</td>
+					</tr>
+					<!--{/loop}-->
+					</tbody>
+				</table>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+var award_interval = null;
+
+$(function(){
+	$('.button .btn').click(function(){
+		{if $poll['STATUS'] == 0}
+			$.dialog({message:'{lang poll.index_award.view.message}'});
+			return false;
+		{/if}
+		
+		var _this = this;
+		if($(_this).hasClass('btn-warning')){
+			$(_this).removeClass('btn-warning').addClass('btn-bb').text('{lang poll.index_award.view.button.end}');
+			
+			if(award_interval) clearInterval(award_interval);
+			
+			award_interval = setInterval(function(){
+				var random = '1' + Math.floor(Math.random() * 100000) + Math.floor(Math.random() * 100000);
+				$('.username').text(random);
+			}, 10);
+		}else{
+			$.getJSON('{$ADMIN_SCRIPT}/poll/_award&do=rand&id={$poll[POLLID]}&rnd=' + Math.random(), function(data){
+				$(_this).removeClass('btn-bb').addClass('btn-warning').text('{lang exam.list_award.view.button.start}');
+				$('.username').text('XXXXXXXXXXX');
+				
+				if(award_interval) clearInterval(award_interval);
+				
+				if(data.success == true){
+					$(_this).removeClass('btn-bb').addClass('btn-warning').text('{lang poll.index_award.view.button.start}');
+					
+					var num = $('.num span').text() - 0;
+					num = num + data.num;
+					
+					$('.num span').text(num);
+					$('#award_body').append(data.html);
+					$('.username').text(data.USERNAME);
+				}else{
+					$(_this).removeClass('btn-warning').addClass('btn-bb').text('{lang poll.index_award.view.button.end}');
+					$.dialog({message:data.message});
+				}
+			});
+		}
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

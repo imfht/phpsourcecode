@@ -1,0 +1,100 @@
+<form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="title" lay-verify="required" lay-reqText="名称不能为空" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">logo</label>
+        <button type="button" class="layui-btn layui-btn-sm plupload_btn" id="up_image">选择图片</button>
+        <script type="text/html" template>
+            <a href="{{ d.params.image || '' }}" target="_blank">
+                <img src="{{ d.params.image || '' }}" width="50" class="{{ d.params.image || 'layui-hide' }}">
+            </a>
+            <input type="hidden" value="{{ d.params.image || '' }}" name="image" lay-verify="required" lay-reqText="logo不能为空">
+        </script>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">描述</label>
+        <div class="layui-input-block">
+            <textarea name="content" class="layui-textarea"></textarea>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">类型</label>
+        <div class="layui-input-block">
+            <input type="radio" name="type" value="1" title="线上" lay-verify="required" checked>
+            <input type="radio" name="type" value="2" title="线下" lay-verify="required">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">使用客户端</label>
+        <div class="layui-input-block">
+            <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/system/payment/client_type" lay-done="layui.data.sendParams(d.params);">
+                <input type="checkbox" name="client_type[]" lay-filter="client_type_all" value="" title="全部">
+                {{# layui.each(d.data, function(index, item){ }}
+                <input type="checkbox" name="client_type[]" lay-filter="client_type" value="{{ index }}" title="{{ item }}" {{# if(layui.jquery.inArray(index, d.params.client_type) !=-1){ }}checked{{# } }}>
+                {{# }); }}
+            </script>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">排序</label>
+        <div class="layui-input-block">
+            <input type="text" name="position" lay-verify="number" lay-reqText="排序只能是数字" autocomplete="off" class="layui-input" value="999">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="id" value="">
+            <input type="button" lay-submit lay-filter="form-submit" value="确认" class="layui-btn">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+
+<script language="JavaScript" src="../../../layuiadmin/lib/plupload/plupload.full.min.js"></script>
+<script language="JavaScript" src="../../../layuiadmin/lib/plupload/i18n/zh_CN.js"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['form', 'plupload'], function () {
+            var $ = layui.jquery,
+                form = layui.form,
+                plupload = layui.plupload;
+
+            plupload.upload();//初始化图片上传
+
+            //监听客户端全部按钮
+            form.on('checkbox(client_type_all)', function (data) {
+                if (this.checked == true) {
+                    $('[lay-filter="client_type"]').prop('checked', true);
+                } else {
+                    $('[lay-filter="client_type"]').prop('checked', false);
+                }
+                form.render('checkbox');
+            });
+            //监听客户端选择
+            form.on('checkbox(client_type)', function (data) {
+                check_select();
+            });
+
+            //客户端全选状态
+            function check_select() {
+                var client_type = $('[lay-filter="client_type"]').length;
+                var checked_client_type = $('[lay-filter="client_type"]:checked').length;
+                if (client_type == checked_client_type) {
+                    $('[lay-filter="client_type_all"]').prop('checked', true);
+                } else {
+                    $('[lay-filter="client_type_all"]').prop('checked', false);
+                }
+                form.render('checkbox');
+            }
+
+            if (params) {
+                check_select();
+            }
+        })
+    }
+</script>

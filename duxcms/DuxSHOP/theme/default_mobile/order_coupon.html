@@ -1,0 +1,99 @@
+<!--#include file="common_head.html"-->
+<div class="dux-tabs-fixed">
+    <div class="dux-tabs-auto">
+        <ul class="dux-tabs">
+            <li class="{$classId == '' ? 'active' : ''}">
+                <a href="{url('')}">全部</a>
+            </li>
+            <!--loop{$classList as $key => $vo}-->
+            <li class="{$classId == $vo.class_id ? 'active' : ''}">
+                <a href="{url('', ['class_id' => $vo.class_id])}">{$vo.name}</a>
+            </li>
+            <!--{/loop}-->
+        </ul>
+    </div>
+</div>
+<main class="dux-main">
+    <!--if{$pageList}-->
+    <div data-dux="page-ajaxPage" data-list="#list" data-tpl="#list-tpl" data-url='{url("ajax", $pageParams)}'data-page="1">
+        <ul class="dux-coupon-list" id="list">
+        </ul>
+        <!--{else}-->
+        <div class="uk-padding uk-text-center">
+            <p>暂无相关优惠券</p>
+        </div>
+        <!--{/if}-->
+</main>
+
+
+
+
+<script type="text/html" id="list-tpl">
+    {{# for(var i = 0, len = d.length; i < len; i++){ }}
+
+    <li>
+        <div class="dux-coupon-box">
+            <div class="box-image">
+                <img src="{{d[i].image}}">
+            </div>
+            <div class="box-info">
+                <div class="name">{{d[i].name}}</div>
+                <div class="money">
+                    <small>￥</small>{{d[i].money}}
+                    <span>满{{d[i].meet_money}}可用</span>
+                </div>
+                <div class="progress">
+                    <progress class="uk-progress" value="{{d[i].receive}}" max="{{d[i].stock}}">
+                    </progress>
+                    <div class="tip">
+                        {{# if(!d[i].stock){ }}
+                        已抢光
+                        {{# }else{ }}
+                        已抢{{Math.round(d[i].receive * d[i].stock / 100)}}%
+                        {{# } }}
+                    </div>
+                </div>
+
+            </div>
+            {{# if(!d[i].receive_status){ }}
+            <div class="box-receive">
+                {{# }else{ }}
+                <div class="box-receive disable">
+                    {{# } }}
+                    <div class="btn">
+                        <div class="tip">
+                            <img src="__PUBLIC__/order/images/coupon-bg.png">
+                        </div>
+                        <a href="javascript:;" class="receive" data-id="{{d[i].coupon_id}}">立即领取</a>
+                    </div>
+                </div>
+            </div>
+    </li>
+    {{# } }}
+</script>
+
+
+<!--#include file="common_foot.html"-->
+<script>
+    Do('base', function () {
+        $('.dux-coupon-list').on('click', '.receive', function () {
+            var obj = this;
+            app.ajax({
+                url : "{url('receive')}",
+                data : {
+                    id : $(this).data('id')
+                },
+                success : function (msg) {
+                    dialog.msg(msg);
+                    $(obj).text('已领取');
+                    $(obj).parents('.box-receive').addClass('disable');
+                },
+                error : function (msg) {
+                    dialog.msg(msg);
+                }
+            });
+
+        });
+    });
+</script>
+</html>

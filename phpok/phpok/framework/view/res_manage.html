@@ -1,0 +1,160 @@
+<!-- include tpl=head_lay nopadding=true -->
+<!-- if $sys.ctrl != 'res' -->
+<script type="text/javascript" src="{url ctrl=js func=ext js=admin.res.js /}"></script>
+<!-- /if -->
+<script type="text/javascript">
+function save()
+{
+	var obj = art.dialog.opener;
+	$("#editopen").ajaxSubmit({
+		'url':get_url('res','setok'),
+		'type':'post',
+		'dataType':'json',
+		'success':function(rs){
+			if(rs.status){
+				$.dialog.close();
+				$.dialog.tips(p_lang('附件信息修改成功'));
+				return true;
+			}
+			$.dialog.alert(rs.info);
+			return false;
+		}
+	});
+	return true;
+}
+function download_it(id)
+{
+	var url = get_url("res","download") + "&id="+id;
+	$.phpok.go(url);
+}
+</script>
+<div class="layui-card">
+	<div class="layui-card-body">
+		<form method="post" id="editopen" class="layui-form" onsubmit="return false;">
+		<input type="hidden" id="id" name="id" value="{$rs.id}" />
+		<div class="layui-form-item">
+			<label class="layui-form-label">
+				<i class="layui-icon layui-tips" lay-tips="{lang设置附件的名称，以方便管理}">&#xe702;</i>
+				{lang附件名称}
+			</label>
+			<div class="layui-input-inline default-auto">
+				<input type="text" id="title" name="title" class="layui-input" value="{$rs.title}" />
+			</div>
+			<!-- if $file_is_local -->
+			<div class="layui-input-inline auto gray lh38"><input type="button" value="下载" onclick="download_it('{$rs.id}')" class="layui-btn" /></div>
+			<!-- /if -->
+		</div>
+		<!-- if $file_is_local -->
+		<div class="layui-form-item">
+			<label class="layui-form-label">
+				{lang覆盖上传}
+			</label>
+			<div class="layui-input-block">
+				<div id="upload_picker"></div>
+				<div id="upload_progress"></div>
+			</div>
+			<div class="layui-input-block mtop">
+				{lang使用此功能将直接覆盖上传原来附件信息，请慎用} {lang仅限} <span class="red b">{$rs.ext}</span>
+			</div>
+		</div>
+		<!-- /if -->
+		<div class="layui-form-item">
+			<label class="layui-form-label">
+				{lang上传时间}
+			</label>
+			<div class="layui-input-block">
+				<input type="text" id="addtime" name="addtime" value="{echo date('Y-m-d H:i:s',$rs[addtime])}" class="layui-input" disabled />
+			</div>
+			<div class="layui-input-block mtop">{lang不支持修改，上传后自动生成}</div>
+		</div>
+
+
+		<!-- if $rs.attr && $rs.attr.width && $rs.attr.height -->
+		<div class="layui-form-item">
+			<label class="layui-form-label">
+				{lang附件宽高}
+			</label>
+			<div class="layui-input-block">
+				<table>
+				<tr>
+					<td><input type="text" disabled name="attr[width]" value="{$rs.attr.width}" class="short" /></td>
+					<td>&#215;</td>
+					<td><input type="text" disabled name="attr[height]" value="{$rs.attr.height}" class="short" /></td>
+					<!-- if $resize -->
+					<!-- if $rs.ext == 'jpg' || $rs.ext == 'jpeg' -->
+					<td>
+						<div style="margin-left:10px;">
+						<select id="ptype">
+							<option value="60">{lang较小文件}</option>
+							<option value="80" selected>{lang较大文件}</option>
+							<option value="100">{lang百分百精度}</option>
+						</select>
+						</div>
+					</td>
+					<!-- /if -->
+					<td>
+						<div style="margin-left:10px;">
+						<select id="resize">
+							<option value="0">{lang默认宽高}</option>
+							<!-- if $rs.attr.width > 2048 -->
+							<option value="2048">{lang限宽}2048</option>
+							<!-- /if -->
+							<!-- if $rs.attr.width > 1024 -->
+							<option value="1024">{lang限宽}1024</option>
+							<!-- /if -->
+							<!-- if $rs.attr.width > 800 -->
+							<option value="800">{lang限宽}800</option>
+							<!-- /if -->
+						</select>
+						</div>
+					</td>
+					<td><div style="margin-left:10px;"><input type="button" value="{lang压缩图片}" onclick="$.admin_res.zipit('{$rs.id}','{$rs.ext}')" class="layui-btn" /></div></td>
+					<!-- /if -->
+				</tr>
+				</table>
+			</div>
+			<div class="layui-input-block mtop">
+				{lang此参数不允许人工修改，系统自动读取}
+			</div>
+			<!-- if $resize && $filesize -->
+			<div class="layui-input-block mtop">{lang当前文件大小是} <span class="red">{$filesize}</span></div>
+			<!-- /if -->
+		</div>
+		<!-- /if -->
+		<div class="layui-form-item">
+			<label class="layui-form-label">
+				{lang附件说明}
+			</label>
+			<div class="layui-input-block">
+				{$content}
+			</div>
+			<div class="layui-input-block mtop">{lang如需对此附件进行说明，可在这里编写}</div>
+		</div>
+	</div>
+</div>
+<!-- if $file_is_local -->
+<script type="text/javascript">
+$(document).ready(function(){
+	obj_upload = new $.admin_upload({
+		"multiple"	: 'false',
+		"id" : "upload",
+		'pick':{'id':'#upload_picker','multiple':false},
+		'resize':false,
+		"swf" : "js/webuploader/uploader.swf",
+		"server": "{url ctrl=upload func=replace oldid=$rs.id/}",
+		"filetypes" : "{$rs.ext}",
+		'accept' : {'title':'附件','extensions':'{$rs.ext}'},
+		"formData" :{'{func session_name}':'{func session_id}'},
+		'fileVal':'upfile',
+		'auto':true,
+		"success":function(){
+			$.phpok.reload();
+		}
+	});
+});
+</script>
+<!-- /if -->
+
+
+</form>
+<!-- include tpl=foot_lay is_open=true -->

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>权限分组编辑</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="__LAYUI__/layui/css/layui.css" media="all">
+</head>
+<body>
+<form class="layui-form" action="" method="post" lay-filter="admin-form">
+    <div class="layui-form-item">
+        <div class="layui-input-inline">
+            <input type="hidden" name="id" value="{$group.id}" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">分组名</label>
+        <div class="layui-input-inline">
+            <input type="text" name="title" value="{$group.title}" lay-verify="required" placeholder="请输入分组名"
+                   autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">所属应用</label>
+        <div class="layui-input-inline">
+            <input type="text" name="module" value="{$group.module|default='admin'}" lay-verify="required" placeholder="请输入应用名"
+                   autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">父级权限组</label>
+            <div class="layui-input-inline">
+                <select name="pid" lay-verify="required" lay-search="">
+                    <option value="0">顶级权限组</option>
+                    {foreach $groups as $k => $v}
+                    <option value="{$k}" {if $group.pid == $k}selected{/if}>{$v}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+    </div>
+    <!--<div class="layui-form-item">-->
+        <!--<div class="layui-inline">-->
+            <!--<label class="layui-form-label">分类</label>-->
+            <!--<div class="layui-input-inline">-->
+                <!--<select name="type" lay-verify="required" lay-search="">-->
+                    <!--<option value="0">请选择分类</option>-->
+                    <!--{foreach $groupType as $key => $val}-->
+                    <!--<option value="{$key}" {if $group.type == $key}selected{/if}>{$val}</option>-->
+                    <!--{/foreach}-->
+                <!--</select>-->
+            <!--</div>-->
+        <!--</div>-->
+    <!--</div>-->
+    <div class="layui-form-item">
+        <label class="layui-form-label">描述信息</label>
+        <div class="layui-input-inline">
+            <input type="text" name="description" value="{$group.description}" placeholder="请输入描述信息"
+                   autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">有效期</label>
+            <div class="layui-input-inline">
+                <input name="end_time" value="{$group.end_time}" id="date" lay-verify="date" placeholder="YYYY-MM-dd"
+                       autocomplete="off"
+                       class="layui-input" type="text">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">状态</label>
+        <div class="layui-input-block">
+            <input type="checkbox" {if isset($group.status) && $group.status== 1}checked{elseif
+                   !isset($group.status)}checked{else/}{/if} name="status" lay-skin="switch" lay-filter="switchTest"
+            lay-text="启用|禁用">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">选择权限</label>
+        <div class="layui-input-block">
+            <div id="LAY-auth-tree-index"></div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-hide">
+        <input type="button" lay-submit lay-filter="LAY-user-front-submit" id="LAY-user-front-submit" value="确认">
+    </div>
+</form>
+
+<script src="__LAYUI__/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '__LAYUI__/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index', //主入口模块
+        authtree: 'lib/extend/authtree'
+    }).use(['jquery', 'authtree', 'form', 'layer', 'laydate'], function () {
+        var $ = layui.jquery;
+        var authtree = layui.authtree;
+        var form = layui.form;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+
+        laydate.render({
+            elem: '#date'
+        });
+        // 初始化
+        $.ajax({
+            url: "{:url('getAdminAuthTree', ['id' => $group['id']])}",
+            dataType: 'json',
+            success: function (data) {
+                // 渲染时传入渲染目标ID，树形结构数据（具体结构看样例，checked表示默认选中），以及input表单的名字
+                authtree.render('#LAY-auth-tree-index', data.data.trees, {
+                    inputname: 'authids[]',
+                    layfilter: 'lay-check-auth',
+                    openall: false,
+                    autowidth: true
+                });
+            }
+        });
+        // 监听自定义lay-filter选中状态，PS:layui现在不支持多次监听，所以扩展里边只能改变触发逻辑，然后引起了事件冒泡延迟的BUG，要是谁有好的建议可以反馈我
+        form.on('checkbox(lay-check-auth)', function (data) {
+            // 注意这里：需要等待事件冒泡完成，不然获取叶子节点不准确。
+            setTimeout(function () {
+                // 获取所有已选中节点
+                var checked = authtree.getChecked('#LAY-auth-tree-index');
+                document.cookie = "admin_auth_checked=" + checked;
+            }, 100);
+        });
+    });
+</script>
+</body>
+</html>

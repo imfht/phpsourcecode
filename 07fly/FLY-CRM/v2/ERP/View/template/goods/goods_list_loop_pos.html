@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+  <div class="row">
+    <div class="col-sm-3">
+      <div class="ibox-content">
+        <div id="treeview12" class="test"></div>
+      </div>
+    </div>
+    <div class="col-sm-9">
+      <div class="ibox-content">
+        <div class="row">
+          <form id="pagerForm" method="post" class="form-inline">
+            <input type="hidden" name="category_id" id="category_id" value="">
+            <div class="col-sm-2"> <a href="javascript:void(0)" class="btn btn-info batch_operation" data-act="save">添加选择商品</a> </div>
+            <div class="col-sm-10 m-b-xs text-right">
+              <div class="input-group pd-b-5">
+                <input type="text" name="keywords" placeholder="输入商品名称关键字搜索" class="form-control">
+              </div>
+              <div class="btn-group">
+                <button data-toggle="dropdown" class="btn dropdown-toggle"><span class="caret"></span></button>
+                <div class="dropdown-menu">
+                  <div class="ibox-content">
+                    <div class="form-group">
+                      <label>商品编码</label>
+                      <input type="text" name="code" placeholder="搜索商品编码" class="form-control">
+                    </div>
+                    <div class="form-group">
+                      <label>商品SKU名称</label>
+                      <input type="text" name="sku_name" placeholder="商品SKU名称" class="form-control">
+                    </div>
+                    <div class="form-group">
+                      <button type="button" class="btn btn-primary btn-xs btn-block ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="input-group"> <span class="input-group-btn">
+                <button type="button" class="btn btn-primary ajaxSearchForm"><i class="fa fa-search"></i> 搜索</button>
+                </span> </div>
+            </div>
+          </form>
+        </div>
+        <table class="table  table-hover sorttable 07fly-table" width="100%">
+          <thead>
+            <tr>
+              <th width="22"><input type="checkbox" group="ids" class="checkboxCtrl"></th>
+              <th><span>商品名称/商品规格</span></th>
+              <th width="80" orderField="by_saleprice" class="sort-filed"><span>销售价格</span></th>
+              <th width="80" orderField="by_marketprice" class="sort-filed"><span>市场价格</span></th>
+              <th width="80" orderField="by_costprice" class="sort-filed"><span>成本价格</span></th>
+              <th width="80" orderField="by_stock" class="sort-filed"><span>库存</span></th>
+              <th width="80"><span>商品编码</span></th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+          <tfoot class="ibox-content">
+            <tr>
+              <td colspan="7" align="center"></td>
+            </tr>
+          </tfoot>
+        </table>
+        <table>
+          <tr>
+            <td><a href="javascript:void(0)" class="btn btn-info batch_operation" data-act="save">添加选择商品</a></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+<script id="tableListTpl" type="text/html">
+<% for(var i=0;i<list.length;i++) { %>
+	<tr>
+		<td><input type="checkbox" name="sku_id" class="checkboxCtrlId" value="<%=list[i]['sku_id']%>" data-goods-name="<%=list[i]['goods_name']%>" data-goods-id="<%=list[i]['goods_id']%>" data-sku-name="<%=list[i]['sku_name']%>" data-sale-price="<%=list[i]['sale_price']%>" data-cost-price="<%=list[i]['cost_price']%>"></td>
+		<td><%=list[i]['goods_name']%>/<%=list[i]['sku_name']%></td>
+		<td><%=list[i]['sale_price']%></td>
+		<td><%=list[i]['market_price']%></td>
+		<td><%=list[i]['cost_price']%></td>
+		<td><%=list[i]['stock']%></td>
+		<td><%=list[i]['code']%></td>
+	</tr>
+<% } %>
+</script>
+<script src="#{$smarty.const.APP}#/View/template/js/plugins/treeview/bootstrap-treeview.js"></script>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+<script type="text/javascript">
+var ajaxUrl='#{$smarty.const.ACT}#/goods/Goods/goods_list_tree/';
+$(document).ready(function () {
+	turnPage(1);//页面加载时初始化分页
+	$('.chosen-select').chosen({search_contains: true});
+	$('.chosen-select').chosen().change(function(){
+		ajaxSearchFormData = $("form").serialize();
+		turnPage(1);
+	});
+	//商品数据加载
+	$.ajax({
+		type: "POST",
+		url: "#{$smarty.const.ACT}#/goods/GoodsCategory/goods_category_left_json/",
+		data:'',
+		dataType:"json",
+		success: function(jsondata){
+			console.log(jsondata);
+		   $('#treeview12').treeview({
+			   data: jsondata, 
+				onNodeSelected: function (event, node) {
+					 // alert(node.text);
+					   $("#category_id").val(node.tags);
+						ajaxSearchFormData = $("form").serialize();
+						turnPage(1);
+				 }
+			});
+		}
+	});
+
+	//选择产品增加订单明细
+	$("body").on("click", ".batch_operation", function() {
+		var list_sku_id_arr=[];
+		parent.$("#list-table tbody input[name='sku_id[]']").each(function(){ 
+			 list_sku_id_arr.push($(this).val()); 
+		});
+		 batch_act =$(this).attr("data-act");
+		 var html = '';
+    	$("tbody input[class='checkboxCtrlId']:checked").each(function(){ 
+			sku_id		=$(this).val();
+			sku_name	=$(this).attr('data-sku-name');
+			goods_name	=$(this).attr('data-goods-name');
+			goods_id	=$(this).attr('data-goods-id');
+			sale_price	=$(this).attr('data-sale-price');
+			cost_price	=$(this).attr('data-cost-price');
+
+			isindex = $.inArray(sku_id,list_sku_id_arr);
+			//判断明细没有选中的商品执行添加 
+			if(isindex<0){
+				html +='<tr>'
+				html +=' <td>';
+				html +='   <input type="hidden" name="goods_name[]" value="'+goods_name+'">';
+				html +='   <input type="hidden" name="goods_id[]" value="'+goods_id+'">';
+				html +='   <input type="hidden" name="sku_id[]" value="'+sku_id+'">';
+				html +='   <input type="hidden" name="sku_name[]" value="'+sku_name+'">';
+				html += 	goods_name+'/'+sku_name;
+				html +=' </td>'
+				html +=' <td><input type="text" class="form-control calculate" name="cost_price[]" value="'+cost_price+'"></td>'
+				html +=' <td><input type="text" class="form-control calculate" name="num[]" value="1"></td>'
+				html +=' <td><input type="text" class="form-control calculate" name="goods_money[]" value="'+cost_price+'" ></td>'
+				html +=' <td><input type="text" class="form-control calculate" name="remarks[]" ></td>'
+				html +=' <td><a href="javascript:void(0);" onclick="delTr(this);" >删除</a></td>'
+				html +='</tr>'
+			}
+		});
+		parent.$("#list-table").append(html);
+		
+		//统计总金额
+		var total_goods_money=0;
+		parent.$("#list-table tbody tr").find("input[name='goods_money[]']").each(function(){ 
+			total_goods_money += parseFloat($(this).val());
+		});
+		parent.$('.total_goods_money').html(total_goods_money.toFixed(2));
+		layer.msg('商品添加成功', {icon: 1}); 
+    //alert(chk_value.length==0 ?'你还没有选择任何内容！':chk_value); 
+	});
+	
+
+	
+});
+
+</script>

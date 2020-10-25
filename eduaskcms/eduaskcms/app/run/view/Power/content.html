@@ -1,0 +1,229 @@
+{extends file="../base.html"}
+{block name=function}
+
+{/block}
+{block name=base}
+{$form->create(['type'=>'file','class'=>'layui-form','novalidate'=>true])}
+{$form->hidden("$mdl.type")}
+{$form->hidden("$mdl.foreign_id")}
+<div id="Power">
+    <div class="userList">
+        <ul class="list">
+            {foreach $list as $ug}
+            <li>
+                <div class="ug">
+                    <i class="fa fa-minus-circle  fa-lg icon"></i>
+                    <a href="{url('content', ['type' => 'usergroup', 'foreign' => $ug.id])}" {if $args.type=='usergroup' && $args.foreign==$ug.id}class="current"{/if}>{$ug.title}</a>
+                </div>
+                {if $ug.User}
+                <dl class="en-font">
+                    {foreach $ug.User as $u}
+                    <dd>
+                        <a href="{url('remove', ['foreign'=>$u.id])}" class="remove javascript" rel="remove_user_power"><i class="fa fa-remove"></i></a>
+                        <a href="{url('content', ['type' => 'user', 'foreign' => $u.id])}" {if $args.type=='user' && $args.foreign==$u.id}class="current"{/if}>{$u.username}</a></dd>
+                    {/foreach}
+                </dl>
+                {/if}
+            </li>
+            {/foreach}
+        </ul>
+        <div class="layui-btn-group">
+            <button class="layui-btn layui-btn-warm" lay-submit lay-filter="power">提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            <a class="layui-btn  power-all  layui-btn-normal" href="javascript:void(0);">全选</a>
+        </div>
+        
+        <div class="layui-btn-group">
+            <a class="layui-btn  layui-btn-normal power-all-reverse" href="javascript:void(0);">反选</a>
+            <a class="layui-btn concise layui-btn-primary" href="javascript:void(0);">简洁</a>
+            <a class="layui-btn fullopen layui-btn-primary" href="javascript:void(0);">展/收</a>            
+        </div>
+        
+    </div>
+
+    {if powertree()}
+    {function tree level=1}
+    {foreach $data as $self_id=>$children}
+    <div class="menu_level menu_level_{$level} {if !$children}no_child{/if} {if $level>1&&$children}isOpen{/if}">
+        <div class="self clearfix">
+            <i class="lline"></i>
+            {$child_count = count($children)}            
+            <span class="power clearfix">
+                {if $child_count > 0}
+                <div class="layui-btn-group">
+                    <a href="javascript:void(0);" class="layui-select-all layui-btn layui-btn-sm">全选</a>
+                    <a href="javascript:void(0);" class="layui-select-reverse layui-btn layui-btn-sm layui-btn-primary">反选</a>
+                </div>
+                {else}
+                <input  type="checkbox" class="switch" lay-skin="switch" lay-text="开|关" lay-filter="switchTest" name="data[{$mdl}][content][{$self_id}]" value="{powertree($self_id,'together')}" {if in_array(powertree($self_id,'together'), (array)$powers)}checked{/if}/>
+                {/if}
+            </span>
+            
+            <span class="menu_info clearfix">            
+                <i class="fa  {if $children}{if $level==1}fa-plus-circle{else}fa-minus-circle{/if}{else}fa-minus-circle{/if}  fa-lg left fa-icon"></i>
+                <span class="menu_title left">
+                    {if powertree($self_id,'icon')}<i class="fa {powertree($self_id,'icon')}"></i>{/if} 
+                    <a href="javascript:void(0);">{powertree($self_id,'title')}</a>
+                </span>
+                <span class="menu_id left nc">〖ID：{$self_id}〗</span>  
+                <span class="left en-font nc">〖控制器：{powertree($self_id,'controller')}〗</span>
+                {if powertree($self_id,'action')}<span class="left en-font nc">〖方法：{powertree($self_id,'action')}〗</span> {/if}                 
+                {if $child_count>0}<span class="menu_child_count left nc">〖子节点数：{$child_count}〗</span>{/if}
+            </span>
+        </div>
+        {if $children}
+        <div class="menu_children">
+            {call tree data=$children level=$level+1}
+        </div>
+        {/if}
+    </div>
+    {/foreach}
+    {/function}
+    
+    <div id="menu_tree">        
+        {call tree data=reset(powertree('threaded')) level=1}        
+    </div>
+    
+    {else}
+    <div >
+        <a href="{url('PowerTree/lists')}" rel="start" class="layui-btn new_tab" data-icon="fa-tree">权限节点</a>        
+    </div>
+    {/if}  
+</div>
+{$form->end()}
+{/block}
+{block name=script}
+<script>
+{if isset($error)}
+layer.msg("{$error}");
+{/if}
+
+function remove_user_power(){
+    var url = $(this).attr('href');
+    layer.confirm('请确认是否删除用户授权？',{ icon: 3, title:'提示'}, function(){
+        HKUC.ajax_request.call(this,url,null,
+        	{
+        		'success':function(msg,data){
+      		        layer.closeAll();
+                    layer.msg(msg);
+        		},
+        		'error':function(msg,data){
+                      layer.closeAll();
+                      layer.msg(msg);
+        		}
+        	}
+        );
+    });
+}
+
+layui.use(['form','element'], function(){
+    var layForm = layui.form;
+    
+    layForm.on('submit(power)', function(data){
+        if (!$('#PowerType').val() || !$('#PowerForeignId')) {
+            layer.msg('请选择一个用户组或用户进行授权');
+            return false;
+        }
+        var who = $('.userList').find('a.current').text();
+        layer.confirm('请确认对[' + who + ']授权完毕？',{ icon: 3, title:'提示'}, function(){
+            $('#PowerForm').submit();
+        });
+        return false ;
+    });
+    
+    $('.concise').click(function(){
+        $('#Power').toggleClass('concise');
+    })
+    
+    $('.fullopen').click(function(){
+        $(this).toggleClass('isOpen');
+        if ($(this).hasClass('isOpen')) {
+             $('#menu_tree').find('.self').each(function(){
+                var parent = $(this).parent('.menu_level') ;
+                if(!parent.hasClass('isOpen'))
+                    parent.addClass('isOpen').children('.menu_children').show().end().children('.self').find('.fa-icon').removeClass('fa-plus-circle').addClass('fa-minus-circle')
+            })
+        } else {
+            $('#menu_tree').find('.self').each(function(){
+                var parent = $(this).parent('.menu_level') ;
+                if(parent.hasClass('isOpen'))
+                    parent.removeClass('isOpen').children('.menu_children').hide().end().children('.self').find('.fa-icon').removeClass('fa-minus-circle').addClass('fa-plus-circle')
+            })
+        }
+    })
+    
+    
+    
+    $('.layui-select-all').click(function(){
+        if (!$(this).closest('.menu_level').hasClass('isOpen')) {
+            $(this).parent().trigger('click');
+        }
+        
+        var child = $(this).closest('.menu_level').find('.menu_children').find('.switch');
+        child.each(function(index, item){
+            item.checked = 1;
+        });
+        layForm.render('checkbox');
+    })
+    
+    $('.layui-select-reverse').click(function(){
+        if (!$(this).closest('.menu_level').hasClass('isOpen')) {
+            $(this).parent().trigger('click');
+        }
+        var child = $(this).closest('.menu_level').find('.menu_children').find('.switch');
+        child.each(function(index, item){
+            if (item.checked) {
+                item.checked = 0
+            } else {
+                item.checked = 1;
+            }
+        });
+        layForm.render('checkbox');
+    })
+    
+    $('.power-all-reverse').click(function(){
+        var child = $('#menu_tree').find('.menu_children').find('.switch');
+        child.each(function(index, item){
+            if (item.checked) {
+                item.checked = 0
+            } else {
+                item.checked = 1;
+            }
+        });
+        layForm.render('checkbox');
+    })
+    
+    $('.power-all').click(function(){
+        var child = $('#menu_tree').find('.menu_children').find('.switch');
+        child.each(function(index, item){
+            item.checked = 1;
+        });
+        layForm.render('checkbox');
+    })
+    
+})
+
+$('.userList').find('i.icon').click(function(){
+    if ($(this).hasClass('fa-minus-circle')) {
+        $(this).removeClass('fa-minus-circle').addClass('fa-plus-circle').closest('li').find('dl').stop(true, true).slideUp(300);
+    } else {
+        $(this).removeClass('fa-plus-circle').addClass('fa-minus-circle').closest('li').find('dl').stop(true, true).slideDown(300);
+    }
+})
+
+
+$('#menu_tree .self').click(function(){
+    var parent = $(this).parent('.menu_level') ;
+    $('#menu_tree').find('.isClick').removeClass('isClick');
+    parent.addClass('isClick');
+    if(parent.hasClass('no_child')) return false ;
+    if(parent.hasClass('isOpen'))
+        parent.removeClass('isOpen').children('.menu_children').hide().end().children('.self').find('.fa-icon').removeClass('fa-minus-circle').addClass('fa-plus-circle')
+    else
+        parent.addClass('isOpen').children('.menu_children').show().end().children('.self').find('.fa-icon').removeClass('fa-plus-circle').addClass('fa-minus-circle')
+}).find('a').click(function(e){
+    e.stopPropagation();
+})
+
+</script>
+{/block}

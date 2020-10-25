@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<link href="static/css/admin/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="static/js/jquery.js"></script>
+<link rel="stylesheet" href="admin/kindeditor/themes/default/default.css" />
+<script charset="utf-8" src="admin/kindeditor/kindeditor-min.js"></script>
+<script charset="utf-8" src="admin/kindeditor/lang/zh_CN.js"></script>
+<script type="text/javascript" src="static/js/Validform_v5.3.2_min.js"></script>
+<script type="text/javascript" src="<{$weburl}>/static/js/cal.js"></script>
+<script type="text/javascript" src="static/js/common.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    //品牌选择
+	$("#brand").change(function(){
+		$.get("<{$weburl}>/index.php?m=ajax&ajax=1", { 
+			brandid :  $("#brand").val() 
+		}, function (data, textStatus){
+               $("#subbrand").html(data); // 把返回的数据添加到页面上
+			}
+		);
+	});
+
+	//品牌选择
+	$("#subbrand").change(function(){
+		$.get("<{$weburl}>/index.php?m=ajax&ajax=1", { 
+			subbrandid :  $("#subbrand").val() 
+		}, function (data, textStatus){
+               $("#subsubbrand").html(data); // 把返回的数据添加到页面上
+			}
+		);
+	});
+})
+</script>
+</head>
+<body>
+<div class="colorarea01">
+	<div class="search clearfix">
+		<div class="searchL">
+			<ul class="menulist">
+            <li><a href="<{$adminpage}>?m=carmodel&a=add" class="add">添加车型</a></li>
+			</ul>
+		</div>
+        <div class="searchR">
+			<form action="<{$adminpage}>?m=carmodel" method="get" name="form2">
+			<input type="hidden" name="m" value="carmodel">
+			<input type="hidden" name="a" value="list">
+			<span>
+			<select name="p_brand" id="brand">
+				<{$select_brand}>
+			</select>
+			<select class="subbrand" id="subbrand" name="p_subbrand" datatype="n" nullmsg="请选择车系！">
+						<option  value="">请选择车系</option>
+						<{$select_subbrand}>                    
+					</select>             
+			</span>
+            <span><input type="submit" name="filtersubmit" value="查询" class="combutton02 w50"></span>
+			</form>
+		</div> 
+	</div>
+    <form action="<{$adminpage}>?m=carmodel" method="post" name="form">
+	<{if $types == 2}>
+		<table cellspacing="0" cellpadding="0" width="100%"  class="listtable">
+		<tr><th width="30">选择</th><th>ID</th><th width="60">排序</th><th align="left">品牌</th><th>车型</th><th>款式</th><th>操作</th></tr>
+		<{foreach from=$brandlist item=brand}>
+			<tr bgcolor="#ffffff" onmouseover="style.backgroundColor='#E2E9EA'"  onmouseout="style.backgroundColor='#ffffff'">
+            <td align="center"><input type="checkbox" name="bulkid[]" value="<{$brand.b_id}>"></td>
+				<td align="center"><{$brand.b_id}></td>
+                <td align="center"><input type="text" size="5" name="orderid[<{$brand.b_id}>]" value="<{$brand.orderid}>" class="ip01"></td>
+				<td align="left"><{$brand.brand01}>&nbsp;&nbsp;<{$brand.model}>&nbsp;&nbsp;<{$brand.styles}>&nbsp;&nbsp;<{$brand.b_name}></td>
+				<td align="center"><{$brand.brand02}></td>
+				<td align="center"><{$brand.styles}></td>
+                <td align="center" class="rightmenu"><a href="<{$adminpage}>?m=carmodel&a=editcarstyle&b_id=<{$brand.f_id}>" class="edit">编辑款式</a> | <a href="<{$adminpage}>?m=carmodel&a=edit&b_id=<{$brand.b_id}>" class="edit">编辑车型</a> | <a href="javascript:if(confirm('确实要删除款式以及款式下的所有车型吗?'))location='<{$adminpage}>?m=carmodel&a=del&b_id=<{$brand.f_id}>'" class="del">删除款式</a> | <a href="javascript:if(confirm('确实要删除吗?'))location='<{$adminpage}>?m=carmodel&a=del&b_id=<{$brand.b_id}>'" class="del">删除车型</a></td>
+			</tr>
+		<{/foreach}>
+        <tr><td colspan="7" class="buttontd"><a href="javascript:selectAll();" title="请选择后操作">全选</a> <a href="javascript:submitForm('<{$adminpage}>?m=carmodel&a=bulkdel','删除');" title="请选择后操作">删除</a> <a href="javascript:submitForm('<{$adminpage}>?m=carmodel&a=bulksort','更新排序');" title="请选择后操作">更新排序</a></td></tr>
+        </form>
+	</table>
+	<div class="listpage"><{$button_basic}><{$button_select}></div>
+	<{else}>
+	<table cellspacing="0" cellpadding="0" width="100%"  class="listtable">
+		<tr><th width="30">选择</th><th>ID</th><th width="60">排序</th><th align="left">品牌</th><th>车型</th><th>款式</th><th>操作</th></tr>
+		<{foreach from=$brandlist item=brand}>
+			<{foreach from=$brand.brands_list item=subbrandlist}>
+				<{foreach from=$subbrandlist.subbrands_list item=subsubbrandlist}>
+				<tr bgcolor="#ffffff" onmouseover="style.backgroundColor='#E2E9EA'"  onmouseout="style.backgroundColor='#ffffff'">
+                    <td align="center"><input type="checkbox" name="bulkid[]" value="<{$subsubbrandlist.b_id}>"></td>
+					<td align="center"><{$subsubbrandlist.b_id}></td>
+                    <td align="center"><input type="text" size="5" name="orderid[<{$subsubbrandlist.b_id}>]" value="<{$subsubbrandlist.orderid}>" class="ip01"></td>
+					<td align="left"><{$brand.b_name}>&nbsp;&nbsp;<{$subbrandlist.b_name}>&nbsp;&nbsp;<{$subsubbrandlist.b_name}></td>
+					<td align="center"><{$brand.b_name}></td>
+					<td align="center"><{$subbrandlist.b_name}></td>
+                     <td align="center" class="rightmenu"><a href="<{$adminpage}>?m=carmodel&a=editcarstyle&b_id=<{$subbrandlist.b_id}>" class="edit">编辑款式</a> | <a href="<{$adminpage}>?m=carmodel&a=edit&b_id=<{$subsubbrandlist.b_id}>" class="edit">编辑车型</a> | <a href="javascript:if(confirm('确实要删除款式以及款式下的所有车型吗?'))location='<{$adminpage}>?m=carmodel&a=del&b_id=<{$subbrandlist.b_id}>'" class="del">删除款式</a> | <a href="javascript:if(confirm('确实要删除吗?'))location='<{$adminpage}>?m=carmodel&a=del&b_id=<{$subsubbrandlist.b_id}>'" class="del">删除车型</a></td>
+				</tr>
+				<{/foreach}>
+			<{/foreach}>
+		<{/foreach}>
+        <tr> <td colspan="7" class="buttontd"><a href="javascript:selectAll();" title="请选择后操作">全选</a> <a href="javascript:submitForm('<{$adminpage}>?m=carmodel&a=bulkdel','删除');" title="请选择后操作">删除</a> <a href="javascript:submitForm('<{$adminpage}>?m=carmodel&a=bulksort','更新排序');" title="请选择后操作">更新排序</a></td></tr>
+	</table>	
+	<{/if}>
+    </form>
+</div>
+</body>
+</html>

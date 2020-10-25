@@ -1,0 +1,6 @@
+<?php if(isset($id)){?>
+	id:'<?php echo $id?>',
+<?php }?>
+<?php if(isset($any)){?>
+	<?php echo $any?>,
+<?php }?>

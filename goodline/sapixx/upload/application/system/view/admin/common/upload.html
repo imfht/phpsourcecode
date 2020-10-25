@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="renderer" content="webkit">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>SmartShop Manage System</title>
+{load href="__PUBLIC__/base/base.css,__PUBLIC__/admin/style.css,__PUBLIC__/js/do.js,__PUBLIC__/js/package.js,__PUBLIC__/admin/common.js" /}
+</head>
+<style type="text/css">
+html,body{margin:10px;}
+ul.gallery{display: flex;flex-wrap:wrap;}
+ul.gallery li{height:100px;width:100px;border: 1px solid #DDDDDD;margin:3px;padding: 5px;line-height: 30px;overflow:hidden;text-align: center;}
+ul.gallery li:first-child {border-width:1px;}
+ul.gallery li a{display:block;text-align: center;padding-top:15px;height: 90px;}
+ul.gallery li i{font-size:50px;}
+ul.gallery li img{width:88px;}
+ul.gallery li:hover,ul.gallery li.current{padding: 4px; border: 2px dotted #7CA3C1;background-color:transparent;}
+#uploader{margin-top:30px;}
+.uploader-list .file-item {position: relative;}
+.uploader-list .file-item .error {position:absolute;padding: 5px 0;background: rgba(255,255,255,0.5);margin-bottom: 0;text-indent: 0;bottom: 0;text-align:center;color:red;left:0;right:0;}
+</style>
+<body>
+<div id="main">
+<div class="tabs">
+    <ul class="tab_menu"><li class="current">本地文件</li><li>文件库</li><li>网络文件</li></ul>
+    <div class="tab_box">
+        <div class="box1">
+            <div class="fn-clear"><ul id="fileList" class="uploader-list gallery"></ul></div>
+            <div id="uploader" class="fn-tac m10"><div id="upButton">选择本地文件</div></div>
+        </div>
+        <div class="box2 hide">
+        <ul class="gallery fn-clear">  
+{volist name="$lists.backpath" id="vo"}<li><a href="{:url('system/admin.common/upload',['path'=>$vo.path,'input'=>$input,'tab'=>1])}"><i class="iconfont icon-arrowleft"></i><br />{$vo.name}</a></li>{/volist}
+{volist name="$lists.folder" id="folder"}<li><a href="{:url('system/admin.common/upload',['path'=>$folder.path,'input'=>$input,'tab'=>1])}"><i class="iconfont icon-wallet_icon"></i><br />{$folder.name} </a></li>{/volist}
+{volist name="$lists.file" id="file"}<li class="getfile" data-src="{$file[0]}"><img src="{$file[0]}"></li>{/volist}
+       </ul> 
+        </div>
+        <div class="box3 hide">
+            <table class="formtable">
+                <tr><th>网络文件URL:</th><td><input class="input w500" type="text" id="imgurl" name="imgurl" value="" /></td></tr>
+                <tr><th></th><td><input type="button" value="确定" class="button button-blue" onclick="setNetImg()"/></td></tr>   
+            </table>
+        </div>
+    </div>
+</div>  
+</div>
+</div>
+<script type="text/javascript">
+Do('layer','upload','tab',function(){
+    saveImage();
+    var $list = $("#fileList");
+    var thumbnailWidth = 120;
+    var thumbnailHeight = 120;
+    var uploader = WebUploader.create({
+        swf: '{__PUBLIC__}js/Plug-in/uploader/Uploader.swf',
+        pick: '#upButton',auto: true,compress:false,fileVal:'upfile',fileNumLimit:10,
+        server:'{:url("system/admin.common/upload")}',
+        accept: {title: 'Images',extensions: 'gif,jpg,jpeg,bmp,png,mp3',mimeTypes: 'image/jpg,image/jpeg,image/png,audio/mpeg'}
+    });
+    //当有文件添加进来的时候
+    uploader.on( 'fileQueued', function( file ) {
+        var $li = $('<li id="' + file.id + '" class="file-item thumbnail">' + '<img></li>'),
+            $img = $li.find('img');
+        $list.append($li);
+        uploader.makeThumb( file, function( error, src ) {
+            if (error) {
+                $img.replaceWith('<span>不能预览</span>');
+                return;
+            }
+            $img.attr( 'src', src );
+        },thumbnailWidth, thumbnailHeight );
+    });
+    //上传完毕
+    uploader.on( 'uploadSuccess', function(file,data ) {
+        if(data.error == 1){
+            var $li = $('#'+file.id ),$error = $li.find('div.error');
+            if (!$error.length) {
+                $error = $('<div class="error"></div>').appendTo($li);
+            }
+            $error.text(data.message);
+        }else{
+            $( '#'+file.id ).addClass('upload-state-done');
+            $( '#'+file.id ).addClass('getfile');
+            $( '#'+file.id ).attr("data-src",data.url);
+            saveImage();
+        }
+    });
+    // 文件上传失败，显示上传出错。
+    uploader.on('uploadError', function( file ) {
+        var $li = $('#'+file.id ),
+            $error = $li.find('div.error');
+        if (!$error.length) {
+            $error = $('<div class="error"></div>').appendTo($li);
+        }
+        $error.text('上传失败');
+    });
+    //完成上传完了,成功或者失败，先删除进度条。
+    uploader.on( 'uploadComplete', function( file ) {
+        $('#'+file.id ).find('.progress').remove();
+    });
+//{if $tab}设置当前Tab
+    $(".tab_menu > li").each(function(i){
+        $(".tab_menu > li").removeClass('current');
+        $('.tab_menu > li:eq(1)').addClass('current');
+        $('.box1').addClass('hide');
+        $('.box2').removeClass('hide');
+    });
+//{/if}设置当前Tab
+    $(".gallery >li").each(function(){
+        $(this).on("click",function(){
+            $(".gallery >li").removeClass('current');
+            $(this).addClass("current");
+        })
+    })
+    //TABS切换
+    $('.tabs').Tabs({event:'click',callback:function(rel){
+        uploader.refresh();
+    }});
+})
+function saveImage(){
+    var index = parent.layer.getFrameIndex(window.name); 
+    $('.getfile').click(function(){
+        parent.$("#"+$('body').attr("class"))[0].contentWindow.{$input?$input:'setImg'}($(this).attr('data-src'));
+        {$close?"parent.layer.msg('设置成功')":"parent.layer.close(index)"}
+    });
+}
+function setNetImg(){
+    var index = parent.layer.getFrameIndex(window.name); 
+    var imgpath = $("#imgurl").val();
+    var re = /^(http|ftp|https):\/\/(\w+(-\w+)*)(\.(\w+(-\w+)*))+(\/\S*)+\.(jpg|png|bmp|gif|mp3)/;
+    if(!re.test(imgpath)){
+        parent.layer.alert('地址必须以http开头,以jpg,png,bmp,gif,mp3结束');
+    }else{
+        parent.$("#"+$('body').attr("class"))[0].contentWindow.{$input?$input:'setImg'}(imgpath);
+        {$close?"parent.layer.msg('设置成功')":"parent.layer.close(index)"}
+    }
+}
+</script>
+</body>
+</html>

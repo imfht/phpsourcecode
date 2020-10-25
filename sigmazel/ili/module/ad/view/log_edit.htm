@@ -1,0 +1,192 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<form method="post" action="{$ADMIN_SCRIPT}/ad/log/{$dispatches[method]}&id={$_var[gp_id]}&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}" onsubmit="javascript:return check_form(this);" enctype="multipart/form-data">
+				<input type="hidden" name="formsubmit" value="yes" />
+				<input type="hidden" name="hdnFile01" value=""/>
+				<input type="hidden" name="hdnCategoryID" id="hdn_category_id" value="{$adlog[CATEGORYID]}" />
+				<div class="well widget">
+					<div class="widget-header">
+						<p class="text">* {lang admin.validate.require}</p>
+					</div>
+					<div class="widget-content">
+						<fieldset>
+							<label>{lang ad.log_edit.view.name.label} *</label>
+							<input type="text" class="input-large"  name="txtTitle" placeholder="{lang ad.log_edit.view.name.placeholder}..." maxlength="50" value="{$adlog[TITLE]}" /> 
+							<span class="help-inline">{lang ad.log_edit.view.name.tips}</span>
+							
+							<label>{lang ad.log_edit.view.ad.label} *</label>
+							<select name="sltEAdId">
+			                	<option value="0">{lang ad.log_edit.view.ad.select}</option>
+			                	<!--{loop $ad_list $key $ad}-->
+			                	<option value="{$ad[ADID]}" size="{$ad[WIDTH]}px * {$ad[HEIGHT]}px" {if $ad[ADID] == $adlog[ADID]}selected="selected"{/if}>{$ad[TITLE]}</option>
+			                	<!--{/loop}-->
+			                </select>
+							<span class="help-inline">{lang ad.log_edit.view.ad.tips}</span>
+					        
+					        <div id="div_category" style="display:none;">
+					        <label>{lang ad.log_edit.view.category.label} *</label>
+							<div id="treeList" style="padding:0px;margin:0px;"></div>
+							</div>
+							
+							<label>{lang ad.log_edit.view.begindate.label}</label>
+							<input type="text"  class="input-medium"  name="txtAdBeginDate" maxlength="16" value="{$adlog[BEGINDATE]}"/> 
+							
+							<label>{lang ad.log_edit.view.enddate.label}</label>
+							<input type="text"  class="input-medium" name="txtAdEndDate" maxlength="16"  value="{$adlog[ENDDATE]}"/> 
+							
+							<label>{lang ad.log_edit.view.link.label} *</label>
+							<input type="text"  class="input-xxlarge"  name="txtLink" maxlength="200"  value="{$adlog[LINK]}"/> 
+							<span class="help-inline">{lang ad.log_edit.view.link.tips}</span>
+							
+							<hr/>
+							<label>{lang ad.log_edit.view.remark.label}</label>
+							<textarea class="span6" rows="4" cols="45" name="txtRemark">{$adlog[REMARK]}</textarea>
+							<span class="help-inline">{lang ad.log_edit.view.remark.tips}</span>
+							
+							<label>{lang ad.log_edit.view.no.label}</label>
+							<input type="text" class="input-mini" name="txtSortNo" maxlength="10" value="{$adlog[SORTNO]}"/> 
+							<span class="help-inline">{lang ad.log_edit.view.no.tips}</span>
+						</fieldset>
+
+						<hr/>
+						<label class="label-file01">{lang ad.log_edit.view.file01.label}<span>{lang ad.log_edit.view.file01.tips}{$adlog[SIZE]}.</span></label>
+						<table class="swfupload">
+							<tr>
+								<td width="240" valign="top" align="center">
+									<p class="img" id="p_file01">
+										<!--{if is_array($adlog['FILE01'])}-->
+										<img src="{$adlog[FILE01][0]}" data="{$adlog[FILE01][4]}" width="240" style="width:240px;" border="0"/>
+										<!--{else}-->
+										<img src="static/images/no-picture.jpg" data="" width="240" style="width:240px;" />
+										<!--{/if}-->
+									</p>
+									<hr/>
+									<div class="upload-button"><span id="swfu_file01"></span></div>
+								</td>
+							</tr>
+						</table>
+						
+						<hr/>
+					    <fieldset>
+							<!--{if $dispatches['method'] == '_pub'}-->
+							<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+							<!--{elseif $dispatches['method'] == '_update'}-->
+							<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</button>
+							<!--{/if}-->
+							<button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+							<button type="button" class="btn btn-small" onclick="javascript:location.href='{$ADMIN_SCRIPT}/ad/log&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}';">返回上页</button>
+						</fieldset>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="static/plugins/swfupload.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_handlers.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_images.js"></script>
+
+<script>
+var swfu_file01 = null;
+
+swfupload_params.limit = 1;
+swfupload_params.uploaded = 0;
+
+function fileQueueError(file, errorCode, message) {
+	if (errorCode === SWFUpload.QUEUE_ERROR.QUEUE_LIMIT_EXCEEDED) {
+		$.dialog({message:'{lang admin.validate.swfupload.lang.limit}'});
+	}else{
+		$.dialog({message:'{lang admin.validate.swfupload.echo.fail}'});
+	}
+}
+
+function uploadSuccess(file, serverData) {
+	if(serverData.substring(0, 7) === "FILEID:") {
+		var tempArr = serverData.split('|');
+		var photoPath = formatFilePath(serverData.substring(7));
+		
+		$('#p_' + tempArr[5] + ' img').attr('src', photoPath).attr('data', serverData.substring(7));
+	}else $.dialog({message:serverData});
+}
+
+function createSwfUpload(file, title){
+	var swf_config = {
+		upload_url: "{$ADMIN_SCRIPT}/ad/log/_upload&file=" + file + "&_SALT={$_var[current][SALT]}",
+		
+		file_size_limit : "400KB", 
+		file_types : "*.jpg;*.bmp;*.gif;*.png",
+		file_types_description : "JPG Images",
+		file_upload_limit : "0",
+		
+		file_queue_error_handler : fileQueueError,
+		file_dialog_complete_handler : fileDialogComplete,
+		upload_progress_handler : uploadProgress,
+		upload_error_handler : uploadError,
+		upload_success_handler : uploadSuccess,
+		upload_complete_handler : uploadComplete,
+		
+		button_image_url : "static/images/swfupload/swfupload.png",
+		button_placeholder_id : "swfu_" + file, 
+		button_width: 150,
+		button_height: 18,
+		button_text : '{lang admin.validate.swfupload.lang.button.choice}' + title + '({lang admin.validate.swfupload.lang.button.limit}400K)',
+		button_text_style : '',
+		button_text_top_padding: 0,
+		button_text_left_padding: 18,
+		
+		flash_url : "static/swfupload.swf", 
+		debug: false
+	};
+	
+	return new SWFUpload(swf_config);
+}
+
+function check_form(frm){
+    if(frm.txtTitle.value.trim().length == 0){
+    	$(frm.txtTitle).next('.help-inline').css('color', 'red');
+    	frm.txtTitle.focus();
+    	return false;
+    }
+    
+    if(frm.txtLink.value.trim().length == 0){
+    	$(frm.txtLink).next('.help-inline').css('color', 'red');
+    	frm.txtLink.focus();
+    	return false;
+    }
+    
+    if(frm.sltEAdId.selectedIndex == 0){
+    	$(frm.sltEAdId).next('.help-inline').css('color', 'red');
+    	frm.sltEAdId.focus();
+    	return false;
+    }
+    
+    frm.hdnFile01.value = $('#p_file01 img').attr('data') ? $('#p_file01 img').attr('data') : '';
+    
+    return true;
+}
+	
+$(function(){
+   	$('.input-medium').datepicker({format:'yyyy-mm-dd'});
+   	
+   	$('fieldset input,textarea,select').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+	$("select[name='sltEAdId']").change(function(){
+		var option = this.options[this.selectedIndex];
+		$('.label-file01 span').text(this.selectedIndex == 0 ? '' : '{lang ad.log_edit.view.file01.tips}' + $(option).attr('size'));
+	});
+	
+	$('.swfupload img').dblclick(function(){
+		$(this).attr({src:'static/images/no-picture.jpg', data:''});
+	});
+	
+	swfu_file01 = createSwfUpload('file01', '{lang ad.log_edit.view.file01}');
+});
+</script>
+<!--{template /module/admin/view/foot}-->

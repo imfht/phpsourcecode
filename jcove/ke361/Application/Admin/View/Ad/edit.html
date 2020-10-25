@@ -1,0 +1,174 @@
+<extend name="Public/base"/>
+  
+<block name="body">
+	<div class="main-title">
+        <h2>编辑广告</h2>
+    </div>
+	<script type="text/javascript" src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>           
+    <form class="form-horizontal" role="form" action="{:U('Ad/edit')}" method="post" enctype="multipart/form-data"> 
+        <div class="form-item">
+        	<label class="item-label" for="ad-title">广告标题</label>
+        	<div class="controls">
+        		<input class="form-control input-large" type="text " id="ad-title" value="{$ad[title]}" name="title">
+        	</div>
+        </div>
+        <div class="form-item">
+        	<label class="item-label" for="ad-template">模版 <span class="check-tips">（选择要显示的模版）</span></label>
+        	<div class="controls">
+        		<select id="ad-template"  name="template">
+        			<option value="0" >请选择</option>
+        			<option value="1" <eq name="ad[template]" value="1">selected</eq>>首页</option>
+        			<option value="2" <eq name="ad[template]" value="2">selected="selected"</eq>>商品详情页</option>
+        			<option value="3" <eq name="ad[template]" value="3">selected="selected"</eq>>文章详情页</option>
+        			<option value="4" <eq name="ad[template]" value="4">selected="selected"</eq>>登录页</option>
+        			<option value="5" <eq name="ad[template]" value="5">selected="selected"</eq>>注册页</option>
+        		</select>
+        	</div>
+        </div>
+        <div class="form-item">
+        	<label class="item-label" for="ad-position">位置<span class="check-tips">（模版中的位置）</span></label>
+        	<div class="controls">
+        		<notempty name="ad[position]">
+	        		<select id="ad-position" name="position">
+	        			<option value="{$ad['position']}">{$ad['position']|get_ad_position_name}</option>
+	        			
+	        		</select>
+	        	<else/>
+	        		<select id="ad-position" name="position">
+	        			<volist name="default_ad_position" id = "vo">
+	        				<option value="{$vo['id']}">{$vo['title']}</option>
+	        			</volist>
+	        		</select>
+	        	</notempty>
+        	</div>
+        </div>
+        <div class="form-item">
+        	<label class="item-label" for="ad-template">类型 <span class="check-tips">（选择要显示的类型）</span></label>
+        	<div class="controls">
+        		<select id="ad-template"  name="type">
+        			
+        			<option value="1" <eq name="ad[type]" value="1">selected</eq>>图片</option>
+        			<option value="2" <eq name="ad[type]" value="2">selected="selected"</eq>>代码</option>
+        			<option value="3" <eq name="ad[type]" value="3">selected="selected"</eq>>文字</option>
+        		</select>
+        	</div>
+        </div>
+        <div class="form-item">
+        	<label class="item-label" for="ad-object-id">对象<span class="check-tips">（指定对象，如文章id，不指定则全部显示）</span></label>
+        	<div class="controls">
+        		<input class="form-control input-small" type="text " id="ad-object-id" value="{$ad[object_id]}" name="object_id">
+        	</div>
+        </div>
+         <div class="form-item">
+        	<label class="item-label" for="ad-width">宽度<span class="check-tips">（广告宽度,需带单位，如：100px,100%）</span></label>
+        	<div class="controls">
+        		<input class="form-control input-small" type="text " id="ad-width" value="{$ad[width]}" name="width">
+        	</div>
+        </div>
+         <div class="form-item">
+        	<label class="item-label" for="ad-height">高度<span class="check-tips">（广告高度,需带单位，如：100px,100%）</span></label>
+        	<div class="controls">
+        		<input class="form-control input-small" type="text " id="ad-height" value="{$ad[height]}" name="height">
+        	</div>
+        </div>
+        <div class="form-item">
+       		 <label class="item-label" for="form-field-1">广告图片<span style="color:#f00;">*</span></label>
+			 <div class="controls">
+				<input type="file" id="upload_picture_pic_url" class="form-control">
+				
+				<div class="upload-img-box">
+				<notempty name="ad.pic_url">
+					<div class="upload-pre-item"><img src="{:get_image_url($ad[pic_url])}"/></div>
+				</notempty>
+				</div>
+			 </div>	
+			 <input type="hidden" name="pic_url" id="pic_url" value="{$ad[pic_url]}"/>
+			<script type="text/javascript">
+			//上传图片
+			   /* 初始化上传插件 */
+			$("#upload_picture_pic_url").uploadify({
+			       "height"          : 30,
+			       "swf"             : "__STATIC__/uploadify/uploadify.swf",
+			       "fileObjName"     : "download",
+			       "buttonText"      : "上传图片",
+			       "uploader"        : "{:U('File/uploadAdPicture',array('session_id'=>session_id()))}",
+			       "width"           : 120,      
+			       "removeTimeout"	  : 1,
+			       "fileTypeExts"	  : "*.jpg; *.png; *.gif;",
+			       "onUploadSuccess" : uploadPicture,
+			       "onFallback" : function() {
+			           alert('未检测到兼容版本的Flash.');
+			       }
+			   });
+			function uploadPicture(file, data){
+			   	var data = $.parseJSON(data);
+			   	var src = '';
+			   	
+			       if(data.status){
+			       	
+			       	$("#pic_url").val(data.path);
+			       	src = data.url || '__ROOT__' + data.path
+			      
+			       	$('.upload-img-box').html(
+			       		'<div class="upload-pre-item"><img src="' + src + '"/></div>'
+			       	);
+			       } else {
+			       	updateAlert(data.info);
+			       	setTimeout(function(){
+			               $('#top-alert').find('button').click();
+			               $(that).removeClass('disabled').prop('disabled',false);
+			           },1500);
+			       }
+			   }
+			</script>
+		</div>
+        <div class="form-item">
+            <label class="item-label" for="form-field-1">内容<span class="check-tips">（文字或代码请直接输入）</span></label>
+            <div class="controls">
+            	<textarea class="col-sm-12 form-control" name="code">{$ad[code]}</textarea>
+          
+            </div>
+        </div>          
+        <div class="form-item">
+            <label class="item-label" for="form-field-1">链接<span style="color:#f00;">*</span></label>
+            <div class="controls">
+            	<input class="col-sm-12 form-control" type="text" name="link" value="{$ad['link']}">
+            </div>
+        </div>
+  
+        <div class="clearfix form-actions">
+            <div class="col-md-offset-4 col-md-4">
+            	<input type="hidden" name="id" value="{$ad.id}">
+                <button class="btn btn-info btn-block ajax-post" target-form="form-horizontal" type="submit">
+                    <i class="icon-ok bigger-110"></i>
+                    确认
+                </button>
+            </div>
+        </div>
+    </form>
+                       
+   
+ </block>
+    <a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
+        <i class="icon-double-angle-up icon-only bigger-110"></i>
+    </a>
+<block name="script">
+    <script type="text/javascript">
+    $(function () {
+       
+        $('#ad-template').change(function(){
+        	template = $(this).val();
+        	$.post("{:U('Ad/ajaxAdPosition')}",{'template':template},function(data){
+        		if(data.status){
+        			$('#ad-position').empty();
+        			$('#ad-position').append(data.content);
+        		}else{
+        			$('#ad-position').empty();
+        			alert(data.message);
+        		}
+        	},'json')
+        });
+    });
+    </script>
+    
+</block>

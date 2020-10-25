@@ -1,0 +1,156 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		
+		<link href="static/images/favicon.ico" rel="icon" type="image/x-icon" />
+		<link href="static/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+		<link href="static/images/favicon.ico" rel="bookmark" type="image/x-icon" />
+		
+		<title>{$setting[ProductName]}</title>
+		
+		<style type="text/css">
+		body {margin:0px; padding:0px; background:#333; text-align:center;}
+		a {color:#333; text-decoration:none; cursor:pointer;}
+		a:linked {color:#333;}
+		a:hover {color:#cc0000;}
+		
+		.frame p {margin:0; padding:0; font-size:18px; color:#fff; line-height:20px;}
+		.frame .qr img {width:160px; height:160px;}
+		.frame .url {color:yellow;}
+		.frame .other {padding:20px 0 5px 0;}
+		.frame button {margin:0; padding:6px 10px; font-size:14px; border:0; cursor:pointer;}
+		
+		.menus {position:relative; height:42px; font-size:13px; line-height:42px; z-index:99;}
+		.menus .item {display:block; height:42px;}
+		.menus .item-detail {position:absolute; bottom:42px; right:-1px; width:90px; border:1px solid #c6c6c6; z-index:9999; cursor:pointer;}
+		.menus .item-detail p {height:40px; font-size:13px; line-height:42px; border-bottom:1px solid #c6c6c6; background:#fff;}
+		.menus .item-detail p a {display:block; height:40px;}
+		.menus .gray {color:#999;}
+		.menus-sub {background:url(static/images/weixin/menu.jpg) right bottom no-repeat;}
+		.menus-sub .item-active {background:url(static/images/weixin/menu.jpg) right bottom no-repeat #f7f7f7;}
+		</style>
+	</head>
+	<body>
+		<table class="frame" width="100%" height="100%" cellpadding="4" cellspacing="4" border="0">
+			<tr>
+				<td width="400">
+					<table align="center" width="340" height="600" cellpadding="0" cellspacing="0" border="0">
+						<tr>
+							<td height="42">
+								<img src="static/images/weixin/top.png" width="340" border="0"/>
+							</td>
+						</tr>
+						<tr>
+							<td style="border:1px solid #fff; background:#fff;">
+								<iframe id="frm_main" name="frm_main" src="{echo $setting['MobileIndex'] ? $setting['MobileIndex'] : 'index.php';}?_PREVIEW=true" width="100%" height="100%" frameborder="0" marginheight="0" marginwidth="0" framespacing="0" scrolling="auto"></iframe>
+							</td>
+						</tr>
+						<!--{if count($menus) > 0}-->
+						<tr>
+							<td height="43" style="border:1px solid #fff; border-top:0;">
+								<table width="100%" cellpadding="0" cellspacing="1" bgcolor="#c6c6c6">
+								<tr bgcolor="#ffffff">
+									<td>
+										<img src="static/images/weixin/keyboard.jpg" border="0"/>
+									</td>
+									<!--{loop $menus $loop $menu}-->
+									<td align="center" width="90">
+							            <div class="menus {echo count($menu['CHILDREN']) > 0 ? 'menus-sub' : 'menus-item';}">
+							            	<a class="item {echo is_cint($menu['URL']) || strexists($menu['URL'], 'REBATE-SALER-') ? 'gray' : '';}" data="{$menu[URL]}">{echo utf8substr($menu['NAME'], 0, 5);}</a>
+							            	
+							            	<div class="item-detail" style="visibility:hidden;">
+								            	<!--{loop $menu['CHILDREN'] $ckey $cmenu}-->
+								            	<p><a class="child {echo is_cint($cmenu['URL']) || is_ansi($cmenu['URL']) ? 'gray' : '';}" data="{$cmenu[URL]}">{echo utf8substr($cmenu['NAME'], 0, 5);}</a></p>
+								            	<!--{/loop}-->
+							            	</div>
+							            </div>
+							        </td>
+									<!--{/loop}-->
+								</tr>
+								</table>
+							</td>
+						</tr>
+						<!--{/if}-->
+						<tr>
+							<td height="40">
+								<img src="static/images/weixin/bottom.png" width="340" border="0"/>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td>
+					<p class="qr">
+						<img src="static/images/no-picture.jpg"/>
+					</p>
+					<br/>
+                    <br/>
+					<p class="title">{lang admin.preview.title}</p>
+					<p class="url"></p>
+					<br/>
+					<p class="title">{lang admin.preview.link.tips}</p>
+					
+					<hr size="1" color="#999999" width="400" align="left"/>
+					<p class="other">{lang admin.preview.other}</p>
+					<p class="actions">
+						<button type="button" action="index">{lang admin.preview.other.index}</button>
+						<!--{if $wx_setting['WX_OPEN'] || true}-->
+						<button type="button" action="api">{lang admin.preview.other.api}</button>
+						<!--{/if}-->
+					</p>
+				</td>
+			</tr>
+		</table>
+		
+		<script src="static/js/jquery.js"></script>
+		<script src="static/js/jquery.extend.js"></script>
+		
+		<script>
+		function preview(url){
+			var query_url = url.replace(/\?/g, '!');
+			query_url = query_url.replace(/&/g, '|');
+			query_url = query_url.replace(/=/g, ',');
+			
+			$('.frame .qr img').attr('src', '{$ADMIN_SCRIPT}/admin/preview/qrcode&url=' + query_url);
+			$('.frame .url').html(url);
+		}
+		
+		$(function(){
+			$('.menus-item .item').click(function(){
+				if($(this).hasClass('gray')) return;
+				
+				var iframe_url = $(this).attr('data');
+				$('#frm_main').attr('src', iframe_url);
+			});
+			
+			$('.menus-sub .item').click(function(){
+				if($(this).hasClass('item-active')){
+					$(this).removeClass('item-active');
+					$('.item-detail', $(this).parent()).css('visibility', 'hidden');
+				}else{
+					$(this).addClass('item-active');
+					$('.item-detail', $(this).parent()).css('visibility', '');
+				}
+			});
+			
+			$('.item-detail a').click(function(){
+				if($(this).hasClass('gray')) return;
+				
+				$(this).parent().parent().prev().removeClass('item-active');
+				$(this).parent().parent().css('visibility', 'hidden');
+				
+				var iframe_url = $(this).attr('data');
+				$('#frm_main').attr('src', iframe_url);
+			});
+			
+			$('.item-detail').hover(function(){}, function(){
+				$(this).css('visibility', 'hidden');
+				$(this).prev().removeClass('item-active');
+			});
+			
+			$('.actions button').click(function(){
+				$('#frm_main').attr('src', "{echo $setting['MobileIndex'] ? $setting['MobileIndex'] : 'index.php';}?_PREVIEW=true/" + $(this).attr('action'));
+			});
+		});
+		</script>
+	</body>
+</html>

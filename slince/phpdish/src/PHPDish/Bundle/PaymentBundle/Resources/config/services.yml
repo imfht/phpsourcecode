@@ -1,0 +1,39 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+        
+    phpdish_payment.payment_gateway.youzan:
+        class: Slince\YouzanPay\YouzanPay
+        public: true
+        arguments: ['', {httpClient: "@phpdish_core.http_client"}]
+
+    phpdish_payment.manager.payment:
+        class: PHPDish\Bundle\PaymentBundle\Service\PaymentManager
+        public: true
+        arguments: ['', "@doctrine.orm.entity_manager", "@event_dispatcher", "@phpdish_payment.manager.wallet", "@phpdish_payment.payment_gateway.youzan"]
+
+    phpdish_payment.manager.wallet:
+        class: PHPDish\Bundle\PaymentBundle\Service\WalletManager
+        public: true
+        arguments: ['', '', "@doctrine.orm.entity_manager", "@event_dispatcher", "@router", "@phpdish_user.manager.user", "@translator"]
+
+    phpdish_payment.money_formatter:
+        class: PHPDish\Bundle\PaymentBundle\Money\MoneyFormatter
+
+    phpdish_payment.twig.extension.money:
+        class: PHPDish\Bundle\PaymentBundle\Twig\MoneyExtension
+        arguments: ["@phpdish_payment.money_formatter"]
+        tags: ['twig.extension']
+
+    phpdish_payment.twig.extension.wallet:
+        class: PHPDish\Bundle\PaymentBundle\Twig\WalletExtension
+        arguments: ["@translator"]
+        tags: ['twig.extension']
+
+    PHPDish\Bundle\PaymentBundle\Controller\:
+         resource: "../../Controller"
+         arguments:
+              $configuration: '@phpdish_resource.configuration.phpdish_payment'
+         tags: ['controller.service_arguments']

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!--{template /module/bbs/theme/mobile_meta}-->
+<link type="text/css" href="tpl/_res/mobile/css/swiper.css?v={$setting[Version]}" rel="stylesheet" />
+<script type="text/javascript" src="tpl/_res/mobile/js/swiper.js?v={$setting[Version]}"></script>
+</head>
+<body>
+	<div class="bbs">
+		<section id="section">
+			<!--{template /module/bbs/theme/mobile_head}-->
+			
+			<div class="load"></div>
+			
+			<div class="block topic" id="topic-list">
+				<div class="scrollWrapper">
+				<!--{if count($topics) > 0}-->
+					<ul class="topic-list">
+						<!--{template /module/bbs/theme/mobile_index_more}-->
+					</ul>
+					</div>
+				<!--{/if}-->
+				
+				<div class="empty" style="{echo $count > 0 ? 'display:none;' : '';}">
+					<span>{lang bbs.topic.empty}</span>
+					<p>
+						<span class="link"><a href="mobile.do?ac=bbs&op=post&id={$forum[FORUMID]}">{lang bbs.topic.empty.link.post}</a></span> {lang bbs.topic.empty.link.or} 
+						<span class="link"><a href="mobile.do">{lang bbs.topic.empty.link.back}</a></span>
+					</p>
+				</div>
+			</div>
+		</section>
+	</div>
+	
+	<div class="quick-bar-post">
+		<a href="mobile.do?ac=bbs&op=post&id={$forum[FORUMID]}">
+			<span class="edit"></span>
+			<span>{lang bbs.button.post}</span>
+		</a>
+	</div>
+	
+	<div id="frm_post" style="display:none;">
+		<form class="pure-form">
+			<div class="pure-g">
+				<textarea cols="45" rows="3" class="pure-u-1" placeholder="{lang bbs.topic.content.placeholder}"></textarea>
+			</div>
+			
+			<p class="operation text-left">
+				<span class="icon ellipsis" ref="faces"></span>
+			</p>
+			
+			<div class="operate faces swiper-container" style="visibility:hidden;">
+				<div class="swiper-wrapper">
+					<!--{loop $faces_list $loop $faces}-->
+					<div class="swiper-slide face-panel-{$loop}">
+						<img src="tpl/_b2c/images/mobile/bg-2-1.png" border="0"/>
+						<p class="panel">
+							<!--{loop $faces $loop $face}-->
+							<span ref="{$face}" class="face"></span>
+							<!--{/loop}-->
+							<br class="clear"/>
+						</p>
+					</div>
+					<!--{/loop}-->
+				</div>
+				
+				<div class="swiper-pagination"></div>
+			</div>
+		</form>
+	</div>
+	
+	<!--{template /module/bbs/theme/mobile_foot}-->
+	
+	<script>
+	function post_dialog_show(topicid, postid){
+		$.dialog({message:$('#frm_post').html(), remove:false, button:{cancel:'{lang button.cancel}', submit:'{lang button.submit}'}, callback:function(){
+			$('#_dialog .operation .icon').click(function(){
+				if($(this).hasClass('active')){
+					$('#_dialog textarea').show();
+					$('#_dialog .operate').hide();
+					
+					$('#_dialog .operation .icon').removeClass('active');
+				}else{
+					$('#_dialog .operation .icon').removeClass('active');
+					$(this).addClass('active');
+					
+					$('#_dialog .operate').hide();
+					$('.' + $(this).attr('ref')).show();
+					
+					if($(this).attr('ref') == 'record'){
+						$('#_dialog textarea').hide();
+					}else{
+						$('#_dialog textarea').show();
+					}
+				}
+				
+				var _cheight = $('#_dialog .content').height();
+				
+				$('#_dialog .window').css({
+					height:_cheight + 'px', marginTop:'-' + (_cheight / 2) + 'px', 
+					position:'fixed'
+				});
+			});
+			
+			$('.faces .face').click(function(){
+				if($(this).attr('ref') != '{}') $('#_dialog textarea').val($('#_dialog textarea').val() + $(this).attr('ref'));
+			});
+			
+			new Swiper('#_dialog .swiper-container', {pagination:'.swiper-pagination'});
+			
+			$('#_dialog .operate').css('visibility', '').hide();
+		}, submit:function(){
+			var content = $('#_dialog textarea').val();
+			
+			if(!content){
+				$('#_dialog textarea').focus();
+				return;
+			}
+			
+			$.post('mobile.do?ac=bbs&op=reply&rnd=' + Math.random(), {topicid:topicid, postid:postid, content:content}, function(data){
+				data = eval('(' + data + ')');
+				
+				if(data.success == true){
+					var tempHTML = '<li data="' + topicid + ',' + data.postid + ',{$_var[current][USERID]}">';
+					tempHTML += '<span class="username">{$_var[current][USERNAME]}</span>';
+					
+					if(postid > 0){
+						 var toname = $('#reply_username_' + postid).html();
+						 tempHTML += ' TO <span class="username">' + toname + '</span>';
+					}
+					
+					tempHTML += '：<span class="content">' + data.content + '</span>';
+					tempHTML += '</li>';
+					
+					$('#li_' + topicid + ' .reply-list').html(tempHTML + $('#li_' + topicid + ' .reply-list').html());
+					$('#li_' + topicid + ' .reply-list .point').show();
+					
+					bind_reply_event();
+
+					var stat_post = $('.crumb .stat .post em').text() - 0;
+					$('.crumb .stat .post em').text(stat_post + 1);
+					
+					var post_count = $('#li_' + topicid + ' .more .count em').text() - 0;
+					$('#li_' + topicid + ' .more .count em').text(post_count + 1);
+					
+					$('#li_' + topicid + ' .more').show();
+					
+					$('#_dialog').remove();
+				}else{
+					$.toast({message:data.message});
+				}
+			});
+		}});
+	}
+	
+	function bind_reply_event(){
+		$('.reply-list li').unbind('click').bind('click', function(){
+			var data = $(this).attr('data');
+			var temparr = data.split(',');
+			
+			if(temparr.length != 3 || temparr[2] == '{$_var[current][USERID]}') return;
+			
+			post_dialog_show(temparr[0], temparr[1]);
+		});
+	}
+	
+	function bind_topic_event(){
+		$('.attachment img').unbind('click').bind('click', function(){
+			$.image_zoom(this);
+		});
+		
+		$('.content .open').unbind('click').bind('click', function(){
+			$(this).hide();
+			
+			$('.cut', $(this).parent()).hide();
+			$('.summary', $(this).parent()).show();
+		});
+		
+		$('.content .close').unbind('click').bind('click', function(){
+			var detail = $(this).parent().parent();
+			
+			$('.open', detail).show();
+			$('.cut', detail).show();
+			
+			$(this).parent().hide();
+		});
+		
+		$('.operate .delete').unbind('click').bind('click', function(){
+			var topicid = $(this).attr('data');
+			
+			$.dialog({message:'{lang bbs.topic.content.operate.delete.confirm}', button: {cancel:'{lang button.cancel}', submit:'{lang button.submit}'}, submit:function(){
+				$.post('mobile.do?ac=bbs&op=delete&rnd=' + Math.random(), {topicid:topicid}, function(data){
+					data = eval('(' + data + ')');
+					
+					if(data.success == true) {
+						$('#li_' + topicid).remove();
+						
+						if($('#topic-list .line').length == 0) $('#topic-list .empty').show();
+						else $('#topic-list .empty').hide();
+					}else $.toast({message:data.message});
+				});
+			}});
+		});
+		
+		$('.operate .reply').unbind('click').bind('click', function(){
+			post_dialog_show($(this).attr('data'), 0);
+		});
+		
+		$('.operate .up').unbind('click').bind('click', function(){
+			if($(this).hasClass('up-active')) return;
+			
+			var self = this;
+			var topicid = $(self).attr('data');
+			var uplist = $('#li_' + topicid + ' .up-list').html().trim();
+			
+			$.post('mobile.do?ac=bbs&op=up&rnd=' + Math.random(), {topicid:topicid}, function(data){
+				data = eval('(' + data + ')');
+				
+				if(data.success == true){
+					if(data.username){
+						if(uplist) $('#li_' + topicid + ' .up-list').html(uplist + ',&nbsp;' + data.username);
+						else $('#li_' + topicid + ' .up-list').html(data.username);
+					}
+					
+					$('#li_' + topicid + ' .up-list').show();
+					$(self).addClass('up-active');
+				}
+			});
+		});
+		
+		bind_reply_event();
+		
+		$('#topic-list .more .loading').unbind('click').bind('click', function(){
+			var topicid = $(this).attr('data');
+			
+			if($('#li_' + topicid + ' .reply-list .hide').length > 0){
+				var page = $('#li_' + topicid + ' .reply-list .hide').attr('page') - 0;
+				
+				$.get('mobile.do?ac=bbs&op=reply_more&page=' + (page + 1) + '&rnd=' + Math.random(), {topicid:topicid}, function(data){
+					$('#li_' + topicid + ' .reply-list .hide').remove();
+					$('#li_' + topicid + ' .reply-list').append(data);
+					
+					bind_reply_event();
+					
+					if($('#li_' + topicid + ' .reply-list .hide').length == 0) $('#li_' + topicid + ' .more').remove();
+				});
+			}
+		});
+	}
+	
+	$(function(){
+		$.gotop({id:'gotop'});
+		
+		{if $perpage < $count}
+		var $refresh = $.refresh({id:'topic-list', page:{$_var[page]}, callback:function(){
+            var scroll = this;
+            
+            if(scroll.options.loadding) return;
+            scroll.options.loadding = true;
+            
+            $('#topic-list .more-empty').remove();
+            
+        	$.get('mobile.do?ac=bbs&do=more&id={$forum[FORUMID]}&rnd=' + Math.random(), {page:scroll.options.page + 1}, function(data){
+        		$('#topic-list .topic-list').append(data);
+        		$('.load').html('');
+        		
+        		bind_topic_event();
+        		
+        		if(data.length == 0 || $('#topic-list .more-empty').length == 0){
+        			$('#topic-list .refresh-container').html('{lang bbs.topic.over}');
+        			scroll.disable();
+        		}
+        		
+        		scroll.options.page++;
+        		
+        		scroll.refresh();
+        	});
+        }});
+        {/if}
+        
+		bind_topic_event();
+	});
+	</script>
+</body>
+</html>

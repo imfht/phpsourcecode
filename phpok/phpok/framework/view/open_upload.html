@@ -1,0 +1,257 @@
+<!-- include tpl=head_lay nopadding=true -->
+<script type="text/javascript">
+function phpok_input(val)
+{
+	$(".piclist li").removeClass("hover");
+	var obj = $.dialog.opener;
+	obj.obj_{$id}.open_action(val);
+	var content = obj.$("#{$id}").val();
+	if(content){
+		var list = content.split(",");
+		for(var i in list){
+			$("#attr_"+list[i]).addClass("hover");
+		}
+	}
+	if(is_more == false){
+		$.dialog.close();
+	}
+}
+function update_select(val)
+{
+	if(val == 'start_date' || val == 'stop_date'){
+		$("#keywords").focus(function(){
+			laydate({istime: true, format: 'YYYY-MM-DD hh:mm:ss'})
+		});
+	} else {
+		$("#keywords").unbind('focus').click(function(){
+			$(this).select();
+		});
+	}
+}
+function check_search()
+{
+	var cate_id = $("#top_cate_id").val();
+	var keywords = $("#keywords").val();
+	if(!cate_id && !keywords){
+		$.dialog.alert('请选择要搜索的项');
+		return false;
+	}
+	return true;
+}
+function add_input(id)
+{
+	var obj = $.dialog.opener;
+	obj.$("#{$id}").val(id);
+	obj.$.phpokform.upload_showhtml('{$id}',false);
+	$.dialog.close();
+}
+function add_select(id){
+	var obj = $.dialog.opener;
+	var old = obj.$("#{$id}").val();
+	if($("#addfile_"+id).prop("checked")){
+		var act = 'add';
+	}else{
+		var act = 'delete';
+	}
+	if(act == 'add'){
+		var info = (old && old != 'undefined') ? old+","+id : id;
+		var list = info.split(',');
+		list = $.unique(list);
+		info = list.join(",");
+		obj.$("#{$id}").val(info);
+		obj.$.phpokform.upload_showhtml('{$id}',true);
+		return true;
+	}
+	if(id == old){
+		obj.$("#{$id}").val('');
+		obj.obj_{$id}.showhtml();
+		return true;
+	}
+	var list = old.split(",");
+	var nlist = new Array();
+	var m = 0;
+	for(var i in list){
+		if(list[i] != id){
+			nlist[m] = list[i];
+			m++;
+		}
+	}
+	old = nlist.join(',');
+	obj.$("#{$id}").val(old);
+	obj.$.phpokform.upload_showhtml('{$id}',true);
+	return true;
+}
+</script>
+<div class="layui-card">
+	<div class="layui-card-header" style="padding-top:5px;">
+		<form method="post" class="layui-form" id="post_save" onsubmit="return false">
+		<ul class="layout">
+			<li>
+				<select name="cate_id" id="top_cate_id">
+					<option value="">全部分类…</option>
+					<!-- loop from=$catelist key=$key value=$value id=$tmpid -->
+					<option value="{$value.id}"{if $value.id == $cate_id} selected{/if}>{$value.title}</option>
+					<!-- /loop -->
+				</select>
+			</li>
+			<li>
+				<select name="keytype" id="keytype" onchange="update_select(this.value)">
+					<!-- loop from=$keytype_list key=$key value=$value id=$tmpid -->
+					<option value="{$key}"{if $key == $keytype} selected{/if}>{$value}</option>
+					<!-- /loop -->
+				</select>
+			</li>
+			<li></li>
+			<li></li>
+		</ul>
+		</form>
+	</div>
+	<div class="layui-card-body">
+		
+	</div>
+</div>
+<div class="search">
+	<form method="post" action="{$pageurl}" onsubmit="return check_search()">
+	<table>
+	<tr>
+		<td>搜索：</td>
+		<td><select name="cate_id" id="top_cate_id">
+			<option value="">全部分类…</option>
+			<!-- loop from=$catelist key=$key value=$value id=$tmpid -->
+			<option value="{$value.id}"{if $value.id == $cate_id} selected{/if}>{$value.title}</option>
+			<!-- /loop -->
+		</select></td>
+		<td><select name="keytype" id="keytype" onchange="update_select(this.value)">
+			<!-- loop from=$keytype_list key=$key value=$value id=$tmpid -->
+			<option value="{$key}"{if $key == $keytype} selected{/if}>{$value}</option>
+			<!-- /loop -->
+		</select></td>
+		<td><input type="text" name="keywords" id="keywords" value="{$keywords}" class="keywords" /></td>
+		<td><input type="submit" value=" {lang搜索} " /></td>
+		<td><input type="button" value=" {lang刷新} " onclick="$.phpok.reload()" /></td>
+	</tr>
+	</table>
+	</form>
+</div>
+<ul class="filelist">
+	<!-- loop from=$rslist key=$key value=$value id=$tmpid -->
+	<li{if !$multiple} onclick="add_input('{$value.id}')" class="hand"{/if}>
+		<label>
+		<div class="li_bg">
+			<div class="ico">
+				<img src="{$value.ico}" class="img" />
+				<!-- if $multiple -->
+				<div class="checkbox"><input type="checkbox" name="addfile[]"{if $multiple} onclick="add_select('{$value.id}')"{/if} id="addfile_{$value.id}" value="{$value.id}" /></div>
+				<!-- /if -->
+			</div>
+			<div class="note">
+				<div class="info">名称：{$value.title}</div>
+				<div class="info">添加：{func date "Y-m-d H:i:s" $value.addtime}</div>
+				<div class="info">属性：{$value.attr ? $value.attr.width.' x '.$value.attr.height : '-'}</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		</label>
+	</li>
+	<!-- /loop -->
+	<div class="clear"></div>
+</ul>
+<!-- if $pagelist -->
+<div class="pagelist">
+<ul>
+	<!-- loop from=$pagelist key=$key value=$value id=$tmpid -->
+	<li><a href="{$value.url}"{if $value.status} class="current"{/if}>{$value.title}</a></li>
+	<!-- /loop -->
+</ul>
+</div>
+<!-- /if -->
+<script type="text/javascript">
+$(document).ready(function(){
+	var obj = $.dialog.opener;
+	var old = obj.$("#{$id}").val();
+	if(old && old != 'undefined'){
+		var list = old.split(',');
+		for(var i in list){
+			$("#addfile_"+list[i]).prop('checked',true);
+		}
+	}
+});
+</script>
+<!-- if $session.admin_id && $sys.app_id == 'admin' -->
+<link rel="stylesheet" type="text/css" href="{#js#}/webuploader/webuploader.css" />
+<script type="text/javascript" src="{#js#}/webuploader/webuploader.min.js"></script>
+<script type="text/javascript" src="{#js#}/webuploader/admin.upload.js"></script>
+<script type="text/javascript">
+var obj_upload = {};
+var obj = art.dialog.opener;
+$(document).ready(function(){
+	cate_change();
+});
+function cate_change()
+{
+	val = $("#upload_cate_id").val();
+	if(!val){
+		$.dialog.alert('请选择要存储的目标分类');
+		return false;
+	}
+	var data = $("#upload_cate_id option[value="+val+"]").attr('data');
+	var catename = $("#upload_cate_id option[value="+val+"]").attr('catename');
+	obj_upload = new $.admin_upload({
+		"multiple"	: 'true',
+		"id" : "upload",
+		'pick':{'id':'#upload_picker','multiple':true},
+		'resize':false,
+		"swf" : "js/webuploader/uploader.swf",
+		"server": "{url ctrl=upload func=save/}",
+		'accept' : {'title':catename,'extensions':data},
+		"formData" :{'{func session_name}':'{func session_id}','cateid':val},
+		'fileVal':'upfile',
+		'sendAsBinary':{$sendAsBinary ? 'true' : 'false'},
+		'auto':true,
+		"success":function(){
+			return true;
+		}
+	});
+	obj_upload.uploader.on('uploadFinished',function(){
+		$.dialog.alert('附件上传成功',function(){
+			$.phpok.reload();
+		});
+	});
+}
+function cancel()
+{
+	return obj_upload.uploader.stop();
+}
+</script>
+<div style="height:120px">&nbsp;</div>
+<div id="upload_open" style="border-top:1px solid #000;background:#efefef;position: fixed;bottom:0;height:120px;z-index:1999;width:100%;margin-left:-3px;margin-right:-3px;">
+	<div class="table">
+		<div class="title">
+			{lang上传附件：}
+			<span class="note">{lang上传前请注意选择附件分类}</span>
+		</div>
+		<div class="content">
+			<table>
+			<tr>
+				<td>
+					<select id="upload_cate_id" onchange="cate_change()" style="width:400px;background-color:#fff;">
+						<!-- loop from=$catelist key=$key value=$value -->
+						<option value="{$value.id}"{if $value.id == $cate_id} selected{/if} data="{$value.filetypes}" catename="{$value.title}">
+						{$value.title}<!-- if $value.typeinfos --> / {lang支持上传格式：}{$value.typeinfos}<!-- /if --></option>
+						<!-- /loop -->
+					</select>
+				</td>
+				<td><div id="upload_picker" class=""></div></td>
+			</tr>
+			</table>
+			
+			
+		</div>
+	</div>
+
+	<div class="table">
+		<div class="content" id="upload_progress"></div>
+	</div>
+</div>
+<!-- /if -->
+<!-- include tpl=foot_open -->

@@ -1,0 +1,344 @@
+<?php
+
+$user_id = @intval($_GET['user_id']);
+$shuo_id = @intval($_GET['shuo_id']);
+$blog_id = @intval($_GET['blog_id']);
+$auth = @$_SESSION['auth'];
+
+//获得user_id
+if (empty($user_id)) {
+	if (!empty($shuo_id)) {
+		$shuo = dt_query_one("SELECT user_id FROM shuo WHERE id = $shuo_id");
+		if (!$shuo) die('获取shuo数据失败！^_^');
+		$user_id = $shuo['user_id'];
+	} else if (!empty($blog_id)) {
+		$blog = dt_query_one("SELECT user_id FROM blog WHERE id = $blog_id");
+		if (!$blog) {
+			put_info('您访问的blog不存在了！^_^');
+			header('Location:?c=center'); 
+			die();
+		}
+		$user_id = $blog['user_id'];
+	} else if (!empty($auth)) {
+		$user_id = $auth['id'];
+	} else { header('Location:?c=user&a=login'); die(); }
+}
+
+//更新visitor数据
+if (!empty($auth)) {
+	$cond = "WHERE user_id = ".$auth['id']." AND to_user_id = $user_id";
+	if (1 > dt_count('visitor', $cond)) {
+		$rs = dt_query("INSERT INTO visitor (user_id, user_name, to_user_id, m_at, c_at) VALUES (".$auth['id'].", '".$auth['name']."', $user_id, ".time().", ".time().")");
+		if (!$rs) die('新建访问数据失败！');
+	} else {
+		$rs = dt_query("UPDATE visitor SET user_name = '".$auth['name']."', m_at = ".time()." $cond");
+		if (!$rs) die('更新访问数据失败！');
+	}
+}
+$rs = dt_query("UPDATE user_info SET visit_c = visit_c + 1 WHERE id = $user_id");
+if (!$rs) die('统计访问数失败！');
+
+//获得user_info
+$user_info = dt_query_one("SELECT * FROM user_info WHERE id = $user_id");
+if (!$user_info) {
+	put_info('该用户不存在！');
+	header('Location:?c=center');
+	die; 
+}
+
+
+?>
+<?php if (empty($_SESSION['app_version'])) {  ?>
+<?php if (!empty($user_info['background_url'])) { ?>
+<style type="text/css" media=screen>
+body {  
+	background:#f5f5f5 url('<?php echo $user_info['background_url'] ?>') no-repeat center center fixed; 	
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+</style>
+<?php } ?>
+<div class="container hidden-xs">
+	<div class="row clearfix">
+		<div class="col-md-12 column index-userface">
+			<div class="col-md-10 column">
+				<h1>
+					<strong id="center_user_name"><?php echo $user_info['name'] ?></strong> <small>的空间 </small>
+					<sup>访问量 <span class="label label-success"><?php echo $user_info['visit_c'] ?></span></sup>
+				</h1>
+			</div>
+			<div class="col-md-2 column">
+				<img class="pull-right" src="http://qr.liantu.com/api.php?bg=ffffff&fg=111111&el=l&w=60&m=0&text=<?php echo 'http://'.$_SERVER['HTTP_HOST'].'?c=center%26user_id='.$user_id ?>"/>
+			</div>
+		</div>
+	</div>
+</div>
+<?php } ?>
+<!-- 保存空间主用户id -->
+<label style="display:none" id="center_user_id"><?php echo $user_info['id'] ?></label>
+<div class="container usernav">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<ul class="nav nav-tabs" id="center_nav">
+				<li id="shuo">
+				<a href="javascript:get_shuo_index()">说说</a>
+				</li>
+				<?php if (!empty($auth) && $user_info['id'] == $auth['id']) { ?>
+				<li id="msg">
+				<a href="javascript:get_msg_index()">私信</a>
+				</li>
+				<li id="msg_sys">
+				<a href="javascript:get_msg_sys_index()">系统信息<?php if ($user_info['msg_sys_c'] > 0) { ?><sup><span id="msg_sys_c" class="badge"><?php echo $user_info['msg_sys_c'] ?></span></sup><?php } ?></a>
+				</li>
+				<li id="set">
+				<a href="javascript:get_set_index()">设置</a>
+				</li>
+				<?php } ?>
+				<li id="blog">
+				<a href="javascript:get_blog_index()">日志</a>
+				</li>
+				<li id="relation">
+				<a href="javascript:get_relation_index()">关系</a>
+				</li>
+				<li id="archive">
+				<a href="javascript:get_archive_index()">个人档</a>
+				</li>
+				<?php global $config; if (in_array($auth['id'], $config['manager']) && !in_array($user_info['id'], $config['manager'])) { ?>
+				<li>
+				<a href="?c=center&a=do_user_bk&user_id=<?php echo $user_info['id'] ?>"><?php if (dt_query_one("SELECT id FROM user_bk WHERE user_id = $user_id LIMIT 1")) { ?>取消黑名单<?php } else { ?> 加入黑名单<?php } ?></a>
+				</li>
+				<?php } ?>
+			</ul>
+		</div>
+
+	</div>
+</div>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-8 column" id="center_area">
+
+		<!-- 空间内容加载区 -->
+
+		</div>
+		<?php if (empty($_SESSION['app_version'])) {  ?>
+		<div class="col-md-4 column" id="side_area">
+			<div class="well">
+				<div class="row clearfix  index-user-info">
+					<div class="index-side-col-6">
+						<img src="<?php echo FACE_URL.$user_info['id'] ?>.jpg" class="img-rounded" width="100%"/>
+					</div>
+					<div class="index-side-col-6">
+						<h4><strong>名字：</strong><?php echo $user_info['name'] ?></h4>
+						<p><strong>简介：</strong><?php echo $user_info['intro'] ?></p>
+					</div>
+				</div>
+				<br>
+				<div class="row clearfix">
+					<div class="index-side-col-4" style="border-right:1px solid #aaa">
+						<a href="javascript:get_relation_index()" class="btn btn-block">
+							<h4> 关注 </h4>
+							<p><?php echo $user_info['follow_c'] ?></p>
+						</a>
+					</div>
+					<div class="index-side-col-4"  style="border-right:1px solid #aaa">
+						<a href="javascript:get_relation_index(1)" class="btn btn-block">
+							<h4> 粉丝 </h4>
+							<p id="fan_c"><?php echo $user_info['fan_c'] ?></p>
+						</a>
+					</div>
+					<div class="index-side-col-4">
+						<a href="javascript:get_shuo_index(1)" class="btn btn-block">
+							<h4> 说说 </h4>
+							<p id="shuoshuo"><?php echo $user_info['shuo_c'] ?></p>
+						</a>
+					</div>
+
+				</div>
+			</div>
+			<?php if (!empty($auth) && $user_info['id'] != $auth['id']) { ?>
+			<div class="well">
+				<div class="row clearfix">
+					<div class="col-xs-6 column" id="do_follow">
+						<?php if (0 < dt_count('follow', "WHERE user_id = ".$auth['id']." AND to_user_id = ".$user_info['id'])) { ?>
+						<a href="javascript:do_follow_i()" class="btn btn-default btn-block"> 取消关注</a>
+						<?php } else { ?>
+						<a href="javascript:do_follow_i()" class="btn btn-default btn-block"><span class="glyphicon glyphicon-plus"></span> 关注 Ta</a>
+						<?php } ?>
+					</div>
+					<div class="col-xs-6 column">
+						<a href="javascript:void()" class="btn btn-default btn-block" data-toggle="modal" data-target="#do_msg_add_m"><span class="glyphicon glyphicon-envelope"></span> 发私信 Ta</a>
+						<!-- Modal -->
+						<div class="modal fade" id="do_msg_add_m" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+										<h3 class="modal-title" id="myModalLabel"><span class="glyphicon glyphicon-edit"></span> 发私信给 <?php echo $user_info['name'] ?> </h3>
+									</div>
+									<div class="modal-body">
+										<textarea class="form-control input-lg" id="msg_content_i" name="content" placeholder="快写点什么吧!^_^" style="width:100%!important;height:150px;"></textarea>
+										<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+										<a type="button" class="btn btn-primary" href="javascript:do_msg_add_i(<?php echo $user_info['id'] ?>)"><span class="glyphicon glyphicon-envelope"></span> 发送给 Ta</a>
+									</div>
+								</div><!-- /.modal-content -->
+							</div><!-- /.modal-dialog -->
+						</div><!-- /.modal -->
+					</div>
+				</div>
+			</div>
+			<?php } ?>
+			<div class="well">
+				<div class="row clearfix">
+					<div class="col-md-12 column">
+						<audio class="index-audio" src="<?php echo $user_info['audio_url'] ?>" autoplay="autoplay" controls="controls"></audio>	
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php } ?>
+	</div>
+</div>
+<script type="text/javascript">
+
+var c_user_id = <?php echo $user_info['id'] ?>;
+
+$(document).ready(function(){
+	$('li#center').addClass('active');
+	<?php if (empty($blog_id)) { ?>
+	get_shuo_index(0, <?php echo $shuo_id ?>);
+	<?php } else { ?>
+	get_blog_index(<?php echo $blog_id ?>);
+	<?php } ?>
+	<?php if (empty($_SESSION['app_version'])) {  ?> get_index_visitor(); <?php } ?>
+});
+
+function get_shuo_index(my_shuo, shuo_id) {
+	$.get('?c=center&a=get_shuo_index&user_id='+c_user_id+'&my_shuo='+my_shuo+'&shuo_id='+shuo_id, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+function get_blog_index(blog_id) {
+	$.get('?c=center&a=get_blog_index&user_id='+c_user_id+'&blog_id='+blog_id, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+function get_relation_index(my_fan) {
+	$.get('?c=center&a=get_relation_index&user_id='+c_user_id+'&my_fan='+my_fan, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+function get_archive_index() {
+	$.get('?c=center&a=get_archive_index&user_id='+c_user_id, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+<?php if (!empty($auth) && $user_info['id'] == $auth['id']) { ?>
+function get_msg_index(page) {
+	$.get('?c=center&a=get_msg_index&page='+page, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+function get_msg_sys_index(page) {
+	$.get('?c=center&a=get_msg_sys_index&page='+page, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+function get_set_index() {
+	$.get('?c=center&a=get_set_index', function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		get_x_index_pub_do(rs);
+	});
+}
+<?php } ?>
+function get_x_index_pub_do(rs) {
+	auto_run_stop();
+	$('ul#center_nav').find('li').removeClass('active');
+	$('div#center_area').html(rs);
+}
+function do_follow_i() {
+	$.get('?c=center&a=do_follow&to_user_id='+c_user_id, function(rs){
+		if ('s0' == rs) { 
+			$("div#do_follow").find('a').html(' 取消关注');
+			$("p#fan_c").text(parseInt($("p#fan_c").text()) + 1);
+		} else if ('s1' == rs) { 
+			$("div#do_follow").find('a').html('<span class="glyphicon glyphicon-plus"></span> 关注 Ta');
+			$("p#fan_c").text(parseInt($("p#fan_c").text()) - 1);
+		} else { alert(rs); }
+	});
+}
+function do_msg_add_i(user_id) {
+	$.post('?c=center&a=do_msg_add&user_id='+user_id, {content:$('textarea#msg_content_i').val(), token:$('div#do_msg_add_m').find('input[name=token]').val()}, function(rs){
+		rs = $.parseJSON(rs);
+		$('div#do_msg_add_m').find('input[name=token]').val(rs.token);
+		if ('s0' != rs.msg) { 
+			alert(rs.msg);
+			return;
+		} 
+		$('div#do_msg_add_m').modal('hide');
+		$('textarea#msg_content_i').val('');
+	});
+}
+<?php if (empty($_SESSION['app_version'])) {  ?>
+function get_index_visitor() {
+	$.get('?c=center&a=get_index_visitor&user_id='+c_user_id, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		$('div#side_area').append(rs);
+		get_index_follow();
+	});
+}
+function get_index_follow() {
+	$.get('?c=center&a=get_index_follow&user_id='+c_user_id, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		$('div#side_area').append(rs);
+		get_index_fan();
+	});
+}
+function get_index_fan() {
+	$.get('?c=center&a=get_index_fan&user_id='+c_user_id, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		}
+		$('div#side_area').append(rs);
+	});
+}
+<?php } ?>
+</script>

@@ -1,0 +1,407 @@
+<layout name="layout"/>
+
+
+<script>
+$(document).ready(function(){
+  $("#start_action").click(function(){
+  $("#start_action").val("启动中...");
+  server = $(this).attr("server");
+  action = $(this).attr("cmd");
+  $.ajax({
+    type : "GET",
+    url  : "http://192.168.4.50:5000/service/",
+    cache : false,
+    dataType: "jsonp",
+    data:{"key":server,"action":action},
+    jsonp: "jsonpcallback",
+    success : function(data){
+        if( data.Action.result == "1"){
+             alert("启动成功!");
+        }else{
+        if( data.Process_number.before != "0"  ){
+             alert("启动失败,进程已经存在!")
+        }else{
+ 	     alert("启动失败!");
+        }
+        }
+    $("#start_action").val("启动"); 
+    
+    },
+    error : function(data){
+        alert("执行错误,请查看日志!")
+    $("#start_action").val("启动");  
+    }
+ });
+  });
+
+
+  $("#stop_action").click(function(){
+  $("#stop_action").val("停止中...");
+  server = $(this).attr("server");
+  action = $(this).attr("cmd");
+  $.ajax({
+    type : "GET",
+    url  : "http://192.168.4.50:5000/service/",
+    cache : false,
+    dataType: "jsonp",
+    data:{"key":server,"action":action},
+    jsonp: "jsonpcallback",
+    success : function(data){
+        if( data.Action.result == "1"){
+             alert("停止成功");
+        }else{
+             alert("停止失败")
+        }
+    $("#stop_action").val("停止"); 
+    },
+    error : function(data){
+        alert("执行错误")
+    $("#stop_action").val("停止");
+    }
+ });
+
+
+  }); 
+
+
+  $("#restart_action").click(function(){
+  server = $(this).attr("server");
+  action = $(this).attr("cmd");
+  $.ajax({
+    type : "GET",
+    url  : "http://192.168.4.50:5000/service/",
+    cache : false,
+    dataType: "jsonp",
+    data:{"key":server,"action":action},
+    jsonp: "jsonpcallback",
+    success : function(data){
+        if( data.Action.result == "1"){
+             alert("重启成功");
+        }else{
+             alert("重启失败")
+        }
+    
+    },
+    error : function(data){
+        alert("执行错误")
+    }
+ });
+
+
+  });
+
+
+
+ $(".dialog-service").click(function() {
+
+  server = $(this).attr("server");
+  action = $(this).attr("cmd");
+  var this_value=$(this);
+  if ( action == "start" ){
+	$(this).val("启动中");
+	var message1 = "启动成功";	
+	var message2 = "启动失败,进程已经存在";	
+	var message3 = "启动失败!";	
+	var message4 = "启动";	
+  }else if ( action == "stop") {
+	$(this).val("停止中"); 
+        var message1 = "停止成功";      
+        var message2 = "停止失败"; 
+        var message3 = "停止失败!";     
+        var message4 = "停止";  
+
+  }else if ( action == "restart" ){
+	$(this).val("重启中"); 
+        var message1 = "重启成功";      
+        var message2 = "重启失败"; 
+        var message3 = "重启失败!";     
+        var message4 = "重启"; 
+  }
+  $('#myModal_confirm').modal({show:true});
+  return 0;	
+  $.ajax({
+    type : "GET",
+    url  : "http://192.168.4.50:5000/service/",
+    cache : false,
+    dataType: "jsonp",
+    data:{"key":server,"action":action},
+    jsonp: "jsonpcallback",
+    success : function(data){
+        if( data.Action.result == "1"){
+             alert(message1);
+        }else{
+        if( data.Process_number.before != "0"  ){
+             alert(message2)
+        }else{
+             alert(message3);
+        }
+        }
+        this_value.val(message4);
+    },
+    error : function(data){
+    this_value.val(message4);  
+        alert("执行错误,请查看日志!")
+    }
+ });
+
+
+               
+ });
+
+
+
+});
+
+
+
+
+
+
+</script>
+
+
+<div class="col-md-12">
+
+
+    <div class="panel panel-archon">
+        <div class="panel-heading"
+             style="background-color: #59d1a3; color: #ffffff; text-transform: uppercase;">
+            <h3 class="panel-title tb_title">
+                {$transtring["main_table_title"]|default="表格标题未定义/未获取成功"}
+				<span class="pull-right">
+					<a style="color: white;" href="#" class="panel-settings">
+                        <i class="icon-cog"></i>
+                    </a>
+					<a style="color: white;" href="#" class="panel-close">
+                        <i class="icon-remove"></i>
+                    </a>
+				</span>
+            </h3>
+        </div>
+
+
+        <div class="buttons-demo tb_title" style="height: 40px; margin-top: 1px;">
+            <a href="http://192.168.4.50:5000/service/" message="确定要启动选中的记录么？"
+               dialog="true" checkbox="true"
+               class="dialog-action btn btn-hg btn-info ">
+                <i class="icon-remove-sign"></i>
+                批量启动
+            </a>
+            <a href="http://192.168.4.50:5000/service/" message="确定要停止选中的记录么？"
+               dialog="true" checkbox="true"
+               class="dialog-action btn btn-hg btn-info ">
+                <i class="icon-remove-sign"></i>
+                批量停止
+            </a>
+
+
+            <a href="{$cache_link}" dialog="after"
+               checkbox="false" class="dialog-action btn btn-hg btn-info ">
+                <i class=" icon-refresh"></i>
+                更新缓存
+            </a>
+            <a href="{$export_link}"
+               class="btn btn-hg btn-info ">
+                <i class="icon-download"></i>
+                导出列表
+            </a>
+
+            <div class="col-lg-3" style="float: right; margin-top: 1px">
+                <form method="GET" class="navbar-form pull-right"
+                      action="{$index_link}" style="margin-top: 0px;">
+
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search"
+                               placeholder="可选择任何关键字搜索!">
+						<span class="input-group-btn">
+							<button type="submit" class="btn btn-small btn-primary">
+                                <i class="icon-search"></i>
+                                搜索
+                            </button>
+						</span>
+                    </div>
+
+                </form>
+            </div>
+
+
+        </div>
+
+
+        <div class="panel-body" style="padding-top: 1px">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+
+                    <th>
+                        <input type="checkbox" class="style checkboxall"/>
+                    </th>
+                    <volist name="table_th" id="th_name">
+                        <th class="th_center">{$th_name}</th>
+                    </volist>
+
+                </tr>
+                </thead>
+                <tbody>
+                <php>
+                    foreach ($list as  $vo){
+                    if($vo['id']){
+                    echo   "<tr>";
+                    echo        "<td class='notallow td_center'>";
+                        echo           "<input type='checkbox' value=".$vo['id']." class='style checkboxrow'/>";
+                        echo        "</td>";
+                    echo       "<td class='visible-lg td_center'>".$vo['id']."</td>";
+
+                    foreach ($table_tr as $trname){
+                    if($trname != "id"){
+                    if ( $trname == "app_key"  ){
+                    echo       "<td class='visible-lg td_center'><a href='http://192.168.4.50:5000/check/?key=".$vo["$trname"]."' target='_blank'>".$vo["$trname"]." </a></td>"; 
+		    }else{
+                    echo       "<td class='visible-lg td_center'>".$vo["$trname"]."</td>";
+                    }
+                    }
+                    }
+                    
+                    $edit_url=C('RexServer')."/service/?"."key=".$vo['app_key'];
+		    $start_url=C('RexServer')."/service/?"."key=".$vo['app_key']."&action=start";	
+		    $stop_url=C('RexServer')."/service/?"."key=".$vo['app_key']."&action=stop";	
+		    $restart_url=C('RexServer')."/service/?"."key=".$vo['app_key']."&action=restart";	
+                    //$edit_url=$edit_link."?"."id=".$vo['id'];
+                    //                     echo   $edit_url;
+ 		    $key=$vo['app_key'];
+                    echo       "<td style=' margin:0 auto;padding:0;clear:both;'>";
+                        echo       "<div style='margin:0; padding:0;  display:inline-block; _display:inline; *display:inline;zoom:1;  ''>";
+  
+                        echo              "<input  type='button'    server=".$key." cmd='start' class='dialog-service btn btn-small btn-primary' value='启动'>";
+			echo " ";
+
+                        echo              "<input  type='button'    server=".$key." cmd='stop' class='dialog-service btn btn-small btn-primary' value='停止'>";
+                        echo           "</div>";
+			echo " ";
+                        echo              "<input  type='button'    server=".$key." cmd='restart' class='dialog-service btn btn-small btn-primary' value='重启'>";
+                        echo           "</div>";
+   
+
+        //echo           "<div style='margin:0; padding:0;  display:inline-block; _display:inline; *display:inline;zoom:1; '>";
+        //echo               "<a href='".$restart_url."'";
+        //echo                  " message='确定要重启 应用 ( ".$vo['app_key']. " ) 么？'";
+        //echo                  " params='"."id=".$vo['id']."' dialog='true' checkbox='false'";
+        //echo                  " id='dialogtest' class='dialog-action btn btn-small btn-primary'>";
+       // echo                   "重启";
+       // echo               "</a>";
+       // echo           "</div>";
+        
+
+       echo           "<div style='margin:0; padding:0;  display:inline-block; _display:inline; *display:inline;zoom:1; '>";
+        
+        echo           "</div>";
+        echo       "</td>";
+        echo    "</tr>";
+        }
+
+
+        }//--/foreach
+
+
+                </php>
+                <!-- 		  <volist name="listsecond" id="vo">
+                                         <tr>
+                                         <td class="notallow"><input type="checkbox" value="{$vo.id}" class="style checkboxrow" /></td>
+                                                 <volist name="vo" id="sub">
+                                                <td class="visible-lg">{$sub}</td>
+                                                </volist>
+
+
+                                        <td>
+                                            <button type="button" class="btn btn-info"><i class="icon-remove-sign"></i></button>
+                                            <button type="button" class="btn btn-info"><i class="icon-edit"></i></button>
+                                        </td>
+                                    </tr>
+
+                        </volist> -->
+
+                </tbody>
+            </table>
+        </div>
+        <div style="text-align: center;">
+            <div class="pagination" style="margin-top: 2px">{$page}</div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+     style="width: 602px;height: 285px;
+       padding: 0;
+      "
+
+        >
+    <div class="modal-dialog" style=" padding: 0;"  >
+        <div class="modal-content" style=" padding: 0;" >
+            <div class="modal-header" >
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h5 class="modal-title tb_title">设置列表显示的字段</h5>
+
+            </div>
+            <div class="modal-body" >
+                <form class="form-horizontal" role="form" method="get" action="{$index_link}">
+
+                    <div class="form-group">
+
+                        <volist name="xlsCell" id="vo">
+
+                        <div class="col-lg-9">
+                            <label class="checkbox-inline">
+                                <input type="checkbox"  name="checkbox[]" value="{$vo.column_name}" >
+                            </label>
+                            <label  class="col-lg-3 control-label td_center">{$vo.column_comment}</label>
+                        </div>
+                        </volist>
+
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="submit" class="btn btn-small btn-primary">
+
+                    确定
+                </button>
+            </div>
+            </form>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="myModal_confirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+     style="width: 602px;height: 141px;
+       padding: 0;
+      "
+
+        >
+    <div class="modal-dialog" style=" padding: 0;"  >
+        <div class="modal-content" style=" padding: 0;" >
+            <div class="modal-header" >
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h5 class="modal-title tb_title">你确定是否要重启该应用?</h5>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="submit" class="dialog-confirm btn btn-small btn-primary">
+
+                    确定
+                </button>
+            </div>
+            </form>
+
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+

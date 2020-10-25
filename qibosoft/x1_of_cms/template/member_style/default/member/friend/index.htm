@@ -1,0 +1,178 @@
+{extend name="$member_style_layout" /}
+{block name="title"}__QUN__成员管理{/block}
+{block name="content"}
+<link rel="stylesheet" href="__STATIC__/group/member_list.css">
+<style type="text/css">
+.MemberContainer .ShowType a {
+	width:25%;
+}
+.setuser{
+	font-size:16px;
+	background:#fff;
+	color:rgb(15, 166, 216);
+	padding:3px 8px 5px 8px;
+	border-radius:3px;
+	margin:5px 0 15px 0;
+	display:block;
+}
+</style>
+<div class="MemberContainer">
+<!--
+	<ul class="qb_ui_page_menu layui-form">
+		<li style="width:100px;float:left;margin-left:5px;"> 
+			<input type="text" id="nick_name" placeholder="请输入用户名" style="width:150px;" class="layui-input">
+		</li>
+		<button type="submit" style="float:right;margin-right:10px; " onclick="search_order()" class="layui-btn">搜索</button>
+	</ul>
+-->
+<script type="text/javascript">
+function search_order(){
+	$.get(baseurl + "&union=aid,type,by,order,name&aid={$id}&name="+ $("#nick_name").val() +'&'+Math.random(),function(res){
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("很抱歉！没找到",{time:1000});
+				$('.MemberContainer .ListMember').eq(choose_i).html('');
+			}else{
+				$('.MemberContainer .ListMember').eq(choose_i).html(res.data);
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+</script>
+
+	<div class="ShowType">
+		<a href="#" class="ck">好友</a>
+		<a href="#">我关注的</a>
+		<a href="#">粉丝</a>
+		<a href="#">黑名单</a>
+	</div>
+	<div class="ListMember">
+		{php}unset($suid);$type=2;{/php}
+		{qb:tag name="myfriend_waplist01" class="app\common\model\Friend@get_label" where="suid=$suid&type=$type&uid=$userdb.uid" rows="10"}
+		<div class="list listmember-{$rs.id}">
+			
+			<dl>
+				<dt><span><a href="{:get_url('user',$rs.he_id)}"><img src="{$rs.he_id|get_user_icon}" onerror="this.src='__STATIC__/images/nopic.png'"/></a></span></dt>
+				<dd>
+					<div class="name">
+						<a href="{:get_url('user',$rs.he_id)}">{$rs.he_id|get_user_name}</a>						
+					</div>
+					<div class="time">日期:{$rs.create_time|format_time='Y-m-d H:i'} <a style="float:right;" href="{:murl('member/msg/add',['uid'=>$rs.he_id])}" class="_pop"><i class="fa fa-comment-o"></i> 私信Ta</a></div>
+				</dd>
+			</dl>			
+			<div class="butter">
+				<span><a href="javascript:" onclick="act('del','{$rs.he_id}','{$rs.id}')">移除</a></span>
+				{if $rs.type!=2}<span><a href="javascript:" onclick="act('add','{$rs.he_id}')">+好友</a></span>{/if}
+				{if ($rs.type!=-1&&$rs.suid!=$userdb.uid) || fun('friend@my',$rs.uid)['type']!=-1}<span><a href="javascript:" onclick="act('bad','{$rs.he_id}')">拉黑</a></span>{/if}
+			</div>
+		</div>
+		{/qb:tag}
+	</div>
+	<div class="ListMember"></div>
+	<div class="ListMember"></div>
+	<div class="ListMember"></div>
+	<div class="ShowMores">查看更多</div>
+</div>
+
+<script type="text/javascript">
+var ajax_url_db = ['type=2&uid={$userdb.uid}','type=1&uid={$userdb.uid}','type=1&suid={$userdb.uid}&uid=','type=-1&uid={$userdb.uid}'];
+var choose_i = 0; //当前选中第几项
+var haveshowpage = []; //每一项,作个标志,已经已显示到第几页
+	//haveshowpage[0] = 1;	//第一项是从第二页开始,第一页显示过了
+var show_total = [];
+
+var baseurl = '{qb:url name="myfriend_waplist01" /}';
+
+
+//显示更多
+function showMoreContent(){
+	haveshowpage[choose_i]++;
+	$.get(baseurl + haveshowpage[choose_i] + "&"+ ajax_url_db[choose_i] +'&'+Math.random(),function(res){
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("已经显示完了！",{time:500});
+				$('.ShowMores').off("click");
+				$('.ShowMores').html('显示完了');
+				//$('.ShowMores').css({'background':'#eee'});
+				if(haveshowpage[choose_i]==1){
+					$('.MemberContainer .ListMember').eq(choose_i).html('');
+				}
+			}else{
+				if(haveshowpage[choose_i]==1){
+					$('.MemberContainer .ListMember').eq(choose_i).html(res.data);
+				}else{
+					$('.MemberContainer .ListMember').eq(choose_i).append(res.data);
+				}
+				if(typeof(show_total[choose_i])=='undefined'){
+					$('.ShowType a').eq(choose_i).html($('.ShowType a').eq(choose_i).html()+'('+res.paginate.total+')');
+				}				
+				show_total[choose_i] = res.paginate.total;
+				scroll_get = true;
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+
+//切换显示
+function showContentType(num){	
+	//更多显示
+	choose_i = num;
+	if( haveshowpage[num] == undefined ){
+		 haveshowpage[num] = 0;
+		 showMoreContent();
+	}
+	$('.ShowMores').off("click"); //避免显示更多,出现多次点击事件
+	$('.ShowMores').on("click",showMoreContent);
+	$('.ShowMores').html('查看更多');
+
+	//切换显示
+	$('.ShowType a').removeClass('ck');
+	$('.ShowType a').eq(num).addClass('ck');
+	$('.MemberContainer .ListMember').hide();
+	$('.MemberContainer .ListMember').eq(num).show();
+}
+
+//切换按钮添加事件
+$('.ShowType a').click(function(){
+	var thisnum=$(this).index();
+	showContentType(thisnum);
+});
+
+//初始化点中第一项
+showContentType(0);
+
+function act(type,uid,id){
+	$.get('{:murl("wxapp.friend/act")}?type='+type+'&uid='+uid,function(res){		
+		if(res.code==0){
+			if(type=='del'){
+				layer.msg("移除成功",{time:500});
+				$(".listmember-"+id).hide();
+			}else{
+				layer.msg("操作成功" ,{time:500});
+				window.location.reload();
+			}			
+		}else{
+			layer.alert(res.msg ,{time:2500});
+		}
+	});
+}
+
+
+//滚动显示更多
+var scroll_get = true;	//做个标志,不要反反复复的加载
+$(document).ready(function () {
+	$(window).scroll(function () {
+		if (scroll_get==true &&  (400 + $(window).scrollTop())>($(document).height() - $(window).height())) {
+			scroll_get = false;			
+			layer.msg('内容加截中,请稍候',{time:1500});
+			showMoreContent();
+		}
+	});
+});
+</script>
+<script type="text/javascript" src="__STATIC__/layui/laydate/laydate.js"></script>
+{/block}

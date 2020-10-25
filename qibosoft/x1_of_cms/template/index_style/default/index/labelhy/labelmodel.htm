@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>碎片管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="stylesheet" href="__STATIC__/css/base.css">
+<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+<script type="text/javascript" src="__STATIC__/js/core/jquery.min.js"></script>
+<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+<style>
+h3{
+	text-align: center;
+	line-height: 30px;
+	padding-top: 15px;
+	font-size:18px;
+}
+.ChooseStyleBox{
+	margin: 20px;
+	border-top:#DDD solid 1px;
+	padding-top: 10px;
+}
+
+
+
+.chooseType{
+	line-height: 35px;
+}
+.chooseType li{
+	display: inline-block;
+	padding: 10px 0px;
+	width:100%;
+}
+
+.chooseType li a{
+	text-align:center;
+	display: block;
+	background: #EDEDED;
+	width:100%;
+	color: #666;
+}
+.chooseType li a.ck{
+	background: #3BA5FF;
+	color: #FFF;
+}
+.chooseType li a:hover{
+	background: #F60;
+	color: #FFF;
+}	
+.chooseTpl:after{
+	content:'';
+	display: block;
+	clear: both;
+}
+.chooseTpl li{
+	float: left;
+	width:33.33%;
+	overflow: hidden;
+}
+.chooseTpl li textarea{
+	display: none;
+}
+.chooseTpl li dl{
+	margin: 10px;
+	background: #f5f5f5;
+	border-radius: 5px;
+	padding-bottom: 10px;
+}
+
+@media (max-width: 500px) {
+	.ChooseStyleBox{
+		margin: 0px;
+	}
+	.chooseTpl li dl{
+		margin: 3px;
+	}
+}
+
+.chooseTpl li dl:hover{
+	box-shadow: 3px 3px 3px #999;
+}
+.chooseTpl li dl dt{
+	position: relative;
+	overflow: hidden;
+}
+.chooseTpl li dl dt:before{
+	content: '';
+	display: block;
+	padding-top: 80%;
+}
+.chooseTpl li dl dt .ifchoose{
+	position:absolute;
+	right:10%;
+	top: 10%;
+	z-index:1;
+	font-size:30px;
+	color:#ccc;
+}
+.chooseTpl li dl dt .ck{
+	color:red;
+}
+.chooseTpl li dl dt img{
+	position:absolute;
+	max-width:90%;
+	max-height: 90%;
+	left:50%;
+	top: 50%;
+  -webkit-transform: translate3D(-50%, -50%, 0);
+      -ms-transform: translate3D(-50%, -50%, 0);
+          transform: translate3D(-50%, -50%, 0);
+}
+.chooseTpl li dl dd div{
+	text-align: center;
+	height: 20px;
+	line-height: 20px;
+	overflow: hidden;
+	padding: 0 15px;
+	font-size:13px;
+	color: #666;
+}
+</style>
+</head>
+<body>
+<script type="text/javascript">
+$(function(){
+	parent.$(".layui-layer-title").html('碎片管理');
+});
+</script>
+ 
+<div class="ChooseStyleBox">
+	 
+	<ul class="chooseType">
+		<li><a href="{$recover_url}" class='ck'>点击恢复默认设置</a></li> 
+	</ul>
+	 
+	<ul class="chooseTpl">
+		{volist name="$all_model" id="vo"}
+		<li data-path="{$vo.path}" data-choose="{:in_array($vo.path,$use_model)?1:0}">
+			<dl>
+				<dt>
+					<img onerror="this.src='__STATIC__/images/nopic.png'" src="{$vo.picurl}">
+					<i class="glyphicon glyphicon-ok ifchoose {if in_array($vo.path,$use_model)}ck{/if}" title="是否选择"></i>
+				</dt>
+				<dd>
+					<div>{$vo.name}</div>
+				</dd>
+			</dl>			
+		</li>
+		{/volist}
+	</ul>
+</div>
+<script type="text/javascript">
+$(".chooseTpl li").click(function(){
+	var path = $(this).data('path');
+	var choose = $(this).attr('data-choose');
+	if(choose==1){		
+		$(this).attr('data-choose',0);
+		$(this).find('.ifchoose').removeClass('ck');
+	}else{		
+		$(this).attr('data-choose',1);
+		$(this).find('.ifchoose').addClass('ck');
+	}
+	var mod = [];
+	$(".chooseTpl li[data-choose='1']").each(function(){
+		mod.push( $(this).data('path') );
+	});
+	$.post("{:get_url('location')}",{extend_cfg:mod},function(res){
+		if(res.code==0){
+			if(choose==1){
+				layer.msg('你禁用了当前碎片',{time:1000,icon:2});
+			}else{
+				layer.msg('你启用了当前碎片',{time:1000,icon:1});
+			}
+		}else{
+			layer.alert(res.msg);
+		}
+	});
+  	//var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+  	//parent.layer.close(index);
+});
+</script>
+</body>
+</html>

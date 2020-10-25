@@ -1,0 +1,91 @@
+{extend name="common@base/common" /}
+{block name="style"}
+<link href="__CSS__/main.min.css" type="text/css" rel="stylesheet">
+{/block}
+{block name="body"}
+{include file="muushop/public/_nav"/}
+<div id="main-container" class="container">
+	<div class="col-md-2">
+		<!--用户中心导航-->
+		{include file="muushop/user/_nav"/}
+	</div>
+
+	<div class="col-md-10 user_common_section">
+    	<div class="common_box main_title">
+    		<h3>我的收货地址</h3>
+    	</div>
+    	<div class="common_box margin-top-10 clearfix">
+        	<button type="button" class="btn btn-warning" data-remote="{:url('User/address',array('action'=>'edit'))}" data-toggle="modal">增加收货地址</button>
+        </div>
+    	{notempty name="list"}
+        {volist name="list" id="list"}
+        <div class="common_box margin-top-10 address-list-box" data-id="{$list.id}">
+            <div class="title">
+                <h4>
+                	{$list.name}
+                	{notempty name="list.first"}
+                		<span class="first">默认地址</span>
+                	{/notempty}
+                </h4>
+            </div>
+            <div class="info">
+                <span>收货人：</span>{$list.name}
+            </div>
+            <div class="info">
+                <span>地区：</span>{$list.province} {$list.city} {$list.district}
+            </div>
+            <div class="info">
+             	<span>详细地址：</span>{$list.address}
+            </div>
+            <div class="info">
+             	<span>手机：</span>{$list.phone}
+            </div>
+            <div class="operate" data-id="{$list.id}">
+                <span>
+                	<a data-toggle="modal" data-remote="{:url('user/address',['action'=>'edit','id'=>$list['id']])}">编辑</a>
+                </span>
+                {empty name="list.first"}
+    	            <span>
+                    	<a class="first-address" data-id="{$list.id}" data-url="{:url('muushop/api/address',['action'=>'first','id'=>$list['id']])}">设为默认地址</a>
+                    </span>
+                {/empty}
+                <span>
+                	<a data-toggle="modal" data-remote="{:url('muushop/user/address',['action'=>'delete','id'=>$list['id']])}">删除</a>
+                </span>
+            </div>
+        </div>
+        {/volist}
+        {else /}
+    	<div class="common_box margin-top-10 address-list-box">
+        	<span class="empty">还没有添加任何收货地址信息...</span>
+        </div>
+        {/notempty}
+
+        <div class="common_box margin-top-10 clearfix">
+        	<button type="button" class="btn btn btn-warning" data-remote="{:url('User/address',array('action'=>'edit'))}" data-toggle="modal">增加收货地址</button>
+        </div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	//设置首选地址
+	$('.first-address').click(function(){
+        var self = $(this);
+        var id = {'id':self.attr('data-id')};
+        var url = self.attr('data-url');
+        $.post(url, id, success, 'json');
+        function success(data) {
+        if (data.code) {
+            toast.success(data.msg, '温馨提示');
+            setTimeout(function () {
+                window.location.href = data.url
+            }, 1000);
+        } else {
+            toast.error(data.msg, '温馨提示');
+        }
+    }
+    });
+});
+</script>
+{/block}

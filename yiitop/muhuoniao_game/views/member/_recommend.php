@@ -1,0 +1,1 @@
+<li><a href="<?php echo Yii::app()->request->baseUrl; ?>/article/index/id/<?php echo $data->id;?>"><img height="64px" width="64px" src="http://918s-game.stor.sinaapp.com/<?php echo $data->imgurl;?>" /><p><?php echo $data->gname;?></p></a></li>

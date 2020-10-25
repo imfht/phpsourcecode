@@ -1,0 +1,146 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	<style>
+		.wrap.tree_menu{
+			height:500px;
+			overflow-y: scroll;
+		}
+	</style>
+	{:W('PageHeader/simple',array('name'=>'权限组管理','search'=>'N'))}
+	<form id="form_search" name="form_search" method="post" action="">
+		<div class="operate panel panel-default">
+			<div class="panel-body">
+				<div class="pull-left">
+					<select name="eq_pid" id="eq_pid" class="form-control col-10" onchange="submit_search();">
+						<option value="#">全部</option>
+						{:fill_option($group_list)}
+					</select>
+				</div>
+				<div class="pull-right">
+					<a onclick="save()" class="btn btn-sm btn-primary">保存</a>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div class="row">
+		<div class="col-sm-4 role_list">
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>名称</th>
+					</tr>
+				</thead>
+				<tbody>
+					<volist name="list" id="data">
+						<tr id="{$data.id}">
+							<td>{$data.id}</td>
+							<td>{$data.name}</td>
+						</tr>
+					</volist>
+				</tbody>
+			</table>
+		
+		</div>
+		<div class="col-sm-8 wrap">
+			<form id="form_data" method="post" action="">
+				<input type="hidden" name="ajax" id="ajax" value="1">
+				<input type="hidden" name="role_id" id="role_id">
+				<input type="hidden" name="org_node_list" id="org_node_list">
+				<input type="hidden" name="node_list" id="node_list">
+				<div class="wrap tree_menu">
+					<table class="table table-bordered">
+						<tr>
+							<th style="width:55%;text-align:center"><label class="inline pull-left">
+								<input class="ace" type="checkbox" name="id-toggle-all" id="id-toggle-all" />
+								<span class="lbl"></span></label>菜单</th>
+							<th style="width:15%;text-align:center">读取</th>
+							<th style="width:15%;text-align:center">修改</th>
+							<th style="width:15%;text-align:center">管理</th>
+						</tr>
+						<volist name="node_list" id="data">
+							<tr>
+								<td class="tbody"><label>
+									<input class="ace" type="checkbox"  name="node_id"  value="{$data.id}" />
+									<span class="lbl level{$data.level}">&nbsp;{$data.name}</span></label></td>
+								<if condition="strpos($data['url'],'/index')||strpos($data['url'],'##')!==false">
+									<td class="text-center"><label class="inline">
+										<input class="ace" type="checkbox" name="read[]" value="{$data.id}" />
+										<span class="lbl"></span></label></td>
+									<td class="text-center"><label class="inline">
+										<input class="ace" type="checkbox" name="write[]" value="{$data.id}"/>
+										<span class="lbl"></span></label></td>
+									<td class="text-center"><label class="inline">
+										<input class="ace" type="checkbox" name="admin[]" value="{$data.id}"/>
+										<span class="lbl"></span></label></td>
+									<else/>
+									<td class="text-center">&nbsp;</td>
+									<td class="text-center">&nbsp;</td>
+									<td class="text-center">&nbsp;</td>
+								</if>
+							</tr>
+						</volist>
+					</table>
+				</div>
+			</form>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function save() {
+			if ($("#role_id").val() == '') {
+				ui_error("请选择权限组");
+				return false;
+			};
+			$("#node_list").val('');
+			$(".wrap .tree_menu input[name='node_id']:checked").each(function() {
+				$("#node_list").val($("#node_list").val() + $(this).val() + ",");
+			});
+			sendForm("form_data", "{:U('set_node')}");
+		};
+
+		function showdata(result) {
+			$(".wrap .tree_menu input").each(function() {
+				$(this).prop("checked", false);
+				//$(this).parents("td").removeClass("active");
+			});
+			for (var s in result.data) {
+				$(".wrap .tree_menu input[name='node_id'][value=" + result.data[s].node_id + "]").prop("checked", "true");
+				//$(".wrap .tree_menu input[name='node_id'][value=" + result.data[s].node_id + "]").parents("td").addClass("active");
+
+				if (result.data[s].admin == 1) {
+					$(".wrap .tree_menu input[name='admin[]'][value=" + result.data[s].node_id + "]").prop("checked", "true");
+					//$(".wrap .tree_menu input[name='admin[]'][value=" + result.data[s].node_id + "]").parents("td").addClass("active");
+				}
+				if (result.data[s].write == 1) {
+					$(".wrap .tree_menu input[name='write[]'][value=" + result.data[s].node_id + "]").prop("checked", "true");
+					//$(".wrap .tree_menu input[name='write[]'][value=" + result.data[s].node_id + "]").parents("td").addClass("active");
+				}
+				if (result.data[s].read == 1) {
+					$(".wrap .tree_menu input[name='read[]'][value=" + result.data[s].node_id + "]").prop("checked", "true");
+					//$(".wrap .tree_menu input[name='read[]'][value=" + result.data[s].node_id + "]").parents("td").addClass("active");
+				}
+			};
+			$("#org_node_list").val('');
+			$(".wrap .tree_menu input[name='node_id']:checked").each(function() {;
+				$("#org_node_list").val($("#org_node_list").val() + $(this).val() + ",");
+			});
+			$("#opmode").val("edit");
+		};
+
+		$(document).ready(function() {
+			set_return_url();
+			set_val('eq_pid', '{$eq_pid}');
+			$(".role_list tbody tr").click(function() {
+				$(".role_list  tr").removeClass("active");
+				$(this).attr("class", "active");
+				$("#role_id").val($(this).attr("id"));
+				sendAjax("{:U('get_node_list')}", "role_id=" + $(this).attr("id"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+		});
+	</script>
+</block>

@@ -1,0 +1,261 @@
+{extend name="default/base" /}
+{block name="main"}
+<style>
+    .shop-form{
+        padding-left: 15px;
+    }
+    #j-agree-box{
+        display: none;
+    }
+    #j-disagree-box{
+        display: none;
+    }
+</style>
+<div class='wst-grid'>
+    <!-- 申请信息 -->
+    <div class='order-box'>
+        <div class='box-head'>申请信息</div>
+        <table class='wst-form'>
+            <tr>
+                <th width='100'>当前状态：</th>
+                <td style="color:red">{$object['statusText']}</td>
+            </tr>
+            <tr>
+                <th width='100'>订单编号：</th>
+                <td>{$object['orderNo']}</td>
+            </tr>
+            <tr>
+                <th>售后类型：</th>
+                <td>{$object['goodsServiceTypeText']}</td>
+            </tr>
+            {if($object['goodsServiceType']!=2)}
+            <tr>
+                <th>退款金额：</th>
+                <td>{:floatval($object['refundMoney'])}</td>
+            </tr>
+            {/if}
+
+            <tr>
+                <th>申请原因：</th>
+                <td>{$object['serviceTypeText']}</td>
+            </tr>
+            <tr>
+                <th>问题描述：</th>
+                <td>{$object['serviceRemark']}</td>
+            </tr>
+            {if(!empty($object['serviceAnnex']))}
+            <tr>
+                <td align='right' height='25'>附件：</td>
+                <td>
+                    {php}
+                     $serviceAnnex = explode(',',$object['serviceAnnex']);
+                    {/php}
+                    <div id="photos-service">
+                        {volist name="$serviceAnnex" id="annex"}
+                        <img class='lazyImg' layer-src="__RESOURCE_PATH__/{$annex}" data-original="__RESOURCE_PATH__/{$annex}"
+                            style='cursor: pointer;' src="__RESOURCE_PATH__/{:str_replace('.','_thumb.',$annex)}" height="100"
+                            width="100" />
+                        {/volist}
+                    </div>
+                </td>
+            </tr>
+            {/if}
+        </table>
+    </div>
+    <!-- 商品信息 -->
+    <div class='order-box'>
+        <div class='box-head'>商品清单</div>
+        <div class='goods-head'>
+            <div class='goods'>商品</div>
+            <div class='price'>单价</div>
+            <div class='num'>数量</div>
+            <div class='t-price'>总价</div>
+        </div>
+        <div class='goods-item'>
+            <div class='goods-list'>
+                {volist name='$object["glists"]' id='vo2'}
+                <div class='item j-g{$vo2['goodsId']}'>
+                    <div class='goods'>
+                        <div class='img'>
+                            <a href='{:Url("home/goods/detail","goodsId=".$vo2["goodsId"])}' target='_blank'>
+                                <img src='__RESOURCE_PATH__/{$vo2["goodsImg"]}' width='80' height='80' title='{$vo2["goodsName"]|WSTStripTags}' />
+                            </a>
+                        </div>
+                        <div class='name'>{if $vo2['goodsCode']=='gift'}【赠品】{/if}{$vo2["goodsName"]}</div>
+                        <div class='spec'>{:str_replace('@@_@@','<br />',$vo2["goodsSpecNames"])}</div>
+                    </div>
+                    <div class='price' style="color: red">¥{$vo2['goodsPrice']}</div>
+                    <div class='num'>{$vo2['goodsNum']}</div>
+                    <div class='t-price' style="color: red">¥{$vo2['goodsPrice']*$vo2['goodsNum']}</div>
+                    <div class='f-clear'></div>
+                </div>
+                {/volist}
+            </div>
+        </div>
+    </div>
+    {/* 展示用户物流信息 */}
+    {if($object['isUserSendGoods']==1 && $object['isUserSendGoods']!=-1)}
+    <div class='order-box'>
+        <div class='box-head'>用户物流信息</div>
+        <table class='wst-form'>
+            {if($object['expressType']==1)}
+            <tr>
+                <th width='100'>快递公司：</th>
+                <td>{$object['expressName']}</td>
+            </tr>
+            <tr>
+                <th>物流单号：</th>
+                <td>{$object['expressNo']}</td>
+            </tr>
+            {else /}
+            <tr>
+                <th>物流单号：</th>
+                <td>无需物流</td>
+            </tr>
+            {/if}
+            {/* 等待商家收货时显示 */}
+            {if($object['serviceStatus']==2)}
+            <tr>
+                <th>是否收货：</th>
+                <td>
+                    <label for="">
+                        <input type="radio" checked onchange="isShopAccept(this.value)" name="isShopAccept" id="" value="1" />
+                        确认收货
+                    </label>
+                    <label for="">
+                        <input type="radio" onchange="isShopAccept(this.value)" name="isShopAccept" id="" value="-1" />
+                        拒收
+                    </label>
+                </td>
+            </tr>
+            <tr id="j-receive-box" style="display: none">
+                <th>拒收类型：</th>
+                <td>
+                    <select id='shopRejectType' onchange='javascript:changeRejectType(this.value)'>
+                        {volist name=":WSTDatas('ORDER_SERVICES_SHOP_REJECT')" id="vo"}
+                        <option value='{$vo["dataVal"]}'>{$vo["dataName"]}</option>
+                        {/volist}
+                    </select>
+                </td>
+            </tr>
+            <tr id="j-receive-input-box" style="display: none">
+                <th>拒收原因：</th>
+                <td><input type="text" id="shopRejectOther"></td>
+            </tr>
+            <tr>
+                <th> </th>
+                <td><button type="button" class="btn" onclick="receive({$p})">提交</button></td>
+            </tr>
+            {/if}
+
+            {/* 等待商家发货时显示 */}
+            {if($object['serviceStatus']==3)}
+            <tr>
+                <th>运输方式：</th>
+                <td>
+                    <label for="">
+                        <input type="radio" checked onchange="shopExpressType(this.value)" name="shopExpressType" id="" value="0" />
+                        无需物流
+                    </label>
+                    <label for="">
+                        <input type="radio" onchange="shopExpressType(this.value)" name="shopExpressType" id="" value="1" />
+                        快递
+                    </label>
+                </td>
+            </tr>
+            <tr class="j-express-box" style="display: none">
+                <th>物流公司</th>
+                <td>
+                    <select id='shopExpressId' class="ex-ipt">
+                        <option value=''>请选择</option>
+                        {volist name="$express" id='vo'}
+                            <option value='{$vo["expressId"]}'>{$vo["expressName"]}</option>
+                        {/volist}
+                    </select>
+                </td>
+            </tr>
+            <tr class="j-express-box" style="display: none">
+                <th>物流单号</th>
+                <td><input type="text" id="shopExpressNo" class="ex-ipt" placeholder="请填写物流单号" /></td>
+            </tr>
+            <tr>
+                <th> </th>
+                <td><button type="button" class="btn" onclick="send({$p})">提交</button></td>
+            </tr>
+            {/if}
+            
+        </table>        
+    </div>
+    {/if}
+    {if($object['isShopSend']==1)}
+    <div class='order-box'>
+        <div class='box-head'>商家物流信息</div>
+        <table class='wst-form'>
+            {if($object['shopExpressType']==1)}
+            <tr>
+                <th width='100'>快递公司：</th>
+                <td>{$object['shopExpressName']}</td>
+            </tr>
+            <tr>
+                <th>物流单号：</th>
+                <td>{$object['shopExpressNo']}</td>
+            </tr>
+            {else /}
+            <tr>
+                <th>物流单号：</th>
+                <td>无需物流</td>
+            </tr>
+            {/if}
+        </table>
+    </div>
+    {/if}
+    <div class="shop-form">
+        {if($object['serviceStatus']==0)}
+        <div>
+            是否受理申请：
+            <label for="">
+                <input type="radio" onchange="isArgee(this.value)" name="isShopAgree" id="" value="1" />
+                是
+            </label>
+            <label for="">
+                <input type="radio" onchange="isArgee(this.value)" name="isShopAgree" id="" value="0" />
+                否
+            </label>
+        </div>
+        {if(in_array($object['goodsServiceType'], [0,2]))}
+        <div id="j-agree-box">
+            <div>
+                商家确认收货地址：<input id="shopAddress" value="{$object.lastShopAddress}" type="text" />
+            </div>
+            <div>
+                商家收货人：<input id="shopName" value="{$object.lastShopName}" type="text">
+            </div>
+            <div>
+                联系电话：<input id="shopPhone" value="{$object.lastShopPhone}" type="text">
+            </div>
+        </div>
+        {/if}
+        <div id="j-disagree-box">
+            <div>
+               不受理原因 ：<input id="disagreeRemark" type="text" />
+            </div>
+        </div>
+        <button type="button" class="btn" onclick="beforeCommit({$p})">提&nbsp;交</button>
+        {/if}
+
+    </div>
+    <input type="hidden" id='goodsServiceType' value="{$object['goodsServiceType']}"  />
+    <input type="hidden" id='serviceStatus' value="{$object['serviceStatus']}"  />
+    <input type="hidden" id='id' value="{$id}"  />
+    <input type="hidden" id='isShopAgree'  />
+    <input type="hidden" id='isShopAccept' value="1"  />
+    <input type="hidden" id='shopExpressType' class="ex-ipt" value="0"  />
+    <div style="text-align: center;margin: 20px 0;">
+        <button type="button" class="btn" onclick="goBack({$p})"><i class="fa fa-angle-double-left"></i>返&nbsp;回</button>
+    </div>
+</div>
+
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__SHOP__/orderservices/orderservices.js?v={$v}'></script>
+{/block}

@@ -1,0 +1,224 @@
+<include file="Public:header" />
+<script type="text/javascript" src="__PUBLIC__/js/kindeditor-all-min.js"></script>
+<script type="text/javascript" src="__PUBLIC__/js/zh_CN.js"></script>
+<link rel="stylesheet" href="__PUBLIC__/css/kindeditor.css" type="text/css" />
+<script type="text/javascript">
+	var editor;
+	KindEditor.ready(function(K) {
+		editor = K.create('textarea[name="content"]', {
+			uploadJson:'{:U("file/editor")}',
+			allowFileManager : true,
+			loadStyleMode : false,
+			fileManagerJson: "{:U('file/manager')}"
+		});
+	});
+</script>
+<div class="container">
+	<!-- Docs nav ================================================== -->
+	<div class="page-header">
+		<h3>{:L('WRITE_LOG')}</h3>
+	</div>	
+	<div class="row">
+		<div class="span12">
+			<include file="Public:alert" />
+			<form action="{:U('log/mylog_add')}" method="post">
+				<input type="hidden" name="creator_id" value="{$Think.session.user_id}"/>
+				<table class="table" width="95%" border="0" cellspacing="1" cellpadding="0">
+					<thead>
+						<tr>
+							<td>&nbsp;</td>
+							<td><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE')}"/>&nbsp; <input class="btn btn-primary" name="submit" type="submit" value="{:L('SAVE AND NEW')}"/> &nbsp;<input class="btn btn-primary" onclick="javascript:history.go(-1)" type="reset" value="{:L('CANCEL')}"/></td>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr> 
+							<td>&nbsp;</td>
+							<td><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE')}"/> &nbsp;<input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE AND NEW')}"/>&nbsp; <input class="btn btn-primary" type="reset" onclick="javascript:history.go(-1)" value="{:L('CANCEL')}"/></td>					
+						</tr>
+					</tfoot>
+					<tbody width="100%">
+						<tr>
+							<th colspan="2">{:L('BASIC_INFO')}</th>
+						</tr>
+						<tr>
+							<td class="tdleft" width="15%">{:L('SUBJECT')}</td>
+							<td><input type="text" class="span5" name="subject" maxlength="20" value="{$current_time|date='Y-m-d',###} {:L('WORKING_LOG')}"></td>						
+						</tr>
+						<tr>
+							<td class="tdleft">{:L('LOG_CATEGORY')}</td>
+							<td><if condition="!C('ismobile')"><input type="radio" name="category_id" value="1" checked>  {:L('COMMUNICATION_LOG')}&nbsp;  &nbsp; </if><input type="radio" name="category_id" value="4" checked> {:L('DAILY_REPROT')} &nbsp;  &nbsp; <input type="radio" name="category_id" value="3"> {:L('WEEKLY_REPROT')} &nbsp;  &nbsp; <input type="radio" name="category_id" value="2"> {:L('MONTHLY_REPROT')}</td>
+						</tr>
+						<if condition="!C('ismobile')">
+							<tr>
+								<td class="tdleft" >{:L('RELATED_BUSINESS')}</td>
+								<td >
+									<input type="hidden" id="business_id" name="business_id" id="select_content"/>
+									<input type="text" name="business_name" id="business_name"/> 
+								</td>							
+							</tr>
+							<tr>
+								<td class="tdleft" >{:L('RELATED_TASK')}</td>
+								<td>
+									<input type="hidden" id="task_id" name="task_id" id="select_content"/>
+									<input type="text" name="task_name" id="task_name"/> 
+								</td>							
+							</tr>
+							<tr>
+								<td class="tdleft" >{:L('MARKETING_PRODUCTS')}</td>
+								<td>
+									<input type="hidden" id="product_id" name="product_id" id="select_content"/>
+									<input type="text" name="product_name" id="product_name"/> 
+								</td>							
+							</tr>
+							<tr>
+								<td class="tdleft" >{:L('CUSTOMER')}</td>
+								<td>
+									<input type="hidden" id="customer_id" name="customer_id" id="select_content"/>
+									<input type="text" name="customer_name" id="customer_name"/> 
+								</td>							
+							</tr>
+						</if>
+						<tr>
+							<td class="tdleft" >{:L('DETAILS_DESCRIPTION_ABOUT_JOB')}</td>
+							<td>
+								<textarea rows="15" <if condition="C('ismobile') eq 1">class="span6"<else/>class="span8"</if> name="content" style="height: 350px;"></textarea> 
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-message1" title="{:L('DIALOG_SELECT_BUSINESS')}">loading...</div>
+<div class="hide" id="dialog-message2" title="{:L('DIALOG_SELECT_TASK')}">loading...</div>
+<div class="hide" id="dialog-message3" title="{:L('DIALOG_SELECT_PRODUCT')}">loading...</div>
+<div class="hide" id="dialog-message4" title="{:L('DIALOG_SELECT_CUSTOMER')}">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+$("#dialog-message1").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="business"]:checked').val();
+			var name = $('input:radio[name="business"]:checked').parent().next().html();
+			if(item){
+				$('#business_id').val(item);
+				$('#business_name').val(name);
+			}
+			
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message2").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="task_id"]:checked').val();
+			var name = $('input:radio[name="task_id"]:checked').parent().next().html();
+			if(item){
+				$('#task_id').val(item);
+				$('#task_name').val(name);
+			}
+			
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message3").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="product_id"]:checked').val();
+			var name = $('input:radio[name="product_id"]:checked').parent().next().html();
+			if(item){
+				$('#product_id').val(item);
+				$('#product_name').val(name);
+			}
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message4").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="customer"]:checked').val();
+			var name = $('input:radio[name="customer"]:checked').parent().next().html();
+			if(item){
+				$('#customer_id').val(item);
+				$('#customer_name').val(name);
+			}
+			
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$(function(){
+	$('#business_name').click(
+		function(){
+			$('#dialog-message1').dialog('open');
+			$('#dialog-message1').load('{:U("business/listdialog")}');
+		}
+	);
+	$('#task_name').click(
+		function(){
+			$('#dialog-message2').dialog('open');
+			$('#dialog-message2').load('{:U("task/listdialog")}');
+		}
+	);
+	$("#product_name").click(function(){
+		$('#dialog-message3').dialog('open');
+		$('#dialog-message3').load('{:U("product/allproductdialog")}');
+	});
+	$('#customer_name').click(
+		function(){
+			$('#dialog-message4').dialog('open');
+			$('#dialog-message4').load('{:U("customer/listdialog")}');
+		}
+	);
+});
+
+</script>
+<include file="Public:footer" />

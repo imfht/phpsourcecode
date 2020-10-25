@@ -1,0 +1,120 @@
+{extend name="index:layout" /}
+
+{block name="menu"}{/block}
+
+{block name="content"}
+ 
+<form class="formlist" method="post" action="{:urls('backup')}">
+<div class="MainContainers">
+  <div class="Header"><span class="tag">备份数据库</span><span class="more">&gt;&gt;</span></div>
+  <div class="Conter">
+
+
+<table class="ListTable">
+   <tr> 
+      <th width='6%'>序号</th>
+      <th> 表的名称(注释)</th>
+      <th width='15%'> 记录数(条)</th>
+      <th width='21%'> 占用空间</th>
+      <th width='19%'> 请选择</th>
+    </tr>
+{php}
+if($breakbak){
+{/php}
+  <tr>
+    <td colspan=5 height=30 style="background:#FF0000;">
+      <div align=center><A HREF="{$breakbak}"><b><font color="ffffff">上次备份被中断是否继续,点击继续</font></b></A></div>
+    </td>
+  </tr>
+  
+{php}
+}
+foreach($listdb AS $key=>$rs){
+{/php}
+  <tr> 
+    <td class='b red'> {$rs.j}</td>
+    <td class='Left'>
+		<a href="{:urls('showtable','table='.$rs['Name'])}"  title="点击可以进行修改">{$rs.Name}</a> <font color="#999">{$rs.Annotation}</font>
+	</td>
+    <td> 
+		<div align='center'>{$rs.Rows}</div>
+    </td>
+    <td> {$rs.Data_length} K</td>
+    <td> 
+        <input type='checkbox' class="tabledb" name='tabledb[]' value='{$rs.Name}' checked>
+        <!--<a href="{:urls('yh','table='.$rs['Name'])}">优化</a> -->
+         　　<a href="{:urls('index','type=xf&table='.$rs['Name'])}">修复</a>
+    </td>
+  </tr>
+{php}
+}
+{/php}
+<tr>
+  <td colspan='5' class='Left'>
+       (总共占用空间 {$totalsize} <b><font color='#0000FF' size=5>M</font></b>) <br /><br />
+            每卷大小 
+        <input name="baksize" type="text" id="baksize" value="1024" size="5"> K <br /><br />
+ 
+备份方式   <input type="radio" name="isup" value="0"> 覆盖数据结构备份(优点省空间)  <input type="radio" name="isup" value="1" checked>  升级备份(优点适应性强,不覆盖当前数据结构,旧数据可以很好适应当前最新的数据结构) 
+        <br /><br />
+        备份速度,每次取几条数据
+        <input type="text" name="rowsnum" size="5" value="200">
+        数值越大.备份越快,但越占服务器资源,如果你的服务器做了限制备份失败,只能把这个数值改为更小,比如50<br /><br />
+         </td>
+  </td>
+</tr>
+    <tr bgcolor='#FFFFFF' align="center"> 
+      <td colspan='5'>
+        <div class='submits'>
+          <input type='button' onclick="CheckAll(true)" name='Submit' value='全选'>
+		  <input type='button' onclick="CheckAll()" name='Submit' value='反选'>
+          <input type='submit' name='Submit' value='立刻备份'>          
+        </div>
+        </td>
+  </tr> 
+  </table>
+
+  </div>
+</div>
+</form>
+
+<div class="MainContainers">
+  <div class="Header"><span class="tag">帮助说明</span></div>
+  <div class="Conter">
+    <ul class="notes">
+	  <li>1、升级备份兼容把旧数据导入到当前升级后的系统使用（可以保留当前升级后的系统的最新数据结构,以解决旧数据缺少字段的问题），覆盖数据结构备份虽然可以节省空间，但还原后，会把当前的最新数据结构还原到以前的，最后有可能出现数据字段丢失报错的问题。</li>
+      <li>2、系统默认设置每次取200条数据,能满足一般的服务器,如果你使用的是虚拟主机.那有可能内存占用量被限制得太小的话,就会导致备份不成功.这个时候,就需要把200改为更小,比如100或者是50.就能解决备份不成功的问题。</li>
+      <li>3、建议你养成经常备份数据库的习惯.防止网站或服务器出现故障,而方便还原数据。</li>
+      <li>4、还原数据库之前,请确认所还原的数据库是完整备份出来的.如果不是完整备份出来的,就会导致弄丢数据.请务必注意。</li>
+	  <li>5、修复功能,主要用于解决服务器突然重启导致部分数据表损坏的问题。正常情况是用不到。</li>
+    </ul>
+  </div>
+</div>
+
+<script language=JavaScript>
+function CheckAll(type){
+	$(".formlist .tabledb").each(function(){
+		if(type){
+			$(this).prop('checked',true);
+		}else{
+			if($(this).is(':checked')){
+				$(this).attr('checked',false);
+			}else{
+				$(this).prop('checked',true);
+			}
+		}
+	});
+}
+</script>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+function choose_type(type){
+	if(type=='new'){
+		get_obj('Charset_type').style.display='';
+	}else{
+		get_obj('Charset_type').style.display='none';
+	}
+}
+//-->
+</SCRIPT>
+{/block}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>商品购买</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<body>
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>商品购买</h1>
+</header>
+<form class="form-horizontal" method="post" action="#">
+<input type="hidden" name="address_name"  value="#{$address.name}#">
+<input type="hidden" name="address_mobile"  value="#{$address.mobile}#">
+<input type="hidden" name="address_address"  value="#{$address.address}#">
+<div class="hui-wrap" >
+  <div class="hui-list hui-row" style="margin-top:40px;">
+    <div class="hui-col-2"> <img src="#{$smarty.const.APP}#/View/template/home/img/list/dizhi.png" style="width:50px; margin:0px; border-radius:50%;" /> </div>
+    <div class="hui-col-9" style="height:75px; line-height:25px;">
+      <input type="hidden" id="address_id" value="#{$address.id}#">
+      收货姓名：#{$address.name}#<br>
+      收货电话：#{$address.mobile}#<br>
+      收货地址：#{$address.address}# </div>
+    <div class="hui-col-1" style="line-height:75px;" > <a href="#{$smarty.const.ACT}#/home/WxMemberAddress/member_address_add/retrun_shop/#{$one.id}#/" style="width: 44px;"><span class="hui-icons hui-icons-right"></span></a> </div>
+  </div>
+  <div class="hui-media-list goods-cart-list" style="margin-top:20px;">
+	  
+    	<ul>
+      #{foreach from=$list key=k item=v}#
+      <input type="hidden" name="shop_id[]" id="shop_id" value="#{$v.shop_id}#">
+      <input type="hidden" name="goods_id[]" id="id_product_#{$k}#" value="#{$v.goods_id}#">
+      <input type="hidden" name="goods_name[]" id="id_goodsname_#{$k}#" value="#{$v.goods_name}#">
+      <input type="hidden" name="price[]" id="id_price_#{$k}#" value="#{$v.sale_price}#">
+      <input type="hidden" name="money[]" id="id_money_#{$k}#" value="#{$v.money}#">
+      <input type="hidden" name="member[]" id="id_member_#{$k}#" value="#{$v.member_id}#">
+      <li>
+        <div class="hui-media-list-img"><img src="#{$v.defaultpic}#" /></div>
+        <div class="hui-media-content">
+          <div class="hui-row">
+			  		<div class="hui-col-8">#{$v.goods_name}#</div>
+			  		<div class="hui-col-4 hui-tr">#{$v.sale_price}#</div>
+			  		<div class="hui-col-12"></div>
+			  		<div class="hui-col-6">小计：<span id="id_min_money_#{$k}#">#{$v.money}#</span></div>
+			  		<div class="hui-col-6 hui-tr">
+						<span class="cartBtn" onClick="javascript:minusCart(this, '#{$v.goods_id}#','#{$k}#')">-</span>
+						<input type="text" name="number[]" id="id_number_#{$k}#" class="cartInput" value="#{$v.number}#" >
+						<span class="cartBtn" onClick="javascript:plusCart(this, '#{$v.goods_id}#','#{$k}#')">+</span> 			  
+			  		</div>
+			</div>
+        </div>
+      </li>
+      #{/foreach}#
+		<input type="hidden" name="all_money" value="#{$one.price}#" id="all_money">
+    </ul>
+	  
+  </div>
+</div>
+<div id="hui-footer">
+  <div style="width:50%;line-height: 44px; text-align:center;" class="hui-fl"> 合计：<span id="id_all_money"></div>
+  <div style="width:50%; text-align:center;" class="hui-fl"> <img src="#{$smarty.const.APP}#/View/template/home/img/list/1-2.png" height="34" id="submit" /> </div>
+</div>
+</form>
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui.js" type="text/javascript" charset="utf-8"></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/plus/jquery1.42.min.js" type="text/javascript" charset="utf-8"></script> 
+<script type="text/javascript">	
+	
+	hui('#submit').click(function(){
+		if(address_id==''){
+		  hui.upToast('请选择收货地址');
+		  return false;
+		}
+		FormData=$("form").serialize();
+		//订单提交
+		$.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/WxGoodsBuy/goods_buy/action/save/',
+			data:FormData,
+			dataType:"json",
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.statusCode==200){
+					hui.upToast('下单成功');
+					var orderid=data.message;
+					var url="#{$smarty.const.ACT}#/home/WxGoodsBuy/goods_buy_pay/order_id/"+orderid+"/";
+					window.location.href=url;
+					hui.upToast('下单成功');
+					//hui.upToast(data.message);
+				}else{
+					hui.upToast(data.message);
+				}
+
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});
+	});
+
+$(document).ready(function () {
+		countMoney();
+		//商品价格
+		all_m=0;
+		$("input[name='money[]']").each(function(){
+			all_m +=parseFloat($(this).val());	
+		});	
+});
+
+
+function countMoney(){
+	var ids=document.getElementsByName("goods_id[]");
+	var i=0;
+	var m=0;
+	for(i;i<ids.length;i++){
+		var min_input=$("#id_money_"+i); 
+		var m=Number(m)+Number(min_input.val());
+	}
+	$("#all_money").val(m); 
+	$("#id_all_money").html(m); 
+	
+}
+
+//减  
+function minusCart(_this, id,key){  
+	var num_input=$("#id_number_"+key);  
+	var num 	 =$("#id_number_"+key).val();  
+	num--;  
+	if(num <= 0){  
+		return false;  
+	} else {  
+		 num_input.val(num);  
+		var money_input=$("#id_money_"+key);  
+		var price_input=$("#id_price_"+key);  
+		var min_money=Number(price_input.val())*num;
+		money_input.val(min_money);
+		$("#id_min_money_"+key).html(min_money);
+		countMoney();
+	}  
+}  
+//加  
+function plusCart(_this,id,key){ 
+	var num_input=$("#id_number_"+key);  
+	var num 	 =$("#id_number_"+key).val();  
+	num++;  
+	if(num <= 0){  
+		return false;  
+	} else {  
+		num_input.val(num);  
+		var money_input=$("#id_money_"+key);  
+		var price_input=$("#id_price_"+key);
+		var min_money=parseFloat(price_input.val())*parseFloat(num);
+		money_input.val(min_money);
+		$("#id_min_money_"+key).html(min_money);
+		countMoney();
+	}   
+}
+
+</script>
+</body>
+</html>

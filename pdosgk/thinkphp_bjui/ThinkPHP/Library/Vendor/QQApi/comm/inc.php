@@ -1,0 +1,2 @@
+<?php die('forbidden'); ?>
+{"appid":"101258396","appkey":"dac85995d56f6f6e8a3770683858b97f","callback":"http://xiaoshuo.mnsmz.net/Home/Oauth/callback","scope":"get_user_info","errorReport":true,"storageType":"file","host":"localhost","user":"root","password":"root","database":"test"}

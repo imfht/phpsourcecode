@@ -1,0 +1,210 @@
+{extend name="common/main"/}
+{block name="body"}
+    <!-- 标题栏 -->
+    <div class="main-title">
+        <h2>{:lang("_BEHAVIOR_LOG_")}&nbsp;&nbsp;&nbsp;<sub style="color: red">{:lang("_THE_LONGTERM_ACCUMULATION_OF_BEHAVIOR_LOG_WILL_LEAD_TO_THE_WHOLE_SYSTEM_PERFORMANCE_DEGRADATION_")}</sub></h2>
+    </div>
+    
+    <div class="with-padding">
+    <div class="clearfix button-box tool-box row">
+        <div class="col-xs-8 pd0">
+                <button class="btn btn-danger ajax-get confirm" url="{:url('clear')}">{:lang("_CLEARANCE_WITH_SPACE_")}</button>
+                <button class="btn btn-danger ajax-post confirm" target-form="ids" url="{:url('remove')}">{:lang("_DELETE_WITH_SPACE_")}</button>
+            <button class="btn btn-warning select">{:lang("_SCREEN_")}</button>
+            <button class="btn btn-info" data-role="csv" data-url="{:url('action/csv')}">
+                {:lang("_EXPORT_CSV_")}
+            </button>
+        </div>
+
+        <div class="col-xs-4">
+            <div class="search-form  pull-right">
+                <div class="input-group" style="width: 200px" >
+                    <input type="text" name="uid" class="search-input form-control" value="{:input('get.uid','','intval')}"
+                           placeholder={:lang("_PLEASE_ENTER_THE_USER_UID_WITH_DOUBLE_")}>
+                    <span class="input-group-btn">
+                        <a class="btn btn-default" href="javascript:;" id="search"
+                            url="{:url('Action/actionlog')}">
+                            <i class="icon icon-search"></i>
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 数据列表 -->
+    <div class="data-table">
+        <table class="table table-bordered table-striped table-hover muu-table">
+            <thead>
+                <tr>
+                <th class="row-selected row-selected">
+                    <input class="check-all" id="check-all" type="checkbox"/>
+                    <label for="check-all"></label>
+                </th>
+                <th class="">{:lang("_ID_")}</th>
+                <th class="">{:lang("_BEHAVIOR_NAME_")}</th>
+
+                <th class="">{:lang("_EXECUTIVE_")}</th>
+                <th>执行者IP</th>
+                <th class="">{:lang("_LOG_CONTENT_")}</th>
+                <th class="">{:lang("_EXECUTION_TIME_")}</th>
+                <th class="">{:lang("_OPERATION_")}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {notempty name="_list"}
+                {volist name="_list" id="vo"}
+                <tr>
+                    <td>
+                        <input class="ids" id="ids-{$vo.id}" type="checkbox" name="ids[]" value="{$vo.id}">
+                        <label for="ids-{$vo.id}"></label>
+                    </td>
+                    <td>{$vo.id} </td>
+                    <td>{:get_action($vo['action_id'],'title')}</td>
+                    <td><a href="{:url('Action/actionlog',['uid'=>$vo['user_id']])}">{:get_nickname($vo['user_id'])}</a></td>
+                    <td>{$vo.ip}</td>
+                    <td>{$vo['remark']}</td>
+                    <td><span>{$vo.create_time|time_format}</span></td>
+
+                    <td><a class="btn btn-sm btn-info" href="{:url('Action/detail',['id'=>$vo['id']])}">{:lang("_DETAILED_")}</a>
+                        <a class="btn btn-sm btn-danger ajax-get" data-confirm="确认执行该操作" href="{:url('Action/remove',['ids'=>$vo['id']])}">{:lang("_DELETE_")}</a>
+                    </td>
+                </tr>
+                {/volist}
+                {else/}
+                <td colspan="7" class="text-center"> aOh!{:lang("_THERE_IS_NO_CONTENT_")} </td>
+                {/notempty}
+            </tbody>
+        </table>
+    </div>
+    <!-- 分页 -->
+    <div class="page">{$page}</div>
+    <!-- /分页-->
+    </div>
+
+    <div class="modal fade" id="select">
+        <div class="modal-dialog">
+            <div class="modal-content" style="height: 298px">
+                <link href="__ZUI__/lib/datetimepicker/datetimepicker.css" rel="stylesheet" type="text/css">
+                <script type="text/javascript" src="__ZUI__/lib/datetimepicker/datetimepicker.min.js"></script>
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                            class="sr-only">{:lang('_CLOSE_')}</span></button>
+                    <h4 class="modal-title" id="myModalLabel">行为日志筛选</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="ajax-form" method="post" action="{:url('admin/action/actionLog')}">
+
+                        <div class="col-xs-12">
+                            <label>根据时间筛选</label>
+                        </div>
+                        <div class="col-xs-12">
+                        <div class="row">
+                        <div class="col-xs-6">
+                            <input type="text" id="sTime" name="sTime" class="time form-control form-datetime" placeholder="发布时间" readonly="" required/>
+                        </div>
+
+                        <div class="col-xs-6">
+                            <input type="text" id="eTime" name="eTime" class="time_d form-control form-datetime" readonly value="" placeholder="结束时间" required/>
+                        </div>
+                        </div>
+                        </div>
+                        <div class="col-xs-12">
+                            <label>根据行为筛选</label>
+                        </div>
+                        <div class="col-xs-12">
+                            <select name="select" class="form-control">
+                                <option></option>
+                                {volist name="action_list" id="vo"}
+                                    <option value="{$vo.id}">{$vo.title}</option>
+                                {/volist}
+                            </select>
+                        </div>
+
+                        <div class="col-xs-12" style="margin:15px auto;">
+                            <span><p class="pull-left" style="margin-right: 5px">
+                                <input type="submit" data-role="submitscreen" value="确定" class="btn btn-primary send_box">
+                            </p></span>
+
+                            <span><p class="pull-left" style="margin-left: 5px;">
+                                <input type="button" value="取消" class="btn btn-primary send_box" data-dismiss="modal">
+                            </p></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
+{block name="script"}
+<script>
+    $('.time').datetimepicker({
+        language:'zh-CN',
+        weekStart:1,
+        todayBtn:1,
+        autoclose:1,
+        todayHighlight:1,
+        startView:2,
+        minView:0,
+        forceParse:0,
+        format: 'yyyy-mm-dd hh:ii'
+    });
+
+    $('.time_d').datetimepicker({
+        language:'zh-CN',
+        weekStart:1,
+        todayBtn:1,
+        autoclose:1,
+        todayHighlight:1,
+        startView:2,
+        minView:0,
+        forceParse:0,
+        format: 'yyyy-mm-dd hh:ii'
+    });
+</script>
+
+<script type="text/javascript">
+$(function(){
+    $("#search").click(function () {
+        var url = $(this).attr('url');
+        var query = $('.search-form').find('input').serialize();
+        query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g, '');
+        query = query.replace(/^&/g, '');
+        if (url.indexOf('?') > 0) {
+            url += '&' + query;
+        } else {
+            url += '?' + query;
+        }
+        window.location.href = url;
+    });
+
+    $("#action_add").click(function(){
+        window.location.href = $(this).attr('url');
+    });
+    //回车搜索
+    $(".search-input").keyup(function (e) {
+        if (e.keyCode === 13) {
+            $("#search").click();
+            return false;
+        }
+    });
+
+    //模态框
+    $('.select').click(function () {
+        $('#select').modal();
+    });
+
+    //导出csv
+    $('[data-role="csv"]').click(function(){
+        var data_url=$(this).attr('data-url');
+        var query=''
+        var form=$('input[type=checkbox]:checked.ids').each(function(){
+            query+= ','+$(this).val();
+            if (query.substr(0,1)==',') query=query.substr(1);
+
+        });
+        data_url+='?ids='+query;
+        window.open(data_url);
+    });
+})
+</script>
+{/block}

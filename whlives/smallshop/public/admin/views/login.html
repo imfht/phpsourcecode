@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>后台管理系统</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../layuiadmin/style/admin.css" media="all">
+    <link rel="stylesheet" href="../layuiadmin/style/login.css" media="all">
+</head>
+<body>
+
+<div class="layadmin-user-login layadmin-user-display-show" id="LAY-user-login" style="display: none;">
+    <div class="layadmin-user-login-main">
+        <div class="layadmin-user-login-box layadmin-user-login-header">
+            <script type="text/html" template>
+                <h2>{{ layui.setter.name }}</h2>
+            </script>
+        </div>
+        <div class="layadmin-user-login-box layadmin-user-login-body layui-form">
+            <div class="layui-form-item">
+                <label class="layadmin-user-login-icon layui-icon layui-icon-username" for="LAY-user-login-username"></label>
+                <input type="text" name="username" id="LAY-user-login-username" lay-verify="required" lay-reqText="用户名不能为空" placeholder="用户名" class="layui-input">
+            </div>
+            <div class="layui-form-item">
+                <label class="layadmin-user-login-icon layui-icon layui-icon-password" for="LAY-user-login-password"></label>
+                <input type="password" name="password" id="LAY-user-login-password" lay-verify="required" lay-reqText="密码不能为空" placeholder="密码" class="layui-input">
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-row">
+                    <div class="layui-col-xs7">
+                        <label class="layadmin-user-login-icon layui-icon layui-icon-vercode" for="LAY-user-login-vercode"></label>
+                        <input type="text" name="captcha_code" id="LAY-user-login-vercode" placeholder="图形验证码" class="layui-input">
+                        <input type="hidden" name="captcha_key" value="">
+                    </div>
+                    <div class="layui-col-xs5">
+                        <div style="margin-left: 10px;">
+                            <img src="" class="layadmin-user-login-codeimg" id="user-captcha_code">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="form-submit">登 入</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-trans layadmin-user-login-footer">
+        <p>© 2019 <a href="http://www.shop168.com.cn/" target="_blank">shop168.com.cn</a></p>
+        <p>
+            <span><a href="http://www.shop168.com.cn/" target="_blank">获取授权</a></span>
+            <span><a href="http://www.shop168.com.cn/" target="_blank">在线演示</a></span>
+            <span><a href="http://www.shop168.com.cn/" target="_blank">前往官网</a></span>
+        </p>
+    </div>
+</div>
+
+<script src="../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index'], function () {
+        var $ = layui.$
+            , setter = layui.setter
+            , admin = layui.admin
+            , form = layui.form;
+
+        form.render();
+
+        //提交
+        form.on('submit(form-submit)', function (obj) {
+            admin.req({
+                url: layui.setter.apiHost + '/login'
+                , data: obj.field
+                , success: function (res) {
+                    if (res.code == 0) {
+                        //请求成功后，写入 access_token
+                        layui.data(setter.tableName, {
+                            key: setter.request.tokenName
+                            , value: res.data.access_token
+                        });
+                        layui.data(layui.setter.tableName, {
+                            key: 'auth_info'
+                            , value: res.data.auth_info
+                        });
+                        //登入成功的提示与跳转
+                        layer.msg('登入成功', {
+                            offset: '15px'
+                            , icon: 1
+                            , time: 1000
+                        }, function () {
+                            location.href = 'index.html'; //后台主页
+                        });
+                    } else {
+                        layer.msg(res.msg);
+                    }
+                }
+            });
+        });
+
+        //获取验证码
+        function get_code() {
+            //请求登入接口
+            admin.req({
+                url: layui.setter.apiHost + '/helper/captcha'
+                , success: function (res) {
+                    if (res.code == 0) {
+                        $('#user-captcha_code').attr('src', res.data.img);
+                        $('[name="captcha_key"]').val(res.data.key);
+                    }
+                }
+            });
+        }
+        get_code();
+
+        //更换图形验证码
+        $('body').on('click', '#user-captcha_code', function(){
+            get_code();
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<extend name="_Layout/main"/>
+
+<block name="main">
+    <!-- 工具栏按钮 -->
+    <div class="toolbar" style="margin-bottom:20px;">
+        <a id="export" class="btn btn-primary" href="javascript:;" autocomplete="off">立即备份</a>
+        <a id="optimize" class="btn btn-warning" href="{:U('optimize')}">优化表</a>
+        <a id="repair" class="btn btn-danger" href="{:U('repair')}">修复表</a>
+    </div>
+
+    <!-- 数据列表 -->
+    <div class="data-table">
+        <form id="export-form" method="post" action="{:U('do_export')}">
+            <div class="panel panel-default">
+                <table class="table table-bordered table-responsive table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th><input class="check-all" checked="chedked" type="checkbox" value=""></th>
+                            <th>表名</th>
+                            <th class="hidden-xs">数据量</th>
+                            <th class="hidden-xs">数据大小</th>
+                            <th class="hidden-xs">创建时间</th>
+                            <th width="160">备份状态</th>
+                            <th width="120">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <volist name="list" id="table">
+                            <tr>
+                                <td class="num"><input class="ids" checked="chedked" type="checkbox" name="tables[]" value="{$table.name}"></td>
+                                <td>{$table.name}</td>
+                                <td class="hidden-xs">{$table.rows}</td>
+                                <td class="hidden-xs">{$table.data_length}</td>
+                                <td class="hidden-xs">{$table.create_time}</td>
+                                <td class="back-status">未备份</td>
+                                <td class="action">
+                                    <a class="btn btn-xs btn-warning ajax-get no-refresh" href="{:U('optimize?tables='.$table['name'])}">优化表</a>
+                                    <a class="btn btn-xs btn-danger ajax-get no-refresh" href="{:U('repair?tables='.$table['name'])}">修复表</a>
+                                </td>
+                            </tr>
+                        </volist>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</block>
+
+<block name="script">
+    <script type="text/javascript">
+        $(function() {
+            var $form = $("#export-form"), $export = $("#export"), tables, $optimize = $("#optimize"), $repair = $("#repair");
+            $optimize.add($repair).click(function(){
+                $.post(this.href, $form.serialize(), function(data){
+                    if(data.status){
+                        $.alertMessager(data.info, 'success');
+                    }else{
+                        $.alertMessager(data.info, 'danger');
+                    }
+                    setTimeout(function(){
+                        $(that).removeClass('disabled').prop('disabled',false);
+                    },1000);
+                }, "json");
+                return false;
+            });
+
+            $export.click(function() {
+                if ($(this).hasClass('confirm')) {
+                    if (!confirm('确认要执行该操作吗?')) {
+                        return false;
+                    }
+                }
+                $export.parent().children().addClass("disabled");
+                $export.html("正在发送备份请求...");
+                $.post(
+                    $form.attr("action"),
+                    $form.serialize(),
+                    function(data){
+                        if(data.status){
+                            tables = data.tables;
+                            $export.html(data.info + "开始备份，请不要关闭本页面！");
+                            backup(data.tab);
+                            window.onbeforeunload = function(){ return "正在备份数据库，请不要关闭！" }
+                        }else{
+                            $.alertMessager(data.info, 'danger');
+                            $export.parent().children().removeClass("disabled");
+                            $export.html("立即备份");
+                            setTimeout(function(){
+                                $(that).removeClass('disabled').prop('disabled',false);
+                            },2000);
+                        }
+                    },"json");
+                return false;
+            });
+
+            function backup(tab, status) {
+                status && showmsg(tab.id, "开始备份...(0%)");
+                $.get($form.attr("action"), tab, function(data){
+                    if(data.status){
+                        showmsg(tab.id, data.info);
+                        if(!$.isPlainObject(data.tab)){
+                            $export.parent().children().removeClass("disabled");
+                            $export.html("备份完成，点击重新备份");
+                            window.onbeforeunload = function(){ return null }
+                            return;
+                        }
+                        backup(data.tab, tab.id != data.tab.id);
+                    }else{
+                        $.alertMessager(data.info, 'danger');
+                        $export.parent().children().removeClass("disabled");
+                        $export.html("立即备份");
+                        setTimeout(function(){
+                            $(that).removeClass('disabled').prop('disabled',false);
+                        },2000);
+                    }
+                }, "json");
+            }
+
+            function showmsg(id, msg) {
+                $form.find("input[value=" + tables[id] + "]").closest("tr").find(".back-status").html(msg);
+            }
+        });
+    </script>
+</block>

@@ -1,0 +1,109 @@
+{case value="avatar"}
+{php}
+    $webuploader=1;
+   if (strpos($field['name'],'[')) {
+    $field['id']=str_replace(']','',str_replace('[','',$field['name']));
+  }else{
+    $field['id']=$field['name'];
+  }
+{/php}
+{load href="__ADMINCSS__/file.css" /}
+{load href="__ADMINJS__/cropbox.js" /}
+<style>
+	.webuploader-pick{
+		padding: 0 !important;
+		height: 27px;
+    	line-height: 27px;
+	}
+	.each img{
+		margin-top: 10px;
+		width: 310px;
+		height: 150px;
+		display: block;
+	}
+	.item_avatar{
+		overflow: hidden;
+    	/*height: 286px;*/
+	}
+	.display_no{
+		display: none;
+	}
+</style>
+<dl class="item_{$field.name} {$field.extra_class}">
+	<dt>{$field.title}</dt>
+	<dd>
+		<div id="preview">
+	<!-- <dd id="uploader-demo" style="margin-left: 0;">
+    	<input style="width: 288px;padding: 5px 4px;border: 1px solid #eee;float: left;height: 22px;margin-left: 20px;" class="uploader-list" name="{$field.name}" type="text" id="{$field.id}" value="{present name="field.value"}{$field.value}{/present}" class="input normal" {$field.extra_attr}/>
+    	{notempty name="field.tip"}<span class="Validform_checktip">{present name="field.confirm"}{eq name="field.confirm" value="required"}<span class="red">*</span> {/eq}{/present}{$field.tip}</span>{/notempty}
+	</dd> -->
+			<img id="imghead" border="0" src="/static/admin/photo_icon.png" width="150" height="150" onClick="$('#previewImg').click();">
+			<input type="file" onChange="previewImage(this)" id="previewImg" style="display:none">
+		<span class="Validform_checktip"><span style="color:red">*</span> 文件格式GIF、JPG、JPEG、PNG文件大小80k以内，建议尺寸80*80像素</span>
+		</div>
+		
+	</dd>
+</dl>
+ 
+<script type="text/javascript">
+ 	//单图上传    IE是用了滤镜。
+	function previewImage(file) {
+		var MAXWIDTH = 90;
+		var MAXHEIGHT = 90;
+		var div = document.getElementById('preview');
+		if(file.files && file.files[0]) {
+			div.innerHTML = '<img id=imghead onclick=$("#previewImg").click()>';
+			var img = document.getElementById('imghead');
+			img.onload = function() {
+				var rect = clacImgZoomParam(MAXWIDTH, MAXHEIGHT, img.offsetWidth, img.offsetHeight);
+				console.log(rect);
+
+				img.width = rect.width + 60;
+				img.height = rect.height + 100;
+				//                 img.style.marginLeft = rect.left+'px';
+				//              img.style.marginTop = rect.top+'px';
+			}
+			var reader = new FileReader();
+			reader.onload = function(evt) {
+				img.src = evt.target.result;
+			}
+			reader.readAsDataURL(file.files[0]);
+		} else //兼容IE
+		{
+			var sFilter = 'filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod=scale,src="';
+			file.select();
+			var src = document.selection.createRange().text;
+			div.innerHTML = '<img id=imghead>';
+			var img = document.getElementById('imghead');
+			img.filters.item('DXImageTransform.Microsoft.AlphaImageLoader').src = src;
+			var rect = clacImgZoomParam(MAXWIDTH, MAXHEIGHT, img.offsetWidth, img.offsetHeight);
+			status = ('rect:' + rect.top + ',' + rect.left + ',' + rect.width + ',' + rect.height);
+			div.innerHTML = "<div id=divhead style='width:" + rect.width + "px;height:" + rect.height + "px;margin-top:" + rect.top + "px;" + sFilter + src + "\"'></div>";
+		}
+	}
+
+	function clacImgZoomParam(maxWidth, maxHeight, width, height) {
+		var param = {
+			top: 0,
+			left: 0,
+			width: width,
+			height: height
+		};
+		if(width > maxWidth || height > maxHeight) {
+			rateWidth = width / maxWidth;
+			rateHeight = height / maxHeight;
+
+			if(rateWidth > rateHeight) {
+				param.width = maxWidth;
+				param.height = Math.round(height / rateWidth);
+			} else {
+				param.width = Math.round(width / rateHeight);
+				param.height = maxHeight;
+			}
+		}
+		param.left = Math.round((maxWidth - param.width) / 2);
+		param.top = Math.round((maxHeight - param.height) / 2);
+		return param;
+	}
+ </script>
+{/case}

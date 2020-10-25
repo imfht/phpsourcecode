@@ -1,0 +1,116 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?=$this->HelpUrl('salesOrderReturnList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th width="10%"><?=$this->translate('销售单号')?>-<?=$this->translate('订单数：').$this->orderList->getTotalItemCount()?></th>
+                                <th width="10%"><?=$this->translate('发货单号')?></th>
+                                <th width="12%"><?=$this->translate('客户')?></th>
+                                <th width="10%"><?=$this->translate('联系人')?></th>
+                                <th width="10%"><?=$this->translate('联系电话')?></th>
+                                <th width="10%"><?=$this->translate('退货金额')?></th>
+                                <th width="6%"><?=$this->translate('状态')?></th>
+                                <th width="18%"><?=$this->translate('操作')?></th>
+                            </tr>
+                            <?php
+                            $sForm = $this->searchForm;
+                            $sForm->prepare();
+                            $sForm->get('return_state')->setEmptyOption('选择');
+                            ?>
+                            <?= $this->form()->openTag($sForm); ?>
+                            <tr>
+                                <td>
+                                    <?= $this->formElement($sForm->get('sales_order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('sales_order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('send_order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('send_order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('customer_id')); ?>
+                                    <?=$this->formElementErrors($sForm->get('customer_id'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('customer_contacts')); ?>
+                                    <?=$this->formElementErrors($sForm->get('customer_contacts'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('customer_phone')); ?>
+                                    <?=$this->formElementErrors($sForm->get('customer_phone'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('return_state')); ?>
+                                    <?=$this->formElementErrors($sForm->get('return_state'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                    <?php if(!empty(array_filter($sForm->getData()))) { ?>
+                                        <a href="<?=$this->url('sales-order-return');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <?= $this->form()->closeTag(); ?>
+                            </thead>
+
+                            <?php if($this->orderList) foreach ($this->orderList as $order) { ?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($order->getSalesorderSn())?></td>
+                                    <td><?=$this->escapeHtml($order->getSalesSendOrderSn())?></td>
+                                    <td><?=$this->escapeHtml($order->getOneSalesOrder()->getOneCustomer()->getCustomerName())?></td>
+                                    <td><?=$this->escapeHtml($order->getOneSalesOrder()->getCustomerContacts())?></td>
+                                    <td><?=$this->escapeHtml($order->getOneSalesOrder()->getCustomerPhone())?></td>
+                                    <td><?=$this->erpCurrencyFormat($order->getSalesOrderReturnAmount());?></td>
+                                    <td><?=$this->salesHelper()->salesOrderReturnState($order->getReturnState(), 2)?></td>
+                                    <td>
+                                        <a href="<?= $this->url('sales-order-return',
+                                            ['action'=>'view', 'id'=>$order->getSalesOrderReturnId()]); ?>" class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('查看')?></a>
+                                        <?php if($order->getReturnState() == -1) { ?>
+                                            <a href="<?= $this->url('sales-order-return',
+                                                ['action'=>'finish', 'id'=>$order->getSalesOrderReturnId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>" class="btn btn-xs btn-success"><i class="fa fa-check"></i> <?=$this->translate('退货完成')?></a>
+                                            <a href="<?= $this->url('sales-order-return',
+                                                ['action'=>'cancel', 'id'=>$order->getSalesOrderReturnId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>" class="btn btn-xs btn-warning"><i class="fa fa-remove"></i> <?=$this->translate('取消退货')?></a>
+                                        <?php } ?>
+
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->orderList, 'Sliding', 'layout/page', ['route' => 'sales-order-return']); ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

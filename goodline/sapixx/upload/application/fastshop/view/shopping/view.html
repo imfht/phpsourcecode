@@ -1,0 +1,90 @@
+{layout name="layout" /}
+{foreach $order as $key => $rs}
+<div id="actionbar" class="fn-clear">
+    {if $rs.paid_at == 1 && $rs.express_status == 0}
+        <a href="javascript:openwin('{:url('fastshop/order/sendgoods',['order_no' =>$key])}')" class="button button-green">立即发货</a>
+
+    {else}
+        <button class="button" disabled>立即发货</button>
+    {/if}
+    {if $rs.paid_at == 1 && $rs.express_status == 1 && $rs.status == 0}
+        <button class="button bar button-green" url="{:url('fastshop/order/completion',['order_no'=>$key])}" msg="【结单？】查询单号确认用户已签收">结单</button>
+    {else}
+        <button class="button" disabled>结单</button>
+    {/if}
+    <div class="fn-right">
+    {if $rs.paid_at == 0 && $rs.is_del ==0}
+        <button class="button bar" url="{:url("fastshop/order/paid",['order_no'=>$key])}" msg="【修改订单？】确认要强制修改订单到付款状态？"><i class="iconfont icon-dollar"></i>人工确认付款</button>
+        <button class="button bar" url="{:url("fastshop/order/delete",['order_no'=>$key])}" msg="【删除？】确认要删除当前订单"><i class="iconfont icon-lajixiang"></i>删除订单</button>
+    {/if}
+    </div>
+</div>
+<table class="pure-table">
+    <thead>
+        <tr class="pure-table-title">
+            <td>{$rs.order_starttime} 订单号 : <i class="iconfont icon-wodedingdan2"></i>{$key}</td>
+            <td colspan="3" class="fn-tar">
+                {if $rs.is_del ==1}
+                    <span class="badge">已删除</span>
+                {else}
+                    {if $rs.status == 1}
+                        <span class="badge">已完成</span>
+                    {else}
+                        {if $rs.paid_at}
+                            {if $rs.express_status}
+                                <span class="badge bg-green">已发货</span>
+                            {else}
+                                <span class="badge bg-blue">待发货</span>  
+                            {/if}
+                        {else}
+                            <span class="badge bg-red">待付款</span>
+                        {/if}
+                    {/if}
+                {/if}
+            </td>
+        </tr>
+        <tr>
+            <td>收货人：{$rs.express_name}&nbsp;/&nbsp;{$rs.express_phone}<br />收货地址：{$rs.express_address}</td>
+            <td colspan="3">{if $rs.express_status}物流公司：{$rs.express_company}<br />{if $rs.express_no}快递单号：<a href="https://www.baidu.com/s?wd={$rs.express_no}" target="_blank" class="badge">{$rs.express_no}</a>{/if}{/if}</td>
+        </tr>
+        <tr><th>商品</th><th class="w140">单价</th><th class="w70 fn-tac">数量</th><th class="w70">小计</th></tr>
+    </thead>
+    {foreach $rs.item as $vo}
+    <tbody>
+        <tr>
+            <td>
+            <div class="fn-clear order">
+                <div class="img fn-left"><img src="{$vo.img}?x-oss-process=style/80" /></div>
+                <div class="info fn-left fn-f14">
+                    {$vo.name}
+                </div>
+                <div class="number fn-right">￥{$vo.buy_price} x {$vo.buy_nums}</div>
+            </div>
+            </td>
+            <td class="fn-tac">￥{$vo.buy_price}元</td>
+            <td class="fn-tac">{$vo.buy_nums}</td>
+            <td class="fn-tac">{$vo.amount}</td>            
+        </tr>
+    </tbody>
+    {/foreach}
+</table>
+{/foreach}
+<style type="text/css">
+    .order {border-bottom: 1px #e9ecf3 solid}
+    .order:last-child{border-bottom:none}
+    .order div {margin: 5px;}
+    .order .img {width: 80px;height: 80px;overflow: hidden;border: 1px dotted #e9ecf3;padding: 2px}
+    .order .img img {width: 78px;}
+    .order .info {line-height: 25px;margin-top: 10px;display: block;}
+    .order .info .gray {color: #9e9e9e}
+    .order .number {line-height: 50px;margin: 10px 20px;}
+</style>
+<script type="text/javascript">
+    Do('base','layer',function () {
+        $(".bar").click(function() {
+            var url = $(this).attr('url');
+            var msg = $(this).attr('msg');
+            tools_submit({action:url,msg:msg})
+        })
+    })
+</script>

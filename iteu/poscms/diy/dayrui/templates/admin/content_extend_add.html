@@ -1,0 +1,198 @@
+{template "nheader.html"}
+<script type="text/javascript">
+$(function() {
+	{if $error}
+	dr_tips('<font color=red>{$error.msg}</font>', 3);
+	d_tips('{$error['error']}', 0);
+	{/if}
+	{if $create}
+	$.post('{$create}&rand='+Math.random(),{ }, function(data){
+	});
+	{/if}
+    //每隔5秒保存表单数据
+    {if !$data.id && !$did}
+    setInterval("dr_save_add_data()", 5000);
+    {/if}
+    // 加载草稿
+    $("#dr_cgbox").mouseover(function(){
+        $(".dr_cgbox").show();
+    }).mouseout(function(){
+        $(".dr_cgbox").hide();
+    });
+    $(".dr_cgbox_select").click(function(){
+        var did = $(this).attr("did");
+        var islock = $(this).attr("islock");
+        if (did != undefined && islock == "0") {
+            window.location.href = '{$draft_url}&did='+did;
+        }
+    });
+    // 自动保存草稿
+    {if $did}
+        setInterval("dr_save_draft_data()", 5000);
+    {/if}
+});
+// 动态保存草稿数据
+function dr_save_draft_data() {
+    $.ajax({
+        type: "POST",
+        dataType:"json",
+        url: memberpath+'index.php?s=member&c=api&m=ajax_save_draft&sid={SITE_ID}&dir={APP_DIR}&did={$did}',
+        data: $("#myform").serialize(),
+        success: function(data) { },
+        error: function(HttpRequest, ajaxOptions, thrownError) { }
+    });
+}
+// 动态保存表单数据
+function dr_save_add_data() {
+    $.ajax({
+        type: "POST",
+        dataType:"json",
+        url: memberpath+'index.php?s=member&c=api&m=ajax_save_add&dir={APP_DIR}_extend',
+        data: $("#myform").serialize(),
+        success: function(data) { },
+        error: function(HttpRequest, ajaxOptions, thrownError) { }
+    });
+}
+// 删除草稿数据
+function delete_draft(did){
+    $("#dr_row_cgbox_"+did).attr("islock", 1);
+    var num = parseInt($("#dr_cg_nums").html());
+    $.ajax({
+        type: "POST",
+        dataType:"json",
+        url: memberpath+'index.php?s=member&c=api&m=ajax_delete_draft&sid={SITE_ID}&dir={APP_DIR}&did='+did,
+        success: function(data) {
+            $("#dr_cgbox_"+did).attr("islock", 0);
+            if (data == did) {
+                $("#dr_cgbox_"+did).remove();
+                $("#dr_cg_nums").html(num - 1);
+            } else {
+                dr_tips(data);
+            }
+        },
+        error: function(HttpRequest, ajaxOptions, thrownError) { }
+    });
+}
+</script>
+<form class="form-horizontal" action="" method="post" id="myform" name="myform">
+<input name="action" id="dr_action" type="hidden" value="back" />
+    <div class="page-bar">
+        <ul class="page-breadcrumb mylink">
+            {$menu.link}
+        </ul>
+        <ul class="page-breadcrumb myname">
+            {$menu.name}
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <button type="button" class="btn green btn-sm btn-outline dropdown-toggle" data-toggle="dropdown" aria-expanded="false" data-hover="dropdown"> {fc_lang('操作菜单')}
+                    <i class="fa fa-angle-down"></i>
+                </button>
+                <ul class="dropdown-menu pull-right" role="menu">
+                    {loop $menu.quick $t}
+                    <li>
+                        <a href="{$t.url}">{$t.icon} {$t.name}</a>
+                    </li>
+                    {/loop}
+                    <li class="divider"> </li>
+                    <li>
+                        <a href="javascript:window.location.reload();">
+                            <i class="icon-refresh"></i> {fc_lang('刷新页面')}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:20px;margin-bottom: 50px;">
+        <div class="col-md-9">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <span class="caption-subject font-green sbold uppercase">{fc_lang('章节内容')}</span>
+                    </div>
+                    {if $draft_list}
+                    <div class="actions">
+                        <div class="btn-group">
+                            <a class="btn green-haze btn-outline btn-circle btn-sm" href="javascript:;" data-toggle="dropdown" data-hover="dropdown" data-close-others="true"> <i class="fa fa-edit"></i> {fc_lang('草稿')} <span class="badge badge-success" id="dr_cg_nums">{count($draft_list)}</span>
+                                <i class="fa fa-angle-down"></i>
+                            </a>
+                            <ul class="dropdown-menu pull-right" style="width:320px">
+                                {loop $draft_list $t}
+                                <li id="dr_cgbox_{$t.id}">
+                                    <a href="javascript:;" class="dr_cgbox_select" id="dr_row_cgbox_{$t.id}" did="{$t.id}" islock="0">{if $t.title}{$t.title}{else}---{/if} <span class="badge badge-s-danger" onclick="delete_draft('{$t.id}')"> <i class="fa fa-trash"></i> {dr_date($t.inputtime)}</span></a>
+                                </li>
+                                {/loop}
+                            </ul>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+                <div class="portlet-body">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{fc_lang('名称')}：</label>
+                            <div class="col-md-9">
+                                <div class="form-control-static">{$content.title}</div>
+                            </div>
+                        </div>
+                        {str_replace('col-md-9', 'col-md-10', $myfield)}
+                    </div>
+                </div>
+            </div>
+
+            {if $ci->get_cache('module-'.SITE_ID.'-'.APP_DIR, 'setting', 'syn2')}
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <span class="caption-subject font-green sbold uppercase">{fc_lang('更多设置')}</span>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="form-body">
+                        {if $ci->get_cache('module-'.SITE_ID.'-'.APP_DIR, 'setting', 'syn2')}
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{fc_lang('同步微博')}：</label>
+                            <div class="col-md-9">
+                                <label><input type="checkbox" name="sina_share" value="1" {if !$data.id}checked="checked"{/if} data-on-text="{fc_lang('开启')}" data-off-text="{fc_lang('关闭')}" data-on-color="success" data-off-color="danger" class="make-switch" data-size="small"> </label>
+                            </div>
+                        </div>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+            {/if}
+        </div>
+        <div class="col-md-3">
+            <div class="portlet light bordered">
+                <div class="portlet-body">
+                    <div class="form-body">
+                        {$sysfield}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="myfooter">
+        <div class="row">
+            <div class="portlet-body form">
+                <div class="form-body">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn blue" onclick="$('#dr_action').val('draft')"> <i class="fa fa-save"></i> {fc_lang('保存草稿')}</button>
+                                <button type="submit" class="btn green" onclick="$('#dr_action').val('back')"> <i class="fa fa-save"></i> {fc_lang('保存并返回')}</button>
+                                {if !$data.id}
+                                <button type="submit" class="btn default" onclick="$('#dr_action').val('continue')"> <i class="fa fa-save"></i> {fc_lang('保存并继续')}</button>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{template nfooter.html}

@@ -1,0 +1,1 @@
+<?php $this->display('member/portal_sidebar'); ?>

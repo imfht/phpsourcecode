@@ -1,0 +1,219 @@
+<include file="Common/header-control" />
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs">
+            <li><a href="{:U('control/platform/weixin')}">公众号列表</a></li>
+            <if condition="!empty($entity)">
+                <li class="active"><a href="{:U('control/platform/weixin?do=modify&id=' . $entity['id'])}">编辑公众号</a></li>
+                <li><a href="{:U('control/platform/weixin?do=create')}">添加公众号</a></li>
+                <else/>
+                <li class="active"><a href="{:U('control/platform/weixin?do=create')}">添加公众号</a></li>
+            </if>
+        </ul>
+    </div>
+    <script>
+        require(['jquery', 'util'], function($, u){
+            $(function(){
+                $('#theform').submit(function(){
+                    if($.trim($('input[name="title"]').val()) == '') {
+                        u.message('必须输入公众号名称');
+                        return false;
+                    }
+                    var level = $(':radio[name=level]:checked').val();
+                    if(level != '0') {
+                        if($.trim($('input[name="appid"]').val()) == '' || $.trim($('input[name="secret"]').val()) == '') {
+                            u.message('您选择的公众号类型必须输入公众号AppId和Secret');
+                            return false;
+                        }
+                    }
+                    <if condition="empty($entity)">
+                        if($.trim($('input[name="qr"]').val()) == '') {
+                            u.message('必须上传公众号二维码');
+                            return false;
+                        }
+                    </if>
+                });
+                
+                $(':radio[name=level]').click(function(){
+                    var level = $(':radio[name=level]:checked').val();
+                    if(level != '0') {
+                        $('.adv-input').removeClass('hide');
+                    } else {
+                        $('.adv-input').addClass('hide');
+                    }
+                });
+            });
+        });
+    </script>
+    <form id="theform" action="" method="post" class="form-horizontal" role="form" enctype="multipart/form-data">
+    <div class="box col-md-12">
+        <div class="box-inner">
+            <div class="box-header well" data-original-title="">
+                <if condition="!empty($entity)">
+                    <h2><i class="fa fa-edit"></i> 编辑微信公众账号</h2>
+                    <else/>
+                    <h2><i class="fa fa-list"></i> 添加微信公众账号</h2>
+                </if>
+            </div>
+            <div class="box-content">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">公众号名称</label>
+                    <div class="col-sm-4">
+                        <input class="form-control" type="text" name="title" value="{$entity['title']}"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">公众号类型</label>
+                    <div class="col-sm-10">
+                        <div class="radio-inline">
+                            <label>
+                                <empty name="entity">
+                                    <input type="radio" name="level" value="2" checked> 认证服务号
+                                    <else/>
+                                    <input type="radio" name="level" value="2" {$entity['level'] == '2' ? 'checked' : ''}> 认证服务号
+                                </empty>
+                            </label>
+                        </div>
+                        <div class="radio-inline">
+                            <label>
+                                <input type="radio" name="level" value="1" {$entity['level'] == '1' ? 'checked' : ''}> 普通服务号/认证订阅号
+                            </label>
+                        </div>
+                        <div class="radio-inline">
+                            <label>
+                                <input type="radio" name="level" value="0" {$entity['level'] == '0' ? 'checked' : ''}> 普通订阅号
+                            </label>
+                        </div>
+                        <div class="help-block">
+                            请正确选择您的公众号类型, 这个涉及到某些具体功能是否启用和具体的处理方式
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group adv-input">
+                    <label class="col-sm-2 control-label">应用ID(AppId)</label>
+                    <div class="col-sm-4">
+                        <input class="form-control" type="text" name="appid" value="{$entity['appid']}"/>
+                        <div class="help-block">
+                            可以在 公众平台的后台 - 开发者中心 找到
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group adv-input">
+                    <label class="col-sm-2 control-label">应用密钥(AppSecret)</label>
+                    <div class="col-sm-4">
+                        <input class="form-control" type="text" name="secret" value="{$entity['secret']}"/>
+                        <div class="help-block">
+                            可以在 公众平台的后台 - 开发者中心 找到
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">备注</label>
+                    <div class="col-sm-4">
+                        <textarea name="remark" class="form-control" rows="4">{$entity['remark']}</textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">公众号二维码</label>
+                    <div class="col-sm-5">
+                        <if condition="!empty($entity['qr'])">
+                            <input type="file" name="qr" value="" accept="image/*" data-preview="{:attach($entity['qr'])}" data-caption="当前服务窗二维码">
+                            <else/>
+                            <input type="file" name="qr" value="" accept="image/*">
+                        </if>
+                        <script>
+                            require(['util'], function(u){u.preview();});
+                        </script>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-1">
+                        <if condition="empty($entity)">
+                            <button type="submit" class="btn btn-block btn-primary">新增</button>
+                            <else/>
+                            <button type="submit" class="btn btn-block btn-primary">保存</button>
+                        </if>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <if condition="!empty($entity)">
+        <div class="box col-md-12">
+            <div class="box-inner">
+                <div class="box-header well" data-original-title="">
+                    <h2><i class="fa fa-plug"></i> 接入微信公众平台</h2>
+                </div>
+                <div class="box-content">
+                    <script>
+                        require(['jquery', 'util'], function($, u){
+                            $(function(){
+                                $('#gen-key').click(function(){
+                                    $.post(location.href, {method: 'generate'}).success(function(dat){
+                                        var json = $.parseJSON(dat);
+                                        if(u.is_error(json)) {
+                                            u.message(json.message);
+                                            return;
+                                        }
+                                        $('#copy-token abbr').html(json.token);
+                                        $('#copy-aes abbr').html(json.aeskey);
+                                    });
+                                });
+                                if($('#copy-token').text() == '') {
+                                    $('#gen-key').trigger('click');
+                                }
+                                $('#copy-url abbr').html(location.protocol + '//' + location.host + $('#copy-url abbr').text());
+                                $('.copy').each(function(){
+                                    u.clip(this, $(this).text());
+                                });
+                            });
+                        });
+                    </script>
+                    <div class="alert alert-info">
+                        访问 <a href="https://mp.weixin.qq.com" class="alert-link">公众平台管理后台</a> 进入 开发者中心 按照以下的内容配置参数后接入系统.
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">接入URL</label>
+                        <div class="col-sm-4">
+                            <p class="form-control-static">
+                                <a class="copy" href="javascript:;" id="copy-url"><abbr title="点击复制">{:U('/api/' . $entity['id'])}</abbr></a>
+                            </p>
+                            <div class="help-block">
+                                点击链接复制
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">接入Token</label>
+                        <div class="col-sm-4">
+                            <p class="form-control-static">
+                                <a class="copy" href="javascript:;" id="copy-token"><abbr title="点击复制">{$entity['token']}</abbr></a>
+                            </p>
+                            <div class="help-block">
+                                点击链接复制
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">接入EncodingAESKey</label>
+                        <div class="col-sm-4">
+                            <p class="form-control-static">
+                                <a class="copy" href="javascript:;" id="copy-aes"><abbr title="点击复制">{$entity['aeskey']}</abbr></a>
+                            </p>
+                            <div class="help-block">
+                                点击链接复制
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-2">
+                            <button id="gen-key" type="button" class="btn btn-block btn-default">重新生成Token及ASEKey</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </if>
+    </form>
+</div>
+<include file="Common/footer-control" />

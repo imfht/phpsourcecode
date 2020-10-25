@@ -1,0 +1,178 @@
+<link href="__COMMON__/lib/webuploader/css/webuploader.css" rel="stylesheet" type="text/css"/>
+<div class="service-edit-form">
+  <form class="form-horizontal" data-type="service-edit" action="{:url('muushop/api/service',['action'=>'apply'])}">
+  <input type="hidden" name="product_id" value="{$product.product_id}">
+  <input type="hidden" name="order_id" value="{$product.order_id}">
+    <div class="form-group">
+      <div class="product-item clearfix">
+        <div class="p-img">
+          <a href="{:url('Index/product',['id'=>$product['product_id']])}" target="_blank">
+            <img src="{$product.main_img_src}" title="{$product.title}" width="60" height="60">
+          </a>
+        </div>
+        <div class="p-msg">
+          <div class="p-name">
+            <a href="{:url('Index/product',['id'=>$product['product_id']])}" class="a-link" target="_blank" title="{$product.title}">{$product.title}
+            </a>
+          </div>
+          {notempty name="product.sku"}
+          <div class="sku_box">
+            {foreach name="product.sku" item="sku" }
+                 <span class="sku_li_span">{$sku}</span>  
+                {/foreach}
+          </div>
+          {/notempty}
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="" class="col-sm-2">服务类型</label>
+      <div class="col-sm-10">
+        <label class="radio-inline">
+          <input type="radio" name="type" value="exchange" checked> 换货
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="type" value="return"> 退货
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="" class="col-sm-2">提交数量</label>
+      <div class="col-sm-10">
+        <input type="number" class="form-control" name="quantity" data-quantity="{$product.quantity}" value="{$product.quantity}">
+      </div>
+    </div>
+    <div class="form-group position">
+      <label for="" class="col-sm-2">问题描述</label>
+      <div class="col-sm-10">
+      	<textarea class="form-control" rows="3" name="description" placeholder="可以输入多行文本"></textarea>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="" class="col-sm-2">图片信息</label>
+      <div class="col-sm-10">
+        <input type="hidden" class="form-control" name="images" data-role="images_file">
+        <div class="images_box">
+            <div id="fileList" class="uploader-list"></div>
+            <div class="clearfix" data-role="upload_picture">
+                <div data-role="upload_btn" class="upload_btn">+</div>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <button type="submit" class="btn btn-default" >确 认 提 交</button>
+    </div>
+  </div>
+  </form>
+</div>
+
+<script type="text/javascript" src="__COMMON__/lib/webuploader/js/webuploader.js"></script>
+<script>
+$(function(){
+  //数量超出购买数量时的处理
+  var quantity = $('[name="quantity"]').data('quantity');
+  $('[name="quantity"]').bind('input propertychange',function(){
+    if($(this).val()>quantity){
+      $(this).val(quantity);
+    }
+    if($(this).val()<=1){
+      $(this).val(1);
+    }
+  })
+})
+
+$(function(){
+    //上传图片
+    // 初始化Web Uploader
+    var uploader = WebUploader.create({
+        fileNumLimit: 5,//上传数量限制
+        fileSizeLimit: 10*1024*1024,//限制上传所有文件大小
+        fileSingleSizeLimit: 10*1024*1024,//限制上传单个文件大小
+        // 选完文件后，是否自动上传。
+        auto: true,
+        // swf文件路径
+        swf: '__COMMON__/lib/webuploader/js/Uploader.swf',
+        // 文件接收服务端。
+        server: "{:url('api/File/uploadPicture')}",
+        // 选择文件的按钮。可选。
+        // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+        pick: '[data-role="upload_btn"]',
+        // 只允许选择图片文件。
+        accept: {
+            title: 'Images',
+            extensions: 'gif,jpg,jpeg,bmp,png',
+            mimeTypes: 'image/jpg,image/jpeg,image/png'
+        }
+    });
+
+    // 当有文件添加进来的时候
+    uploader.on( 'fileQueued', function( file ) {
+
+        var imgNum = $('[data-role="upload_picture"] .image-item');
+        if(imgNum.length>=4){
+          alert('最多允许上传5张图片');
+          //return false;
+        }else{
+          uploader.upload();
+        }
+        
+    });
+    //初始化空数组
+    var image_id = [];
+    var image_id_string ='';
+    // 文件上传成功，给item添加成功class, 用样式标记上传成功。
+    uploader.on( 'uploadSuccess', function( file,data ) {
+        if(data.code==1){
+            var data = data.data;
+            
+            image_id.push(data[0].id);
+            
+            $('[data-role="upload_picture"]').append('<div class="image-item"><img src="'+data[0].path+'" style="width:60px;height:60px;" /></div>');
+            image_id_string += ','+data[0].id;
+            if (image_id_string.substr(0,1)==',') image_id_string = image_id_string.substr(1);
+
+            $('[data-role="images_file"]').val(image_id_string);
+        }
+    });
+    // 文件上传失败，显示上传出错。
+    uploader.on( 'uploadError', function( file ) {
+        toast.error("上传出错！请检查后重新上传！");
+    });
+    //验证文件格式以及文件大小
+    uploader.on("error", function (type) {
+        if (type == "Q_TYPE_DENIED") {
+            toast.error("请上传png、jpg、gif格式文件");
+        } else if (type == "Q_EXCEED_SIZE_LIMIT") {
+            toast.error("文件大小不能超过200k");
+        }else {
+            toast.error("上传出错！请检查后重新上传！错误代码"+type);
+        }
+    });
+});
+
+(function($){
+
+  $('form[data-type="service-edit"]').submit(function (e) {
+      e.preventDefault();
+      toast.showLoading();
+      var self = $(this);
+      $.post(self.attr("action"), self.serialize(), function(res){
+          toast.hideLoading();
+          
+          if (res.code) {
+            toast.success(res.msg, '温馨提示');
+            setTimeout(function () {
+                window.location.reload();
+            }, 1000);
+          }else{
+              toast.error(res.msg, '温馨提示');
+          }
+
+      }, "json");
+      return false;
+  });
+
+})(jQuery);
+</script>

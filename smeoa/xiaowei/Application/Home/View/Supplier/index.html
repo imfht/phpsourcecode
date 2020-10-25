@@ -1,0 +1,277 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+<div class="page-header clearfix">
+	<div class="dropdown col-sm-8">		
+		<b class="dropdown-toggle" data-toggle="dropdown"><span class="title">全部</span><span class="fa fa-caret-down"></span></b>
+		<ul class="dropdown-menu">
+			<li gid="">
+				<a>全部</a>
+			</li>
+			<foreach name="tag_list" item="vo">
+				<li gid="{$key}">
+					<a>{$vo}</a>
+				</li>
+			</foreach>
+		</ul>
+	</div>
+	<div class="col-sm-4 pull-right">
+		<div class="search_box">
+			<div class="input-group ">
+				<input type="hidden" value="abc" >
+				<input  class="form-control" type="text"  name="keyword" id="keyword" onkeydown="key_local_search();"/>
+				<div class="input-group-btn">
+					<a class="btn btn-sm btn-info" onclick="btn_local_search();"><i class="fa fa-search" ></i> </a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<form id="form_data" name="form_data" method='post'>
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<div class="btn-group">
+					<a class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> 管理 <b class="fa fa-caret-down"></b></a>
+					<ul class="dropdown-menu">
+						<li>
+							<a onclick="manage_tag();">管理组</a>
+						</li>
+						<li>
+							<a onclick="import_contact();">导入</a>
+						</li>
+						<li>
+							<a onclick="export_contact();">导出</a>
+						</li>
+					</ul>
+				</div>
+				<a class="btn btn-sm btn-danger" onclick="del();" >删除</a>
+				<div class="btn-group">
+					<a class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> 组 <span class="fa fa-caret-down"></span> </a>
+					<ul class="dropdown-menu tag_list">
+						<li class="dropdown-header">
+							添加到
+						</li>
+						<foreach name="tag_list" item="vo">
+							<li>
+								<label class="clearfix">
+									<input class="ace" type="checkbox" name="tag[]" value="{$key}"/>
+									<span class="lbl"></span><span class="text">{$vo}</span></label>
+							</li>
+						</foreach>
+						<li class="new_tag">
+							<input type="text" name="new_tag" class="input-medium">
+						</li>
+						<li class="divider"></li>
+						<li class="apply">
+							<input class="btn btn-sm btn-primary" type="button" value="应用" onclick="apply();">
+						</li>
+						<li class="cmd">
+							<input class="btn btn-sm btn-primary" type="button" onclick="create_new_tag();" value="新组">
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="pull-right">
+				<a class="btn btn-sm btn-primary" onclick="add();">新建</a>
+			</div>
+		</div>
+	</div>
+	<div class="ul_table border-top border-bottom">
+		<empty name="list">
+			<ul>
+				<li class="no-data">
+					没找到数据
+				</li>
+			</ul>
+			<else/>
+			<ul class="col-xs-12 border">
+				<foreach name="list" item="vo">
+					<li class="tbody">
+						<div class="row">
+							<div class="data" style="display:none">
+								{$vo.letter}
+							</div>
+							<div class="tag" style="display:none">
+								<php>
+									if(!empty($tag_data[$vo["id"]]))
+									echo($tag_data[$vo["id"]])
+								</php>
+							</div>
+							<div class="col-sm-6 col-xs-12">
+								<label class="inline pull-left col-3">
+									<input class="ace" type="checkbox" name="id[]" value="{$vo.id}" />
+									<span class="lbl"></span></label>
+									<nobr class="col-7 pull-left text-right">公司名称：</nobr>
+								<a href="{:U('read','id='.$vo['id'])}" class="data wrap"> {$vo.name}&nbsp;	</a>
+							</div>
+							<div class="col-sm-6 col-xs-12" >
+								<nobr class="col-10 pull-left text-right">
+									税号：
+								</nobr>
+								<nobr class="data">
+									{$vo.tax_no}
+								</nobr>
+							</div>
+						</div>
+						<div class="row">
+							<div  class="col-sm-6 col-xs-12" >
+								<nobr class="col-10 pull-left text-right">
+									联系人：
+								</nobr>
+								<nobr class="data">
+									{$vo.contact}
+								</nobr>
+							</div>
+							<div  class="col-sm-6 col-xs-12">
+								<nobr class="col-10 pull-left text-right">
+									电话：
+								</nobr>
+								<nobr class="data">
+									<a href="tel:{$vo.office_tel}">{$vo.office_tel}</a> 
+									<notempty name="vo.mobile_tel">
+										/ <a href="tel:{$vo.mobile_tel}">{$vo.mobile_tel}</a> 
+									</notempty>
+								</nobr>
+							</div>
+						</div>
+					</li>
+				</foreach>
+			</ul>
+		</empty>
+	</div>
+</form>
+</block>
+<block name="js">
+<script type="text/javascript">
+	function add() {
+		window.open("{:U('add')}", "_self");
+		return false;
+	}
+
+	function edit() {
+		id = $("li.tbody.selected :checkbox").val();
+		if (id == undefined) {
+			ui_error("请选择要编辑的联系人");
+			return false;
+		} else {
+			window.open(fix_url("{:U('edit')}?id=" + id), "_self");
+		}
+	}
+
+	function del(){
+		ui_confirm('确定要删除吗?',function(){
+			if ($("#form_data .ul_table input:checked").length == 0) {
+				$("li.tbody.active :checkbox").attr("checked", true);
+			}
+			sendForm("form_data", "{:U('del')}");
+			$("#form_data input:checked").each(function() {
+				$(this).parents("li").remove();
+			});
+		});
+	}
+
+	function apply() {
+		if ($("#form_data .ul_table input:checked").length == 0) {
+			ui_error("请选择数据");
+		}
+		sendForm("form_data", "{:U('set_tag')}", "{:U('index')}");
+	}
+
+	function create_new_tag() {
+		$(".cmd").hide();
+		$(".new_tag").css("display", "block");
+		$(".apply").show();
+	}
+
+	function key_local_search() {
+		if (event.keyCode == 13) {
+			$(".ul_table li").hide();
+			val = $("#keyword").val().toUpperCase();
+			if (val.length == 0) {
+				$(".page-header .title").html("全部");
+			} else {
+				$(".page-header .title").html("搜索结果");
+			}
+			$(".ul_table li .data").each(function() {
+				if ($(this).text().indexOf(val) >= 0) {
+					$(this).parents("li").show();
+				};
+			});
+		}
+	}
+
+	function btn_local_search() {
+		$(".ul_table li").hide();
+		val = $("#keyword").val().toUpperCase();
+		if (val.length == 0) {
+			$(".title nobr").html("全部");
+		} else {
+			$(".title nobr").html("搜索结果");
+		}
+		$(".ul_table li .data").each(function() {
+			if ($(this).text().indexOf(val) >= 0) {
+				$(this).parents("li").show();
+			};
+		});
+		return false;
+	}
+
+	function export_contact() {
+		window.open("{:U('export')}", "_blank");
+		return false;
+	}
+
+	function import_contact() {
+		window.open("{:U('import')}", "_self");
+		return false;
+	}
+
+	function manage_tag() {
+		window.open("{:U('tag_manage')}", "_self");
+		return false;
+	}
+
+
+	$(document).ready(function() {
+		set_return_url();
+
+		$(".page-header .dropdown-menu li").click(function() {
+			$("#keyword").val("");
+			$(".ul_table li").hide();
+			gid = $(this).attr("gid");
+			$(".page-header .title").html($(this).text());
+			$(".ul_table li div.tag").each(function() {
+				if ($(this).text().indexOf(gid) >= 0) {
+					$(this).parents("li").show();
+				};
+			});
+		});
+
+		$('.tag_list li').click(function(event) {
+			event.stopPropagation();
+		});
+
+		$("li.tbody").click(function(){
+			$(".table input:checkbox").attr("checked", false);
+			$(".tag_list input[name='tag[]']").attr("checked", false);
+			str=trim($(this).find(".tag").text());
+			
+			strs=str.split(","); 
+			for (i=0;i<strs.length;i++)    
+			 {  
+				 $(".tag_list input[name='tag[]'][value='"+strs[i]+"']").prop("checked",true);
+			}
+		});
+
+		$('.tag_list input').on('change', function(event) {
+			if (($('.tag_list input:checked').length == 0) && ($(".tag_list input[name='new_tag']").val() == "")) {
+				$(".cmd").show();
+				$(".apply").hide();
+			} else {
+				$(".cmd").hide();
+				$(".apply").show();
+			}
+		});
+	}); 
+</script>
+</block>

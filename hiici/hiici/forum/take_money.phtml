@@ -1,0 +1,118 @@
+<?php 
+
+$auth = @$_SESSION['auth'];
+if (empty($auth)) put_info_t('用户未登录！^_^');
+
+$price = @doubleval($_GET['price']);
+$price_r = @doubleval($_GET['price_r']);
+$user_id = @doubleval($_REQUEST['user_id']);
+$pay = @doubleval($_POST['pay']);
+
+$v_title = (empty($price_r)) ? '收款' : '付款';
+
+if (!empty($pay)) {
+	$password = filter_var($_POST['password'], FILTER_SANITIZE_STRING);
+
+	switch (account_pay_pre_check($password, $pay)) {
+	case -1: put_info_t('支付密码错误！^_^'); 
+	case -2: put_info_t('可用账户余额不足！^_^'); 
+	}
+
+	if (!account_pay($pay, '付款-ID-'.$user_id, 0, $forum['city'])) die('扣款失败！^_^');
+	if (!do_account_pay($user_id, $pay, '收款-ID-'.$auth['id'], 1, intval($forum['city']))) die('支付失败！^_^'); 
+	header('Location:?c=account&a=index');
+}
+
+function put_info_t($info) {
+	put_info($info); header('Location:'.$_SERVER["HTTP_REFERER"]); die;
+}
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><?php echo $v_title ?></li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="forum-add">
+		<div class="row clearfix">
+			<div class="col-md-12 column">
+				<h3><span class="glyphicon glyphicon-transfer"></span> <?php echo $v_title ?> </h3>
+				<hr class="solid">
+				<div class="col-md-11 column">
+					<form class="form-horizontal" id="do_take_money" action="?c=forum&a=take_money" <?php if (!empty($price_r)) echo 'method="post"' ?>>
+						<fieldset>
+<?php if (!empty($price_r)) { ?>
+							<div class="form-group">
+								<label class="col-md-2 col-xs-6 control-label">收款方用户ID</label>  
+								<div class="col-md-9 col-xs-6">
+									<input name="user_id" type="text" class="form-control input-md" required="" <?php if ($user_id) echo 'readonly="readonly"' ?> value="<?php echo $user_id ?>"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-md-2 control-label">支付金额（元）</label>  
+								<div class="col-md-9">
+									<input name="pay" type="text" class="form-control input-md" required="" <?php if ($user_id) echo 'readonly="readonly"' ?> value="<?php echo $price_r ?>">
+								</div>
+							</div>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label">支付密码</label>  
+								<div class="col-md-9">
+									<input id="password" name="password" type="password" placeholder="密码" class="form-control input-md" required="">
+								</div>
+							</div>
+							<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+							<!-- Button -->
+							<div class="form-group">
+								<label class="col-md-2 control-label hidden-xs"></label>
+								<div class="col-md-2 col-xs-5">
+									<button class="btn btn-success btn-block" onclick="encrypt_password()">确认付款</button>
+								</div>
+								<div class="col-md-7 col-xs-7">
+								</div>
+							</div>
+<?php } else { ?>
+<?php if (!empty($price)) { ?>
+							<style> #qrcode_pay canvas { max-width:100%;margin-bottom:50px } </style>
+							<a href="?c=account&a=index"><div id="qrcode_pay" src_d="<?php echo 'http://'.$_SERVER['HTTP_HOST'].'?c=forum&a=take_money&price_r='.$price.'&user_id='.$auth['id'] ?>"></div></a>
+<?php } else { ?>
+							<!-- Text input-->
+							<div class="form-group">
+								<label class="col-md-2 control-label hidden-xs">收款金额</label>  
+								<div class="col-md-9">
+									<input name="price" type="text" placeholder="收款金额" class="form-control input-md" required="">
+								</div>
+							</div>
+							<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+							<!-- Button -->
+							<div class="form-group">
+								<label class="col-md-2 control-label hidden-xs"></label>
+								<div class="col-md-2 col-xs-5">
+									<button class="btn btn-success btn-block">收款</button>
+								</div>
+								<div class="col-md-7 col-xs-7">
+								</div>
+							</div>
+<?php } ?>
+<?php } ?>
+						</fieldset>
+					</form>	
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="websocket/inc/quaggaJS/jquery.qrcode.min.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('#qrcode_pay').qrcode({width: 290,height: 290,text: $('#qrcode_pay').attr('src_d')});
+});
+
+</script>

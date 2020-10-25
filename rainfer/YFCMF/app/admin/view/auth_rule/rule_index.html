@@ -1,0 +1,243 @@
+{extend name="admin@public/base_content" /}
+{block name="main-content"}
+<div class="page-content">
+    <div class="row maintop">
+        <div class="col-xs-12 no-padding" id="rule-add">
+            <form class="form-horizontal ajaxForm-noJump" name="admin_rule_add" method="post" action="{:url('ruleSave')}">
+                <input name="no_frame" type="hidden" value="1" />
+                <small>检测：</small>
+                <small>
+                    <select name="notcheck">
+                        <option value="0">检测</option>
+                        <option value="1">不检测</option>
+                    </select>
+                </small>
+                <small>显示：</small>
+                <small>
+                    <select name="display">
+                        <option value="1">显示</option>
+                        <option value="0">不显示</option>
+                    </select>
+                </small>
+                <small class="sl-left10">父级：</small>
+                <small>
+                    <select id='pid' name="pid" required>
+                        <option value="0">--默认顶级--</option>
+                        {foreach name="admin_rule_all" item="v"}
+                        <option value="{$v.id}" style="margin-left:55px;">{$v.lefthtml}{$v.title}</option>
+                        {/foreach}
+                    </select>
+                </small>
+                <small>
+                    <select id="module" name="module">
+                        <option value="">所属模块</option>
+                        {foreach $modules as $k=>$v }
+                        <option value="{$k}">{$v}</option>
+                        {/foreach}
+                    </select>
+                </small>
+                <small class="sl-left10">名称：</small>
+                <small><input name="title" id="title" class="rule" placeholder=" 输入名称" required/></small>
+                <small class="sl-left10">控/方：</small>
+                <small><input name="name" id="name" class="rule" placeholder=" 输入控制器/方法" required/></small>
+                <small class="sl-left10">icon：</small>
+                <small><input name="icon" id="icon" class="wh50" placeholder=" 图标样式"/></small>
+                <small class="sl-left10">排序：</small>
+                <small><input name="sort" id="sort" class="wh30" value="50"/></small>
+                <small>
+                    <button class="btn btn-xs btn-danger ruleadd">
+                        添加权限
+                    </button>
+                </small>
+            </form>
+        </div>
+        <div class="col-xs-12 col-sm-12 rule-top alert alert-info top10">
+            <button type="button" class="close" data-dismiss="alert">
+                <i class="ace-icon fa fa-times"></i>
+            </button>
+            1、《模块/控/方》：意思是 模块/控制器/方法; 例如 admin/Sys/baseIndex<br/>
+            2、css为控制左侧导航顶级栏目前图标样式(仅一级菜单有效)，具体可查看FontAwesome图标CSS样式
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <div>
+                    <form class="ajaxForm" name="ruleorder" method="post" action="{:url('ruleOrder')}">
+                        <table class="table table-striped table-bordered table-hover" id="dynamic-table">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th></th>
+                                <th class="hidden-xs">权限名称</th>
+                                <th>所属模块</th>
+                                <th>控制器/方法</th>
+                                <th>不检测</th>
+                                <th>显示</th>
+                                <th>状态</th>
+                                <th class="hidden-sm hidden-xs">级别</th>
+                                <th class="hidden-sm hidden-xs">添加时间</th>
+                                <th class="hidden-sm hidden-xs">排序</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {foreach name="admin_rule" item="v"}
+                            <tr id="{$pid}-{$v.id}">
+                                <td height="28">{$v.id}</td>
+                                <td><a data-id="{$v.id}" data-level="{$v.level}" href="{:url('ruleIndex')}"
+                                       style="cursor:pointer;" class="rule-list"><span
+                                        class="fa fa-plus blue"></span></a></td>
+                                <td class="hidden-xs"
+                                    style='padding-left:{if condition="$v.leftpin neq 0"}{$v.leftpin}px{/if}'>
+                                    {$v.lefthtml}{$v.title}
+                                </td>
+                                <td>{$v.module}</td>
+                                <td>{$v.name}</td>
+                                <td>
+                                    {if condition="$v['notcheck'] eq 1"}
+                                    <a class="red open-btn" href="{:url('ruleNotcheck')}" data-id="{$v.id}" title="不检测">
+                                        <div>
+                                            <button class="btn btn-minier btn-danger">不检测</button>
+                                        </div>
+                                    </a>
+                                    {else/}
+                                    <a class="red open-btn" href="{:url('ruleNotcheck')}" data-id="{$v.id}" title="检测">
+                                        <div>
+                                            <button class="btn btn-minier btn-yellow">检测</button>
+                                        </div>
+                                    </a>
+                                    {/if}
+                                </td>
+                                <td>
+                                    {if condition="$v['display'] eq 1"}
+                                    <a class="red open-btn" href="{:url('ruleDisplay')}" data-id="{$v.id}" title="已显示">
+                                        <div>
+                                            <button class="btn btn-minier btn-yellow">显示</button>
+                                        </div>
+                                    </a>
+                                    {else/}
+                                    <a class="red open-btn" href="{:url('ruleDisplay')}" data-id="{$v.id}" title="已隐藏">
+                                        <div>
+                                            <button class="btn btn-minier btn-danger">隐藏</button>
+                                        </div>
+                                    </a>
+                                    {/if}
+                                </td>
+                                <td>
+                                    {if condition="$v['status'] eq 1"}
+                                    <a class="red open-btn" href="{:url('ruleState')}" data-id="{$v.id}" title="已启用">
+                                        <div>
+                                            <button class="btn btn-minier btn-yellow">启用</button>
+                                        </div>
+                                    </a>
+                                    {else/}
+                                    <a class="red open-btn" href="{:url('ruleState')}" data-id="{$v.id}" title="已禁用">
+                                        <div>
+                                            <button class="btn btn-minier btn-danger">禁用</button>
+                                        </div>
+                                    </a>
+                                    {/if}
+                                </td>
+                                <td class="hidden-sm hidden-xs">{$v.level}级</td>
+                                <td class="hidden-sm hidden-xs">{$v.create_time|date='Y-m-d'}</td>
+                                <td class="hidden-sm hidden-xs">
+                                    <input name="{$v.id}" value="{$v.sort}" class="table-input center"/>
+                                </td>
+                                <td>
+                                    <div class="hidden-sm hidden-xs action-buttons">
+                                        <a class="blue yf-modal-open" href="javascript:;" data-url="{:url('ruleAdd')}"
+                                           data-id="{$v['id']}" data-title="添加子类">
+                                            <i class="ace-icon fa fa-plus-circle bigger-130"></i>
+                                        </a>
+                                        <a class="green yf-modal-open" href="javascript:;" data-url="{:url('ruleEdit')}"
+                                           data-id="{$v['id']}" data-title="修改">
+                                            <i class="ace-icon fa fa-pencil bigger-130"></i>
+                                        </a>
+                                        <a class="green yf-modal-open" href="javascript:;" data-url="{:url('ruleCopy')}"
+                                           data-id="{$v['id']}" data-title="复制">
+                                            <i class="ace-icon fa fa-exchange bigger-130"></i>
+                                        </a>
+                                        <a class="red confirm-rst-url-btn" data-id="{$v['id']}" href="{:url('ruleDel')}"
+                                           data-info="你确定要删除吗？" title="删除">
+                                            <i class="ace-icon fa fa-trash-o bigger-130"></i>
+                                        </a>
+                                    </div>
+                                    <div class="hidden-md hidden-lg">
+                                        <div class="inline position-relative">
+                                            <button class="btn btn-minier btn-primary dropdown-toggle"
+                                                    data-toggle="dropdown" data-position="auto">
+                                                <i class="ace-icon fa fa-cog icon-only bigger-110"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-only-icon dropdown-yellow dropdown-menu-right dropdown-caret dropdown-close">
+                                                <li>
+                                                    <a href="javascript:;" data-url="{:url('ruleAdd')}"
+                                                       data-id="{$v['id']}" class="tooltip-success yf-modal-open"
+                                                       data-rel="tooltip" title="" data-original-title="添加子类"
+                                                       data-title="添加子类">
+                                                        <span class="green">
+                                                            <i class="ace-icon fa fa-plus-circle bigger-120"></i>
+                                                        </span>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a data-url="{:url('ruleEdit')}" data-id="{$v['id']}"
+                                                       href="javascript:;" class="tooltip-success yf-modal-open"
+                                                       data-rel="tooltip" data-title="修改" data-original-title="修改">
+                                                        <span class="green">
+                                                            <i class="ace-icon fa fa-pencil-square-o bigger-120"></i>
+                                                        </span>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a data-url="{:url('ruleCopy')}" data-id="{$v['id']}"
+                                                       href="javascript:;" class="tooltip-success yf-modal-open"
+                                                       data-rel="tooltip" data-title="复制" data-original-title="复制">
+                                                        <span class="green">
+                                                            <i class="ace-icon fa fa-exchange bigger-120"></i>
+                                                        </span>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="{:url('ruleDel')}" data-id="{$v['id']}"
+                                                       data-info="你确定要删除吗？" class="tooltip-error confirm-rst-url-btn"
+                                                       data-rel="tooltip" title="" data-original-title="删除">
+                                                        <span class="red">
+                                                            <i class="ace-icon fa fa-trash-o bigger-120"></i>
+                                                        </span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {/foreach}
+                            <tr>
+                                <td colspan="15" align="left">
+                                    <button data-url="{:url('ruleOrder')}"
+                                            class="btn btn-white btn-yellow btn-sm order-btn">排序
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- /.page-content -->
+{/block}
+{block name="scripts"}
+<script>
+    $('body').on('change','#pid',function () {
+        var $value=parseInt($(this).val());
+        var module=$('#module');
+        console.log($value);
+        if ($value > 0) {
+            module.hide();
+        } else {
+            module.show();
+        }
+    });
+</script>
+{/block}

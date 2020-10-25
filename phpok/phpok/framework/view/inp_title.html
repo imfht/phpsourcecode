@@ -1,0 +1,167 @@
+<!-- include tpl=head_lay nopadding=true js=js/art-template.js -->
+<input type="hidden" name="val" id="val" value="" />
+<script type="text/javascript">
+var input_id = "#{$input}";
+var multi = {$multi ? "1" : "0"};
+function show_list()
+{
+	var obj = $.dialog.opener;
+	var cid = obj.$(input_id).val();
+	if(cid == "undefined" || cid == "0" || cid == ""){
+		$("#selected_list").hide();
+		return true;
+	}
+	$("tr[name=list]").show();
+	var tlist = cid.split(",");
+	for(var i in tlist){
+		$("#id_"+tlist[i]).hide();
+	}
+	var url = get_url("inp","","type=title&content="+$.str.encode(cid));
+	$.phpok.json(url,function(rs){
+		if(!rs.status){
+			$("#selected_list").hide();
+			return true;
+		}
+		var lst = rs.info;
+		template.defaults.imports.dateFormat = $.phpok.date;
+		var html = template("art-tpl", {'rslist':rs.info});
+		$("#selected_list").html(html).show();
+	});
+}
+function add_input(val)
+{
+	var obj = $.dialog.opener;
+	var old_c = obj.$(input_id).val();
+	if(old_c){
+		var c = old_c + ","+val;
+	}else{
+		var c = val;
+	}
+	var lst = c.split(",");
+	lst = $.unique(lst);
+	var c = lst.join(",");
+	obj.$(input_id).val(c);
+	show_list();
+}
+function single_input(val)
+{
+	var obj = $.dialog.opener;
+	obj.$(input_id).val(val);
+	obj.$.phpokform.title_show_single('{$input}');
+	$.dialog.close();
+}
+function delete_input(val)
+{
+	var obj = $.dialog.opener;
+	if(multi){
+		var old_c = obj.$(input_id).val();
+		if(!old_c){
+			return true;
+		}
+		var lst = old_c.split(",");
+		var n_list = new Array();
+		var m=0;
+		for(var i=0;i<lst.length;i++){
+			if(lst[i] != val)
+			{
+				n_list[m] = lst[i];
+				m++;
+			}
+		}
+		if(n_list.length<1){
+			obj.$(input_id).val("");
+		}else{
+			var str = n_list.join(",");
+			obj.$(input_id).val(str);
+		}
+	}else{
+		obj.$(input_id).val("");
+	}
+	show_list();
+}
+$(document).ready(function(){
+	show_list();
+});
+function check_search()
+{
+	var k = $("input[name=keywords]").val();
+	var t = $("select[name=pid]").val();
+	if(!k && !$t){
+		$.dialog.alert('请输入要搜索的关键字或指定项目');
+		return false;
+	}
+	return true;
+}
+</script>
+<script id="art-tpl" type="text/html">
+<table class="layui-table">
+<thead>
+<tr>
+	<th width="20"></th>
+	<th width="60">ID</th>
+	<th>{lang标题}</th>
+	<th width="120">{lang日期}</th>
+	<th width="60">{lang操作}</th>
+</tr>
+</thead>
+<% for(var i in rslist){ %>
+<tr id="{$_rs.identifier}_div_<%= rslist[i].id %>">
+	<td><input type="checkbox" value="<%= rslist[i].id %>" id="title_{$_rs.identifier}_<%= i %>" lay-ignore></td>
+	<td><%= rslist[i].id %></td>
+	<td><label for="title_{$_rs.identifier}_<%= i %>"><%= rslist[i].title %></label></td>
+	<td><%= dateFormat(rslist[i].dateline,'Y-m-d H:i') %></td>
+	<td><input type="button" value="{lang删除}" class="layui-btn layui-btn-xs layui-btn-danger" onclick="delete_input('<%= rslist[i].id %>')" /></td>
+</tr>
+<% } %>
+</table>
+</script>
+<div class="layui-card">
+	<div class="layui-card-header" style="padding:5px;">
+		<form method="post" class="layui-form" action="{$formurl}" onsubmit="return check_search()">
+		<ul class="layout">
+			<li{if !$project_list || count($project_list)<2} style="display:none"{/if}>
+				<select name="pid">
+					<option value="">{lang全部项目}</option>
+					<!-- loop from=$project_list key=$key value=$value id=$tmpid -->
+					<option value="{$value.id}"{if $pid == $value.id} selected{/if}>{$value.title}</option>
+					<!-- /loop -->
+				</select>
+			</li>
+			<li><input type="text" name="keywords" value="{$keywords}" class='layui-input' /></li>
+			<li><input type="submit" value="搜索" class="layui-btn" /></li>
+			<!-- if $pid || $keywords -->
+			<li><input type="button" value="取消搜索" class="layui-btn layui-btn-warm" onclick="$.phpok.go('{$formurl}')" /></li>
+			<!-- /if -->
+		</ul>
+		</form>
+	</div>
+	<div class="layui-card-body">
+		<div id="selected_list" class="hide"></div>
+		<table class="layui-table">
+		<thead>
+		<tr>
+			<th width="60">ID</th>
+			<th>{lang主题}</th>
+			<th width="120">{lang时间}</th>
+			<th width="60">{lang操作}</th>
+		</tr>
+		</thead>
+		<!-- loop from=$rslist key=$key value=$value id=$tmpid -->
+		<tr name="list" id="id_{$value.id}">
+			<td>{$value.id}</td>
+			<td>{$value.title}</td>
+			<td>{func date 'Y-m-d H:i' $value.dateline}</td>
+			<td>
+				<!-- if $multi -->
+				<input type="button" value="添加" onclick="add_input('{$value.id}')" class="layui-btn layui-btn-xs" />
+				<!-- else -->
+				<input type="button" value="选择" onclick="single_input('{$value.id}')" class="layui-btn layui-btn-xs" />
+				<!-- /if -->
+			</td>
+		</tr>
+		<!-- /loop -->
+		</table>
+		<!-- include tpl=pagelist -->
+	</div>
+</div>
+<!-- include tpl=foot_lay is_open=true -->

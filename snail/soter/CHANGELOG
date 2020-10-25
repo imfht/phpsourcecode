@@ -1,0 +1,1111 @@
+============v1.1.32[2017-03-27]===========
+增加了:
+1.超级工厂方法Sr::factory($className, $hmvcModuleName = null,...)增加了传递参数给类的构造方法的支持.
+第三个参数开始的参数Soter会按着参数顺序传递给你要实例化的类的构造方法.
+比如:执行了Sr::factory('\Bean\User', null,669,'jack')
+同时User类如下:
+<?php
+namespace Bean;
+class User{
+	private $id=0,$name='';
+	public function __construct($id,$name){
+		this.id=$id;
+		this.name=$name;
+	}
+}
+那么669和jack就会作为$id和$name传递给User类的构造方法,如果要传递更多参数
+在调用Sr::factory('\Bean\User', null,669,'jack')的时候,后面依次写上即可.
+
+2.入口文件增加了配置->setExceptionLevel(E_ALL ^ E_DEPRECATED),设置错误级别,也就是error_reporting()的参数,
+只有此级别的错误才会触发配置的错误显示控制处理类.
+
+
+修复了：
+1、修复了数据库驱动的updateBatch方法,当更新的条件字段不是数字时会报错的bug.
+
+升级提示:
+1.在入口文件配置项->setExceptionControl(true)上面
+增加如下配置:
+	/* 设置错误级别,也就是error_reporting()的参数,只有此级别的错误才会触发下面的错误显示控制处理类 */
+	->setExceptionLevel(E_ALL ^ E_DEPRECATED)
+	/* 设置Soter管理异常错误 */
+	->setExceptionControl(true)
+
+
+============v1.1.31[2017-03-21]===========
+增加了:
+1.增加了PSR-4命名的支持,详情见"手册代码规范部分".
+2.增加了命名空间的支持.
+
+修复了：
+1、修复了数据库驱动的updateBatch方法,当更新的条件字段不是数字时会报错的bug.
+
+升级提示:
+无
+
+============v1.1.30[2017-02-20]===========
+优化了:
+1.Sr::clientIp()方法,增加了两个默认参数,更了活动获取访问者IP.
+  function clientIp($source = array('HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'), $check = array('HTTP_X_FORWARDED_FOR'))
+
+增加了:
+1.手册系统方法部分增加了更详细的对clientIp的使用说明.
+
+升级提示:
+无
+
+============v1.1.29[2017-01-19]===========
+增加了:
+1.入口文件setHmvcDomains配置项目里面增加了isFullDomain配置.
+   这样hvmc模块域名绑定支持子域名和完整域名绑定两种模式.
+
+升级提示:
+在入口文件setHmvcDomains配置项目里面增加isFullDomain配置.
+比如
+修改之前:
+	->setHmvcDomains(array(
+	    'enable' => false, //总开关，是否启用
+	    'domains' => array(
+		'demo' => array(
+		    'hmvcModuleName' => 'Demo', //hvmc模块名称
+		    'enable' => false, //单个开关，是否启用
+		    'domainOnly' => true, //是否只能通过绑定的域名访问
+		)
+	    )
+	))
+修改之后:
+	->setHmvcDomains(array(
+	    'enable' => false, //总开关，是否启用
+	    'domains' => array(
+		'demo' => array(
+		    'hmvcModuleName' => 'Demo', //hvmc模块名称
+		    'enable' => false, //单个开关，是否启用
+		    'domainOnly' => true, //是否只能通过绑定的域名访问
+		    'isFullDomain' => false//绑定完整的域名设置为true；绑定子域名设置为false
+		)
+	    )
+	))
+
+============v1.1.28[2017-01-03]===========
+修复了：
+1、修复了手册在某些最新浏览器里面右侧主体部分的导航位置不正确的bug.
+
+优化了:
+1.优化了运行环境变量的相关功能,剔除了4K代码,提高了性能,而且能够支持更多的环境,
+     1.1 之前的情况是:config配置目录下面默认的是四个子文件夹分别是:
+     default,dvelopment,testing,production,我们在入口文件里面通过setEnvironment()方法告诉soter使用哪个文件夹.
+     1.2 现在我们还可以设置更多的环境,比如setEnvironment('demo'),那么soter使用的就是config/demo作为配置文件夹.
+      而不是局限于dvelopment,testing,production.
+
+2.手册命令行任务部分,增加了_log方法的使用实例.
+
+升级提示：
+1.入口文件里面,如果使用了hmvc,里面的bootstrap文件里面也需要做下面的修改,bootstrap文件里面如果没有下面的某项不操作即可.
+    1.1把
+          ->setEnvironment(($env = (($cliEnv = Sr::getOpt('env')) ? $cliEnv : Sr::arrayGet($_SERVER, 'ENVIRONMENT'))) ? Sr::config()->getServerEnvironment($env) : Sr::ENV_DEVELOPMENT)
+         修改为
+         ->setEnvironment(($env = (($cliEnv = Sr::getOpt('env')) ? $cliEnv : Sr::arrayGet($_SERVER, 'ENVIRONMENT'))) ? $env : 'development')
+    1.2把
+          ->setShowError(Sr::config()->getEnvironment() != Sr::ENV_PRODUCTION)
+         修改为
+         ->setShowError(Sr::config()->getEnvironment() != 'production')
+     1.3把
+	->setEncryptKey(array(
+	    Sr::ENV_DEVELOPMENT => '', //开发环境密钥
+	    Sr::ENV_TESTING => '', //测试环境密钥
+	    Sr::ENV_PRODUCTION => ''//产品环境密钥
+	))
+         修改为
+	->setEncryptKey(array(
+	    'development' => '', //开发环境密钥
+	    'testing'=> '', //测试环境密钥
+	    'production' => ''//产品环境密钥
+	))
+
+2.移除了方法和变量:
+如果使用了下面的方法和变量,在你的代码里面需要:
+Soter_Config::getServerEnvironment(),使用Sr::config()->getEnvironment()取代
+Soter_Config::getConfigCurrentDirName,使用Sr::config()->getEnvironment()取代
+Sr::ENV_DEVELOPMENT,使用development替代
+Sr::ENV_PRODUCTION,使用production替代
+Sr::ENV_TESTING ,使用testing替代
+
+3.移除了下面方法,不再需要
+Soter_Config::getServerEnvironmentTestingValue
+Soter_Config::getServerEnvironmentProductionValue
+Soter_Config::getServerEnvironmentDevelopmentValue
+Soter_Config::setServerEnvironmentDevelopmentValue
+Soter_Config::setServerEnvironmentTestingValue
+Soter_Config::setServerEnvironmentProductionValue
+Soter_Config::setConfigTestingDirName
+Soter_Config::getConfigTestingDirName
+Soter_Config::getConfigProductionDirName
+Soter_Config::getConfigDevelopmentDirName
+Soter_Config::setConfigProductionDirName
+Soter_Config::setConfigDevelopmentDirName
+
+============v1.1.27[2016-12-29]===========
+修复了：
+1、修复了缓存驱动Sr::cache()->get()方法在驱动redis,redis_cluster时,
+      对获取到的数据是非序列化的数据被设置为null的bug。
+
+升级提示：
+无
+
+============v1.1.26[2016-12-29]===========
+修复了：
+1、修复了缓存驱动Sr::cache()->instance()方法在驱动memcache,memcached,redis_cluster时首次被调用时为null的bug。
+
+升级提示：
+无
+
+============v1.1.25[2016-12-26]===========
+增加了：
+1、优化了命令行--task参数，不仅支持类名写法还支持路径的写法。
+2、Sr::config()->getEnvironment($retrunString = false)增加了$retrunString参数，
+      可以返回代表环境的字符串。默认返回是数字，即：Sr::ENV_DEVELOPMENT、Sr::ENV_TESTING、Sr::ENV_PRODUCTION
+
+升级提示：
+无
+
+============v1.1.24[2016-11-24]===========
+修复了：
+1、修复了Soter_Task的判断pid是否存在的方法在windows上无法正确判断的bug。
+
+升级提示：
+无
+
+============v1.1.23[2016-11-23]===========
+优化了：
+1、优化了Dao层的delete方法，去掉了参数非空检查，增大delete方法使用范围。
+2、手册Dao层部分增加了delete的更多使用说明。
+
+升级提示：
+无
+
+============v1.1.22[2016-11-16]===========
+增加了：
+1、增加了多例任务Soter_Task_Multiple，允许同一时间同时存在指定数目相同任务。
+2、手册命令行部分增加了多例任务使用说明。
+
+升级提示：
+无
+
+============v1.1.21[2016-10-26]===========
+优化了：
+1、优化了手册的系统方法中的查找配置部分使用说明。
+
+升级提示：
+无
+
+============v1.1.20[2016-10-14]===========
+增加了：
+1、Sr::db()->select($field,$wrap=true)方法增加了第二个参数。
+   第二个参数意思是：是否用反引号保护字段。true：保护。false：不保护
+   比如：
+   1、Sr::db()->select(‘username’,true) 生成 ： select `username` 
+   2、Sr::db()->select(‘username’,false) 生成 ： select username
+
+升级提示：
+无
+
+============v1.1.19[2016-10-08]===========
+优化了：
+1、优化了checkData方法的reg验证，该规则获取参数的时候不再分割，直接使用参数整体作为郑则表达式。
+
+升级提示：
+无
+
+============v1.1.18[2016-09-08]===========
+优化了：
+1、优化了Soter_Config的find($filename)方法，按照包的顺序查找配置文件，
+	如果文件存在就返回路径，不存在返回空。
+	比如当前环境是development，那么：find('host.php'),
+	首先会查找config/development/host.php，
+	如果不存在继续查找config/default/host.php
+2、优化了Sr::config()方法。
+
+============v1.1.17[2016-09-02]===========
+增加了：
+1、Soter_Config类增加了find($filename)方法，查找当前application里面的配置文件，
+	如果文件存在就返回路径，不存在返回空。
+	比如当前环境是development，那么：find('host.php'),
+	首先会查找application/config/development/host.php，
+	如果不存在继续查找application/config/default/host.php
+2、手册系统方法部分增加了Sr::config()->find($filename)方法的说明。
+
+============v1.1.16[2016-07-21]===========
+增加了：
+1.缓存接口增加了public function reset();方法，
+  这个操作会把缓存类内部使用的缓存操作对象重置为空，那么再次使用缓存的时候需，重新生成缓存操作对象。
+  使用场景是：
+  当我们在一个方法开始使用了get一个缓存，那么缓存类对象就会被创建，以后操作缓存的时候继续使用之前生成缓存类对象，
+  然后我们进行了一个长时间的操作，然后又调用了set设置缓存，如果是redis这种网络连接的缓存，这个时候就会报redis has goone away的异常，
+  原因是开始的时候get操作的缓存实例对象到redis的socket连接经过长时间操作已经超时了，连接被服务端断开，那么后面接着set就会报错了。
+  为了解决这个问题，我们可以在长时间操作之后，在操作缓存之前使用reset把缓存实例清空那么接着set就会重新生成缓存实例操作缓存，就不会报错了。
+2、增加了Soter_Cache_Redis_Cluster缓存类，支持最新官方Redis3.0 Cluster集群。需要安装phpredis拓展。
+升级提示：
+1、配置文件config/环境/cache.php中drivers需要加入如下配置项：
+'redis_cluster' => array(
+    'class' => 'Soter_Cache_Redis_Cluster',
+    'config' => array(
+	'hosts'=>array(//集群中所有master主机信息
+	    //'127.0.0.1:7001',
+	    //'127.0.0.1:7002',
+	    //'127.0.0.1:7003',
+	),
+	'timeout'=>1.5,//连接超时，单位秒
+	'read_timeout'=>1.5,//读超时，单位秒
+	'persistent'=>false,//是否持久化连接
+	//key的前缀，便于管理查看，在set和get的时候会自动加上和去除前缀，无前缀请保持null
+	'prefix' => null, //Sr::server('HTTP_HOST')
+    )
+),
+
+============v1.1.15[2016-07-20]===========
+增加了：
+1.缓存接口增加了public function &instance($key = null, $isRead=true);方法，
+  当我项目确定使用一种固定的缓存的时候，为了使用确定缓存类型比如redis的高级功能
+  就需要能够获取redis对象实现高级功能，那么可以通过instance获取缓存类使用的实例redis对象。
+
+升级提示：
+无
+
+============v1.1.14[2016-07-19]===========
+优化了：
+1.重写了redis缓存类，客户端实现redis集群，可以直接安装N个相互独立的redis，
+  然后Soter读写缓存的时候，根据算法sprintf('%u',crc32($key))%count($nodeCount)
+  取得key应该读写在哪个master redis服务器上，如果master redis服务器有一个以上slaves从服务器
+  那么读的时候随机选取slaves从服务器读取缓存。
+
+升级提示：
+需要修改cache.php配置文件，把redis配置字段修改为如下格式：
+'redis' => array(
+	'class' => 'Soter_Cache_Redis',
+	'config' =>array(
+			//redis服务器信息，支持集群。
+			//原理是：读写的时候根据算法sprintf('%u',crc32($key))%count($nodeCount)
+			//把$key分散到下面不同的master服务器上，负载均衡，而且还支持单个key的主从负载均衡。
+			array(
+			    'master' => array(
+				//sock,tcp;连接类型，tcp：使用host port连接，sock：本地sock文件连接
+				'type' => 'tcp',
+				//key的前缀，便于管理查看，在set和get的时候会自动加上和去除前缀，无前缀请保持null
+				'prefix' => null, //Sr::server('HTTP_HOST')
+				//type是sock的时候，需要在这里指定sock文件的完整路径
+				'sock' => '',
+				//type是tcp的时候，需要在这里指定host，port，password，timeout，retry
+				//主机地址
+				'host' => '127.0.0.1',
+				//端口
+				'port' => 6379,
+				//密码，如果没有,保持null
+				'password' => NULL,
+				//0意味着没有超时限制，单位秒
+				'timeout' => 3000,
+				//连接失败后的重试时间间隔，单位毫秒
+				'retry' => 100,
+				// 数据库序号，默认0, 参考 http://redis.io/commands/select
+				'db' => 0,
+			    ),
+			    'slaves' => array(
+	//			array(
+	//			    'type' => 'tcp',
+	//			    'prefix' => null, //Sr::server('HTTP_HOST')
+	//			    'sock' => '',
+	//			    'host' => '127.0.0.1',
+	//			    'port' => 6380,
+	//			    'password' => NULL,
+	//			    'timeout' => 3000,
+	//			    'retry' => 100,
+	//			    'db' => 0,
+	//			),
+			    )
+			),
+	//		array(
+	//		    'master' => array(
+	//			'type' => 'tcp',
+	//			'prefix' => null,
+	//			'sock' => '',
+	//			'host' => '10.69.112.34',
+	//			'port' => 6379,
+	//			'password' => NULL,
+	//			'timeout' => 3000,
+	//			'retry' => 100,
+	//			'db' => 0,
+	//		    ),
+	//		    'slaves' => array(
+	//		    )
+	//		),
+		    )
+)
+1、如果只有一个redis那么只设置一个master即可,示例如下：
+'redis' => array(
+	'class' => 'Soter_Cache_Redis',
+	'config' =>array(
+			array(
+			    'master' => array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.1','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+			    'slaves' => array()
+			),
+	)
+2、如果是主从那么设置一个master，一个或者多个slaves即可,示例如下：
+'redis' => array(
+	'class' => 'Soter_Cache_Redis',
+	'config' =>array(
+			array(
+			    'master' => array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.1','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+			    'slaves' => array(
+					array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.2','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+					array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.3','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,)
+				)
+			),
+	)
+3、如果是多个独立的master，分摊key的存储，那么配置多个master即可，配置示例如下：
+'redis' => array(
+	'class' => 'Soter_Cache_Redis',
+	'config' =>array(
+			array(
+			    'master' => array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.1','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+			    'slaves' => array(
+					array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.2','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+					array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.3','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,)
+				)
+			),
+			array(
+			    'master' => array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.4','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+			    'slaves' => array(
+					array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.5','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,),
+					array('type' => 'tcp','prefix' => null,'sock' => '','host' => '127.0.0.6','port' => 6379,'password' => NULL,'timeout' => 3000,'retry' => 100,'db' => 0,)
+				)
+			),
+	)
+
+============v1.1.13[2016-06-14]===========
+增加了：
+1.Sr::sessionSet($key, $value)设置session的方法，$key支持多级，
+  比如$key是user.id,那么设置的就是$_SESSION['user']['id']=$value。
+
+2.Sr::sessionUnset($key = null)销毁session的方法，$key支持多级，
+  比如$key是user.id,那么销毁的就是$_SESSION['user']['id']。
+  如果$key是null，那么销毁的就是$_SESSION变量。
+
+3.Sr::arraySet($array, $key, $value)设置数组key值的方法，$key支持多级，
+  比如$key是user.id,那么设置的就是$array['user']['id']=$value。
+4.手册系统方法部分增加了Sr::arraySet()说明,输出部分增加了Sr::sessionSet()和Sr::sessionUnset()说明;
+升级提示：
+无
+
+============v1.1.12[2016-06-12]===========
+增加了：
+1.手册命令行任务增加了hmvc的说明。
+
+升级提示：
+无
+============v1.1.11[2016-05-25]===========
+增加了：
+1.增强了异常处理代码，即使发生内存不够用的致命错误一样能捕获到并处理，
+  之前如果发生了内存不够用的致命错误，虽然能捕获到，但是没有内存空间处理了。
+  入口文件增加了配置：
+  ->setExceptionMemoryReserveSize(512000)
+  用来设置Soter异常管理程序保留的内存大小，单位byte。
+升级提示：
+无
+
+============v1.1.10[2016-05-13]===========
+修复了：
+1.before方法检测落后于方法检测的bug。
+
+升级提示：
+无
+
+============v1.1.9[2016-04-07]===========
+修复了：
+1.数据库驱动_displayError()方法在出现错误的时候有可能被重复调用的bug。
+
+优化了：
+1.数据库报错信息里面包含了数据库组名称，方便排查数据库问题。
+
+升级提示：
+无
+
+============v1.1.8[2016-03-10]===========
+增加了
+1.入口里面设置项->setSessionConfig增加了session_save_path设置，
+  当使用默认的文件方式存储session时，用来设置session文件的保存位置。
+
+============v1.1.7[2016-03-16]===========
+修复了
+1.Soter数据库驱动，处理null值的bug。
+
+============v1.1.6[2016-03-10]===========
+增加了
+1.入口里面设置项->setSessionConfig增加了session_save_path设置，
+  当使用默认的文件方式存储session时，用来设置session文件的保存位置。
+
+============v1.1.5[2016-03-09]===========
+修复了
+1.数据库驱动在处理使用了数据库函数的情况下，错误的处理字段的bug。
+
+增加了
+1.数据库手册增加了wrap方法的使用介绍。
+
+
+============v1.1.4[2016-02-23]===========
+优化了
+1.忘记在index.php里面启用数据库的时候使用数据库报错的提示信息。
+
+修复了：
+1.Task手册里面task文件位置描述错误的bug。
+
+升级提示：
+无
+
+============v1.1.3[2016-01-27]===========
+优化了：
+1.Sr::checkData方法的unique和exists验证规则，在某些情况下会导致查询大量数据消耗过多内存的问题。
+
+升级提示：
+无
+
+============v1.1.2[2016-01-26]===========
+修复了：
+1.修复了pathinfo路由器中错误处理路由信息，导致无法访问子文件夹中的控制器的bug。
+
+升级提示：
+无
+
+============v1.1.1[2016-01-25]===========
+修复了：
+1.修复了get路由器中错误判断pathinfo，导致一些情况下pathinfo路由器不能生效的bug。
+
+升级提示：
+无
+
+============v1.0.99[2016-01-24]===========
+修复了：
+1.修复了路由器中处理hmvc绑定域名处理的逻辑不当，导致一些情况下hmvc配置无效的bug。
+
+升级提示：
+无
+
+============v1.0.98[2016-01-23]===========
+修复了：
+1.hmvc模块开启了域名绑定的时候，hmvc模块自己的bootstrap配置无效的问题。
+
+升级提示：
+无
+
+============v1.0.97[2016-01-21]===========
+增加了：
+1.配置文件session.php里面增加了对memcache和redis的设置详细说明。
+
+升级提示：
+无
+
+============v1.0.96[2016-01-20]===========
+修复了：
+1.hmvc项目的bootstrap配置中一些配置无法生效的bug.
+
+增加了：
+1.hmvc项目的bootstrap配置中增加了所有可用的配置。
+
+升级提示：
+1.如果使用了hmvc项目，可以根据自己情况增加bootstrap配置。
+
+============v1.0.95[2016-01-19]===========
+修复了：
+1.pathinfo路由器处理uri不当，导致hmvc模式下设置的默认控制器和方法无效的bug。
+
+升级提示：
+无
+
+============v1.0.94[2016-01-06]===========
+增加了：
+1.手册的路由部分的默认控制器和方法部分，增加了2和4示例，非常酸爽。
+2.异常手册示例增加了getEnvironment
+
+升级提示：
+1.入口文件里面“->setExceptionJsonRender(function(Exception $e) { ”增加如下一行。
+		$json['environment'] = $e->getEnvironment();
+
+============v1.0.93[2016-01-04]===========
+增加了：
+1.Soter_Exception对象增加了getEnvironment方法，获取当前的环境字符串标识。
+2.异常显示信息里面增加了Environment环境提示，方便调试，知道当前的soter环境。
+
+升级提示：
+无
+
+============v1.0.91[2016-01-04]===========
+修复了：
+1.Sr::view()在hmvc子模块下面寻找视图的问题。
+
+升级提示：
+无
+
+============v1.0.90[2016-01-04]===========
+修复了：
+1.Sr::url()模块名称匹配问题。
+
+升级提示：
+无
+
+============v1.0.89[2016-01-04]===========
+修复了：
+1.Sr::message($msg, $url = null, $time = 3, $view = null)
+  和Sr::redirect($url, $msg = null, $time = 3, $view = null)
+  在hmvc子模块里面被调用的时候，传递的视图参数无法使用子模块的视图文件的问题。
+
+2.修复了当前访问的hmvc子模块绑定了当前子域名，
+   Sr::url()里面包含当前模块名称的时候，如果是domainOnly的时候Sr::url()
+   生成的链接应该去掉当前模块名称，否则报错的问题。
+
+升级提示：
+无
+
+============v1.0.88[2015-12-17]===========
+修复了：
+1.Redis缓存驱动没有处理db配置参数，导致选择redis数据库无效的问题。
+
+升级提示：
+无
+
+============v1.0.87[2015-12-14]===========
+修复了：
+1.数据库查询缓存，当没有指定key的时候，缓存获取的时候计算key错误，导致查询缓存功能失效的问题。
+
+升级提示：
+无
+
+
+============v1.0.86[2015-12-08]===========
+修复了：
+1.手册路由器部分的uri书写错误，错误的写为rui，已经修正为URI。
+
+升级提示：
+无
+
+============v1.0.85[2015-12-07]===========
+修复了：
+1.数据库驱动，慢查询和索引分析功能的处理逻辑，
+  因为mysql从5.6开始explain才支持SELECT DELETE INSERT REPLACE UPDATE五种类型
+  5.5及之前版本explain只支持SELECT类型语句。之前没有区别版本，导致使用低版本msyql时，
+  打开慢查询和索引分析功能就报错的问题。
+  现在在数据库mysql类型配置里面加了一个versionThan56，用于指定是否mysql版本是否大于等于5.6，true：大于，false：小于。
+
+增加了：
+1.数据库配置文件里面，mysql配置示例里面增加了versionThan56配置项，
+  用于指定是否mysql版本是否大于等于5.6，true：大于，false：小于。
+
+升级提示：
+无
+
+============v1.0.84[2015-12-07]===========
+修复了：
+1.mysql session 处理类close方法错误的返回一个对象的问题，应该返回0或1
+
+============v1.0.83[2015-12-07]===========
+修复了：
+1.mysql session 处理类，调用了数据库不存在的close方法，数据库驱动已经修复，增加了close方法。
+
+增加了：
+1.Sr::db()返回的Soter_Database_ActiveRecord对象增加了close方法，
+  可以通过Sr::db()->close()手动关闭数据库连接，close方法会清除当前所有已经连接的数据库。
+  如果要重新连接数据库怎么办？
+  无需手动进行任何多余操作，直接Sr::db()继续使用就行！Soter会自己检查是否连接，没有连接然后会自动连接。
+
+============v1.0.82[2015-12-04]===========
+增加了：
+1.控制器增加了前置方法和后置方法功能。
+  如果一个控制器有一个名字为before的方法，在Soter里面称为“前置方法”， 
+  前置方法类似于类的构造方法，在web运行模式下，会在每个被访问的控制器方法执行之前执行before方法。 
+  如果一个控制器有一个名字为after的方法，在Soter里面称为“后置方法”， 
+  后置方法类似于类的析构方法，在web运行模式下，会在每个被访问的控制器方法执行之后执行after方法。 
+
+2.手册控制器部分，增加了对前置方法和后置方法功能的介绍。
+
+升级提示：
+无
+
+============v1.0.81[2015-12-04]===========
+修复了：
+1、Sr::urlPath方法在Windows下面路径开始的/会丢失的问题。
+
+优化了：
+1.优化了Sr::arrayGet($array, $key, $default = null)方法。
+  $key支持点方式直接获取数组内层数据。
+  比如有数组：
+	$array=array(
+			'a'=>'1',
+			'b'=>array(
+				'd'=>'2'
+			)
+		);
+  那么如果要直接获取$array['b']['d'],$key可以写为：b.d，即：Sr::arrayGet($array, 'b.d')
+
+2.下面的方法的$key参数都支持上面1总提到的$key的写法。
+  Sr::get($key = null, $default = null, $xssClean = false)
+  Sr::getPost($key, $default = null, $xssClean = false)
+  Sr::post($key = null, $default = null, $xssClean = false) 
+  Sr::postGet($key, $default = null, $xssClean = false)
+  Sr::session($key = null, $default = null, $xssClean = false)
+  Sr::server($key = null, $default = null)
+  Sr::cookie($key = null, $default = null, $xssClean = false) 
+  Sr::cookieRaw($key = null, $default = null, $xssClean = false) 
+
+
+升级提示：
+无
+
+============v1.0.80[2015-11-26]===========
+修复了：
+1、修复了xssClean方法里面的拼写错误，self::xss_clean修正为self::xssClean
+
+升级提示：.
+无
+============v1.0.79[2015-11-17]===========
+优化了：
+1.全面支持PHP7，所有测试案例在PHP7下面测试通过。
+
+升级提示：.
+无
+
+============v1.0.78[2015-11-17]===========
+优化了：
+1.优化了使用了指针的foreach以支持PHP7。
+
+升级提示：.
+无
+
+============v1.0.77[2015-10-30]===========
+优化了：
+1.优化了数据库手册，增加了“直接执行SQL语句”部分。
+
+升级提示：.
+无
+
+============v1.0.76[2015-10-29]===========
+修复了：
+1.修复了数据库select里面使用 select 别名.* ，别名会被错误的加上前缀的bug。
+
+升级提示：
+无
+============v1.0.75[2015-10-28]===========
+优化了：
+1.Sr::db()->groupBy($key)，当$key是多个字段逗号分隔的时候，智能去掉空格。
+2.插件模式下，不再管理异常错误，零入侵。
+3.优化了数据库手册的join使用说明，第一个参数可以是数组用来对join的表名称使用别名。
+  第一个参数是数组的时候：array('原始表名称'=>'as别名')
+
+增加了：
+1.Http拓展增加了sleep($microSeconds)方法，来设置每次请求之后需要sleep的时间，单位是毫秒，比如1000是一秒，
+  这个往往是抓数据的网站对访问频率进行了限制的时候使用的。
+
+修复了：
+1.数据库处理sql的时候，select table.xxx，当xxx是*的时候依然用反单引号保护的问题。
+
+升级提示：
+无
+
+============v1.0.74[2015-10-16]===========
+修复了：
+1.Sr::db()->updateBatch($table, array $values, $index),
+  当values存在两个以上的字段时候，最后数据库更新的数据位置错误的bug。
+
+升级提示：
+无
+
+============v1.0.73[2015-09-18]===========
+优化了：
+1.命令行任务输出调试信息里面带上了pid信息，方便调试。
+
+升级提示：
+无
+
+============v1.0.72[2015-09-02]===========
+优化了：
+1.发生异常的时候，现在可以输出全部的调用堆栈信息，为定位错误提供了更详细的信息。
+
+升级提示：
+无
+
+============v1.0.71[2015-09-01]===========
+修复了：
+1.手册Dao部分的单词错误问题，错误单词fileds更正为fields。
+2.Dao类里面，错误单词fileds更正为fields。
+
+增加了：
+1.Sr::db($group = '', $isNewInstance = false)增加了第二个参数：$isNewInstance
+	默认情况下，每个数据库配置组，为了节省资源Soter只会生成对应的唯一一个单例数据库操作对象。
+	通过第二个参数为true的时候，可以让Soter重新生成一个和配置组对应的单例对象。
+
+	第二个参数的意义：	
+	比如下面的操作：
+
+	a.Sr::db()->insert('a',$data)->execute();
+	b.//做了一个耗时的操作，时间比较长，导致上面a的数据库操作单例对象连接到数据库的链接超时。
+	c.Sr::db()->update('b',$data)->execute()//这里就会报错：mysql has gone away
+
+	c之所以报错，因为a和c使用的都是一个对象，而且是执行a的时候连接一次数据库，以后不再连接。
+	经过b耗时操作，导致a中建立的数据库连接超时，失去到数据库服务器的连接。然后下面的c执行的时候就会报错。
+
+	为了避免这种情况，我们可以通过第二个参数，让Soter不在使用旧的单例，每次都使用新的数据库操作对象，
+	这样c执行的时候就会使用新的对象去重新连接数据库就不会出现超时的问题。
+
+	上面的问题可以进行下面的修改，可以避免超时：
+
+	a.Sr::db()->insert('a',$data)->execute();
+	b.//做了一个耗时的操作，时间比较长，导致上面a的数据库操作单例对象连接到数据库的链接超时。
+	c.Sr::db('',true)->update('b',$data)->execute()//这里不会报错：mysql has gone away，因为这里通过第二个参数true，
+	使用了新的数据库操作对象，会重新去连接数据库。
+2.增加了Sr::getTempPath()方法获取系统临时目录路径，适用windows和lunix。
+
+升级提示：
+无
+
+============v1.0.70[2015/08/25]===========
+修复了：
+1.手册系统方法部分里面的加密解密的使用说明错误的问题。
+
+升级提示：
+无
+
+============v1.0.69[2015/08/21]===========
+优化了：
+1.命令行调试模式输出，任务结束的输出多一个换行，这样能够更清晰的看每个任务的执行情况。
+
+升级提示：
+无
+============v1.0.68[2015/08/14]===========
+修改了：
+1.为了规范统一方法命名规则（驼峰式），对bean实体的set和get方法规则进行了调整。
+	Bean的get方法和set方法命名规范是：
+
+	调整前：
+	set规范是set+首字母大写的表字段名称。
+	get规范是get+首字母大写的表字段名称。
+
+	调整后：
+	set规范是set+不含下划线单词首字母大写的表字段名称。
+	比如：表字段名称是：account_id,那么Bean的set方法名称就应该是setAccountId;
+	比如：表字段名称是：phone,那么Bean的set方法名称就应该是setPhone;
+	get规范是get+不含下划线单词首字母大写的表字段名称。
+	比如：表字段名称是：account_id,那么Bean的get方法名称就应该是getAccountId;
+	比如：表字段名称是：phone,那么Bean的get方法名称就应该是getPhone;
+2.代码生成器，生成Bean使用新规则。
+3.Bean手册的规范部分，对新规则进行了描述。
+
+修复了：
+1.数据库驱动，结果集对象的key方法对objects方法无效的问题。
+
+升级提示：
+
+1.如果使用了bean层，请对现在的bean类进行修改，修改内容如下：
+a.按着新规范，修改bean类的set方法。
+b.按着新规范，修改bean类的get方法。
+2.代码其它地方调用了这些get或者set方法的地方，需要修改成新规则的方法名称。
+
+
+============v1.0.67[2015/08/12]===========
+优化了：
+1.异常手册“自定义处理”部分，修改了示例代码，增加了命令行判断，
+  如果没命令行判断，那么执行task的时候会导致潜在问题。
+
+升级提示：
+无
+
+============v1.0.66[2015/08/12]===========
+修复了：
+1.白名单BackendServerIpWhitelist默认值应该是array(),错误的使用了'',导致Sr::clientIp()报错的问题;
+
+升级提示：
+无
+
+============v1.0.65[2015/08/12]===========
+修复了：
+1.命令行task执行的时候有的linux系统判断进程pid的时候，ps命令报错的问题。
+2.数据库缓存查询，获取缓存之后没有重置，导致下面的缓存数据错误的bug。
+
+升级提示：
+无
+
+============v1.0.64[2015/08/05]===========
+增加了：
+1.Sr::isAjax()方法，判断请求是否是ajax请求，该方法只对jquery的ajax请求有效。
+	原理是，jquery的ajax请求会在http头部加上X-Requested-With: XMLHttpRequest头，
+	Sr::isAjax()方法通过判断是否存在$_SERVER['HTTP_X_REQUESTED_WITH']而且值是XMLHttpRequest，
+	来判断是否是ajax请求。
+
+升级提示：
+无
+
+============v1.0.63[2015/08/03]===========
+优化了：
+1.task命令行消息的输出格式中输出当前task的名称，方便查看。
+
+升级提示：
+无
+
+============v1.0.62[2015/07/31]===========
+优化了：
+1.redis缓存连接逻辑，连接性能大大提升，做到了没有多余的连接。
+
+升级提示：
+无
+
+============v1.0.61[2015/07/21]===========
+增加了：
+1.命令行task的execute方法支持返回空代表执行成功 返回错误信息或者错误码表示执行失败
+  命令行task支持--debug-error参数，只有任务执行失败的时候才输出信息。
+   任务执行是否失败，是根据任务的execute方法的返回值判断的，
+   返回空代表执行成功 返回非空错误信息或者错误码表示执行失败。
+   提示：
+   --debug-error参数和--debug参数只能存在一个，如果都存在则忽略--debug
+2.命令行手册部分增加了对--debug-error参数的介绍。
+
+优化了：
+1.命令行调试信息的时间，时间能够显示精确到毫秒。
+
+升级提示：
+无
+
+============v1.0.60[2015/07/21]===========
+增加了：
+1.为了避免特殊情况下，soter无法完成异常处理功能，导致出错时显示空白，
+  增加了关闭Soter异常管理功能的配置。
+
+升级提示：
+1.需要在入口文件里面增加setExceptionControl配置，
+  setExceptionControl配置需要放在Soter::initialize()之后。
+  修改后也就是如下所示：
+  Soter::initialize()
+	/* 设置Soter管理异常错误 */
+	->setExceptionControl(true)
+
+============v1.0.59[2015/07/16]===========
+优化了：
+1.路由器手册中传递参数部分，对参数的使用结合了示例进行介绍。
+
+升级提示：
+无
+
+============v1.0.58[2015/07/15]===========
+优化了：
+1.数据库驱动编译where条件部分，优化了判断逻辑。
+2.数据库手册中Where部分，对like和or的使用进行了介绍。
+
+升级提示：
+无
+
+============v1.0.57[2015/06/20]===========
+优化了：
+1.数据库手册中Dao部分，对getPage和search方法的使用介绍。
+
+升级提示：
+无
+
+============v1.0.56[2015/06/19]===========
+增加了：
+1.数据库手册中更新数据部分，对set方法的使用介绍。
+
+升级提示：
+无
+
+============v1.0.55[2015/06/19]===========
+增加了：
+1.数据库驱动，批量更新updateBatch支持，设置字段值自增。
+	以前批量数据是例如：
+	array(
+		array('id'=>1,'num'=>2),
+		array('id'=>1,'num'=>3),
+	);
+	如果想把num自增，现在可以这样写，把num的值变成数组，
+	形式如：array('num +'=>3),将会生成：`num` + 3，
+	注意num后面要有空格，空格后面是数据库支持的计算操作符。
+	现在批量更新，而且要自增num字段的值，数据格式可以如下：
+	array(
+		array('id'=>1,'num'=>array('num +'=>3)),
+		array('id'=>1,'num'=>array('num +'=>4)),
+	);
+
+升级提示：
+无
+
+============v1.0.54[2015/06/18]===========
+增加了：
+1.Dao层的search方法中的条件变量对group by的支持。
+
+升级提示：
+无
+
+============v1.0.53[2015/06/17]===========
+优化了：
+1.当关闭了错误显示，命令行下面发生异常，显示空白。
+ 调整为：
+    命令行模式下：
+    当关闭了错误显示，使用系统异常对象输出错误信息。
+2.其它乱七八糟的一些细节优化
+
+修复了：
+1.数据库驱动，where的in使用空数组的时候报错问题。
+
+升级提示：
+无
+
+============v1.0.52[2015/06/12]===========
+优化了：
+1.Sr::sessionStart()对session是否启动的判断
+
+升级提示：
+无
+
+============v1.0.51[2015/06/08]===========
+优化了：
+1.优化了异常对象
+2.cache的redis前缀配置，默认为空。
+
+修复了：
+1.xss数据验证错误使用了self
+
+升级提示：
+无
+
+============v1.0.50[2015/06/02]===========
+增加了：
+1.单例任务增加了--pid参数，可以实现多个单例同时执行。
+
+更新了:
+1.单例任务手册
+
+升级提示：
+无
+
+============v1.0.48[2015/06/01]===========
+优化了：
+1.Sr::redirect()逻辑，当只有地址参数的时候使用location重定向。
+
+修复了：
+1.hmvc绑定域名后，由于get路由器错误处理导致路径访问错误的bug
+
+修改了：
+1.hmvc绑定域名配置，更加强大，可以全部启用或者禁用，可以单个启用或者禁用,
+  可以设置是否只能通过绑定的域名访问
+
+升级提示：
+1.需要修改入口文件setHmvcDomains的配置
+v1.0.48以前是下面的格式：
+->setHmvcDomains(array(
+	    'enable' => true,
+	    'domains' => array(
+		'demo' =>'Demo'//hvmc模块名称
+	    )
+	))
+v1.0.48要修改为下面的格式：
+->setHmvcDomains(array(
+	    'enable' => true,//总开关，是否启用
+	    'domains' => array(
+		'demo' => array(
+		    'hmvcModuleName' => 'Demo',//hvmc模块名称
+		    'enable' => true,//单个开关，是否启用
+		    'domainOnly' => true//是否只能通过绑定的域名访问
+		)
+	    )
+	))
+
+============v1.0.47[2015/05/31]===========
+修复了：
+1.数据库手册个别文字缺少的错误
+2.hmvc绑定域名后，由于get路由器错误处理导致路径访问错误的bug
+
+升级提示：
+无
+
+============v1.0.46[2015/05/30]===========
+修复了：
+1.路由手册个别文字缺少的错误
+
+升级提示：
+无
+
+============v1.0.45[2015/05/28]===========
+修复了：
+1. 数据库手册中关于insert execute的返回值描述错误。
+
+修改了：
+1.Dao层insert方法的返回值，之前是返回受到影响的行数，现在返回的是插入id
+
+增加了：
+1. Dao层增加两个方法，批量插入insertBatch和批量更新updateBatch
+
+升级提示：
+1.由于Dao层insert方法的返回值改变了，用到此方法的返回值的地方注意是否修改逻辑。
+
+============v1.0.44[2015/05/27]===========
+修复了：
+1.加密解密方法获取key不准确的问题
+
+增加了：
+1.入口文件里面设置加密解密密钥，支持字符串参数
+
+升级提示：
+无
+
+
+============v1.0.43[2015/05/26]===========
+优化了：
+1.判断类是否存在方法的逻辑
+
+修复了：
+1.数据验证手册的例子错误使用了dump
+
+升级提示：
+无
+
+============v1.0.42[2015/05/26]===========
+修复了：
+1.cache默认配置错误的bug
+
+升级提示：
+无
+
+============v1.0.41[2015/05/26]===========
+修改了：
+1.拓展：异常记录数据库记录类，增加了是否记录Soter_Exception_404参数
+2.拓展：异常记录数据库记录类手册
+
+升级提示：
+无
+
+============v1.0.40[2015/05/26]===========
+增加了：
+1.任务输出调式信息功能
+2.任务手册
+
+升级提示：
+无
+
+============v1.0.39[2015/05/25]===========
+优化了：
+1.单例任务逻辑和实现方法
+2.任务的实现
+3.任务手册
+
+升级提示：
+无
+
+============v1.0.38[2015/05/24]===========
+优化了：
+1.单例任务逻辑
+
+升级提示：
+无
+
+============v1.0.37[2015/05/24]===========
+增加了：
+1.单例任务
+2.拓展：异常记录数据库记录类
+3.单例任务手册
+4.拓展：异常记录数据库记录类手册
+
+升级提示：
+入口文件配置项较v1.0.36发生了较大变动，请使用v1.0.37入口文件里面的配置顺序。

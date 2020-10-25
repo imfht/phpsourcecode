@@ -1,0 +1,111 @@
+{php}
+	$myapp = \think\Db::name('app') -> column(true,'app_id');
+	$param = [
+		'type'	=>	'my',
+		'ids'	=>	implode(',',array_keys($myapp))
+	];
+	$res = \ebcms\Server::store('apps', $param);
+	if (!$res['code']) {
+		$error = $res['msg'];
+	}
+	$storeapp = [];
+	foreach($res['data'] as $key => $value){
+		$storeapp[] = array_merge($value,$myapp[$value['id']]);
+		unset($myapp[$value['id']]);
+	}
+{/php}
+<script>
+	var M = {};
+	$(function() {
+		M.uninstall = function(id){
+			EBCMS.MSG.confirm('<p>卸载之后所有数据都将清空！若只是临时停用，只需切换状态即可！<p/><p><input type="text" class="form-control" id="uninstall_password" placeholder="请输入密码"><p/><p>确定卸载？<p/>',function(){
+				EBCMS.CORE.submit({
+					url:'{:url('uninstall')}',
+					queryParams:{
+						id:id,
+						password:$('#uninstall_password').val()
+					},
+					success:function(res){
+						if (!res.code) {
+							EBCMS.MSG.alert(res.msg);
+						}else{
+							setTimeout(function() {
+								parent.location = parent.location;
+							}, 100);
+						};
+					}
+				});
+			});
+		}
+	});
+</script>
+<div class="row">
+	{notempty name='error'}
+		<div class="col-md-12">
+			<div class="alert alert-danger">
+				<h1>发生错误：</h1>
+				<hr>
+				<p>{$error}</p>
+			</div>
+		</div>
+	{else/}
+		{foreach name='storeapp' item='vo'}
+			<div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+				<div class="media store-list">
+					<a class="media-left" href="#">
+						<img src="{$vo.logo|thumb}" class="logo" alt="...">
+					</a>
+					<div class="media-body">
+						<h4 class="media-heading">
+							<span class="pull-right text-danger">¥<b>{$vo.price}</b></span>
+							<a href="{$vo.url_full}" target="_blank"><b>{$vo.title}</b></a>
+							<span class="small"><b class="text-muted">v{$vo.version}</b></span>
+						</h4>
+						<p>{$vo.description}</p>
+						{neq name='vo.name' value='ebcms'}
+							{if condition="$vo['status'] != 1"}
+							<button class="btn btn-warning btn-xs ebcms-do" url="{:url('status')}" data-id="{$vo.id}" data-value="1">启用</button>
+							{else/}
+							<button class="btn btn-primary btn-xs ebcms-do" url="{:url('status')}" data-id="{$vo.id}" data-value="0">停用</button>
+							{/if}
+							<a class="btn btn-primary btn-xs" href="{:url('config/setting',['name'=>$vo['name']])}">配置</a>
+							<button class="btn btn-primary btn-xs" onclick="M.uninstall('{$vo.id}');">卸载</button>
+						{/neq}
+						{eq name='vo.name' value='ebcms'}
+							<a class="btn btn-primary btn-xs" href="{:url('config/setting',['name'=>'system'])}">系统设置</a>
+							<a class="btn btn-primary btn-xs" href="{:url('config/setting',['name'=>'home'])}">前台设置</a>
+						{/eq}
+						{if condition="$vo['version_last'] && version_compare($vo['version_last'], $vo['version'], '>')"}
+							<button class="btn btn-danger btn-xs ebcms-go" url="{:url('preins',['app_id'=>$vo['app_id']])}">更新</button>
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/foreach}
+		{foreach name='myapp' item='vo'}
+			<div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+				<div class="media store-list" style="border: 1px solid #8BC34A;background: rgba(205, 220, 57, 0.18);">
+					<a class="media-left" href="#">
+						<img src="{$vo.title|thumb}" class="logo" alt="...">
+					</a>
+					<div class="media-body">
+						<h4 class="media-heading">
+						<span class="pull-right text-danger"><b>本地模块</b></span>
+							<b>{$vo.title}</b>
+							<span class="small"><b class="text-muted">v{$vo.version}</b></span>
+						</h4>
+						<p>本地应用</p>
+						{neq name='vo.name' value='ebcms'}
+							{if condition="$vo.status != 1"}
+							<button class="btn btn-warning ebcms-do" url="{:url('status')}" data-id="{$vo.id}" data-value="1">启用</button>
+							{else/}
+							<button class="btn btn-primary ebcms-do" url="{:url('status')}" data-id="{$vo.id}" data-value="0">停用</button>
+							{/if}
+							<button class="btn btn-primary" onclick="M.uninstall('{$vo.id}');">卸载</button>
+						{/neq}
+					</div>
+				</div>
+			</div>
+		{/foreach}
+	{/notempty}
+</div>

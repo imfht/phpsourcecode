@@ -1,0 +1,47 @@
+<case value="file">
+    <div id="[type]{$group_k}_upload_{$[type]k}" {$form.extra_attr}></div>
+    <div id="[type]{$group_k}_preview_{$[type]k}">
+        <input type="hidden" name="{$[type]form.name}" value="{$[type]form.value}">
+        <ul class="list-group file-box">
+            <notempty name="[type]form.value">
+                <li class="list-group-item file-item" data-id="{$[type]form.value}">
+                    <i class="fa fa-file"></i> 
+                    <span>{$[type]form.value|get_upload_info='name'}</span>
+                    <i class="fa fa-times-circle remove-file"></i>
+                </li>
+            </notempty>
+        </ul>
+    </div>
+    <script type="text/javascript">
+        $(function(){
+            $('#[type]{$group_k}_upload_{$[type]k}').Huploadify({
+                uploader:'{:U(C("MODULE_MARK")."/PublicUpload/upload")}',
+                fileTypeExts:'*.gif;*.jpg;*.jpeg;*.png;'+
+                             '*.swf;*.flv;*.mp3;*.wav;*.wma;*.wmv;*.mid;*.avi;*.mpg;*.asf;*.rm;*.rmvb;*.mp4;'+
+                             '*.doc;*.docx;*.xls;*.xlsx;*.ppt;*.pptx;*.pdf;*.wps;*.txt;*.zip;*.rar;*.gz;*.bz2;*.7z',
+                fileSizeLimit:{:C('UPLOAD_FILE_SIZE')}*1024,
+                buttonText:'上传文件',
+                onUploadComplete:function(file, data){
+                    var data = $.parseJSON(data);
+                    if(data.error == 1){
+                        $.alertMessager(data.message, 'danger');
+                    }else{
+                        var new_file = '<li class="list-group-item file-item" data-id="'+data.id+'"><i class="fa fa-file"></i> '
+                                       +data.name+' <i class="fa fa-times-circle remove-file"></i></li>'
+                        $('#[type]{$group_k}_preview_{$[type]k} .list-group').html(new_file);
+                        $('#[type]{$group_k}_preview_{$[type]k} input').attr('value', data.id);
+                    }
+                }
+            });
+        });
+        //删除文件
+        $('#[type]{$group_k}_preview_{$[type]k} .remove-file').click(function(){
+            var ready_for_remove_id = $(this).closest('.file-item').attr('data-id'); //获取待删除的文件ID
+            if(!ready_for_remove_id) {
+                $.alertMessager('错误', 'danger');
+            }
+            $('#[type]{$group_k}_preview_{$[type]k} input').val('') //删除后覆盖原input的值为空
+            $(this).closest('.file-item').remove(); //删除文件预览
+        });
+    </script>
+</case>

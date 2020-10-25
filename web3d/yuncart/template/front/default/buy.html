@@ -1,0 +1,300 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta content="IE=EmulateIE7" http-equiv="X-UA-Compatible">
+<title>确认提交订单--<!--{$mallname}--></title>
+<!--{include(file='static.html')}-->
+</head>
+<body>
+<!--{include(file='head.html')}-->
+
+<!--主体内容-->
+<div class="container">
+	<div class="gwc_content">
+		<div class="gwc_top"><img src="template/front/<!--{$tpl}-->/images/gwc_top02.gif" /></div>
+		<!--收货人信息-->
+		<form name="theform" id="theform" action="<!--{url('index','buy','ordercomp')}-->" method="post" onsubmit="return Buy.submitorder()">
+		<div id="forc"></div>
+				
+		<!--支付方式-->
+		<div class="order_box">
+			<div class="o_l_right"></div>
+			<h3>支付方式</h3>
+			<div class="shr_info">
+				<!--{if $payments}-->
+				<table width="100%" border="0" cellspacing="0" cellpadding="0">
+					<tbody>
+						<!--{foreach $payments payment}-->
+						<tr height="60">
+							<td width="30%">
+								<input type="radio" value="<!--{$payment.paymentid}-->" name="paymentid" /><!--{$payment.name}-->
+							</td>
+							<td width="70%">
+								<!--{$payment.memo}-->
+							</td>
+						</tr>
+						<!--{/foreach}-->
+					</tbody>
+				</table>
+				<!--{/if}-->
+			</div>
+		</div>
+		<!--支付方式-->
+		<div class="order_box">
+			<div class="o_l_right">【<a href="<!--{url('index','cart')}-->">返回购物车</a>】</div>
+			<h3>商品清单</h3>
+		</div>
+		<div class="gwc_list">
+				<table width="100%" border="0" cellspacing="0" cellpadding="0">
+					 <thead class="tab_title">
+						<tr align="center">
+							<th width="60%" colspan="2">商品名称</th>
+							<th width="10%">单价</th>
+							<th width="10%">数量</th>
+							<th width="20%">小计</th>
+						</tr>
+					  </thead>
+					<tbody class="tab_list">
+						<!--{foreach $cartitems cartitem}-->
+					  <tr align="center">
+						<td width="5%" align="left">
+							<a href="<!--{url('index','item','index','itemid=$cartitem[itemid]')}-->" target="_blank">
+								<img src="<!--{$cartitem.itemimg}-->_50x50.jpg" width="50" height="50" />
+							</a>
+						</td>
+						<td width="55%" align="left">
+<!--{if $cartitem['type'] == 'meal'}-->
+	<a href="<!--{url('index','item','index','itemid=$cartitem[itemid]')}-->" target="_blank"><!--{$cartitem.title}--></a>
+	<!--{foreach $cartitem[mealitems] mealitem}-->
+		<p><em class="text_red">[包括]</em>
+			<a href="<!--{url('index','item','index','itemid=$mealitem[itemid]')}-->" target="_blank"><!--{$mealitem.itemname}--></a>
+		</p>
+	<!--{/foreach}-->
+<!--{else}-->
+	 <a href="<!--{url('index','item','index','itemid=$cartitem[itemid]')}-->" target="_blank"><!--{$cartitem.itemname}--></a>
+	 <!--{if $cartitem[gifts]}-->
+		<!--{foreach $cartitem[gifts] gift}-->
+		<p><em class="text_red">[赠品]</em>：<a href="<!--{url('index','item','index','itemid=$gift[gitemid]')}-->" target="_blank"><!--{$gift.gitemname}--></a> <em class="text_red">x <!--{$gift.num}--></em> </p>
+		<!--{/foreach}-->
+	<!--{/if}-->
+<!--{/if}-->
+						</td>
+						<td><!--{getPrice($cartitem.price,0)}--></td>
+						<td><!--{$cartitem.num}--></td>
+						<td class="text_red"><!--{getPrice($cartitem.price * $cartitem.num,0)}--></td>
+					  </tr>
+					  <!--{/foreach}-->
+					</tbody>
+				</table>
+		</div>
+		<!--其它详细-->
+		<div class="order_box">
+			<h3>其它详细</h3>
+			<div class="shr_info">
+				<p>订单附言：<input type="text" name="memo" id="memo" size="40"/></p>
+				<p>发    票：<input type="checkbox" value="1" name="istax" id="istax" onclick="$('#fortax').toggle()"/> </p>
+				<p class="none" id="fortax">发票抬头：
+					<input type="text" value="" name="tax_company" id="tax_company"/>
+				</p>
+			</div>
+		</div>
+		<!--其它详细-->
+		<!--费用总计-->
+		<div class="order_box">
+			<h3>费用总计</h3>
+			<div class="shr_info">
+				<div class="buycoupon">
+					<h1>
+						<a href="javascript:void(0)" onclick="Buy.showCoupon();return false;">使用优惠券减去部分金额</a>
+					</h1>
+					<ul class="coupon none">
+						<!--{if $coupons}-->
+							<!--{foreach $coupons coupon}-->
+							<li>
+								<input type="radio" value="<!--{$coupon.couponid}-->" name="couponid" onclick="Buy.useCoupon(<!--{$coupon.deno}-->)"
+									<!--{if $.session.cart.itemfee < $coupon.require}-->disabled<!--{/if}-->
+								/> 
+								面额：<!--{$coupon.deno}-->元
+								(<!--{if $coupon.require}-->订单金额满<!--{$coupon.require}-->元，<!--{/if}-->有效期至：<!--{date('Y-m-d ',$coupon[endtime])}-->)
+							</li>
+							<!--{/foreach}-->
+						<!--{else}-->
+							<li>您没有可以使用的优惠券</li>
+						<!--{/if}-->
+					</ul>
+				</div>
+				<div class="buyfee">
+					<p class="pright">商品金额：<span id="itemfee"><!--{getPrice($.session.cart.itemfee,0)}--></span>元 </p>
+					<p id="forsfeep" class="pright">运费：<span id="postfee">
+						<!--{if $man.nofreight}-->0.00<!--{else}-->__<!--{/if}--></span>元
+					</p>
+					<p class="pright">优惠券：<span id="couponfee">0.00</span>元</p>
+					<!--{if $man}-->
+						<p class="pright">
+							满减优惠：
+							<!--{if $man.minus}--> -<span id="minusfee"><!--{getPrice($man.minus,0)}--></span>元 <!--{/if}-->
+							<!--{if $man.nofreight}-->包邮<!--{/if}-->
+							<!--{if $man.gift}-->赠送<a href="<!--{$man.gift.url}-->"><!--{$man.gift.giftname}--></a><!--{/if}-->
+						</p>
+					<!--{/if}-->
+					<p class="pright">应付款总额：<span class="text_red" id="totalfee">
+						商品金额 + 运费 - 优惠
+					</span>元</p>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+		<!--费用总计-->
+		<div class="gwc_but">
+		  <input type="submit" class="gwc_but03" value=""/>
+		</div>
+		</form>
+	</div>
+</div>
+<!--主体内容 end-->
+<!--{include(file='foot.html')}-->
+</body>
+</html>
+<script type="text/javascript">
+var Buy = {
+	operurl : "<!--{url('index','buy','operaddr')}-->",
+	saveurl : "<!--{url('index','buy','saveaddr')}-->",
+	forc    : $("#forc"),
+	nofreight:!!parseInt("<!--{if $man && $man.nofreight}-->1<!--{else}-->0<!--{/if}-->"),
+	use:function() {//使用这个地址
+		var addressid = $("input[name='addressid']:checked").val();
+		if(!addressid) return false;
+		var _this = this;
+		$.post(this.operurl,{opertype:'use',addressid:addressid},function(data) {
+			_this.forc.html(data);
+		});
+	},
+	edit:function(addressid) {
+		var _this = this;
+		$.post(this.operurl,{opertype:'edit',addressid:addressid},function(data) {
+			_this.forc.html(data);
+		});
+	},
+	get:function() {
+		var _this = this;
+		$.get(this.operurl,{opertype:'get'},function(data) {
+			_this.forc.html(data);
+		});
+	},
+	add:function() {
+		var _this = this;
+		$.post(this.operurl,{opertype:'add'},function(data) {
+			_this.forc.html(data);
+		});
+	},
+	del:function(addressid) {
+		$.post(this.operurl,{opertype:'del',addressid:addressid},function(data) {
+			$("#tr_"+ addressid).remove();
+		});
+	},
+	focusobj:function(obj) {
+		$(obj).removeClass("hintborder");
+	},
+	saveAndUse:function(addressid) {//保存并使用
+		var $receiver = $("#receiver"),
+			receiver  = $.trim($receiver.val()),
+			$province = $("#province"),
+			province  = $province.val(),
+			$city	  = $("#city"),
+			city	  = $city.val(),
+			$district = $("#district"),
+			district  = $district.val(),
+			$address  = $("#address"),
+			address	  = $.trim($address.val()),
+			$zipcode  = $("#zipcode"),
+			zipcode	  = $.trim($zipcode.val()),
+			$link	  = $("#link"),
+			link	  = $.trim($link.val()),
+			can		  = true;
+		if(!receiver)  {
+			$receiver.addClass("hintborder");
+			can = false;
+		}
+		if(!province) {
+			$province.addClass("hintborder");
+			can = false;
+		}
+		if(!city) {
+			$city.addClass("hintborder");
+			can = false;
+		}
+		if(!district) {
+			$district.addClass("hintborder");
+			can = false;
+		}
+		if(!address) {
+			$address.addClass("hintborder");
+			can = false;
+		}
+		if(!zipcode) {
+			$zipcode.addClass("hintborder");
+			can = false;
+		}
+		if(!link) {
+			$link.addClass("hintborder");
+			can = false;
+		}
+		if(!can) return false;
+		postdata = {receiver:receiver,province:province,city:city,district:district,address:address,link:link,zipcode:zipcode};
+		if(addressid) postdata.addressid = addressid;
+		var _this = this;
+		$.post(this.saveurl,postdata,function(data){
+			_this.forc.html(data);
+		});
+	},
+	clickone:function() {
+		$('#newtb').hide();
+		$("#foradd").hide();
+		$("#foruse").show();
+	},
+	submitorder:function() {
+		var $address = $("#addressid");
+		if(!$address.length || $address.val() == 0) {
+			jAlert("请选择收货地址");
+			return false;
+		}
+		if(!$("input[name='wayid']:checked").length) {
+			jAlert("请选择快递方式！");
+			return false;
+		}
+		if(!$("input[name='paymentid']:checked").length) {
+			jAlert("请选择支付方式！");
+			return false;
+		}
+		return true;
+	},
+	checkway:function(expresswayid) {
+		if(!this.nofreight) {
+			var sfee		= parseFloat($("#price_"+expresswayid).text()) || 0;
+			$("#postfee").text(sfee.toFixed(2));
+		} 
+		this.calctotal();
+	},
+	showCoupon:function() {//显示优惠券
+		$(".coupon").show();
+	},
+	useCoupon:function(deno) {//使用优惠券
+		$("#couponfee").text(deno.toFixed(2));
+		this.calctotal();
+	},
+	calctotal:function() {
+		var postfee		= parseFloat($("#postfee").text()) || 0,
+			itemfee		= parseFloat($("#itemfee").text()) || 0,
+			couponfee	= parseFloat($("#couponfee").text()) || 0,
+			minusfee	= parseFloat($("#minusfee").text()) || 0;
+		
+		var total = postfee + itemfee - couponfee - minusfee;
+		if(total <0) total = 0.00;
+		$("#totalfee").text(total.toFixed(2));	
+	}
+};
+$(function(){
+	Buy.get();
+});	
+</script>

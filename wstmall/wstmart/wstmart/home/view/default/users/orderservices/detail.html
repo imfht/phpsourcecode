@@ -1,0 +1,183 @@
+{extend name="default/users/base" /}
+{block name="title"}售后详情 - 买家中心{__block__}{/block}
+{block name="css"}
+<link href="__STYLE__/css/osdetail.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="content"}
+<div class="wst-user-head"><span>售后详情</span></div>
+<div class='wst-user-content'>
+        <table class='wst-order-list' style="border-collapse: collapse;">
+            <thead>
+                <tr class='head'>
+                    <th width="200">商品信息</th>
+                    <th width="115">单价</th>
+                    <th width="115">数量</th>
+                    <th width="115">总价</th>
+                </tr>
+            </thead>
+            <tbody class="j-order-row">
+                {if(isset($detail['glists']))}
+                {volist name="detail['glists']" id="gItem"}
+                <tr>
+                    <td>
+                        <div class="fl">
+                            <img data-original='__RESOURCE_PATH__/{:WSTImg($gItem.goodsImg,1)}' class='gImg'>
+                        </div>
+                        <div class="g-info">{$gItem.goodsName}</div>
+                        <div class="wst-clear"></div>
+                    </td>
+                    <td>￥{$gItem.goodsPrice}</td>
+                    <td>{$gItem.goodsNum}</td>
+                    {php}
+                        $goodsTotalPrice = $gItem['goodsNum']*$gItem['goodsPrice'];
+                    {/php}
+                    <td>￥{$goodsTotalPrice}</td>
+                </tr>
+                {/volist}
+                {/if}
+            </tbody>
+        </table>
+        <div class="service-box">
+            <p class="tl-tit">售后服务单类型</p>
+            <span class="refund-money">{$detail['goodsServiceTypeText']}</span>
+        </div>
+        <div class="service-box">
+            <p class="tl-tit">售后服务单状态</p>
+            <span class="refund-money">{$detail['statusText']}</span>
+        </div>
+        {if($detail['goodsServiceType']==0)}
+        <div class="service-box">
+            <p class="tl-tit">退款总金额</p>
+            <span class="refund-money">￥{:floatval($detail['refundMoney'])}</span>
+        </div>
+        {/if}
+
+        {if($detail['isClose']!=1 && $detail['serviceStatus']==1)}
+            <div class="express-box">
+                <p class="tl-tit">填写物流信息</p>
+                <label style="cursor:pointer;margin-right:10px;color: #666">
+                    <input class="ex-ipt" checked type='radio' onchange="deliverType(this.value)" name="expressType" value='0'>
+                    无需物流
+                </label>
+                <label style="cursor:pointer;margin-right:10px;color: #666">
+                    <input class="ex-ipt" type='radio' onchange="deliverType(this.value)" name="expressType" value='1'>
+                    快递
+                </label>
+                <div id="j-express" style='display: none'>
+                    <div class="os-input-item">
+                        <span><em>* </em>物流公司</span>
+                        <select id='expressId' class="ex-ipt">
+                            <option value=''>请选择</option>
+                            {volist name="$express" id='vo'}
+                                <option value='{$vo["expressId"]}'>{$vo["expressName"]}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <div class="os-input-item">
+                        <span><em>* </em>物流单号</span>
+                        <input type="text" id="expressNo" class="ex-ipt" placeholder="请填写物流单号" />
+                    </div>
+                </div>
+                <div>
+                    <input type="button" onclick="userExpress()" value="提交" />
+                </div>
+            </div>
+        {/if}
+        {/* 展示用户物流信息 */}
+        {if($detail['isUserSendGoods']==1)}
+            <div class="express-box">
+                <p class="tl-tit">用户物流信息</p>
+                {if($detail['expressType']==1)}
+                <div class="pdl5">
+                    快递公司：{$detail['expressName']}
+                </div>
+                <div class="pdl5">
+                    物流单号：{$detail['expressNo']}
+                </div>
+                {else /}
+                <div class="pdl5">
+                    物流单号：无需物流
+                </div>
+                {/if}
+            </div>
+        {/if}
+        {if($detail['isShopSend']==1)}
+            <div class="express-box">
+                <p class="tl-tit">商家物流信息</p>
+                {if($detail['shopExpressType']==1)}
+                <div class="pdl5">
+                    快递公司：{$detail['shopExpressName']}
+                </div>
+                <div class="pdl5">
+                    物流单号：{$detail['shopExpressNo']}
+                </div>
+                {else /}
+                <div class="pdl5">
+                    物流单号：无需物流
+                </div>
+                {/if}
+            </div>
+        {/if}
+        
+        {/* 等待用户收货时显示 */}
+        {if($detail['isClose']!=1 && $detail['serviceStatus']==4)}
+        <div class="comfirm-box">
+            <p class="tl-tit">用户确认收货</p>
+            <label style="cursor:pointer;margin-right:10px;color: #666">
+                <input class="cm-ipt" checked type='radio' onchange="isUserAccept(this.value)" name="isUserAccept" value='1'>
+                确认收货
+            </label>
+            <label style="cursor:pointer;margin-right:10px;color: #666">
+                <input class="cm-ipt" type='radio' onchange="isUserAccept(this.value)" name="isUserAccept" value='-1'>
+                拒收
+            </label>
+            <div id="j-confirm" style='display: none'>
+                <div class="os-input-item">
+                    <span><em>* </em>拒收类型：</span>
+                    <select class="cm-ipt" id='userRejectType' onchange='javascript:changeRejectType(this.value)'>
+                            <option value='0'>请选择</option>
+                        {volist name=":WSTDatas('ORDER_REJECT')" id="vo"}
+                        <option value='{$vo["dataVal"]}'>{$vo["dataName"]}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div id="j-cm-input" class="os-input-item" style='display: none'>
+                    <span><em>* </em>拒收原因：</span>
+                    <input type="text" id="userRejectOther" class="cm-ipt" placeholder="请填写拒收原因" />
+                </div>
+            </div>
+            <div>
+                <input type="button" onclick="userConfirm()" value="提交" />
+            </div>
+        </div>
+        {/if}
+
+        <div class="time-line-box">
+            <p class="tl-tit">协商历史</p>
+            {volist name="log" id="lItem"}
+            <div class="tl-item">
+                <img data-original='{:WSTUserPhoto(WSTImg($lItem['avatar'],1))}' class="tl-img fl">
+                <div class="tl-info fl">
+                    <div class="tl-r-t">
+                        <span>{$lItem.nickname}</span>
+                        <span class="tl-time">{$lItem.logTime}</span>
+                        <div class="wst-clear"></div>
+                    </div>
+                    <div class="tl-log">{$lItem.logContent}</div>
+                </div>
+                <div class="wst-clear"></div>
+            </div>
+            {/volist}
+        </div>
+        
+</div>
+<input type="hidden" id="id" value="{$id}">
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__STYLE__/users/orderservices/orderservices.js?v={$v}'></script>
+<script>
+    $(function () {
+        $('.gImg,.tl-img').lazyload({ effect: "fadeIn",failurelimit : 10,skip_invisible : false,threshold: 200,placeholder:window.conf.RESOURCE_PATH+'/'+WST.conf.GOODS_LOGO});
+    })
+</script>
+{/block}

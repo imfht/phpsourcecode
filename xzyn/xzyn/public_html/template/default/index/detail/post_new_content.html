@@ -1,0 +1,382 @@
+{extend name="public/base" /}
+
+{block name="title"}
+<title>{$archive.title} - {:confv('title')}</title>
+<meta name="keywords" content="{$archive.keywords}">
+<meta name="description" content="{$archive.description}">
+{/block}
+
+{block name="pjax_container"}
+<style type="text/css">
+	.affix {
+	    position: fixed;
+	    z-index: 20;
+	    top:0px;
+	}
+	@media (max-width: 767px) {
+		.affix {
+		    position: static;
+		    z-index: 20;
+		    top:0px;
+		}
+	}
+</style>
+<div class="content">
+    <div class="row">
+        <div class="col-sm-4 col-sm-push-8">
+        	<div class="affix_top">
+				<!--文章分类-->
+				<div class="box box-solid">
+		            <div class="box-body x-pt-0">
+		            	<div class="row  x-mlr-0">
+		            		<div class="col-sm-4 col-xs-4 x-plr-5 x-mt-10">
+								<a href="/category/{$parent.dirs}" class="btn btn-block btn-default">{$parent['typename']}</a>
+							</div>
+		            		{volist name="typelist" id="vo"}
+							<div class="col-sm-4 col-xs-4 x-plr-5 x-mt-10">
+								<a href="/category/{$vo.dirs}" class="btn btn-block btn-default">{$vo['typename']}</a>
+							</div>
+							{/volist}
+		            	</div>
+		            </div>
+	          	</div>
+	          	<!--用户信息-->
+				<div class="box box-widget widget-user userinfo">
+				    <div class="widget-user-header bg-black userinfo-top" style="background: url('__static__/common/admin/adminLTE/img/photo1.png') center center;">
+				      	{eq name="$archive['user']['id']" value="$user['id']"}
+				      	<a class="x-tc-bai" href="{:url('@member/users/index')}">
+				      		<h3 class="widget-user-username pull-right"><i class="fa fa-gear"></i></h3>
+				      	</a>
+				      	{/eq}
+				      	<h3 class="widget-user-username">{$archive['user']['name'] ?: $archive['user']['username']}</h3>
+				      	<h5 class="widget-user-desc">{:csubstr(strip_tags(htmlspecialchars_decode($archive['userinfo']['info'])),60)}</h5>
+				    </div>
+				    <div class="widget-user-image">
+				      	<img class="img-circle x-yy-4" data-toggle="modal" data-target="#tauserinfo" src="{$archive['userinfo']['avatar']|default='/static/global/face/default.png'}">
+				    	<form class="form-horizontal" method="POST" action="{:url('userinfo/focus')}" onsubmit="return false" >
+			    			<input type="hidden" name="uid" value="{$archive['user']['id']}" />
+					    	<span class="x-yuan btn btn-info btn-xs x-dwa-lb x-yy-4 submits" title="点击关注" style="left:50%;margin-left:-12px;bottom:-10px;" data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt;">
+					    		<i class="fa fa-heart donghua pulse infinite"></i>
+					    	</span>
+				    	</form>
+				    </div>
+				    <div class="box-footer no-padding">
+				    	<div class="text-center x-mt-30 x-mb-10">
+					    	<div class="btn-group">
+					    		<a href="#tab1" class="btn btn-default " data-toggle="tab">TA的资料</a>
+					    		<a href="#tab2" class="btn btn-default archive" data-toggle="tab">TA的文章</a>
+					    		<a href="#tab2" class="btn btn-default arc-rep" data-toggle="tab">TA的回复</a>
+					    	</div>
+					    </div>
+				    	<div class="tab-content">
+					    	<div class="tab-pane fade in active" id="tab1">
+
+								<div class="box no-border no-margin">
+						            <div class="box-header with-border">
+						              	<h3 class="box-title">TA的资料</h3>
+						              	<div class="box-tools pull-right">
+							                <button type="button" class="btn btn-box-tool" data-widget="collapse">
+							                	<i class="fa fa-minus"></i>
+							                </button>
+						              	</div>
+						            </div>
+						            <div class="box-body">
+						              	The body of the box
+						            </div>
+					         	</div>
+
+					    	</div>
+					    	<div class="tab-pane fade " id="tab2">
+
+					    		<div class="box no-border no-margin">
+						            <div class="box-header with-border">
+						              	<h3 class="box-title">TA的文章</h3>
+						              	<div class="box-tools pull-right">
+							                <button type="button" class="btn btn-box-tool" data-widget="collapse">
+							                	<i class="fa fa-minus"></i>
+							                </button>
+						              	</div>
+						            </div>
+						            <div class="box-body">
+						              	<div class="new-arc-box"></div>
+
+						            </div>
+						            <div class="box-footer" style="padding-top:10px;">
+										<button class="btn btn-block btn-success" id="new-arc-btn" data-type="newarc" data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt; 加载中..." >点击加载</button>
+						            </div>
+					         	</div>
+
+					    	</div>
+				    	</div>
+				    </div>
+
+				</div>
+			</div>
+        </div>
+
+        <div class="col-sm-8 col-sm-pull-4">
+			<!--置顶/推荐/头条-->
+			<div class="nav-tabs-custom">
+	            <ul class="nav nav-tabs">
+	              	<li class="active"><a href="#tab_1" data-toggle="tab">置顶</a></li>
+	              	<li><a href="#tab_2" data-toggle="tab">推荐</a></li>
+	              	<li><a href="#tab_3" data-toggle="tab">头条</a></li>
+	              	{notempty name="$user"}
+	              	<li class="pull-right"><a href="{:url('Detail/addArticle')}" class=""><i class="fa fa-pencil-square-o"> 发布</i></a></li>
+	              	{/notempty}
+	            </ul>
+	            <div class="tab-content">
+	            	{php}$zhidinglist = typeArchive('a',10){/php}
+		            <div class="tab-pane active" id="tab_1">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$zhidinglist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-red"> 置顶</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+		            </div>
+		            {php}$tuijianlist = typeArchive('c',10){/php}
+		            <div class="tab-pane" id="tab_2">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$tuijianlist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-green"> 推荐</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+		            </div>
+		            {php}$toutiaolist = typeArchive('h',10){/php}
+	              	<div class="tab-pane" id="tab_3">
+				        <ul class="nav nav-pills nav-stacked">
+				        	{volist name="$toutiaolist" id="vo"}
+				            <li class="x-t-no">
+				                <a class="x-t-no1" style="padding:5px 0;" href="{:url($vo['arcurl'])}">
+				                    <span class="label bg-yellow"> 头条</span> {$vo['title']}
+				                </a>
+				            </li>
+							{/volist}
+				        </ul>
+	              	</div>
+	            </div>
+	       </div>
+
+			<!--文章内容-->
+			<div class="box box-primary">
+	            <div class="box-header with-border">
+	            	<h3 class="box-title">{$archive.title}</h3>
+	            </div>
+	            <div id="liulan-img" class="box-body archive-content-img">
+	              	<p>
+						{notempty name="$archive['litpic']"}
+	                    	<div class="text-center x-mb-10">
+	                    		<img src="{$archive.litpic}" />
+	                    	</div>
+	                    {/notempty}
+						{$archive.addondata.content}
+	              	</p>
+	              	<form action="{:url('arc_zan')}" method="post" onsubmit="return false" class="">
+	              		<input type="hidden" name="id" value="{$archive['id']}" />
+						<input type="hidden" name="type" value="archive" />
+		              	<a class="btn btn-default btn-xs text-muted" href="/category/{$archive['arctype']['dirs']}">
+		              		<i class="fa fa-tags"></i> {$arctype.typename}
+		              	</a>
+		              	<button type="button" class="submits btn btn-default btn-xs">
+		              		<i class="fa fa-thumbs-o-up"></i> {$archive['zan_num']} 赞
+		              	</button>
+	              		<span class="pull-right text-muted">
+	              			<i class="fa fa-clock-o x-pr-5"> {$archive.create_time}</i>
+	              			<i class="fa fa-eye x-pr-5"> {$archive.click}</i>
+	              			<i class="fa fa-commenting-o x-pr-5"> {$archive['reply_num']}</i>
+	              		</span>
+	              	</form>
+	            </div>
+				<div class="box-footer">
+					{:prenext($archive)} 	<!--上下一篇-->
+            	</div>
+          	</div>
+			{:click($archive)}
+			<!--文章回复-->
+			<div class="box box-primary box-solid">
+	            <div class="box-header with-border">
+	            	<button type="button" class="box-title btn btn-box-tool" data-toggle="collapse" data-target="#huifu{$archive['id']}">
+	            		<i class="fa fa-commenting-o"> {$archive.reply_num} 条回复</i>
+	            	</button>
+	            </div>
+	            <div class="box-body {empty name='$reply_list'}collapse {else /}collapse in{/empty}" id="huifu{$archive['id']}" >
+				{volist name="$reply_list" id="vo"}
+				{if condition="$vo['h_layer'] eq 1"}
+					<div class="box box-primary">	<!--一级回复-->
+			            <div class="box-header with-border">
+			              	<div class="user-block">
+			                	<img class="img-circle" src="{$vo['userinfo']['avatar']|default='/static/common/img/default.png'}" alt="">
+			                	<div class="username x-mb-5">
+			                		<a class="x-t-no1" href="/userinfo/{$vo['user']['id']}">{$vo['user']['name'] ?: $vo['user']['username']}</a>
+			                	</div>
+			                	<div class="description">
+			                		<span class="x-t-no2">{:csubstr(strip_tags(htmlspecialchars_decode($vo['userinfo']['info'])),40)}</span>
+			                	</div>
+			              	</div>
+			            </div>
+			            <div class="box-body">
+			              	<p>{$vo['contents']}</p>
+		                  	<div class="">
+						        <form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+						        	<input type="hidden" name="ar_id" value="{$vo['id']}" />
+							        <input type="hidden" name="type" value="reply" />
+			                  		<span class="text-muted"><i class="fa fa-clock-o x-pr-5"> {$vo['create_time']}</i></span>
+					              	<button type="button" class="submits pull-right btn btn-warning btn-xs">
+					              		<i class="fa fa-thumbs-o-up"></i> {$vo['zan_num']} 赞
+					              	</button>
+					              	<button type="button" data-toggle="collapse" data-target="#huifu-neirong{$vo['id']}" class="x-mr-10 pull-right btn btn-primary btn-xs">
+					              		<i class="fa fa-commenting-o"> {$vo['reply_num']} 条回复</i>
+					              	</button>
+					              	<button type="button" data-toggle="collapse" data-target="#huifu-neirong{$vo['id']}{$archive['id']}" class="x-mr-10 pull-right btn btn-warning btn-xs">
+					              		<i class="fa fa-pencil-square-o"> 回复</i>
+					              	</button>
+				              	</form>
+		                  	</div>
+			            </div>
+			            <div class="box-footer box-comments collapse" id="huifu-neirong{$vo['id']}">
+							{volist name="$reply_list" id="to"}
+							{if condition="$to['pid'] eq $vo['id']"}
+			              	<div class="box-comment">	<!--二级回复-->
+			                	<img class="img-circle img-sm" src="{$to['userinfo']['avatar']|default='/static/common/img/default.png'}" >
+			                	<div class="comment-text">
+			                      	<div class="username x-ptb-5">
+			                      		<a href="/userinfo/{$to['user']['id']}" class="x-t-no1">{$to['user']['name'] ?: $to['user']['username']}</a>
+			                      	</div>
+			                      	<div class="">{$to['contents']}</div>
+				                  	<div class="text-right x-mt-5">
+						              	<form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+					                  		<span class="pull-left text-muted"><i class="fa fa-clock-o x-pr-5"> {$to['create_time']}</i></span>
+						        			<input type="hidden" name="ar_id" value="{$to['id']}" />
+							        		<input type="hidden" name="type" value="reply" />
+					                  		<button type="button" data-toggle="collapse" data-target="#huifu-form{$to['id']}" class="btn btn-primary btn-xs x-ml-5" {if condition="$to['uid'] eq $user['id']"}disabled{/if}>
+							              		<i class="fa fa-pencil-square-o"></i> 回复
+							              	</button>
+					                  		<button type="button" class="submits btn btn-warning btn-xs x-ml-5">
+							              		<i class="fa fa-thumbs-o-up"></i> {$to['zan_num']} 赞
+							              	</button>
+							            </form>
+				                  	</div>
+				                  	<div class="x-mt-5 collapse" id="huifu-form{$to['id']}">
+				                  		<form action="{:url('arc_reply')}" method="post" onsubmit="return false">
+				                  			<input type="hidden" name="pid" value="{$to['id']}" />
+			                  				<input type="hidden" name="aid" value="{$archive['id']}" />
+							                <div class="input-group input-group-sm">
+							                	<input type="text" name="contents" class="form-control" placeholder="回复:{$to['user']['name'] ?: $to['user']['username']}">
+							                    <span class="input-group-btn">
+							                    	{notempty name="$user"}
+							                      	<button type="button" class="submits btn btn-info btn-flat">回复</button>
+							                      	{else /}
+							                      	<a onclick="poplogin()" class="btn btn-info btn-flat">登录回复</a>
+							                      	{/notempty}
+							                    </span>
+							              	</div>
+						              	</form>
+				                  	</div>
+				                  	{volist name="$reply_list" id="so"}
+									{if condition="$so['pid'] eq $to['id']"}
+										<div class="x-x-t x-mt-5">	<!--三级回复-->
+											<div class="username x-ptb-5">
+												<div class="x-t-no1">
+													<a href="/userinfo/{$so['user']['id']}">{$so['user']['name'] ?: $so['user']['username']}</a> 回复 <a href="/userinfo/{$to['user']['id']}">{$to['user']['name'] ?: $to['user']['username']}</a>
+												</div>
+											</div>
+											<div>{$so['contents']}</div>
+											<form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+							        			<input type="hidden" name="ar_id" value="{$so['id']}" />
+							        			<input type="hidden" name="type" value="reply" />
+												<div>
+													<span class="text-muted x-f12"><i class="fa fa-clock-o x-pr-5"> {$so['create_time']}</i></span>
+							                  		<button type="button" class="submits pull-right btn btn-warning btn-xs x-ml-5">
+									              		<i class="fa fa-thumbs-o-up"></i> {$so['zan_num']} 赞
+									              	</button>
+												</div>
+											</form>
+										</div>
+									{/if}
+									{/volist}
+			                	</div>
+			              	</div>
+							{/if}
+							{/volist}
+			            </div>
+
+			            <form class="collapse" action="{:url('arc_reply')}" method="post" onsubmit="return false" id="huifu-neirong{$vo['id']}{$archive['id']}">
+			                <input type="hidden" name="pid" value="{$vo['id']}" />
+			                <input type="hidden" name="aid" value="{$archive['id']}" />
+			            	<div class="box-footer ">
+				                <!--<img class="img-responsive img-circle img-sm" src="http://127.0.0.20/dist/img/user4-128x128.jpg" >-->
+				                <div class="img-push">
+					                <div class="input-group input-group-sm">
+					                	<input type="text" name="contents" class="form-control" placeholder="回复:{$vo['user']['name'] ?: $vo['user']['username']}">
+					                    <span class="input-group-btn">
+					                    	{notempty name="$user"}
+					                      	<button type="button" class="submits btn btn-info btn-flat">回复</button>
+					                      	{else /}
+					                      	<a onclick="poplogin()" class="btn btn-info btn-flat">登录回复</a>
+					                      	{/notempty}
+					                    </span>
+					              	</div>
+				                </div>
+			            	</div>
+			            </form>
+		          	</div>
+		        {/if}
+				{/volist}
+	            </div>
+
+	            <form action="{:url('arc_reply')}" method="post" onsubmit="return false">
+			        <input type="hidden" name="pid" value="0" />
+			        <input type="hidden" name="aid" value="{$archive['id']}" />
+		            <div class="box-footer">
+		                <img class="img-responsive img-circle img-sm" src="{$user['userinfo']['avatar']|default='/static/common/img/default.png'}">
+		                <div class="img-push">
+			                <div class="input-group input-group-sm">
+			                	<input type="text" name="contents" class="form-control" {notempty name="$user"} placeholder="回复内容" {else /} placeholder="登录回复"{/notempty}>
+			                    <span class="input-group-btn">
+			                    	{notempty name="$user"}
+			                      	<button type="button" class="submits btn btn-info btn-flat">回复</button>
+			                      	{else /}
+			                      	<a onclick="poplogin()" class="btn btn-info btn-flat">登录回复</a>
+			                      	{/notempty}
+			                    </span>
+			              	</div>
+		                </div>
+		            </div>
+	            </form>
+          	</div>
+
+        </div>
+
+    </div>
+</div>
+{notempty name="$user"}
+<a href="{:url('Detail/addArticle')}" class="x-yuan btn btn-warning x-yy-5 x-fd-b x-p-0 x-lh-40" style="bottom:75px;right:10px;width:40px;height:40px;">
+	<i class="fa fa-lg fa-pencil-square-o"></i>
+</a>
+{/notempty}
+<script>
+$(function() {
+	$('.affix_top').affix({
+		offset: {
+	      	top: $(".affix_top").offset().top,
+//	      	bottom: 700
+	    }
+	})
+	var viewer = new Viewer(document.getElementById('liulan-img'), {	//浏览图片
+		title:false,	//显示当前图片的标题（现实 alt 属性及图片尺寸）默认 true
+		fullscreen:false,	//播放时是否全屏,默认 true
+		interval:3000,	//播放间隔，单位为毫秒 默认 5000
+	});
+
+})
+</script>
+
+{/block}

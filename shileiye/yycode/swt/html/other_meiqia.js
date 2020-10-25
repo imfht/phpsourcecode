@@ -1,0 +1,1 @@
+document.writeln("<script src=\"//meiqia.com/js/mechat.js?unitid={mqid}\" charset=\"UTF-8\" async=\"async\"></script>");

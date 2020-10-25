@@ -1,0 +1,129 @@
+<?php
+/**
+ * 评论处理
+ */
+namespace Home\Controller;
+use Common\Controller\HomebaseController;
+class CommentsController extends  HomebaseController {
+    /**
+     * ajax 处理多层评论 TODO 有一个难以解决的点 暂时放弃 就是在php页面循环中  难以实现无线循环处理 有点麻烦
+     */
+    public function send_comment(){
+        if (IS_AJAX) {
+            $uid = I('post.uid',0,'intval');
+            $aid = I('post.aid',0,'intval');
+            $toUid = I('post.toUid',0,'intval');
+            //用于前端js  页面标点内容插入
+            $oldMid = I('post.mid',0,'intval');
+            //评论层级
+            $level = I('post.level',0,'intval');
+
+            //父类ID
+            $parentId = I('post.parentId',0,'intval');
+            //评论内容
+            $content = I('post.comment','');
+            $commentModel = M('comments');
+            if (!$uid || !$content || !$aid) {
+                exit(json_encode(array('status'=>0,'msg'=>'操作失败.ㄒoㄒ~','level'=>'')));
+            }
+            //写入数据
+            $postData = array(
+                'url' => I('post.url',''),
+                'uid' => $uid,
+                'full_name' => $_SESSION['user']['nickname'],
+                'email' => $_SESSION['user']['u_email'],
+                'createtime' => date('Y-m-d H:i:s',time()),
+                'content' => replace_phiz($content),
+                'aid' => $aid,
+            );
+            $postData['to_uid'] = $toUid;//被评论的用户ID
+            $postData['parentid'] = $parentId;//父类ID
+            $time = date('Y/m/d H:i',time());
+            $img = $_SESSION['user']['face'];//头像
+            $nickname = $postData['full_name'];//昵称
+            $newContent = $postData['content'];//内容
+            if (!$level) {
+                //一层评论
+                if ($mid = $commentModel->add($postData)) {
+                    //组合字符串返回
+                    $str=<<<str
+                    <li id="comment-{$mid}" class="comment">
+							<article id="div-comment-{$mid}" class="comment-body">
+								<footer class="comment-meta">
+									<div class="comment-author">
+										<img alt="{$nickname}" src="{$img}" class="avatar avatar-70 photo" style="width:70px;height:70px;">
+										<b class="fn"><a href="" rel="external nofollow" class="url">{$nickname}</a></b>
+										<span class="says">说道：</span>
+									</div>
+
+									<div class="comment-metadata">
+										<a href="javascript:;">
+											<time datetime="{$time}">{$time}</time>
+										</a>
+									</div>
+
+								</footer>
+
+								<div class="comment-content">
+									<p>{$newContent}</p>
+								</div>
+
+								<div class="reply">
+									<a class="comment-reply-link" href="javascript:;" toUid={$uid} parentId="{$mid}" comid="{$mid}" level="1">回复</a>
+								</div>
+							</article>
+                    </li>
+str;
+                    exit(json_encode(array('status'=>1,'msg'=>'评论成功.^_^','level'=>$level,'data'=>$str)));
+                } else {
+                    exit(json_encode(array('status'=>0,'msg'=>'操作失败.ㄒoㄒ~','level'=>'0')));
+                }
+
+
+            } else {
+
+                if ($mid = $commentModel->add($postData)) {
+                    //多层评论
+                    $str = <<<str
+                    <ol class="children">
+                            <li id="comment-{$mid}" class="comment">
+                                <article id="div-comment-{$mid}" class="comment-body">
+                                    <footer class="comment-meta">
+                                        <div class="comment-author">
+                                            <img alt="{$nickname}" src="{$img}" class="avatar avatar-70 photo" style="width:70px;height:70px;">
+                                            <b class="fn"><a href="" rel="external nofollow" class="url">{$nickname}</a></b>
+                                            <span class="says">说道：</span>
+                                        </div>
+                                        <!-- .comment-author -->
+
+                                        <div class="comment-metadata">
+                                            <a href="javascript:;">
+                                                <time datetime="{$time}">{$time}</time>
+                                            </a>
+                                        </div>
+
+                                    </footer>
+
+                                    <div class="comment-content">
+                                        <p>{$newContent}</p>
+                                    </div>
+
+                                    <div class="reply">
+                                        <a class="comment-reply-link" href="javascript:;" toUid={$uid} parentId="{$mid}" comid="{$mid}" level="1">回复</a>
+                                    </div>
+                                </article>
+                            </li>
+					</ol>
+str;
+                    exit(json_encode(array('status'=>1,'msg'=>'评论成功.^_^','level'=>$level,'data'=>$str,'tag'=>"#div-comment-{$oldMid}")));
+                } else {
+                    exit(json_encode(array('status'=>0,'msg'=>'操作失败.ㄒoㄒ~','level'=>'1')));
+                }
+
+
+
+            }
+        }
+    }
+
+}

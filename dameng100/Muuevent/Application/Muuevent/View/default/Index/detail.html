@@ -1,0 +1,298 @@
+<extend name="Base/common"/>
+
+<block name="style">
+    <link href="__CSS__/event.min.css" rel="stylesheet" type="text/css"/>
+</block>
+<block name="body">
+<include file="_nav"/>
+<!--导航-->
+<div id="main-container" class="container">
+    <include file="_search"/>
+    <div class="event_detail_box">
+        <div class="event_desc clearfix">
+            <div class="col-xs-5">
+                <div class="img_box">
+                    <img src="{$content.cover_id|getThumbImageById=400,300}"/>
+                </div>
+            </div>
+
+            <div class="col-xs-7">
+
+                <div class="event_desc_info">
+                    <h2 class="text-more" title="{$content.title}">{$content.title}</h2>
+                    <div class="item type">{$content.type.title}</div>
+
+                    <div class="item">
+                        时间：{:date('Y-m-d H:i',$content['sTime'])} -- {:date('Y-m-d H:i',$content['eTime'])}
+                    </div>
+
+                    <div class="item" >
+                        地点：{$content.province}{$content.city}{$content.district}{$content.address}
+                    </div>
+
+                    <div class="item clearfix">
+                        <span class="event_count">限额{$content.limitCount}人</span>
+                    </div>
+
+                    <div class="item">
+                        发起人：
+                        <a class="" href="{$content.user.space_url}">
+                            <img src="{$content.user.avatar32}" class="img-circle" /> {$content.user.nickname}
+                        </a>
+                    </div>
+
+                    <div class="item">
+                        <div class="btn-group">
+                            <php>if(!$check_isSign){</php>
+                            <if condition="time() lt $content['eTime']">
+                                <if condition="is_login() eq 0">
+                                    <a class="btn btn-lg btn-info   " href="javascript:"style="color: #fff"
+                                       onclick="toast.error('请登陆后再报名')">报名参加 </a>
+                                    <else/>
+                                    <a class="btn btn-lg btn-info event_sign" data-remote="{:U('doSign',array('event_id'=>$content['id']))}" data-toggle="modal">报名参加 </a>
+                                </if>
+                            <else />
+                                <a class="btn btn-lg event_sign" disabled>活动已结束 </a>
+                            </if>
+                            <php>}else{</php>
+                                <a class="btn btn-lg btn-warning" href="javascript:" id="unSign">
+                                   取消报名 
+                                </a>
+                                <button class="btn btn-lg btn-success">已报名</button>
+
+                            <php>}</php>
+                            
+                        </div>
+
+                        <div class="btn-group">
+                            <php>if($content['uid'] == is_login() || is_administrator(is_login())){</php>
+
+                                <if condition="time() lt $content['eTime']">
+                                    <a id="endEvent" class="btn btn-lg btn-default">结束活动</a>
+                                </if>
+
+                                <a href="{:U('edit',array('id'=>$content['id']))}" class="btn btn-lg btn-default">编辑活动</a>
+                            
+                            <php>}</php>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="event_explain">
+            <div class="row">
+                <div class="col-xs-9">
+
+                    <div class="event_module">
+                        <div>
+                            <h2>活动详情</h2>
+                        </div>
+                        <div class="word-wrap detail">
+                            {$content.explain}
+
+                            <div class="pull-right" style="color: #999;font-size: 12px;">
+                                发布时间： {$content.create_time|friendlyDate} &nbsp;&nbsp;
+                                更新时间： {$content.update_time|friendlyDate}
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+
+                    <div class="event_take">
+                        <h3 class="event_type_name">参与活动的用户 ({$content.attend_count}人) 
+                        </h3>
+
+                        <div class="attend_lists clearfix">
+                            <div class="load">加载中...</div>
+                            <div class="lists"></div>
+                        </div>
+                            
+                        <div class="PageCode pager"></div>
+                        
+                    </div>
+
+                    <div class="event_comment">
+                        {:hook('localComment', array('path'=>"Muuevent/index/detail/$content[id]", 'uid'=>$content['uid'],'count_model'=>'Muuevent','count_field'=>'reply_count','this_url'=>'Muuevent/index/detail'))}
+                    </div>
+
+                </div> 
+                <div class="col-xs-3" >
+                    <div class="event_map clearfix">
+                        <h3>活动地点</h3>
+                        <div id="this_event_map" class="this_event_map"></div>
+                    </div>
+
+                    {:W('RecommendEvent/recommendEvent')}
+                </div>  
+            </div>
+        </div>
+
+
+    </div>
+</div>
+</block>
+
+<block name="script">
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak={:modC('MUUEVENT_CONFIG_BAIDUMAP_AK')}"></script> 
+<script type="text/javascript" src="__LIB__/jqpaginator.min.js"></script> 
+<script>
+$(function(){
+//百度地图标注
+    
+    // 百度地图API功能
+    var map = new BMap.Map("this_event_map");
+    var point = new BMap.Point({$content['point']});
+    map.centerAndZoom(point, 12);
+    map.enableScrollWheelZoom();   //启用滚轮放大缩小，默认禁用
+    map.enableContinuousZoom();    //启用地图惯性拖拽，默认禁用
+    var marker = new BMap.Marker(point);// 创建标注
+    map.addOverlay(marker);             // 将标注添加到地图中
+    marker.disableDragging();           // 不可拖拽
+
+});
+
+$(function(){
+    //获取已报名用户分页列表
+    pageHtml(1,12);
+    //构建ajax分页
+    function pageHtml(page,r){
+        var event_id = "{$content['id']}";
+        var url = U('Muuevent/Ajax/attend_user?event_id='+event_id);
+        var totalCount=0;
+
+        $.get(url, function (res) {
+            if (res.status) {
+                totalCount =  res.data.totalCount;
+                attend_page(totalCount,page,r);
+            }else{
+                $('.attend_lists').html('<span class="no_attend">还没有用户参与</span>'); 
+            }
+        });
+    }
+    //调用分页库
+    function attend_page(totalCount,page,r,){
+        var totalCount=totalCount;//数据的条数
+        var r=r;//每页几条数据
+        var totalPages=  Math.ceil(totalCount/r);//可以分为几页
+        
+        $('.PageCode').html('');
+        $('.PageCode').jqPaginator({
+            totalPages: totalPages,
+            pageSize:r,
+            visiblePages: 10,
+            currentPage: 1,
+            first: '<li class="first"><a href="javascript:void(0);">首页<\/a><\/li>',
+            prev: '<li class="prev"><a href="javascript:void(0);">上一页<\/a><\/li>',
+            next: '<li class="next"><a href="javascript:void(0);">下一页<\/a><\/li>',
+            last: '<li class="last"><a href="javascript:void(0);">末页<\/a><\/li>',
+            page: '<li class="page"><a href="javascript:void(0);">{{page}}<\/a><\/li>',
+            onPageChange: function (num, type) {
+                $('.attend_lists .load').removeClass('hidden');
+                get_attend_list(num,r)
+            }
+        });
+    }
+    
+    //获取数据
+    function get_attend_list(page,r){
+        var event_id = "{$content['id']}";
+        var url = U('Muuevent/Ajax/attend_user?event_id='+event_id+'&page='+page+'&r='+r);
+        $.get(url, function (res) {
+            
+            if (res.status) {
+                appendHtml(res.data.list);  
+            }
+        }, 'json');
+    }
+
+    //写入HTML
+    function appendHtml(list){
+
+        var html='';
+        $.each(list,function(n,v){
+            html+='<div class="col-md-2">';
+
+            html+='<div class="user_item">';
+            html+='<div class="avatar"><img src='+v.user.avatar32+' class="img-circle"></div>';
+            html+='<div class="nickname">'+v.user.nickname+'</div>';
+            html+='</div>';
+            html+='</div>';
+            html+='</div">';
+        });
+
+        $('.attend_lists .lists').html(html);
+        $('.attend_lists .load').addClass('hidden');
+
+    }
+
+});
+
+$(function () {
+    /**
+     * 取消报名
+     * */
+    $('#unSign').click(function () {
+        if (confirm('确定要取消报名么？')) {
+            
+            var event_id = "{$content['id']}";
+            $.post(U('Muuevent/Ajax/unSign?event_id='+event_id), {event_id: event_id}, function (res) {
+                if (res.status) {
+                    toast.success(res.info);
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                }
+                else {
+                    toast.error(res.info);
+                }
+            }, 'json');
+
+        }
+    });
+    /**
+     * 删除活动事件
+     * */
+    $('#delEvent').click(function () {
+        if (confirm('确定要删除活动么？')) {
+
+            var event_id = "{$content['id']}";
+            $.post(U('Muuevent/Ajax/doDel?event_id='+event_id), {event_id: event_id}, function (res) {
+                if (res.status) {
+                    toast.success(res.info);
+                    setTimeout(function () {
+                        location.href = "{:U('index')}";
+                    }, 1500);
+                }
+                else {
+                    toast.error(res.info);
+                }
+            }, 'json');
+ 
+        }
+    });
+    /**
+     * 提前结束活动点击事件
+     */
+    $('#endEvent').click(function () {
+        if (confirm('确定要提前结束活动么？')) {
+            
+            var event_id = "{$content['id']}";
+            $.post(U('Muuevent/Ajax/doEnd?event_id='+event_id), {event_id: event_id}, function (res) {
+                if (res.status) {
+                    toast.success(res.info);
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                }
+                else {
+                    toast.error(res.info);
+                }
+            }, 'json');
+        }
+    });
+})
+</script>
+
+</block>
+

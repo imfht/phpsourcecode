@@ -1,0 +1,163 @@
+{extend name="public:member" /}
+{block name="content"}
+<div class="page-header">
+	<h1>
+		{$breadcrumb1}
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$breadcrumb2}
+		</small>
+	
+	</h1>
+</div>
+<div class="row">
+	<div class="col-xs-12">	
+		<div class="form-horizontal">			
+			{if condition="$Request.param.id"}
+			<input name="address_id" type="hidden" value="{$Request.param.id}" />
+			{/if}
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left">  收货人 </label>
+			<div class="col-sm-5">
+				<div class="clearfix">
+					<input name="name" class="col-xs-10 col-sm-10 form-control" placeholder="收货人"  value="{$address.name|default=''}" type="text">
+				</div>
+			</div>
+			</div>
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left">  手机号码 </label>
+			<div class="col-sm-5">
+				<div class="clearfix">
+					<input name="telephone" class="col-xs-10 col-sm-10 form-control" placeholder="联系电话" value="{$address.telephone|default=''}" type="text">
+				</div>
+			</div>
+			</div> 
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left">  收货地址 </label>
+			<div class="col-sm-8">
+				<div class="clearfix">
+					<input name="address" class="col-xs-10 col-sm-10 form-control" placeholder="收货地址" value="{$address.address|default=''}" type="text">
+				</div>
+			</div>
+			</div> 
+			
+			
+			<div class="form-group required clearfix">
+				<label class="col-sm-2 control-label">区域</label>
+				<div class="col-sm-10">
+					<p id="area">
+				        <select name="province_id" id="province">
+				            <option value="-1" selected>省份</option>
+				            {volist name="province" id="v"}
+				                <option <?php if(isset($address)&&($address['province_id']==$v['area_id'])){echo ' selected="selected"';} ?> value="{$v.area_id}">{$v.area_name}</option>
+				            {/volist}
+				        </select>
+				        <select name="city_id" id="city">
+				            <option value="-1">城市</option>
+				            {if condition="isset($city)"}
+					            {volist name="city" id="v"}
+					                <option <?php if(isset($address)&&($address['city_id']==$v['area_id'])){echo ' selected="selected"';} ?> value="{$v.area_id}">{$v.area_name}</option>
+					            {/volist}
+				            {/if}
+				        </select>  
+				        
+				        <?php if(isset($country)){ ?>
+				        	<select name="country_id" id="country">		
+				        	{if condition="isset($country)"}						           
+					            {volist name="country" id="v"}
+					                <option <?php if(isset($address)&&($address['country_id']==$v['area_id'])){echo ' selected="selected"';} ?> value="{$v.area_id}">{$v.area_name}</option>
+					            {/volist}
+				            {/if}
+				        </select>
+				        <?php } ?>
+				     </p>
+				</div>
+			</div>
+			
+		</div>
+		<div class="form-group">
+			<label class="col-sm-1 control-label no-padding-left"> </label>	
+			<div class="col-sm-11">
+				<button form="form" type="submit" id="submit"  class="btn btn-sm btn-primary">提交</button>		
+			</div>
+		</div>
+	</div>
+</div>
+{/block}
+{block name="javascript"}
+<script>
+$("#province").change(function(){
+    var ajaxurl='{:url("/getarea")}';
+    var areaId=this.value;
+    var areaType='city';
+    $('#country').remove();
+    if(areaId!=-1){
+    $.post(ajaxurl,{'areaId':areaId},function(data){                
+        if(areaType==='city'){
+           $('#'+areaType).html('<option value="-1">城市</option>');              
+        }
+      
+        if(areaType!=='null'){
+            $.each(data,function(no,items){
+                $('#'+areaType).append('<option value="'+items.area_id+'">'+items.area_name+'</option>');
+            });
+        }
+    });
+   }else{
+   	$('#'+areaType).html('<option value="-1">城市</option>');       
+   }
+}); 
+        
+$("#city").change(function(){
+    var ajaxurl='{:url("/getarea")}';
+    var areaId=this.value;
+    var areaType='county';
+	 $('#country').remove();
+    $.post(ajaxurl,{'areaId':areaId},function(data){   
+           
+       if(data!=null){
+      
+       	var html='';
+       	html+=' <select name="country_id" id="country">'
+       	$.each(data,function(no,items){
+              html+=  '<option value="'+items.area_id+'">'+items.area_name+'</option>';
+         });
+       	html+='</select>';
+       	$('#area').append(html);
+       }
+    });
+   
+}); 
+        
+
+$('#submit').live('click', function() {
+	$.ajax({
+		url: "{$action}",
+		type: 'post',
+		data: $('input[type=\'text\'],input[type=\'hidden\'], select'),
+		dataType: 'json',
+		beforeSend: function() {
+			$('#submit').attr('disabled', true);
+			$('#submit').after('<span class="wait">&nbsp;<img src="__IMG__/loading.gif" alt="" /></span>');
+		},	
+		complete: function() {
+			$('#submit').attr('disabled', false); 
+			$('.wait').remove();
+		},			
+		success: function(json) {					
+			if (json['redirect']) {						
+				location = json['redirect'];
+			} else if (json['error']) {								
+				alert(json['error']);																																			
+			}  
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});	
+});
+
+</script>	
+{/block}

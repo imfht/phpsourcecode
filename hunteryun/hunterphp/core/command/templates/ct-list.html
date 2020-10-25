@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title><?php print $name; ?>列表</title>
+    <base href="{{ base_path() }}">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <link rel="stylesheet" href="theme/admin/assets/layui/css/layui.css">
+    <link rel="stylesheet" href="theme/admin/assets/css/style.css">
+</head>
+
+<body>
+    <div class="tab-body">
+        <div class="handle-box">
+            <ul>
+                <li class="handle-item"><a href="javascript:;" onclick="<?php print $type; ?>Add();" class="layui-btn btn-add btn-default" id="btn-add<?php print $type; ?>"><i class="linyer icon-add"></i> 添加<?php print $name; ?></a></li>
+            </ul>
+        </div>
+        <table class="layui-table">
+            <thead>
+                <tr>
+                  <th>ID</th>
+<?php foreach ($fields as $field): ?>
+<?php if($field['html_type'] == 'text' || $field['html_type'] == 'image'): ?>
+                  <th><?php print $field['lable']; ?></th>
+<?php endif; ?>
+<?php endforeach; ?>
+                  <th><?php print t('Created'); ?></th>
+                  <th><?php print t('Operations'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+              <?php print '@foreach($'.$type.'s[\'list\'] as $r)'; ?>
+
+                  <tr>
+                    <td>
+                        <?php print '{{ $r->'.substr($type, 0, 1 ).'id }}'; ?>
+
+                    </td>
+<?php foreach ($fields as $field): ?>
+<?php if($field['html_type'] == 'text'): ?>
+                    <td>
+                      <?php print '{{ $r->'.$field['name'].' }}'; ?>
+
+                    </td>
+<?php endif; ?>
+<?php if($field['html_type'] == 'image'): ?>
+  <?php if($field['html_type_setting']['image_type'] == 'single'): ?>
+                    <td>
+                      <img src="<?php print '{{ $r->'.$field['name'].' }}'; ?>" width="70">
+                    </td>
+  <?php else: ?>
+                    <td>
+                      <?php print '@foreach(json_decode($r->'.$field['name'].') as $v)'; ?>
+
+                      <img src="<?php print '{{ $v->image }}'; ?>" width="70">
+                      <?php print '@endforeach'; ?>
+
+                    </td>
+  <?php endif; ?>
+<?php endif; ?>
+<?php endforeach; ?>
+                    <td>
+                        <?php print '{{ date("Y-m-d H:i:s", $r->created) }}'; ?>
+
+                    </td>
+                    <td class=" td-handle">
+                        <a href="javascript:;" onclick="<?php print $type; ?>Edit('<?php print '{{ $r->'.substr($type, 0, 1 ); ?>id }}');" class="layui-btn layui-btn-normal layui-btn-xs">编辑</a>
+                        <a href="javascript:;" onclick="<?php print $type; ?>Del('<?php print '{{ $r->'.substr($type, 0, 1 ); ?>id }}');" class="layui-btn layui-btn-danger layui-btn-xs ajax-delete">删除</a>
+                    </td>
+                </tr>
+              <?php print '@endforeach'; ?>
+
+            </tbody>
+        </table>
+        {!! hunter_pager($<?php print $type; ?>s['pager'], '上一页', '下一页') !!}
+        <input id="iframe_status" value="" hidden="hidden">
+    </div>
+    <script src="theme/admin/assets/layui/layui.js"></script>
+    <script>
+        function <?php print $type; ?>Add() {
+            layui.use(['layer'], function() {
+                var $ = layui.jquery;
+                var layer = layui.layer;
+
+                var index = layer.open({
+                    title: '添加<?php print $name; ?>',
+                    type: 2,
+                    area: ['800px', '590px'],
+                    fix: false, //不固定
+                    maxmin: true,
+                    content: ["admin/<?php print $type; ?>/add", 'yes'],
+                    success: function(layero, index) {},
+                    end: function() {
+                        var iframe_status = $("#iframe_status").val();
+                        if (iframe_status == '1') {
+                            layer.msg('添加成功!', {
+                                icon: 1,
+                                time: 1000,
+                                shade: 0.1
+                            }, function() {
+                                location.reload();
+                            });
+                        } else if (iframe_status == '0') {
+                            layer.msg('添加失败!', {
+                                icon: 5
+                            });
+                        }
+                    }
+                });
+                layer.full(index);
+            });
+        }
+
+        function <?php print $type; ?>Edit(<?php print substr($type, 0, 1 ); ?>id) {
+            layui.use(['layer'], function() {
+                var $ = layui.jquery;
+                var layer = layui.layer;
+
+                var index = layer.open({
+                    title: '编辑<?php print $name; ?>',
+                    type: 2,
+                    area: ['800px', '590px'],
+                    fix: false, //不固定
+                    maxmin: true,
+                    content: ["admin/<?php print $type; ?>/edit/" + <?php print substr($type, 0, 1 ); ?>id, 'yes'],
+                    success: function(layero, index) {},
+                    end: function() {
+                        var iframe_status = $("#iframe_status").val();
+                        if (iframe_status == '1') {
+                            layer.msg('编辑成功！', {
+                                icon: 1,
+                                time: 1000,
+                                shade: 0.1
+                            }, function() {
+                                location.reload();
+                            });
+                        } else if (iframe_status == '0') {
+                            layer.msg('没有可编辑的内容!', {
+                                icon: 5
+                            });
+                        } else if (iframe_status == '') {}
+                    }
+                });
+                layer.full(index);
+            });
+        }
+
+        function <?php print $type; ?>Del(<?php print substr($type, 0, 1 ); ?>id) {
+            layui.use(['layer'], function() {
+                var $ = layui.jquery;
+                var layer = layui.layer;
+
+                layer.confirm('你确定要删除此项吗?', {
+                    icon: 3,
+                    title: '删除<?php print $name; ?>'
+                }, function(index) {
+                    $.ajax({
+                        type: "GET",
+                        url: "admin/<?php print $type; ?>/del/" + <?php print substr($type, 0, 1 ); ?>id,
+                        success: function(msg) {
+                            if (msg) { //如果成功了
+                                layer.msg('删除成功!', {
+                                    icon: 1,
+                                    time: 1000,
+                                    shade: 0.1
+                                }, function() {
+                                    location.reload();
+                                });
+                            } else {
+                                layer.msg('删除失败!', {
+                                    icon: 5
+                                });
+                            }
+                        }
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,123 @@
+
+<include file="mobile/Public/header" />
+
+<link rel="stylesheet" href="__CSS__/coupon.css">
+<header class="color-main vertical-box">
+    <span class="header-title">我的优惠券</span>
+    <div class="header-left vertical-box">
+        <img class="img-btn" src="__IMG__/back.png" onclick="history.back()">
+    </div>
+    <div class="header-right vertical-box">
+        <img class="img-btn" src="__IMG__/home.png" onclick="window.location.href='{:U('shop/index/index')}'">
+    </div>
+</header>
+<php>
+if(!empty($type)&&$type=='select'){
+    </php>
+    <article class="margin-top">
+        <footer class="btn-footer footer-one-btn ">
+            <button class="cancel-coupon color-primary">不使用优惠券</button>
+        </footer>
+    </article>
+
+    <p class="tips-font list-bottom-tips margin-top">
+        以下为可以使用的优惠券<br/>点击立即使用
+    </p>
+<php>
+}
+</php>
+<article class="coupon-container">
+    <php>
+    if(!empty($user_coupons['list'])){
+        foreach($user_coupons['list'] as $c){
+            if(!empty($c['out_limit_price'])){
+                continue;
+            }
+            $coupon = $c['info'];
+            </php>
+            <section class="coupon-section clearfix" data-id="<php> echo $c['id'] </php>">
+                <div class="coupon-left border-box">
+                    <p class="coupon-desc small-text">
+                        <!--<img class="coupon-logo" src="__IMG__/coupon-logo.png">-->
+                        <php>
+                        if(!empty($coupon['rule']['min_price'])){
+                            echo '付款金额满'.($coupon['rule']['min_price']/100).'可用';
+                        }
+                        else{
+                            echo '无条件使用';
+                        }
+                        </php>
+                    </p>
+                    <p class="coupon-price text-ellipsis">
+                        ￥<span class="coupon-num"><php> echo floor($coupon['rule']['discount']/100) </php></span><span class="coupon-num-top">.<php> printf("%'02d", $coupon['rule']['discount']%100); </php></span>
+                    </p>
+                    <p class="coupon-bottom-tips small-text">
+                    <span>
+                        有效期：
+                        <php>
+                        if(!empty($c['expire_time'])){
+                            echo date('Y.m.d',$c['create_time']) .'-'. date('Y.m.d',($c['expire_time']));
+                        }
+                        else{
+                            echo '永久';
+                        }
+                        </php>
+                    </span>
+                    </p>
+                </div>
+                <div class="coupon-right border-box">
+                    <p class="right-text">现金券</p>
+                </div>
+            </section>
+    <php>
+        }
+    }
+    else{
+        echo '<p class="list-bottom-tips">没有优惠券</p>';
+    }
+    </php>
+</article>
+
+<php>
+if(empty($type)){
+    </php>
+<footer class="btn-footer footer-one-btn clearfix border-box" style="border-bottom: thin solid #d3d3d3;padding-bottom: 2rem">
+	<button class="get-coupon-btn color-primary" onclick="window.location.href='{:U('shop/index/coupons')}'">
+			更多优惠券，点击这里
+	</button>
+</footer>
+
+    <php>
+}
+</php>
+
+<include file="mobile/Public/footer" />
+
+
+<script>
+    var type_data = <php> echo(!empty($type)? json_encode($type):"null")</php>;
+    console.log(type_data);
+    //'jquery' or 'zepto' 脚本入口,按情况选择加载
+    seajs.use(['zepto'], function () {
+        $(document).ready(function () {
+            /*选择模式*/
+            if(type_data=='select'){
+                seajs.use('zepto_cookie', function () {
+                    $('.coupon-section').click(function () {
+                        var id = $(this).data('id');
+                        $.fn.cookie('coupon_id',id);
+                        $.fn.cookie('freshen_data',true);
+                        history.back()
+                    });
+                    $('.cancel-coupon').click(function () {
+                        $.fn.cookie('coupon_id',null);
+                        $.fn.cookie('freshen_data',true);
+                        history.back()
+                    })
+                })
+            }
+        })
+    });
+</script>
+</body>
+</html>

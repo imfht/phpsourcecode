@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=100%, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>正在跳转...</title>
+</head>
+
+<body>
+    <div style="text-align: center;margin-top: 20px;">正在跳转...</div>
+    <script type="text/javascript">
+    // 'http://localhost:9090/public/oauth.html#/?redirect=' + encodeURIComponent(location.href);
+    var $_GET = (function(){
+        var url = window.document.location.href.toString();
+        var u = url.split("?");
+        if(typeof(u[1]) == "string"){
+            u = u[1].split("&");
+            var get = {};
+            for(var i in u){
+                var j = u[i].split("=");
+                get[j[0]] = j[1];
+            }
+            return get;
+        } else {
+            return {};
+        }
+    })();
+
+    var Ajax = {
+        get: function(url, fn) {
+            var obj = new XMLHttpRequest(); // XMLHttpRequest对象用于在后台与服务器交换数据          
+            obj.open('GET', url, true);
+            obj.onreadystatechange = function() {
+                if (obj.readyState == 4 && obj.status == 200 || obj.status == 304) { // readyState==4说明请求已完成
+                    fn.call(this, obj.responseText); //从服务器获得数据
+                }
+            };
+            obj.send(null);
+        },
+        post: function(url, data, fn) {
+            var obj = new XMLHttpRequest();
+            obj.open("POST", url, true);
+            obj.setRequestHeader("Content-type", "application/x-www-form-urlencoded"); // 发送信息至服务器时内容编码类型
+            obj.onreadystatechange = function() {
+                if (obj.readyState == 4 && (obj.status == 200 || obj.status == 304)) { // 304未修改
+                    fn.call(this, obj.responseText);
+                }
+            };
+            obj.send(data);
+        }
+    }
+    
+    var redirect = $_GET['redirect'];
+    if (redirect) {
+        localStorage.redirect = $_GET['redirect'];
+    } else {
+        redirect = localStorage.redirect;
+    }
+
+    var code = $_GET['code'];
+    var state = $_GET['state'];
+    var apiUrl = '/api/public/oauth';
+    if (!code) {
+        apiUrl += '?redirect=' + encodeURIComponent(location.href);
+    } else {
+        apiUrl += '?code=' + code + '&state=' + state;
+    }
+
+    Ajax.get(apiUrl, function(res) {
+        var json = JSON.parse(res);
+        if (json.data.token) {
+            localStorage.token = json.data.token;
+            localStorage.user = JSON.stringify(json.data.user);
+            location.href = decodeURIComponent(redirect);
+            return;
+        }
+        location.href = json.data.url;
+    });
+    </script>
+</body>
+
+</html>

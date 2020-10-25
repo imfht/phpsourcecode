@@ -1,0 +1,143 @@
+<hr/>
+
+<div class="row insert-face-container">
+    <div class="col-md-12 weibo_post_box">
+        <h5 class="text-primary">评论</h5>
+
+        <div class="row">
+            <div class="col-md-12">
+                <p>
+                    <textarea id="comment-content" style="height: 8em; width: 100%;"
+                              class="form-control insert-face-textarea"
+                              placeholder="说点什么吧～"></textarea>
+                </p>
+                <a class="col-md-10" style="padding: 0;" href="javascript:" onclick="insertFace($(this))"><img
+                        src="__STATIC__/image/bq.png"/></a>
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <button class="btn btn-block btn-primary" id="submit-comment"
+                                data-url="{:tox_addons_url('LocalComment/Index/addComment', array('app'=>$app,'mod'=>$mod, 'row_id'=>$row_id,'uid'=>$uid))}">
+                            发表
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="emot_content" class="emot_content"></div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <hr/>
+            </div>
+        </div>
+        <if condition="!$list">
+            <p class="text-muted" style="text-align:center;padding-top:2em;padding-bottom:2em;font-size:2em;">
+                暂时没有评论～
+            </p>
+        </if>
+        <volist name="list" id="comment">
+            <div class="row">
+                <div class="col-sm-12">
+                    <eq name="comment.uid" value="0">
+                        <a class="pull-left">
+                            <img src="{:getRootUrl()}Addons/Avatar/default_64_64.jpg" style="width: 64px;"
+                                 class="avatar-img"/>
+                        </a>
+                        <else/>
+                        <a href="{$comment.user.space_url}" class="pull-left">
+                            <img src="{$comment.user.avatar64}" style="width: 64px;" ucard="{$comment.user.uid}"
+                                 class="avatar-img"/>
+                        </a>
+                    </eq>
+
+
+                    <div style="overflow: hidden">
+                        <div class="" style="padding-left: 16px;">
+
+                            <p>
+                                <eq name="comment.uid" value="0">
+                                    <a>游客</a>
+                                    <else/>
+                                    <a href="{$comment.user.space_url}"
+                                       ucard="{$comment.user.uid}">{$comment.user.nickname|op_t}</a></eq>
+                            </p>
+
+
+                            <p>{$comment.content|parse_comment_content}</p>
+
+                            <p>
+                                <span class="text-muted">{$comment.create_time|friendlyDate}</span>
+
+                            <div class="pull-right">
+                                <if condition="check_auth('deleteLocalComment') OR is_administrator() OR ( ($comment['uid'] eq is_login()) AND (is_login() neq 0)) ">
+                                    <a class="local-comment-delete" data-cid="{$comment.id}">删除</a> &nbsp;&nbsp;
+                                </if>
+                                <a class=" local-comment-reply" data-uid="{$comment.uid}"
+                                   data-username="{$comment.user.nickname|op_t}">回复</a>
+                            </div>
+
+
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr/>
+        </volist>
+        <div class="pull-right">
+            {:getPagination($total_count, $count)}
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('#submit-comment').click(function (e) {
+            e.preventDefault();
+            var url = $(this).attr('data-url');
+            var content = $('#comment-content').val();
+            $('#submit-comment').attr('disabled','disabled');
+            $.post(url, {content: content}, function (a) {
+                if(!a.status){
+                    $('#submit-comment').removeAttr('disabled');
+                }
+                handleAjax(a);
+            });
+        });
+    })
+</script>
+
+
+<script type="text/javascript" src="__PUBLIC__/Core/js/ext/atwho/atwho.js"></script>
+<link type="text/css" rel="stylesheet" href="__PUBLIC__/Core/js/ext/atwho/atwho.css"/>
+
+<script>
+    $(function () {
+        var config = {
+            at: "@",
+            data: "{:U('Weibo/Index/atWhoJson')}",
+            tpl: "<li data-value='@${nickname}'><img class='avatar-img' style='width:2em;margin-right: 0.6em' src='${avatar32}'/>${nickname}</li>",
+            show_the_at: true,
+            search_key: 'search_key',
+            start_with_space: false
+        };
+        $('#comment-content').atwho(config);
+    });
+
+    $(function () {
+        $('.local-comment-reply').click(function (e) {
+            var $textarea = $('#comment-content');
+            var nickname = $(this).attr('data-username');
+            $textarea.focus();
+            $textarea.append('回复 @' + nickname + ' ：');
+        });
+
+        $('.local-comment-delete').click(function (e) {
+            $.post("{:tox_addons_url('LocalComment/Index/deleteComment')}", {id: $(this).attr('data-cid')}, function (msg) {
+                handleAjax(msg);
+            })
+        });
+    })
+
+</script>

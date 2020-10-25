@@ -1,0 +1,184 @@
+<!--{template /module/admin/view/head}-->
+<style>
+.post-item {position:relative;}
+.post-item .float {position:absolute; top:0; right:0; text-align:right;}
+.post-content {padding:4px 0;}
+</style>
+
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<p class="text">{lang bbs.topic_view.view.header}</p>
+				</div>
+				<div class="widget-content">
+				<table class="table" id="tbl_posts">
+					<!--{loop $children $_loop $item}-->
+					<tr class="row-1">
+						 <td width="200" valign="top">
+						 	<p>
+			            		<strong>{lang bbs.topic_view.view.post.td.username}:</strong>{$item[USERNAME]}
+			            	</p>
+							<p>
+			            		<strong>{lang bbs.topic_view.view.post.td.ip}:</strong>{$item[ADDRESS]}
+			            	</p>
+			            	<p>
+			            		<strong>{lang bbs.topic_view.view.post.td.edittime}:</strong>{$item[EDITTIME]}
+			            	</p>
+						</td>
+						<td valign="top" style="background:#fff;">
+							<div class="post-item">
+								<p>
+				            		<!--{if $item[FIRST] == 1}--><strong>{$item[TITLE]}</strong><!--{else}-->{$item[TITLE]}<!--{/if}-->
+				            	</p>
+				            	
+				            	<p class="float">
+				            		{lang bbs.topic_view.view.post.td.sort} <span class="f16">{echo $start + $_loop + 1;}</span> {lang bbs.topic_view.view.post.td.floor}
+				            		&nbsp;
+				            		<!--{if $item[FIRST] == 0}-->
+				            			<a href="javascript:void(null);" class="btn btn-mini btn-primary btn-edit" title="{$item[TITLE]}" data="{$item[FORUM_POSTID]}" {$dispatches[operations][edit]}>{lang admin.operation.edit}</a>
+										<a href="javascript:void(null);" class="btn btn-mini btn-delete" title="{$item[TITLE]}" data="{$item[FORUM_POSTID]}" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+									<!--{/if}-->
+				            	</p>
+			            	</div>
+			            	
+			            	<div class="post-content">
+			            		<!--{if $item[FIRST] == 1}-->
+			            		{$topic[CONTENT]}
+			            		<!--{else}-->
+			            		{$item[CONTENT]}
+			            		<!--{/if}-->
+			            	</div>
+			            	
+			            	<!--{if $item[FIRST] == 1}-->
+				            	<div class="attachment">
+									<!--{loop $topic[FILES] $_key $file}-->
+									<!--{if is_array($file)}-->
+									<a href="{$file[3]}" target="_blank"><img src="{$file[0]}" width="100" style="width:100px;" border="0"/></a>
+									<!--{/if}-->
+									<!--{/loop}-->
+								</div>
+							<!--{/if}-->
+						</td>
+					</tr>
+					<!--{/loop}-->
+					<!--{if $count > 0}-->
+			        <tr>
+						<td colspan="2">
+							{$pager}
+						</td>
+					</tr>
+					<!--{/if}-->
+			        <tr>
+						<td colspan="2">
+							<button type="submit" name="btnAdd" id="btn_add_post" class="btn btn-small" {$dispatches[operations][add]}>{lang bbs.topic_view.view.operation.add}</button>
+							<button type="button" name="btnBack" class="btn btn-small" onclick="javascript:location.href='{$ADMIN_SCRIPT}/bbs/topic&page={$_var[gp_ppage]}&psize={$_var[gp_ppsize]}{$search[querystring]}';">{lang admin.operation.go.back}</button>
+						</td>
+					</tr>
+				</table>
+				
+				<form id="frm_post" name="frmPost" method="post" action="{$ADMIN_SCRIPT}/bbs/topic/_view&do=post&id={$_var[gp_id]}&ppage={$_var[gp_ppage]}&ppsize={$_var[gp_ppsize]}{$search[querystring]}" onsubmit="javascript:return check_form(this);">
+				<input type="hidden" name="formsubmit" value="yes" />
+				    <div class="well widget" id="tbl_add_post" style="display:none;">
+						<div class="widget-header">
+							<p class="text">* {lang admin.validate.require}</p>
+						</div>
+						<div class="widget-content">
+							<fieldset>
+								<label>{lang bbs.topic_view.view.post.td.username} *</label>
+								<input type="text" class="input-large" name="txtUserName" placeholder="{lang bbs.topic_view.view.post.td.username.placeholder}..." size="15" maxlength="20" class="input-small" />
+								<span class="help-inline">{lang bbs.topic_view.view.post.td.username.tips}</span>
+								
+								<label>{lang bbs.topic_view.view.post.td.title.label} *</label>
+								<input type="text" class="input-xlarge" name="txtTitle" placeholder="{lang bbs.topic_view.view.post.td.title.placeholder}..." maxlength="50" value="{lang bbs.topic_view.view.post.td.title.prev}{echo utf8substr($topic[TITLE], 0, 20, '..');}"/> 
+								<span class="help-inline">{lang bbs.topic_view.view.post.td.title.tips}</span>
+								
+								<label>{lang bbs.topic_view.view.post.td.content.label} *</label>
+								<textarea class="span8" rows="4" cols="45" name="txtContent"></textarea>
+								<span class="help-inline">{lang bbs.topic_view.view.post.td.content.tips}</span>
+							</fieldset>
+							
+							<hr/>
+							<fieldset>
+								<button type="submit" name="btnSubmit" id="btn_submit" class="btn btn-small btn-primary" {$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+								<button type="reset"  name="btnCancel" id="btn_cancel" class="btn btn-small">{lang admin.operation.cancel}</button>
+							</fieldset>
+						</div>
+					</div>	
+				</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+var kindEditor = null;
+
+function check_form(frm){
+	if(frm.txtUserName.value.trim().length == 0){
+		$(frm.txtUserName).next('.help-inline').css('color', 'red');
+    	frm.txtUserName.focus();
+    	return false;
+    }
+    
+    if(frm.txtTitle.value.trim().length == 0){
+    	$(frm.txtTitle).next('.help-inline').css('color', 'red');
+    	frm.txtTitle.focus();
+    	return false;
+    }
+    
+    if(kindEditor.html().length == 0){
+    	$(frm.txtContent).next('.help-inline').css('color', 'red');
+    	kindEditor.focus();
+    	return false;
+    }
+
+    return true;
+}
+
+$(function(){
+	$('fieldset input,textarea,select').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+  	$('#tbl_posts .btn-edit').click(function(){
+		var postid = $(this).attr('data');
+		
+		$.getJSON('{$ADMIN_SCRIPT}/bbs/topic/_json&id=' + postid, {}, function(json){
+	 		var frm = $('#frm_post').get(0);
+	 		frm.action = '{$ADMIN_SCRIPT}/bbs/topic/_view&do=edit&postid=' + postid + '&page={$_var[page]}&id={$_var[gp_id]}&ppage={$_var[gp_ppage]}&ppsize={$_var[gp_ppsize]}{$search[querystring]}';
+	 		
+	 		$("#frm_post input[name='txtUserName']").val(json.USERNAME);
+	 		$("#frm_post input[name='txtTitle']").val(json.TITLE);
+	 		$("#frm_post textarea[name='txtContent']").val(json.CONTENT);
+	 		
+	 		$('#tbl_add_post').show();
+			$('#btn_submit').focus();
+	 	});
+	});
+	
+	$('#tbl_posts .btn-delete').click(function(){
+  		var postid = $(this).attr('data');
+  		var tempHTML = '<p>' + $(this).attr('title') + '； </p>';
+  		$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang bbs.topic_view.view.operation.delete.message}</p>' + tempHTML, callback:function(){
+  			$('#modal_dialog .btn-primary').click(function(){
+  				location.href = '{$ADMIN_SCRIPT}/bbs/topic/_view&do=delete&postid=' + postid + '&page={$_var[page]}&id={$_var[gp_id]}&ppage={$_var[gp_ppage]}&ppsize={$_var[gp_ppsize]}{$search[querystring]}';
+  			});
+  		}});
+  	});
+	
+	$('#btn_add_post').click(function(){
+		$('#tbl_add_post').show();
+		$('#btn_submit').focus();
+	});
+	
+	$('#btn_cancel').click(function(){
+		$('#tbl_add_post').hide();
+	});
+
+});
+</script>
+<!--{template /module/admin/view/foot}-->

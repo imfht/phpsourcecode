@@ -1,0 +1,191 @@
+{/include file="simpla/common/header.html"/}
+{/include file="simpla/common/left.html"/}
+<div id="main-content">
+  <h2>欢迎您 {/$_adminname/}</h2>
+  <p id="page-intro">商品销售。带<font class="red"> * </font>为必填项目。先把商品加入订单。所有商品都加人订单后点<font class="red">确认提交</font>完成！</p>
+  <div class="clear"></div>
+  <div class="content-box">
+    <div class="content-box-header">
+      <h3>商品销售</h3>
+      <ul class="content-box-tabs">
+        <li><a href="{/get_url rule="/sales/index"/}">销售明细</a></li>
+        <li><a href="#tab1" class="default-tab">商品销售</a></li>
+        <li><a href="{/get_url rule="/sales/return"/}">商品退货</a></li>
+      </ul>
+      <div class="clear"></div>
+    </div>
+    <div class="content-box-content">
+      <div class="tab-content default-tab" id="tab1">
+        <div class="form">
+          <form action="{/get_url rule='/sales/sales'/}" method="post" id="js-form">
+            <fieldset class="clearfix">
+              <p>
+                <label class="w80"><font class="red"> * </font>商品条形码：</label>
+                <span>
+                <input type="text" value="" class="text-input small-input" name="goods_sn" id="goods_sn" />
+                </span> <a href="#ProBox" style="margin-left:5px;" id="selectPro">手动选择</a></p>
+              <p>
+                <label class="w80"><font class="red"> * </font>数量：</label>
+                <span>
+                <input type="text" value="1" class="text-input min-input" name="num" />
+                </span> <small>计重商品单位为千克</small></p>
+              <dt>
+                <input type="submit" name="" id="button" class="button" value="加人订单" />
+                &nbsp;<a href="{/get_url rule='/sales/sales' data="ac=del"/}">重新出库</a> </dt>
+            </fieldset>
+          </form>
+        </div>
+        <hr />
+        <table>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>数量</th>
+              <th>单价（元）</th>
+              <th>总价（元）</th>
+              <th>优惠额（元）</th>
+            </tr>
+          </thead>
+          <tfoot>
+            <tr>
+              <td colspan="5">{/$pagebar/}</td>
+            </tr>
+          </tfoot>
+          <tbody>
+          
+          {/section name=i loop=$info/}
+          {/assign var="impress" value=$info[i].out_price*$info[i].num/}
+          <tr>
+            <td>{/$info[i].goods_name/}</td>
+            <td class="ch"><span class="Change" id="num{/$info[i].id/}" data-id="{/$info[i].id/}"  data-type="num">{/$info[i].num/}</span></td>
+            <td class="ch"><span class="Change" id="price{/$info[i].id/}" data-id="{/$info[i].id/}"  data-type="price">{/$info[i].out_price/}</span></td>
+            <td id="sum{/$info[i].id/}">{/$info[i].out_price*$info[i].num/}</td>
+            <td id="yx{/$info[i].id/}">{/$info[i].p_discount*$info[i].num/}</td>
+          </tr>
+          {/sectionelse/}
+          
+          <tr>
+            <td colspan="5">暂无商品</td>
+          </tr>
+          {//section/}
+          <tr>
+            <th colspan="5" align="right">总价：<span id="total">{/$total/}</span>元，优惠：<span id="discount">{/$discount/}</span>元。小计：<span id="collect" class="red">{/$total-$discount/}</span>元</th>
+          </tr>
+            </tbody>
+          
+        </table>
+       <style>
+	   .cardbox{position:relative; width:313px; }  #selectCard{ width:300px !important;}
+	   #main-content #userlist{ display:none; list-style:none; width:180px; padding:0; position:absolute; right:0; top:31px; border:1px solid #CCC; background:#eee;}
+	    #main-content #userlist li{ background:none; padding:5px; border-bottom:1px solid #ccc; margin-bottom:-1px; cursor:pointer;} #userlist li p{ padding:0; font-weight:bold;}#userlist li small{ font-weight:normal; font-size:14px;}
+		#userlist li p,#userlist li span {font-size:14px !important;}
+	   </style>
+        <div class="form">
+          <form action="{/get_url rule='/sales/out' data="oid=$order_id"/}" method="post" id="js-form2">
+            <fieldset class="clearfix">
+              <p>
+                <label class="w80">会员卡号：</label>
+                <div class="cardbox" ><input type="text" autocomplete = "off" value="" class="text-input small-input"  id="selectCard" name="cardid" />
+                <ul id="userlist">
+                <li class="red">请尽量按要求准确输入！</li>
+                </ul>
+                </div>
+                <small>填写会员卡卡号或者用户姓名、手机号、身份证号</small></p>
+              <dt>
+                <input type="submit" name="submit" class="button" id="button" value="确认提交" />
+              </dt>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:none;">
+    <div id="ProBox" class="sBox" >
+      <h2>选择商品</h2>
+      <ul id="prolist">
+        <li rel="">全部</li>
+        {/section name=i loop=$catelist/}
+        <li rel="{/$catelist[i].cat_id/}">{/$catelist[i].pre/}{/$catelist[i].cat_name/}</li>
+        {//section/}
+      </ul>
+      <div id="Prolists"> </div>
+      <div class="clear"></div>
+    </div>
+  </div>
+  <script>
+  $('.Change').click(function(){
+	  var type=$(this).data('type');
+	  var val=decimal($(this).html(),2);
+	  var h='<div class="chbox" id="chbox'+$(this).data('id')+'"><input type="text" value="'+val.toFixed(2)+'" class="text-input w20" id="text'+type+$(this).data('id')+'" name="'+type+'" /><input type="submit" name="" class="button " onclick="ChangeOk('+$(this).data('id')+',\''+type+'\')" value="确认" /></div>';
+	  $(this).hide();
+	  $(this).parent().append(h);
+	  });
+function ChangeOk(id,type){
+	var val=decimal($('#text'+type+id).val(),2).toFixed(2);
+	$.post("{/get_url rule='/sales/ajaxSales'/}", {
+        Pid: id,
+        Ptype: type,
+		Pval:val
+    },
+    function(data) {
+		if(data.indexOf('失败')<0){
+	           $('#'+type+id).html(val);
+			   var val1=type=='num'?$('#price'+id).html():$('#num'+id).html();
+			   var val3=(val*val1).toFixed(2);
+			     $('#sum'+id).html(val3);
+			     $('#total').html(val3);
+			     $('#collect').html((val3-$('#discount').html()).toFixed(2));
+			}
+			$('#'+type+id).show()
+	       $('#chbox'+id).remove();
+    });
+
+	}
+$('#selectPro').colorbox({
+    inline: true,
+    width: "60%",
+    height: "80%",scrolling:false,
+    onComplete: function() {
+        $('#Prolists').width($('#ProBox').width() - 165);
+    }
+});
+$('#selectCard').bind('keyup',function(){
+	if($(this).val().length<2){return false;}
+	$.get('{/get_url rule="/member/ajaxcard"/}-key-'+$(this).val()+'.html',function(data){$('#userlist').html(data);});
+	$('#userlist').slideDown(100);
+	});
+$('#userlist li').live('click',function(){
+		if($(this).attr('class')!='red'){
+			$('#selectCard').val($.trim($(this).find('span').html()));
+			$('#userlist').slideUp(100);
+			}
+});
+$('#Prolists .pagination a').live('click',
+function() {
+    $.get($(this).attr('href') + '?t=' + Math.random(),
+    function(data) {
+        $('#Prolists').html(data);
+    });
+    return false;
+});
+$('#Prolists .sn').live('click',
+function() {
+    $('#goods_sn').val($(this).attr('rel'));
+    $.colorbox.close();
+});
+
+$('#prolist li').click(function() {
+    var self = $(this);
+    var v = self.attr('rel');
+    $.post("{/get_url rule='/goods/ajaxgoods'/}", {
+        cat_id: v
+    },
+    function(data) {
+        $('#Prolists').html(data);
+    });
+});
+</script> 
+  {/include file="simpla/common/copy.html"/} </div>
+{/include file="simpla/common/footer.html"/}

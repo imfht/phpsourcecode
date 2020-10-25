@@ -1,0 +1,143 @@
+<link href="__COMMON__/lib/webuploader/css/webuploader.css" type="text/css" rel="stylesheet">
+<link href="__COMMON__/lib/cropper/cropper.min.css" rel="stylesheet">
+<style>
+
+</style>
+    <!--用来存放item-->
+    <div class="avatar-view">
+        <img src="{$user.avatar256}" alt="">
+    </div>
+
+    <div class="action-box">
+        <button class="btn btn-block btn-lg btn-warning avatar_upload_btn" data-toggle="modal" data-target="#avatar-modal">
+            更换头像
+        </button>
+
+    </div>
+
+    <div class="modal fade" id="avatar-modal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="avatar-body">
+                    <div class="avatar-upload">
+                        <input class="avatar-data" name="avatar_data" type="hidden">
+                        <a class="avatar-input" id="upload_avatar" name="avatar_file" type="file">
+                            {:lang('_AVATAR_SELECT_')}
+                        </a>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="avatar-wrapper"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="avatar-preview preview-lg"><img src="{$user.avatar256}"></div>
+                            <div class="avatar-preview preview-md"><img src="{$user.avatar128}"></div>
+                            <div class="avatar-preview preview-sm"><img src="{$user.avatar64}"></div>
+                        </div>
+                    </div>
+                    <div class="row avatar-btns">
+                        <div class="col-md-9">
+                            
+
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success btn-block avatar-save" data-role="avatar_btn" >
+                                {:lang('_AVATAR_SAVE_')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script type="text/javascript" charset="utf-8" src="__COMMON__/lib/webuploader/js/webuploader.js"></script>
+<script src="__COMMON__/lib/cropper/cropper.min.js"></script>
+<script>
+
+$(function () {
+    
+    var avatarData = $('[name="avatar_data"]');
+
+    var path;
+
+    var uploader_{$uid}= WebUploader.create({
+        // 选完文件后，是否自动上传。
+        auto: false,
+        // swf文件路径
+        swf: 'Uploader.swf',
+        // 文件接收服务端。
+        server: "{:url('api/File/uploadAvatar',array('uid'=>$uid))}",
+        // 选择文件的按钮。可选。
+        // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+        pick: '#upload_avatar',
+        // 只允许选择图片文件。
+        accept: {
+            title: 'Images',
+            extensions: 'gif,jpg,jpeg,bmp,png',
+            mimeTypes: 'image/jpg,image/jpeg,image/png'
+        }
+    });
+    uploader_{$uid}.on('fileQueued', function (file) {
+        uploader_{$uid}.upload();
+        toast.showLoading();
+    });
+    /*上传成功*/
+    uploader_{$uid}.on('uploadSuccess', function (file, ret) {
+        toast.hideLoading();
+        
+        if (ret.code == 0) {
+            toast.error(ret.msg);
+        } else {
+            
+            path = ret.data[0].path;
+            var src = ret.data[0].path;
+            
+            $('.avatar-wrapper').html('<img src="'+src+'" />');
+
+            $('.avatar-wrapper img').load(function () {
+                //图片加载完成后初始化裁剪组件
+                var image = $('.avatar-wrapper img');
+                
+                image.cropper({
+                    aspectRatio: 1,
+                    preview: $('.avatar-preview'),
+                    strict: false,
+                    crop: function(data) {
+                        var json = ['{"x":' + data.detail.x, '"y":' + data.detail.y, '"height":' + data.detail.height, '"width":' + data.detail.width, '"rotate":' + data.detail.rotate + '}'].join();
+                        avatarData.val(json);
+                    }
+                });
+            })
+            //重置队列
+            uploader_{$uid}.reset();
+        }
+    });
+
+    $('[data-role=avatar_btn]').click(function(){
+        var avatarJson = JSON.parse(avatarData.val());
+        var x = parseInt(avatarJson.x);
+        var y = parseInt(avatarJson.y);
+        var w = parseInt(avatarJson.width);
+        var h = parseInt(avatarJson.height);
+
+        var crop = x + ',' + y + ',' + w + ',' + h;
+
+        //检查是否已经裁剪过
+        if (typeof (crop) == 'undefined') {
+            toast.error("{:lang('_AVATAR_UPLOAD_AND_CROP_')}");
+            return;
+        }
+        
+        var uid ='{$uid}';
+        //提交到服务器
+        var url = "{:url('ucenter/member/saveAvatar')}";
+
+        $.post(url, {uid: uid, crop: crop, path:path}, function (res) {
+            handleAjax(res);
+        });
+    })
+});
+
+</script>
+       
+

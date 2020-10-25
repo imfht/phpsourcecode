@@ -1,0 +1,160 @@
+<extend name="Public:base" />
+<block name="head_script">
+<link href="__CSS__/member.css" rel="stylesheet" type="text/css">  
+<link href="__PUBLIC__/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"> 	
+</block>
+<block name="content">   
+<div>
+	<div class="container">
+		<div class="row">
+			
+			<div id="content" class="col-sm-9">
+				<div class="page-title">
+					<h1>订单信息</h1>
+				</div>
+				
+					<div class="table-responsive">	
+					<table class="table table-bordered table-hover">
+						<thead>
+							<tr>
+								<td class="text-left">订单号</td>
+								
+								<td></td>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td class="text-left" style="width: 50%;">
+									<b>订单号：</b><?php echo $order['order'][0]['order_num_alias'] ?> <br />
+									<b>支付方式：</b><?php echo get_payment_name($order['order'][0]['payment_code']); ?>
+								</td>							
+								<td><b>下单时间：</b><?php echo date("Y-m-d H:i:s",$order['order'][0]['date_added']) ?><br />
+									<b>货运方式：</b><?php echo get_shipping_name($order['order'][0]['shipping_method']); ?>
+								</td>
+							</tr>
+						</tbody>
+				</table>
+				</div>
+				<div class="table-responsive">		
+				<table class="table table-bordered table-hover">
+						<thead>
+							<tr>
+								<td colspan="2" class="text-left">收货地址</td>
+								
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="2" class="text-left">
+									<b>收货人：</b><?php echo $order['address']['name']; ?>，
+									<b>联系电话：</b><?php echo $order['address']['telephone']; ?>，
+									<b>收货地址：</b><?php echo get_area_name($order['address']['province_id']); ?>,
+									<?php echo get_area_name($order['address']['city_id']); ?>,
+									<?php echo get_area_name($order['address']['country_id']); ?>,
+									<?php echo $order['address']['address']; ?>
+								</td>
+								
+							</tr>
+						</tbody>
+				</table>
+				</div>			
+				
+				<div class="table-responsive">		
+					<table class="table table-bordered table-hover">
+						<thead>
+							<tr>
+								<td class="text-left">名称</td>
+								<td class="text-left">型号</td>
+								<td class="text-left">数量</td>
+								<td class="text-left">价格</td>
+								<td class="text-left">总计</td>
+							</tr>
+						</thead>
+					<tbody>
+						<volist name="order['goods']" id="d">
+							<tr>
+								<td><a>{$d.name}</a>
+									<?php if($option_list=M()->query('select * from '.C('DB_PREFIX').'order_option where order_goods_id='.$d['order_goods_id'].' and order_id='.$d['order_id'])){ ?>
+									<?php foreach ($option_list as $option) { ?>
+					                <br />
+					                &nbsp;<small> - <?php echo $option['name']; ?>: <?php echo $option['value']; ?></small>
+					                <?php } ?>
+					                <?php } ?>
+								</td>
+								<td>{$d.model}</td>
+								<td>{$d.quantity}</td>
+								<td>￥ <?php echo round($d['price'],2); ?></td>
+								<td>￥ <?php echo round($d['total'],2); ?></td>
+							</tr>
+						</volist>
+						
+					</tbody>
+					<tfoot>
+						<tr>
+							<td colspan="3"></td>
+							<td class="text-left"><b><?php echo $order['total'][0]['title']; ?></b></td>
+							<td><?php echo $order['total'][0]['text']; ?></td>
+						</tr>
+						<tr>
+							<td colspan="3"></td>
+							<td class="text-left"><b><?php echo $order['total'][1]['title']; ?></b></td>
+							<td><?php echo $order['total'][1]['text']; ?></td>
+						</tr>
+						<tr>
+							<td colspan="3"></td>
+							<td class="text-left"><b><?php echo $order['total'][2]['title']; ?></b></td>
+							<td><?php echo $order['total'][2]['text']; ?></td>
+						</tr>
+					</tfoot>
+					</table>
+				</div>	
+				<div class="page-title">
+					<h1>订单历史</h1>
+				</div>
+				
+				<div class="table-responsive">		
+				<table class="table table-bordered table-hover">
+						<thead>
+							<tr>
+								<td class="text-left">时间</td>
+								<td class="text-left">状态</td>	
+								<td class="text-left">留言</td>						
+							</tr>
+						</thead>
+						<tbody>
+							<volist name="order['history']" id="d">
+							<tr>								
+								<td><?php echo date("Y-m-d H:i:s",$d['date_added']) ?></td>
+								<td><?php echo get_order_status_name($d['order_status_id']); ?> </td>
+								<td>{$d.comment}</td>
+							</tr>
+							</volist>
+						</tbody>
+				</table>
+				</div>
+				<?php if($order['order'][0]['order_status_id']==C('default_order_status_id')){ ?>
+			
+				<div class="buttons clearfix">
+				<div class="left">
+					<a style="background:#da2c2a;" onclick="window.location = '<?php echo U('Payment/confirm_pay',array('token'=>pay_token('pay_token'),'id'=>$_GET['id'])); ?>'" class="btn btn-primary btn-continue">去付款</a>
+					<a style="float:right;" id="cancel" class="btn btn-primary btn-continue right" href="{:U('/cancel_order/'.$_GET['id'])}">取消订单</a>
+				</div>
+				</div>
+				<?php } ?>
+			</div>
+			<include file="User/side" />
+		</div>
+	</div>
+</div>	 
+</block>
+<block name="foot_script">
+<script type="text/javascript">
+
+$('#cancel').click(function(){
+	var f=confirm('确认要取消订单吗？');
+	if(f==false){
+		return false;
+	}	
+});
+</script>	
+</block>

@@ -1,0 +1,1 @@
+a:3:{s:7:"primary";s:2:"id";s:2:"id";a:7:{s:9:"permanent";i:0;s:14:"auto_increment";i:0;s:3:"max";i:0;s:4:"type";s:3:"int";s:7:"default";s:0:"";s:9:"autocount";i:0;s:8:"enum_val";s:0:"";}s:4:"body";a:7:{s:9:"permanent";i:0;s:14:"auto_increment";i:0;s:3:"max";i:0;s:4:"type";s:4:"text";s:7:"default";s:0:"";s:9:"autocount";i:0;s:8:"enum_val";s:0:"";}}

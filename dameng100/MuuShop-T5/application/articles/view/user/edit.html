@@ -1,0 +1,177 @@
+{extend name="common@base/common" /}
+
+{block name="style"}
+<link href="__CSS__/articles.min.css" rel="stylesheet" type="text/css"/>
+<link href="__LIB__/webuploader/css/webuploader.css" rel="stylesheet" type="text/css"/>
+<script src="/static/common/lib/jquery-2.1.1/jquery.min.js"></script>
+{/block}
+{block name="body"}
+    <div id="main-container" class="container">
+    	<section class="articles_edit_item">
+    		<div class="form_item">
+	    		<h2 class="title text-center">{$title}</h2>
+
+	        	<div class="aline" style="margin-bottom: 10px"></div>
+		    	<form class="form-horizontal ajax-form" role="form" action="{:Url()}" method="post">
+			        <input type="hidden" name="id" id="id" value="{$data.id}"/>
+			        
+			        <div class="form-group has-feedback">
+                        <label for="title" class="control-label">标题</label>
+                        <div class="">
+                            <input id="title" name="title" class="form-control input-lg form_check" check-type="Text" value="{$data.title}" placeholder="文章标题" required="">
+                        </div>
+                    </div>
+
+			        <div class="form-group">
+			            <label for="category" class="control-label">分类</label>
+
+			            <div class="">
+			                <select id="category" name="category" class="form-control input-lg">
+			                    {volist name="category" id="top"}
+			                        <option value="{$top.id}" {eq name="data['category']" value="$top['id']"} selected{/eq}>
+			                        {$top.title}
+			                        </option>
+			                    {/volist}
+			                </select>
+			            </div>
+			        </div>
+			        <div class="form-group has-feedback">
+			            <label for="source" class="control-label">来源</label>
+
+			            <div class="">
+			                <input id="source" name="source" class="form-control input-lg" value="{$data.source}" placeholder="原文地址(选填)"/>
+			            </div>
+
+			        </div>
+
+			        <div class="form-group ">
+                        <label for="cover-id" class="control-label">封面图</label>
+                        <input type="hidden" name="cover" id="cover_id_cover" value="{$data.cover}" />
+                        <div class="cover-box clearfix">
+                            <div class="col-md-6">
+                                <div class="webuploader-box">
+                                    <div id="uploadimg">
+                                        <div id="imgPicker" class="btn btn-lg btn-warning cover-upload-btn">上传封面</div>
+                                    </div>
+                                    <span class="tip">封面建议尺寸：400*300px</span>
+                                </div>
+                                <div class="uploader-text">
+                                    <p>
+                                        一张漂亮的封面，能让你的活动锦上添花，带来更多用户阅读
+                                        及增加传播效果，也将影响其被推荐的几率！
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="upload-img-box">
+                                    {if condition="$data['cover']"}
+                                        <img src="{$data.cover|get_cover='path'}" class="img-responsive">
+                                    {else/}
+                                        <img src="__IMG__/cover.png" class="img-responsive">
+                                    {/if}
+                                    <div class="progress-box"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                       </div>
+			        
+			        <div class="form-group has-feedback">
+			            <label for="description" class="control-label">摘要</label>
+
+			            <div class="">
+			                <textarea id="description" name="description" class="form-control input-lg" placeholder="简单描述一下文章内容(选填)">{$data.description}</textarea>
+			            </div>
+			        </div>
+
+
+			        <div class="form-group">
+			            <label for="content" class="control-label">详情</label>
+
+			            <div class="">
+			                {:widget('common/Wangeditor/editor',['myeditor_edit','content',$data['detail']['content'],'','height:auto;min-height:400px'])}
+			            </div>
+			        </div>
+			        <div class="form-group text-center">
+			            
+			            <button type="submit" class="btn btn-lg btn-primary">提交</button>
+			            <button onclick="history.go(-1);" class="btn btn-lg btn-default">返回</button>
+			            
+			        </div>
+			    </form>
+			</div>
+		</section>
+    </div>
+{/block}
+{block name="script"}
+<script type="text/javascript" src="__LIB__/webuploader/js/webuploader.js"></script>
+<script>
+
+$(function(){
+
+    //上传图片
+     // 初始化Web Uploader
+    var uploader = WebUploader.create({
+        // 选完文件后，是否自动上传。
+        auto: true,
+        // swf文件路径
+        swf: '__LIB__/webuploader/js/Uploader.swf',
+        // 文件接收服务端。
+        server: "{:Url('api/file/uploadPicture',array('session_id'=>session_id()))}",
+        // 选择文件的按钮。可选。
+        // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+        pick: '#imgPicker',
+        // 只允许选择图片文件。
+        accept: {
+            title: 'Images',
+            extensions: 'gif,jpg,jpeg,bmp,png',
+            mimeTypes: 'image/jpg,image/jpeg,image/png'
+        }
+    });
+
+    // 当有文件添加进来的时候
+    uploader.on( 'fileQueued', function( file ) {
+        uploader.upload();
+    });
+    // 文件上传过程中创建进度条实时显示。
+    uploader.on( 'uploadProgress', function( file, percentage ) {
+        var $percent = $('.upload-progress');
+
+        // 避免重复创建
+        if ( !$percent.length ) {
+            $percent = $('<div class="progress"><div class="progress-bar upload-progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"><span class="sr-only">0%</span></div></div>')
+                    .appendTo('.progress-box' )
+                    .find('.upload-progress');
+        }
+        $percent.find('span').html(percentage * 100 + '%');
+        $percent.css( 'width', percentage * 100 + '%' );
+    });
+
+    // 文件上传成功，给item添加成功class, 用样式标记上传成功。
+    uploader.on( 'uploadSuccess', function( file,data ) {
+    	//单图上传直接拿第一个
+        var data = data.data[0];
+        console.log(file);
+        console.log(data);
+        $( '#'+file.id ).addClass('upload-state-done');
+        //var data = $.parseJSON(data);
+        $('#cover_id_cover').val(data.id);
+        $('.progress').remove(); //移除进度条
+        $('.upload-img-box').html('<img src="'+data.path+'"/>');
+    });
+
+    // 文件上传失败，显示上传出错。
+    uploader.on( 'uploadError', function( file ) {
+        var $li = $( '#'+file.id ),
+            $error = $li.find('div.error');
+
+        // 避免重复创建
+        if ( !$error.length ) {
+            $error = $('<div class="error"></div>').appendTo( $li );
+        }
+
+        $error.text('上传失败');
+    });
+});
+</script>
+{/block}

@@ -1,0 +1,106 @@
+<textarea class="wysihtml5 form-control" name="<?php echo $inputname?>" rows="<?php echo $inputrows ?: 6?>" autocomplete="off"><?php echo $inputvalue?></textarea>
+
+<script>
+
+jQuery(document).ready(function() {
+    
+    if(typeof WPF.wysihtml5 === "undefined"){
+        
+        
+        WPF.wysihtml5 = function(){
+            if ($('.wysihtml5').size() > 0) {
+                $('.wysihtml5').wysihtml5(
+                    $.extend(
+                    wysiwyg_images_upload_Options, 
+                    {
+                        stylesheets:["<?php echo STATIC_URL?>/theme/assets/global/plugins/bootstrap-wysihtml5/wysiwyg-color.css"],
+                        "locale":"zh-CN"
+                    })
+                );
+            }
+            
+            
+            $('.fileupload_wysihtml5_input').fileupload({
+                autoUpload: true,
+                acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
+                url: "<?php echo $this->url->get("Ajax/fileupload")?>",
+                dataType: 'json',
+                done: function (e, data) {
+                    
+                    if(data.result.status){
+                        
+                        var imgdiv = $(this).parents(".fileupload_wysihtml5").find(".fileupload_img");
+                        var imgurlinput = $(this).parents(".fileupload_wysihtml5").find(".fileupload_wysihtml5_imgurlinput");
+                        
+                        imgdiv.find("img").attr("src",data.result.info.thumbnailUrl);
+                        imgurlinput.val(data.result.info.url);
+                        
+                    }else{
+                        alert(data.result.info);
+                    }
+                    
+                    
+                    
+                    
+                },
+                progressall: function (e, data) {
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    
+                    var progressdiv = $(this).parents(".fileupload_wysihtml5").find(".fileupload_progress");
+                    
+                    progressdiv.show();
+                    progressdiv.find('.progress-bar').css(
+                        'width',
+                        progress + '%'
+                    );
+                    if(progress==100){
+                        setTimeout(function(){
+                            progressdiv.hide();
+                            progressdiv.find('.progress-bar').css("width",0);
+                        },500)
+                    }
+                }
+            }).prop('disabled', !$.support.fileInput)
+                .parent().addClass($.support.fileInput ? undefined : 'disabled');
+        };
+        
+        
+        if (!$().wysihtml5) {
+            
+            $("head").append("<link href='<?php echo STATIC_URL?>/theme/assets/global/plugins/bootstrap-wysihtml5/bootstrap-wysihtml5.css' rel='stylesheet' type='text/css'/>")
+            
+            
+            jQuery.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/bootstrap-wysihtml5/wysihtml5-0.3.0.js", function(){
+                jQuery.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/bootstrap-wysihtml5/bootstrap-wysihtml5.js", function(){
+                    jQuery.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/bootstrap-wysihtml5/locales/bootstrap-wysihtml5.zh-CN.js", function(){
+                        jQuery.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/bootstrap-wysihtml5/custom_image_and_upload_wysihtml5.js", function(){
+                            if (!$().fileupload) {
+                                $("head").append("<link href='<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css' rel='stylesheet' type='text/css'/>");
+                                jQuery.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/js/jquery.fileupload.js", function(){
+                                    WPF.wysihtml5();
+                                });
+                            }else{
+                                WPF.wysihtml5();
+                            }
+                        });
+                    });
+                });
+            });
+            
+            
+            
+        }else{
+            if (!$().fileupload) {
+                $("head").append("<link href='<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css' rel='stylesheet' type='text/css'/>");
+                jQuery.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/js/jquery.fileupload.js", function(){
+                    WPF.wysihtml5();
+                });
+            }else{
+                WPF.wysihtml5();
+            }
+        }
+        
+    }
+});
+
+</script>

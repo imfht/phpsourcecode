@@ -1,0 +1,83 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <a href="<?=$this->url('stock-check', ['action'=> 'add']);?>" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> <?=$this->translate('添加盘点')?></a>
+            <?=$this->HelpUrl('stockCheckList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th><?=$this->translate('盘点单号')?>-<?=$this->translate('单数：') . $this->stockCheckList->getTotalItemCount(); ?></th>
+                                <th><?=$this->translate('盘点仓库')?></th>
+                                <th><?=$this->translate('盘点人')?></th>
+                                <th width="18%"><?=$this->translate('备注')?></th>
+                                <th width="10%"><?=$this->translate('盘点时间')?></th>
+                                <th width="8%"><?=$this->translate('盘点状态')?></th>
+                                <th width="18%"><?=$this->translate('操作')?></th>
+                            </tr>
+
+                            </thead>
+
+                            <?php if(isset($this->stockCheckList) && $this->stockCheckList->getTotalItemCount() > 0) { foreach ($this->stockCheckList as $value) { ?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($value->getStockCheckSn())?></td>
+                                    <td><?=$this->escapeHtml($value->getOneWarehouse()->getWarehouseName())?></td>
+                                    <td><?=$this->escapeHtml($value->getStockCheckUser())?></td>
+                                    <td><?=$this->escapeHtml($value->getStockCheckInfo())?></td>
+                                    <td><?=date("Y-m-d", $value->getStockCheckTime())?></td>
+                                    <td><?=$this->stockHelper()->stockCheckState($value->getStockCheckState())?></td>
+                                    <td>
+                                        <a href="<?= $this->url('stock-check',
+                                            ['action'=>'view', 'id'=>$value->getStockCheckId()]); ?>"
+                                           class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('查看')?>
+                                        </a>
+                                        <?php if($value->getStockCheckState() == 2) { ?>
+                                            <a href="<?= $this->url('stock-check',
+                                                ['action'=>'confirm', 'id'=>$value->getStockCheckId()]); ?>" class="btn btn-xs btn-success"><i class="fa fa-check"></i> <?=$this->translate('确认')?></a>
+                                            <a href="<?= $this->url('stock-check',
+                                                ['action'=>'edit', 'id'=>$value->getStockCheckId()]); ?>"
+                                               class="btn btn-xs btn-success"><i class="fa fa-pencil"></i> <?=$this->translate('编辑')?>
+                                            </a>
+                                            <a href="javascript:;" onclick="deleteConfirm('<?=$this->translate('您确实要删除该盘点单吗？')?>', '<?= $this->url('stock-check', ['action'=>'delete', 'id'=>$value->getStockCheckId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>');" class="btn btn-xs btn-danger">
+                                                <i class="fa fa-trash"></i> <?=$this->translate('删除')?>
+                                            </a>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+                            <?php } } else { ?>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="6"><?=$this->translate('暂无盘点信息')?></td>
+                                </tr>
+                                </tfoot>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->stockCheckList, 'Sliding', 'layout/page', ['route' => 'stock-check']); ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>
+<script>
+    laydate.render({elem: '#start_time'});
+    laydate.render({elem: '#end_time'});
+</script>

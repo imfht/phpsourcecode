@@ -1,0 +1,154 @@
+{% extends "BluehouseappWebBundle:Frontend/layout:layout.html.twig" %}
+{% from 'BluehouseappWebBundle:Macros:misc.html.twig'  import pagination %}
+{% block body %}
+
+<div class="box_sep20"></div>
+
+<div class="box" style="border-bottom: 0px;">
+    <div class="box_header">
+        <div class="box_fr">
+            <a href="{{ path('user_show', { 'username': entity.member.username }) }}">
+                {% if entity.member.avatar %}
+
+                    <img  class="box_avatar" border="0"  align="default" src="{{vich_uploader_asset(entity.member,'userImage')|imagine_filter('avatar_image')}}"/>
+                {% else %}
+                    <img src="{{ asset('bundles/bluehouseappweb/images/user_default.png') }}"/>
+
+                {% endif %}
+            </a>
+        </div>
+        <a href="{{ path('post')}}">蓝房子</a>
+        {% if entity.node %}
+        <span class="box_chevron">&nbsp;›&nbsp;</span>
+            <a href="{{ path('post_by_node', { 'currentNodeId': entity.node.id }) }}">{{ entity.node.name }}</a>
+        {% endif %}
+        <div class="box_sep10"></div>
+        <h1>{{ entity.title }}</h1>
+        &nbsp;
+        <small class="box_gray">
+            <a href="{{ path('user_show', { 'username': entity.member.username }) }}">
+
+                {% if entity.member.nickname %}
+                    {{ entity.member.nickname }}
+                {% else %}
+                    {{ entity.member.username }}
+                {% endif %}
+            </a>
+            ·
+            {{ time_diff(entity.modified) }}
+          </small>
+    </div>
+    <div class="box_cell">
+
+        <div class="topic_content">{{ entity.content |striptags|raw|nl2br }}</div>
+
+    </div>
+    {% if is_granted('ROLE_MANAGER')%}
+        <a onclick="return confirm('您确定要删除这个帖子吗?')"
+           href="{{path('bluehouseapp_post_delete',{'id':entity.id})}}">删除</a>
+    {% endif %}
+
+</div>
+<div class="box_sep20"></div>
+    {% if  entity.commentCount<1 %}
+<div class="box transparent">
+        <div class="box-inner" style="text-align: center">
+            <span style="color: rgba(0, 0, 0, 0.25);">目前尚无回复</span>
+        </div>
+    </div>
+<div class="box_sep20"></div>
+    {% endif %}
+<div class="box">
+    <div class="box_cell">
+        <div class="box_fr" style="margin: -3px -5px 0px 0px;">
+            {#<a href="#" class="box_tag">#}
+                {#<li class="box_fa fa-tag"></li>#}
+                {#标签1</a>#}
+            {#<a href="#" class="box_tag">#}
+                {#<li class="box_fa fa-tag"></li>#}
+                {#标签2</a>#}
+        </div>
+        {% if  entity.commentCount>0 %}
+        <span class="box_gray">{{ entity.commentCount }} 回复 &nbsp;
+            <strong class="snow">|</strong> &nbsp;直到 {{ entity.lastCommentTime|date("Y-m-d H:i") }}
+        </span>
+        {% endif %}
+
+    {% for comment in comments %}
+        {% if loop.last %}
+
+        <div id="r_{{ comment.id }}" class="box_inner box_cell" style="border-bottom: 0">
+        {% else %}
+        <div id="r_{{ comment.id }}" class="box_inner box_cell">
+        {% endif %}
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tbody>
+                    <tr>
+                        <td width="48" valign="top" align="center">
+
+                            {% if comment.member.avatar %}
+
+                                <img  class="box_avatar" border="0"  align="default" src="{{vich_uploader_asset(comment.member,'userImage')|imagine_filter('small_image')}}"/>
+
+                            {% else %}
+                                <img src="{{ asset('bundles/bluehouseappweb/images/user_default.png') }}"/>
+
+                            {% endif %}
+
+                        </td>
+                        <td width="10" valign="top"></td>
+                        <td width="auto" valign="top" align="left">
+                            <div class="box_fr"> &nbsp; &nbsp; <span class="box_no">{{ loop.index }}</span></div>
+                            <div class="sep3"></div>
+                            <strong><a href="{{ path('user_show', { 'username': comment.member.username }) }}" class="box_dark">
+                                    {% if comment.member.nickname %}
+                                        {{ comment.member.nickname }}
+                                    {% else %}
+                                        {{ comment.member.username }}
+                                    {% endif %}
+
+                                </a></strong>&nbsp; &nbsp;<span
+                                    class="box_fade box_small">
+                                    {{ time_diff(comment.modified) }}
+                                </span>
+
+                            <div class="sep5"></div>
+                            <div class="reply_content">
+                                {{comment.content|striptags|raw|nl2br}}
+                            </div>
+                            {% if is_granted('ROLE_MANAGER')%}
+                                <a onclick="return confirm('您确定要删除这个回复吗?')"
+                                   href="{{path('bluehouseapp_postcomment_delete',{'id':comment.id})}}">删除</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+        </div>
+     {% endfor %}
+
+    </div>
+
+        {{ pagination(comments) }}
+    <div class="box download-box post-comment-form">
+        {% if is_granted('ROLE_USER') %}
+            <div style="width: 100%">
+                <div style="margin: 0 20px">
+                    {{ form(form) }}
+                </div>
+            </div>
+        {% else %}
+            <center>请<a href="{{path('fos_user_security_login')}}">登录</a>后再添加评论</center>
+        {% endif %}
+    </div>
+
+</div>
+{#<div class="h20"></div>#}
+{#<div class="box">#}
+    {#<div class="box-inner">#}
+        {#<a href="#" class="box_tag">文档</a>#}
+        {#<a href="#" class="box_tag">思路</a>#}
+        {#<a href="#" class="box_tag">网页</a>#}
+    {#</div>#}
+{#</div>#}
+{% endblock %}

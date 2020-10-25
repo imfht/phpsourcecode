@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+<title>{echo admin_title()}</title>
+<!--header-->
+{template _:header}
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+<!--top-->
+{template _main_top}
+<!--nav-->
+{template _main_nav}
+	<div class="position">
+		<h1>终端设备</h1>
+	</div>
+	<div class="layui-body admin-body">
+		<div class="admin-content">
+			<div class="searcher">
+				<form name="sch_form" id="sch_form" method="get" action="{echo \befen\get_url()}">
+					<div class="layui-input-inline">
+						<input type="text" name="merchant_name" id="merchant_name" class="layui-input" value="{echo input('param.merchant_name')}" placeholder="商户名称">
+					</div>
+					<div class="layui-input-inline">
+						<input type="text" name="store_name" id="store_name" class="layui-input" value="{echo input('param.store_name')}" placeholder="门店名称">
+					</div>
+					<div class="layui-input-inline"><input type="text" name="SN" id="SN" class="layui-input" value="{echo input('param.SN')}" placeholder="SN"></div>
+					<div class="layui-input-inline layui-left-margin"><button type="submit" id="search" class="layui-btn">查询</button></div>
+				</form>
+				<div class="clear"></div>
+			</div>
+			<form name="theform" id="theform" method="post" action="{echo \befen\get_url()}">
+			<table class="layui-table">
+				<thead>
+					<tr>
+						<th>所属商户</th>
+						<th>所属门店</th>
+						<th>设备类型</th>
+						<th>SN</th>
+						<th>设备状态</th>
+						<th>运行状态</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!--{loop $list $key $val}-->
+					<tr id="">
+						<td>{$val[merchant_name]}</td>
+						<td>{$val[store_name]}</td>
+						<td>{echo model('Trade')->getGate($val['trade_gate'])}</td>
+						<td>{$val[SN]}</td>
+						<td class="op"><span class="layui-badge layui-bg-status-{$val[status]}">{echo model('StoreDevice')->getStatus()[$val[status]]}</span></td>
+						<td class="op">
+							<!--{if empty($val['version'])}-->
+							<span class="layui-badge" style="background-color:#ADADAD;">离线</span>
+							<!--{else}-->
+							<span class="layui-badge" style="background-color:#12BB00;">在线</span>
+							<!--{/if}-->
+						</td>
+					</tr>
+					<!--{/loop}-->
+				</tbody>
+			</table>
+			</form>
+			<div class="listpages">{$pagenav}</div>
+		</div>
+	</div>
+</div>
+<!--footer-->
+{template _:footer}
+<script type="text/javascript">
+window.sch_store = $('#sch_form input[name=store_name]').autoComplete({
+	url: "{echo url('store/index')}",
+	field: "",
+	value: "{echo input('param.store_name')}",
+	name_hidden: "store_id",
+	value_hidden: "{echo input('param.store_id')}",
+});
+$('#sch_form input[name=merchant_name]').autoComplete({
+	url: "{echo url('merchant/index')}",
+	field: "",
+	value: "{echo input('param.merchant_name')}",
+	name_hidden: "merchant_id",
+	value_hidden: "{echo input('param.merchant_id')}",
+}, function(o, _self, _target){
+	window.sch_store.url = '{echo url('store/index')}?merchant_id=' + _target.val();
+});
+$('#sch_form input[name=merchant_name]').bind("input propertychange", function(){
+	window.sch_store._self.val("");
+	window.sch_store.name_hidden && window.sch_store._target.val("");
+});
+</script>
+</body>
+</html>

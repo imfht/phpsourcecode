@@ -1,0 +1,121 @@
+{extend name="$index_style_layout" /}
+{block name="head_title"} {$info.title} {/block}
+
+{block name="body_content"}
+<link rel="stylesheet" href="__STATIC__/group/index.css">
+<div class="MainContainer">
+	<div class="ListBox">
+		<div class="list">
+			<ul>
+				<li class="img"><a href="{:urls('content/show',['id'=>$info.id])}"><img src="{$info.picurl}" onerror="this.src='__STATIC__/images/nopic.png'"></a></li>
+				<li class="info">
+					<div class="title"><a href="{:urls('content/show',['id'=>$info.id])}">{$info.title}</a></div>
+					<div class="cnt">人气：<span>{$info.view}</span></div>
+					<div class="other">
+						<span><i class="fa fa-user-o">{:fun('qun@count','qun_member',$info.id)}</i></span>
+						
+					</div>
+				</li><!--
+				<li class="join">
+					<dl>
+						<dt><span onclick="addpost()">发布</span></dt>
+						<dd class="MorePost">
+							<em><i class="fa fa-angle-up"></i></em>
+							<div>
+							<a href="{:urls('bbs/add',['aid'=>$info.id])}">帖子</a>
+							<a href="{:urls('cms/add',['aid'=>$info.id,'mid'=>2])}">图片</a>
+							<a href="{:murl('shop/content/add',['mid'=>1,'ext_id'=>$info.id])}">商品</a>
+							</div>
+						</dd>
+					</dl>
+				</li>-->
+			</ul>
+		</div>
+	</div>
+
+	<div class="MainAction">
+		<ul>
+			<ol><a href="{:urls('content/show',['id'=>$id])}"><i class="fa fa-object-ungroup"></i> 返回主页</a></ol>
+			<li><a href="{:urls('cms/add',['aid'=>$info.id,'mid'=>2])}"><i class="fa fa-user-plus"></i> 发布</a></li>
+		</ul>
+	</div>
+
+<div style="margin-top:10px;padding-left:10px;background:#fff;">
+{include file="../../default/qun/common/mysort" /}
+</div>
+
+	<div class="ShowContentType">
+		<div class="tags"><span class="ck">最新</span><span>热门</span><span>推荐</span></div>
+		<div class="Contents">
+			{qb:hy name="qun_wapindex_model002" union="order,by" where="uid=$info.uid&myfid=$myfid&mid=$mid" type="cms" rows="6"}
+			<div class="imgs"><a href="{$rs.url}"><span><img src="{$rs.picurl}" onerror="this.src='__STATIC__/images/nopic.png'"></span><em>{$rs.title}</em></a></div>
+			{/qb:hy}
+		</div>
+		<div class="Contents"></div>		
+		
+		<div class="Contents"></div>			
+		
+		<div class="ShowMores"><span>查看更多</span></div>
+	</div>
+</div>
+
+<script type="text/javascript">
+var ajax_url_db = ['&order=id&by=desc&','&order=view&by=desc&','&order=status&by=desc&'];
+var choose_i = 0; //选中第几项
+var haveshowpage = []; //每一项,作个标志,已经已显示到第几页
+//    haveshowpage[0] = 1;
+
+//显示更多
+function showMoreContent(){	
+	var url = ajax_url_db[choose_i];	//第几项对应的网址
+	haveshowpage[choose_i]++;
+	$.get('{qb:hy_url name="qun_wapindex_model002"/}' + haveshowpage[choose_i] + url + "&myfid={$myfid}",function(res){
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("已经显示完了！",{time:500});
+				$('.ShowMores').off("click");
+				$('.ShowMores span').html('显示完了');
+				$('.ShowMores span').css({'background':'#eee'});
+			}else{
+				if(haveshowpage[choose_i]==1){
+					$('.ShowContentType .Contents').eq(choose_i).html(res.data);
+				}else{
+					$('.ShowContentType .Contents').eq(choose_i).append(res.data);
+				}
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+
+//切换显示
+function showContentType(num){
+
+	choose_i = num;
+	$('.ShowMores').off("click");	//先移除,避免重复加多次click事件
+	$('.ShowMores').on("click",showMoreContent);
+	$('.ShowMores span').html('查看更多');
+
+	if(haveshowpage[num]==undefined){
+		haveshowpage[num] = 0;
+		showMoreContent();
+	}
+
+	$('.ShowContentType .tags span').removeClass('ck');
+	$('.ShowContentType .tags span').eq(num).addClass('ck');
+	$('.ShowContentType .Contents').hide();
+	$('.ShowContentType .Contents').eq(num).show();
+}
+$('.ShowContentType .tags span').click(function(){
+	var thisnum=$(this).index();
+	showContentType(thisnum);
+});
+showContentType(0);
+
+function addpost(){
+	var obj = $('.MorePost');
+	obj.is(':hidden') ? obj.show() : obj.hide();
+}
+</script>
+{/block}

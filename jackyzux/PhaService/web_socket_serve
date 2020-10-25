@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+SOURCE="$0"
+while [ -h "$SOURCE" ]; do
+    BASE_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$BASE_DIR/$SOURCE"
+done
+
+BASE_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+ulimit -c unlimited
+
+
+APP_NAME="{ PhaServie StdWebSocketServer }"
+
+MAIN_SCRIPT="$BASE_DIR/sys/StdWebSocketServer/initialize.php"
+
+PID_FILE="${BASE_DIR}/var/pid/std_web_socket_server.pid"
+
+LOG_DIR="${BASE_DIR}/var/log"
+
+STR_DATE=`date +%Y%m%d`
+
+LOG_FILE="${LOG_DIR}/std_web_socket_server_${STR_DATE}_$$.log"
+
+# Check running
+FUNC_CHK_RUNNING(){
+    if [ -f "${PID_FILE}" ]; then
+        MASTER_PID=`cat ${PID_FILE}`
+        if [ -d "/proc/${MASTER_PID}" ]; then
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Start
+FUNC_START(){
+    FUNC_CHK_RUNNING
+    if [ "$?" = "1" ]; then
+        echo "[START] RUNNING..., PROCESS_ID:${MASTER_PID}"
+        return
+    fi
+    nohup php "${MAIN_SCRIPT}" start ${LOG_FILE} > ${LOG_FILE} 2>&1 &
+    echo "[START] [$$] SUCCESS"
+}
+
+# Status
+FUNC_STATUS(){
+    FUNC_CHK_RUNNING
+    if [ "$?" = "1" ]; then
+        echo "[STATUS] RUNNING..., PROCESS_ID:${MASTER_PID}"
+        return 1
+    else
+        echo "[STATUS] THE SERVICE NOT RUNNING."
+        return 0
+    fi
+}
+
+# Reload
+FUNC_RELOAD(){
+    FUNC_CHK_RUNNING
+    if [ "$?" = "1" ]; then
+        kill -USR1 ${MASTER_PID}
+        return 1
+    else
+        echo "[RELOAD] THE SERVICE NOT RUNNING."
+        return 0
+    fi
+}
+
+# Restart
+FUNC_RESTART(){
+    FUNC_STOP
+    FUNC_START
+}
+
+# Stop
+FUNC_STOP(){
+    FUNC_CHK_RUNNING
+    if [ "$?" = "1" ]; then
+        kill -15 ${MASTER_PID}
+        if [ "$?" = "0" ]; then
+            echo -e "[STOP] PROCESS_ID:${MASTER_PID}\c"
+            while [ -d "/proc/${MASTER_PID}" ]
+            do
+                echo -e ".\c"
+                sleep 0.1
+            done
+            echo "[STOP] SUCCESS"
+            return 1
+        else
+            echo "[STOP] ERROR, PROCESS_ID:${MASTER_PID}"
+            return 0
+        fi
+    else
+        echo "[STOP] THE SERVICE NOT RUNNING."
+        return 1
+    fi
+}
+
+# Kill
+FUNC_KILL(){
+    FUNC_CHK_RUNNING
+    if [ "$?" = "1" ]; then
+        kill -9 ${MASTER_PID}
+        if [ "$?" = "0" ]; then
+            echo -e "[KILL] ${MASTER_PID}\c"
+            while [ -d "/proc/${MASTER_PID}" ]
+            do
+                echo -e ".\c"
+                sleep 0.1
+            done
+            echo "[KILL] SUCCESS"
+            return 1
+        else
+            echo "[KILL] ERROR, PROCESS_ID:${MASTER_PID} "
+            return 0
+        fi
+    else
+        echo "[KILL] THE SERVICE NOT RUNNING."
+        return 1
+    fi
+}
+
+if [ ! -d "${LOG_DIR}" ]; then
+    mkdir -p ${LOG_DIR}
+fi
+
+case "$1" in
+    "start")   FUNC_START ;;
+    "status")  FUNC_STATUS ;;
+    "reload")  FUNC_RELOAD ;;
+    "restart") FUNC_RESTART ;;
+    "stop")    FUNC_STOP ;;
+    "kill")    FUNC_KILL ;;
+    *)
+        echo " "
+        echo "┌───────────────────────────────────────────────────────────────────────────────┐"
+        echo "│                                                                               │"
+        echo "│                      ${APP_NAME}                         │"
+        echo "│                                                                               │"
+        echo "├─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┤"
+        echo "│                    https://www.qhbit.cn <jacky.ju@qq.com>                     │"
+        echo "├───────────────────────────────────────────────────────────────────────────────┤"
+        echo "│ Usage:                                                                        │"
+        echo "│  ./$(basename $0) {start|status|restart|reload|stop|kill}                   │"
+        echo "└───────────────────────────────────────────────────────────────────────────────┘"
+    ;;
+esac

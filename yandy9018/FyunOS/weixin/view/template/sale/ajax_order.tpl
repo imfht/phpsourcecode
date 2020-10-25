@@ -1,0 +1,1 @@
+<?php if (isset($ajax_newOrder)) { ?><?php foreach ($ajax_newOrder as $order) { ?>data:<span><a href="<?php echo $order['href']; ?>" class="item"><i class="icon-signin"></i> <?php echo $order['order_id']; ?><span class="time"><i class="icon-time"></i><?php echo $order['addtime']; ?></span></a></span>\n\n<?php } ?><?php }else{ ?>data:123123\n\n<?php } ?>

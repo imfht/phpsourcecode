@@ -1,0 +1,209 @@
+{if $full_page}
+<!--头部 -->
+{include file="common/admin_header.html"}
+<!--头部 -->
+<!--顶部导航 -->
+{include file="common/top_nav.html"}
+<!--顶部导航 -->
+
+<!--左侧导航 -->
+{include file="common/left_nav.html"}
+<!--左侧导航 -->
+        <section class="content">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="box box-success">
+                        <div class="box-header">
+                            <h3 class="box-title">文章分类列表</h3>
+                        </div>
+                        <form action="" method="post" enctype="multipart/form-data" class="form-inline definewidth pad-10" >
+                            <a href="?c={$c}&a=add" title="添加"><span class="btn btn-primary btn-danger">添加</span></a>
+                        </form>
+                        <!-- 数据的显示 -->
+                        <div class="box-body" id="data-list">
+                         <!--非ajax返回 -->
+                        {/if}
+                        <!--ajax返回数据 -->
+                        <table  class="table table-bordered table-striped text-center" id="list-table" >
+                            <thead>
+                            <tr>
+                                <th>文章分类名称 </th>
+                                <th>分类类型 </th>
+                                <th>排序</th>
+                                <th>是否显示在导航栏 </th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {foreach from=$lists item=list}
+                            <tr style="text-align:left; width:200px;" class="{$list.level}" id="{$list.level}_{$list.cat_id}"{if $list.level gt 0}style="display:none;"{/if}>
+                                <!--<th style="text-align:left;padding-left:70px; width:200px;">{$list.cat_name}</th>-->
+                                <td style="text-align:left;width:200px;" class="first-cell nowrap" valign="top" >
+                                    {if $list.is_leaf neq 1}
+                                    <img src="images/menu_minus.gif" id="icon_{$list.level}_{$list.cat_id}" width="9" height="9" border="0" style="margin-left:{$list.level}em" onclick="rowClicked(this)" />
+                                    {else}
+                                    <img src="images/menu_arrow.gif" width="9" height="9" border="0" style="margin-left:{$list.level}em" />
+                                    {/if}
+                                    <span>{$list.cat_name}</span>
+                                </td>
+                                <td>{$list.cat_type}</td>
+                                <td>{$list.sort_order}</td>
+                                <td style="width:120px;">{if $list.show_in_nav eq 1}<img onclick="img(this,'{$list.show_in_nav}','{$list.cat_id}')" src="images/yes.gif"/> {else} <img onclick="img(this,'{$list.show_in_nav}','{$list.cat_id}')" src="images/no.gif"/> {/if}</td>
+                                <td>
+                                    <!--查看功能-->
+                                    <!--<a href="?c={$c}&a=show&id={$list.brand_id}" title="查看"> <span class="label label-warning" style="font-size: 100%;"><span class="glyphicon glyphicon-search" style="top: 3px;margin-right: 3px;"></span>查看</span></a>-->
+                                    <a href="?c={$c}&a=edit&cat_id={$list.cat_id}" title="编辑"> <span class="label label-success" style="font-size: 100%;"><span class="glyphicon glyphicon-pencil" style="top: 3px;margin-right: 3px;"></span> 编辑</span></a>
+                                    <a title="删除" href="javascript:void(0)">
+                                        <span class="label label-danger" style="font-size: 100%;" onclick="action.confirm({$list.cat_id})"><span class="glyphicon glyphicon-trash" style="top: 3px;margin-right: 3px;"></span>删除</span>
+                                    </a>
+                                </td>
+                            </tr>
+                                {foreachelse}
+                                <tr>
+                                    <td class="no-records" colspan="11">
+                                        <span class="ion ion-ios-gear-outline" style="font-size: 50px;"><i class="ion ion-ios-gear-outline"></i></span>
+                                        <h3>没有数据</h3>
+                                        <h5>由<a href="/">{$config.shop_name}</a>提供技术支持</h5>
+                                    </td>
+                                </tr>
+                                {/foreach}
+
+                                </tbody>
+</table>
+                             <!-- 分页数据  -->
+                            {include file="common/admin_page.html"}
+                           <!-- 数据显示结束  -->
+                        {if $full_page}
+                        <!--非ajax返回 -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+    </div>
+<!--移除表单-->
+<div class="modal fade" id="confirm" tabindex="-1" role="dialog"
+     aria-labelledby="myModalLabel" aria-hidden="true" style="">
+    <div class="modal-dialog" style="margin-top: 220px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close"
+                        data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title">
+                    确认操作
+                </h4>
+            </div>
+            <form class="form-horizontal" action="">
+                <div class="modal-body  text-center">
+
+                    <p class="fs-14 co-999">确认删除吗?</p>
+
+                </div>
+                <div class="modal-footer text-center">
+                    <button type="button" class="btn btn-primary btn-danger" onclick="destroy()" data-loading-text="提交中..."  data-complete-text="重新发送">确定</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!--移除表单-->
+{include file="common/admin_footer.html"}
+<script>
+    var imgPlus = new Image();
+    imgPlus.src = "images/menu_plus.gif";
+    /**
+     * 折叠分类列表
+     */
+    function rowClicked(obj)
+    {
+        // 当前图像
+        img = obj;
+        // 取得上二级tr>td>img对象
+        obj = obj.parentNode.parentNode;
+        // 整个分类列表表格
+        var tbl = document.getElementById("list-table");
+        // 当前分类级别
+        var lvl = parseInt(obj.className);
+        // 是否找到元素
+        var fnd = false;
+        var sub_display = img.src.indexOf('menu_minus.gif') > 0 ? 'none' : 'table-row' ;
+        // 遍历所有的分类
+        for (i = 0; i < tbl.rows.length; i++)
+        {
+            var row = tbl.rows[i];
+            if (row == obj)
+            {
+                // 找到当前行
+                fnd = true;
+                //document.getElementById('result').innerHTML += 'Find row at ' + i +"<br/>";
+            }
+            else
+            {
+                if (fnd == true)
+                {
+                    var cur = parseInt(row.className);
+                    var icon = 'icon_' + row.id;
+                    if (cur > lvl)
+                    {
+                        row.style.display = sub_display;
+                        if (sub_display != 'none')
+                        {
+                            var iconimg = document.getElementById(icon);
+                            iconimg.src = iconimg.src.replace('plus.gif', 'minus.gif');
+                        }
+                    }
+                    else
+                    {
+                        fnd = false;
+                        break;
+                    }
+                }
+            }
+        }
+        for (i = 0; i < obj.cells[0].childNodes.length; i++)
+        {
+            var imgObj = obj.cells[0].childNodes[i];
+            if (imgObj.tagName == "IMG" && imgObj.src != 'images/menu_arrow.gif')
+            {
+                imgObj.src = (imgObj.src == imgPlus.src) ? 'images/menu_minus.gif' : imgPlus.src;
+            }
+        }
+    }
+    /*移除*/
+    function destroy(){
+        var id=$("#confirm").attr("action");
+        $.post('?c={$c}&a=destroy',{'id':id},function(data) {
+            if(data.code<1){
+                alert("操作失败");
+            }
+            window.location.reload();
+        });
+    }
+    /**
+     * @param a this 当前
+     * @param param status  状态
+     * @param id  id
+     */
+    function img(a,param,id){
+        $.post('?c={$c}&a=show_nav',{'cat_id':id,'show_in_nav':param},function(data) {
+//            alert(JSON.stringify(data));
+
+            if(data.code<1){
+                alert("操作失败");
+            }else{
+                if($(a).attr('src') == "images/no.gif"){
+                    $(a).attr('src',"images/yes.gif");
+                }else{
+                    $(a).attr('src',"images/no.gif");
+                }
+            }
+        });
+    }
+</script>
+{/if}

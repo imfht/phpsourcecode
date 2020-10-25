@@ -1,0 +1,193 @@
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+	
+			<div id="alert_box_table"></div>
+
+			<div class="well well-sm">
+				<div class="row">
+
+					<div class="col-sm-6 padding0">
+						<div class="input-group">
+
+							<input  type="text" id="username" name="username" value="{$param['username']}" placeholder="请输入手机号码" class="form-control">
+							<span class="input-group-btn">
+								<button type="button" id="seach_btn" class="btn btn-default"><i class="icon-search green"></i>
+								<span class="">搜索</span></button>
+							</span>
+							 
+						</div>
+					</div>
+					<div class="col-sm-1" style="float:right;">
+						<button id="send_sms" class="btn btn-success" >
+							<i class="icon-envelope-alt bigger-130"></i>
+							<span class="bigger-110 no-text-shadow">群发短信</span>
+						</button>
+					</div>
+					
+
+
+				</div>
+			</div>
+			<div class="space-4"></div>
+			<div class="table-responsive">
+				{:NW('Table',array(
+						'columns'=>array(
+							array('name'=>'username','text'=>'手机号码','width'=>'18%','sortable'=>true),
+							array('name'=>'mac','text'=>'终端MAC','width'=>'15%','sortable'=>false),
+							array('name'=>'auth_type','text'=>'登录次数','width'=>'16%','sortable'=>true),
+							array('name'=>'times','text'=>'认证次数','width'=>'16%','sortable'=>true),
+							array('name'=>'lastvisit_time','text'=>'最后一次登录时间','width'=>'16%','sortable'=>true),
+							array('name'=>'device_type','text'=>'设备类型','width'=>'10%','sortable'=>true),
+							
+						), 
+						'default'	=> '空',
+						'checkbox'	=> array('name'=>'ckb', 'id'=>'allckb', 'field'=>'username'),
+						'rows'		=> !is_array($rows) ? array() : $rows ,
+						
+						
+					) ,'User'
+				)}
+				
+			</div>
+			{:W('Page/index', array('total'=>$count, 'rp'=>$pagelen, 'param'=>$param))}
+			<div id="table-list" class="widget-box transparent" style="display:none;">
+				<div class="widget-header widget-header-flat widget-header-small"><h5><i class="icon-envelope-alt"></i>群发短信</h5>
+				</div>
+				<div class="widget-body  col-sm-12 col-xs-12">
+					<div class="widget-main">
+						<form name="userForm" id="userForm" novalidate="" role="form"> 
+							<div class="form-horizontal">
+						
+		
+
+									<div class="form-group">
+										<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+											号码列表： 
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-xs-12 col-sm-12 ">
+												<textarea rows="10" id="send_sms_list" name="send_sms_list" class="col-sm-6 col-xs-12"></textarea>
+									
+											</div>
+											
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+											短信内容： 
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-xs-12 col-sm-12 ">
+												<textarea rows="10" id="send_msg" name="send_msg" class="col-sm-6 col-xs-12" ></textarea>
+											
+											</div>
+											
+										</div>
+									</div>
+								
+
+							
+					
+								<div id="alert_box"></div>
+								<div class="clearfix form-actions">
+									<div class="col-md-offset-3 col-md-9 col-sm-9">
+										<button id="save" class="col-sm-2 btn btn-success" type="button">
+											<i class="icon-save bigger-110"></i>
+										 	<span id="submitbutton">发送</span>
+										</button>
+										<button class="col-sm-2 btn btn-default left10" type="button" id="cancle">
+											<i class="icon-reply bigger-110"></i>
+										 	<span id="submitbutton">取消</span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>	
+
+
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	$(document).ready(function(){
+		$('#allckb').click(function(){
+			var ischecked = $(this).attr('checked') ? true : false;
+			$("input[name='ckb']").attr('checked', ischecked);
+		});
+		$('#seach_btn').click(function(){
+			window.location.href = search();
+		});
+		$('#listRows').change(function(){
+			window.location.href = search();
+		})
+		$("th[name='sort']").click(function(){
+
+			window.location.href = search()+'&reverse='+$(this).attr('id')+'&sortkey='+$(this).attr('field');
+		});
+		function search(){
+			var username = $('#username').val();
+			var listRows = $('#listRows').val();
+			return "{:U('Sms/phone_list')}?pagelen="+listRows+'&username='+username;
+		}
+		$('#cancle').click(function(){
+			$('#table-list').hide();
+			$('#send_sms_list').val('');
+		});
+		$('#send_sms').click(function(){
+			var id = '';
+			$("input[name='ckb']").each(function(){
+				if ($(this).attr('checked')){
+					id += $(this).attr('value')+'\n';
+				}
+			})
+		
+			if (id == ''){
+				$("#alert_box_table").jk_alert({msg: '请选择要发送的号码', type:'danger', show_time:12000});
+				return false;
+			}
+			$('#table-list').show();
+			$("html,body").animate({scrollTop:$('#table-list').offset().top},500);
+			$('#send_sms_list').val(id);
+
+		});
+		$('#save').click(function(){
+
+			var send_sms_list = $('#send_sms_list').val().replace('\n', ',');
+			if ($.trim($('#send_sms_list').val()) == ''){
+				$("#alert_box").jk_alert({msg: '请选择要发送的号码', type:'danger', show_time:12000});
+				return false;
+			}
+        	if ($.trim($('#send_msg').val()) == ''){
+				$("#alert_box").jk_alert({msg: '请填写要发送的内容', type:'danger', show_time:12000});
+				return false;
+			}
+			showdialog({
+				'title':'提示',
+				'message':'您确定要对这些号码发送消息吗？',
+				'okfunction':function(){
+					$.ajax({ 
+			            url: "{:U('Sms/send_sms')}",  
+			            data:{'phone_list':send_sms_list, 'send_msg':$('#send_msg').val()},
+			            dataType:'json',
+			            type:'POST',
+			            success: function(data){
+			                if (data.ret == 1){
+			                    $("#alert_box").jk_alert({ msg: data.msg, type: 'success', show_time: 3500 });
+			                    
+			                }else{
+			                    $("#alert_box").jk_alert({ msg: data.msg, type: 'danger', show_time: 3500 });
+			                }
+			            }
+			        });
+				}
+			})
+		});
+
+	});
+</script>

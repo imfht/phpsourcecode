@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+    <meta charset="UTF-8">
+    <title>日志记录</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="stylesheet" href="/css/font.css">
+    <link rel="stylesheet" href="/css/xadmin.css">
+    <script src="/lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/js/xadmin.js"></script>
+    <style>
+        /*.layui-table-view .layui-table[lay-size=lg] .layui-table-cell {*/
+        /*    font-size: 15px;*/
+        /*    font-weight: 500;*/
+        /*}*/
+        .layui-table thead span {
+            /*background-color: #acd3ed;*/
+            font-size: 15px;
+        }
+        .layui-table tbody tr td div{
+            font-size: 14px;
+        }
+
+        .layui-table tbody tr:hover {
+            background-color: #acd3ed;
+        }
+
+        .layui-table tbody tr:hover td div {
+            font-size: 17px;
+        }
+
+    </style>
+</head>
+
+<body class="layui-anim layui-anim-scale flag" style="display: none"><br/>
+<div class="x-nav">
+            <span class="layui-breadcrumb">
+                <a>首页</a>
+                <a>日志记录</a>
+            </span>
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:5px;float:right"
+       id="refresh" title="刷新">
+        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+    </a>
+</div>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card" style="border-radius: 20px;">
+                <div class="layui-card-body" style="border-radius: 20px; background-image: linear-gradient(#acd3ed,#ffffff , #acd3ed);">
+
+                    <form class="layui-form layui-col-space5" style="margin-top: 5px" id="myForm">
+                        <div class="layui-input-inline">
+                            <select lay-verify="choose" lay-filter="choose" name="option">
+                                <option value="">选择要查找的内容</option>
+                                <option value="1">时间</option>
+                                <option value="2">操作</option>
+                                <option value="3">操作人员</option>
+                            </select>
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <input style="display: none" lay-verify="" id="findText" type="text" name="message"
+                                   autocomplete="false" placeholder="" lay-reqText="" class="layui-input">
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <input style="display: none;width: 260px" lay-verify="" id="findTime" type="text"
+                                   name="findTime"
+                                   autocomplete="false" placeholder="" lay-reqText="" class="layui-input">
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <button class="layui-btn" lay-submit="" lay-filter="search">
+                                <i class="layui-icon">&#xe615;</i>查找
+                            </button>
+                        </div>
+                    </form>
+                    <table id="demo" lay-filter="demo" style="font-size: 20px"></table>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    layui.use(['table', 'form', 'layer', 'jquery', 'laydate'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+
+        //动态显示
+        parent.layui.notice.remove();
+        parent.layui.notice.info('日志记录界面', '已进入', parent.noticeOpt1);
+        // setTimeout(function () {
+        //     $('.flag').show();
+        //     tableIns.resize();
+        // }, 100);
+        $('.flag').show();
+
+        $("#refresh").click(function () {
+            $("#myForm")[0].reset();
+            layui.form.render();
+            $("#findText").hide();
+            $("#findTime").hide();
+            parent.layui.notice.remove();
+            parent.layui.notice.success("日志记录已校准", "<div class = 'layui-icon layui-icon-heart-fill'> 同步成功</div>", parent.noticeOpt6);
+            table.render({
+                elem: '#demo'
+                , url: '/index/Administrator/logMsg' //数据接口
+                , loading: true
+                , size: 'lg'
+                , page: {
+                    layout: ['prev', 'page', 'next', 'count', 'limit']//自定义布局顺序
+
+                    , groups: 10 	//最多几个跳页按钮
+                    , first: false //不显示首页
+                    , last: false //不显示尾页
+                }
+                , cols: [[ //表头
+                    {
+                        field: 'time',
+                        title: '时间',
+                        align: 'center',
+                        width: 190,
+                        // style: 'background-color: #9be6a8;color: #2c2525;'
+                    }
+                    , {
+                        field: 'operation',
+                        title: '操作',
+                        minWidth: 220,
+                        align: 'left',
+                        // style: 'background-color: #acd3ed;color: #2c2525;'
+                    }
+                    , {
+                        field: 'who',
+                        title: '操作人员',
+                        width: 250,
+                        align: 'center',
+                        // style: 'background-color: #edccac;color: #2c2525;'
+                    }
+
+                ]]
+            });
+        });
+
+        //初始化日期时间选择器
+        laydate.render({
+            elem: '#findTime'
+            , type: 'datetime'
+            , range: '-'
+            , trigger: 'click' //采用click弹出
+        });
+        //自定义验证规则
+        form.verify({
+            choose: function (value) {
+                if (!value){
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('请选择搜索项', '操作异常', parent.noticeOpt5);
+                    return '请选择搜索项！'
+                }
+
+            },
+            message: function (value) {
+                if (!value) {
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('请输入要搜索的内容', '操作异常', parent.noticeOpt5);
+                    return '请输入要搜索的内容';
+                }
+
+            },
+            time: function (value) {
+                if (!value) {
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('请输入要搜索的时间', '操作异常', parent.noticeOpt5);
+                    return '请输入要搜索的时间';
+                }
+
+            }
+
+        });
+        // 动态显示搜索选项提示
+        form.on('select(choose)', function (data) {
+            // console.log(data.elem); //得到select原始DOM对象
+            // console.log(data.value); //得到被选中的值
+            // console.log(data.othis); //得到美化后的DOM对象
+            var findText = $("#findText");
+            var findTime = $("#findTime");
+            var select = data.value;
+            //默认不显示输入框
+            findText.hide();
+            findTime.hide();
+            //重置验证类型
+            findText.attr('lay-verify', '');
+            findTime.attr('lay-verify', '');
+            //每次切换搜索项后都要清空里面的值
+            findText.val('');
+            findTime.val('');
+            // console.log(findText.val);
+            switch (select) {
+                case "1":
+                    findTime.attr('lay-verify', 'time');
+                    findTime.attr('placeholder', "请输入要搜索的时间");
+                    findTime.attr('lay-reqText', '请输入要搜索的时间');
+                    findTime.show();
+                    break;
+
+                case "2":
+                    findText.attr('lay-verify', 'message');
+                    findText.attr('placeholder', '请输入要搜索的操作类型');
+                    findText.attr('lay-reqText', '请输入要搜索的操作类型');
+                    findText.show();
+                    break;
+
+                case "3":
+                    findText.attr('lay-verify', 'message');
+                    findText.attr('placeholder', '请输入要搜索的操作人员');
+                    findText.attr('lay-reqText', '请输入要搜索的操作人员');
+                    findText.show();
+                    break;
+
+            }
+
+        });
+        //搜索功能
+        form.on('submit(search)', function (data) {
+            layer.msg('搜索中', {time: 500});
+            // console.log(data.field.findTime);
+            var load = layer.load();
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    choose: data.field.option
+                    , message: data.field.message
+                    , findTime: data.field.findTime
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+                , done: function (res, curr, count) {
+                    layer.close(load);
+                    layer.msg('搜索完成，找到' + count + '条数据', {time: 1500});
+                }
+            });
+
+            return false;
+        });
+
+        //生成数据表格
+        var tableIns = table.render({
+            elem: '#demo'
+            , url: '/index/Administrator/logMsg' //数据接口
+            , loading: true
+            , size: 'lg'
+            , page: {
+                layout: ['prev', 'page', 'next', 'count', 'limit']//自定义布局顺序
+
+                , groups: 10 	//最多几个跳页按钮
+                , first: false //不显示首页
+                , last: false //不显示尾页
+            }
+            , cols: [[ //表头
+                {
+                    field: 'time',
+                    title: '时间',
+                    align: 'center',
+                    width: 190,
+                    // style: 'background-color: #9be6a8;color: #2c2525;'
+                }
+                , {
+                    field: 'operation',
+                    title: '操作',
+                    minWidth: 220,
+                    align: 'left',
+                    // style: 'background-color: #acd3ed;color: #2c2525;'
+                }
+                , {
+                    field: 'who',
+                    title: '操作人员',
+                    width: 250,
+                    align: 'center',
+                    // style: 'background-color: #edccac;color: #2c2525;'
+                }
+
+            ]]
+            // ,done: function(res, curr, count){
+            //     //如果是异步请求数据方式，res即为你接口返回的信息。
+            //     //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+            //     console.log(res.data);
+            //
+            //     //得到数据总量
+            //     console.log(count);
+            // }
+        });
+
+//下面为结束符号
+    });
+
+
+</script>
+
+</html>

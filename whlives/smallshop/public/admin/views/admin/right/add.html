@@ -1,0 +1,151 @@
+<form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">权限名称</label>
+        <div class="layui-input-inline">
+            <input type="text" name="title" lay-verify="required" lay-reqText="名称不能为空" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">菜单栏目</label>
+        <div class="layui-input-inline">
+            <select name="menu_top" id="menu_top" lay-filter="menu_top" lay-verify="required" lay-reqText="请选择菜单栏目">
+            </select>
+        </div>
+        <div class="layui-input-inline">
+            <select name="menu_child" id="menu_child" lay-filter="menu_child" lay-verify="required" lay-reqText="请选择菜单栏目">
+            </select>
+        </div>
+        <script id="menu_tpl" type="text/html">
+            <option value=""></option>
+            {{# layui.each(d.data, function(index, item){ }}
+            <option value="{{ item.id }}" {{# if(item.id== d.default_id){ }}selected{{# } }}>{{ item.title }}</option>
+            {{# }); }}
+        </script>
+    </div>
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">权限码</label>
+        <div class="layui-input-block">
+            <textarea name="right" lay-verify="required" lay-reqText="权限码不能为空" class="layui-textarea"></textarea>
+            <div class="layui-form-mid layui-word-aux">请输入权限码，每行一个</div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">快捷选择</label>
+        <div class="layui-input-inline">
+            <select name="url_controller" id="url_controller" lay-filter="url_controller">
+            </select>
+        </div>
+        <div class="layui-input-inline">
+            <select name="url_action" id="url_action" lay-filter="url_action">
+            </select>
+        </div>
+        <script id="url_tpl" type="text/html">
+            <option value=""></option>
+            {{# layui.each(d.data, function(index, item){ }}
+            <option value="{{ item }}" {{# if(item== d.default_id){ }}selected{{# } }}>{{ item }}</option>
+            {{# }); }}
+        </script>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="id" value="">
+            <input type="button" lay-submit lay-filter="form-submit" value="确认" class="layui-btn">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<!--获取默认参数-->
+<script type="text/html" template lay-done="layui.data.sendParams(d.params);"></script>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['admin', 'form', 'laytpl'], function () {
+            var admin = layui.admin,
+                form = layui.form,
+                laytpl = layui.laytpl,
+                $ = layui.jquery;
+
+            var routes;
+            //获取路由
+            admin.req({
+                url: layui.setter.apiHost + '/helper/admin_routes',
+                async: false,
+                success: function (result) {
+                    if (result.code == 0) {
+                        routes = result.data;
+                    }
+                }
+            });
+
+            //获取下级菜单
+            function get_menu(type, parent_id = 0, default_id = 0) {
+                if (!parent_id) parent_id = 0;
+                if (!default_id) default_id = 0;
+                admin.req({
+                    url: layui.setter.apiHost + '/system/menu/select',
+                    data: {parent_id: parent_id},
+                    success: function (result) {
+                        if (result.code == 0) {
+                            if (parent_id == 1) {
+                                result.data = [{id: "1", title: "主页"}];
+                            }
+                            data = {data: result.data, default_id: default_id};
+                            laytpl($('#menu_tpl').html()).render(data, function (html) {
+                                $('#' + type).html(html);
+                            });
+                            form.render('select');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('操作失败，请刷新页面重试！');
+                    }
+                });
+            }
+
+            get_menu('menu_top', 0, params.menu_top);
+
+            //监听菜单选择
+            form.on('select(menu_top)', function (data) {
+                get_menu('menu_child', data.value, params.menu_child);
+            });
+            //快捷选择完成给文本框赋值
+            form.on('select(url_action)', function (data) {
+                right = $('[name="right"]').val();
+                newline = '';
+                if (right.length > 0) {
+                    newline = '\n';
+                }
+                $('[name="right"]').val(right + newline + data.value);
+            });
+
+            //编辑时二级菜单赋值
+            if (params.menu_top && params.menu_child) {
+                get_menu('menu_child', params.menu_top, params.menu_child);
+            }
+
+            //监听快捷选择
+            form.on('select(url_controller)', function (data) {
+                set_route(data.value, params.url_action);
+            });
+
+            //设置选择的路由
+            function set_route(controller, default_id) {
+                if (!default_id) default_id = 0;
+                if (!controller) {
+                    data = {data: Object.keys(routes), default_id: default_id};
+                    laytpl($('#url_tpl').html()).render(data, function (html) {
+                        $('#url_controller').html(html);
+                    });
+                } else {
+                    data = {data: routes[controller], default_id: default_id};
+                    laytpl($('#url_tpl').html()).render(data, function (html) {
+                        $('#url_action').html(html);
+                    });
+                }
+                form.render('select');
+            }
+
+            set_route();//设置默认的路由
+        })
+    };
+</script>

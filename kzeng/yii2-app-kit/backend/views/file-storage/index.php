@@ -1,0 +1,95 @@
+<?php
+
+use yii\helpers\Html;
+use yii\grid\GridView;
+
+/* @var $this yii\web\View */
+/* @var $searchModel backend\models\search\FileStorageItemSearch */
+/* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $components array */
+/* @var $totalSize integer */
+
+$this->title = Yii::t('backend', 'File Storage Items');
+$this->params['breadcrumbs'][] = $this->title;
+?>
+<div class="file-storage-item-index">
+
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+    <div class="row text-right">
+        <div class="pull-right">
+            <div class="col-xs-12">
+                <dl>
+                    <dt>
+                        <?php echo Yii::t('backend', 'Used size') ?>:
+                    </dt>
+                    <dd>
+                        <?php echo Yii::$app->formatter->asSize($totalSize); ?>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        <div class="pull-right">
+            <div class="row">
+                <div class="col-xs-12">
+                    <dl>
+                        <dt>
+                            <?php echo Yii::t('backend', 'Count') ?>:
+                        </dt>
+                        <dd>
+                            <?php echo $dataProvider->totalCount ?>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php echo GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
+        'columns' => [
+            ['class' => 'yii\grid\SerialColumn'],
+
+            [
+                'attribute' => 'component',
+                'filter' => $components,
+                'headerOptions' => array('style'=>'width:10%;'),
+            ],
+            'path',
+            [
+                'label' => 'Pic',
+                'format' => 'html',
+                'value' => function($model, $key, $index, $column){
+                    if(!empty($model->path))
+                        $thumb = '<img src=' . $model->base_url .'/'.$model->path. ' width=100px height=70px>';
+                    else
+                        $thumb = '';
+
+                    return $thumb;
+                },
+                'headerOptions' => array('style'=>'width:120px;'),
+            ],
+            //'type',
+            [
+                'attribute' => 'type',
+                'headerOptions' => array('style'=>'width:10%;'),
+            ],
+
+            'size:size',
+
+            //'name',
+            //'upload_ip',
+            [
+                'attribute' => 'upload_ip',
+                'headerOptions' => array('style'=>'width:10%;'),
+            ],
+            'created_at:datetime',
+
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'template' => '{view} {delete}'
+            ]
+        ]
+    ]); ?>
+
+</div>

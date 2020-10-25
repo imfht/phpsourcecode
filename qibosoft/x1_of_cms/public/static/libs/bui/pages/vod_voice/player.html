@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>音频直播</title>
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+<script type="text/javascript">
+var weburl = window.location.href;	//var weburl = window.location.href.indexOf("http")==0 ? '' : '../../../../../..';
+weburl = weburl.substring(0,weburl.indexOf('/public/static/')); //方便手机获取真实路径
+document.write('<link rel="stylesheet" href="'+weburl+'/public/static/css/base.css">');
+document.write('<link rel="stylesheet" href="'+weburl+'/public/static/libs/jplayer/css/style.css"/>');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/js/core/jquery.min.js"><\/script>');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/layer/layer.js"><\/script>');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/libs/jplayer/ttw-clarity-player.js"><\/script>');
+document.write('<script type="text/javascript" src="'+weburl+'/public/static/libs/jplayer/yepnope.js"><\/script>');
+
+var parents;
+if(window.parent.frames['iframe_msg']!=undefined){	//在PC圈子界面里
+	parents = window.parent.frames['iframe_msg'];
+}else{
+	parents = window.parent;
+}
+
+</script>
+<style type="text/css">
+#voice{
+    height:50px;
+    width:100%;
+    margin:0 auto;
+}
+ </style>
+<div id="voice"></div>
+
+<script type="text/javascript">
+var in_pc = false;
+if (!(navigator.userAgent.match(/(iPhone|iPod|Android|ios|iPad)/i))){
+	in_pc = true;
+	$("#voice").css('height','300px');
+}
+/*
+var str = window.location.href;
+var ar = str.substring(str.indexOf('aid=')+4).split('&cid=');
+var aid = ar[0] , clientId = ar[1];
+*/
+
+var is_in_weixin = false;
+var clarity;
+var myPlaylist = [];
+
+
+function voice_player(urls,obj) {
+	
+	urls.forEach((rs)=>{
+		myPlaylist.push({
+				mp3:rs.url,
+                duration:'2:21',
+                cover:weburl+'/public/static/libs/jplayer/css/images/bg.jpg',
+                title:rs.title,
+                artist:'',
+                background:'',
+				next_topic:false,
+		});	
+	});
+	/*
+        var myPlaylist = [
+			{
+                mp3:"http://qb.net/public/uploads/files/20191211/1_201912111650027e49b.mp3",
+                duration:'2:21',
+                cover:'/public/static/libs/jplayer/css/images/bg.jpg',
+                title:'天路.MP3',
+                artist:'',
+                background:'',
+				next_topic:false,
+            },
+			{
+                mp3:"http://qb.net/public/uploads/files/20191211/1_201912111650151b9b9.mp3",
+                duration:'2:21',
+                cover:'/public/static/libs/jplayer/css/images/bg.jpg',
+                title:'伤不起.mp3',
+                artist:'',
+                background:'',
+				next_topic:false,
+            },			 
+        ];
+		*/
+        clarity = $('#voice').ttwClarityPlayer(myPlaylist,{
+				jPlayer:{
+					supplied:'mp3',
+					errorAlerts:true,	
+					autoPlay:true,				
+					warningAlerts:true,
+					consoleAlerts:true,
+					smoothPlayBar:false,
+					timeupdate:function (e) {
+						var time = parseInt(e.jPlayer.status.currentTime);
+						//console.log(time);
+						if(typeof(api_player_time)=='function'){
+							api_player_time(time);
+						}
+					},
+					play:function(){
+						if(typeof(api_player_play)=='function'){
+							api_player_play();
+						}
+					},
+					pause:function(){
+						if(typeof(api_player_pause)=='function'){
+							api_player_pause();
+						}
+					},
+					ended:function() {
+						if(typeof(api_player_ended)=='function'){
+							api_player_ended();
+						}
+					},
+					ready: function (e) {
+						if(typeof(api_player_ready)=='function'){
+							api_player_ready();
+						}
+						console.log("初始化完毕");
+						//$(this).jPlayer("pause",5);
+						if(typeof(obj)=='object'){
+							if(obj.index>0){
+								clarity.paythis(obj.index);
+							}
+							clarity.play(obj.time);
+						}
+						$(".jp-previous").hide();
+						$(".jp-next").hide();
+						$(".jp-play").click(function(){
+							//parents.user_ask_sync_vod_voice();
+							//parents.w_s.send('{"type":"user_ask_quner","tag":"ask_vod_voice_sync","user_cid":"'+clientId+'"}');
+							parents.mod_class.vod_voice.play_status();
+						});
+					},
+					error:function(event){
+						if(typeof(api_player_error)=='function'){
+							api_player_error();
+						}
+						//$(".jp-next").trigger("click");
+					},
+				}
+			});
+
+		
+		document.addEventListener("WeixinJSBridgeReady",function(){
+			clarity.play();			
+			is_in_weixin=true;
+		});
+		setTimeout(function(){
+			if(is_in_weixin==false){
+				clarity.play();				
+			}
+		}, 2000 );
+        
+		//$('#voice-size-picker').on('click', 'li', function(){
+        //    $('#voice').attr('data-size', $(this).data('size'));
+        //    clarity.manageLayout();
+        //});
+}
+</script>
+
+
+<script type='text/javascript'>
+var play_index = 0;	//当前播放哪一集
+var play_time = 0; //当前播放到第几秒
+
+function now_play_voice(index){	//当前正在播放第几集
+	play_index = index;
+}
+
+function get_now_state(){	//当前播放状态,让圈主发送给会员同步用的
+	return [play_index,play_time];
+}
+
+
+//监听内容播放的时间变动,此函数是反复执行的
+function api_player_time(time){
+	play_time = time;
+	//console.log("时间"+time);
+}
+
+
+function control(obj){ //接受圈主的指令 此函数主要是给父窗口调用的.
+	var t = obj.type;
+	if(typeof(vod[t])=='function'){
+		vod[t](obj);
+	}
+}
+
+var vod = {
+	sync_play:function(obj){	//同步播放
+		if(typeof(obj)=='object'){
+			if(obj.index!=play_index){
+				clarity.paythis(obj.index);
+			}
+			clarity.play(obj.time);
+		}else{
+			var o = {
+				type:'sync_play',
+				index:play_index,
+				time:play_time,
+			};
+			ws_send(o);
+		}	
+	},
+	prev:function(obj){	//上一集
+		if(typeof(obj)=='object'){
+			clarity.paythis(obj.index);
+			clarity.play(0);
+		}else{
+			play_index--;
+			if(play_index<0){
+				play_index = myPlaylist.length-1;
+			}
+			var o = {
+				type:'prev',
+				index:play_index,
+			};
+			ws_send(o);
+		}	
+	},
+	next:function(obj){	//下一集
+		if(typeof(obj)=='object'){
+			clarity.paythis(obj.index);
+			clarity.play(0);
+		}else{
+			play_index++;
+			if(play_index>myPlaylist.length-1){
+				play_index = 0;
+			}
+			var o = {
+				type:'next',
+				index:play_index,
+			};
+			ws_send(o);
+		}	
+	},
+	pause:function(obj){	//暂停
+		if(typeof(obj)=='object'){
+			clarity.pause();
+		}else{
+			var o = {
+				type:'pause',
+			};
+			ws_send(o);
+		}	
+	},
+	play:function(obj){	//继续播放
+		if(typeof(obj)=='object'){
+			clarity.play();
+		}else{
+			var o = {
+				type:'play',
+			};
+			ws_send(o);
+		}	
+	},
+	is_quiet:false,
+	quiet:function(obj){	//静音
+		if(typeof(obj)=='object'){
+			if(this.is_quiet==false){
+				this.is_quiet = true;
+				$(".volume").trigger("click");
+			}else{
+				this.is_quiet = false;
+				$(".volume").trigger("click");
+				$(".volume").trigger("click");
+				$(".volume").trigger("click");
+			}			
+		}else{
+			var o = {
+				type:'quiet',
+			};
+			ws_send(o);
+		}
+	},
+	finish:function(obj){	//结束直播
+		if(typeof(obj)=='object'){
+			if(in_pc==true){
+				if( typeof(parents.in_pc_qun)=='boolean' && parents.in_pc_qun==true ){	//在PC圈子风格里
+					window.parent.$("#iframe_play").attr("src","about:blank");
+					window.parent.$("#iframe_play").hide();
+					if(typeof(window.parent.close_play)=='function'){
+						window.parent.close_play();
+					}
+				}else{	//单独的PC聊天界面里
+					var index1 = parent.layer.getFrameIndex(window.name);
+					parent.layer.close(index1);
+				}				
+			}else{
+				parents.$(".iframe_chat").attr("src","about:blank");
+				parents.$(".iframe_chat").hide();
+			}			
+		}else{
+			parents.mod_class.vod_voice.stop();
+			var o = {
+				type:'finish',
+			};
+			ws_send(o);			
+			/*
+			$.get("/member.php/member/vod/stop_voice.html?aid="+aid,function(res){
+				if(res.code==0){
+					layer.msg('成功结束');
+				}else{
+					layer.alert(res.msg);
+				}
+			});*/
+		}	
+	},
+}
+
+
+$(function(){
+	var pause = false;
+	$("#sync_pause").click(function(){
+		if(pause==false){
+			pause = true;
+			vod.pause();
+			$(this).html('取消暂停');
+		}else{
+			pause = false;
+			vod.play();
+			$(this).html('暂停');
+		}
+	});
+
+	var quiet=false;
+	$("#sync_quiet").click(function(){
+		if(quiet){
+			quiet = false;
+			vod.quiet();
+			$(this).html('静音');
+		}else{
+			quiet = true;
+			vod.quiet();
+			$(this).html('取消静音');
+		}
+	});
+});
+
+
+function ws_send(arr){	//圈主发送指令
+	parents.ws_send({
+		type:"qun_to_alluser",      //告诉WS服务器,群发给所有圈子成员
+		tag:"vod_voice_sync_play",	//返回的自定义标志,自己做处理
+		data:arr
+	});
+}
+
+
+$(function(){
+	if(parents.my_uid==parents.quninfo.uid){
+		$('.syscn').show();
+	}
+});
+</script>
+<style type="text/css">
+.syscn{
+	margin-top:10px;
+	display:none;
+}
+.syscn a{	
+	margin-left:10px;
+	border:1px solid #6ab8c5;
+	border-radius:3px;
+	padding:1px 5px 3px 5px;
+}
+.syscn a:last-child{
+	border:1px solid orange;
+}
+</style>
+<div class="syscn">
+<a href="#" onclick="vod.sync_play();">同步</a><a href="#" onclick="vod.prev();">上一集</a><a href="#" onclick="vod.next();">下一集</a><a href="#" id="sync_pause">暂停</a><a href="#" id="sync_quiet">静音</a><a href="#" onclick="vod.finish();">结束</a>
+</div>
+</body>
+</html>

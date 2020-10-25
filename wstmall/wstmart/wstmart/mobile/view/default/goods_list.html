@@ -1,0 +1,174 @@
+{extend name="default/base" /}
+{block name="title"}
+    {if $catInfo['seoTitle']}
+        {$catInfo['seoTitle']} - 
+    {else}
+        {$catInfo['catName']} - 商品列表 - 
+    {/if}
+    {__block__}
+{/block}
+{block name="meta"}
+<meta name="description" content="{if $catInfo && $catInfo['seoDes']}{$catInfo['seoDes']}{else}{:WSTConf('CONF.seoMallDesc')}{/if}">
+<meta name="Keywords" content="{if $catInfo && $catInfo['seoKeywords']}{$catInfo['seoKeywords']}{else}{:WSTConf('CONF.seoMallKeywords')}{/if}">
+{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/goods_list.css?v={$v}">
+{/block}
+{block name="header"}
+    <header class="ui-header ui-header-positive wst-se-header2">
+		<i class="ui-icon-return" onclick="history.back()"></i>
+		<div class="wst-se-search">
+		    <i class="wst-icon-search" onclick="javascript:WST.searchPage('goods',1);"></i>
+		    <form action＝"" class="input-form" onclick="javascript:WST.searchPage('goods',1);">
+			<input type="search" value="{$keyword}" placeholder="按关键字搜索商品" onsearch="WST.search(0)" autocomplete="off" disabled="disabled">
+			</form>
+		</div>
+		{eq name="catInfo.showWay" value="1"}
+			<span class='wst-se-icon wst-se-icon2' onclick="javascript:switchList(this);"></span>
+		{/eq}
+		{eq name="catInfo.showWay" value="0"}
+			<span class='wst-se-icon' onclick="javascript:switchList(this);"></span>
+		{/eq}
+	</header>
+{/block}
+{block name="main"}
+     <input type="hidden" class="ipt" name="" value="{$keyword}" id="keyword" autocomplete="off">
+     <input type="hidden" class="ipt" name="" value="{$catId}" id="catId" autocomplete="off">
+	 <input type="hidden" class="ipt" name="" value="{$brandId}" id="brandId" autocomplete="off">
+     <input type="hidden" class="ipt" name="" value="" id="condition" autocomplete="off">
+	 <input type="hidden" class="ipt" name="" value="" id="desc" autocomplete="off">
+	 <input type="hidden" name="" value="" id="currPage" autocomplete="off">
+	 <input type="hidden" class="ipt" name="" value="" id="isFreeShipping" autocomplete="off">
+     <input type="hidden" class="ipt" name="" value="" id="totalPage" autocomplete="off">
+
+     {/*遮盖层*/}
+     <div id="backgroundTier" onclick="javascript:closeScreenTier();" style="display:none;"></div>
+     <div id="screen">
+     <div class="screen-top">
+     	<div class="screen-box1">
+     		<p class="screen-title">价格区间</p>
+     		<div class="ui-row-flex option-box1">
+     			<input class="ui-col ui-flex ui-flex-pack-start section ipt" id="minPrice" type="text" placeholder="最低价" autocomplete="off" value='{$minPrice}'>
+     			<span class="across"></span>
+     			<input class="ui-col ui-flex ui-flex-pack-end section section-end ipt" id="maxPrice" type="text" placeholder="最高价" autocomplete="off" value='{$maxPrice}'>
+     			<span class="across" style="border-color: transparent;"></span>
+     			<span class="across" style="border-color: transparent;"></span>
+     		</div>
+     	</div>
+          <div class="screen-box1" id="freeed" style="display:none;">
+               <p class="screen-title">是否包邮</p>
+               <div class="ui-row-flex option-box1">
+                        <div class="transport selected" onclick="javascript:cancelFree(this);" style="background-color:white;">
+                            <p id="freeValue"></p>
+                        </div>
+               </div>
+          </div>
+     	<div class="screen-box1" id="free">
+     		<p class="screen-title">是否包邮</p>
+     		<div class="ui-row-flex option-box1">
+				    <div class="transport" onclick="javascript:isFreeShipping(this);" f="1">
+				        <p>包邮</p>
+				    </div>
+				    <div class="transport" onclick="javascript:isFreeShipping(this);" f="0">
+				        <p>不包邮</p>
+				    </div>
+     		</div>
+     	</div>
+		<ul class="ui-tab-content">
+             <li id="screenAttred"></li>
+         </ul>
+          <ul class="ui-tab-content">
+	        <li id="screenAttr"></li>
+	    </ul>
+     </div>
+     	<div id="indexbnts" class="index-bnts wst-flex-row wst-jfe">
+     		<div onclick="javascript:resetAll();" class="left J_ping">重置</div>
+     		<div onclick="javascript:screenGoodsList();" report-eventparam="B" report-eventid="MFilter_Confirm" class="right J_ping">确定</div>
+     	</div>
+     </div>
+     <section class="ui-container">
+     	<div class="ui-row-flex wst-shl-head">
+		    <div class="ui-col ui-col sorts active" status="down" onclick="javascript:orderCondition(this,0);">
+		   		 <p class="pd0">销量</p><i class="down2"></i>
+		    </div>
+		    <div class="ui-col ui-col sorts" status="down" onclick="javascript:orderCondition(this,1);">
+		   		 <p class="pd0">价格</p><i class="down"></i>
+		    </div>
+		    <div class="ui-col ui-col sorts" status="down" onclick="javascript:orderCondition(this,2);">
+		   		 <p class="pd0">人气</p><i class="down"></i>
+		    </div>
+		    <div class="ui-col ui-col sorts wst-flex-row wst-ac" status="down" onclick="javascript:screenTier();">
+		    	<i class="screen"></i><p class="pd1">筛选</p>
+		    </div>
+		</div>
+		<ul id="goods-container" class="ui-tab-content {eq name='catInfo.showWay' value='0'}goods-container{/eq}">
+	        <li id="goods-list"  {eq name="catInfo.showWay" value="1"} class='wst-go-switch'{/eq}></li>
+	    </ul>
+     </section>
+     {/*筛选框*/}
+<script id="list" type="text/html">
+{{# if(d && d.length>0){ }}
+	{{# for(var i=0; i<d.length; i++){ }}
+		<div class="wst-in-goods {{# if((i)%2==0){ }}left{{# }else{ }}right{{# } }}" onclick="javascript:WST.intoGoods({{ d[i].goodsId }});">
+		<div class="img j-imgAdapt"><a href="javascript:void(0);" onclick="javascript:WST.intoGoods({{ d[i].goodsId }});"><img src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{{ d[i].goodsImg }}" title="{{ d[i].goodsName }}"/></a></div>
+			<div class="name ui-nowrap-multi">{{ d[i].goodsName }}</div>
+			<div class="tags ui-nowrap-multi">
+				{{# if(d[i].isSelf==1){ }}<span class='tag'>自营</span>{{# } }}
+				{{# if(d[i].isFreeShipping==1){ }}<span class='tag'>包邮</span>{{# } }}
+				{{ d[i]['tags']!=undefined?d[i]['tags'].join(' '):'' }}&nbsp;
+			</div>
+			<div class="info"><span class="price">¥ <span>{{ d[i].shopPrice }}</span></span></div>
+			<div class="info2"><span class="price">好评率{{ d[i].praiseRate }}</span><span class="deal">成交数:{{ d[i].saleNum }}</span></div>
+		</div>
+	{{# } }}
+{{# }else{ }}
+	<div class="wst-prompt-icon" style="width:1.395rem;"><img src="__MOBILE__/img/no_data.png" ></div>
+	<div class="wst-prompt-info">
+		<p>暂无数据</p>
+	</div>
+{{# } }}
+</script>
+<script id="screenListed" type="text/html">
+{{# if(d && d.length>0){ }}
+{{# for (var i=0; i<d.length;i++){ }}
+          <div class="screen-box">
+               <p class="screen-title">{{d[i].attrName}}</p>
+               <div class="option-box1">
+                    <span onclick="javascript:cancelSeled(this);"  id="a_{{d[i]['attrId']}}" d="{{d[i]['attrId']}}" k="{{i}}" class="attrs after-color selected" style="background-color:white;">{{d[i].attr}}</span>
+               </div>
+		  </div>
+{{# } }}
+{{# } }}
+</script>
+<script id="screenList" type="text/html">
+{{# if(d && d.length>0){ }}
+{{# for (var i=0; i<d.length;i++){ }}
+
+        <input type="hidden" id="v_{{d[i]['attrId']}}" class="vsed" value=""/>
+     	<div class="screen-box no">
+     		<p class="screen-title">{{d[i].attrName}}{{# if(d[i]['attrVal'].length>4){ }}<i class="arrow-base arrow" onclick="javascript:showAll(this)" d="{{d[i]['attrId']}}" s=0></i>{{# } }}</p>
+     		<div class="option-box">
+                    <span onclick="javascript:cancelSeled(this);"  id="a_{{d[i]['attrId']}}" d="{{d[i]['attrId']}}" class="transport attrs after-color selected" style="display:none;background-color:white;"></span>
+     		{{# for (var j=0;j<d[i]['attrVal'].length;j++){ }}
+     			<span onclick="javascript:selectAttr(this);" d="{{d[i]['attrId']}}" v="{{d[i]['attrVal'][j]}}" n="{{d[i].attrName}}" class="attrs after-color attr-box">{{d[i]['attrVal'][j]}}</span>
+            {{# } }}
+     		</div>
+     	</div>
+
+{{# } }}
+{{# } }}
+</script>
+<script type="text/html" id="sc">
+	<input type="hidden" id="vs" class="sipt ipt" value='{{d}}'/>
+</script>
+</script>
+{/block}
+{block name="include"}
+{include file="default/goods_search_box" /}
+<div class="wst-toTop" style="display: block;bottom: 0.68rem;">
+	<a href="{:url('mobile/goods/history')}"><i class="wst-toHistoryimg"></i></a>
+</div>
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/goods_list.js?v={$v}'></script>
+{/block}

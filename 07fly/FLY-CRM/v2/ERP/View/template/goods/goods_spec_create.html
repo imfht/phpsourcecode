@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="ibox float-e-margins">
+				<div class="ibox-content">
+					<table class="table table-hover sorttable 07fly-table">
+						<thead>
+							<tr>
+								<th width="22"><input type="checkbox" group="ids" class="checkboxCtrl"></th>
+								<th width="30">规格</th>
+								<th width="200">规格值</th>
+							</tr>
+						</thead>
+						<tbody>
+							 #{foreach from=$list key=k item=v}#
+							<tr>
+								<td><input name="ids" class="checkboxCtrlId" id="spec-id-#{$v.spec_id}#" value="#{$v.spec_id}#" type="checkbox"></td>
+								<td>#{$v.spec_name}#</td>
+								<td id="spec-#{$v.spec_id}#-value">
+									#{foreach from=$v.spec_value_list key=k2 item=v2}#
+										<input type="checkbox" class="spec_and_value" data-spec-id="#{$v.spec_id}#" data-spec-name="#{$v.spec_name}#" data-spec-value-name="#{$v2.spec_value_name}#" value="#{$v2.spec_value_id}#"> #{$v2.spec_value_name}#
+									#{/foreach}#
+								</td>
+							</tr>
+							#{/foreach}#
+						</tbody>
+						<tfoot class="ibox-content">
+							<tr>
+								<td colspan="3" align="center"><button type="button" class="btn btn-info btn-sm btn-block create_spec"><i class='fa fa-plus'></i> 生成规格</button></td>
+							</tr>
+						</tfoot>
+					</table>
+					<div class="ibox-content">注意：改变规格会删除现有的有的商品规格数据，并生成新的规格数据。</div>	
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+<script type="text/javascript">
+$(function() {
+	$(".create_spec").click(function(){
+		var chk_value =[]; 
+    	$("tbody input[class='spec_and_value']:checked").each(function(){ 
+			spec_id=$(this).attr('data-spec-id');
+			spec_name=$(this).attr('data-spec-name');
+			spec_value_name=$(this).attr('data-spec-value-name');
+			spec_value_id=$(this).val();
+			var single = {
+				spec_id:spec_id,
+				spec_name:spec_name,
+				spec_value_name:spec_value_name,
+				spec_value_id: spec_value_id
+			};
+        chk_value.push(single); 
+		}); 
+		console.log(chk_value);
+		chk_value_txt=JSON.stringify(chk_value);
+		$.ajax({
+			type: "POST",
+			url: "#{$smarty.const.ACT}#/goods/GoodsSpec/goods_spec_create_json/",
+			data:{"chk_value_txt":chk_value_txt},
+			dataType:"json",
+			success: function(data){
+				var html='<table class="table table-hover sku-table"><thead>';
+				html +='	<tr>';
+				html +='		<th width="200">商品规格</th>';	
+				html +='		<th width="50">销售价格</th>';	
+				html +='		<th width="50">市场价格</th>';	
+				html +='		<th width="50">成本价格</th>';	
+				html +='		<th width="50">库存量</th>';	
+				html +='	</tr>';	
+				html+='</thead><tbody>';
+				$.each(data, function(idx, obj) {
+					html +='<tr>';
+					html +=  '<td>'+obj.txt_name;
+					html +=  '<input type="hidden" name="sku_name[]" value="'+obj.txt_name+'">';
+					html +=  '<input type="hidden" name="sku_value_items[]" value="'+obj.txt_id+'">';
+					html +=  '</td>';
+					html +=  '<td><input type="text" name="sku_sale_price[]" value="0.00"></td>';
+					html +=  '<td><input type="text" name="sku_market_price[]" value="0.00"></td>';
+					html +=  '<td><input type="text" name="sku_cost_price[]" value="0.00"></td>';
+					html +=  '<td><input type="text" name="sku_stock[]" value="0"></td>';
+					html +='</tr>';
+					console.log(obj.txt_name);
+				});
+				html+='</tbody></table>';
+				//$("#create_table").html(html);
+				//alert('#{$create_id}#');
+				parent.$("##{$create_id}#").html(html);
+				//关闭iframe页面
+				var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+				parent.layer.close(index);
+				//console.log(data);
+			},
+			complete: function () {//完成响应
+			}
+		});
+	}); 
+	
+	//点击小类，选择中大类
+	$(".spec_and_value").click(function(){
+		spec_id=$(this).attr("data-spec-id");
+		$("#spec-id-"+spec_id).attr("checked", true);
+	});
+	//选择大类后，全先小类
+	$(".checkboxCtrlId").click(function(){
+		spec_id=$(this).val();
+		spec_id_class="spec-"+spec_id+"-value";
+		$("#"+spec_id_class+" input[type='checkbox']").prop("checked", $(this).prop('checked'));
+	});
+	
+});
+</script> 

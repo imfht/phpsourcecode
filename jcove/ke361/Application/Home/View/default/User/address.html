@@ -1,0 +1,133 @@
+<extend name="user"/>
+
+<block name="user_right">
+
+	<h3>收货地址</h3>
+	<div>
+		<h4>新增收货地址</h4>
+		<form class="am-form am-form-horizontal" action="{:U('User/address')}">
+			  <div class="am-form-group">
+				<label for="consignee" class="am-u-sm-2 am-form-label">收货人<span>*</span></label>
+				<div class="am-u-sm-10">
+				  <input type="text" class="form-control" name="consignee" value="{$user_address.consignee}" id="consignee" placeholder="收货人姓名">
+				</div>
+			  </div>
+			  <div class="am-form-group">
+				<label for="mobile" class="am-u-sm-2 am-form-label">手机<span>*</span></label>
+				<div class="am-u-sm-10">
+				  <input type="text" name="mobile" class="form-control" id="mobile" value="{$user_address.mobile}" placeholder="请填写正确的手机号">
+				</div>
+			  </div>
+			  <div class="am-form-group user-district">
+				  <label class="am-u-sm-2 am-form-label" >所在地区<span>*</span>	</label>
+				  <div class="am-u-sm-10">
+					<select class="form-control" name="province" id="J_province"></select>
+					<select class="form-control" name="city" id="J_city" style="display:none;"></select>
+					<select class="form-control" name="district" id="J_district" style="display:none;"></select>
+					<select class="form-control" name="community" id="J_community" style="display:none;"></select>
+				  </div>
+			  </div>
+			  <div class="am-form-group">
+				<label for="address" class="am-u-sm-2 am-form-label">详细地址<span>*</span></label>
+				<div class="am-u-sm-10">
+				  <input type="text" class="form-control" name="address" id="address" value="{$user_address.address}" placeholder="详细地址">
+				</div>
+			  </div>
+			  <div class="am-form-group">
+				<div class="am-u-sm-offset-2 am-u-sm-10">
+					<notempty name="user_address.id">
+						<input type="hidden" name="id" value="{$user_address.id}">
+					</notempty>
+				  <button type="submit" target-form="am-form" class="am-btn am-btn-success ajax-post">确认</button>
+				</div>
+			  </div>
+			</form>
+
+</div>
+<div>
+	<h4>已保存收货地址</h4>
+	<div class="table user-address-list ">
+		<div class="am-g title">
+			<h5 class="am-u-md-1">收货人</h5>
+			<h5 class="am-u-md-3">所在地区</h5>
+			<h5 class="am-u-md-3">详细地址</h5>
+			<h5 class="am-u-md-2">手机</h5>
+			<h5 class="am-u-md-3">操作</h5>
+		</div>
+		<div class="am-g contents">
+			<volist name="_list" id="vo">
+				<div class="item">
+					<div class="am-u-md-1">{$vo.consignee}</div>
+					<div class="am-u-md-3">{$vo.province|get_district_name}{$vo.city|get_district_name}{$vo.district|get_district_name}{$vo.community|get_district_name}</div>
+					<div class="am-u-md-3">{$vo.address}</div>
+					<div class="am-u-md-2">{$vo.mobile}</div>
+					<div class="am-u-md-3">
+						<a href="{:U('User/address',array('method'=>'edit','id'=>$vo['id']))}">编辑</a>
+						<a href="{:U('User/address',array('method'=>'del','id'=>$vo['id']))}"class="ajax-get confirm">删除</a>
+						<if condition="$vo.status eq 1">
+							<span class="label label-warning">默认地址</span>
+						<else/>
+							<a class="ajax-get confirm" href="{:U('User/address',array('method'=>'set_default','id'=>$vo['id']))}">设为默认</a>
+						</if>
+
+					</div>
+				</div>
+			</volist>
+		</div>
+
+
+	</div>
+</div>
+
+</block>
+<block name="script">
+<script>
+$(function(){
+	
+	var pid=<if condition="$user_address.province neq ''">{$user_address.province}<else />0</if>;  //默认省份id
+	var cid=<if condition="$user_address.city neq ''">{$user_address.city}<else />0</if>;  //默认城市id
+	var did=<if condition="$user_address.district neq ''">{$user_address.district}<else />0</if>;  //默认区县市id
+	var coid=<if condition="$user_address.community neq ''">{$user_address.community}<else />0</if>;  //默认乡镇id
+
+	
+	$.post("{:U('District/getProvince')}", {pid: pid}, function(result){
+		$("#J_province").html(result);
+	});
+
+	$.post('{:U("District/getCity")}', {pid: pid, cid: cid}, function(result){
+		$("#J_city").show().html(result);
+	});
+
+	$.post('{:U("District/getDistrict")}', {cid: cid, did: did}, function(result){
+		$("#J_district").show().html(result);
+	});
+
+	$.post('{:U("District/getCommunity")}', {did: did, coid: coid}, function(result){
+		$("#J_community").show().html(result);
+	});
+
+	$('#J_province').change(function(){
+		var pid_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getCity")}', {pid: pid_g}, function(result){
+			$("#J_city").show().html(result);
+		});
+	});
+	
+	$('#J_city').change(function(){
+		var cid_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getDistrict")}', {cid: cid_g}, function(result){
+			$("#J_district").show().html(result);
+		});
+	});
+
+	$('#J_district').change(function(){
+		var did_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getCommunity")}', {did: did_g}, function(result){
+			$("#J_community").show().html(result);
+		});
+	});
+	$('.am-nav').find('a[href="'+'{:U("address")}'+'"]').closest('li').addClass('am-active');
+	
+});
+</script>
+</block>

@@ -1,0 +1,189 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('编辑：'.$flow_type['name']))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a onclick="go_return_url();" class="btn btn-sm btn-primary">返回</a>
+				<neq name="flow_type.type" value="1">
+					<a onclick="popup_confirm();"  class="btn btn-sm btn-primary">选择审批流程</a>
+
+				</neq>
+			</div>
+			<div class="pull-right">
+				<a onclick="del();"  class="btn btn-sm btn-danger">删除</a>
+				<a onclick="save(10);"  class="btn btn-sm btn-primary">临时保存</a>
+				<a onclick="save(20);"  class="btn btn-sm btn-primary">提交</a>
+			</div>
+		</div>
+	</div>
+	<form method='post' id="form_data" name="form_data" enctype="multipart/form-data" class="well form-horizontal">
+		<input type="hidden" id="id" name="id" value="{$vo.id}">
+		<input type="hidden" id="ajax" name="ajax" value="0">
+		<input type="hidden" id="type" name="type" value="{$flow_type.id}">
+		<input type="hidden" id="opmode" name="opmode" value="edit">
+		<input type="hidden" id="confirm" name="confirm" value="">
+		<input type="hidden" id="confirm_name" name="confirm_name" value="">
+		<input type="hidden" id="consult" name="consult" value="">
+		<input type="hidden" id="consult_name" name="consult_name" value="">
+		<input type="hidden" id="refer" name="refer" value="">
+		<input type="hidden" id="refer_name" name="refer_name" value="">
+		<input type="hidden" id="step" name="step" value="">
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">标题*：</label>
+			<div class="col-sm-10">
+				<input value="{$vo.name}" class="form-control" type="text" id="name" name="name" check="require" msg="请输入标题">
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >文件编号*：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{vo.doc_no}
+					<!-- {$flow_type.doc_no_format}   2016.1.28 origin 修改编辑审批单号查看问题  -->
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >日期：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.create_time|to_date='Y-m-d'}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >编写人：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.user_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >部门：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.dept_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >审批：</label>
+			<div class="col-sm-10">
+				<p id="confirm_wrap" class="form-control-static address_list">
+					{$vo.confirm_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >协商：</label>
+			<div class="col-sm-10">
+				<p id="consult_wrap" class="form-control-static address_list">
+					{$vo.consult_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group hidden">
+			<label class="col-sm-2 control-label" >抄送：</label>
+			<div class="col-sm-10">
+				<p id="refer_wrap" class="form-control-static address_list">
+					{$vo.consult_name}
+				</p>
+			</div>
+		</div>
+		
+		<volist name="field_list" id="field_vo">
+			{:W('UserDefineField/edit',array($field_vo))}
+		</volist>
+		
+		<neq name="flow_type.is_edit" value="2">
+			<div class="form-group">
+				<div class="col-xs-12">
+					<textarea class="editor" id="content" name="content" style="width:100%;height:300px;">{$vo.content}</textarea>
+				</div>
+			</div>
+		</neq>
+		
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/edit',array('add_file'=>$vo['add_file']))}
+			</div>
+		</div>
+	</form>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function save(step) {
+			$("#confirm").val("");
+			$("#confirm_wrap  span").each(function() {
+				$("#confirm").val($("#confirm").val() + $(this).attr("data") + '|');
+			});
+			$("#confirm_name").val($("#confirm_wrap").html());
+			$("#consult").val("");
+			$("#consult_wrap  span").each(function() {
+				$("#consult").val($("#consult").val() + $(this).attr("data") + '|');
+			});
+			$("#consult_name").val($("#consult_wrap").html());
+
+			$("#refer").val("");
+			$("#refer_wrap  span").each(function() {
+				$("#refer").val($("#refer").val() + $(this).attr("data") + '|');
+			});
+			$("#refer_name").val($("#refer_wrap").html());
+
+			if ($("#confirm").val().length < 2) {
+				ui_error('请选择审批流程');
+				return false;
+			}
+			$("#step").val(step);
+			sendForm("form_data", "{:U('save')}");
+		}
+
+		function popup_confirm() {
+			winopen("{:U('popup/confirm')}", 560, 470);
+		}
+
+		function del() {
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('del')}", 'id={$vo.id}', function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							go_return_url();
+						});
+					}
+				});
+			});
+		}
+
+		$(document).ready(function() {
+			<php>if($flow_type['is_lock']==0){</php>
+			$('.address_list').on('mouseenter', 'span', function() {
+				$(this).find('i').remove();
+				$(this).append('<i class="fa fa-times"></i>');	 
+			});
+			$('.address_list').on('mouseleave', 'span', function() {
+				$i = $(this).find('i');
+				$i.removeClass('fa-times');
+				$i.addClass('fa-arrow-right');
+				$(".address_list span:last i").attr('class', 'fa');
+			});
+
+			$('.address_list').on('click', 'i', function() {
+				$(this).parents('span').remove();
+				$(".address_list span:last i").attr('class', 'fa');
+			});
+			<php>}</php>
+		});
+	</script>
+
+</block>

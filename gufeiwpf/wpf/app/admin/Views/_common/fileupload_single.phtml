@@ -1,0 +1,108 @@
+<div class="fileupload_single">
+	<div class="fileupload_img">
+        <img src="<?php echo $imgurl ?: STATIC_URL."/img/common/no_img_80x80.png"?>" width="80" height="80"/>
+        <input type="hidden" class="fileupload_single_imginput" name="<?php echo $inputname?>" value="<?php echo $inputvalue ?: ""?>" autocomplete="off"  />                                    
+    </div>
+    <div class="margin-top-10">
+        <span class="btn btn-success fileinput-button">
+            <i class="glyphicon glyphicon-plus"></i>
+            <span>上传...</span>
+            <!-- The file input field used as target for the file upload widget -->
+            <input tabindex="-1" class="fileupload_single_input" type="file" accept="image/*" autocomplete="off"/>
+        </span>
+        <?php if(!$no_selector){?>
+        <a class="btn blue fileupload_single_select" href="javascript:void(0);">
+			<i class="fa fa-list"> 选择图片 </i>
+		</a>
+        <?php }?>
+        
+        <a class="btn purple fileupload_single_del" href="javascript:void(0);">
+			<i class="fa fa-times"> 删除</i>
+		</a>
+    </div>
+    
+    <!-- The global progress bar -->
+    <div class="progress fileupload_progress margin-top-10" style="display: none;">
+        <div class="progress-bar progress-bar-success"></div>
+    </div>
+    <!-- The container for the uploaded files -->
+    
+	<span class="help-block">
+		 只允许一张图片，新上传或新选择会替换旧的图片
+	</span>
+</div>
+
+<script>
+var PHOTO_SELECT = {
+    curr_selector : null,
+    selector_url : "<?php echo $this->url->get("Ajax/photoselector")?>"
+}
+
+jQuery(document).ready(function() {
+    
+    if(typeof WPF.fileupload !== "object"){
+        WPF.fileupload = {};
+        
+    }
+
+
+    
+    if(typeof WPF.fileupload.fileupload_single === "undefined"){        
+        WPF.fileupload.fileupload_single = function(){
+            $('.fileupload_single_input').fileupload({
+                autoUpload: true,
+                acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
+                url: "<?php echo $this->url->get("Ajax/fileupload")?>",
+                dataType: 'json',
+                done: function (e, data) {
+                    if(data.result.status){
+                        var imgdiv = $(this).parents(".fileupload_single").find(".fileupload_img");            
+                        imgdiv.find("img").attr("src",data.result.info.thumbnailUrl);
+                        imgdiv.find(".fileupload_single_imginput").val(data.result.info.photoid);
+                    }else{
+                        alert(data.result.info);
+                    }
+                    
+                },
+                progressall: function (e, data) {
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    
+                    var progressdiv = $(this).parents(".fileupload_single").find(".fileupload_progress");
+                    
+                    progressdiv.show();
+                    progressdiv.find('.progress-bar').css(
+                        'width',
+                        progress + '%'
+                    );
+                    if(progress==100){
+                        setTimeout(function(){
+                            progressdiv.hide();
+                            progressdiv.find('.progress-bar').css("width",0);
+                        },500)
+                    }
+                }
+            }).prop('disabled', !$.support.fileInput)
+                .parent().addClass($.support.fileInput ? undefined : 'disabled');
+            
+            $(".fileupload_single").on("click",".fileupload_single_del",function(){
+                var imgdiv = $(this).parents(".fileupload_single").find(".fileupload_img");
+                imgdiv.find("img").attr("src","<?php echo STATIC_URL?>/img/common/no_img_80x80.png");
+                imgdiv.find(".fileupload_single_imginput").val("");
+            });
+            
+        };
+        
+        if (!$().fileupload) {
+            $("head").append("<link href='<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css' rel='stylesheet' type='text/css'/>")
+        
+            $.getScript("<?php echo STATIC_URL?>/theme/assets/global/plugins/jquery-file-upload/js/jquery.fileupload.js", function(){
+                WPF.fileupload.fileupload_single();
+            });
+        }else{
+            WPF.fileupload.fileupload_single();
+        }
+        
+    }
+
+});
+</script>

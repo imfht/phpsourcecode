@@ -1,0 +1,48 @@
+var attachnum = $attachnum;
+var pid = $pid;
+
+window.UEDITOR_HOME_URL = "$conf[plugin_url]baidu_editor/ueditor/";
+$.xload('plugin/baidu_editor/ueditor/ueditor.config.js', 'plugin/baidu_editor/ueditor/ueditor.all.min.js', 'view/js/swfupload/swfupload.js', function() {
+	window.UEDITOR_CONFIG.snapscreenServerUrl = '?ueditor-uploadimage-$conf[cookie_pre]sid-$_sid-$conf[cookie_pre]auth-$_auth-ajax-1.htm';
+	var editor = new UE.ui.Editor();
+	window.editor = editor;
+	editor.render("update_message_$pid");
+	editor.ready(function(){
+		editor.setContent($('#update_message_$pid').val());
+		editor.focus(true);
+		
+		<!--{if $isfirst}-->
+		// TAB 切换键到 message
+		$('#update_subject_$pid').keydown(function(e) {
+			var keycode = e.keyCode ? e.keyCode : e.which;
+			if(keycode == 9) {
+				setTimeout(function() {editor.focus(true);}, 100); // fix chrome.
+			}
+		});
+		<!--{/if}-->
+		
+		var attachdialog = editor.ui._dialogs.attachmentDialog;
+		//var attachdialog = editor.getDialog('attachment');
+		attachdialog.iframeUrl = '?ueditor-attach-fid-$fid-pid-$pid-redirect-0.htm';
+		
+		attachdialog.onok = function() {
+			$('#'+attachdialog.id+'_iframe')[0].contentWindow.attach_form_submit(attachdialog);
+			return false;
+		};
+		
+		window.set_attach_num = function(attachnum) {
+			if(attachnum > 0) {
+				$('#'+editor.ui.id).find('div.edui-for-attachment').alert(attachnum, {alerticon: 0, width: 20});
+			}
+		};
+		window.set_attach_num(attachnum);
+		
+		// 快捷键相应
+		editor.body.onkeydown = function(e) {
+			if((e.ctrlKey && (e.which == 13 || e.which == 10)) || (e.altKey && e.which == 83)) {
+				editor.sync();
+				$('#update_submit_$pid').trigger('click');
+			}
+		}
+	});
+});

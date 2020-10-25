@@ -1,0 +1,119 @@
+{extend name="$member_style_layout" /}
+
+{block name="title"}认证身份/提升等级{/block}
+{block name="content"}
+<style>
+.upbtn{background:#F60;color:#FFF;padding:5px 6px;}
+.upbtn:before{padding-right:3px;}
+.upbtn:hover{background:#F30;color:#FFF;}
+.show-about{
+	margin:10px;
+}
+.show-about img{
+	max-width:95%;
+}
+</style>
+<div class="MainCont">
+	<div class="head">
+    	<div class="tag">
+        	你的角色<span class="b blue">“{$userdb.groupid|getGroupByid}”</span>{$userdb['group_endtime']>time()?date('(Y-m-d H:i到期)',$userdb['group_endtime']):''}
+        </div>
+    </div>
+    <div class="cont">
+    	<table width="100%" border="0" cellspacing="0" cellpadding="0" class="ListTable">
+          <tr>
+            <th width="20%">相关说明</th>
+{volist name="groupdb" id="rs"}
+              <th>{$rs.title}</th>
+{/volist}
+          </tr>
+          <tr>
+            <td>所需{$money_name}</td>
+{volist name="groupdb" id="rs"}
+           <td>
+		   {if strstr($rs['level'],'=')}
+				{volist name="$rs._level" id="money"}
+					<input type="radio" name="time_{$rs.id}" value="{$key}"><span class="b blue">{$key}</span>天（<span class="b red">{$money}</span>{$money_dw}）<br>
+				{/volist}
+			{else /}
+				<span class="b red">{$rs.level}</span>{$money_dw}
+			{/if}
+		   </td>
+{/volist}
+          </tr>
+		  <tr>
+            <td>有效期</td>
+{volist name="groupdb" id="rs"}
+           <td> {if !strstr($rs['level'],'=')}<span class="b red">{$rs.daytime?:"永久有效"}</span>{$rs.daytime?"天":""}{/if} </td>
+{/volist}
+          </tr>
+		<tr>
+        <td>权限介绍</td>
+        {volist name="groupdb" id="rs"}
+        <td>
+		<div class="about-{$rs.id}" style="display:none;"><div class="show-about">{$rs.about}</div></div>
+		<a href="javascript:layer.open({type:1,title:'权限介绍',area: ['95%', '80%'],content:$('.about-{$rs.id}').html()});" class="glyphicon glyphicon-exclamation-sign">权限介绍</a></td>
+        {/volist} 
+	  </tr>
+          <tr> 
+            <td>&nbsp;</td>
+{volist name="groupdb" id="rs"}
+            
+			<td>
+		  {if is_array(fun("shengji@status",$userdb['uid'],$rs['id']))}
+			  {if fun("shengji@status",$userdb['uid'],$rs['id'])['status']=='0'}
+			  信息已提交,请等待管理员审核! 
+			  {elseif fun("shengji@status",$userdb['uid'],$rs['id'])['status']=='-1'}
+			  申请失败：{:fun("shengji@status",$userdb['uid'],$rs['id'])['refuse_reason']} <a href="{:urls('buy',['gid'=>$rs['id']])}" class='upbtn fa fa-id-badge'>{$rs.level?'重新付费认证':'重新免费认证'}</a> {elseif fun("shengji@status",$userdb['uid'],$rs['id'])['status']=='1'}
+			  成功升级到 {$rs.title}
+			  {/if}
+          {else/} 
+		  	{if count($rs._level)>1}
+				<a href="javascript:upgroup('{:urls('buy',['gid'=>$rs['id']])}',{$rs['id']})" class='upbtn fa fa-id-badge'>{$rs.level?'付费升级':'免费升级'}</a>
+			{else /}
+				<a href="{:urls('buy',['gid'=>$rs['id']])}" class='upbtn fa fa-id-badge ajax_get' data-alert="你确认要付费认证吗?">{$rs.level?'付费升级':'免费升级'}</a>
+			{/if}
+		  {/if}
+			</td>
+{/volist}
+          </tr>
+        </table>
+    </div>
+</div>
+<div class="MainCont mtop10">
+	<div class="head">
+    	<div class="tag">注意事项</div>
+    </div>
+    <div class="cont">
+    	<ul class="aboutnote">
+        	<li>1.部分身份认证，需要消费{$money_name}，你当前可用的{$money_name}是： <span class="b red">{:config('webdb.up_group_use_rmb')?$userdb.rmb:$userdb.money}</span> {$money_dw}</li>
+            <li>2.如果你的{$money_name}不足，你可以先在线充值.<a href="{:purl(config('webdb.up_group_use_rmb')?'marketing/rmb/add':'marketing/jifen/add')}"><span class="b red">在线充值</span></a></li>
+			<li>3.认证升级用户组{if $webdb.forbid_auto_upgroup}需要管理员人工审核通过后才能生效，请如实填写相关信息。{else /}，成功付费后，将自动升级！{/if}</li>
+        </ul>
+    </div>
+</div>
+<script type="text/javascript">
+function upgroup(url,gid){
+	var day = $("input[name='time_"+gid+"']:checked").val();
+	if(day==undefined ){
+		layer.alert('请选择要升级几天?');
+	}else{
+		layer.confirm("你确认要升级 "+day+" 天吗?",{btn1:function(index){
+			layer.close(index);
+			$.get(url+"?day="+day,function(res){
+				if(res.code==0){
+					layer.msg(res.msg);
+					window.location.href = res.url;
+				}else if(res.msg.indexOf('充值')>-1){
+					layer.confirm(res.msg,{btn1:function(index){
+						window.location.href = res.url;
+					}});
+				}else{
+					layer.alert(res.msg);
+				}
+			});
+		}});
+	}
+}
+</script>
+{/block}

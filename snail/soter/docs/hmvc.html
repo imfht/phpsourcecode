@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>HMVC</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/inc.js"></script>
+	</head>
+	<body>
+		<fieldset>
+			<legend>HMVC</legend>
+			<ol>
+				<li><h2 class="title_h2">HMVC简介</h2>
+					HMVC（Hierarchical-Model-View-Controller），也可以叫做 Layered MVC。
+					<br>顾名思义，就是按等级划分的 MVC 模式，简单的解释就是把MVC又细分成了多个子 MVC，
+					<br>每个模块就分成一个 MVC。使用 HMVC 的好处就是可以降低各个功能模块之间的耦合性，
+					<br>提高代码复用性，使得每个功能都可以独立出来，每个模块都有自己的 MVC 结构。
+
+
+				</li>
+				<li><h2 class="title_h2">注册HMVC模块</h2>
+					如果我们要启用一个hmvc模块，我们需要在入口文件index.php里面修改下面的配置：
+					<pre class="brush:php">
+						//注册hmvc模块，数组键是uri里面的hmvc模块名称，值是hmvc模块文件夹名称
+						->setHmvcModules(array(
+							// 'Demo' => 'demo'
+						))
+					</pre>
+					可以看到数组里面<b>键</b>是我们访问hmvc模块的时候<b class="text_strong">URL里面</b>的hmvc模块名称，
+					<br><b>值</b>是hmvc模块的<b class="text_strong">文件夹名称</b>。
+				</li>
+				<li><h2 class="title_h2">HMVC结构</h2>
+					Soter的hvmc子模块默认都在application/hmvc目录里面，一个模块一个目录。
+					<h3 class="title_h3">1.Soter的HMVC目录结构</h3>
+					<pre>
+application
+	|- classes
+		|- Controller
+			|- controllers.php
+		|- Model
+			|- models.php
+		|- ...
+	|- views
+		|- index.php
+		|- footer.php
+		|- ...
+	|- hmvc
+		|- hmvc_module1
+			|- classes
+				|- Controller
+					|- controllers.php
+				|- Model
+					|- models.php
+				|- ...
+			|- views
+				|- index.php
+				|- footer.php
+				|- ...
+			|- ....
+		|- hmvc_module2
+			|- classes
+				|- Controller
+					|- controllers.php
+				|- Model
+					|- models.php
+				|- ...
+			|- views
+				|- index.php
+				|- footer.php
+				|- ...
+			|- ....
+		|- ....
+					</pre>
+				</li>
+				<li><h2 class="title_h2">访问HMVC模块</h2>
+					当我们在入口文件里面启用了一个hmvc模块之后，默认情况下我们可以通过pathinfo路由模式和get路由模式访问hmvc模块。
+					<br>假如我们在入口文件注册了<code>Demo=>demo</code> HMVC模块，url中对应模块名称是Demo。
+					<h3 class="title_h3">1.pathinfo模式</h3>
+					比如：http://127.0.0.1/index.php/<b>Demo/</b>Welcome/index.do
+					<br>可以看到我们只需要在index.php/后面跟上hmvc模块配置的名称即可，这里是Demo，然后后面就是 控制器名称/方法名称.do
+					<br>上面的url访问的是demo hmvc模块的Welcome控制器的do_index方法。
+					<h3 class="title_h3">2.get模式</h3>
+					get模式很简单，我们只需要通过m参数指定hmvc模块配置名称即可。
+					<br>比如：http://127.0.0.1/index.php?m=Demo&c=Welcome&a=index
+					<br>上面的url访问的是demo hmvc模块的Welcome控制器的do_index方法。
+				</li>
+				<li><h2 class="title_h2">HMVC模块绑定子域名</h2>
+					在入口文件里面我们可以看到下面的配置：
+					<pre class="brush:php">
+						/* hvmc模块域名绑定
+						 * 1.子域名绑定
+						 * domains的键是二级开始的域，不包含顶级域名.
+						 * 比如顶级域名是test.com,这里的domains的键是demo代表demo.test.com
+						 * 再比如domains的键是i.user代表i.user.test.com
+						 * isFullDomain这里设置为false.
+						 * 2.完整域名绑定
+						 * domains的键是完整的域名,比如demo.com,
+						 * isFullDomain这里设置为true.
+						 * 配置项介绍:
+						 *	0.最外层的enable是总开关.
+						 * 	1.hmvcModuleName是域名要绑定的hmvc模块名称，
+						 *	   也就是对应着上面的setHmvcModules()注册的关联数组中的"键"名称.
+						 * 	2.demo下面的enable是单个域名绑定是否启用.
+						 * 	3.domainOnly是否只能通过绑定的域名访问hvmc模块.
+						 * 	4.绑定完整的域名isFullDomain这里设置为true.
+						 *	   绑定子域名isFullDomain这里设置为false.
+						 */
+						->setHmvcDomains(array(
+						    'enable' => false, //总开关，是否启用
+						    'domains' => array(
+							'demo' => array(
+							    'hmvcModuleName' => 'Demo', //hvmc模块名称
+							    'enable' => false, //单个开关，是否启用
+							    'domainOnly' => true, //是否只能通过绑定的域名访问
+							    'isFullDomain' => false//绑定完整的域名设置为true；绑定子域名设置为false
+							)
+						    )
+						))
+					</pre>
+					上面的配置就是定义子域名和hmvc模块的绑定关系，如果需要配置多个域名绑定,在domains下面增加多个配置数组即可.
+
+					<br><b class="text_strong">提示：</b>
+					<br>假设当前访问的网站顶级域名是test.com。
+					<br>绑定设置如下：
+					<pre class="brush:php">
+						->setHmvcDomains(array(
+						    'enable' => true,
+						    'domains' => array(
+								'demo' => array(
+										'hmvcModuleName' => 'Demo', 
+										'enable' => true, 
+										'domainOnly' => true,
+										'isFullDomain' => false
+								),
+								'i.u' => array(
+										'hmvcModuleName' => 'User', 
+										'enable' => true, 
+										'domainOnly' => true,
+										'isFullDomain' => false
+								),
+								'news.com' => array(
+										'hmvcModuleName' => 'News',
+										'enable' => true, 
+										'domainOnly' => true,
+										'isFullDomain' => true
+								),
+						    )
+						))
+					</pre>
+					当我们的hvmc模块绑定了子域名之后，绑定前后的访问方式如下：
+					<br>1.访问 Demo hmvc模块的控制器Welcome的index方法
+					<br>绑定前：http://test.com/index.php/Demo/Welcome/index.do
+					<br>绑定后：http://demo.test.com/index.php/Welcome/index.do
+					<br>2.访问 User hmvc模块的控制器Welcome的index方法
+					<br>绑定前：http://test.com/index.php/User/Welcome/index.do
+					<br>绑定后：http://i.u.test.com/index.php/Welcome/index.do
+					<br>3.访问 News hmvc模块的控制器Welcome的index方法
+					<br>绑定前：http://test.com/index.php/News/Welcome/index.do
+					<br>绑定后：http://news.com/index.php/Welcome/index.do
+
+				</li>
+			</ol>
+		</fieldset>
+		<script src="js/inc.foot.js"></script>
+	</body>
+</html>

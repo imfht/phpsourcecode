@@ -1,0 +1,63 @@
+其实卸载就是一个逆向思维，还是提供卸载方法吧，免得有人说不会：
+
+#
+#--------[ 打开 ]------------
+#
+includes/class/module_bbcode.php
+#
+#--------[ 找到并删除 ]------------
+#
+var $ad = array();
+#
+#--------[ 找到并删除 ]------------
+#
+$this->load_index_ad();
+#
+#--------[ 找到并删除 ]------------
+#
+			'[显示顶部广告]'=> $this->ad['top'],
+			'[显示底部广告]'=> $this->ad['foot'],
+#
+#--------[ 找到并删除 ]------------
+#
+	function load_index_ad() {
+		global $table_prefix;
+		$top = '';
+		$foot = '';
+		$sql = 'SELECT ad_id, ad_name, ad_type, ad_time, ad_url
+			FROM ' . $table_prefix.'shop_ad
+			ORDER BY ad_id DESC';
+		if ( !($result = $this->_db->sql_query($sql)) ) trigger_error('无法查询广告信息', E_USER_WARNING);
+		if ( $row = $this->_db->sql_fetchrow($result) ) {
+			$i = 0;
+			do {
+				if ( $row['ad_type'] ) {
+					if ( $row['ad_time'] < time() ) $this->_db->sql_query("DELETE FROM " . $table_prefix . "shop_ad WHERE ad_id = " . $row['id']);
+					else $top .= '<a href="' . $row['ad_url'] . '">' . $row['ad_name'] . '</a><br />';
+				} else {
+					if ( $row['ad_time'] < time() ) $this->_db->sql_query("DELETE FROM ".$table_prefix."shop_ad WHERE ad_id = " . $row['id']);
+					else $foot .= '<a href="' . $row['ad_url'] . '">' . $row['ad_name'] . '</a><br />';
+				}
+				$i++;
+			}
+			while ( $row = $this->_db->sql_fetchrow($result) );
+			$this->_db->sql_freeresult($result);
+		}
+
+		$this->ad['top'] = $top;
+		$this->ad['foot'] = $foot;
+	}
+#
+#--------[ 打开 ]------------
+#
+template/admin/help_module_bbcode.tpl
+#
+#--------[ 找到并删除 ]------------
+#
+					<div class="title">MODS</div>
+					<p><input type="text" value="[显示顶部广告]"> => 显示顶部广告</p>
+					<hr />
+					<p><input type="text" value="[显示底部广告]"> => 显示底部广告</p>
+#
+#--------[ 进入MODS管理后台，选择虚拟商店卸载，完成 ]------------
+#

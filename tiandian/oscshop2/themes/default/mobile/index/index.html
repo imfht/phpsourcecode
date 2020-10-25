@@ -1,0 +1,98 @@
+{extend name="public:base" /}
+{block name="head"}
+<link href="__PUBLIC__/view_res/mobile/css/home.css" type="text/css" rel="Stylesheet" />
+<script src="__PUBLIC__/artTemplate/template.js"></script>
+<script src="__PUBLIC__/view_res/mobile/load_list.js"></script>
+<script src="__PUBLIC__/view_res/mobile/index.js"></script>
+{/block} 
+{block name="header"}
+{include file="public/search" /}
+{/block}
+
+{block name="content"}
+<section class="home-recom">
+    <section class="clearfix" id="goods_list">
+
+    </section>
+    <div id="list-loading" style="display: none;"><img src="__PUBLIC__/view_res/mobile/images/icon/spinner-g-60.png" width="30"></div>
+</section>
+<script id="list" type="text/html">
+    	<@each list as value i@>
+	        <a href="/mobile/goods/detail/id/<@value.goods_id@>" class="hplist">
+	                <img src="/<@value.image@>" />
+	                <p><@value.name@></p>
+	        <i>&yen;<@value.price@></i>
+	        </a>
+        <@/each@>
+</script>
+{/block}
+
+{block name="footer"}
+{include file="public/footer-nav" /}
+{/block}
+
+{block name="script"}
+{if condition="in_wechat()"}
+<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>    
+<script type="text/javascript">
+wx.config({
+    debug: false,            
+    appId: '{$signPackage.appId}',
+    timestamp: {$signPackage.timestamp},
+    nonceStr: '{$signPackage.nonceStr}',
+    signature: '{$signPackage.signature}',            
+    jsApiList: [
+    'checkJsApi',
+    'onMenuShareTimeline',
+    'onMenuShareAppMessage'
+    ]
+});	
+        
+wx.ready(function(){
+	
+		var is_agent = '<?php echo user("is_agent"); ?>';
+        var site_url='<?php echo request()->domain(); ?>';
+        if(is_agent==1){        	
+        	var url =site_url+'/mobile/index/agent_share/osc_aid/'+'<?php echo hashids()->encode(user("uid")); ?>';
+        }else{
+        	var url =site_url+'/mobile/';
+        }           
+   
+        //获取“分享到朋友圈”按钮点击状态及自定义分享内容接口
+        wx.onMenuShareTimeline({
+            title: '<?php echo config("SITE_NAME"); ?>',
+            link: url, 
+            imgUrl: site_url+'/uploads/<?php echo config("SITE_ICON"); ?>',
+            success: function () {
+               pvShareCallback(url,'分享到朋友圈');
+            }
+        });
+        //获取“分享给朋友”按钮点击状态及自定义分享内容接口
+        wx.onMenuShareAppMessage({
+            title: '<?php echo config("SITE_NAME"); ?>',
+            desc: '<?php echo config("SITE_NAME"); ?>',
+            link: url,
+            imgUrl: site_url+'/uploads/<?php echo config("SITE_ICON"); ?>',
+            success: function () {
+              pvShareCallback(url,'分享给朋友');
+            }
+        });
+        function pvShareCallback(url,type) {
+        	
+            $.post("{:url('Index/add_share')}", {
+                url: url,
+                uid:'<?php echo user("uid"); ?>',
+                type:type                    
+            });
+        }  
+        
+});	        
+         	        
+</script> 
+{/if}
+<script>
+$(function(){
+scroll_load('mobile/index/ajax_goods_list','list','goods_list');
+});
+</script>
+{/block}

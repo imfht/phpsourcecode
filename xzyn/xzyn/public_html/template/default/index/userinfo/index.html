@@ -1,0 +1,324 @@
+{extend name="public/base" /}
+{block name="title"}
+<title>{$udata['name'] ?: $udata['username']}的个人主页 - {:confv('title')}</title>
+<meta name="keywords" content="{:confv('keywords')}">
+<meta name="description" content="{:confv('description')}">
+{/block}
+{block name="pjax_container"}
+<div class="content">
+{notempty name="$udata['id']"}
+    <div class="row">
+        <div class="col-sm-12">
+			<div class="box box-widget widget-user userinfo">
+			    <div class="widget-user-header bg-black userinfo-top x-dwr" style="background: url('__static__/common/admin/adminLTE/img/photo1.png') center center;">
+			      	{eq name="$udata['id']" value="$user['id']"}
+			      	<a class="x-tc-bai" href="{:url('@member/users/index')}">
+			      		<h3 class="widget-user-username pull-right"><i class="fa fa-gear"></i></h3>
+			      	</a>
+			      	{/eq}
+			      	<h3 class="widget-user-username">{$udata['name'] ?: $udata['username']}</h3>
+			      	<h5 class="widget-user-desc">{:csubstr(strip_tags(htmlspecialchars_decode($udata['userinfo']['info'])),60)}</h5>
+
+				    <div class="bg-red x-dwa-rb x-f12 x-plr-5">共 {$udata['click']} 位访客</div>
+			    </div>
+			    <div class="widget-user-image">
+			      	<img class="img-circle x-yy-4" data-toggle="modal" data-target="#tauserinfo" src="{$udata['userinfo']['avatar']|default='/static/global/face/default.png'}">
+			    	<form class="form-horizontal" method="POST" action="{:url('userinfo/focus')}" onsubmit="return false" >
+		    			<input type="hidden" name="uid" value="{$udata['id']}" />
+				    	<span class="x-yuan btn btn-info btn-xs x-dwa-lb x-yy-4 submits" title="点击关注" style="left:50%;margin-left:-12px;bottom:-12px;" data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt;">
+				    		<i class="fa fa-heart donghua pulse infinite"></i>
+				    	</span>
+			    	</form>
+			    </div>
+			    <div class="box-footer nav-tabs-custom no-padding">
+			      	<div class="row nav nav-tabs x-ptb-10">
+			            <div class="col-sm-3 col-xs-3 border-right active">
+			                <a href="#tab1" class="x-tc-heis archive" data-toggle="tab" aria-expanded="true">
+				                <div class="description-block">
+				                    <h5 class="description-header"><i class="fa fa-pencil-square-o fa-lg"></i></h5>
+				                    <span class="description-text ">TA的文章</span>
+				                </div>
+			                </a>
+			            </div>
+			            <div class="col-sm-3 col-xs-3">
+			            	<a href="#tab1" class="x-tc-heis arc-rep" data-toggle="tab" aria-expanded="false">
+				                <div class="description-block">
+				                    <h5 class="description-header"><i class="fa fa-commenting-o fa-lg"></i></h5>
+				                    <span class="description-text ">TA的回复</span>
+				                </div>
+			                </a>
+			            </div>
+			            <div class="col-sm-3 col-xs-3 border-right">
+			            	<a href="#tab2" class="x-tc-heis focus_ta_btn" data-toggle="tab" aria-expanded="false">
+				                <div class="description-block">
+				                    <h5 class="description-header"><i class="fa fa-user-plus fa-lg"></i></h5>
+				                    <span class="description-text ">关注TA的</span>
+				                </div>
+			                </a>
+			            </div>
+			            <div class="col-sm-3 col-xs-3 ">
+			                <a href="#tab2" class="x-tc-heis ta_focus_btn" data-toggle="tab" aria-expanded="false">
+				            	<div class="description-block">
+				                    <h5 class="description-header"><i class="fa fa-users fa-lg"></i></h5>
+				                    <span class="description-text">TA关注的</span>
+				                </div>
+			                </a>
+			            </div>
+			      	</div>
+
+			      	<div class="tab-content no-padding">
+			      		<div class="tab-pane active" id="tab1">
+			      			<div class="box box-primary no-margin">
+					            <div class="box-header with-border">
+					              	<h3 class="box-title listTitle"><i class="fa fa-pencil-square-o"></i> TA发布的文章</h3>
+					            </div>
+					            <div class="box-body no-padding new-arc-box"></div>
+					            <div class="box-footer" style="padding-top:10px;">
+									<button class="btn btn-block btn-success" id="new-arc-btn" data-type="newarc" data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt; 加载中..." >点击加载</button>
+					            </div>
+					        </div>
+			      		</div>
+			      		<div class="tab-pane" id="tab2">
+			      			<div class="box box-primary no-margin">
+					            <div class="box-header with-border">
+					              	<h3 class="box-title focus_title"><i class="fa fa-heart"></i> 关注TA的</h3>
+					            </div>
+					            <div class="box-body">
+					              	<ul class="products-list product-list-in-box focus_list"></ul>
+					            </div>
+					            <div class="box-footer" style="padding-top:10px;">
+					              	<button class="btn btn-block btn-success" id="load-btn" data-type="focus_ta" data-loading-text="&lt;i class='fa fa-spinner fa-spin '&gt;&lt;/i&gt; 加载中..." >点击加载</button>
+					            </div>
+					        </div>
+					    </div>
+			      	</div>
+			    </div>
+			</div>
+		</div>
+    </div>
+
+	<!--资料-->
+	<div class="modal fade" id="tauserinfo" data-backdrop="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-body no-padding">
+					<ul class="list-group no-margin">
+					  	<li class="list-group-item"><b class="">手机号：</b>
+					  		{neq name="$udata['is_share']['moblie_is_share']" value="0"}
+					  			{$udata['moblie']|default="这家伙很懒，什么也没留下"}
+					  			<a href="tel:{$udata['moblie']}" class="btn btn-info btn-xs pull-right"><i class="fa fa-phone"></i> 拨打</a>
+					  		{else /}
+					  			<span class="x-tc-hong">保密</span>
+					  		{/neq}
+					  	</li>
+					  	<li class="list-group-item"><b class="">微信号：</b>
+					  		{neq name="$udata['is_share']['wx_is_share']" value="0"}
+					  			{$udata['userinfo']['weixin']|default="这家伙很懒，什么也没留下"}
+					  			<a href="javascript:void(0);" onclick="$('.wximg_btn').click()" data-dismiss="modal" class="btn btn-info btn-xs pull-right">
+					  				<i class="fa fa-qrcode"></i> 二维码
+					  			</a>
+					  		{else /}
+					  			<span class="x-tc-hong">保密</span>
+					  		{/neq}
+					  	</li>
+					  	<li class="list-group-item"><b class=""> QQ号：</b>
+					  		{neq name="$udata['is_share']['qq_is_share']" value="0"}
+					  			{$udata['userinfo']['qq']|default="这家伙很懒，什么也没留下"}
+					  			<a href="http://wpa.qq.com/msgrd?v=3&uin={$udata['userinfo']['qq']}&site=qq&menu=yes" class="btn btn-info btn-xs pull-right"><i class="fa fa-qq"></i> 发信息</a>
+					  		{else /}
+					  			<span class="x-tc-hong">保密</span>
+					  		{/neq}
+					  	</li>
+					  	<li class="list-group-item"><b class=""> 邮箱：</b>
+					  		{neq name="$udata['is_share']['email_is_share']" value="0"}
+					  			{$udata['email']|default="这家伙很懒，什么也没留下"}
+					  			<a href="Mailto:{$udata['email']}" class="btn btn-info btn-xs pull-right"><i class="fa fa-envelope-o"></i> 发邮件</a>
+					  		{else /}
+					  			<span class="x-tc-hong">保密</span>
+					  		{/neq}
+					  	</li>
+					  	<li class="list-group-item"><b class=""> 性别：</b>
+					  		{neq name="$udata['is_share']['sex_is_share']" value="0"}
+					  			<a href="javascript:void(0);">{eq name="$udata['sex']" value="0"}女{else /}男{/eq}</a>
+					  		{else /}
+					  			<span class="x-tc-hong">保密</span>
+					  		{/neq}
+					  	</li>
+					  	<li class="list-group-item"><b class=""> 生日：</b>
+					  		{neq name="$udata['is_share']['birthday_is_share']" value="0"}
+					  			<a href="javascript:void(0);">{$udata['userinfo']['birthday']|date='Y-m-d'}</a>
+					  		{else /}
+					  			<span class="x-tc-hong">保密</span>
+					  		{/neq}
+					  	</li>
+					  	<li class="list-group-item"><b class=""> 个人简介：</b>
+					  		<span class="">{$udata['userinfo']['info']|default="这家伙很懒，什么也没留下"}</span>
+					  	</li>
+					</ul>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	{neq name="$udata['is_share']['wx_is_share']" value="0"}
+		<div id="weixin_img" class="x-yc">
+			<img class="wximg_btn" src="{$udata['userinfo']['wximgurl_turn']}" />
+		</div>
+	{/neq}
+
+{else /}
+	{$empty}
+{/notempty}
+</div>
+
+<script>
+$(function() {
+	var page = 1;
+	var pages = 1;
+    $('body').off('click', '#new-arc-btn');
+    $('body').off('click', '#load-btn');
+    $('body').off('click', '.arc-rep');
+    $('body').off('click', '.archive');
+    $('body').off('click', '.focus_ta_btn');
+    $('body').off('click', '.ta_focus_btn');
+
+    $('body').on("click", '.arc-rep', function(event) {	//回复的文章
+    	var type = $('#new-arc-btn').data('type');
+    	var disabled = $('#new-arc-btn').attr('disabled');
+    	$('.listTitle').html('<i class="fa fa-pencil-square-o"></i> TA回复的文章');
+    	if( disabled ){
+    		$('#new-arc-btn').attr('disabled',false);
+    		$('#new-arc-btn').html('点击加载');
+    	}
+    	if( type != 'newarc_rep' ){
+			$('#new-arc-btn').data('type','newarc_rep');
+			page = 1;
+    		$('.new-arc-box').empty();
+    		$('#new-arc-btn').button('loading');
+			$('#new-arc-btn').trigger("click");
+		}else{
+			page = 1;
+    		$('.new-arc-box').empty();
+    		$('#new-arc-btn').button('loading');
+			$('#new-arc-btn').trigger("click");
+		}
+    })
+
+    $('body').on("click", '.archive', function(event) {	//发布的文章
+    	var type = $('#new-arc-btn').data('type');
+    	var disabled = $('#new-arc-btn').attr('disabled');
+    	$('.listTitle').html('<i class="fa fa-pencil-square-o"></i> TA发布的文章');
+    	if( disabled ){
+    		$('#new-arc-btn').attr('disabled',false);
+    		$('#new-arc-btn').html('点击加载');
+    	}
+    	if( type != 'newarc' ){
+    		$('#new-arc-btn').data('type','newarc');
+    		page = 1;
+    		$('.new-arc-box').empty();
+    		$('#new-arc-btn').button('loading');
+    		$('#new-arc-btn').trigger("click");
+		}else{
+			page = 1;
+    		$('.new-arc-box').empty();
+    		$('#new-arc-btn').button('loading');
+			$('#new-arc-btn').trigger("click");
+		}
+    })
+
+    $('body').on("click", '#new-arc-btn', function(event) {
+        var _this = $(this);
+        var type = _this.data('type');
+        _this.button('loading');
+        $.ajax({
+            type: "post",
+            url: "/index/userinfo/newarc",
+            data:{'page':page,'uid':{$udata['id']},'type':type},
+            success: function(html) {
+                if(html != '') {
+                    $('.new-arc-box').append(html);
+                    page += 1; //分页数+1
+                    _this.button('reset');
+                } else {
+                    _this.html('没有更多');
+                }
+            }
+        });
+    });
+
+    $('body').on("click", '.focus_ta_btn', function(event) {	//关注TA的
+    	var type = $('#load-btn').data('type');
+    	var disabled = $('#load-btn').attr('disabled');
+    	$('.focus_title').html('<i class="fa fa-heart"></i> 关注TA的');
+    	if( disabled ){
+    		$('#load-btn').attr('disabled',false);
+    		$('#load-btn').html('点击加载');
+    	}
+    	if( type != 'focus_ta' ){
+    		$('#load-btn').data('type','focus_ta');
+    		pages = 1;
+    		$('.focus_list').empty();
+    		$('#load-btn').button('loading');
+    		$('#load-btn').trigger("click");
+		}else{
+			pages = 1;
+    		$('.focus_list').empty();
+    		$('#load-btn').button('loading');
+			$('#load-btn').trigger("click");
+		}
+    })
+
+    $('body').on("click", '.ta_focus_btn', function(event) {	//TA关注的
+    	var type = $('#load-btn').data('type');
+    	var disabled = $('#load-btn').attr('disabled');
+    	$('.focus_title').html('<i class="fa fa-heart"></i> TA关注的');
+    	if( disabled ){
+    		$('#load-btn').attr('disabled',false);
+    		$('#load-btn').html('点击加载');
+    	}
+    	if( type != 'ta_focus' ){
+    		$('#load-btn').data('type','ta_focus');
+    		pages = 1;
+    		$('.focus_list').empty();
+    		$('#load-btn').button('loading');
+    		$('#load-btn').trigger("click");
+		}else{
+			pages = 1;
+    		$('.focus_list').empty();
+    		$('#load-btn').button('loading');
+			$('#load-btn').trigger("click");
+		}
+    })
+
+    $('body').on("click", '#load-btn', function(event) {
+        var _this = $(this);
+        var type = _this.data('type');
+        _this.button('loading');
+        $.ajax({
+            type: "post",
+            url: "/index/userinfo/focuslist",
+            data:{'page':pages,'uid':{$udata['id']},'type':type},
+            success: function(html) {
+//                  console.log(html);
+                if(html != '') {
+                    $('.focus_list').append(html);
+                    pages += 1; //分页数+1
+                    _this.button('reset');
+                } else {
+                    _this.html('没有更多');
+                }
+            }
+        });
+    });
+	$(".avatar-view").tooltip({placement:'bottom'});
+    $('#new-arc-btn').trigger("click");
+	var viewer = new Viewer(document.getElementById('weixin_img'), {	//浏览图片
+		title:false,	//显示当前图片的标题（现实 alt 属性及图片尺寸）默认 true
+		fullscreen:false,	//播放时是否全屏,默认 true
+		interval:3000,	//播放间隔，单位为毫秒 默认 5000
+	});
+
+})
+
+</script>
+{/block}

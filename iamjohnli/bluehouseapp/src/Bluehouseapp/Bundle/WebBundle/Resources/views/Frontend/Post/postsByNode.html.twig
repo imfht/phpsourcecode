@@ -1,0 +1,149 @@
+{% extends "BluehouseappWebBundle:Frontend/layout:layout.html.twig" %}
+{% from 'BluehouseappWebBundle:Macros:misc.html.twig'  import pagination %}
+{% block title %}蓝房子{% endblock %}
+{% block body -%}
+    <div class="h20"></div>
+    <div class="box">
+        <!-- 节点下的帖子样式 start -->
+        <div class="box">
+            <div class="box_header"><div style="float: left; display: inline-block; margin-right: 10px; margin-bottom: 10px;">
+
+    {% if currentNode.attachment %}
+        <img src="{{vich_uploader_asset(currentNode,'image')|imagine_filter('avatar_image')}}" border="0" align="default" width="auto"/>
+
+    {% endif %}
+
+            </div>
+                <div class="fr f12"><span class="box_snow">主题总数</span> <strong class="box_gray">{{ entities.nbResults }}</strong></div><a href={{ path('post') }}>蓝房子</a>
+                <span class="box_chevron">&nbsp;>&nbsp;</span> {{ currentNode.name }}
+
+                <div class="h10"></div>
+                <span class="f12 box_gray">
+                {% if currentNode.description %}
+                    {{ currentNode.description }}
+                {% endif %}
+                </span>
+                <div class="h10"></div>
+                <input type="button" class="super normal button" value="创建新主题" onclick="location.href = '{{ path('post_new', { 'nodeId': currentNode.id }) }}';">
+
+            </div>
+
+
+            {% for entity in entities %}
+                <div class="box-cell box-item" style="border-top-left-radius: 3px; border-top-right-radius: 3px;">
+                    <div style="position: absolute; margin: -10px -10px 0px 650px;"></div>
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tbody>
+                        <tr>
+                            <td width="48" valign="top" align="center">
+                                {% set member=entity.member %}
+
+                                <a href="{{ path('user_show', { 'username': member.username }) }}">
+                                    {% if entity.member.avatar %}
+                                        <img src="{{vich_uploader_asset(member,'userImage')|imagine_filter('small_image')}}"/>
+                                    {% else %}
+                                        <img src="{{ asset('bundles/bluehouseappweb/images/user_default.png') }}"/>
+                                    {% endif %}
+                                </a>
+
+
+                            </td>
+                            <td width="10"></td>
+
+                            <td width="auto" valign="middle"><span class="box-item-title"><a
+                                            href="{{ path('post_show', { 'id': entity.id }) }}">{{ entity.title }}</a></span>
+
+                                <div class="h_5"></div>
+                    <span class="box-small box-fade"><div class="box-votes"></div>
+                        <a class="box-node" href="#">{{ entity.node.name }}</a> &nbsp;•&nbsp; <strong>
+                            <a  href="{{ path('user_show', { 'username': entity.member.username }) }}">
+                                {% if entity.member.nickname %}
+                                    {{ entity.member.nickname }}
+                                {% else %}
+                                    {{ entity.member.username }}
+                                {% endif %}
+                            </a></strong> &nbsp;•&nbsp;
+
+
+                        {{ time_diff(entity.modified) }}
+                        {% if lastComments[entity.id] %}
+                            {% set member= lastComments[entity.id].member %}
+                            &nbsp;•&nbsp; 最后回复来自 <strong>
+                            <a
+                                    href="{{ path('user_show', { 'username': member.username }) }}">
+                                {% if member.nickname %}
+                                    {{ member.nickname }}
+                                {% else %}
+                                    {{ member.username }}
+                                {% endif %}
+                            </a>
+                        </strong>
+                        {% endif %}
+                    </span>
+                            </td>
+                            <td width="50" align="right" valign="middle">
+                                {%  if entity.commentCount>0 %}
+                                    <a href="#" class="box-count-livid">{{ entity.commentCount }}</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            {% endfor %}
+
+        </div>
+        <!-- 节点下的帖子样式 end -->
+
+
+
+
+
+    </div>
+
+    {{ pagination(entities) }}
+
+    <!-- 节点内容 -->
+    <div class="h20"></div>
+    <div class="box">
+        <div class="box-cell">
+            <div class="box-fr"><a href="#">浏览全部节点</a></div>
+            <span class="box-fade"><strong>蓝房子</strong> / 节点导航</span>
+        </div>
+    {% for category in categories %}
+        {% if loop.last %}
+        <div class="box-inner">
+        {% else %}
+        <div class="box-cell">
+        {% endif %}
+            <table cellpadding="0" cellspacing="0" border="0">
+                <tbody>
+                    <tr>
+                        <td align="right" width="60">
+                            <span class="box-fade">{{ category.name }}</span>
+                        </td>
+                        <td style="line-height: 200%; padding-left: 10px;">
+
+                            {% if category.nodes %}
+                                {% set nodes=category.nodes %}
+                                {% for node in nodes %}
+                                    {% if node.status %}
+                                        {% if node.enabled %}
+                                            <a href="{{ path('post_by_node', { 'currentNodeId': node.id }) }}" style="font-size: 14px;"> {{ node.name }}</a>&nbsp; &nbsp;
+                                        {% endif %}
+                                    {% endif %}
+
+
+                                {% endfor %}
+                            {% endif %}
+
+
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    {% endfor%}
+    </div>
+{% endblock %}

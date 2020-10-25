@@ -1,0 +1,145 @@
+{extend name="Public:base" /}
+      {block name="seo"}
+              <title>{$keyword}|搜索页|{$Think.CONFIG.WEB_SITE_TITLE} - Powered by EasySNS!</title>
+  
+  
+  <meta name="keywords" content="{$Think.CONFIG.WEB_SITE_KEYWORD}">
+  <meta name="description" content="{$Think.CONFIG.WEB_SITE_DESCRIPTION}">
+      {/block}
+{block name="body"}
+<div class="aw-container-wrap">
+	<div class="container">
+		<div class="row">
+			<div class="aw-content-wraps clearfix">
+				<div class="col-sm-12 aw-main-content">
+					<div class="aw-mod aw-mod-search-result">
+						<div class="mod-head">
+							<div class="tabbable">
+								<ul class="nav nav-tabs aw-nav-tabs active" id="list_nav">
+									<li><a href="#users" data-toggle="tab">用户</a></li>
+									<li ><a href="#ht" data-toggle="tab">话题</a></li>
+
+									<li class="active"><a href="#topics" data-toggle="tab">帖子</a></li>
+									
+									<h2 class="hidden-xs">
+										<p>搜索 - <span id="aw-search-type">帖子</span>
+										</p>
+									</h2>
+								</ul>
+							</div>
+						</div>
+						<div class="mod-body">
+							<div class="tab-content">
+								<div class="tab-pane active">
+									<div id="search_result">
+
+
+</div>
+
+									<!-- 加载更多内容 -->
+									<a class="aw-load-more-content disabled" id="search_result_more" data-page="1">
+										<span>更多...</span>
+									</a>
+									<!-- end 加载更多内容 -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+{/block}
+{block name="script"}
+<script>
+var search_query = '{$keyword}';
+var split_query = '';
+var ajax_template = '';
+$(function()
+{
+	$('#list_nav a').click(function ()
+	{
+		
+		window.location.hash = $(this).attr('href').replace(/#/g, '');
+
+		$('#aw-search-type').html($(this).text());
+
+		$('#search_result').html('<p style="padding: 15px 0" align="center"><img src="' + G_BASE_URL + '/public/images/loding.gif" alt="" /></p>');
+
+		$('#search_result_more').attr('data-page', 1).click();
+	});
+
+	$('#search_result_more').click(function()
+	{
+		var _this = this,
+			page = parseInt($(this).attr('data-page')) || 1
+
+		var request_url = G_BASE_URL + 'index.php?c=Ajaxinfo&a=search&type=' +  window.location.hash.replace(/#/g, '') + '&q=' + encodeURIComponent(search_query) + '&template=' + ajax_template + '&page=' + page;
+
+		if (typeof search_recommend != 'undefined')
+		{
+			var request_url = request_url + '&is_recommend=1';
+		}
+
+		$(this).addClass('loading');
+
+		$.get(request_url, function (response)
+		{
+			if (response.code==1)
+			{
+				if ($(_this).attr('data-page') == 1)
+				{
+					$('#search_result').html(response.data.data);
+				}
+				else
+				{
+					$('#search_result').append(response.data.data);
+				}
+
+				$('#search_result .aw-title a').highText(split_query, 'span', 'aw-text-color-red');
+
+				$(_this).attr('data-page', parseInt($(_this).attr('data-page')) + 1);
+
+			}
+			else
+			{
+				if ($(_this).attr('data-page') == 1)
+				{
+					$('#search_result').html('<p style="padding: 15px 0" align="center">' + _t('没有内容') + '</p>');
+				}
+				if ($(_this).attr('data-page') > 1)
+				{
+					
+					$(_this).find('span').html(_t('没有更多了'));
+				}
+				
+				$(_this).addClass('disabled');
+
+			}
+
+			$(_this).removeClass('loading');
+
+		});
+
+		return false;
+	});
+	
+	switch (window.location.hash)
+	{
+		case '#questions':
+		case '#ht':
+		case '#users':
+		case '#topics':
+			
+			$("#list_nav a[href='" + window.location.hash + "']").click();
+		break;
+
+		default:
+			$("#list_nav a[href='#topics']").click();
+		break;
+	}
+});
+</script>
+{/block}

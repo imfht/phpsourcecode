@@ -1,0 +1,157 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'新建：'.$flow_type['name']))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a onclick="go_return_url();" class="btn btn-sm btn-primary">返回</a>
+				<eq name="flow_type.is_lock" value="0">
+					<a onclick="popup_confirm();"  class="btn btn-sm btn-primary">选择审批流程</a>
+				</eq>
+			</div>
+			<div class="pull-right">
+				<a onclick="save(10);"  class="btn btn-sm btn-primary">存草稿</a>
+				<a onclick="save(20);"  id="post" class="btn btn-sm btn-primary">提交</a>
+			</div>
+		</div>
+	</div>
+	<form method='post' id="form_data" name="form_data" enctype="multipart/form-data" class="well form-horizontal">
+		<input type="hidden" id="ajax" name="ajax" value="1">
+
+		<input type="hidden" id="type" name="type" value="{$flow_type.id}">
+		<input type="hidden" id="opmode" name="opmode" value="add">
+		<input type="hidden" id="confirm" name="confirm" value="">
+		<input type="hidden" id="confirm_name" name="confirm_name" value="">
+		<input type="hidden" id="consult" name="consult" value="">
+		<input type="hidden" id="consult_name" name="consult_name" value="">
+		<input type="hidden" id="refer" name="refer" value="">
+		<input type="hidden" id="refer_name" name="refer_name" value="">
+		<input type="hidden" id="step" name="step" value="">
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">标题*：</label>
+			<div class="col-sm-10">
+				<input class="form-control" type="text" id="name" name="name" check="require" msg="请输入标题">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >文件编号：</label>
+			<div class="col-sm-10">
+				<p class="form-control-static">
+					{$flow_type.doc_no_format}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >审批：</label>
+			<div class="col-sm-10 address_list_box">
+				<p id="confirm_wrap" class="form-control-static address_list">
+					{$flow_type.confirm_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >协商：</label>
+			<div class="col-sm-10 address_list_box">
+				<p id="consult_wrap" class=" form-control-static address_list">
+					{$flow_type.consult_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group hidden">
+			<label class="col-sm-2 control-label" >抄送：</label>
+			<div class="col-sm-10">
+				<p id="refer_wrap" class="form-control-static address_list">
+					{$flow_type.refer_name}
+				</p>
+			</div>
+		</div>
+		<volist name="field_list" id="vo">
+			{:W('UserDefineField/edit',array($vo))}
+		</volist>
+		<eq name="flow_type.is_show" value="1">
+			<div class="form-group">
+				<div class="col-xs-12">
+					<textarea class="editor" id="content" name="content" style="width:100%;height:300px;">{$flow_type.content}</textarea>
+				</div>
+			</div>
+		</eq>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" >附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/add')}
+			</div>
+		</div>
+	</form>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		$(document).ready(function() {
+			udf_field.init();
+
+			<php>if($flow_type['is_lock']==0){</php>
+			$('.address_list').on('mouseenter', 'span', function() {
+				$(this).find('i').remove();
+				$(this).append('<i class="fa fa-times"></i>');	 
+			});
+			$('.address_list').on('mouseleave', 'span', function() {
+				$i = $(this).find('i');
+				$i.removeClass('fa-times');
+				$i.addClass('fa-arrow-right');
+				$(".address_list span:last i").attr('class', 'fa');
+			});
+
+			$('.address_list').on('click', 'i', function() {
+				$(this).parents('span').remove();
+				$(".address_list span:last i").attr('class', 'fa');
+			});
+			<php>}</php>
+		});
+		
+		function save(step) {
+			$("#confirm").val("");
+			$("#confirm_wrap  span").each(function() {
+				$("#confirm").val($("#confirm").val() + $(this).attr("data") + '|');
+			});
+
+			$("#confirm_name").val($("#confirm_wrap").html());
+
+			$("#consult").val("");
+			$("#consult_wrap  span").each(function() {
+				$("#consult").val($("#consult").val() + $(this).attr("data") + '|');
+			});
+			$("#consult_name").val($("#consult_wrap").html());
+
+			if ($("#confirm").val().length < 2) {
+				ui_error('请选择审批流程');
+				return false;
+			}
+			$("#step").val(step);
+			sendForm("form_data", "{:U('save')}", "{:U('index')}");
+            var t=3;
+			var int=setInterval(function(){
+				t--;
+				if(t==0){
+					$("#post").html("提交")
+					$("#post").attr("onclick","save(20)");
+					 clearInterval(int);
+	
+				}else{
+				  $("#post").attr("onclick","javascript:alert('不能重复提交！')");
+				  $("#post").html("重新提交("+t+")")	
+				}
+			},1000)
+			
+		}
+
+		function popup_confirm() {
+			winopen("{:U('popup/confirm')}",560, 470);
+		}
+
+	</script>
+
+</block>

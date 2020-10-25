@@ -1,0 +1,53 @@
+<?php
+$this->widget('views\bootstrap\widgets\ViewBuilder',
+	array(
+		'name' => 'view',
+		'values' => $this->data,
+		'elements_object' => $this->elements,
+		'elements' => array(
+		),
+		'columns' => array(
+			'member_id',
+			'login_name',
+			'realname',
+			'sex',
+			'birth_ymd',
+			'is_pub_birth',
+			'birth_md',
+			'anniversary',
+			'is_pub_anniversary',
+			'head_portrait',
+			'head_portrait_file',
+			'introduce',
+			'interests',
+			'is_pub_interests',
+			'telephone',
+			'mobiphone',
+			'is_pub_mobiphone',
+			'email',
+			'is_pub_email',
+			'live_country',
+			'live_province',
+			'live_city',
+			'live_district',
+			'live_street',
+			'live_zipcode',
+			'address_country',
+			'address_province',
+			'address_city',
+			'address_district',
+			'address_street',
+			'address_zipcode',
+			'qq',
+			'msn',
+			'skypeid',
+			'wangwang',
+			'weibo',
+			'blog',
+			'website',
+			'fax',
+			'_button_history_back_'
+		)
+	)
+);
+?>

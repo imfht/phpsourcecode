@@ -1,0 +1,280 @@
+<div class="easyui-navpanel" style="position:relative;padding:20px">
+    <form id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Form"></form>
+
+    <table id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item"></table>
+    <div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_toolbar">
+        <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_add" href="#" class="easyui-linkbutton"
+           iconCls="icon-add" plain="true">{:lang('新增')}</a>
+        <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_edit" href="#" class="easyui-linkbutton"
+           iconCls="icon-edit" plain="true">{:lang('编辑')}</a>
+        <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_remove" href="#" class="easyui-linkbutton"
+           iconCls="icon-remove" plain="true">{:lang('删除')}</a>
+    </div>
+
+</div>
+
+
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Fun_Win"></div>
+
+<div id="{$Think.CONTROLLER_NAME}_vr_row_edit_buttons" style="display: none">
+    <a id="{$Think.CONTROLLER_NAME}_vr_row_edit_tb_save" href="#" class="easyui-linkbutton">{:lang('保存')}</a>
+    <a id="{$Think.CONTROLLER_NAME}_vr_row_edit_tb_close" href="#" class="easyui-linkbutton">{:lang('关闭')}</a>
+</div>
+
+<div id="{$Think.CONTROLLER_NAME}_vr_row_edit_toolbar" style="display: none">
+    <a id="{$Think.CONTROLLER_NAME}_vr_row_edit_close" href="#" class="easyui-linkbutton"
+       data-options="iconCls:'icon-close'">{:lang('关闭')}</a>
+</div>
+
+<script>
+    $(function () {
+        // ---------------------页面对象------------------------
+        var record = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        record.father = new Page({
+            Module: '{$Think.P_M}',
+            Controller: '{$Think.P_C}',
+            Action: '{$Think.P_A}',
+        });
+
+        // 重置选择器
+        record.init().select();
+
+        // ----------------------事件---------------------------
+        // 初始化完窗体时运行
+        record.event._func_show = function () {
+            // 增加下拉框改变时，重写单据编号
+            $(record.CA + 'emp_id').combobox({
+                onSelect: function (rec) {
+                    if (record.edit_state == 'add') {
+                        $.post('vr_get_default_add_data', {emp_id: rec.emp_id}, function (data) {
+                            record.Fm.form('load', data);
+                            // 异步顺序
+                            record.seq.run_next();
+                        });
+                    }
+                }
+            });
+            // 当开始里程 和 结束里程都不为空时，计算总里程
+            $(record.CA + 'a_li_end').numberbox({
+                onChange: function(newV, oldV){
+                    var beg = $(record.CA + 'a_li_beg').numberbox('getValue');
+
+                    if(beg && newV) {
+                        var temp = newV - beg;
+                        $(record.CA + 'a_li').numberbox('setValue', temp);
+                    }
+                }
+            });
+
+            setTimeout(function () {
+                record.seq.run_next();
+            }, 200);
+        };
+
+        // 刷新单据数据, 新增或编辑时运行
+        record.event._create_voucher = function () {
+            if (record.edit_state == 'add') {
+                record.Fm.form('clear');
+
+                var default_emp_id = record.data.emp_info['emp_id'];
+                // 设置默认的客户时，会触发获取之前定义，选择时获取默认的表头数据
+                $(record.CA + 'emp_id').combobox('setValue', default_emp_id);
+                // 获取默认生成数据
+                // 临时单据编号,服务器日期
+//                $.post('vr_get_default_add_data', {eba_id: default_eba_id}, function (data) {
+//                    record.Fm.form('load', data);
+//
+//                    record.seq.run_next();
+//                });
+
+                record.MG_Item.datagrid('loadData', []);
+                record.MG_Item.datagrid('reloadFooter', []);
+            } else if (record.edit_state == 'edit') {
+                if (record.edit_row_data) {
+                    $.post('vr_get_voucher_data', {voucher_id: record.edit_row_data.voucher_id}, function (data) {
+                        record.base().check_session_result(data);
+                        console.log(data);
+
+                        record.Fm.form('load', data.vr[0]);
+//                        $(record.CA + 'Form').form('load', data.vr[0]);
+                        record.datagrid().load_data({
+                            grid_id: 'MG_Item',
+                            data: data.vr_item,
+                            footer_field: ['inp_num'],
+                            need_type: 'sum'
+                        });
+                    });
+                }
+                setTimeout(function () {
+                    record.seq.run_next();
+                }, 200);
+            }
+        };
+
+        // 记录保存事件
+        record.event._func_before_save = function () {
+            console.log('record save');
+            var ebs_v = [];
+            var ebs_vr_item = {};
+
+            ebs_v = record.Fm.serializeArray();
+            ebs_v = record.form().serialize_array_to_obj(ebs_v);
+            ebs_vr_item = record.MG_Item.datagrid('getData');
+            if(ebs_vr_item.rows.length == 0) {
+                $.messager.alert('提示', "{:lang('请输入明细表格数据,再保存')}");
+                return 1;
+            }
+
+            var post_data = {
+                ebs_v: ebs_v,
+                ebs_vr_item: ebs_vr_item
+            };
+            $.post('vr_save_data', post_data, function (data) {
+                // 如果是新增之后，那么需要改变单据状态为编辑，填写单据编号
+                record.base().check_session_result(data);
+
+                if (data.result == 'success') {
+                    $(record.CA + 'voucher_id').val(data.voucher_id);
+                    record.edit_state = 'edit';
+                    $(record.father.CA + 'ref').click();
+                    // 这里需要重置成功上传之后的 图片资源列
+                    var grid_data = record.MG_Item.datagrid('getData');
+                    grid_data.rows.forEach(function(v, k) {
+                        grid_data.rows[k].a_img_1 = '';
+                    });
+                    record.MG_Item.datagrid('loadData', grid_data);
+                }
+                $.messager.alert("{:lang('提示')}", data.info, 'info');
+            })
+        };
+
+        record.MG_Item.where_data_chg = function () {
+            record.datagrid().load_footer_data({
+                grid_id: 'MG_Item',
+                footer_field: [
+                    'b_gas_num', 'b_gas_amount', 'b_type_1', 'b_type_2',
+                    'b_type_3', 'c_type_1', 'c_type_2', 'c_type_3', 'c_type_4',
+                ],
+                need_type: 'sum',
+                // 回调处理合计值, 写入到表头的控件中
+                fn: function(footer_data) {
+                    console.log(footer_data);
+                    for(var i in footer_data[0]) {
+                        if(footer_data[0].hasOwnProperty(i)) {
+//                            $(record.CA + i).numberbox('setValue', footer_data[0][i]);
+                            $(record.CA + i).val(footer_data[0][i]);
+                        }
+                    }
+
+                }
+            });
+        };
+
+        //----------------------- 传递的 js_json 数据
+        record.data = JSON.parse('{$js_data}');
+
+        // ---------------------按钮 与 控件---------------------------
+        // 关闭、新增、保存、删除
+        // 关闭之前，需要检测此单据有没有明细数据，
+        // 如果有明细数据，没有保存过，提示是否需要保存
+        record.linkbutton().win_close('close');
+        record.linkbutton().record_save('save');
+        record.linkbutton().record_add('add');
+        record.linkbutton().record_remove({
+            btn_id: 'remove'
+        });
+
+        record.form().mb_field_init();
+
+        record.datagrid().init({
+            grid_id: 'MG_Item',
+            o: {
+                singleSelect: true,
+                toolbar: "#{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_toolbar",
+                // 这里不同于原easyui的列定义，去掉外层数组，为了与后台数据传递保持一致
+                columns:
+                    [
+                        {
+                            field: 'a_eba_name', title: '客户名称', width: 80,
+                        },
+                        {
+                            field: 'a_gps', title: '打卡坐标', width: 60,
+                        },
+                        {
+                            field: 'a_address', title: '打卡地点', width: 60,
+                        },
+                        {
+                            field: 'note_info', title: '备注', width: 80,
+                        },
+                    ]
+                ,
+                idField: 'res_id',
+//                toolbar: '{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Toolbar',
+                showFooter: true,
+                onDblClickRow: function () {
+                    $(record.CA + 'MG_Item_edit').click();
+                },
+            },
+        });
+
+        // ----------------------下级页面
+        var row_edit = record.child_record = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: 'vr_row_edit',
+        });
+        row_edit.gui_build_state = {
+            linkbutton: false,
+            form: false,
+        };
+
+        row_edit.data = JSON.parse('{$row_js_data}');
+        row_edit.menubutton().linkbutton_init(row_edit.data.Top_Buttons, 'close', 'after');
+
+        // 表格按钮
+        // 窗口定义
+        var url = "{:url('vr_row_edit')}";
+        url = record.url().add_param(url);
+        var row_edit_win = {
+            href: url,
+            fit: true,
+//            height: '100%',
+//            width: '100%',
+            title: "{:lang('查看|新增 打卡记录')}",
+            draggable: false,
+            buttons: '#{$Think.CONTROLLER_NAME}_vr_row_edit_buttons',
+            toolbar: '#{$Think.CONTROLLER_NAME}_vr_row_edit_toolbar',
+            modal: true,
+            onOpen: function () {
+                row_edit.auto_run().when_build_ele_finish();
+            }
+        };
+
+        record.linkbutton().index_add({
+            btn_id: 'MG_Item_add',
+            record: row_edit,
+            open_win_id: 'vr_row_edit',
+            open_win_val: row_edit_win,
+        });
+
+        record.linkbutton().index_edit({
+            btn_id: 'MG_Item_edit',
+            grid_id: 'MG_Item',
+            record: row_edit,
+            open_win_id: 'vr_row_edit',
+            open_win_val: row_edit_win,
+        });
+
+        record.linkbutton().index_remove({
+            btn_id: 'MG_Item_remove',
+            grid_id: 'MG_Item',
+            key: 'res_id',
+            name: 'res_name'
+        })
+
+    })
+</script>

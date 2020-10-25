@@ -1,0 +1,1 @@
+单元测试目录，关于单元测试可以参考：http://www.01happy.com/yaf-phpunit/

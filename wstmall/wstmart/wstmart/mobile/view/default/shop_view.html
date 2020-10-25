@@ -1,0 +1,126 @@
+{extend name="default/base" /}
+{block name="title"}{$data['shop']['shopName']} - {__block__}{/block}
+{block name="meta"}
+<meta name="description" content="{$data['shop']['shopDesc']}">
+<meta name="keywords" content="{$data['shop']['shopKeywords']}">
+{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/shops.css?v={$v}">
+{/block}
+{block name="header"}
+	{php}$Title = "店铺信息"{/php}
+	{include file="default/header" /}
+{/block}
+
+{block name="main"}
+<input type="hidden" name="" value="{$data.shop.shopId}" id="shopId" autocomplete="off">
+
+     <section class="ui-container">
+     	<div style="border-bottom:0;">
+     		 <div class="wst-shop-home-bg"
+     		 {if $data['shop']['shopMoveBanner']!=''}
+	   		 	style="background:url(__RESOURCE_PATH__/{:WSTImg($data['shop']['shopMoveBanner'],2)}) no-repeat center top;background-size:cover;"
+	   		 {else}
+	   		 	{if(WSTConf('CONF.shopAdtop'))}
+	   		 		style="background:url(__RESOURCE_PATH__/{:WSTImg(WSTConf('CONF.shopAdtop'),2)}) no-repeat center top;background-size:cover;"
+	   		 	{/if}
+	   		 {/if}>
+     		 	<div class="wst-shop-photo">
+     		 		<img src="__RESOURCE_PATH__/{:WSTImg($data.shop.shopImg,3)}">
+     		 	</div>
+     		 	<div class="wst-shop-name">{$data.shop.shopName}</div>
+
+     		 	<div class="shop-home-btn-box">
+     		 		<div class="wst-flex-row wst-center">
+				    <a href="tel:{$data.shop.shopTel}"  class="J_service shop-home-btn" style="margin-right:0.41rem;text-align: center;">
+				        联系卖家
+				    </a>
+                    {:hook('mobileDocumentContact',['type'=>'shopIndex','shopId'=>$data['shop']['shopId']])}
+				    <button class="shop-home-btn f-btn" id="fBtn" onclick="{if ($data['shop']['isfollow']>0)}WST.cancelFavorite({$data['shop']['isfollow']},1){else /}WST.favorites({$data.shop.shopId},1){/if}" style="border:0;">
+                         {if ($data['shop']['isfollow']>0)}
+                            <span id="fStatus">已关注</span>
+                        {else /}
+                            <span id="fStatus">关注店铺</span>
+                        {/if}
+				    </button>
+					</div>
+     		 	</div>
+
+     		 	<div class="score-box">
+     		 		<div class="ui-row-flex ui-whitespace score-item">
+					    <div class="ui-col ui-col score-text">商品评分：{$data.shop.scores.goodsScore}</div>
+					    <div class="ui-col ui-col score-text">时效评分：{$data.shop.scores.timeScore}</div>
+					    <div class="ui-col ui-col score-text">服务评分：{$data.shop.scores.serviceScore}</div>
+					</div>
+     		 	</div>
+
+     		 </div>
+
+     		 <div class="wst-shop-home-info">
+     		 	<ul class="shop-info">
+     		 		<li class="item-address">
+                        <div class="title">商家地址：</div>
+                        <div class="accbox">{$data.shop.shopAddress}</div>
+                    </li>
+     		 		<li class="ui-nowrap ui-whitespace">商家电话：<span>{$data.shop.shopTel}</span></li>
+     		 		<li class="ui-nowrap ui-whitespace">服务时间：<span>{$data.shop.serviceStartTime}-{$data.shop.serviceEndTime}</span></li>
+     		 		<li class="ui-nowrap ui-whitespace">发票说明：
+                        <span>
+                        {if ($data.shop.isInvoice==1)}
+                        可开发票({$data.shop.invoiceRemarks})
+                        {else /}
+                        不支持发票
+                        {/if}
+                        </span>
+                    </li>
+                    {if count($data['shop']['accreds'])>0}
+                    {php}$accreds = $data['shop']['accreds'];{/php}
+                    <li class="item-acc">
+                        <div class="title">认证信息：</div>
+                        <div class="accbox">
+                        {foreach $accreds as $ac}
+                        <lable><img class="accimg" src="__RESOURCE_PATH__/{$ac['accredImg']}">{$ac['accredName']}</lable>
+                        {/foreach}
+                        </div>
+                    </li>
+                    {/if}
+                    {if isset($data['shop']['businessLicenceImg']) && $data['shop']['businessLicenceImg']!=''}
+                      <li class="ui-nowrap ui-whitespace">工商执照：<span><a href='{$data['shop']['businessLicenceImg']}' target='_blank' style='color:blue'>点击查看</a></span>
+                      </li>
+                    {/if}
+     		 	</ul>
+     		 	<div class="shop-qrcode">
+				    <div id='qrcode'></div>
+				</div>
+     		 </div>
+
+     		 </div>
+
+
+
+     		 
+     	</div>
+     </section>
+{/block}
+
+
+{block name="footer"}{/block}
+{block name="js"}
+<script src="__MOBILE__/js/qrcode.js"></script>
+        <script>
+        $(function(){
+    		var url= "{:url('mobile/shops/index',array('shopId'=>$data['shop']['shopId']),'',true)}";
+    		//参数1表示图像大小，取值范围1-10；参数2表示质量，取值范围'L','M','Q','H'
+    		var qr = qrcode(9, 'H');
+    			qr.addData(url);
+    			qr.make();
+    		$("#qrcode").html(qr.createImgTag(3,3));
+    		$('.wst-in-search').on('submit', '.input-form', function(event){
+    		    event.preventDefault();
+    		})
+        });
+        goShopHome = function(sid){
+            location.href=WST.U('mobile/shops/index','shopId='+sid,true);
+        }
+        </script>
+{/block}

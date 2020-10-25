@@ -1,0 +1,201 @@
+
+<div class="hy-box hy-bo-b hy-bo-t" style="margin-top:10px;padding:10px">
+	<select id="forum" type="text" class="hy-text">
+    <option value="-1">请选择分类</option>
+		{if version_compare(HYBBS_V,'1.5.1','<')}
+  
+  {foreach $forum as $v}
+  <option value="{$v['id']}" {if X('get.fid') == $v['id']}selected{/if}>{$v['name']}</option>
+  {/foreach}
+  {else}
+    <?php 
+    $forum_group = cache('forum_group');
+    if(empty($forum_group) || DEBUG){
+      $forum_group = S("Forum_group")->select('*');
+      cache('forum_group',$forum_group);
+    }
+    ?>
+
+    {foreach $forum_group as $v}
+    <optgroup label="{$v.name}">
+      {foreach $forum as $vv}
+        {if $vv['fgid'] == $v['id']}
+          <option value="{$vv['id']}" {if X('get.fid') == $vv['id']}selected{/if}>{$vv.name}</option>
+        {/if}
+      {/foreach}
+    </optgroup>
+    {/foreach}
+    {foreach $forum as $v}
+        <?php $has = false; ?>
+        {foreach $forum_group as $vv}
+            
+            {if $v['fgid'] == $vv['id']}
+                <?php $has = true;break; ?>
+            {/if}
+            
+        {/foreach}
+        {if !$has}
+          <option value="{$v['id']}" {if X('get.fid') == $v['id']}selected{/if}>{$v.name}</option>
+        {/if}
+    {/foreach}
+  {/if}
+	</select>
+</div>
+
+<div class="hy-box hy-bo-b hy-bo-t" style="margin-top:10px">
+	<div class="hy-input-box">
+	<label style="font-weight: bold;
+    font-size: 1.4rem;">标题</label>
+	</div>
+    <div class="hy-input-box">
+        <input id="title" type="text" placeholder="请输入标题">
+    </div>
+</div>
+
+<div class="hy-box" style="font-size: 16px;">
+	<div class="hy-input-box">
+	<label style="font-weight: bold;
+    font-size: 1.4rem;">内容</label>
+	</div>
+
+    <div id="editor" class="hy-editor" contenteditable="true">
+        <p>&nbsp;</p>
+    </div>
+    <div style="" id="upload">
+        <label for="fileToUpload" class="hy-editor-btn" ><img src="{#WWW}Plugin/hy_moblie_editor/image.png"></label>
+        <label class="hy-editor-btn" ><img style=" width: 28px;height: 28px;" class="hy-editor-emoji" src="{#WWW}Plugin/hy_moblie_editor/s.png" onclick="$('#emoji-box').toggleClass('emoji-box-show')"></label>
+        <label class="hy-editor-btn" ><img style=" width: 28px;height: 28px;" class="hy-editor-emoji" src="{#WWW}Plugin/hy_moblie_editor/video.png" onclick="$('#video-box').toggleClass('emoji-box-show')"></label>
+        <label class="hy-editor-btn" ><img style=" width: 28px;height: 28px;" class="hy-editor-emoji" src="{#WWW}Plugin/hy_moblie_editor/file.png" onclick="$('#file-box').toggleClass('emoji-box-show')"></label>
+        <input type="file" name="fileToUpload" id="fileToUpload" onchange="fileSelected('upload','fileToUpload');" style="display: none;">
+    </div>
+    <p style="height:1px"></p>
+</div>
+
+<div class="hy-box hy-bo-b hy-bo-t" style="margin-top:10px;padding: 0 10px;">
+    <input type="checkbox" id="thread-hide"> <label for="thread-hide"> 需要回复可见</label>
+    <span class="grey">|</span>
+     <label for="thread-gold"> 付费：</label> <input type="text" id="tgold" style="width:60px">
+</div>
+
+<div id="video-box" class="hy-box" style="padding:10px;display:none">
+    <h3>插入视频</h3>
+    <div class="hy-input-box" style="margin-bottom:10px">
+        <input type="text" id="video-input" placeholder="输入视频地址 (.mp4)">
+    </div>
+   
+    <button type="button" class="hy-btn hy-btn-primary" onclick="insertvideo($('#video-input').val())">插入视频</button>
+</div>
+<div id="file-box" class="hy-box" style="padding:10px;display:none">
+    <h3>附件</h3>
+    <div id="file_rq">
+        <!-- <table>
+            <tr>
+                <th>ID</th>
+                <td></td>
+            </tr>
+            <tr>
+                <th>附件名称</th>
+                <td></td>
+            </tr>
+            <tr>
+                <th>付费金币</th>
+                <td></td>
+            </tr>
+            <tr>
+                <th>隐藏附件</th>
+                <td></td>
+            </tr>
+            <tr>
+                <th>附件描述</th>
+                <td></td>
+            </tr>
+            <tr>
+                <th>操作</th>
+                <td></td>
+            </tr>
+        </table> -->
+    </div>
+    <input type="file" name="fileToUpload" id="fileToUpload1" onchange="fileSelected('uploadfile','fileToUpload1');" style="display: none;">
+    <button type="button" onclick="$('#fileToUpload1').click()" class="hy-btn hy-btn-primary">上传附件</button>
+</div>
+
+<div id="emoji-box" class="hy-box" style="padding:10px;display:none">
+
+</div>
+<link rel="stylesheet" type="text/css" href="{#WWW}Plugin/hy_moblie_editor/hy_moblie.css">
+<script type="text/javascript" src="{#WWW}Plugin/hy_moblie_editor/hy_edit.js"></script>
+
+
+{hook p_hy_moblie_editor_post_index_1}
+
+<div class="hy-box" style="padding:10px">
+	<button type="button" id="post1" class="hy-btn hy-btn-danger" >发 布</button>
+</div>
+
+
+<script type="text/javascript">
+$(function(){
+    
+    $("#post1").click(function(){
+        console.log('发布');
+        var _obj = $(this);
+        _obj.attr('disabled','disabled');
+        _obj.text("提交中...");
+
+
+
+        var fileid='';
+        var filegold='';
+        var filemess='';
+        var filehide = '';
+        $(".fileid").each(function(e){
+            fileid+=$(this).text()+'||';
+        });
+        $(".filegold").each(function(e){
+            filegold+=$(this).val()+'||';
+        });
+        $(".filemess").each(function(e){
+            filemess+=$(this).val()+'||';
+        });
+        $(".filehide").each(function(e){
+            filehide+=($(this).is(':checked')?'1':0)+'||';
+        });
+
+
+
+        var forum = $("#forum").val();
+        $.ajax({
+         url: '<?php echo WWW.URL('post','','');?>',
+         type:"POST",
+         cache: false,
+         data:{
+             title:$("#title").val(),
+             content:$("#editor").html(),
+             forum:forum,
+             fileid:fileid,
+             filegold:filegold,
+             filemess:filemess,
+             filehide:filehide,
+             thide:($("#thread-hide").is(':checked')?1:0),
+             tgold:$("#tgold").val(),
+             {hook p_hy_moblie_editor_post_index_data}
+         },
+         dataType: 'json'
+     }).then(function(e) {
+         
+         if(e.error){ 
+            window.location.href="<?php echo WWW.URL('thread','','',EXP);?>"+e.id + "{#EXT}";
+             
+         }else{
+            $.hy.warning( e.info);
+         }
+            _obj.removeAttr('disabled');
+            _obj.text("发 布");
+       }, function() {
+         $.hy.warning( "请尝试重新提交");
+          _obj.removeAttr('disabled');
+            _obj.text("发 布");
+       });
+    })
+});
+</script>

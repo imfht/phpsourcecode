@@ -1,0 +1,82 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+global $config;
+if (!in_array($auth['id'], $config['manager']) && $city_info['user_id'] != $auth['id']) die('用户权限不够!^_^');
+
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+
+if (empty($page)) { $page = 1; }
+$limit = 20;
+
+$cond = "WHERE city = $forum_city";
+
+$kinds = dt_query("SELECT * FROM forum_kind $cond ORDER BY today_up_c DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$kinds) die('获取数据失败！');
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><span class="glyphicon glyphicon-edit"></span> 分类管理</li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<a class="btn btn-success pull-right" href="?c=forum&a=forum_kind_add">添加分类</a>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>分类名称</th>
+						<th>赞/天</th>
+						<th>创建时间</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php while($kind = mysql_fetch_array($kinds)) { ?>
+				<tr id="<?php echo $kind['id'] ?>">
+					<td><?php echo $kind['name'] ?></td>
+					<td><?php echo $kind['today_up_c'] ?></td>
+					<td><?php echo date('Y-m-d', $kind['c_at']) ?></td>
+					<td>
+						<a class="btn btn-default btn-sm" href="?c=forum&a=forum_kind_edit&kind_id=<?php echo $kind['id'] ?>">设置</a>
+						<a class="btn btn-default btn-sm" href="javascript:do_forum_kind_del(<?php echo $kind['id'] ?>)">删除</a>
+					</td>
+				</tr>
+				<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('forum_kind', $cond, $page, $limit, '?c=forum&a=forum_kind_manage&page=') ?>
+		</div>
+
+
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#forum_manage').addClass('active');
+});
+
+function do_forum_kind_del(kind_id) {
+	if (!confirm (" O_O 确定要删除吗！")) return;
+
+	$.get('?c=forum&a=do_forum_kind_opr&opr=1&kind_id='+kind_id, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('tr#'+kind_id).remove();
+	});
+}
+</script>

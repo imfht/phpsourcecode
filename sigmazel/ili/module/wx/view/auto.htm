@@ -1,0 +1,183 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<p class="text">* {lang admin.validate.require}</p>
+				</div>
+				<form method="post" action="{$ADMIN_SCRIPT}/wx/auto" onsubmit="javascript:return check_form(this);">
+					<input type="hidden" name="formsubmit" value="yes" />
+					<input type="hidden" name="hdnAutoPic" value="" />
+					<fieldset>
+						<label>{lang wx.auto.view.open.label}</label>
+						<label class="checkbox inline">
+							<input class="fancy" name="rdoAutoType" type="radio" value="0" {if $wx_setting['AUTOTYPE'] == 0}checked="checked"{/if}/> {lang wx.auto.view.open.0}
+						</label>
+						<label class="checkbox inline">
+							<input class="fancy" name="rdoAutoType" type="radio" value="1" {if $wx_setting['AUTOTYPE'] == 1}checked="checked"{/if}/> {lang wx.auto.view.open.1}
+						</label>
+						<label class="checkbox inline">
+							<input class="fancy" name="rdoAutoType" type="radio" value="2" {if $wx_setting['AUTOTYPE'] == 2}checked="checked"{/if}/> {lang wx.auto.view.open.2}
+						</label>
+						
+						<div id="div_text" {if $wx_setting['AUTOTYPE'] != 1}style="display:none;"{/if}>
+							<hr />
+							<label>{lang wx.auto.view.text.label}</label>
+							<textarea class="span5" name="txtAutoText" rows="6" placeholder="{lang wx.auto.view.text.placeholder}">{$wx_setting[AUTOTEXT]}</textarea>
+							<span class="help-inline">{lang wx.auto.view.text.tips}</span>
+						</div>
+						
+						<div id="div_pic" {if $wx_setting['AUTOTYPE'] != 2}style="display:none;"{/if}>
+							<hr />
+							<label>{lang wx.auto.view.title.label}</label>
+							<input type="text" class="input-xlarge" name="txtAutoTitle" maxlength="32" value="{$wx_setting[AUTOTITLE]}" placeholder="{lang wx.auto.view.title.placeholder}…"/>
+							<span class="help-inline">{lang wx.auto.view.title.tips}</span>
+							
+							<label>{lang wx.auto.view.url.label}</label>
+							<input type="text" class="input-xxlarge" name="txtAutoUrl" maxlength="100" value="{$wx_setting[AUTOURL]}" placeholder="{lang wx.auto.view.url.placeholder}…"/>
+							<span class="help-inline">{lang wx.auto.view.url.tips}</span>
+							
+							<label>{lang wx.auto.view.description.label}</label>
+							<textarea class="span5" name="txtAutoDescription" rows="5" placeholder="{lang wx.auto.view.description.placeholder}…">{$wx_setting[AUTODESCRIPTION]}</textarea>
+							<span class="help-inline">{lang wx.auto.view.description.tiips}</span>
+							
+							<label>{lang wx.auto.view.pic.label}</label>
+							<table class="swfupload">
+								<tr>
+									<td align="center">
+										<p class="img" id="p_image">
+											<!--{if is_array($wx_setting['AUTOPIC'])}-->
+											<img src="{$wx_setting[AUTOPIC][0]}" data="{$wx_setting[AUTOPIC][4]}" width="200" style="width:200px;" border="0"/>
+											<!--{else}-->
+											<img src="static/images/no-picture.jpg" width="200" style="width:200px;" />
+											<!--{/if}-->
+										</p>
+										<div id="divFileUploadButton" class="upload-button"><span id="spnButtonPlaceholder"></span></div>
+										<div id="divFileProgressContainer" class="upload-progress"></div>
+									</td>
+								</tr>
+							</table>
+						</div>
+						
+						<hr />
+						<button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][setup]}>{lang admin.operation.submit}</button>
+						<button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+					</fieldset>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript" src="static/plugins/swfupload.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_handlers.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_images.js"></script>
+
+<script>
+var swfu;
+swfupload_params.limit = 1;
+swfupload_params.uploaded = 0;
+
+function fileQueueError(file, errorCode, message) {
+	if (errorCode === SWFUpload.QUEUE_ERROR.QUEUE_LIMIT_EXCEEDED) {
+		$.dialog({message:'{lang admin.validate.swfupload.lang.limit}'});
+	}else{
+		$.dialog({message:'{lang admin.validate.swfupload.echo.fail}'});
+	}
+}
+
+function uploadSuccess(file, serverData) {
+	if(serverData.substring(0, 7) === "FILEID:") {
+		var photoPath = formatFilePath(serverData.substring(7));
+		$('#p_image img').attr('src', photoPath).attr('data', serverData.substring(7));
+	}else $.dialog({message:serverData});
+}
+
+function check_form(frm){
+	if(frm.rdoAutoType[1].checked){
+		if(frm.txtAutoText.value.trim().length == 0){
+	    	$(frm.txtAutoText).next('.help-inline').css('color', 'red');
+	    	frm.txtAutoText.focus();
+	    	return false;
+	    }
+	}else if(frm.rdoAutoType[2].checked){
+		if(frm.txtAutoTitle.value.trim().length == 0){
+	    	$(frm.txtAutoTitle).next('.help-inline').css('color', 'red');
+	    	frm.txtAutoTitle.focus();
+	    	return false;
+	    }
+		
+		if(frm.txtAutoUrl.value.trim().length == 0){
+	    	$(frm.txtAutoUrl).next('.help-inline').css('color', 'red');
+	    	frm.txtAutoUrl.focus();
+	    	return false;
+	    }
+	}
+	
+	frm.hdnAutoPic.value = $('#p_image img').attr('data') ? $('#p_image img').attr('data') : '';
+	
+	return true;
+}
+
+$(function(){
+	$('.fancy').uniform();
+	
+	$('fieldset input,textarea,select').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+	$("input[name='rdoAutoType']").click(function(){
+		if($(this).val() == '1') {
+			$('#div_text').show();
+			$('#div_pic').hide();
+		}else if($(this).val() == '2'){
+			$('#div_text').hide();
+			$('#div_pic').show();
+		}else{
+			$('#div_text').hide();
+			$('#div_pic').hide();
+		}
+	});
+	
+	$('.swfupload img').dblclick(function(){
+		$(this).attr({src:'static/images/no-picture.jpg', data:''});
+	});
+	
+	swfu = new SWFUpload({
+		upload_url: "{$ADMIN_SCRIPT}/wx/auto/_upload&_SALT={$_var[current][SALT]}",
+		
+		file_size_limit : "200KB", 
+		file_types : "*.jpg;*.bmp;*.gif;*.png",
+		file_types_description : "JPG Images",
+		file_upload_limit : "0",
+		
+		file_queue_error_handler : fileQueueError,
+		file_dialog_complete_handler : fileDialogComplete,
+		upload_progress_handler : uploadProgress,
+		upload_error_handler : uploadError,
+		upload_success_handler : uploadSuccess,
+		upload_complete_handler : uploadComplete,
+		
+		button_image_url : "static/images/swfupload/swfupload.png",
+		button_placeholder_id : "spnButtonPlaceholder",
+		button_width: 180,
+		button_height: 18,
+		button_text : '{lang admin.validate.swfupload.lang.button}({lang admin.validate.swfupload.lang.button.size.200})',
+		button_text_style : '',
+		button_text_top_padding: 0,
+		button_text_left_padding: 18,
+		button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,
+		button_cursor: SWFUpload.CURSOR.HAND,
+		
+		flash_url : "static/swfupload.swf",
+		
+		custom_settings : {
+			upload_target : "divFileProgressContainer"
+		},
+		
+		debug: false
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

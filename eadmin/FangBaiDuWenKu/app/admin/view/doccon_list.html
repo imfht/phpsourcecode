@@ -1,0 +1,117 @@
+{extend name="base" /}
+{block name="body"}
+<blockquote class="layui-elem-quote news_search">
+
+		<div class="layui-inline">
+		
+		<form id="searchform">
+			 
+		    	    <div class="layui-input-inline search-form">
+		    	   
+		  <select name="tid" class="layui-input">
+                                             
+                                                    <option value="-1"  {if condition="input('tid') eq -1"}selected{/if}>选择分类</option>
+                                                   
+                                                  {volist name="doccate_list" id="vo"}
+                                                    <option value="{$vo.id}"  {if condition="input('tid') eq $vo.id"}selected{/if}>{$vo.name}</option>
+                                                    {/volist} 
+                                             
+              </select>
+		    </div>
+		    		    <div class="layui-input-inline search-form">
+		<input name="search_data" value="{:input('search_data')}"  type="text"  placeholder="文档标题"  class="layui-input search_input">
+		    </div>
+		    <div class="layui-input-inline search-form">
+		  <select name="status" class="layui-input">
+                                             
+                                                    <option value="0"  {if condition="(input('status') neq 2) AND (input('status') neq 1)"}selected{/if}>全部</option>
+                                                    <option value="2"  {if condition="input('status') eq 2"}selected{/if}>待审核</option>
+                                                    <option value="1"  {if condition="input('status') eq 1"}selected{/if}>审核通过</option>
+                                             
+              </select>
+		    </div>
+		    <a class="layui-btn search_btn"  id="search" data-url="{:url('docconlist')}">查询</a>
+		    </form>
+		</div>
+<div class="layui-inline">
+			<ob_link><a class="layui-btn layui-btn-danger batchDel" data-url="{:url('docconAlldel')}">批量删除</a></ob_link>
+			
+			<ob_link><a class="layui-btn layui-btn-danger batchSh"  tiperror="请选择需要审核的数据" tipconfirm="确定审核选中的信息？"  data-url="{:url('docconAllSh')}">批量审核</a></ob_link>
+				<ob_link>	<a class="ajaxget layui-btn layui-btn-danger" href="javascript:void(0)"   data-url="{:url('docconAll')}"><i class="fa fa-eraser"></i><cite>审核所有</cite></a></ob_link>
+				
+			
+			<ob_link>
+			<a data-title="推送文档"  tiperror="请选择需要推送的信息" tipconfirm="确定推送选中的信息？" data-url="{:url('docconTuisong')}" class="layui-btn  tuisong_btn">推送至专辑</a></ob_link>
+						<ob_link>
+			<a data-title="更改文档"  tiperror="请选择需要更改的分类" tipconfirm="确定更改选中的文档分类？" data-url="{:url('docconChange')}" class="layui-btn  change_btn">更改分类</a></ob_link>
+		<ob_link><a class="layui-btn layui-btn-normal Add_btn" data-title="批量上传" data-url="{:url('docconPiliang')}"><i class="fa fa-plus"></i> 批量上传</a></ob_link>
+	
+		</div>
+</blockquote>
+	<div class="layui-form users_list">
+	  	<table class="layui-table">
+				<thead>
+                    <tr>
+                      {notempty name='list'}
+					<th width="5%" style="text-align:center"><input type="checkbox" name="" lay-skin="primary" lay-filter="allChoose" id="allChoose"></th>
+					 {/notempty}
+                       <th><a href="">标题</a></th>
+                       <th>文档路径</th>
+                        <th>所属分类</th>
+                        <th>所属频道</th>
+                        <th>所属专辑</th>
+                         <th>发布者</th>
+                      <th>积分</th>
+                       <th>精品</th>
+                        <th>置顶</th>
+                         <th>预览</th>
+                        <th>状态</th>
+                      <th>时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                       {notempty name='list'}
+                  <tbody class="users_content">
+                    {foreach name="$list" item="vo"}
+                    <tr>
+                        <td width="5%" style="text-align:center"><input type="checkbox" name="checked" lay-skin="primary" lay-filter="choose" value="{$vo.id}"></td>
+                       <td>{$vo.title}</td>
+                       <td><a href="{$vo.fileid|get_file_url}" target="_blank">点击下载文档</a></td>
+                       <td>{$vo.tidname}</td>
+                       <td>{$vo.gidname}</td>
+                       <td>{$vo.zjname|default='无'}</td>
+                        <td>{$vo.username}</td>
+                        <td>{$vo.score}</td>
+                         <td><input type="checkbox" data-url="{:url('docconCstatus',['id'=>$vo['id']])}" name="choice" lay-skin="switch" lay-text="精品|普通" lay-filter="switchTest"  value="{$vo['choice']}" {php}echo $vo['choice']==1 ? 'checked' : '';{/php}></td>
+                         <td><input type="checkbox" data-url="{:url('docconCstatus',['id'=>$vo['id']])}" name="settop" lay-skin="switch" lay-text="置顶|普通" lay-filter="switchTest"  value="{$vo['settop']}" {php}echo $vo['settop']==1 ? 'checked' : '';{/php}></td>
+                          <td>{php}echo $vo['pageid']>0 ? '已生成预览' : '待转换';{/php}</td>
+                          <td>{php}echo $vo['status']>0 ? '通过' : '待审核';{/php}</td>
+                           <td>{$vo.create_time|friendlyDate}</td>
+                        <td>
+                               <ob_link><a data-title="编辑文档"  data-url="{:url('docconEdit',['id'=>$vo['id']])}" class="layui-btn layui-btn-mini users_edit"><i class="fa fa-edit"></i>编辑</a></ob_link>
+                      <ob_link><a class="layui-btn layui-btn-danger layui-btn-mini cstatus" href="javascript:;"  data-url="{:url('docconSh', array('id' => $vo['id']))}" data-field="status" data-val="{$vo.status}"><i class="fa fa-gavel"></i> {php}echo $vo['status']>0 ? '禁用' : '审核';{/php}</a></ob_link>
+                      <ob_link><a class="layui-btn layui-btn-danger layui-btn-mini users_del" href="javascript:;"  data-url="{:url('docconDel', array('id' => $vo['id']))}"><i class="fa fa-trash-o"></i> 删 除</a></ob_link>
+                 
+                      </td>
+                    </tr>
+                    {/foreach}
+                    </tbody>
+                      {else/}
+       <tbody class="users_content">
+       <tr class="odd"><td colspan="8" class="text-center" valign="top">{:config('empty_list_describe')}</td></tr>
+       </tbody>
+      {/notempty}
+                </table>
+	</div>
+			
+{/block}
+ {block name="page"}
+<div class="btable-paged" >
+<div class="layui-main">
+	{$list->render()}
+</div>
+</div>
+<script>
+
+</script>
+ {/block}

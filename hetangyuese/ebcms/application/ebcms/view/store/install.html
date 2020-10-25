@@ -1,0 +1,129 @@
+{include file='common/header' /}
+<script>
+    var M = {};
+    $(function() {
+        M.install = function(){
+            if ('{$error|default='0'}' == '1') {
+                EBCMS.MSG.alert('请先处理会引起更新错误的问题！');
+            }else{
+                EBCMS.MSG.confirm('<h4 class="text-danger"><strong>注意事项！</strong></h4><p class="text-danger">应用安装或更新均属自愿，我们不承担由此带来的任何责任！</p><p class="text-danger">为了安全起见，我们建议您全站备份！</p>',function(){
+                    EBCMS.CORE.submit({
+                        url:'{:url('install')}',
+                        queryParams:$('form').serialize(),
+                        success:function(res){
+                            if (res.code) {
+                                EBCMS.MSG.notice(res.msg);
+                                setTimeout(function() {
+                                    parent.location = parent.location;
+                                }, 100);
+                            }else{
+                                EBCMS.MSG.alert(res.msg);
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    });
+</script>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>
+                <span>安装应用：<b class="text-danger">{$app.title} v{$version.version}</b></span>
+            </h3>
+            <table class="table table-bordered">
+                <tr>
+                    <td style="width: 100px;">应用名称</td>
+                    <td>{$app.title} - {$app.name}</td>
+                    <td>发布时间：{$app.create_time|date='Y-m-d',###}</td>
+                </tr>
+                <tr>
+                    <td>应用简介</td>
+                    <td colspan="2">{$app.description}</td>
+                </tr>
+                {notempty name='app.info'}
+                {foreach name='app.info' item='vo'}
+                <tr>
+                    <td>{$key}</td>
+                    <td colspan="2">{$vo}</td>
+                </tr>
+                {/foreach}
+                {/notempty}
+                
+                {notempty name='app.author'}
+                {foreach name='app.author' item='vo'}
+                <tr>
+                    <td>{$key}</td>
+                    <td colspan="2">{$vo}</td>
+                </tr>
+                {/foreach}
+                {/notempty}
+                <tr>
+                    <td>版本号</td>
+                    <td colspan="2">
+                        {$version.version}
+                    </td>
+                </tr>
+                <tr>
+                    <td>版本说明</td>
+                    <td colspan="2">
+                        {$version.content|htmlspecialchars_decode}
+                    </td>
+                </tr>
+            </table>
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4><strong>注意事项！</strong></h4>
+                <p>应用安装属自愿原则，我们不承担由此带来的任何责任！</p>
+                <p>为了安全起见，我们建议您全站备份！</p>
+            </div>
+            {notempty name='version.file'}
+                {notempty name='errors'}
+                    <h3>可能是以下文件或文件夹权限不足，导致无法更新，建议检查！</h3>
+                    <table class="table table-bordered" style="width:100%;">
+                    <tr>
+                        <th>错误</th>
+                        <th style="width:200px;">权限不足</th>
+                    </tr>
+                        {foreach name='errors' item='vo'}
+                        <tr>
+                            <td>{$vo}</td>
+                            <td><span class="glyphicon glyphicon-remove text-danger"></span></td>
+                        </tr>
+                        {/foreach}
+                    </table>
+                {else/}
+                    <form class="form-inline" role="form" method="POST" action="{:url('install')}">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <div class="input-group-addon">安装码</div>
+                                <input class="form-control" name="authcode" value="{:input('authcode')}" readonly style="width: 700px;" type="text" placeholder="">
+                            </div>
+                        </div>
+                        <button type="button" onclick="M.install();" class="btn btn-danger">安装</button>
+                        <button type="button" class="btn btn-default ebcms-go" url="{:url('store/index')}">返回</button>
+                        <p class="help-block">安装码实时更新，请到官网 <a href="http://www.ebcms.com/store/user/index.html" class="text-danger">[用户中心]</a> 获取！</p>
+                        <input type="hidden" name="app_id" value="{$app.id}">
+                    </form>
+                {/notempty}
+                <p class="text-danger">“ <b>./</b> ”开头的表示相对于网站入口文件index.php</p>
+                {notempty name='files'}
+                <table class="table table-bordered" style="width:100%;">
+                    <tr>
+                        <th>需要更新的文件</th>
+                        <th style="width:200px;">检测结果</th>
+                    </tr>
+                    {foreach name='files' item='vo'}
+                    <tr>
+                        <td>{$key}</td>
+                        <td>{eq name='vo' value='1'}<span class="glyphicon glyphicon-ok text-success"></span>{else/}<span class="glyphicon glyphicon-remove text-danger"></span>{/eq}</td>
+                    </tr>
+                    {/foreach}
+                </table>
+                {/notempty}
+            {/notempty}
+        </div>
+    </div>
+</div>
+{include file='common/footer' /}

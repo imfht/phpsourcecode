@@ -1,0 +1,97 @@
+<div class="public_comment">
+
+       <div class="orderbar"> 
+        <if condition="($strObj['page'] eq 1) && ($strObj[count_comment] gt 3)">
+        	<a href="{:U($strObj['showurl'],array('id'=>$strObj['typeid'],'sc'=>$strObj['sc'],'isauthor'=>$strObj['author']['isauthor']))}">{$strObj['author']['text']}</a>&nbsp;&nbsp;
+            <if condition="$strObj['sc'] eq 'asc'">
+                <a href="{:U($strObj['showurl'],array('id'=>$strObj['typeid'],'sc'=>'desc','isauthor'=>$strObj['isauthor']))}">倒序阅读</a> 
+            <else />
+                <a href="{:U($strObj['showurl'],array('id'=>$strObj['typeid'],'sc'=>'asc','isauthor'=>$strObj['isauthor']))}">正序阅读</a> 
+            </if>
+        </if>
+      </div>
+      
+      <!--comment评论-->
+      <ul class="comment" id="comment">
+       <if condition="!empty($commentList)">
+        <foreach name="commentList" item="item">
+        <li class="clearfix">
+          <div class="user-face"> <a href="{:U('space/index/index',array('id'=>$item[user][doname]))}"><img title="{$item[user][username]}" alt="{$item[user][username]}" src="{$item[user][face]}"></a> </div>
+          <div class="reply-doc">
+            <h4><span class="fr"></span>
+            <a href="{:U('space/index/index',array('id'=>$item['user']['doname']))}">{$item['user']['username']}</a> <php> echo date('Y-m-d H:i:s',$item['addtime'])</php>
+            </h4>
+            
+            <if condition="$item['referid'] neq 0">
+            <div class="recomment"><span id="re_sub_{$item['cid']}"><php>echo getsubstrutf8($item['recomment']['content'],0,60,0);</php>&nbsp;
+            <php>if(mb_strlen($item['recomment']['content'],'utf8')>60){</php>
+            <a href="javascript:;" onClick="$('#re_all_{$item['cid']}').show();$('#re_sub_{$item['cid']}').hide();">... </a>
+            </span>
+            <span style="display:none" id="re_all_{$item['cid']}">
+            	{$item['recomment']['content']}
+            </span>
+            <php>}</php>
+            <strong><a href="{:U('space/index/index',array('id'=>$item[recomment][user][doname]))}">{$item[recomment][user][username]}</a></strong>
+            </div>
+            </if>
+            
+            <p>{$item['content']}</p>
+            
+            <!--签名--> 
+            <if condition="!empty($item['user']['signed'])">
+            <div class="signed">{$item['user']['signed']}</div>
+            </if>
+            
+            <div class="group_banned"> 
+              <if condition="$visitor[userid] neq 0">
+              <span><a href="javascript:void(0)"  onclick="commentOpen({$item['cid']},{$item['typeid']})">回复</a></span> 
+              </if>
+              <if condition="($strObj['userid'] eq $visitor['userid'])  OR ($visitor['userid'] eq $item['userid']) ">
+              <span><a class="j a_confirm_link" href="{:U('home/comment/delete',array('cid'=>$item['cid']))}" rel="nofollow" onclick="return confirm('确定删除?')">删除</a> </span> 
+              </if>
+            </div>
+            <div id="rcomment_{$item['cid']}" style="display:none; clear:both; padding:0px 10px">
+              <textarea style="width:550px;height:50px;font-size:12px; margin:0px auto;" id="recontent_{$item['cid']}" type="text" onkeydown="keyRecomment({$item['cid']},{$item['typeid']},'{$item['type']}',event)" class="txt"></textarea>
+              <p style=" padding:5px 0px">
+                 <button onclick="recomment({$item['cid']},{$item['typeid']},'{$item['type']}')" id="recomm_btn_{$item['cid']}" class="subab" data-url="{:U('home/comment/recomment')}">提交</button>
+                &nbsp;&nbsp;<a href="javascript:;" onclick="$('#rcomment_{$item['cid']}').slideToggle('fast');">取消</a> </p>
+            </div>
+          </div>
+          <div class="clear"></div>
+        </li>
+        </foreach> 
+        </if>
+      </ul>
+      <div class="page">{$pageUrl}</div>
+      <h2>你的回应&nbsp;·&nbsp;·&nbsp;·&nbsp;·&nbsp;·&nbsp;·</h2>
+      <div> 
+        <if condition="!$visitor['userid']">
+        <div style="border:solid 1px #DDDDDD; text-align:center;padding:20px 0"><a href="{:U('home/user/login')}" class="i a_show_login">登录</a> | <a href="{:U('home/user/register')}" class="i a_show_register">注册</a></div>
+        <else />
+        <form method="POST" action="{:U('home/comment/add')}" onSubmit="return checkComment('#formMini');" id="formMini" enctype="multipart/form-data">
+          <textarea  style="width:100%;height:100px;" id="editor_mini" name="content" class="txt" onkeydown="keyComment('#formMini',event)"></textarea>
+          <input type="hidden" name="ik_comment" value="{$ik_comment}" />
+          <input class="submit" type="submit" value="加上去(Crtl+Enter)" style="margin:10px 0px">
+        </form>
+        </if>
+      </div>
+
+</div><!--//public_comment-->      
+<style>
+/*comment评论列表*/
+.comment{width: 100%;overflow:hidden;}
+.comment li {margin: 0 0 0px 0px;overflow:hidden; display:block;}
+.comment li .user-face {float: left;height: 48px;overflow: hidden;width: 48px; margin-top:0px;}
+.comment li .reply-doc {float: right;width: 580px;overflow: hidden;}
+.comment li .reply-doc p img{max-width:450px;}
+.comment li .reply-doc h4 {font-weight:normal;font-size:12px;height: 22px;line-height: 22px;margin: 0 0 5px 0px;color: #666666;display: block;overflow: hidden; background-color:#F0F6F3; padding:0px 10px}
+.comment li .reply-doc p {margin: 0 0 25px;overflow: hidden;word-wrap: break-word;}
+.comment li .reply-doc .recomment {margin: 20px 0;font-size: 12px; padding-left:7px;border-left: 1px solid; width:80%}
+.comment li .reply-doc .recomment strong{margin-left: 10px;white-space: nowrap;}
+.comment li .group_banned {text-align: right; padding-bottom:5px}
+.comment li .group_banned span{ margin-left:10px}
+.comment li .group_banned span a{ color:#aaa}
+.comment li .group_banned span a:hover{ color:#fff}
+/**orderbar**/
+.orderbar{ text-align:right; padding-bottom:5px}
+</style>      

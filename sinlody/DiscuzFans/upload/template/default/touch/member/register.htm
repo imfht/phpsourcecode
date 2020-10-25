@@ -1,0 +1,122 @@
+<!--{template common/header}-->
+<!-- header start -->
+<header class="header">
+    <div class="nav">
+        <a href="javascript:;" onclick="history.go(-1)" class="z"><img src="{STATICURL}image/mobile/images/icon_back.png" /></a>
+		<span>{lang register}</span>
+    </div>
+</header>
+<!-- header end -->
+<!-- registerbox start -->
+<div class="loginbox registerbox">
+	<div class="login_from">
+		<form method="post" autocomplete="off" name="register" id="registerform" action="member.php?mod={$_G[setting][regname]}&mobile=2">
+		<input type="hidden" name="regsubmit" value="yes" />
+		<input type="hidden" name="formhash" value="{FORMHASH}" />
+		<!--{eval $dreferer = str_replace('&amp;', '&', dreferer());}-->
+		<input type="hidden" name="referer" value="$dreferer" />
+		<input type="hidden" name="activationauth" value="{if $_GET[action] == 'activation'}$activationauth{/if}" />
+		<input type="hidden" name="agreebbrule" value="$bbrulehash" id="agreebbrule" checked="checked" />
+		<ul>
+			<li><input type="text" tabindex="1" class="px p_fre" size="30" autocomplete="off" value="" name="{$_G['setting']['reginput']['username']}" placeholder="{lang registerinputtip}" fwin="login"></li>
+			<li><input type="password" tabindex="2" class="px p_fre" size="30" value="" name="{$_G['setting']['reginput']['password']}" placeholder="{lang login_password}" fwin="login"></li>
+			<li><input type="password" tabindex="3" class="px p_fre" size="30" value="" name="{$_G['setting']['reginput']['password2']}" placeholder="{lang registerpassword2}" fwin="login"></li>
+			<li class="bl_none"><input type="email" tabindex="4" class="px p_fre" size="30" autocomplete="off" value="" name="{$_G['setting']['reginput']['email']}" placeholder="{lang registeremail}" fwin="login"></li>
+			<li class="bl_none"><input type="text" tabindex="5" class="px p_fre" size="30" autocomplete="off" value="" name="{$_G['setting']['reginput']['sms']}" id="{$_G['setting']['reginput']['sms']}" placeholder="{lang registersms}" fwin="login"></li>
+			<!--{if $sendsms}-->
+				<li class="bl_none">
+					<input type="text" tabindex="6" class="px p_fre" size="15" autocomplete="off" value="" name="{$_G['setting']['reginput']['smscode']}" id="{$_G['setting']['reginput']['smscode']}" placeholder="{lang smscode}" fwin="login">
+					<input type="button" tabindex="7" class="px p_fre" size="15" value="{lang smscodesend}" id="smscodesend" fwin="login">
+				</li>
+				<script type="text/javascript">
+					var smscodesendtime = 60,smscodesendtimefuc,lastsms,lastsmscode;
+					$(function(){
+						$('#smscodesend').click(function(){
+							sendsms("#{$_G['setting']['reginput']['sms']}","#{$_G['setting']['reginput']['smscode']}");
+						});
+						smscodesendtime = getcookie('smscodesendtime');
+						if(smscodesendtime) disabledsendsms(smscodesendtime, true);
+					});
+					function checksms(id) {
+						var sms = $(id).val();
+						if(sms == '' || sms == lastsms) {
+							popup.open('手机号不能为空','alert');
+							return false;
+						} else {
+							lastsms = sms;
+						}
+						if(!sms.match(/1\d{10}/ig)) {
+							popup.open('手机号不正确','alert');
+							return false;
+						}
+						$.get('forum.php?mod=ajax&inajax=yes&infloat=register&handlekey=register&ajaxmenu=1&action=checksms&sms=' + sms,{}, function(s) {
+							s = s.match(/<p>(.*)<\/p>/)[1];
+							if(s != 'succeed'){
+								popup.open(s,'alert');
+								return false;
+							}
+						},'text');
+						return true;
+					}
+					function sendsms(smsid,smscodeid){
+						disabledsendsms(5);
+						if(checksms(smsid) === false){
+							return false;
+						}
+						var sms = $(smsid).val();
+						$.get('forum.php',{mod:'ajax',inajax:'yes',infloat:'register',handlekey:'register','ajaxmenu':1,action:'sendsmscode',sms:sms}, function(s) {
+							s = s.match(/<p>(.*)<\/p>/)[1];
+							var success = s == '短信验证码发送成功' ? true : false;
+							if(success){
+								disabledsendsms(60,true);
+							}else{
+								popup.open(s,'alert');
+							}
+						},'text');
+					}
+					function disabledsendsms(time, changestr){
+						clearTimeout(smscodesendtimefuc);
+						smscodesendtime = time;
+						if(changestr){
+							$('#smscodesend').val(smscodesendtime + '秒后重新发送');
+							setcookie('smscodesendtime',smscodesendtime,smscodesendtime);
+						}
+						$('#smscodesend').attr('disabled','disabled');
+						smscodesendtimefuc = setInterval(function(){
+							if(smscodesendtime == 1){
+								undisabledsendsms();
+							}else{
+								--smscodesendtime;
+								if(changestr){
+									$('#smscodesend').val(smscodesendtime + '秒后重新发送');
+									setcookie('smscodesendtime',smscodesendtime,smscodesendtime);
+								}
+							}
+						},1000);
+					}
+
+					function undisabledsendsms(){
+						clearTimeout(smscodesendtimefuc);
+						$('#smscodesend').val('发送验证码');
+						$('#smscodesend').removeAttr("disabled");
+					}
+				</script>
+			<!--{/if}-->
+			<!--{if empty($invite) && ($_G['setting']['regstatus'] == 2 || $_G['setting']['regstatus'] == 3)}-->
+				<li><input type="text" name="invitecode" autocomplete="off" tabindex="8" class="px p_fre" size="30" value="{lang invite_code}" placeholder="{lang invite_code}" fwin="login"></li>
+			<!--{/if}-->
+			<!--{if $_G['setting']['regverify'] == 2}-->
+				<li><input type="text" name="regmessage" autocomplete="off" tabindex="9" class="px p_fre" size="30" value="{lang register_message}" placeholder="{lang register_message}" fwin="login"></li>
+			<!--{/if}-->
+		</ul>
+		<!--{if $secqaacheck || $seccodecheck}-->
+			<!--{subtemplate common/seccheck}-->
+		<!--{/if}-->
+	</div>
+	<div class="btn_register"><button tabindex="10" value="true" name="regsubmit" type="submit" class="formdialog pn pnc"><span>{lang quickregister}</span></button></div>
+	</form>
+</div>
+<!-- registerbox end -->
+
+<!--{eval updatesession();}-->
+<!--{template common/footer}-->

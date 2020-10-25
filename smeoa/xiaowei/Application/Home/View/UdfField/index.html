@@ -1,0 +1,157 @@
+<extend name="Layout/ins_page"/>
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>$folder_name,'search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a class="btn btn-sm btn-primary" onclick="go_return_url()">返回</a>
+			</div>
+			<div class="pull-right" id="uploader">
+				<a id="pickfiles" class="btn btn-sm btn-primary">导入</a>
+				<a onclick="export_udf()" class="btn btn-sm btn-primary">导出</a>
+				<a onclick="add()" class="btn btn-sm btn-primary">新增</a>
+				<a onclick="save()" class="btn btn-sm btn-primary">保存</a>
+				&nbsp;|&nbsp;
+				<a onclick="del()" class="btn btn-sm btn-danger">删除</a>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-4 sub_left_menu ">
+			<div class="well">
+				<php>
+					echo $menu
+				</php>
+			</div>
+		</div>
+		<div class="col-sm-8 ">
+			<form method='post' id="form_data" class="well form-horizontal">
+				<input type="hidden" name="controller" id="controller" value="{$Think.CONTROLLER_NAME}">
+				<input type="hidden" name="row_type" id="row_type" value="{$row_type}">
+				<input type="hidden" name="id" id="id" >
+				<input type="hidden" id="opmode" name="opmode" value="edit">
+				<input type="hidden" name="ajax" id="ajax" value="1">
+
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="name">名称*：</label>
+					<div class="col-sm-8">
+						<input class="form-control" type="text" id="name" name="name" check="require" msg="请输入名称">
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="type">控件类型*：</label>
+					<div class="col-sm-8">
+						<select name="type" id="type" check="require" msg="请选择控件类型" class="form-control col-12">
+							<option value="">请选择</option>
+							<option value="popup">弹窗选择</option>
+							<option value="add_file">文件上传</option>
+							<option value="text">单行文本</option>
+							<option value="date">日期 </option>
+							<option value="datetime">日期+时间 </option>
+							<option value="select">列表</option>
+							<option value="link_select">联动列表</option>
+							<option value="radio">单选</option>
+							<option value="checkbox">多选 </option>
+							<option value="textarea">多行文本 </option>
+							<option value="editor">编辑器</option>
+							<option value="simple">简易编辑器</option>
+							<option value="help">帮助 </option>
+							<option value="hr">分隔符</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="layout">控件布局：</label>
+					<div class="col-sm-8">
+						<select name="layout" id="layout" check="require" msg="请选择控件布局" class="form-control col-12">
+							<option value="">请选择 <option value="1">两列 <option value="2">整行 <option value="3">帮助 <option value="4">分隔符
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="data">控件数据：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="data" name="data" >
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="config">设置：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="config" name="config" >
+					</div>
+				</div>
+				<div class="form-group =">
+					<label class="col-sm-4 control-label" for="sort">排序：</label>
+					<div class="col-sm-8">
+						<input class="form-control" type="text" id="sort" name="sort" >
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="validate">验证：</label>
+					<div class="col-sm-8">
+						<select name="validate" id="validate" class="form-control col-12">
+							<option value="">请选择 <option value="require">必选 <option value="email">邮件 <option value="number">数字
+						</select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label" for="msg">错误提示：</label>
+					<div class="col-sm-8">
+						<input  class="form-control" type="text" id="msg" name="msg" >
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	<form method='post'  class="well form-horizontal clearfix">
+		<volist name="field_list" id="vo">
+			{:W('UserDefineField/edit',array($vo))}
+		</volist>
+	</form>
+</block>
+<block name="js">
+	<script>
+		function add() {
+			winopen("{:U('UdfField/add',array('controller'=>$controller,'row_type'=>$row_type))}",560, 470);
+		};
+
+		function export_udf() {
+			window.open("{:U('UdfField/export',array('row_type'=>$row_type))}", "_blank");
+			return false;
+		}
+
+		function del() {
+			ui_confirm('真的要删除吗?', function() {
+				$("#opmode").val("del");
+				sendForm("form_data", "", "__SELF__");				
+			});
+		};
+
+		function save() {
+			if ($("#opmode").val() == "") {
+				ui_error("请选择要修改的数据");
+				return false;
+			} else {
+				sendForm("form_data", "", "__SELF__");
+			}
+		};
+
+		function showdata(result) {
+			for (var s in result.data) {
+				set_val(s, result.data[s]);
+			}
+		}
+
+		$(document).ready(function() {
+			$(".sub_left_menu .tree_menu  a").click(function() {
+				$(".sub_left_menu .tree_menu  a").removeClass("active");
+				$(this).addClass("active");
+				sendAjax("{:U('UdfField/read')}", "id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+		});
+
+	</script>
+</block>

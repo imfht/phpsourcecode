@@ -1,0 +1,90 @@
+{extend name="$index_style_layout" /}
+
+<!--SEO相关-->
+{block name="head_title"}{$info.title}{/block}
+{block name="head_keword"}{$info.keywords?:$info.title}  {$s_info.name} {/block}
+{block name="head_description"}{:get_word(del_html($info['content']),300)}{/block}
+
+{block name="body_content"}
+
+{php}$mvurl=is_array($info['mv_url'])?$info['mv_url'][0]['url']:$info['mv_url'];{/php}
+{if $info['mid']==3&&($info.zhibo_status==1||$info.zhibo_status==2)&&empty($mvurl)}
+<!--预告直播-->
+<script type="text/javascript">
+window.location.href="{:get_url('msg',-$info.ext_id)}";
+</script>
+{/if}
+
+<link rel="stylesheet" href="__STATIC__/index/default/article.css">
+<div class="ArticleContBox">
+	<div class="MainInfos">
+		<div class="title">{$info.title}</div>
+		<div class="infos">
+			<span><i class="glyphicon glyphicon-time"></i> {:date("Y-m-d H:i:s",$info.create_time)}</span>
+			<span><i class="si si-eye"></i> {$info.view}</span> 
+			<span class="manage_topic"> <li class="fa fa-cogs"></li> 管理</span> 
+			{include file="index@common/manage_btn" /}
+		</div>
+		<div class="ShowContent">
+			{$info.content}
+			
+			<!-- 组图 -->
+			{volist name="$info.picurls" id="rs"}
+			{php}if(strstr($info['content'],$rs['picurl']))continue;{/php}
+			<br><img src="{$rs.picurl}"><br>
+			{/volist}
+
+			{notempty name="$info.mv_url"}
+			<!-- 视频模型 -->			
+			<br><center>{:fun('Player@play',$mvurl,'100%','250px')}</center>
+			{/notempty}
+
+			{notempty name="$info.voice_url"}
+				<!-- 音频模型 -->
+				<br><center><audio controls="controls" autoplay>
+				  <source src="{$info['voice_url'][0]['url']}" type="audio/mp3" />
+				你的浏览器不支持
+				</audio></center>
+			{/notempty}
+
+		</div>
+	</div>
+<!--显示自定义字段内容 field="picurl,title,content,keywords" 就是过滤掉不在里边重复显示的字段-->
+<style type="text/css">.OtherInfos .SideBox{clear:both;}.OtherInfos img{height:100px;float:left;margin:3px;}</style>
+  	<div class="OtherInfos">
+{qb:showpage field="picurl,title,content,keywords,mv_url,myfid"}
+		<div class="SideBox">
+		{if in_array($rs['type'],['images','images2','image','file','files','files2'])}
+			<!-- 组图及多文件的显示方法\template\index_style\default\index\common\field.htm,其实不建议放在这里,影响布局,更多请查阅 http://help.php168.com/665693/  -->
+			<div class="tag"><span>{$rs.title}</span></div>
+			{include file="index@common/field" /}
+		{else /}
+			<div class="tag"><span>{$rs.title}</span></div>
+			<div class="cont">{$rs.value}</div>
+		{/if}
+		</div>
+{/qb:showpage}
+	</div>
+
+	{qb:hy name="wap_cmsshow_content001" val="datas" type="labelmodel"  where="index_style/default/cms/content/wap_model/comment,quninfo,morelist,index_style/default/index/userkefu,index_style/default/index/footmenu"} {$datas} {/qb:hy}
+</div>
+<script>
+function thisimg_over(imgobjs){
+	imgobjs.animate({"max-width":"150%","max-height":"150%"},300);
+}
+function thisimg_out(imgobjs){
+	imgobjs.animate({"max-width":"100%","max-height":"100%"},300);
+}
+</script>
+
+
+<!-- 分享海报二维码宣传推广图片 -->
+{include file="$haibao" /}
+{include file="../../../haibao_style/btn" /}
+<!--<div style="position:fixed;right:30px;top:80px;z-index:200;width:30px;font-size:10px;line-height:10px;color:#000;opacity:0.7;"><i id="share_code" onclick="share_btn()" style="font-size:30px;" class="fa fa-qrcode"></i>海报</div>-->
+
+<!-- 微信分享 -->
+{include file="index@share"/}
+{/block}
+
+{block name="body_Footcont"} {/block}

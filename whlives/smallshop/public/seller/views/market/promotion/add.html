@@ -1,0 +1,201 @@
+<form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">名称</label>
+        <div class="layui-input-inline">
+            <input type="text" name="title" lay-verify="required" lay-reqText="名称不能为空" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">起用金额</label>
+        <div class="layui-input-inline">
+            <input type="text" name="use_price" lay-verify="price" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">起止时间</label>
+        <div class="layui-input-inline">
+            <input type="text" name="start_at" id="start_at" lay-verify="required" lay-reqText="开始时间不能为空" autocomplete="off" class="layui-input" readonly>
+        </div>
+        <div class="layui-form-mid layui-word-aux">-</div>
+        <div class="layui-input-inline">
+            <input type="text" name="end_at" id="end_at" lay-verify="required" lay-reqText="结束时间不能为空" autocomplete="off" class="layui-input" readonly>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">选择用户组</label>
+        <div class="layui-input-block">
+            <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/member/group/select" lay-done="layui.data.sendParams(d.params)">
+                <input type="checkbox" name="user_group[]" lay-filter="user_group_all" value="" title="全部">
+                {{# layui.each(d.data, function(index, item){ }}
+                <input type="checkbox" name="user_group[]" lay-filter="user_group" value="{{ index }}" title="{{ item }}" {{# if(layui.jquery.inArray(index, d.params.user_group) !=-1){ }}checked{{# } }}>
+                {{# }); }}
+            </script>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">活动类型</label>
+        <div class="layui-input-inline">
+            <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/market/promotion/get_type" lay-done="layui.form.render();">
+                <select name="type" lay-filter="type" lay-verify="required" lay-reqText="请选择活动类型">
+                    <option value=""></option>
+                    {{# layui.each(d.data, function(index, item){ }}
+                    <option value="{{ index }}" {{# if(index== d.params.type){ }}selected{{# } }}>购买金额满{X}{{ item }}</option>
+                    {{# }); }}
+                </select>
+            </script>
+        </div>
+        <div class="layui-input-inline layui-hide coupons">
+            <select name="coupons_id" lay-filter="coupons_id">
+                <option value=""></option>
+            </select>
+        </div>
+        <div class="layui-input-inline layui-hide type_value">
+            <input type="text" name="type_value" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux layui-hide type_value_prompt"></div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">描述</label>
+        <div class="layui-input-block">
+            <textarea name="content" class="layui-textarea"></textarea>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="id" value="">
+            <input type="button" lay-submit lay-filter="form-submit" value="确认" class="layui-btn">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['admin', 'form', 'laydate'], function () {
+            var admin = layui.admin,
+                $ = layui.jquery,
+                form = layui.form,
+                laydate = layui.laydate;
+
+            //监听规则选择
+            form.on('select(type)', function (data) {
+                $('.type_value input').val('');
+                select_type(data.value);
+            });
+
+            //更新规则填写
+            function select_type(type_val) {
+                var type_val = Number(type_val);
+                if ($.inArray(type_val, [1, 2, 3]) != -1) {
+                    $('.type_value').removeClass('layui-hide');
+                    $('.type_value_prompt').removeClass('layui-hide');
+                    $('.coupons').addClass('layui-hide');
+                    var prompt = '';
+                    switch (type_val) {
+                        case 1:
+                            prompt = '元(整数)';
+                            break;
+                        case 2:
+                            prompt = '%，1-100';
+                            break;
+                        case 3:
+                            prompt = '积分(整数)';
+                            break;
+                    }
+                    $('.type_value_prompt').text(prompt);
+                } else if (type_val == 4) {
+                    $('.type_value').addClass('layui-hide');
+                    $('.type_value_prompt').addClass('layui-hide');
+                    $('.coupons').removeClass('layui-hide');
+                } else {
+                    $('.type_value').addClass('layui-hide');
+                    $('.type_value_prompt').addClass('layui-hide');
+                    $('.coupons').addClass('layui-hide');
+                }
+            }
+
+            if (params.type) {
+                select_type(params.type);
+            }
+
+            //监听用户组全部按钮
+            form.on('checkbox(user_group_all)', function (data) {
+                if (this.checked == true) {
+                    $('[lay-filter="user_group"]').prop('checked', true);
+                } else {
+                    $('[lay-filter="user_group"]').prop('checked', false);
+                }
+                form.render('checkbox');
+            });
+            //监听用户组选择
+            form.on('checkbox(user_group)', function (data) {
+                check_select();
+            });
+
+            //用户组全选状态
+            function check_select() {
+                var user_group = $('[lay-filter="user_group"]').length;
+                var checked_user_group = $('[lay-filter="user_group"]:checked').length;
+                if (user_group == checked_user_group) {
+                    $('[lay-filter="user_group_all"]').prop('checked', true);
+                } else {
+                    $('[lay-filter="user_group_all"]').prop('checked', false);
+                }
+                form.render('checkbox');
+            }
+
+            //监听店铺选择
+            get_coupons();
+
+            //根据店铺刷新优惠券
+            function get_coupons(default_id) {
+                if (!default_id) default_id = 0;
+                admin.req({
+                    url: layui.setter.apiHost + '/market/coupons/select',
+                    success: function (result) {
+                        if (result.code == 0) {
+                            var html = '<option value=""></option>';
+                            $.each(result.data, function (index, item) {
+                                var selected = '';
+                                if (index == default_id) {
+                                    selected = 'selected';
+                                }
+                                html += '<option value="' + index + '" ' + selected + '>' + item + '</option>';
+                            })
+                            $('[name="coupons_id"]').html(html);
+                            form.render('select');
+                        }
+                    },
+                    error: function () {
+                        layer.msg('优惠券获取失败');
+                    }
+                });
+            }
+
+            if (params) {
+                check_select();
+                if (params.type == 4) {
+                    get_coupons(params.coupons_id);
+                }
+            }
+
+            //自定义验证规则
+            form.verify({
+                price: [
+                    /(^-|[1-9]([0-9]+)?(\.[0-9]{1,2})?$)|(^(0){1}$)|(^[0-9]\.[0-9]([0-9])?$)/,
+                    '请输入正确的金额,且最多两位小数!'
+                ]
+            });
+
+            //日期
+            laydate.render({
+                elem: '#start_at',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#end_at',
+                type: 'datetime'
+            });
+        })
+    }
+</script>

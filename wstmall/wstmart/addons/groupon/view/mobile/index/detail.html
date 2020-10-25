@@ -1,0 +1,339 @@
+{extend name="$LAYOUT_MOBILE_BASE" /}
+{block name="title"}商品详情 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__ROOT__/addons/groupon/view/mobile/index/css/detail.css?v={$v}">
+<link rel="stylesheet"  href="__MOBILE__/js/share/nativeShare.css?v={$v}">
+{/block}
+{block name="header"}
+	{php}$cartNum = WSTCartNum();{/php}
+	<header class="ui-header ui-header-positive wst-header">
+	    <a href="{:addon_url('groupon://goods/molists')}"><i class="ui-icon-return"></i></a>
+	    <ul class="ui-tab-nav">
+	        <li class="switch active" onclick="javascript:pageSwitch(this,1);">商品</li>
+	        <li class="switch" onclick="javascript:pageSwitch(this,2);">详情</li>
+	        <li class="switch" id="appr" onclick="javascript:pageSwitch(this,3);">评价</li>
+    	</ul>
+	    <a href="{:url('mobile/carts/index')}"><span class="cart" >{if($cartNum>0)}<span>{php} echo $cartNum;{/php}</span>{/if}</span></a>
+	    <span class="share" onclick="javascript:shareShow();"></span>
+    </header>
+{/block}
+{block name="footer"}
+    <div class="ui-loading-wrap wst-Load" id="Load">
+	    <i class="ui-loading"></i>
+	</div>
+	<input type="hidden" name="" value="{$info['goodsId']}" id="goodsId" autocomplete="off">
+	<input type="hidden" name="" value="{$info['goodsType']}" id="goodsType" autocomplete="off">
+    <footer class="ui-footer wst-footer-btns" style="height:42px; border-top: 1px solid #e8e8e8;" id="footer">
+        <div class="wst-toTop" id="toTop">
+	  	<i class="wst-toTopimg"><span>顶部</span></i>
+		</div>
+		<div class="ui-row-flex">
+		<div class="ui-col ui-col-3 wst-go-icon">
+		  <div class="ui-row-flex">
+				<div class="ui-col ui-col" style="border-right: 1px solid rgba(0,0,0,.05);">
+					<div class="icon">
+						{if($info['shop']['shopQQ'])!=''}
+							<a href="http://wpa.qq.com/msgrd?v=3&uin={$info['shop']['shopQQ']}&site=qq&menu=yes"><span class="img qq"></span><span class="word">客服</span></a>
+						{else /}
+							<a href="tel:{$info['shop']['shopTel']}"><span class="img qq"></span><span class="word">客服</span></a>
+						{/if}
+						{:hook('wechatDocumentContact',['type'=>'goodsDetail','shopId'=>$info['shop']['shopId'],'goodsId'=>$info['goodsId']])}
+					</div>
+				</div> 
+				<div class="ui-col ui-col" style="border-right: 1px solid rgba(0,0,0,.05);">
+				<div class="icon"><a href="{:url('mobile/shops/home',['shopId'=>$info['shop']['shopId']])}"><span class="img shop"></span><span class="word">店铺</span></a></div>
+				</div> 
+				<div class="ui-col ui-col" style="border-right: 1px solid rgba(0,0,0,.05);">
+				{if($info['favGood']==0)}
+		    	<button class="but" type="button"><span class="img imgfollow nofollow" onclick="javascript:WST.favorites({$info['goodsId']},0);"></span><span style="line-height: 1.5;" class="word">关注</span></button>
+				{else}
+		    	<button class="but" type="button"><span class="img imgfollow follow" onclick="javascript:WST.cancelFavorite({$info['favGood']},0);"></span><span style="line-height: 1.5;"  class="word">关注</span></button>
+				{/if}
+			    </div>  
+			</div>
+		</div>
+	    <div class="ui-col ui-col-4 wst-goods_buy">
+			<button id="buyBtn" class="wst-goods_buym active" type="button" onclick="javascript:cartShow(1);" disabled>立即参团</button>
+	    </div>
+	    </div>
+    </footer>
+{/block}
+{block name="main"}
+
+{if($info['goodsId']>0)}
+	 {/* 商品  */}
+     <section class="ui-container" id="goods1">
+        <div class="ui-slider" style="padding-top:100%;" id="groupon-time" sc="{:date("Y-m-d H:i:s")}" sv="{$info['startTime']}" ev="{$info['endTime']}" st="{$info['status']}">
+		    <ul class="ui-slider-content" style="{if($info['imgcount']>0)}{$info['imgwidth']}{/if}">
+		        {volist name="info['gallery']" id="ga"}
+		        <li><div class="wst-go-img"><a><img src="__RESOURCE_PATH__/{:WSTImg($ga,2)}"></a></div></li>
+		        {/volist}
+		    </ul>
+		</div>
+		<div class="ui-nowrap-multi ui-whitespace wst-go-name">{if $info['isFreeShipping']==1}<span class='wst-red'>【包邮】</span>{/if}{$info['goodsName']}</div>
+		<div class="ui-row-flex wst-go-price">
+		    <div class="ui-col ui-col-2">
+		    	<p class="price">¥{$info['grouponPrice']}<span class="market">¥{$info['marketPrice']}</span></p>
+		    	<p>成交数：{$info['orderNum']}{$info['goodsUnit']}，每人限购{$info['limitNum']}{$info['goodsUnit']}</p>
+		    </div>
+		</div>
+		<div class="ui-row-flex wst-go-price">
+			<div class="ui-col">
+				<p class="time" id="grouptime">{if $info['status']==-1}团购活动已结束{else}正在计算团购时间...{/if}</p>
+				{if($info['grouponDesc'])}
+			    <p>团购说明：{$info['grouponDesc']}</p>
+			    {/if}
+			</div>
+		</div>
+		   {if!empty($info['spec'])}
+		    <div class="wst-go-spec">
+				{volist name="$info['spec']" id="sp"}
+				<div class="spec">
+					{volist name="sp['list']" id="sp2"}
+					{if $sp2['itemImg']!=''}
+						<span class="introduce">{$sp['name']}：</span><img class="j-option img active" data-val="{$sp2['itemId']}" src="__RESOURCE_PATH__/{$sp2['itemImg']}" title="{$sp2['itemName']}">
+					{else}
+						<span class="introduce">{$sp['name']}：</span><span class="j-option words active" data-val="{$sp2['itemId']}">{$sp2['itemName']}</span>
+					{/if}
+					{/volist}
+					<div class="wst-clear"></div>
+				</div>
+				{/volist}
+			</div>
+			{/if}
+		<ul class="ui-list ui-list-text wst-go-ul ui-list-active">
+			{if WSTConf('CONF.isOrderScore')==1}
+		    <li>
+		        <div class="ui-list-info">
+		            <h5 class="ui-nowrap"><span class="word">积分</span><span class="line">|</span>购买即可获得{php}echo WSTMoneyGiftScore($info['shopPrice']);{/php}积分</h5>
+		        </div>
+		        <span class="icon">···</span>
+		    </li>
+		    {/if}
+		    <li style="display: none;">
+		        <div class="ui-list-info">
+		            <h5 class="ui-nowrap"><span class="word">优惠</span><span class="line">|</span></h5>
+		        </div>
+		        <span class="icon">···</span>
+		    </li>
+		    {if !empty($info['attrs']) }
+		    <li onclick="javascript:dataShow();">
+		        <div class="ui-list-info">
+		            <h5 class="ui-nowrap">产品参数</h5>
+		        </div>
+		        <span class="icon">···</span>
+		    </li>
+		    {/if}
+
+		    <li onclick="javascript:pageSwitch($('#appr'),3);">
+		        <div class="ui-list-info">
+		            <h5 class="ui-nowrap">商品评价(<span class="red">{$info['appraiseNum']}</span>)</h5>
+		        </div>
+		        <span class="icon">···</span>
+		    </li>
+		</ul>
+		<ul class="ui-list ui-list-one ui-list-link wst-go-shop">
+		    <li onclick="javascript:location.href='{:url('mobile/shops/home',['shopId'=>$info['shop']['shopId']])}';">
+		        <div class="ui-list-thumb">
+		            <span><img src="__RESOURCE_PATH__/{:WSTImg($info['shop']['shopImg'],3)}" title="{$info['shop']['shopName']}"></span>
+		        </div>
+		     <div class="ui-list-info info">
+		    	<p class="name">{$info['shop']['shopName']}</p><br/>
+		        <p class="ui-nowrap-flex name2">主营：{$info['shop']['cat']}</p>
+        	</div>
+		    </li>
+		    <div class="ui-whitespace">
+		    <div class="ui-row-flex score">
+			    <div class="ui-col ui-col">商品评分:<span class="red">{$info['shop']['scores']['goodsScore']}</span></div><span class="line">|</span>
+			    <div class="ui-col ui-col">时效评分:<span class="red">{$info['shop']['scores']['timeScore']}</span></div><span class="line">|</span>
+			    <div class="ui-col ui-col">服务评分:<span class="red">{$info['shop']['scores']['serviceScore']}</span></div>
+			</div>
+			</div>
+		</ul>
+		<div class="wst-shl-ads">
+	     	<div class="title">猜你喜欢</div>
+	     	{wst:goods type='best' cat="$info['shop']['catId']" num='6'}
+	     	<div class="wst-go-goods" onclick="javascript:WST.intoGoods({$vo['goodsId']});">
+	     		<div class="img j-imgAdapt">
+	     			<a href="javascript:void(0);" onclick="javascript:WST.intoGoods({$vo['goodsId']});"><img src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{:WSTImg($vo['goodsImg'],3)}" title="{$vo['goodsName']}"></a>
+	     		</div>
+	     		<p class="name ui-nowrap-multi">{$vo['goodsName']}</p>
+	     		<div class="info"><span class="ui-nowrap-flex price">¥{$vo['shopPrice']}</span></div>
+	     	</div>
+	     	{/wst:goods}
+		    <div class="wst-clear"></div>
+	    </div>
+	    <div class="wst-go-top" style="display: none;">上拉查看图文详情</div>
+     </section>
+    {/* 详情  */}
+    <section class="ui-container" id="goods2" style="display: none;">
+    	<div class="wst-go-details">{$info['goodsDesc']}</div>
+    </section>
+    {/* 评价  */}
+    <input type="hidden" name="" value="{$info['goodsId']}" id="goodsId" autocomplete="off">
+    <input type="hidden" name="" value="" id="currPage" autocomplete="off">
+    <input type="hidden" name="" value="" id="totalPage" autocomplete="off">
+    <section class="ui-container" id="goods3" style="display: none;">
+    	<div id="evaluate-list"></div>
+    </section>
+<script id="list" type="text/html">
+{{# if(d && d.length>0){ }}
+{{# for(var i=0; i<d.length; i++){ }}
+	<div class="ui-whitespace wst-go-evaluate">
+		<div class="info">
+			<span class="name">{{ d[i].loginName }}</span>
+			{{# if(d[i].rankImg){ }}
+            	<img src="__RESOURCE_PATH__/{{ d[i].rankImg }}">
+            {{# } }}
+            {{# var score = (d[i].goodsScore+d[i].serviceScore+d[i].timeScore)/3; }}
+			{{# for(var j=1; j<6; j++){ }}
+				{{# if(j <= score.toFixed(0)){ }}
+                	<i class="bright"></i>
+            	{{# }else{ }}       
+                	<i class="dark"></i>
+                {{# } }}
+            {{# } }}
+            <span class="time">{{ d[i].createTime }}</span>
+            <div class="wst-clear"></div>
+        </div>
+        <div class="content">
+       		<p>{{ d[i].content }}</p>
+				{{# if(d[i].images){ }}
+					{{# for(var m=0; m<d[i].images.length; m++){ }}
+                   		<img src="__RESOURCE_PATH__/{{ d[i].images[m] }}">
+                	{{# } }}
+            	{{# } }}
+            <div class="wst-clear"></div>
+           	<p class="word">{{ d[i].goodsSpecNames }}</p>
+        </div>
+		{{# if(d[i].shopReply){ }}
+            <div class="reply"><p>卖家回复：{{ d[i].shopReply }}</p></div>
+        {{# } }}
+    </div>
+{{# } }}
+{{# }else{ }}
+	<ul class="ui-row-flex wst-flexslp">
+		<li class="ui-col ui-flex ui-flex-pack-center">
+		<p>对不起，没有相关评论。</p>
+		</li>
+	</ul>
+{{# } }}
+</script>
+{else}
+ <ul class="ui-row-flex wst-flexslp">
+	<li class="ui-col ui-flex ui-flex-pack-center">
+	<p>对不起，没有找到商品。</p>
+	</li>
+</ul>
+{/if}
+{/block}
+{block name="include"}
+{/* 遮盖层  */}
+<div class="wst-cover" id="cover"></div>
+{/* 参数框  */}
+{if !empty($info['attrs']) }
+<div class="wst-fr-box" id="frame">
+	<div class="title"><span>产品参数</span><i class="ui-icon-close-page" onclick="javascript:dataHide();"></i><div class="wst-clear"></div></div>
+	<div class="content" id="content">
+		{volist name="$info['attrs']" id="at"}
+			{$at['attrName']}：{$at['attrVal']}<br/>
+		{/volist}
+	</div>
+	<button class="button" onclick="javascript:dataHide();">确定</button>
+</div>
+{/if}
+
+{/*分享 */}
+<?php if(!(Request()->isSsl())){?>
+<script type='text/javascript' src='__MOBILE__/js/share/nativeShare.js?v={$v}'></script>
+<div class="wst-cart-box" id="frame-share" style="padding-top:10px;">
+	<div class="content" id="nativeShare" style="padding-bottom:50px;">
+		<div class="bshare-custom icon-medium-plus">
+			<div class="ui-form-item ui-form-item-show" style="font-size:0.15rem;">    
+				<a title="分享到QQ空间" class="bshare-qzone">分享到QQ空间</a>
+			</div>
+			<div class="ui-form-item ui-form-item-show" style="font-size:0.15rem;">
+				<a title="分享到新浪微博" class="bshare-sinaminiblog">分享到新浪微博</a>
+			</div>
+			<div class="ui-form-item ui-form-item-show" style="font-size:0.15rem;">    
+				<a title="分享到开心网" class="bshare-kaixin001">分享到开心网</a>
+			</div>
+			<div class="ui-form-item ui-form-item-show" style="font-size:0.15rem;">
+				<a title="分享到人人网" class="bshare-renren">分享到人人网</a>
+			</div>
+		</div>
+	</div>
+	<div class="determine"><button class="button" onclick="javascript:shareHide();">取消</button></div>
+</div>
+<script>
+	var config = {
+		url:  '{$shareInfo["link"]}',
+		title:'{$shareInfo["title"]}',
+	  	desc:'{$shareInfo["desc"]}',
+	  	img:'{$shareInfo["imgUrl"]}',
+	};
+	var share_obj = new nativeShare('nativeShare',config);
+	$(function(){
+		if(bShare){
+	    	bShare.addEntry({
+			    url: '{$shareInfo["link"]}',
+				title:'{$shareInfo["title"]}',
+				summary:'{$shareInfo["desc"]}',
+			    pic: '{$shareInfo["imgUrl"]}',
+			});
+	    }
+	});
+</script>
+<?php } ?>
+
+{/*加入购物车框  */}
+<div class="wst-cart-box" id="frame-cart">
+	<div class="title">
+     	<div class="picture"><div class="img"><a href="javascript:void(0);"><img src="__RESOURCE_PATH__/{:WSTImg($info['goodsImg'],2)}" title="{$info['goodsName']}"></a></div></div>
+		<i class="ui-icon-close-page" onclick="javascript:cartHide();"></i>
+		<p class="ui-nowrap-multi">{$info['goodsName']}</p>
+		<p class="ui-nowrap-flex price"><span id="j-shop-price">¥{$info['grouponPrice']}</span><span id="j-market-price" class="price2">¥{$info['marketPrice']}</span></p>
+		<div class="wst-clear"></div>
+	</div>
+	<div class="standard" id="standard">
+	<div class="number">
+		<p>数量</p>
+		<div class="stock">库存：<span id="goods-stock">{$info['grouponNum']}</span>{$info['goodsUnit']}</div>
+	  	<div class="wst-buy_l">
+           <input class="wst-buy_l1" type="button" value="-" onclick='javascript:WST.changeIptNum(-1,"#buyNum")'><input id="buyNum" class="wst-buy_l2" data-min='1' data-max='' type="number" value="1" autocomplete="off" onkeyup='WST.changeIptNum(0,"#buyNum")'><input class="wst-buy_l3" type="button" value="+" onclick='javascript:WST.changeIptNum(1,"#buyNum")'>
+      	</div>
+		<div class="wst-clear"></div>
+	</div>
+	</div>
+	<button class="button" onclick="javascript:addCart({$info['goodsType']});">确定</button>
+</div>
+{/block}
+{block name="js"}
+<script>
+var goodsInfo = {
+	id:{$info['goodsId']},
+	grouponId:{$info['grouponId']},
+	isSpec:{$info['isSpec']},
+	goodsStock:{$info['goodsStock']},
+	marketPrice:{$info['marketPrice']},
+	goodsPrice:{$info['shopPrice']}
+	{if isset($info['saleSpec'])}
+	,sku:{:json_encode($info['saleSpec'])}
+	{/if}
+}
+
+//弹框
+function shareShow(){
+	jQuery('#cover').attr("onclick","javascript:shareHide();").show();
+	jQuery('#frame-share').animate({"bottom": 0}, 500);
+}
+function shareHide(){
+	var cartHeight = parseInt($("#frame-cart").css('height'))+52+'px';
+	jQuery('#frame-share').animate({'bottom': '-'+cartHeight}, 500);
+	jQuery('#cover').hide();
+}
+</script>
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/mobile/index/js/detail.js?v={$v}'></script>
+<script type='text/javascript' src='__ROOT__/addons/groupon/view/mobile/index/js/time.js?v={$v}'></script>
+{/block}

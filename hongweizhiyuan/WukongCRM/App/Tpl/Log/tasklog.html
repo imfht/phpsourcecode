@@ -1,0 +1,85 @@
+<form class="form-horizontal" enctype="multipart/form-data" action="{:U('Log/tasklog')}" method="post">	
+	<table class="table table-hover">
+	<input type='hidden' name="task_id" value="{$model_id}"/> 
+	<input type='hidden' name="role_id" value="{$Think.session.role_id}"/>
+		<tr>
+			<th colspan="4">{:L('BASIC_INFO')}</th>
+		</tr>
+		<tr>
+			<td class="tdleft">内容描述</td>
+			<td colspan="3"><textarea rows="6" class="span4" name="content"></textarea></td>
+		</tr>
+		<tr >
+			<td class="tdleft" width="15%">新增相关人</td>
+			<td>
+				<input type="hidden" name="about_roles" id="owner_id"/>
+				<input class="span" type="text" id="owner_name" name="about_roles_name" />&nbsp; 单击选择
+			</td>
+			<td class="tdleft" >发送通知</td>
+			<td width="25%"><input type="checkbox" name="message_alert" checked="checked" value="1"/>站内信<input type="checkbox" name="email_alert" value="1"/>邮件</td>
+		</tr>
+		<tr>
+			<td class="tdleft" width="15%">任务状态</td>
+			<td colspan="3">
+				<select name="status">
+					<option <if condition="$status eq '未启动'">selected</if> value="未启动">未启动</option>
+					<option <if condition="$status eq '推迟'">selected</if> value="推迟">推迟</option>
+					<option <if condition="$status eq '进行中'">selected</if> value="进行中">进行中</option>
+					<option <if condition="$status eq '完成'">selected</if> value="完成">完成</option>
+				</select>
+			</td>
+		</tr>
+		
+		<tr>
+			<td class="tdleft">新增附件</td>
+			<td colspan="3">
+				文件总大小不能超过20MB，允许类型：{$allowExts}
+				<p id="attachment1"><input type="file" name="file[]"/></p> <a id="add_more" href="javascript:add_file(2);">增加一个附件</a>
+			</td>
+		</tr>
+		<tr>
+			<td>&nbsp;</td>
+			<td><input class="btn btn-primary" type="submit" name="submit" value="{:L('ADD')}"/> &nbsp; <input class="btn" onclick="javascript:$('#dialog-log').dialog('close');" type="button" value="{:L('CANCEL')}"/></td>
+		</tr>
+	</table>
+</form>
+<div class="hide" id="dialog-message7" title="新增相关人">loading...</div>
+<script type="text/javascript">
+
+$("#dialog-message7").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	height:400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			checked_role_id = '';
+			checked_role_name = '';
+			$(".muti_role_id:checked").each(function(){
+				checked_role_id += ($(this).val()+',');
+				checked_role_name += ($(this).attr('rel')+',');
+			});
+			$('#owner_id').val(checked_role_id);
+			$('#owner_name').val(checked_role_name);
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$('#owner_name').click(
+	function(){
+		$('#dialog-message7').dialog('open');
+		$('#dialog-message7').load('{:U("user/mutiListDialog","by=task")}');
+	}
+);
+function add_file(id) {
+	$("#add_more").before('<p id="attachment' + id + '"><input type="file" name="file[]"/> <a href=\'javascript:void(0)\'  onclick=\'javascript:$(\"#attachment' + id + '\").remove();\'>{:L('DELETE')}</a></p>');
+	$("#add_more").attr('href', 'javascript:add_file(' + (id+1) + ');');
+}
+</script>

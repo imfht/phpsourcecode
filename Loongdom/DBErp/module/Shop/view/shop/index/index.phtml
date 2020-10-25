@@ -1,0 +1,137 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?=$this->HelpUrl('shopOrderList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th><?=$this->translate('订单号')?></th>
+                                <th><?=$this->translate('购买人')?></th>
+                                <th width="10%"><?=$this->translate('支付方式')?></th>
+                                <th width="12%"><?=$this->translate('所属商城')?></th>
+                                <th width="10%"><?=$this->translate('订单金额')?></th>
+                                <th width="8%"><?=$this->translate('订单状态')?></th>
+                                <th width="12%"><?=$this->translate('时间')?></th>
+                                <th width="12%"><?=$this->translate('操作')?></th>
+                            </tr>
+                            <?php
+                            $sForm = $this->searchForm;
+                            $sForm->prepare();
+                            $sForm->get('order_state')->setEmptyOption('选择');
+                            ?>
+                            <?= $this->form()->openTag($sForm); ?>
+                            <tr>
+                                <td>
+                                    <?= $this->formElement($sForm->get('order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('buy_name')); ?>
+                                    <?=$this->formElementErrors($sForm->get('buy_name'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('payment_name')); ?>
+                                    <?=$this->formElementErrors($sForm->get('payment_name'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('app_id')); ?>
+                                    <?=$this->formElementErrors($sForm->get('app_id'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_amount')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_amount')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_amount'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_amount'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('order_state')); ?>
+                                    <?=$this->formElementErrors($sForm->get('order_state'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_time')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_time')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_time'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_time'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                    <?php
+                                    $formData = $sForm->getData();
+                                    if(!empty(array_filter($formData))
+                                        || $formData['order_state'] != ''
+                                        || $formData['app_id'] != '') { ?>
+                                        <a href="<?=$this->url('app-shop');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <?= $this->form()->closeTag(); ?>
+                            </thead>
+
+                            <?php if($this->orderList->getTotalItemCount() > 0) { foreach ($this->orderList as $order) { ?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($order->getShopOrderSn())?></td>
+                                    <td><?=$this->escapeHtml($order->getShopBuyName())?></td>
+                                    <td><?=$this->escapeHtml($order->getShopPaymentName())?></td>
+                                    <td><?=$this->escapeHtml($order->getOneApp()->getAppName())?></td>
+                                    <td><?=$this->erpCurrencyFormat($order->getShopOrderAmount())?></td>
+                                    <td><?=$this->shop()->shopOrderState($order->getShopOrderState())?></td>
+                                    <td><?=date("Y-m-d H:i", $order->getShopOrderAddTime())?></td>
+                                    <td>
+                                        <a href="<?= $this->url('app-shop',
+                                            ['action'=>'view', 'id'=>$order->getShopOrderId()]); ?>"
+                                           class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('查看')?>
+                                        </a>
+
+                                        <?php if($order->getShopOrderState() == 0) { ?>
+                                            <a href="javascript:;" onclick="deleteConfirm('<?=$this->translate('您确实要删除该订单吗？')?>', '<?= $this->url('app-shop', ['action'=>'delete', 'id'=>$order->getShopOrderId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>');" class="btn btn-xs btn-danger">
+                                                <i class="fa fa-trash"></i> <?=$this->translate('删除')?>
+                                            </a>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+                            <?php } } else { ?>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="8"><?=$this->translate('暂无订单信息')?></td>
+                                </tr>
+                                </tfoot>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->orderList, 'Sliding', 'layout/page', ['route' => 'app-shop']); ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>
+<script>
+    laydate.render({elem: '#start_time'});
+    laydate.render({elem: '#end_time'});
+</script>

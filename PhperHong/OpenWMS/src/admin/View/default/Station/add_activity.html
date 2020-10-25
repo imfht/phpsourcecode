@@ -1,0 +1,170 @@
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+			<form name="userForm" id="userForm" novalidate="" action="{:U('Station/save_activity')}" method="post"> 
+				<input type="hidden" id="id" name="id" value="{$info['id']}" />
+				<div class="form-horizontal">
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+							<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;标题： 
+						</label>
+						<div class="col-sm-6">
+							<div class="input-group col-xs-12 col-sm-12 ">
+								<input type="text" id="title" name="title" class="form-control" value="{$info['title']}"/>
+							</div>
+						</div>
+						<div class="help-block col-sm-4" >
+							<span id="titleTip"></span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+							<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;开始时间： 
+						</label>
+						<div class="col-sm-6">
+							<div class="input-group col-xs-12 col-sm-12 ">
+								<input type="text" id="start_datetime" name="start_datetime" onFocus="WdatePicker({isShowClear:false})" class="form-control Wdate" <if condition="($info['start_datetime'] neq '')">value="{:date('Y-m-d', $info['start_datetime'])}"</if>/>
+							</div>
+						</div>
+						<div class="help-block col-sm-4" >
+							<span id="start_datetimeTip"></span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right margintop5"  for="form-field-1"> 
+							<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;结束时间： 
+						</label>
+						<div class="col-sm-6">
+							<div class="input-group col-xs-12 col-sm-12 ">
+								<input type="text" id="end_datetime" name="end_datetime" class="form-control Wdate" onFocus="WdatePicker({isShowClear:false})" <if condition="($info['end_datetime'] neq '')">value="{:date('Y-m-d', $info['end_datetime'])}"</if>/>
+							</div>
+						</div>
+						<div class="help-block col-sm-4" >
+							<span id="end_datetimeTip"></span>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+							图片： 
+						</label>
+						<div class="col-sm-9">
+							<div class="input-group col-xs-10 col-sm-6 ">
+								<div id="config_upload_process"></div>
+								<input type="hidden" name="thumb" id="thumb" value="{$info.thumb}"> 
+								<img id="demo_thumb" src="__PUBLIC__/upload/station_activity/{$info['thumb']}" class="img-thumbnail col-xs-12 col-sm-4" style="<if condition="($info['thumb'] eq '')">display:none;</if>" >
+								<div class="space-4"></div>
+								<div id="alert_box_thumb"></div>
+								<div style="clear:both;"></div>
+								<p class="help-block dp">png/jpg/jpeg图片，小于500KB，分辨率建议宽度500px，高度200px</p>
+							</div>
+							
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+							<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;内容： 
+						</label>
+						<div class="col-sm-9">
+							<input type="hidden" id="content" name="content" value="{$info['content']}" />
+							<script id="editor" type="text/plain" style="width:100%;height:300px;"></script>
+						</div>
+					</div>
+
+					
+					
+				
+					<div id="alert_box"></div>
+					<div class="clearfix form-actions">
+						<div class="col-md-offset-2 col-md-9 col-sm-9">
+							<button id="save" class="col-sm-2 btn btn-success" type="submit" >
+								<i class="icon-save bigger-110"></i>
+							 	<span id="submitbutton">保存</span>
+							</button>
+							<button class="col-sm-2 btn btn-default left10" type="button" id="cancle">
+								<i class="icon-reply bigger-110"></i>
+							 	<span id="submitbutton">取消</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="__PUBLIC__/dest/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" charset="utf-8" src="__PUBLIC__/dest/ueditor/ueditor.all.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="__PUBLIC__/dest/ueditor/lang/zh-cn/zh-cn.js"></script>
+<script type="text/javascript">
+	$(document).ready(function(){
+		window.UEDITOR_HOME_URL = '__PUBLIC__/dest/ueditor/';
+		var ue = UE.getEditor('editor');
+		ue.addListener("ready", function () {
+		    ue.setContent('{$info['content']}');
+
+		});
+
+		$.formValidator.initConfig({
+			formid:"userForm",
+			onerror:function(msg){
+			},
+			onsuccess:function(){
+				
+				$('#content').val(UE.getEditor('editor').getContent());
+			}
+		}); 
+		$("#title").formValidator({empty:false, onshow:"请输入新闻标题", onfocus:"范围为[2-20]", oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			if (val.length >= 2 && val.length <= 40){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+		//status
+		$('#cancle').click(function(){
+			window.location.href = "{:U('Station/activity')}";
+		});
+		var imagename = "{$info['thumb']}";
+		var fullbackuptab = $('#config_upload_process').html5uploader({
+			fileTypeExts:'image/jpeg,image/png,image/jpg', //支持上传的后缀名，多个用逗号隔开, 填写mime类型
+			auto:true,  //是否自动上传
+			removeTimeout:3000,  //上传成功后，进度条多少毫秒后消失
+			url:"{:U('Merchant/upload_img')}",
+			input_file_id:'input-file-config',  //上传控件的id
+			formData:{'type':'station_activity', 'imagename':imagename},  //附加的参数,POST方式提交
+			onCheckFileTypeExts:function(){   //文件类型不对的回调函数
+				$("#alert_box_thumb").jk_alert({msg:'文件类型错误!', type:'danger', show_time:8000});
+			},
+			onSelect: function(file){
+				
+			},
+			onUploadStart:function(){  //开始上传的回调函数
+				
+			},
+			onInit:function(){  //初始化的回调函数
+				//美化上传框
+				$('#input-file-config').ace_file_input({no_file:'点击选择文件 ...', btn_choose:'上传', btn_change:'修改', droppable:false});
+			},
+			onUploadComplete:function(){   //上传完成的回调函数
+				//$("#alert_box_config").jk_alert({msg:'上传完成，正在升级，请稍候...', type:'success', show_time:8000});
+			
+			},
+			onUploadSuccess:function(file, responseText){  //上传成功的回调函数
+				var data = JSON.parse(responseText);
+				if ( 1 == data.ret) { 
+					$('#demo_thumb').attr('src', '__PUBLIC__/'+data.data.savepath+data.data.savename).show();
+					$('#thumb').val(data.data.savename);
+					fullbackuptab.formData = {'type':'station_activity', 'imagename':data.data.savename};
+				}else{
+					$("#alert_box_thumb").jk_alert({msg: data.msg, type:'danger', show_time:12000});
+				}
+			
+			},
+			onUploadError:function(file, responseText){
+				$("#alert_box_thumb").jk_alert({msg:responseText.msg, type:'danger', show_time:8000});
+			}
+		});
+	});
+</script>
+				                

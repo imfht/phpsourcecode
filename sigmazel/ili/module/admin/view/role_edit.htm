@@ -1,0 +1,144 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<form method="post" action="{$ADMIN_SCRIPT}/admin/role/{$dispatches[method]}&id={$_var[gp_id]}" onsubmit="javascript:return check_form(this);">
+			<input type="hidden" name="formsubmit" value="yes" />
+			<div class="well widget">
+				<div class="widget-header">
+					<p class="text">* {lang admin.validate.require}</p>
+				</div>
+				<div class="widget-content">
+                    <fieldset>
+                        <label>{lang admin.role_edit.view.no.label} *</label>
+                        <input type="text" class="input-mini" name="txtDisplayOrder" placeholder="{lang admin.role_edit.view.no.placeholder}..." maxlength="3" value="{$role[DISPLAYORDER]}" /> 
+                        <span class="help-inline">{lang admin.role_edit.view.no.tips}</span>
+                        
+                        <label>{lang admin.role_edit.view.cname.label} *</label>
+                        <input type="text" class="input-large" name="txtCName" placeholder="{lang admin.role_edit.view.cname.placeholder}..." maxlength="50" value="{$role[CNAME]}" /> 
+                        <span class="help-inline">{lang admin.role_edit.view.cname.tips}</span>
+                        
+                        <label>{lang admin.role_edit.view.remark.label}</label>
+                        <textarea class="span6" rows="3" name="txtComment">{$role[COMMENT]}</textarea>
+                        <span class="help-inline">{lang admin.role_edit.view.remark.tips}</span>
+                    </fieldset>
+                    
+                    <h4>{lang admin.role_edit.view.menu.label}</h4>
+                    <fieldset id="role_menus">
+                        <!--{loop $menus $menu}-->
+                        <div path="{$menu[PATH]}">
+                            <label class="checkbox checkbox-menu inline" path="{$menu[PATH]}">
+                                <input type="checkbox" class="fancy" name="cbxItem[{$menu[MENUID]}]" rel="menu" value="1" path="{$menu[PATH]}" {if $role_menus[$menu[MENUID]]}checked="checked"{/if} /><i class="{$menu[ICON]}"></i> {$menu[CNAME]}
+                            </label>
+                            
+                            <span class="operation_space"></span>
+                            <!--{loop $operation_list $key $operation}-->
+                                <!--{if $menu[OPERATIONS][$key]}-->
+                                <label class="checkbox checkbox-operate inline">
+                                    <input type="checkbox" class="fancy" name="operations_{$menu[MENUID]}[{$key}]" rel="operate" value="1" path="{$menu[PATH]}" {if $role_menus[$menu['MENUID']]['OPERATIONS'][$key]}checked="checked"{/if}/> {$operation}
+                                </label>
+                                <!--{/if}-->
+                            <!--{/loop}-->
+                            <hr/>
+                            
+                            <!--{loop $menu['MENUS'] $item}-->
+                            <div path="{$item[PATH]}">
+                                <label class="checkbox checkbox-menu children inline" path="{$item[PATH]}">
+                                    <input type="checkbox" class="fancy" name="cbxItem[{$item[MENUID]}]" rel="menu" value="1" path="{$item[PATH]}" {if $role_menus[$item[MENUID]]}checked="checked"{/if} /><i class="{$item[ICON]}"></i> {$item[CNAME]} 
+                                </label>
+                                
+                                <span class="operation_space"></span>
+                                <!--{loop $operation_list $key $operation}-->
+                                    <!--{if $item[OPERATIONS][$key]}-->
+                                    <label class="checkbox checkbox-operate inline">
+                                        <input type="checkbox" class="fancy" name="operations_{$item[MENUID]}[{$key}]" rel="operate" value="1" path="{$item[PATH]}" {if $role_menus[$item['MENUID']]['OPERATIONS'][$key]}checked="checked"{/if}/> {$operation}
+                                    </label>
+                                    <!--{/if}-->
+                                <!--{/loop}-->
+                            </div>
+                            <!--{/loop}-->
+                            </div>
+                            
+                            <br/>
+                        <!--{/loop}-->
+                        
+                        <hr />
+                        <!--{if $dispatches['method'] == '_add'}-->
+                        <button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+                        <!--{elseif $dispatches['method'] == '_update'}-->
+                        <button type="submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</button>
+                        <!--{/if}-->
+                        
+                        <button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+                        <button type="button" class="btn btn-small" onclick="javascript:location.href='{$ADMIN_SCRIPT}/admin/role';">{lang admin.operation.go.back}</button>
+                    </fieldset>
+                </div>
+            </div>
+            </form>
+        </div>
+	</div>
+</div>
+
+<script>
+function check_form(frm){
+    if(frm.txtDisplayOrder.value.trim().length == 0){
+    	$(frm.txtDisplayOrder).next('.help-inline').css('color', 'red');
+    	frm.txtDisplayOrder.focus();
+    	return false;
+    }
+    
+    if(!frm.txtDisplayOrder.value.trim().isInt()){
+    	$(frm.txtDisplayOrder).next('.help-inline').css('color', 'red');
+    	frm.txtDisplayOrder.focus();
+    	return false;
+    }
+    
+    if(frm.txtCName.value.trim().length == 0){
+    	$(frm.txtCName).next('.help-inline').css('color', 'red');
+    	frm.txtCName.focus();
+    	return false;
+    }
+    
+    if(frm.txtIdentity.value.trim().length == 0){
+    	$(frm.txtIdentity).next('.help-inline').css('color', 'red');
+    	frm.txtIdentity.focus();
+    	return false;
+    }
+    
+    return true;
+}
+
+$(function(){
+	$('.fancy').uniform();
+	
+	$('fieldset input,textarea').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+	//菜单点击
+	$('#role_menus :checkbox').click(function(){
+		var rel = $(this).attr('rel');
+		var path = $(this).attr('path');
+		var parent = $("#role_menus div[path='" + path + "']");
+		
+		if(rel == 'menu'){
+			if(this.checked) $('input', parent).attr('checked', true).parent().addClass('checked');
+			else $('input', parent).attr('checked', false).parent().removeAttr('class');
+		}else if(rel == 'operate'){
+			if($('.checkbox-operate :checked', parent).length > 0) $('.checkbox-menu input', parent).attr('checked', true).parent().addClass('checked');
+			//else $('.checkbox-menu input', parent).attr('checked', false).parent().removeAttr('class');
+		}
+		
+		var pparent = $(parent).parent();
+		var ppath = $(pparent).attr('path');
+		
+		if(ppath){
+			if($('.children :checked', pparent).length > 0) $("label[path='" + ppath + "'] input", pparent).attr('checked', true).parent().addClass('checked');
+			else $("label[path='" + ppath + "'] input", pparent).attr('checked', false).parent().removeAttr('class');
+		}
+	});
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

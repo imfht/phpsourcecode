@@ -1,0 +1,161 @@
+<div class="clearfix">
+	<ul class="nav pull-left">			
+		<li class="pull-left" >{:L('SEARCH_CONDITION')}
+			<select id="field" style="width:auto" onchange="changeCondition()" name="field">
+				<option class="all" value="all">{:L('ANY_FIELDS')}</option>
+				<option class="word" value="subject">{:L('TASK_SUBJECT')}</option>
+				<option class="role" value="owner_role_id">{:L('EXECUTOR')}</option>
+				<option class="role" value="creator_role_id">{:L('CREATOR_ROLE')}</option>
+				<option class="task_status" value="status">{:L('TASK_STATUS')}</option>
+				<option class="task_priority" value="priority">{:L('PRECEDENCE')}</option>
+				<option class="word" value="description">{:L('DESCRIPTION')}</option>
+				<option class="date" value="due_date">{:L('DEADLINE')}</option>
+				<option class="date" value="create_date">{:L('CREATE_DATE')}</option>
+				<option class="date" value="update_date">{:L('UPDATE_DATE')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="conditionContent" class="pull-left">
+			<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+				<option value="contains">{:L('CONTAINS')}</option>
+				<option value="is">{:L('IS')}</option>
+				<option value="start_with">{:L('START_WITH')}</option>
+				<option value="end_with">{:L('END_WITH')}</option>
+				<option value="is_empty">{:L('IS_EMPTY')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="searchContent" class="pull-left">
+			<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+		</li>
+		<li class="pull-left">
+			<button class="btn" onclick="d_changeCondition(0)">{:L('SEARCH')}</button>
+		</li>
+		&nbsp;<a target="_blank" href="{:U('task/add')}">{:L('CREATE_TASK')}</a>
+	</ul>
+</div>
+<empty name="task_list">
+	<div class="alert">{:L('EMPTY_DATA')}</div>
+<else/>
+<table class="table table-hover">
+	<thead>
+		<tr>
+			<th>&nbsp;</th>
+			<th>{:L('THEME')}</th>
+			<th>{:L('RELATED_INFO')}</th>
+			<th>{:L('EXECUTOR')}</th>	
+			<th>{:L('STATUS')}</th>
+			<th>{:L('PRECEDENCE')}</th>
+		</tr>
+	</thead>
+	<tfoot id="footer">
+		<tr>
+			<td colspan="6">
+				<div class="row pagination">
+					<div class="span2">
+						{:L('PAGE_COUNT', array($count_num ,$total))}
+					</div>
+					<div class="span4">
+						<div><ul id="changepage">
+							<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')}</span></li>
+							<if condition="1 lt $total">
+								<li><a class="page" href="javascript:void(0)" rel="2">{:L('NEXT_PAGE')}</a></li>
+							<else />
+								<li><span>{:L('NEXT_PAGE')}</span></li>
+							</if>
+						</ul></div>
+					</div>
+				</div>
+			</td>
+		</tr>
+	</tfoot>
+	<tbody id="load" class="hide">
+		<tr><td class="tdleft" colspan="6" style=" height:300px;text-align:center"><img src="./Public/img/load.gif"></td></tr>
+	</tbody>
+	<tbody id="data">
+		<volist name="task_list" id="vo">
+			<tr>
+				<td>
+					<input type="radio" name="task_id" value="{$vo.task_id}" rel="{$vo.task_id}" />
+				</td>
+				<td>{$vo.subject}</td>
+				<td>{$vo.module.module_name} {$vo.module.name}</td>
+				<td>
+					<volist name="vo.owner" id="v">
+						{$v.user_name},
+					</volist>
+				</td>
+				<td>{$vo.status}</td>
+				<td>{$vo.priority}</td>
+			</tr>
+		</volist>
+	</tbody>
+</table>
+</empty>
+<script type="text/javascript">
+	$('.page').click(function(){
+		var a = $(this).attr('rel');
+		d_changeCondition(a);
+	});
+	function d_changeCondition(p){
+		$('#data').addClass('hide');
+		$('#load').removeClass('hide');
+		
+		var field = $('#field').val();
+		var condition = $('#condition').val();
+		var asearch = encodeURI($("#search").val());
+		$.ajax({
+			type:'get',
+			url:'index.php?m=task&a=changecontent&field='+field+'&search='+asearch+'&condition='+condition+'&p='+p,
+			async:false,
+			success:function(data){
+				var temp = '';
+				if(data.data.list != null){
+					$.each(data.data.list, function(k, v){
+						temp += "<tr><td><input type='radio' name='task_id' value='"+v.task_id+"'/></td>";
+						temp +=  '<td>'+v.subject+'</td>';
+						if(v.module){
+							temp +=  '<td>'+v.module.module_name+v.module.name+'</td>';
+						}else{
+							temp +=  '<td>&nbsp;</td>';
+						}
+						var t = '';
+						$.each(v.owner,function(key,val){
+							t += val.user_name+',';
+						});
+						temp +=  '<td>'+t+'</td>';
+						temp +=  '<td>'+v.status+'</td>';
+						temp +=  '<td>'+v.priority+'</td>';
+                        temp +=  "</tr>";
+					});
+					var changepage = "";
+					if(data.data.p == 1){
+						changepage = "<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')} </span></li>";
+						if(data.data.p < data.data.total){
+							changepage += "<li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'> {:L('NEXT_PAGE')}</a></li>";
+						}else{
+							changepage += "<li><span>{:L('NEXT_PAGE')}</span></li>";
+						}
+					}else if(data.data.p == data.data.total){
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><span>{:L('NEXT_PAGE')}</span></li>";
+					}else{
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>";
+					}
+					$('#p').html(data.data.p);
+					$('#changepage').html(changepage);
+					$('#count').html(data.data.count);
+					$('#total_page').html(data.data.total);
+					$('#data').html(temp);
+					$('.page').click(function(){
+						var a = $(this).attr('rel');
+						d_changeCondition(a);
+					});
+				}else{
+					$('#data').html('<tr><td colspan="4">{:L("NOT_FIND_THE_RESULTS_YOU_WANT")}</tr>');
+					$('#footer').addClass('hide');
+				}
+				$('#load').addClass('hide');
+				$('#data').removeClass('hide');
+			},
+			dataType:'json'
+		});		
+	}
+</script>

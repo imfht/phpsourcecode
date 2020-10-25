@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>网站后台管理</title>
+    <meta name="description" content="这是一个 index 页面">
+    <meta name="keywords" content="index">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <link rel="icon" type="image/png" href="__ADMIN__/i/favicon.png">
+    <link rel="apple-touch-icon-precomposed" href="__ADMIN__/i/app-icon72x72@2x.png">
+    <meta name="apple-mobile-web-app-title" content="Amaze UI" />
+    <link rel="stylesheet" href="__ADMIN__/css/amazeui.min.css" />
+    <link rel="stylesheet" href="__ADMIN__/css/app.css">
+    <script src="__ADMIN__/js/jquery.min.js"></script>
+
+    <script src="__PLUG__/kingeditor/kindeditor-all.js"></script>
+    <style>
+        .am-msg{
+            color: red;
+        }
+    </style>
+    {block name="style"}{/block}
+</head>
+
+<body data-type="widgets">
+<script src="__ADMIN__/js/theme.js"></script>
+<!--头部描述信息开始<div class="container-fluid am-cf">-->
+{block name="content_header">}{/block}
+<!--头部描述信息结束-->
+{block name="body">}
+{/block}
+<!-- 内容区域结束 -->
+<script src="__ADMIN__/js/amazeui.min.js"></script>
+<script src="__ADMIN__/js/app.js"></script>
+<!--模态框开始-->
+<div class="am-modal am-modal-confirm" tabindex="-1" id="my_success">
+    <div class="am-modal-dialog">
+        <div class="am-modal-hd">操作成功</div>
+        <div class="am-modal-bd am-msg">
+
+        </div>
+        <div class="am-modal-footer">
+            <span class="am-modal-btn" data-am-modal-confirm>返回列表</span>
+            <span class="am-modal-btn" data-am-modal-cancel>继续操作</span>
+        </div>
+    </div>
+</div>
+
+<div class="am-modal am-modal-confirm" tabindex="-1" id="my_error">
+    <div class="am-modal-dialog">
+        <div class="am-modal-hd">操作失败</div>
+        <div class="am-modal-bd am-msg">
+
+        </div>
+        <div class="am-modal-footer">
+            <span class="am-modal-btn" data-am-modal-cancel>返回</span>
+        </div>
+    </div>
+</div>
+
+<div class="am-modal am-modal-confirm" tabindex="-1" id="my_del">
+    <div class="am-modal-dialog">
+        <div class="am-modal-hd">Amaze UI</div>
+        <div class="am-modal-bd">
+            你，确定要删除这条记录吗？
+        </div>
+        <div class="am-modal-footer">
+            <span class="am-modal-btn" data-am-modal-cancel>取消</span>
+            <span class="am-modal-btn" data-am-modal-confirm>确定</span>
+        </div>
+    </div>
+</div>
+<!--模态框结束-->
+<?php if(!empty($infoModule['menu'])){ $count=count($infoModule['menu'])-1;$index_url=$infoModule['menu'][$count]['url']; } ?>
+<script>
+    /**
+     * diolog 弹框
+     * @param msg  提示信息
+     * @param status   状态 1 成功 2 失败
+     * @returns {boolean}
+     */
+    function di_alert(msg,status) {
+        $(".am-msg").text(msg);
+        if (status==1){
+            return $('#my_success').modal({
+                relatedTarget: this,
+                onConfirm: function(options) {
+                    window.location.href="{$index_url|default='index'}";
+                },
+                // closeOnConfirm: false,
+                onCancel: function() {
+                    window.location.href=location
+                }
+            });
+        }else if(status==2){
+            return $('#my_error').modal({
+                relatedTarget: this,
+                // closeOnConfirm: false,
+                onCancel: function() {
+                }
+            });
+        }
+    }
+    //下拉框
+    /*function select(obj){
+        var name=$(obj).val();
+        select_target=$(obj).parent().attr("target");
+        //下拉赋值
+        $(select_target).attr('value',name);
+    }*/
+    function selected_on(obj) {
+        var select_target=$(obj).attr("target");
+        var options=$(select_target+"_select option:selected");  //获取选中的值
+        $(select_target).attr('value',options.val());
+    }
+    //ajax表单提交
+    $("#btn").on('click', function() {
+        var action = $('#ajax_form').attr('action');
+        $.ajax({
+            type: "post",
+            url: action,
+            data: $("#ajax_form").serialize(),
+            success: function(data) {
+                if (data.code==1){
+                    return di_alert(data.msg,1);
+                }else{
+                    return di_alert(data.msg,2);
+                }
+            },
+            error: function(data) {
+                return di_alert(data.msg,2);
+            }
+        })
+    });
+    //上传图片
+    $(document).on('change',".file",function(){
+        var obj=this;
+        var action = "{:url('kbcms/admin_upload/upload')}";
+        var file=obj.files[0];
+        var xhr = new XMLHttpRequest();
+        xhr.open("post", action, true); // 上传地址
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    var str = $.parseJSON(xhr.responseText); // 返回格式，此处为json，可以为别的格式
+                    if (str.status==1){
+                        var objUrl = getObjectURL(file) ;
+                        //console.log("objUrl = "+objUrl) ;
+                        var num=$(obj).attr("number");
+                        if (objUrl) {
+                            $(".img"+num).attr("src", objUrl);
+                            $(".image"+num).val(str.url);
+                            $(".image"+num).attr('href',str.url);
+                            $(".image"+num).attr('target','_blank');
+                            //target="_blank"
+                        }
+                    }else{
+                        alert(str.msg);
+                    }
+                }
+            }
+        }
+        var fd = new FormData();
+        fd.append('file', file);
+        xhr.send(fd);
+    }) ;
+    //建立一個可存取到該file的url
+    function getObjectURL(file) {
+        var url = null ;
+        if (window.createObjectURL!=undefined) { // basic
+            url = window.createObjectURL(file) ;
+        } else if (window.URL!=undefined) { // mozilla(firefox)
+            url = window.URL.createObjectURL(file) ;
+        } else if (window.webkitURL!=undefined) { // webkit or chrome
+            url = window.webkitURL.createObjectURL(file) ;
+        }
+        return url ;
+    }
+</script>
+<!--脚本文件开始-->
+{block name="script"}{/block}
+<!--脚本文件结束-->
+</body>
+</html>

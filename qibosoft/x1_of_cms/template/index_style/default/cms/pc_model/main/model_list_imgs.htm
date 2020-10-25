@@ -1,0 +1,73 @@
+<!--图库列表-->
+		<div class="ListInfoBox">
+		<!--name是标签名，跟通用标签不能重名，rows取几条数据,order按什么方式排序，list代表可控排序，id即时间,view代表浏览量-->
+		{qb:listpage name="news_listimg_page_listdata002" rows="5" order="list"}
+			<ul class="qb_ui_ListInfo_date_title_pics">
+				<ol>
+					<dl>
+						<dt><span>{:date("m-d",$rs['create_time'])}</span><em>{:date("Y",$rs['create_time'])}</em></dt>
+						<dd>
+							<h3><a href="{$rs.url}">{$rs.title|get_word=100}</a></h3>
+							<p>{$rs.content|get_word=200}</p>
+						</dd>
+					</dl>
+				</ol>
+				<li>
+				{volist name="rs.picurls" id="pic"}
+					{if ($key<5)}<div><a href="{$rs.url}"><img src="{$pic.picurl}" onmouseover='thisimg_over($(this))' onmouseout='thisimg_out($(this))'/></a></div>{/if}
+				{/volist}
+				</li>
+			</ul>
+		{/qb:listpage} 
+		</div>
+		<!---异步显示更多调用一个显示更多的碎片模块[content/showmore]，需要预设置如下参数[listurl：访问地址][thispage：开始页][TheListObj：插入对象][ThisRows：条数][listshops：子对象条数]--->
+		<script type="text/javascript">
+			var listurl='{qb:list_url name="news_listimg_page_listdata002"/}';	//news_listimg_page_listdata002 跟上面的标签名要一到致
+			var thispage=1;
+			var TheListObj=$('.ListInfoBox');
+			var ThisRows={$news_listimg_page_listdata002.rows};  //每页显示几条 $news_listimg_page_listdata002 跟上面的标签名要一到致,但是这里多了一个$
+			var listshops=$('.ListInfoBox').children().length;	//当前页面显示了几条内容
+		</script>
+
+		<!--{$pages} 这是传统分页-->
+		<div class="qb_ui_ShowMores">
+			<button onclick="showMoreInfo()">更多<i class="fa fa-angle-double-down"></i></button>
+		</div>
+
+
+<script type="text/javascript">
+function showMoreInfo(){
+	$('.qb_ui_ShowMores').html('内容加载中……');
+	thispage++;
+	$.get(listurl+thispage+'&'+Math.random(),function(res){
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("已经显示完了！",{time:500});
+				$('.qb_ui_ShowMores').html('');
+			}else{
+				res.data="<div class='pages"+thispage+"'>"+res.data+"</div>";			
+				TheListObj.append(res.data);
+				TheListObj.find('.pages'+thispage).hide();
+				TheListObj.find('.pages'+thispage).fadeIn();
+				$('.qb_ui_ShowMores').html('<button onclick="showMoreInfo()">更多 <i class="fa fa-angle-double-down"></i></button>');
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+function thisimg_over(imgobjs){
+	imgobjs.animate({"width":"150%"},300);
+}
+function thisimg_out(imgobjs){
+	imgobjs.animate({"width":"100%"},300);
+}
+function HiddenShowMores(){		
+	if(parseInt(listshops/ThisRows)<1){
+		$('.qb_ui_ShowMores').hide();
+	}else{
+		$('.qb_ui_ShowMores').show();
+	}
+}
+HiddenShowMores();
+</script>

@@ -1,0 +1,240 @@
+<?PHP exit('Access Denied'); ?>
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:07:23
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:07:23
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:09:42
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:09:42
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:00
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:00
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:08
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:08
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:37
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:37
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:38
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:38
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:38
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:10:38
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:08
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:08
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:19
+
+
+INSERT INTO `articles` SET `content`='test'
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:19
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:20
+
+
+INSERT INTO `articles` SET `content`='test'
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:20
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:28
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:12:28
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:09
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:09
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:10
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:10
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:10
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:10
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:10
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:10
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:17
+
+
+INSERT INTO articles VALUES (NULL,'test')
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:17
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:26
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:26
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:30
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:13:30
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:14:16
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:14:16
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:15:35
+
+
+SELECT * FROM articl1es
+客户IP:127.0.0.1
+时间 :2015-09-22 23:15:35
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:15:48
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:15:48
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:15:53
+
+
+SELECT * FROM 1articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:15:53
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:16:05
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:16:05
+
+
+SET NAMES utf8
+客户IP:127.0.0.1
+时间 :2015-09-22 23:35:01
+
+
+SELECT * FROM articles
+客户IP:127.0.0.1
+时间 :2015-09-22 23:35:01

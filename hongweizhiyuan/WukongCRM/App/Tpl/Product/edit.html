@@ -1,0 +1,561 @@
+<include file="Public:header" />
+<script type="text/javascript" src="__PUBLIC__/js/kindeditor-all-min.js"></script>
+<script type="text/javascript" src="__PUBLIC__/js/zh_CN.js"></script>
+<script src="__PUBLIC__/js/PCASClass.js" type="text/javascript"></script>
+<script type="text/javascript" src="__PUBLIC__/js/formValidator-4.0.1.min.js" charset="UTF-8"></script>
+<script type="text/javascript" src="__PUBLIC__/js/formValidatorRegex.js" charset="UTF-8"></script>
+<link rel="stylesheet" href="__PUBLIC__/css/kindeditor.css" type="text/css" />
+<link rel="stylesheet" href="__PUBLIC__/css/jquery.fileupload.css" type="text/css" />
+<div class="container">
+	<!-- Docs nav ================================================== -->
+	<div class="page-header">
+			<h4>{:L('PRODUCTION_EDITOR')}</h4>
+		</div>
+	<div class="row">
+		<div class="span12">
+			<include file="Public:alert" />
+		</div>
+		<div class="span12">
+			<form id="form1" action="{:U('product/edit', 'id='.$product['product_id'])}" method="post" enctype="multipart/form-data">
+			<input type="hidden" name="product_id" value="{$product.product_id}"/>
+			<table class="table" width="95%" border="0" cellspacing="1" cellpadding="0">
+				<tfoot>
+					<tr>
+						<td style="text-align:center;" colspan="4"><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE')}"/>&nbsp; 
+						<input class="btn" type="button" onclick="javascript:history.go(-1)" value="{:L('RETURN')}"/></td>
+					</tr>
+				</tfoot>
+				<tbody>
+					<tr><th colspan="4">{:L('BASIC_INFORMATION')}</th></tr>
+						<php>$j=0;</php>
+						<volist name="field_list['main']" id="vo">
+                        <php>$j++;</php>
+                        <if condition="$vo['form_type'] == 'textarea' or $vo['form_type'] == 'editor' or $vo['form_type'] == 'address'">
+                            <if condition="$i%2 == 0">
+                            <td colspan="2">&nbsp;</td>
+                            </tr>
+                            </if>
+                            <tr>
+                                <td class="tdleft" width="15%">{$vo.name}:</td>
+                                <td colspan="3">{$vo.html}</td>
+                            </tr>
+                            <if condition="$i%2 != 0 && count($field_list['main']) != $j">
+                            <php>$i++;</php>
+                            </if>
+                        <else/>
+                            <if condition="$i%2 != 0">
+                            <tr>
+                            </if>
+                                <td class="tdleft" width="15%">{$vo.name}:</td>
+                                <td width="35%">{$vo.html}</td>
+                            <if condition="$i%2 == 0">
+                            </tr>
+                            </if>
+                            <if condition="$i%2 != 0 && count($field_list['main']) == $j">
+                                <td colspan="2">&nbsp;</td>
+                                </tr>
+                            </if>
+                        </if>
+						</volist>
+						<tr><th  colspan="4">{:L('PRODUCT_PICTURE')}</th></tr>
+						<tr>
+							<td class="tdleft" height="100">主图</td>
+							<td colspan="3" height="100">
+								<input type="hidden" name="main_images_id" value="{$product.images.main.images_id}"/>
+								<table  class="table table-striped">
+									<tbody>
+										<tr>
+											<td width="20%">
+												<div class="thumbnail thumb80">
+													<if condition="empty($product['images']['main']['path'])">
+														<img id="main_pic_prev" class="thumb80" />
+													<else />
+														<a href="{$product.images.main.path}" target="_self" class="litebox">
+															<img id="main_pic_prev" src="{$product.images.main.path}" class="thumb80" />
+														</a>
+													</if>
+												</div>
+											</td>
+											<td width="35%">
+												<p>
+													<span id="main_pic_prev_name">
+														<if condition="empty($product['images']['main']['name'])">无<else />{$product.images.main.name}</if>
+													</span>
+												</p>
+											</td>
+											<td width="25%">
+												<p>
+													<span id="main_pic_prev_size">
+														<if condition="empty($product['images']['main']['size'])">0<else />{$product.images.main.size}</if>
+													</span> KB
+												</p>
+											</td>
+											<td width="30%">
+												<div class="btn btn-success fileinput-button">
+													<span>选择文件</span>
+													<input type="file" name="main_pic[]" id="main_pic">
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<td class="tdleft" style="min-height:50">副图</td>
+							<td colspan="3" style="min-height:50">
+								<notempty name="product['images']['secondary']">
+									<volist name="product['images']['secondary']" id="vo">
+										<div class="box-secondary" id="box-list-{$vo.images_id}">
+											<a href="{$vo.path}" target="_self" class="litebox" data-litebox-group="group-1">
+												<img src="{$vo.path}" class="thumbnail thumb80">
+												<a href="javascript:del_img({$vo.images_id});"><i class="icon-remove del_parts"></i></a>
+											</a>
+										</div>
+									</volist>
+								</notempty>
+								<div class="div_add">
+									<a class="btn btn-primary pull-right" id="btn_add_files" href="javascript:void(0);">
+										<i class="icon-plus"></i>&nbsp;&nbsp;新增
+									</a>
+								</div>
+							</td>
+						</tr>
+						<tr><th  colspan="4">{:L('ADDITIONAL_INFORMATION')}</th></tr>
+						<php>$j=0;</php>
+						<volist name="field_list['data']" id="vo">
+                        <php>$j++;</php>
+                        <if condition="$vo['form_type'] == 'textarea' or $vo['form_type'] == 'editor' or $vo['form_type'] == 'address'">
+                            <if condition="$i%2 == 0">
+                            <td colspan="2">&nbsp;</td>
+                            </tr>
+                            </if>
+                            <tr>
+                                <td class="tdleft" width="15%">{$vo.name}:</td>
+                                <td colspan="3">{$vo.html}</td>
+                            </tr>
+                            <if condition="$i%2 != 0 && count($field_list['data']) != $j">
+                            <php>$i++;</php>
+                            </if>
+                        <else/>
+                            <if condition="$i%2 != 0">
+                            <tr>
+                            </if>
+                                <td class="tdleft" width="15%">{$vo.name}:</td>
+                                <td width="35%">{$vo.html}</td>
+                            <if condition="$i%2 == 0">
+                            </tr>
+                            </if>
+                            <if condition="$i%2 != 0 && count($field_list['data']) == $j">
+                                <td colspan="2">&nbsp;</td>
+                                </tr>
+                            </if>
+                        </if>
+						</volist>
+				</tbody>
+			</table>
+            <input name="a" type="hidden" value="edit">
+            <input name="product_id" type="hidden" value="{$product['product_id']}">
+			</form>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-validate" title="{:L('PRODUCT_TEST_RESULTS')}">
+	{:L('SELECT_ALL_OF_CUSTOMERS')}
+	<div id="search_content"></div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/js/uploadPreview.js"></script>
+<link href="__PUBLIC__/css/litebox.css" rel="stylesheet" type="text/css">
+<script src="__PUBLIC__/js/litebox.min.js" type="text/javascript"></script>
+<script src="__PUBLIC__/js/images-loaded.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+//初始化上传图片
+$("body").on('click','input[type="file"]', function(){
+	var selector = $(this).attr('id');
+	$("#"+selector).uploadPreview({ Img: selector+"_prev", Width: 120, Height: 120 });
+});
+//初始化图片查看插件
+$('.litebox').liteBox({
+  revealSpeed: 400,
+  background: 'rgba(0,0,0,.8)',
+  overlayClose: true,
+  escKey: true,
+  navKey: true,
+  errorMessage: '图片加载失败.'
+});
+
+//删除图片
+function del_img(param){
+	if(param){
+		if(confirm('{:L("CONFIRM_DELETE")}')){
+			$.ajax({
+				'type':'get',
+				'dataType':'json',
+				'url':'{:U("product/delImg")}',
+				'data':{images_id:param},
+				'success':function(data){
+					if(data.status == 1){
+						//删除图片DOM
+						$('#box-list-'+param).remove();
+					}else{
+						alert(data.info);
+					}
+				}
+			});
+		}else{
+			return false;
+		}
+	}else{
+		alert('{:L("PARAMETER_ERROR")}');
+	}
+}
+$("#dialog-validate").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 400,
+	maxHeight: 400,
+	buttons: { 
+		"{:L('CONFIRM')}": function () {
+			$(this).dialog("close"); 
+		}
+	},
+	position: ["center", 100]
+});
+$(function(){
+	$('#name').blur(
+		function(){
+			name = $('#name').val();
+			if(name!=''){
+				$.post('{:U("product/check")}',
+					{
+					name:name
+					},
+					function(data){
+						if(data.data != 0){
+							$result = '';
+							$.each(data.data, function(k, v){
+								$result += (k+1)+'、'+v+'</br>';
+							});
+							$('#dialog-validate').dialog('open');
+							$("#search_content").html($result);
+						}
+					},
+				'json');
+			} else {
+				alert('{:L('PLEASE_FILL_OUT_THE_PRODUCT_NAME')}');
+			}
+		}
+	)
+	$('#owner_name').click(
+		function(){
+			$('#dialog-role-list').dialog('open');
+			$('#dialog-role-list').load("{:U('user/listDialog')}");
+		}
+	);
+	$('#validate').click(
+		function(){
+			name = $('#name').val();
+			if(name!=''){
+				$.post('{:U("product/validate")}',
+					{
+						name:name
+					},
+					function(data){
+						if(data.data == 0){
+							alert(data.info);
+						}else{
+							$result = '';
+							$.each(data.data, function(k, v){
+								$result += (k+1)+'、'+v+'</br>';
+							});
+							$('#dialog-validate').dialog('open');
+							$("#search_content").html($result);
+						}
+					},
+				'json');
+			} else {
+				alert('{:L('PLEASE_FILL_OUT_THE_PRODUCT_NAME')}');
+			}
+		}
+	);
+});
+$(function(){
+    $.formValidator.initConfig({formID:"form1",debug:false,submitOnce:true,
+        onError:function(msg,obj,errorlist){
+        alert(msg);
+    },
+    submitAfterAjaxPrompt : '{:L('THERE_ARE_DATA_ARE_ASYNCHRONOUS_VALIDATION')}'
+});
+<volist name="field_list[main]" id="vo">
+    <if condition="$vo['is_validate'] == 1">
+        <if condition="$vo['form_type'] != 'box'">
+	        $("#{$vo[field]}").formValidator({
+	            tipID:"{$vo[field]}Tip",
+	            <if condition="$vo['is_null'] == 1">
+	            onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+				empty:false,
+	            <else />
+	            onShow:" ",
+				empty:true,
+	            </if>
+	            onFocus:" ",
+	            onCorrect:"<span style='color:green;'>√</span>",
+				defaultValue:"{$product[$vo['field']]}"
+	        }).inputValidator({
+	            <if condition="$vo['is_null'] == 1">
+	            min:1,max:{$vo[max_length]|default="255"},
+	            onshow:"{:L('NOT NULL',array($vo[name]))}",
+	            <else />
+	            min:0,max:{$vo[max_length]|default="255"},
+	            </if>
+	            onErrorMin:"{:L('NOT NULL',array($vo[name]))}",
+	            onErrorMax:"{:L('MAXIMUM_REQUEST_LENGTH_EXCEEDED',array($vo[name]))}"
+	         });
+            <if condition="$vo['form_type'] == 'email'">
+            $("#{$vo[field]}").regexValidator({
+                regExp:"email",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'mobile'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"mobile",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'phone'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"tel",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'datetime'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"date",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'number'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"num",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+             </if>
+             <if condition="$vo['is_unique'] == 1 && $vo['field']!='name'">
+            $("#{$vo[field]}").ajaxValidator({
+                dataType : "json",
+                type : "GET",
+                async : false,
+                isValid : true,
+                data : {
+                    id:{$product.product_id}
+                    },
+                url : "{:U('product/validate')}",
+                success : function(data){
+                    if( data.status == 1 ) return false;
+                    if( data.status == 0 ) return true;
+                    return false;
+                },
+                error: function(jqXHR, textStatus, errorThrown){alert("{:L('THE_SERVER_DID_NOT_RETURN_DATA_MAY_BE_THE_SERVER_BUSY_PLEASE_TRY_AGAIN')}"+errorThrown);},
+                onError : "{:L('THIS_DISABLED_PLEASE_CHANGE',array($vo[name],$vo[name]))}",
+                onWait : "{:L('LEGITIMACY_CHECKING_PLEASE_WAIT',array($vo[name]))}"
+            }); 
+             </if>
+         <else />
+             <if condition="$vo['setting']['type'] == 'checkbox'">
+             $(":checkbox[name='{$vo['field']}[]']").formValidator({
+                 tipID:"{$vo[field]}Tip",
+                 <if condition="$vo['is_null'] == 1">
+                 onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+                 <else />
+                 onShow:" ",
+                 </if>
+                 onFocus:" ",
+                 onCorrect:"<span style='color:green;'>√</span>"
+             }).inputValidator({
+             	<if condition="$vo['is_null'] == 1">
+                 min:1,
+                 <else/>
+                 min:0,
+                 </if>
+             	onError:"{:L('PLEASE_SELECT',array($vo[name]))}"
+             });
+             <elseif condition="$vo['setting']['type'] == 'select'"/>
+	        	 $("#{$vo[field]}").formValidator({
+	                 tipID:"{$vo[field]}Tip",
+	                 <if condition="$vo['is_null'] == 1">
+	                 onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+	                 <else />
+	                 onShow:" ",
+	                 </if>
+	                 onFocus:" ",
+	                 onCorrect:"<span style='color:green;'>√</span>"
+	             }).inputValidator({
+	             	<if condition="$vo['is_null'] == 1">
+	                 min:1,
+	                 <else/>
+	                 min:0,
+	                 </if>
+	             	onError:"{:L('PLEASE_SELECT',array($vo[name]))}"
+	             });
+             <else />
+	             $(":radio[name='{$vo['field']}']").formValidator({
+	                 tipID:"{$vo[field]}Tip",
+	                 <if condition="$vo['is_null'] == 1">
+	                 onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+	                 <else />
+	                 onShow:" ",
+	                 </if>
+	                 onFocus:" ",
+	                 onCorrect:"<span style='color:green;'>√</span>"
+	             }).inputValidator({
+	             	<if condition="$vo['is_null'] == 1">
+	                 min:1,
+	                 <else/>
+	                 min:0,
+	                 </if>
+	             	onError:"{:L('PLEASE_SELECT',array($vo[name]))}"
+	             });
+             </if>
+         </if>
+     </if>
+</volist>
+<volist name="field_list[data]" id="vo">
+    <if condition="$vo['is_validate'] == 1">
+        <if condition="$vo['form_type'] != 'box'">
+	        $("#{$vo[field]}").formValidator({
+	            tipID:"{$vo[field]}Tip",
+	            <if condition="$vo['is_null'] == 1">
+	            onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+				empty:false,
+	            <else />
+	            onShow:" ",
+				empty:true,
+	            </if>
+	            onFocus:" ",
+	            onCorrect:"<span style='color:green;'>√</span>",
+				defaultValue:"{$product[$vo['field']]}"
+	        }).inputValidator({
+	            <if condition="$vo['is_null'] == 1">
+	            min:1,max:{$vo[max_length]|default="255"},
+	            onshow:"{:L('NOT NULL',array($vo[name]))}",
+	            <else />
+	            min:0,max:{$vo[max_length]|default="255"},
+	            </if>
+	            onErrorMin:"{:L('NOT NULL',array($vo[name]))}",
+	            onErrorMax:"{:L('MAXIMUM_REQUEST_LENGTH_EXCEEDED',array($vo[name]))}"
+	         });
+            <if condition="$vo['form_type'] == 'email'">
+            $("#{$vo[field]}").regexValidator({
+                regExp:"email",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'mobile'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"mobile",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'phone'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"tel",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'datetime'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"date",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+            <elseif condition="$vo['form_type'] == 'number'"/>
+             $("#{$vo[field]}").regexValidator({
+                regExp:"num",
+                dataType:"enum",
+                onError:"{:L('A_OLUTE_OR_SELF_RELATIVE',array($vo[name]))}"
+            });
+             </if>
+             <if condition="$vo['is_unique'] == 1 && $vo['field']!='name'">
+            $("#{$vo[field]}").ajaxValidator({
+                dataType : "json",
+                type : "GET",
+                async : false,
+                isValid : true,
+                data : {
+                    id:{$product.product_id}
+                    },
+                url : "{:U('product/validate')}",
+                success : function(data){
+                    if( data.status == 1 ) return false;
+                    if( data.status == 0 ) return true;
+                    return false;
+                },
+                error: function(jqXHR, textStatus, errorThrown){alert("{:L('THE_SERVER_DID_NOT_RETURN_DATA_MAY_BE_THE_SERVER_BUSY_PLEASE_TRY_AGAIN')}"+errorThrown);},
+                onError : "{:L('THIS_DISABLED_PLEASE_CHANGE',array($vo[name],$vo[name]))}",
+                onWait : "{:L('LEGITIMACY_CHECKING_PLEASE_WAIT',array($vo[name]))}"
+            }); 
+             </if>
+         <else />
+             <if condition="$vo['setting']['type'] == 'checkbox'">
+             $(":checkbox[name='{$vo['field']}[]']").formValidator({
+                 tipID:"{$vo[field]}Tip",
+                 <if condition="$vo['is_null'] == 1">
+                 onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+                 <else />
+                 onShow:" ",
+                 </if>
+                 onFocus:" ",
+                 onCorrect:"<span style='color:green;'>√</span>"
+             }).inputValidator({
+             	<if condition="$vo['is_null'] == 1">
+                 min:1,
+                 <else/>
+                 min:0,
+                 </if>
+             	onError:"{:L('PLEASE_SELECT',array($vo[name]))}"
+             });
+             <elseif condition="$vo['setting']['type'] == 'select'"/>
+	        	 $("#{$vo[field]}").formValidator({
+	                 tipID:"{$vo[field]}Tip",
+	                 <if condition="$vo['is_null'] == 1">
+	                 onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+	                 <else />
+	                 onShow:" ",
+	                 </if>
+	                 onFocus:" ",
+	                 onCorrect:"<span style='color:green;'>√</span>"
+	             }).inputValidator({
+	             	<if condition="$vo['is_null'] == 1">
+	                 min:1,
+	                 <else/>
+	                 min:0,
+	                 </if>
+	             	onError:"{:L('PLEASE_SELECT',array($vo[name]))}"
+	             });
+             <else />
+	             $(":radio[name='{$vo['field']}']").formValidator({
+	                 tipID:"{$vo[field]}Tip",
+	                 <if condition="$vo['is_null'] == 1">
+	                 onShow:"<span style='color:red;'>{:L('WILL_OPTIONS')}</span>",
+	                 <else />
+	                 onShow:" ",
+	                 </if>
+	                 onFocus:" ",
+	                 onCorrect:"<span style='color:green;'>√</span>"
+	             }).inputValidator({
+	             	<if condition="$vo['is_null'] == 1">
+	                 min:1,
+	                 <else/>
+	                 min:0,
+	                 </if>
+	             	onError:"{:L('PLEASE_SELECT',array($vo[name]))}"
+	             });
+             </if>
+         </if>
+     </if>
+</volist>
+});
+</script>
+<include file="Public:footer" />

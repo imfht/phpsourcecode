@@ -1,0 +1,88 @@
+<div class="panel-body ">
+	<div class="text-center list-check"  style="display:none">
+		<h4>系统获取到上次有未导入数据。</h4>
+		<ul class="pager">
+	       	<li><a href="<{:addons_url('Ftp://Ftp/fileList')}>">继续未完成</a></li>
+	    	<li><a href="javascript:void(0);" id="scan">重新扫描</a></li>
+	    </ul>   
+    </div>
+	<p class="load-info" style="display:none"><strong>系统初始化，请稍后！</strong></p>
+	<form class="form-horizontal" style="display:none" enctype="multipart/form-data" action="<{:addons_url('Ftp://Ftp/scan')}>" name="songs"  method="post">	
+		<div class="form-group">	
+			<label class=" col-sm-2 control-label">扫描目录</label>
+			<div class="col-sm-3">
+				<input  type="text"  name="path" value="" class="form-control">					
+			</div>
+			<span class="help-block">格式Music/listen/ 默认根目录 </span>
+		</div>
+
+		<div class="form-group">	
+			<label class=" col-sm-2 control-label">扫描文件后缀</label>
+			<div class="col-sm-3">
+				<input  type="text"  name="exts" value=".mp3,.m4a,.mp4" class="form-control">					
+			</div>
+			<span class="help-block">多个用英文“,”号阁开。</span>
+		</div>
+			
+		 <div class="form-group">
+            	<div class="col-sm-6 col-sm-offset-2">
+            	   	<button class="btn btn-success ftp-btn" href="<{:addons_url('Ftp://Ftp/scan')}>" type="submit">扫描服务器文件</button>
+   					<!--button class="btn btn-primary ftp-btn" href="<{:addons_url('Ftp://Ftp/upload')}>" type="submit">上传文件到服务器</button-->
+            	</div>
+        	</div>
+	</form>
+
+</div>
+<script type="text/javascript">
+	//导航高亮csspinner duo
+	$(function () {
+		$('.panel-body').addClass('csspinner duo');
+		$('.load-info').show();	
+		$.post("<{:addons_url('Ftp://Ftp/checkList')}>").success(function(data){
+			$('.panel-body').removeClass('csspinner duo');
+			$('.load-info').hide();
+			if (data.status==1) {				
+				$('.form-horizontal').hide();				
+				$('.list-check').show();
+			}else{				
+				$('.form-horizontal').show();
+			}
+		});
+	})
+	
+	$('#scan').click(function(){
+		$('.list-check').hide();
+		$('.load-info').hide();
+		$('.form-horizontal').show();
+	});
+	
+	$('.ftp-btn').click(function(){
+		var target= $(this).attr('href'),form =  $('.form-horizontal');
+		$('.panel-body').addClass('csspinner duo');
+		$('.load-info').show().find('strong').html('正在扫描，请稍后！');
+		form.hide();
+		var query = form.serialize();
+		$.post(target,query).success(function(data){
+            if (data.status==1) {
+                if (data.url) {
+                    topAlert(data.info + ' 页面即将自动跳转~','success');
+               			setTimeout(function(){
+	                    if (data.url) {
+	                        location.href=data.url;
+	                    }
+                	},1500);
+                }else{
+                    topAlert(data.info,'success');
+                }
+
+            }else{
+                topAlert(data.info);
+                $('.load-info').hide();
+                $('.panel-body').removeClass('csspinner duo');
+                $('.form-horizontal').show();
+            }
+        });
+		
+		return false;
+	});
+</script>

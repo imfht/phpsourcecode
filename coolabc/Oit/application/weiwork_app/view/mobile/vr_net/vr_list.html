@@ -1,0 +1,126 @@
+<div style="padding:5px;border:1px solid #ddd">
+    <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_ref" href="#" class="easyui-linkbutton"
+       data-options="iconCls:'icon-reload'">{:lang('刷新')}</a>
+    <!-- 如果没有定义功能下拉菜单，会导致easyui 解析失败报错 -->
+    <a href="#" class="easyui-menubutton"
+       data-options="menu:'#{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_popup_menu',iconCls:'icon-function'">{:lang('功能')}</a>
+</div>
+
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_popup_menu" style="width:150px;"></div>
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG" style="width:100%;height:90%" data-options=" border: false, lines: true "></div>
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Fun_Win"></div>
+
+
+<!-- 将明细卡片的按钮调整至上级页面，固定在顶端 -->
+<div id="{$Think.CONTROLLER_NAME}_vr_record_toolbar" style="display: none">
+    <a id="{$Think.CONTROLLER_NAME}_vr_record_close" href="#" class="easyui-linkbutton"
+       data-options="iconCls:'icon-close'">{:lang('关闭')}</a>
+</div>
+
+<script>
+    $(function () {
+        var index = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        index.gui_build_state = {
+            menu: false,
+            linkbutton: false,
+        };
+
+        var record = index.child_record = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: 'vr_record',
+        });
+        record.gui_build_state = {
+            linkbutton: false,
+            form: false,
+        };
+
+        console.log(index);
+        console.log(record);
+
+        // 传递的 js_json 数据
+        index.data = JSON.parse('{$js_data}');
+        record.data = JSON.parse('{$record_js_data}');
+        console.log(index.data);
+
+        index.menubutton().linkbutton_init(index.data.Top_Buttons, 'ref', 'after');
+        record.menubutton().linkbutton_init(record.data.Top_Buttons, 'close', 'after');
+
+        // 窗口定义
+        var url = "{:url('vr_record')}";
+        url = index.url().add_param(url);
+        var win_record = {
+            href: url,
+            fit: true,
+            title: "{:lang('单据明细')}",
+            draggable: false,
+            toolbar: '#{$Think.CONTROLLER_NAME}_vr_record_toolbar',
+            onOpen: function () {
+                record.auto_run().when_build_ele_finish();
+            }
+        };
+        index.linkbutton().index_add({
+            btn_id: 'add',
+            open_win_id: 'vr_record',
+            open_win_val: win_record,
+            record: record,
+        });
+        index.linkbutton().index_ref('ref');
+
+        // 创建popup_menu
+        index.menu().menu_item(index.data.Popup_Menu, 'popup_menu');
+        // 单独的每项菜单的功能
+        index.popup_menu = {
+            fun_1: function (item) {
+                alert("{:lang('功能等待开发^_^...')}");
+
+            },
+        };
+        // 将点击菜单下拉功能时，下上面定义的功能进行调用绑定
+        index.menu().menu_item_click_bind(index.data.Popup_Menu, 'popup_menu');
+
+        // ----------------------事件---------------------------
+        // 刷新单据数据, 新增或编辑时运行
+        index.event._create_voucher = function () {
+            $.post('vr_get_voucher_list_data', function (data) {
+                // 单据列表
+                index.MG.datalist({
+                    data: data.vr_data,
+                    textField: 'title',
+                    groupField: 'group',
+                    textFormatter: function (value) {
+                        return '<a href="javascript:void(0)" class="datalist-link">' + value + '</a>';
+                    },
+                    onClickRow: function (key, row) {
+                        win_record.href = index.url().add_param(url, 'voucher_id/' + row.voucher_id + '/');
+
+                        // 编辑或查看记录
+                        record.edit_state = 'edit';
+                        record.edit_row_data = row;
+                        record.edit_index = key;
+
+                        if (index.open_win_id == 'vr_record') {
+                            console.log('编辑窗口 打开: ' + 'vr_record');
+                            index.Fun_Win.dialog('open');
+                        } else {
+                            console.log('编辑窗口 新建: ' + 'vr_record');
+                            index.Fun_Win.dialog(win_record);
+                            index.open_win_id = 'vr_record';
+                        }
+                    },
+                });
+
+                // 异步顺序执行
+                // 在异步中，直接调用
+                index.seq.run_next();
+            });
+
+        };
+        index.auto_run().when_build_ele_finish();
+
+    })
+</script>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+  <div class="ibox-content">
+    <form class="form-horizontal" method="post" action="#">
+		<input type="hidden" name="customer_id" value="#{$one.customer_id}#">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">客户名称</label>
+        <div class="col-sm-10">
+          <input name="name" class="form-control" type="text" value="#{$one.name}#" required/>
+          <span class="help-block m-b-none"></span> </div>
+      </div>
+		 #{$field_ext}#
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-8">
+          <button class="btn btn-w-m btn-info save-form" type="button">保存数据</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- 自定义js --> 
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script> 
+<script>
+$(document).ready(function () {
+	$(".datepicker").datetimepicker({
+		language: "zh-CN",
+		autoclose: true,//选中之后自动隐藏日期选择框
+		clearBtn: true,//清除按钮
+		todayBtn: true,//今日按钮
+		format: "yyyy-mm-dd hh:ii:ss",
+	});
+	
+	//下拉选择+联动效果
+	$('.chosen-select').chosen({search_contains: true});
+	$(".source-chosen-select").val("#{$one.source}#").trigger("chosen:updated");
+	$(".level-chosen-select").val("#{$one.level}#").trigger("chosen:updated");
+	$(".ecotype-chosen-select").val("#{$one.ecotype}#").trigger("chosen:updated");
+	$(".trade-chosen-select").val("#{$one.trade}#").trigger("chosen:updated");
+	//扩展字段+联动
+  #{foreach from=$options key=k item=v}#	
+	$(".#{$k}#-chosen-select").val("#{$v}#").trigger("chosen:updated");
+  #{/foreach}#
+	
+	//数据保存
+	$("body").on("click", ".save-form", function() {
+		FormData=$("form").serialize();
+		$.ajax({
+			type: "POST",
+			url: "#{$smarty.const.ACT}#/crm/CstCustomer/cst_customer_modify/",
+			data:FormData,
+			dataType:"json",
+			success: function(data){
+				if(data.statusCode=='200'){
+					layer.msg('操作成功', {icon: 1}); 		
+				}
+			},    
+			complete: function() {   
+				setTimeout(function(){
+					//关闭窗口
+					var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+					parent.layer.close(index);
+				 },800);
+   		  },
+		});		
+	});
+});
+</script>
+</body>
+</html>

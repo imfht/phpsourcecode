@@ -1,0 +1,146 @@
+<extend name="Public/base"/>
+  
+<block name="body">
+	<div class="main-title">
+        <h2>编辑专题</h2>
+    </div>
+	<script type="text/javascript" src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>           
+    <form class="form-horizontal" role="form" action="{:U('promotion/edit')}" method="post" enctype="multipart/form-data"> 
+        <div class="form-item">
+        	<label class="item-label" for="promotion-title">标题:</label>
+        	<div class="controls">
+        		<input class="form-control" type="text " id="promotion-title" value="{$promotion[promotion_name]}" name="promotion_name">
+        	</div>
+        </div>
+        <div class="form-item">
+       		 <label class="item-label" for="form-field-1">图标:<span style="color:#f00;">*</span></label>
+			 <div class="controls">
+				<input type="file" id="upload_picture_pic_url" class="form-control">
+				
+				<div class="upload-img-box">
+				<notempty name="promotion.pic_url">
+					<div class="upload-pre-item"><img src="{:get_image_url($promotion[pic_url])}"/></div>
+				</notempty>
+				</div>
+			 </div>	
+			 <input class="hidden" type="text" name="pic_url" id="pic_url" value="{$promotion[pic_url]}"/>
+       
+			<script type="text/javascript">
+			//上传图片
+			   /* 初始化上传插件 */
+			$("#upload_picture_pic_url").uploadify({
+			       "height"          : 30,
+			       "swf"             : "__STATIC__/uploadify/uploadify.swf",
+			       "fileObjName"     : "download",
+			       "buttonText"      : "上传图片",
+			       "uploader"        : "{:U('File/uploadAdPicture',array('session_id'=>session_id()))}",
+			       "width"           : 120,      
+			       "removeTimeout"	  : 1,
+			       "fileTypeExts"	  : "*.jpg; *.png; *.gif;",
+			       "onUploadSuccess" : uploadPicture,
+			       "onFallback" : function() {
+			           alert('未检测到兼容版本的Flash.');
+			       }
+			   });
+			function uploadPicture(file, data){
+			   	var data = $.parseJSON(data);
+			   	var src = '';
+			   	
+			       if(data.status){
+			       	
+			       	$("#pic_url").val(data.path);
+			       	src = data.url || '__ROOT__' + data.path
+			      
+			       	$('.upload-img-box').html(
+			       		'<div class="upload-pre-item"><img src="' + src + '"/></div>'
+			       	);
+			       } else {
+			       	updateAlert(data.info);
+			       	setTimeout(function(){
+			               $('#top-alert').find('button').click();
+			               $(that).removeClass('disabled').prop('disabled',false);
+			           },1500);
+			       }
+			   }
+			</script>
+		</div> 	
+        <div class="form-item">
+            <label class="item-label" >活动开始时间:</label>
+            <div class="controls">
+            	<input class="form-control time" type="text" name="start_time"  value="{$promotion[start_time]|time_format}"/>
+            </div>
+        </div>
+        <div class="form-item">
+            <label class="item-label" >活动结束时间:</label>
+            <div class="controls">
+            	<input class="form-control time" type="text" name="end_time"  value="{$promotion[end_time]|time_format}"/>
+            </div>
+        </div>
+        <div class="form-item">
+            <label class="item-label" >是否允许商家报名参加:</label>
+            <div class="controls">
+            	<label class="checkbox">
+            		<input  type="checkbox" name="allow_apply"  value="1" <if condition="$promotion['allow_apply'] gt 0">checked="checked"</if>/>是
+            
+            	</label>
+            	</div>
+        </div>
+        <div class="form-item">
+            <label class="item-label">报名要求:</label>
+            <div class="controls">
+            	<textarea class="col-sm-12 form-control "  name="condition"  />{$promotion[condition]}</textarea>
+            </div>
+        </div>
+        <div class="form-item">
+            <label class="item-label">活动描述:</label>
+            <div class="controls">
+            	<textarea class="col-sm-12 form-control "  name="discription"  />{$promotion[discription]}</textarea>
+            	{:hook('adminArticleEdit', array('name'=>'discription','value'=>$promotion[discription]))}
+            </div>
+        </div>          
+
+        <div class="clearfix form-actions">
+            <div class="col-md-offset-4 col-md-4">
+            	<input type="hidden" name="id" value="{$promotion.id}">
+                <button class="btn btn-info btn-block ajax-post" target-form="form-horizontal" type="submit">
+                    <i class="icon-ok bigger-110"></i>
+                    确认
+                </button>
+            </div>
+        </div>
+    </form>
+                       
+   
+ </block>
+<block name="script">
+<link href="__STATIC__/datetimepicker/css/datetimepicker.css" rel="stylesheet" type="text/css">
+<php>if(C('COLOR_STYLE')=='blue_color') echo '<link href="__STATIC__/datetimepicker/css/datetimepicker_blue.css" rel="stylesheet" type="text/css">';</php>
+<link href="__STATIC__/datetimepicker/css/dropdown.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="__STATIC__/datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+<script type="text/javascript" src="__STATIC__/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+<script type="text/javascript">
+$(function(){
+    $('.date').datetimepicker({
+        format: 'yyyy-mm-dd',
+        language:"zh-CN",
+        minView:2,
+        autoclose:true
+    });
+    $('.time').datetimepicker({
+        format: 'yyyy-mm-dd hh:ii',
+        language:"zh-CN",
+        minView:2,
+        autoclose:true
+    });
+});
+function getNextElement(node){    
+    if(node.nextSibling.nodeType == 1){    //判断下一个节点类型为1则是“元素”节点   
+        return node.nextSibling;    
+    }    
+    if(node.nextSibling.nodeType == 3){      //判断下一个节点类型为3则是“文本”节点  ，回调自身函数  
+        return getNextElement(node.nextSibling);    
+    }    
+    return null;
+}
+</script>
+</block>

@@ -1,0 +1,83 @@
+<div class='editable-page-model'>
+<form id="editable_model_form" action="{$Request.url}">
+    <div class="dssc-form-default">
+        <dl>
+            <dt>{$Think.lang.ds_goodsclass}</dt>
+            <dd id="searchgc_td" onclick='changeCate()'></dd>
+            <input type="hidden" id="choose_gcid" name="choose_gcid" value="{$cate_info.gc_id}"/>
+        </dl>
+        <div id='cate_list' class='p15'>
+                <table class="dssc-default-table mb15">
+                    <thead>
+                      <tr>
+                      <th class="tl" style="padding-left: 10px">{$Think.lang.ds_goodsclass}</th>
+                      <th class="w90">{$Think.lang.ds_sort}</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+    </div>
+    <div class='tc pb20 pt20'><a class="dssc-btn" dstype="select-124" href="javascript:void(0)" onclick="submitEditableModelForm()">{$Think.lang.ds_submit}</a></div>
+</form>
+</div>
+<script>
+    var gc_choose_json={$gc_choose_json|raw};
+    var gc_json={$gc_json|raw};
+    var cate_info={:json_encode($cate_info)};
+    var old_chooseid=null;
+    $(function () {
+        //商品分类
+        init_gcselect(gc_choose_json, gc_json);
+        changeCate()
+        for(var i in cate_info.list){
+            $('input[name="cate_id['+cate_info.list[i].gc_id+'][gc_id]"]').attr('checked','')
+            $('input[name="cate_id['+cate_info.list[i].gc_id+'][gc_id]"]').parent().addClass('selected')
+            $('input[name="cate_id['+cate_info.list[i].gc_id+'][sort]"]').val(cate_info.list[i].sort)
+        }
+    })
+    function checkboxEvent(){
+    $(".checkbox-common").on("click", function () {
+        //如果样式是选中设置input为不选中
+        if ($(this).hasClass('selected')) {
+            $(this).children("input").prop("checked", false);
+        }
+        var checkbox = $(this).children("input");
+        if (checkbox.is(":checked")) {
+            $(this).addClass("selected");
+        } else {
+            $(this).removeClass("selected");
+        }
+    });
+    }
+    function changeCate(){
+        var chooseid=parseInt($("#choose_gcid").val());
+        if(isNaN(chooseid)){
+            chooseid=0
+        }
+        if(old_chooseid==chooseid){
+            return
+        }
+        old_chooseid=chooseid
+        var html=''
+        if(chooseid){
+            var childid = gc_json[chooseid].child;
+            if(childid){
+                var childid_arr = childid.split(",");
+                for(var i in childid_arr){
+                html += ('<tr><td class="tl"><label class="checkbox-label"><i class="checkbox-common"><input type="checkbox" name="cate_id['+gc_json[childid_arr[i]].gc_id+'][gc_id]" value="'+gc_json[childid_arr[i]].gc_id+'" /></i><span>'+gc_json[childid_arr[i]].gc_name+'</span></label></td><td><input type="text" size="1" name="cate_id['+gc_json[childid_arr[i]].gc_id+'][sort]" value="9" /></td></tr>');
+                }
+            }
+        }else{
+            for(var i in gc_json){
+                if(gc_json[i].depth == 1){
+                    html += ('<tr><td class="tl"><label class="checkbox-label"><i class="checkbox-common"><input type="checkbox" name="cate_id['+gc_json[i].gc_id+'][gc_id]" value="'+gc_json[i].gc_id+'" /></i><span>'+gc_json[i].gc_name+'</span></label></td><td><input type="text" size="1" name="cate_id['+gc_json[i].gc_id+'][sort]" value="9" /></td></tr>');
+                }
+            }
+        }
+        
+        $('#cate_list tbody').html(html)
+        checkboxEvent()
+    }
+</script>
+

@@ -1,0 +1,107 @@
+
+
+<div>
+    <style>
+        .modal-dialog {
+            width: 600px;
+        }
+        .select_box_this {
+            margin: 10px 0 20px;
+            width: 100%;
+            text-align: right;
+            font-size: 16px;
+        }
+        .select_box_this .form-group {
+            margin-top: 5px;;
+        }
+    </style>
+    <form id="migration" action="{:url()}" method="post" class="ajax-form">
+
+        {empty name="users"}
+        <div>
+            <input type="checkbox" id="systemMessage" value="systemMessage" name="sendType[]" checked>
+            <label for="systemMessage">系统消息</label>
+
+            <input type="checkbox" id="systemEmail" value="systemEmail" name="sendType[]">
+            <label for="systemEmail">邮件</label>
+
+            <input type="checkbox" id="mobileMessage" value="mobileMessage" name="sendType[]">
+            <label for="mobileMessage">手机短信</label><br/>
+
+            {:lang("_USER_GROUP:_")}{:lang("_COLON_")}
+            <!--用户组-->
+            {volist name="groups" id="one_group"}
+                <input type="checkbox" id="user_group_{$one_group['id']}"" name="user_group[]" value="{$one_group['id']}"
+                {if condition="$aUserGroup eq $one_group['id'] or $aUserGroup eq 0"}checked{/if}
+                style="cursor:pointer;">
+                <label for="user_group_{$one_group['id']}">{$one_group['value']}</label>
+            {/volist}
+        </div>
+        <div>
+            {:lang("_USER_IDENTITY_")}{:lang("_COLON_")}
+            <!--身份组-->
+            {volist name="roles" id="one_role"}
+                <input type="checkbox" id="user_role_{$one_role['id']}" name="user_role[]" value="{$one_role['id']}"
+                {if condition="$aRole eq $one_role['id'] or $aRole eq 0 "}checked{/if}
+                style="cursor:pointer;">
+                <label for="user_role_{$one_role['id']}">{$one_role['value']}</label>
+            {/volist}
+        </div>
+        {else /}
+        <div>
+            <input type="checkbox" id="systemMessage" value="systemMessage" name="sendType[]" checked>
+            <label for="systemMessage">系统消息</label>
+
+            <input type="checkbox" id="systemEmail" value="systemEmail" name="sendType[]">
+            <label for="systemEmail">邮件</label>
+
+            <input type="checkbox" id="mobileMessage" value="mobileMessage" name="sendType[]">
+            <label for="mobileMessage">手机短信</label><br/>
+
+            {:lang("_USER_")}{:lang("_COLON_")}
+            {volist name="users" id="one_user"}
+                <label style="margin-right: 10px">
+                       [{$one_user['uid']}]{$one_user['nickname']}
+                </label>
+            {/volist}
+            <input type="hidden" name="uids" value="{$uids}">
+        </div>
+
+        {/empty}
+        <div class="form-group clearfix">
+            <input type="text" name="title" class="form-control" placeholder={:lang("_THE_TITLE_OF_AN_INCOMING_MESSAGE_WITH_DOUBLE_")}>
+        </div>
+
+        <div class="form-group clearfix">
+            <input type="text" name="url" class="form-control " placeholder={:lang("_URL_LINK_TO_ENTER_A_MESSAGE_WITH_DOUBLE_")}>
+        </div>
+
+        <div class="form-group">
+            {:widget('common/Wangeditor/editor',['content','content',''])}
+        </div>
+
+        <div style="width: 100%;text-align: center;">
+            <a class="btn btn-primary" data-role="submit">{:lang("_SEND_OUT_")}</a>
+            <a onclick="$('.close').click();" class="btn btn-default">{:lang("_CANCEL_")}</a>
+        </div>
+    </form>
+</div>
+<script>
+    $(function () {
+        $('[data-role="submit"]').click(function () {
+            var query = $('#migration').serialize();
+            var url = $('#migration').attr('action');
+            $.post(url, query, function (msg) {
+                if (msg.status) {
+                    toast.success({:lang('_MESSAGE_SENDING_SUCCESS_WITH_SINGLE_')});
+                    setTimeout(function () {
+                        location.reload()
+                       // window.location.href = msg.url;
+                    }, 1500);
+                } else {
+                    handleAjax(msg);
+                }
+            }, 'json');
+        });
+    });
+</script>

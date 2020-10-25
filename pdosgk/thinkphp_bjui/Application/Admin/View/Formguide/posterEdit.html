@@ -1,0 +1,152 @@
+<script>
+    //缩略图
+    var thumbUploader = KindEditor.editor({
+        allowFileManager : true,
+        uploadJson       : '{:U('Attachment/uploadJson')}',            //更改默认的上传控件
+        fileManagerJson  : '{:U('Attachment/fileManagerJson')}',  //更改默认的空间控件
+    });
+    function flashupload(uploadid, name, textareaid, funcName, args, module, catid, authkey){
+        thumbUploader.loadPlugin('image', function() {
+            thumbUploader.plugin.imageDialog({
+                imageUrl : KindEditor('#'+textareaid).val(),
+                clickFn : function(url, title, width, height, border, align) {
+                    if(funcName){
+                        funcName(uploadid,textareaid,url);
+                    }else{
+
+                    }
+                    // KindEditor('#thumb').val(url);
+                    // $('#thumb_preview').attr("src", url);
+                    thumbUploader.hideDialog();
+                }
+
+            });
+        });
+    }
+    function preview(uploadid,returnid, url){
+        $('#'+returnid).val(url);
+        $('#'+returnid+'_s').attr('src', url);
+    }
+
+</script>
+<style type="text/css">
+    table img{
+        width: 90px;
+        height: 50px;
+    }
+</style>
+<div class="bjui-pageContent">
+    <form action="<empty name="Detail">{:U('Poster/posterAdd')}<else />{:U('Poster/posterEdit?id='.$Detail['id'])}</empty>" id="j_custom_form" data-toggle="validate" data-alertmsg="false">
+
+        <div style="margin:15px auto 0;">
+            <fieldset>
+                <legend>基本信息</legend>
+                <!-- Tab panes -->
+                <div class="">
+                    <div class="tab-pane fade active in" id="tab_setting_1">
+                        <table class="table table-condensed table-hover table-striped" width="100%">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <label for="c_name" class="control-label x85">标题：</label>
+                                        <input type="text" id="c_name" name="info[name]" value="{$Detail.name}" data-rule="required" size="30" class="required">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>图片设置 <button type="button" id="poser_add">添加+</button></legend>
+                <!-- Tab panes -->
+                <div class="">
+                    <div class="tab-pane fade active in" id="tab_setting_2">
+                        <table width="100%"  class="table_form table table-condensed table-hover table-striped" style="border-bottom: 1px solid #ccc;margin: 15px 0px;">
+                            <tbody id="picList">
+                                <foreach name="Detail.setting" item="item">
+                                    <tr id="p_{$key}"><td class="y-bg">
+                                        <label class="control-label x85">链接：</label>
+                                        <input type="text" class="input-text form-control" name="linkurl[]" id="" size="20" value="{$item.linkurl}">
+                                        <br><label class="control-label x85">描述：</label>
+                                        <input type="text" class="input-text form-control" name="alt[]" id="" value="{$item.alt}" size="20">
+                                    </td>
+                                    <td>
+                                        <a href="javascript:flashupload('imgurl_images', 'upload_photo','imgurl{$key}',preview,'1,1,1','poster', '', '');void(0);">
+                                            <img src="{$item.imageurl}" id="imgurl{$key}_s" height="50" onerror="this.src='/Public/images/nopic.gif'"> </a><input type="hidden" id="imgurl{$key}" name="imageurl[]" value="{$item.imageurl}"> 
+                                        <a href="javascript:up_div('p_{$key}')">上移</a> <a href="javascript:down_div('p_{$key}')">下移</a><button class="btn del" type="button" onclick="remove_div('p_{$key}')">删除</button>
+                                    </td>
+                                    </tr>
+                                </foreach>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        
+    </form>
+</div>
+<div class="bjui-pageFooter">
+    <ul>
+        <li><button type="button" class="btn-close" data-icon="close">取消</button></li>
+        <li><button type="submit" class="btn-default" data-icon="save">保存</button></li>
+    </ul>
+</div>
+
+<script type="text/javascript">
+    
+    $("#picList").on('change', 'input', function () {
+        this.setAttribute('value', this.value);
+    })
+
+    $(".del").on('click', function(){
+        var table_element=$(this).closest('tr')
+        console.log(table_element)
+        console.log(table_element.index())
+        // table_element.find('input').each(function(ele){
+        //     $(this).val('')
+        // });
+        // table_element.find('img').each(function(){
+        //     $(this).attr('src', "/Public/images/nopic.gif")
+        // })
+    })
+
+
+    $("#poser_add").on('click', function(){
+         add_poser('')
+    })
+
+    function add_poser(url, alt=''){
+
+        var ids = parseInt(Math.random() * 10000); 
+         var str = $("#picList").html();
+         console.log(str)
+            var filename = '';
+            str += "<tr id='p_"+ids+"'><td class=\"y-bg\"><label class=\"control-label x85\">链接：</label><input type=\"text\" class=\"input-text form-control\" name=\"linkurl[]\" id=\"\" size=\"20\" value='"+url+"'><br><label class=\"control-label x85\">描述：</label><input type=\"text\" class=\"input-text form-control\" name=\"alt[]\" id=\"\" value='"+alt+"' size=\"20\"></td><td><a href=\"javascript:flashupload('imgurl_images', 'upload_photo','imgurl"+ids+"',preview,'1,1,1','poster', '', '');void(0);\"><img src=\"/Public/images/nopic.gif\" id=\"imgurl"+ids+"_s\" height=\"50\" onerror='this.src=\"/Public/images/nopic.gif\"'> </a><input type=\"hidden\" id=\"imgurl"+ids+"\" name=\"imageurl[]\" value=\"\"> <a href=\"javascript:up_div('p_"+ids+"')\">上移</a> <a href=\"javascript:down_div('p_"+ids+"')\">下移</a><button class=\"btn del\" type=\"button\" onclick=\"remove_div('p_"+ids+"')\">删除</button></td></tr>";
+            $("#picList").html(str);
+
+            $(".del").on('click', function(){
+            var table_element=$(this).closest('tr')
+            console.log(table_element)
+            console.log(table_element.index())
+        })
+
+    }
+    function remove_div(id){
+        $('#'+id).remove();
+    }
+
+    function up_div(id) {
+        if($('#'+id).prev()){
+            $('#'+id).prev().before($('#'+id));
+        }
+    }
+    function down_div(id) {
+        if($('#'+id).next()){
+            $('#'+id).next().after($('#'+id));
+        }
+    }
+
+</script>

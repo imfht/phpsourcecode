@@ -1,0 +1,180 @@
+{extend name="./oscshop/admin/view/public/base.html" /}
+{block name="content"}
+<div class="page-header">
+<h1>	
+	移动端
+	<small>
+		<i class="ace-icon fa fa-angle-double-right"></i>
+		{$breadcrumb1}
+	</small>
+	
+</h1>
+</div>
+
+<div class="page-header">
+<a href="{:url('CustomMenu/delete_menu')}" class="delete btn btn-primary">清空菜单</a>
+<button id="send" form="menu" type="submit" style="float:right;"  class="btn btn-sm btn-primary">提交生成</button>	
+</div>	
+
+<div class="row">
+	<form id="menu" action="{:url('CustomMenu/create_menu')}" method="post">
+	{if condition="empty($menu)"}	
+	{for start="0" end="3"}
+	<div class="col-xs-12">	
+		<div class="table-responsive">
+				<table class="table table-striped table-bordered table-hover">  	
+					<tr>
+						<th class="col-xs-2">第{$i+1}列菜单类型</th>
+						<th class="col-xs-5">第{$i+1}列菜单名称</th>
+						<th class="col-xs-5">第{$i+1}列菜单内容</th>
+						<th></th>
+					</tr>
+					<tbody id="tbody{$i}">
+					<tr>
+						<td>							
+							<select class="form-control" name="type[{$i}][0]" id="select{$i}">								
+								{foreach name="menu_type" item="m" }
+								<option value="{$key}">{$m.name}</option>
+								{/foreach}
+							</select>
+						</td>
+						<td>
+							<input type="text" name="name[{$i}][0]" value="" class="form-control">
+						</td>
+						<td>
+							<input type="text" name="content[{$i}][0]" value="" class="form-control">
+						</td>
+					</tr>
+					</tbody>
+					<tr>
+						<td colspan="3">
+							<div class="btn btn-primary " bid='0' id="b{$i}" onclick="add_child_menu('{$i}');">添加子菜单</div>
+						</td>
+					</tr>
+				</table>
+			
+		</div>
+	</div>
+	{/for}
+	{else/}
+		{volist name="menu" id="menu" key="k"}
+		<div class="col-xs-12">	
+			<div class="table-responsive">
+					<table class="table table-striped table-bordered table-hover">  	
+						<tr>
+							<th class="col-xs-2">第{$k}列菜单类型</th>
+							<th class="col-xs-5">第{$k}列菜单名称</th>
+							<th class="col-xs-5">第{$k}列菜单内容</th>
+							<th></th>
+						</tr>
+						<tbody id="tbody{$k-1}">
+						{if condition="empty($menu['sub_button'])"}	
+						<tr>
+							<td>							
+								<select class="form-control" name="type[{$k-1}][0]" id="select{$k-1}">								
+									{foreach name="menu_type" item="m" }
+									<option {if condition="$m['type'] EQ $menu['type'] "} selected="selected"{/if}  value="{$key}">{$m.name}</option>
+									{/foreach}
+								</select>
+							</td>
+							{if condition="$menu['type'] EQ 'view' "}
+								<td>
+									<input type="text" name="name[{$k-1}][0]" value="{$menu.name}" class="form-control">
+								</td>
+								<td>
+									<input type="text" name="content[{$k-1}][0]" value="{$menu.url}" class="form-control">
+								</td>
+							{/if}
+						</tr>
+						
+						{else/}
+							<tr>
+								<td>							
+									<select class="form-control" name="type[{$k-1}][0]" id="select{$k-1}">								
+											{foreach name="menu_type" item="m" }
+											<option  value="{$key}">{$m.name}</option>
+											{/foreach}
+										</select>
+								</td>
+								
+								<td>
+									<input type="text" name="name[{$k-1}][0]" value="{$menu.name}" class="form-control">
+								</td>
+								<td>
+									<input type="text" name="content[{$k-1}][0]" value="" class="form-control">
+								</td>
+								
+							</tr>
+							<?php $sb_key=0; ?>
+							{volist name="$menu['sub_button']" id="m1"}
+							<?php $sb_key+=1; ?>
+								<tr id="{$k-1}input{$sb_key}">
+									<td>							
+										<select class="form-control" name="type[{$k-1}][{$sb_key}]" id="select{$sb_key}">								
+											{foreach name="menu_type" item="m" }
+											<option {if condition="$m1['type'] EQ $m['type'] "} selected="selected"{/if}  value="{$key}">{$m.name}</option>
+											{/foreach}
+										</select>
+									</td>
+									{if condition="$m1['type'] EQ 'view' "}
+										<td>
+											<input type="text" name="name[{$k-1}][{$sb_key}]" value="{$m1.name}" class="form-control">
+										</td>
+										<td>
+											<input type="text" name="content[{$k-1}][{$sb_key}]" value="{$m1.url}" class="form-control">
+										</td>
+									{else/}
+										<td>
+											<input type="text" name="name[{$k-1}][{$sb_key}]" value="{$m1.name}" class="form-control">
+										</td>
+										<td>
+											<input type="text" name="content[{$k-1}][{$sb_key}]" value="{$m1.url|default=''}" class="form-control">
+										</td>
+									{/if}
+									<td><button type="button" onclick="$('#'+'{$k-1}'+'input'+'{$sb_key}').remove();" class="btn btn-danger"><i class="fa fa-trash"></i></button></td>
+								</tr>
+							{/volist}
+						{/if}
+						
+						
+						
+						</tbody>
+						<tr>
+							<td colspan="3">
+								<div class="btn btn-primary " bid='0' id="b{$k-1}" onclick="add_child_menu('{$k-1}');">添加子菜单</div>
+							</td>
+						</tr>
+					</table>
+				
+			</div>
+		</div>
+		{/volist}
+	{/if}
+	
+	</form>
+</div>
+{/block}
+{block name="javascript"}
+<script>
+function add_child_menu(id){
+	
+	var num=$('#b'+id).attr('bid');
+
+	num=parseInt(num)+1;
+	
+	$('#b'+id).attr('bid',num);
+	
+	var select=$('#select'+id).html();
+	var html='';
+	html+='<tr id="'+id+'input'+num+'">';
+	html+='<td><select class="form-control" name="type['+id+']['+num+']">';
+	html+=select;	
+	html+='</select></td>';
+	html+='<td><input type="text" name="name['+id+']['+num+']" value="" class="form-control"></td>';	
+	html+='<td><input type="text" name="content['+id+']['+num+']" value="" class="form-control"></td>';
+	html+='<td><button type="button" onclick="$(\'#'+id+'input'+num+'\').remove();" class="btn btn-danger"><i class="fa fa-trash"></i></button></td></tr>';
+//	alert(html);
+	$('#tbody'+id).append(html);
+}
+</script>							
+{/block}

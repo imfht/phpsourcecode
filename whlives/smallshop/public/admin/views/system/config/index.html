@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+<form class="layui-form" method="post">
+    <div class="layui-fluid" id="component-tabs">
+        <div class="layui-row">
+            <div class="layui-col-md12">
+                <div class="layui-card">
+                    <div class="layui-card-header">
+                        <button type="button" class="layui-btn layui-btn-sm" lay-event="add">添加</button>
+                    </div>
+                    <div class="layui-card-body">
+                        <div class="layui-tab">
+                            <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/system/config" lay-done="layui.form.render();">
+                                <ul class="layui-tab-title">
+                                    {{# var i = 0;layui.each(d.data, function(index, item){ }}
+                                    <li {{# if(i== 0){ }}class="layui-this" {{# } }}>{{ index}}</li>
+                                    {{# i++;}); }}
+                                </ul>
+                                <div class="layui-tab-content">
+                                    {{# var j = 0;layui.each(d.data, function(index, item){ }}
+                                    <div class="layui-tab-item {{# if(j == 0){ }}layui-show{{# } }}">
+                                        {{# layui.each(item, function(key, item1){ }}
+                                        {{# if(item1.input_type == 'text'){ }}
+                                        <div class="layui-form-item">
+                                            <label class="layui-form-label">{{ item1.title }}</label>
+                                            <div class="layui-input-block">
+                                                <input type="text" name="config[{{ item1.id }}]" value="{{ item1.value }}" autocomplete="off" class="layui-input">
+                                            </div>
+                                        </div>
+                                        {{# }else if(item1.input_type == 'textarea'){ }}
+                                        <div class="layui-form-item">
+                                            <label class="layui-form-label">{{ item1.title }}</label>
+                                            <div class="layui-input-block">
+                                                <textarea name="config[{{ item1.id }}]" class="layui-textarea">{{ item1.value }}</textarea>
+                                            </div>
+                                        </div>
+                                        {{# }else if(item1.input_type == 'radio'){ }}
+                                        <div class="layui-form-item">
+                                            <label class="layui-form-label">{{ item1.title }}</label>
+                                            <div class="layui-input-block">
+                                                {{# layui.each(item1.select_value, function(k, select_value){ }}
+                                                <input type="radio" name="config[{{ item1.id }}]" value="{{ k }}" title="{{ select_value }}" {{# if(k== item1.value){ }}checked{{# } }}>
+                                                {{# }); }}
+                                            </div>
+                                        </div>
+                                        {{# }else if(item1.input_type == 'select'){ }}
+                                        <div class="layui-form-item">
+                                            <label class="layui-form-label">{{ item1.title }}</label>
+                                            <div class="layui-input-block">
+                                                <select name="config[{{ item1.id }}]">
+                                                    {{# layui.each(item1.select_value, function(k, select_value){ }}
+                                                    <option value="{{ k }}" {{# if(k== item1.value){ }}selected{{# } }}>{{ select_value }}</option>
+                                                    {{# }); }}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        {{# } }}
+                                        {{# }); }}
+                                    </div>
+                                    {{# j++;}); }}
+                                </div>
+                            </script>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label"></label>
+                            <div class="layui-input-inline">
+                                <input type="hidden" name="id" value="">
+                                <input type="button" lay-submit lay-filter="form-submit" value="保存" class="layui-btn">
+                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'helper'], function () {
+        var admin = layui.admin,
+            form = layui.form,
+            $ = layui.$,
+            helper = layui.helper,
+            edit_view_url = 'system/config/add',//添加编辑页模板地址
+            api_action_url = layui.setter.apiHost + '/system/config';
+
+        //监听提交
+        form.on('submit(form-submit)', function (data) {
+            //提交 Ajax 成功后，关闭当前弹层并重载表格
+            admin.req({
+                type: "POST",
+                url: api_action_url + '/update',
+                data: data.field,
+                success: function (result) {
+                    if (result.code == 0) {
+                        layer.msg('保存成功');
+                    } else {
+                        layer.msg(result.msg);
+                    }
+                },
+                error: function () {
+                    layer.msg('操作失败，请刷新页面重试！');
+                }
+            });
+        });
+
+        $('.layui-card-header .layui-btn').on('click', function () {
+            var type = $(this).attr('lay-event');
+            if (type == 'add') {
+                helper.open_window('添加', api_action_url, edit_view_url);
+            }
+        });
+    });
+</script>
+</body>
+</html>

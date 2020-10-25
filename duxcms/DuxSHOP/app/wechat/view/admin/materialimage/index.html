@@ -1,0 +1,76 @@
+<div data-dux="table-bind">
+    <div class="dux-page-header uk-clearfix">
+        <div class="page-title">
+            <a class="uk-button uk-button-danger" href="javascript:;" id="sync"> 同步素材</a>
+        </div>
+        <div class="page-action">
+            <a class="uk-button uk-button-primary" href="{url('add')}">添加</a>
+        </div>
+    </div>
+    <div class="dux-page-images uk-clearfix" data-table>
+        <!--loop{$list as $vo}-->
+        <div class="item tr">
+            <img src="{$vo.image}" alt="">
+            <div class="info">
+                <div class="title">
+                    <p>{date('Y-m-d H:i:s', $vo.time)}</p>
+                </div>
+                <div class="btn">
+                    <a class="uk-button uk-button-danger uk-button-small" href="javascript:;"
+                       data-url="{url('del')}" data-id="{$vo.material_id}" title="删除" data-del><i
+                            class=" fa fa-trash"></i> 删除</a>
+                </div>
+            </div>
+
+        </div>
+        <!--{/loop}-->
+    </div>
+    <div class="dux-page-foot uk-clearfix">
+        {$page}
+    </div>
+</div>
+<script>
+    Do('base', 'dialog', function () {
+        var dialog = null;
+        var sync = function (pageNum) {
+            app.debug(pageNum);
+            app.ajax({
+                url: '{url("sync")}',
+                type: 'post',
+                data: {
+                    page: pageNum
+                },
+                tip: false,
+                success: function (info) {
+                    layer.close(dialog);
+                    dialog = layer.msg('素材完成页数(' + info.num + '/' + info.max + ')', {
+                        time : 200000
+                    });
+                    sync(pageNum + 1);
+                },
+                error : function(msg, url) {
+                    layer.close(dialog);
+                    layer.msg(msg);
+                    if(url) {
+                        setTimeout(function() {
+                            window.location.href = url;
+                        }, 2000);
+                    }
+                }
+            });
+
+        };
+
+        $('#sync').click(function () {
+            layer.confirm('同步素材将会删除已有本地数据,并耗费大量资源,请确认？', {
+                btn: ['同步','取消'] //按钮
+            }, function(index){
+                dialog = layer.msg('同步中,请稍等!');
+                layer.close(index);
+                sync(1);
+            });
+
+        });
+
+    });
+</script>

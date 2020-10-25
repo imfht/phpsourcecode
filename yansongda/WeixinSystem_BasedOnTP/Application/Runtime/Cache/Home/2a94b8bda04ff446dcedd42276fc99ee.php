@@ -1,0 +1,1 @@
+<?php if (!defined('THINK_PATH')) exit(); if($data['type'] == 'text' ): echo W('Text/index', array($data)); endif; ?>

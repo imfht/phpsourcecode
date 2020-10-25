@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>收银台</title>
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/weui/dist/style/weui.min.css">
+    <style type="text/css">
+		.pay-btn{ display: block; width: 90%; margin: 0 auto;}
+		.pay-price{ color:#FE6714; font-size:41px}
+		.pay-title{ font-weight: bold; margin-right: 15px;}
+		.pay-name{ color: #FE6714;}
+		.is_pay-btn{ display: block; width: 30%; margin-top: 15px;font-size:10px;margin-right: 5%;}
+    </style>
+</head>
+<body>
+<div style="width:90%;margin:41px auto 20px;">
+	<p>
+		<span class="pay-title">支付金额：</span>
+		<span class="pay-price">￥{$order["order_total_price"]/100}</span>
+	</p>
+</div>
+<div>
+	<a href="javascript:;" class="weui_btn weui_btn_primary pay-btn">立即支付</a>
+</div>
+<div>
+	<a href="javascript:;" class="weui_btn weui_btn_default is_pay-btn" type="button" data-id="{$order["id"]}">已支付点击这里</a>
+</div>
+<script type="text/javascript" src="__PUBLIC__/js/jquery-2.0.3.min.js"></script>
+<script type="text/javascript" src="__PUBLIC__/js/fastclick.js"></script>
+<script type="text/javascript">
+	$(document).ready(function(){
+		//fastclick消除延迟
+		$('.is_pay-btn').data('id')==undefined && $('.is_pay-btn').hide()
+		FastClick.attach(document.body);
+		$('.pay-btn').on('click', function() {
+			callpay();
+		});
+		$('.is_pay-btn').on('click', function() {
+			orderquery($(this).data('id'));
+		});
+
+	});
+	//调用微信JS api 支付
+	function jsApiCall()
+	{
+			WeixinJSBridge.invoke(
+			'getBrandWCPayRequest',
+			{$jsApiParameters},
+			function(res){
+				if(res.err_msg == "get_brand_wcpay_request:ok" ) {
+					var link = "{:U('shop/index/orders')}";
+					window.location.href=link;
+
+				}     // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。
+				if(res.err_msg == "get_brand_wcpay_request:cancel" ) {
+					window.location.reload();
+
+				}     // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。
+			}
+		);
+	}
+
+	function callpay()
+	{
+		if (typeof WeixinJSBridge == "undefined"){
+			if( document.addEventListener ){
+				document.addEventListener('WeixinJSBridgeReady', jsApiCall, false);
+			}else if (document.attachEvent){
+				document.attachEvent('WeixinJSBridgeReady', jsApiCall);
+				document.attachEvent('onWeixinJSBridgeReady', jsApiCall);
+			}
+		}else{
+			jsApiCall();
+		}
+	}
+
+	function orderquery(id)
+	{
+		var data
+		data = {id:id};
+		$.post('/index.php/home/weixin/orderquery',data,function(res){
+			if(res.status ==1 )
+			{
+				var link = "{:U('shop/index/orders')}";
+				window.location.href=link;
+			}
+			else
+			{
+				alert('该订单至目前未被支付');
+				window.location.reload();
+			}
+
+	});
+	}
+
+</script>
+</body>
+</html>

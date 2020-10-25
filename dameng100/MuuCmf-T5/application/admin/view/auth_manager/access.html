@@ -1,0 +1,105 @@
+<!-- 管理员用户组新增和编辑页面 -->
+{extend name="common/main" /}
+{block name="body"}
+    <div class="main-title">
+        <h2>{:lang("_MANAGEMENT_BACKGROUND_AUTHORIZATION_")}</h2>
+    </div>
+	<div class="tab-wrap with-padding">
+
+        <div class="tab-wrap clearfix">
+            <div class="col-xs-10">
+                <ul class="nav nav-pills">
+                    <li class="active"><a href="javascript:;">{:lang("_MANAGEMENT_BACKGROUND_AUTHORIZATION_")}</a></li>
+                    <li><a href="{:url('AuthManager/accessUser',array('group_name'=>input('group_name') ,'group_id'=> input('group_id')))}">{:lang("_FRONT_DESK_ACCESS_AUTHORIZATION_")}</a></li>
+                    <li><a href="{:url('AuthManager/user',array('group_name'=>input('group_name') ,'group_id'=> input('group_id')))}">{:lang("_MEMBER_DELEGATION_")}</a></li>
+
+                </ul>
+            </div>
+            <div class="col-xs-2 text-right">
+                <select name="group" class="form-control">
+                    {volist name="auth_group" id="vo"}
+                        <option value="{:url('AuthManager/access',['group_id'=>$vo['id'],'group_name'=>$vo['title']])}" {eq name="vo['id']" value="$this_group['id']"}selected{/eq} >{$vo.title}</option>
+                    {/volist}
+                </select>
+            </div>
+        </div>
+
+		<div>
+			<!-- 访问授权 -->
+			<div class="node-list">
+            <div class="tab-pane in">
+				<form action="{:url('AuthManager/writeGroup')}" enctype="application/x-www-form-urlencoded" method="post" class="form-horizontal auth-form ajax-form">
+					{volist name="node_list" id="node"}
+						<dl class="checkmod">
+							<dt class="hd">
+                                <input class="auth_rules rules_all" type="checkbox" id="<?php echo $main_rules[$node['url']] ?>" name="rules[]" value="<?php echo $main_rules[$node['url']] ?>" >
+                                <label for="<?php echo $main_rules[$node['url']] ?>">{$node.title}{:lang("_ADMINISTRATION_")}</label>
+							</dt>
+							<dd class="bd">
+								{notempty name="node['child']"}
+								{volist name="node['child']" id="child"}
+                                <div class="rule_check">
+                                    <div>
+                                        <input class="auth_rules rules_row" type="checkbox" id="{$child['url']}" name="rules[]" value="{$auth_rules[$child['url']]}"/>
+                                        <label for="{$child['url']}">{$child.title}</label>
+                                    </div>
+                                   {notempty name="child['operator']"}
+                                   <span class="divsion">&nbsp;</span>
+                                   <span class="child_row">
+                                        {volist name="child['operator']" id="op"}
+                                           <input class="auth_rules" type="checkbox" id="{$op['url']}" name="rules[]"
+                                           value="{$auth_rules[$op['url']]}"/>
+                                           <label for="{$op['url']}">{$op.title}</label>
+                                        {/volist}
+                                   </span>
+                                    {/notempty}
+			                    </div>
+								{/volist}
+								{/notempty}
+							</dd>
+						</dl>
+					{/volist}
+
+			        <input type="hidden" name="id" value="{$this_group.id}" />
+                    <input type="hidden" name="back_url" value="{:url('',['group_id'=>$this_group.id])}" />
+                    <button type="submit" class="btn btn-success submit-btn">{:lang("_SURE_WITH_SPACE_")}</button>
+                    <button class="btn btn-return" onclick="javascript:history.back(-1);return false;">{:lang("_RETURN_WITH_SPACE_")}</button>
+			    </form>
+			</div>
+            </div>
+
+		</div>
+	</div>
+
+{/block}
+{block name="script"}
+
+<script>
+$(function(){
+    var rules = [{$this_group.rules}];
+
+    $('.auth_rules').each(function(){
+        if( $.inArray( parseInt(this.value,10),rules )>-1 ){
+            $(this).prop('checked',true);
+        }
+        if(this.value==''){
+            $(this).closest('span').remove();
+        }
+    });
+
+    //全选节点
+    $('.rules_all').on('change',function(){
+        $(this).closest('dl').find('dd').find('input').prop('checked',this.checked);
+    });
+    $('.rules_row').on('change',function(){
+        $(this).closest('.rule_check').find('.child_row').find('input').prop('checked',this.checked);
+    });
+
+
+
+    $('select[name=group]').change(function(){
+        location.href = this.value;
+    });
+})
+</script>
+{/block}

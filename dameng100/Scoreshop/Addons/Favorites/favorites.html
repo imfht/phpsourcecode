@@ -1,0 +1,60 @@
+ <a title="收藏"
+    <if condition="$favoritesed">
+    </if> class="favorites_btn" table="{$table}" row="{$row}" uid="{$uid}" jump="{$jump}" field="{$field}">
+
+    <if condition="$favoritesed">
+        <i id="ico_favorites" class="icon icon-star"></i>
+        <else/>
+        <i id="ico_favorites" class="icon icon-star-empty"></i>
+    </if>
+
+    </a>
+    <span id="favorites_{$app}_{$table}_{$row}_pos"><span id="favorites_{$app}_{$table}_{$row}">{$count}</span> </span>
+<script>
+    function bind_favorites() {
+            var FAVORITES_URL = "{:addons_url('Favorites://Favorites/doFavorites')}";
+            $('.favorites_btn').unbind('click');
+            $('.favorites_btn').click(function () {
+                // event.stopPropagation();
+                var me = $(this);
+                if (MID == 0) {
+                    toast.error('请在登陆后再收藏哦。', '温馨提示');
+                    return;
+                } else {
+                    var row = $(this).attr('row');
+                    var table = $(this).attr('table');
+                    var uid = $(this).attr('uid');
+                    var jump = $(this).attr('jump');
+                    var field = $(this).attr('field');
+                    if (typeof(THIS_MODEL_NAME) != 'undefined') {
+                        MODULE_NAME = THIS_MODEL_NAME;
+                    }
+                    $.post(FAVORITES_URL, {appname: MODULE_NAME, row: row, table: table, uid: uid, jump: jump, field: field}, function (msg) {
+                        if (msg.status) {
+                            var num_tag = $('#favorites_' + MODULE_NAME + '_' + table + '_' + row);
+                            var pos = $('#favorites_' + MODULE_NAME + '_' + table + '_' + row + '_pos');
+                            if (pos.text() == '') {
+                                var html = '<span id="' + '#favorites_' + MODULE_NAME + '_' + table + '_' + row + '">1</span>';
+                                pos.html('&nbsp;( ' + html + '&nbsp;)');
+
+                            } else {
+                                var num = num_tag.text();
+                                num++;
+                                num_tag.text(num);
+                            }
+                            var ico = me.find('#ico_favorites');
+                            ico.removeClass();
+                            ico.addClass('icon-star');
+                            toast.success(msg.info, '温馨提示');
+
+                        } else {
+                            toast.error(msg.info, '温馨提示');
+                        }
+
+                    }, 'json');
+                }
+
+                });
+            }
+bind_favorites();
+</script>

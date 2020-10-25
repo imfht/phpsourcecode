@@ -1,0 +1,86 @@
+# PHPDish Mention Adapter
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    phpdish_core.theme.context.generic:
+        class: PHPDish\Bundle\CoreBundle\Theme\Context\GenericThemeContext
+        arguments: ['@sylius.repository.theme', '%theme.current_theme%']
+
+    ## http client
+    phpdish_core.http_client:
+        class: GuzzleHttp\Client
+        arguments: [{verify: false}]
+
+    ## 拼音服务
+    phpdish_core.pinyin_translator:
+        class: Overtrue\Pinyin\Pinyin
+
+    ## 搜索服务，如果需要其它服务可以自行替换
+    phpdish_core.searcher:
+        class: PHPDish\Bundle\CoreBundle\Search\Algolia\AlgoliaSearch
+        public: true
+        arguments:
+            - "@search.index_manager"
+            - "@doctrine.orm.entity_manager"
+
+    # mention 适配器
+    phpdish_core.mention.adapter:
+        class: PHPDish\Bundle\CoreBundle\Mention\Adapter
+        arguments: ['@phpdish_user.manager.user', '@router']
+
+    ## 默认null engine
+    search.engine.null:
+        class: Algolia\SearchBundle\Engine\NullEngine
+
+    ## locale manager
+    phpdish_core.locale_manager:
+        class: PHPDish\Bundle\CoreBundle\Locale\LocaleManager
+        arguments: ['%locales%']
+
+    phpdish_core.twig_extension.date:
+         class: Twig\Extensions\DateExtension
+         public: false
+         arguments: ['@translator']
+         tags:
+            - { name: twig.extension}
+
+    phpdish_core.twig_extension.url_pattern:
+         class: PHPDish\Bundle\CoreBundle\Twig\UrlPatternExtension
+         arguments: ['@request_stack']
+         public: false
+         tags:
+            - { name: twig.extension}
+
+    # 配置参数读取扩展
+    phpdish_core.twig_extension.container:
+         class: PHPDish\Bundle\CoreBundle\Twig\ContainerExtension
+         arguments: ['@service_container']
+         public: false
+         tags:
+            - { name: twig.extension}
+
+    # Pjax服务设置
+    phpdish_core.pjax.helper:
+         class: PHPDish\Component\Pjax\Helper\PjaxHelper
+
+    phpdish_core.twig_extension.pjax:
+         class: PHPDish\Component\Pjax\Twig\PjaxExtension
+         arguments: ['@phpdish_core.pjax.helper']
+         public: false
+         tags:
+            - { name: twig.extension}
+
+    phpdish_core.manager.friend_link:
+        class: PHPDish\Bundle\CoreBundle\Service\FriendLinkManager
+        arguments: ['@doctrine.orm.entity_manager']
+
+    phpdish_core.twig_extension.friend_link:
+         class: PHPDish\Bundle\CoreBundle\Twig\FriendLinkExtension
+         arguments: ['@phpdish_core.manager.friend_link']
+         tags: ['twig.extension']
+
+    phpdish_core.util.notification_helper:
+        class: PHPDish\Bundle\CoreBundle\Util\NotificationHelper

@@ -1,0 +1,80 @@
+<div id="actionbar" class="fn-clear">
+    <div class="fn-left">
+        <button class="button button-green bar" url="{:url('group/ids_action')}" msg="你确认要添加【选择】商品为团购商品吗？"><i class="iconfont icon-zhengque"></i>确认选择</button>
+    </div>
+    <div class="fn-right">
+        <form id="form" action="{:url('group/add')}" method="get">
+            <input placeholder="请输入商品关键字/@货号/#编号" class="input w250" type="text" name="keyword" value="{$keyword}">
+            <input type="submit" value="搜索" class="button button-blue">
+        </form>
+    </div>
+    <div class="fn-right">
+        <button class="button category" url="{:url('group/category')}">分类筛选</button>
+    </div>
+</div>
+<table class="table table-border">
+    <thead>
+        <tr>
+            <th class="fn-tac w40"><input type="checkbox" onclick="CheckAll(this)"></th>
+            <th class="fn-tac w100">状态</th>
+            <th class="fn-tac w80">商品名称</th>
+            <th></th>
+            <th class="w100">销售价</th>
+            <th class="w100">成本价</th>
+        </tr>
+    </thead>
+    <tbody>
+        {foreach $lists as $vo}
+        <tr>
+            <td class="fn-tac"><input name="ids[]" type="checkbox" value="{$vo.id}"></td>
+            <td class="fn-tac">
+                {if $vo.is_sale == 1}
+                    <span class="badge bg-yellow">删除</span>
+                {elseif $vo.is_sale == 2}
+                    <span class="badge bg-green">在售</span>
+                {else}
+                    <span class="badge">下架</span>
+                {/if}
+            </td>
+            <td class="fn-tac"><img src="{$vo.img}?x-oss-process=style/80" class="w60" /></td>
+            <td>{$vo.name}</td>
+            <td>￥{$vo.sell_price|money}</td>
+            <td>￥{$vo.cost_price|money}</td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+{$lists|raw}
+<script type="text/javascript">
+Do('base', 'layer', function () {
+    $(".bar").click(function() {
+        var url = $(this).attr('url');
+        var msg = $(this).attr('msg');
+        goods_submit({action:url,msg:msg})
+    })
+    $(".category").click(function () {
+        var url = $(this).attr('url');
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.open({ type: 2, title: '栏目筛选', maxmin: true, area: ['60%', '70%'], content: url+'?index='+index})
+    })
+})
+//选择商品
+function goods_submit(obj){
+    var ids = "";
+    $("input:checkbox[name='ids[]']:checked").each(function() {ids += $(this).val() + ",";});
+    var index = parent.layer.getFrameIndex(window.name); 
+    parent.layer.confirm(obj.msg,{icon:3},function(index){
+        $.post(obj.action,{ids:ids},function(data) {
+            if (data.code == "200") {
+                parent.layer.alert(data.msg,{icon:1},function(index){
+                    window.location.reload();
+                    parent.layer.close(index);
+                });
+            } else {
+                parent.layer.alert(data.msg,{icon:5});
+            }
+        },"json");
+        parent.layer.close(index);
+    });
+}   
+</script>

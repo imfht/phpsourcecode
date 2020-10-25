@@ -1,0 +1,68 @@
+<?php 
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+$kind = @intval($_GET['kind']);
+$cond = "WHERE kind = 'PTGG'";
+
+switch ($kind) {
+case 2:
+	$cond = "WHERE kind = 'PTGG'";
+	break;
+case 3:
+	$cond = "WHERE kind = 'HKGG'";
+	break;
+case 4:
+	$cond = "WHERE kind = 'MTBD'";
+	break;
+}
+
+if (empty($page)) { $page = 1; }
+$limit = 10;
+
+$issues = dt_query("SELECT id, title, content_s, c_at FROM finance_issue $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$issues) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+
+<div class="finance-nav-sub">
+	<div class="container">
+		<ul class="nav navbar-nav">
+			<li id="finance_issue_2">
+			<a href="?c=finance&a=issue_list&kind=2">平台公告</a>
+			</li>
+			<li id="finance_issue_3">
+			<a href="?c=finance&a=issue_list&kind=3">还款公告</a>
+			</li>
+			<li id="finance_issue_4">
+			<a href="?c=finance&a=issue_list&kind=4">媒体报道</a>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<div class="container finance-issue-list">
+	<h3><?php $issue_kind_name = array( '2' => '平台公告', '3' => '还款公告', '4' => '媒体报道'); echo $issue_kind_name[$kind] ?></h3>
+	<hr class="dashed">
+	<?php while($issue = mysql_fetch_array($issues)) { ?>
+	<h3> <a href="?c=finance&a=issue_show&issue_id=<?php echo $issue['id'] ?>"><?php echo $issue['title'] ?></a></h3>
+	<small><?php echo fmt_date($issue['c_at']) ?></small>
+	<p><?php echo $issue['content_s'] ?></p>
+	<hr class="dashed">
+	<?php } ?>
+
+	<?php pagination('finance_issue', $cond, $page, $limit, '?c=finance&a=issue_list&kind='.$kind.'&page=') ?>
+</div>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+		$('li#finance_issue_<?php echo $kind; ?>').addClass('active');
+		});
+
+</script>

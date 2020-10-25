@@ -1,0 +1,143 @@
+<include file="Public:header" />
+<style>
+table tbody tr{cursor:move;}
+</style>
+<div class="container">
+	<div class="page-header">
+		<h4>{:L('SYSTEM_SETTING')}</h4>
+	</div>
+	<include file="Public:alert" />
+	<div class="tabbable">
+		<ul class="nav nav-tabs">
+			<li><a href="{:U('setting/defaultInfo')}">{:L('BASIC_SYSTEM_SETTING')}</a></li>
+			<li><a href="{:U('setting/smtp')}">{:L('SMTP_SETTING')}</a></li>
+			<li class="active"><a href="{:U('setting/leadsstatus')}">{:L('CUSTOMIZING_FIELDS_SETTING')}</a></li>		
+			<li><a href="{:U('product/category')}">{:L('PRODUCT_CATEGORY_SETTINGS')}</a></li>
+			<li><a href="{:U('knowledge/category')}">{:L('KNOWLEDGE_CLASSIFICATION_SET')}</a></li>
+			<li><a href="{:U('navigation/setting')}">{:L('SYSTEM_NAVIGATION_SETTING')}</a></li>
+			<li><a href="{:U('setting/weixin')}">{:L('WHCHAT_SETTING')}</a></li>
+		</ul>
+	</div>
+	<div class="row">
+		<div class="span2 knowledgecate">
+			<ul class="nav nav-list">
+				<li class="active">
+					<a href="javascript:void(0);">{:L('CUSTOMIZING_FIELDS_SETTING')}</a>
+				</li>
+				<li><a href="{:U('setting/leadsstatus')}"><i class="icon-chevron-right"></i>{:L('CLUES_TO_THE_STATE')}</a></li>
+				<li><a href="{:U('setting/businessstatus')}"><i class="icon-chevron-right"></i>{:L('BUSINESS_TO_THE_STATE')}</a></li>
+				<li><a href="{:U('setting/industry')}"><i class="icon-chevron-right"></i>{:L('INDUSTRY_SETTING')}</a></li>
+				<li><a class="active" href="{:U('setting/source')}"><i class="icon-chevron-right"></i>{:L('INFORMATION_SOURCES_SET')}</a></li>
+                <li><a href="{:U('setting/fields')}"><i class="icon-chevron-right"></i>{:L('CUSTOMIZING_FIELDS_SETTING')}</a></li>
+			</ul>
+		</div>
+		<form action="{:U('setting/sourcedelete')}" method="post">
+			<div class="span10">
+				<p><div class="bulk-actions align-left">
+					<input type="submit" class="btn" value="{:L('DELETE')}"/> &nbsp; <a class="btn" id="sort_btn">{:L('SAVE_ORDER')}</a>
+					<div class="pull-right">
+						<a class="btn btn-primary" id="add">{:L('ADD_THE_SOURCE')}</a>
+					</div>
+				</div></p>
+			</div>
+			<div class="span10">
+				<table class="table table-hover" width="95%" border="0" cellspacing="1" cellpadding="0">
+					<notempty name="sourceList">
+					<thead>
+						<tr>
+							<th width="10%"><input type="checkbox" name="check_all" id="check_all" class="check_all"/> &nbsp;</th>
+							<th width="20%">{:L('STATE_NAME')}</th>
+							<th width="50%">{:L('STATE_DESCRIBE')}</th>
+							<th width="20%">{:L('OPERATING')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr>
+							<td colspan="4">
+								<div class="span8"><span style="color: rgb(243, 40, 12);">{:L('HINT')}</span></div>
+							</td>
+						</tr>
+					</tfoot>
+					<tbody>
+						<volist name="sourceList" id="vo">
+							<tr>
+								<td><input type="checkbox" class="list" name="source_id[]" value="{$vo.source_id}"/>
+								</td>
+								<td>{$vo.name}</td>
+								<td>{$vo.description}</td>
+								<td><a class="edit" href="javascript:void(0)" rel="{$vo.source_id}">{:L('EDIT')}</a> &nbsp; &nbsp;<a class="delete" href="javascript:void(0)" rel="{$vo.source_id}">{:L('DELETE')}</a></td>
+							</tr>
+						</volist>
+					</tbody>
+					<else />
+						<tr>
+							<td>{:L('EMPTY_TPL_DATA')}</td>
+						</tr>
+					</notempty>
+				</table>
+			</div> 
+		</form>
+	</div>
+<div class="hide" id="dialog-add" title="{:L('ADD_STATE')}">loading...</div>
+<div class="hide" id="dialog-edit" title="{:L('MODIFY_THE_STATE_OF')}">loading...</div>
+<div class="hide" id="dialog-delete" title="{:L('DELETE_THE_STATE_OF')}">loading...</div>
+</div>
+<script type="text/javascript">	
+$("#dialog-add").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-edit").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-delete").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+
+$("table tbody").sortable({connectWith: "table tbody"});
+
+$(function(){
+	$("#check_all").click(function(){
+		$("input[class='list']").prop('checked', $(this).prop("checked"));
+	});
+	$("#add").click(function(){
+		$('#dialog-add').dialog('open');
+		$('#dialog-add').load('{:U("setting/sourceadd")}');
+	});
+	$(".edit").click(function(){
+		var id = $(this).attr('rel');
+		$('#dialog-edit').dialog('open');
+		$('#dialog-edit').load('{:U("setting/sourceedit","id")}'+id);
+	});
+	$(".delete").click(function(){
+		var id = $(this).attr('rel');
+		$('#dialog-delete').dialog('open');
+		$('#dialog-delete').load('{:U("setting/sourcedelete","id")}'+id);
+	});
+	$("#sort_btn").click(
+		function() {
+			position = [];
+			$.each($(".list"), function(i, item){position.push(item.value)});
+			$.get('{:U("setting/sourcesort")}',{postion:position.join(',')}, function(data){
+				if (data.status == 1) {
+					$(".page-header").after('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+				} else {
+					$(".page-header").after('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+				}
+			}, 'json');
+		}	
+	);
+})
+</script>
+<include file="Public:footer" />

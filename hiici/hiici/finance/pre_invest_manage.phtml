@@ -1,0 +1,123 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+global $config;
+if (!in_array($auth['id'], $config['manager'])) {
+	if (1 > dt_count('finance_lmcy', 'WHERE user_id = '.$auth['id'])) die('用户权限不够!');
+	$cond = 'AND lmcy_id = (SELECT id FROM finance_lmcy WHERE user_id = '.$auth['id'].' LIMIT 1)';
+} else {
+	$cond = '';
+}
+
+if (!empty($_POST)) die;
+
+$page = @intval($_GET['page']);
+$kind_filter = @intval($_COOKIE['pre_invest_kind_filter']);
+$search = @filter_var($_GET['search'], FILTER_SANITIZE_STRING);
+
+switch ($kind_filter) {
+case 2:
+	$cond .= " AND money < 10000";
+	break;
+case 3:
+	$cond .= " AND money > 10000 AND money < 100000";
+	break;
+case 4:
+	$cond .= " AND money > 100000 AND money < 1000000";
+	break;
+case 5:
+	$cond .= " AND money > 1000000 AND money < 10000000";
+	break;
+case 6:
+	$cond .= " AND money > 10000000";
+	break;
+}
+
+$v_p_search = '';
+if (!empty($search)) {
+	$cond .= " AND user_name LIKE '%$search%'";
+	$v_p_search = '&search='.$search;
+}
+
+if (!empty($cond)) $cond = preg_replace('/AND/', 'WHERE', $cond, 1);
+
+if (empty($page)) { $page = 1; }
+$limit = 20;
+
+$p_is = dt_query("SELECT * FROM finance_pre_invest $cond ORDER BY c_at LIMIT ".$limit * ($page - 1).",$limit");
+if (!$p_is) die('获取数据失败！');
+
+?>
+<?php require_once('finance/inc/nav_sub_im.html') ?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column" style="margin-top:20px">
+			<div class="finance-filter-well">
+				<div class="row clearfix">
+					<div class="col-md-8 column">
+						<ul id="kind_filter" class="nav nav-pills">
+							<li class="disabled"> <a href="#">成员类型</a> </li>
+							<li class=""><a href="javascript:do_kind_filter(1)">全部</a></li>
+							<li class=""><a href="javascript:do_kind_filter(2)">万级下</a></li>                       
+							<li class=""><a href="javascript:do_kind_filter(3)">万级</a></li>                       
+							<li class=""><a href="javascript:do_kind_filter(4)">十万级</a></li>                       
+							<li class=""><a href="javascript:do_kind_filter(5)">百万级</a></li>                       
+							<li class=""><a href="javascript:do_kind_filter(6)">百万级上</a></li>                       
+						</ul>
+					</div>
+					<div class="col-md-4 column">
+						<div class="input-group">
+							<input id="pre_invest_search" class="form-control" type="text" placeholder="搜索" value="<?php echo $search ?>">
+							<a href="javascript:pre_invest_search()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span> 搜索</a>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<table class="table">
+				<thead>
+					<tr>
+						<th>用户名称</th>
+						<th>联系电话</th>
+						<th>意向投资额</th>
+						<th>意向投资描述</th>
+						<th>机构</th>
+						<th>提交时间</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php while($p_i = mysql_fetch_array($p_is)) { ?>
+				<tr>
+					<td><a href="?c=center&user_id=<?php echo $p_i['user_id'] ?>"><?php echo $p_i['user_name'] ?></a></td>
+					<td><?php echo $p_i['phone']; ?></td>
+					<td><?php echo $p_i['money']; ?></td>
+					<td><?php echo $p_i['des']; ?></td>
+					<td><?php echo $p_i['lmcy_id']; ?></td>
+					<td><?php echo date('Y-m-d', $p_i['c_at']) ?></td>
+				</tr>
+				<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('finance_pre_invest', $cond, $page, $limit, '?c=finance&a=pre_invest_manage&page=', $v_p_search) ?>
+		</div>
+
+
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#finance_im').addClass('active');
+	$('li#im_tzyx').addClass('active');
+	var kind_filter = ('' == getCookie('pre_invest_kind_filter')) ? 1 : getCookie('pre_invest_kind_filter');
+	$('ul#kind_filter').find('li:eq('+kind_filter+')').addClass('active');
+});
+
+function do_kind_filter(mark) {
+	setCookie('pre_invest_kind_filter', mark, 365, '/');
+	location = '?c=finance&a=pre_invest_manage&search=<?php echo $v_p_search ?>';
+}
+</script>

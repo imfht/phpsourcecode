@@ -1,0 +1,193 @@
+<extend name="Public:base" />
+<block name="content">    
+<section class="container" id="blog_content">
+	<div class="container">
+		<div class="row">
+			
+			<div class="col-md-9">
+				<div class="row">
+					<header class="col-md-12 ">
+						<h3 class="tac">{$content.title}</h3>
+					</header>
+				</div>
+				<div class="clearfix">
+				<volist name="images" id="i" >
+					<div class="col-md-12 center-block">					
+						<img class="img-thumbnail" src="__ROOT__/Uploads/image/{$i.image}" />
+						<p class="tac">{$i.title}</p>
+					</div>
+				</volist>
+				</div>
+				<div id="blog-content" class="well">
+					<?php echo htmlspecialchars_decode($content['content']); ?>					
+				</div>
+				
+				
+				<?php if($content['allow_reply']==1){ ?>
+				<div id="reply">
+				
+				<h5>全部留言</h5>
+				<div id="reply_content">
+					<ol class="comments first_level">
+						<volist name="reply" id="r">
+						<li>
+							<article class="comment_box commentbox1">
+				                <div class="gravatar">
+				                  <img src="__IMG__/1.jpg" alt="author 6" />
+				                </div>
+				                <div class="comment_text">
+				                  <div class="comment_author">{$r.title} <span class="date">{$r.create_time}</span></div>
+				                  <p style="text-align: justify;">{$r.content}</p>
+				                  <div class="reply"><a href="#comment" class="re" style="cursor:pointer;" author="{$r.title}">回复</a></div>
+				                </div>
+				                <div class="clearfix"></div>
+				             </article>
+						</li>
+						</volist>
+					</ol>
+				</div>
+				
+				<div id="comment_form">
+		          <h5>写下留言</h5>
+		          <form  name="comment" id="validation-form">
+		          	
+		         	<div class="form-group">
+		              <label>名字</label>
+		              <div class="clearfix">
+		              <input name="name" id="name" class="form-control" type="text" maxlength="30" />
+		              </div>
+		            </div>
+		            
+		            <div class="form-group">
+		              <label>邮箱  (* 必填  但不会公开)</label>
+		              <div class="clearfix">
+		              <input name="email" id="email" class="form-control" type="text" maxlength="30" />
+		              </div>
+		            </div>
+		            <div class="form-group">
+		              <label>你的留言</label><br />
+		              <div class="clearfix">
+		              <textarea cols="5" rows="8" class="form-control" id="comment" name="comment"></textarea>
+		              </div>
+		            </div>
+		            
+
+		            
+		            <a style="margin:10px 0;" id="submit" type="submit" class="btn btn-warning">提交</a>
+		          </form>
+		        </div>
+		        </div>	
+				<?php } ?>
+			</div>
+			{~W('BlogCategory/blog_category_show')}	
+			
+			</div>
+		</div>
+	
+</section>
+
+</block>	
+<block name="foot_script">
+<?php if($content['allow_reply']==1){ ?>
+<script src="__PUBLIC__/js/jquery.validate.min.js"></script>
+<script>
+var verifyimg = $(".verifyimg").attr("src");
+	 $(".reloadverify").click(function(){
+        if( verifyimg.indexOf('?')>0){
+            $(".verifyimg").attr("src", verifyimg+'&random='+Math.random());
+        }else{
+            $(".verifyimg").attr("src", verifyimg.replace(/\?.*$/,'')+'?'+Math.random());
+        }
+    });
+    
+	$('.re').on('click', function() {		
+		var title='回复 '+$(this).attr('author');
+		$('#name').val(title);
+	});	
+
+	
+	$('#submit').click(function(){
+		if($("#validation-form").valid()){
+			$.getJSON("{:U('/reply')}",{
+				name:$('#name').val(),
+				email:$('#email').val(),
+				comment:$('#comment').val(),
+				id:'{$Think.get.id}'
+				}, function(data){
+					
+					$("#reply_content").load("{:U('/replys/'.$_GET['id'])}");
+					//$(".reloadverify").trigger('click');
+		    	});
+		}
+	});
+	
+	$('#validation-form').validate({
+			errorElement: 'div',
+			errorClass: 'help-block',
+			focusInvalid: false,
+			rules: {				
+				name: {
+					required: true					
+				},
+				email: {
+					required: true					
+				},
+				comment: {
+					required: true					
+				},
+				verify: {
+					required: true,
+					remote	: {
+                    url :"{:U('/check_verify')}",
+                    type:'get',
+                    data:{
+                    	verify : function(){
+                            return $('#verify').val();
+                        }
+                    }
+                }					
+				}
+								
+			},
+	
+			messages: {
+				
+				name: {
+					required: "必填"					
+				},
+				email: {
+					required: "必填"					
+				},
+				comment: {
+					required: "必填"					
+				},
+				verify: {
+					required: "必填",
+					remote	 : '验证码错误'					
+				}
+				
+			},
+	
+			invalidHandler: function (event, validator) { //display error alert on form submit   
+				$('.alert-danger', $('.login-form')).show();
+			},
+	
+			highlight: function (e) {
+				$(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+			},
+	
+			success: function (e) {
+				$(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+				$(e).remove();
+			},
+	
+			errorPlacement: function (error, element) {
+				 error.insertAfter(element.parent());
+			},
+
+		});
+			
+   
+</script>
+<?php } ?>	
+</block>

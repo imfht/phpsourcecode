@@ -1,0 +1,134 @@
+<!--{json width:"940",title:"发表新帖"}-->
+<style type="text/css">
+.post_thread_form dt {width: 5%;}
+.post_thread_form dd {width: 93%;}
+</style>
+<form action="?post-thread-fid-$fid-ajax-1.htm" method="post" id="post_thread_form_$pid" class="post_thread_form" target="_blank">
+	<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+	<!--{hook common_form_hash_after.htm}-->
+	<dl>
+		<!--{hook post_thread_subject_before.htm}-->
+		<dt><label for="subject">标题：</label></dt>
+		<dd style="white-space: nowrap">
+			<!--{if $forumselect}-->$forumselect<!--{/if}-->
+			<span id="typeselect">
+		<!--{if $typeselect1 || $typeselect2 || $typeselect3 || $typeselect4}-->
+			<!--{loop $forum[types] $cateid $types}-->
+				<!--{if $cateid == 1 && $typeselect1}-->$typeselect1<!--{/if}-->
+				<!--{if $cateid == 2 && $typeselect2}-->$typeselect2<!--{/if}-->
+				<!--{if $cateid == 3 && $typeselect3}-->$typeselect3<!--{/if}-->
+				<!--{if $cateid == 4 && $typeselect4}-->$typeselect4<!--{/if}-->
+			<!--{/loop}-->
+		<!--{/if}-->
+			</span>
+			<input type="text" name="subject" id="subject_$pid" value="$thread[subject]" style="width: 500px;" tabindex="100" /> <span class="small grey">(200字)</span>
+		</dd>
+		
+		<!--{hook post_thread_subject_after.htm}-->
+		
+		<dt><label for="thread_message_$pid">内容：</label></dt>
+		<dd style="position: relative;"><textarea name="message" id="thread_message_$pid" style="width: 855px; height: 400px;" tabindex="101"></textarea></dd>
+
+		<!--{hook post_thread_message_after.htm}-->
+		
+		<dt></dt>
+		<dd>
+			<input type="submit" class="button bigblue" id="post_thread_submit_$pid" value="发表新帖" tabindex="102" />
+			<input type="button" class="button biggrey" value="取消" id="post_thread_cancel_$pid"  tabindex="103" />
+			<!--{hook post_thread_button_end.htm}-->
+		</dd>
+		
+	</dl>
+</form>
+
+<!--{hook post_thread_ajax_js_before.htm}-->
+
+<script type="text/javascript">
+
+function delay_execute(dialog, recall) {
+	
+	// hook post_thread_delay_execute_start.htm
+	
+	$('#subject_$pid').focus();
+	
+	// 自动伸缩，自动提交
+	$('#thread_message_$pid').keyup(function(e) {
+		if((e.ctrlKey && (e.which == 13 || e.which == 10)) || (e.altKey && e.which == 83)) {
+			$('#post_thread_submit_$pid').trigger('click');
+			return false;
+		}
+	});
+
+	$('#post_thread_submit_$pid').click(function() {
+		$('div.alert').remove();
+		$('#post_thread_submit_$pid').disable();
+		var postdata = $("#post_thread_form_$pid").serialize();
+		$.post($('#post_thread_form_$pid').attr('action'), postdata,  function(s){
+			$('#post_thread_submit_$pid').enable();
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <=0) {
+				alert(json.message);
+				return false;
+			}
+			
+			json = json.message;
+			if(json.subject) {
+				$('#subject_$pid').alert(json.subject, {width: 250, delay: 3000}).focus();
+				return false;
+			}
+			if(json.message) {
+				$('#thread_message_$pid').parent().alert(json.message, {width: 250, delay: 3000});
+				$('#thread_message_$pid')[0].focus();
+				return false;
+			}
+			
+			// hook post_thread_submit_after_js.htm
+			
+			var thread = json.thread;
+			
+			$('#thread_message_$pid').val('');
+	 		
+	 		dialog.set_body('<div class="ok">发表成功，页面将自动跳转到列表页！</div>');
+	 		setTimeout(function() {
+	 			if(thread && (thread.typeid1 || thread.typeid2 || thread.typeid3 || thread.typeid4)) {
+	 				var typeidurl = '-typeid1-'+thread.typeid1+'-typeid2-'+thread.typeid2+'-typeid3-'+thread.typeid3+'-typeid4-'+thread.typeid4; 
+	 			} else {
+	 				var typeidurl = '';
+	 			}
+	 			window.location= '?thread-index-fid-'+thread.fid+'-tid-'+thread.tid+typeidurl+'.htm';
+	 			dialog.close();
+	 		}, 500);
+		  });
+		  
+		  // hook post_thread_ajax_post_after.htm
+		  
+		  return false;
+	});
+	$('#post_thread_cancel_$pid').click(function() {
+		dialog.close();
+	});
+	
+	// 选择版块，AJAX 加载主题分类
+	$('#fid').change(function() {
+		var fid = this.value;
+		$.get('?post-typeselect-fid-'+fid+'-ajax-1.htm', function(s) {
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <=0) {
+				alert(json.message);
+				return false;
+			}
+			
+			json = json.message;
+			var typeslects = json.typeselect1 + json.typeselect2 + json.typeselect3 + json.typeselect4;
+			$('#typeselect').html(typeslects);
+		});
+	});
+	
+	// hook post_thread_delay_execute_end.htm
+	
+	// hook common_form_hash_after_js.htm
+}
+</script>
+

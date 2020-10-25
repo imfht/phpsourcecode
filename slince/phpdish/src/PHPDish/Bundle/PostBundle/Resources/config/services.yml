@@ -1,0 +1,101 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    phpdish_post.manager.post:
+        class: PHPDish\Bundle\PostBundle\Service\PostManager
+        public: true
+        arguments:
+            - ''
+            - '@doctrine.orm.entity_manager'
+            - '@event_dispatcher'
+            - '@markdown.parser'
+
+    phpdish_post.manager.category:
+        class: PHPDish\Bundle\PostBundle\Service\CategoryManager
+        public: true
+        arguments:
+            - ''
+            - '@doctrine.orm.entity_manager'
+            - '@event_dispatcher'
+            - '@router'
+            - '@translator'
+            - '@phpdish_payment.manager.payment'
+            - '@phpdish_payment.manager.wallet'
+
+    phpdish_post.manager.book:
+        class: PHPDish\Bundle\PostBundle\Service\BookManager
+        public: true
+        arguments:
+            - '@doctrine.orm.entity_manager'
+            - '@phpdish_post.manager.post'
+            - '@phpdish_post.manager.category'
+
+    phpdish_post.manager.post.comment:
+        class: PHPDish\Bundle\PostBundle\Service\CommentManager
+        public: true
+        arguments:
+            - ''
+            - '@doctrine.orm.entity_manager'
+            - '@event_dispatcher'
+            - "@phpdish_cms.body_processor"
+
+    phpdish_post.form.type.post:
+         class: PHPDish\Bundle\PostBundle\Form\Type\PostType
+         arguments: ['@phpdish_post.manager.category']
+         tags:
+             - { name: form.type }
+
+    phpdish_post.security.post_voter:
+        class: PHPDish\Bundle\PostBundle\Security\PostVoter
+        arguments: ['@security.access.decision_manager']
+        tags:
+             - { name: security.voter}
+        public: false
+
+
+    phpdish_post.security.comment_voter:
+        class: PHPDish\Bundle\PostBundle\Security\CommentVoter
+        arguments: ['@security.access.decision_manager']
+        tags:
+             - { name: security.voter}
+        public: false
+
+    phpdish_post.security.category_voter:
+        class: PHPDish\Bundle\PostBundle\Security\CategoryVoter
+        arguments: ['@security.access.decision_manager']
+        tags:
+             - { name: security.voter}
+        public: false
+
+    phpdish_post.avatar_generator.category:
+        class: PHPDish\Bundle\ResourceBundle\AvatarGenerator\AvatarGenerator
+        arguments: ['@phpdish_media.file_manager', '@phpdish_media.file_namer']
+
+    phpdish_post.event_subscriber.category:
+        class: PHPDish\Bundle\PostBundle\EventListener\CategorySubscriber
+        arguments: ['@phpdish_post.avatar_generator.category']
+        tags: ['kernel.event_subscriber']
+
+    phpdish_post.event_subscriber.payment:
+        class: PHPDish\Bundle\PostBundle\EventListener\PaymentSubscriber
+        arguments: ['@phpdish_post.manager.category']
+        tags: ['kernel.event_subscriber']
+
+    phpdish_post.twig_extension.post:
+        class: PHPDish\Bundle\PostBundle\Twig\PostExtension
+        public: false
+        arguments:
+            - "@phpdish_post.manager.category"
+            - "@phpdish_post.manager.post"
+            - "@phpdish_post.manager.post.comment"
+        tags:
+            - {name: twig.extension}
+
+    PHPDish\Bundle\PostBundle\Controller\:
+         resource: "../../Controller"
+         arguments:
+              $configuration: '@phpdish_resource.configuration.phpdish_post'
+         tags: ['controller.service_arguments']

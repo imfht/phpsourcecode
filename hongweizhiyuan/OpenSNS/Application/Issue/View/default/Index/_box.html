@@ -1,0 +1,173 @@
+<if condition="check_auth('addIssueContent')">
+    <!-- Modal -->
+    <div id="frm-post-popup" class="white-popup mfp-hide" style="max-width: 745px">
+        <h2>投稿</h2>
+
+        <div class="aline" style="margin-bottom: 10px"></div>
+        <div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="controls">
+                        <input type="file" id="upload_picture_cover">
+                        <div class="upload-img-box" style="margin-top: 20px;width: 250px">
+                            <div style="font-size:3em;padding:2em 0;color: #ccc;text-align: center">暂无封面</div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-8">
+                    <form class="form-horizontal  ajax-form" role="form"  action="{:U('Issue/Index/doPost')}" method="post">
+                        <div class="form-group">
+                            <label for="title" class="col-sm-2 control-label">标题</label>
+
+                            <div class="col-sm-10">
+                                <input id="title" name="title" type="" class="form-control" value="" placeholder="标题"/>
+                            </div>
+
+                            <input type="hidden" name="cover_id" id="cover_id_cover" value="{$data['cover']}"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="issue_top" class="col-sm-2 control-label">分类</label>
+                            <div class="col-sm-5">
+                                <select id="issue_top" name="issue" class="form-control">
+                                    <volist name="tree" id="top">
+                                        <option value="{$top.id}">
+                                            {$top.title}
+                                        </option>
+
+                                    </volist>
+                                </select>
+                            </div>
+
+                            <script>
+                                $(function(){
+
+                                    $('#issue_top').change(function(){
+                                        var pid=$(this).val();
+                                        $.post("{:U('Issue/Index/selectDropdown')}",{pid:pid},function(data){
+                                            $('#issue_second').html('');
+                                            $.each(data,function(index,element){
+
+                                                        $('#issue_second').append('<option value="'+element.id+'">'+element.title+'</option>')
+                                                    }
+                                            )
+                                        },'json');
+                                    });
+                                    $('#issue_top').change();
+                                })
+
+                            </script>
+                            <div class="col-sm-5">
+                                <select id="issue_second" name="issue_id" class="form-control">
+                                    <volist name="tree" id="top">
+                                        <option value="{$top.id}">
+                                            {$top.title}
+                                        </option>
+                                    </volist>
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="url" class="col-sm-2 control-label">网址</label>
+
+                            <div class="col-sm-10">
+
+                                <input id="url" name="url" type="text" class="form-control" value="http://" placeholder="输入以http://开头的网址"/>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="content" class="col-sm-2 control-label">介绍</label>
+
+                            <div class="col-sm-10">
+
+                                <php>$config='toolbar:[\'bold italic underline fontsize forecolor justifyleft |  map image emotion\']';</php>
+                                {:W('UeditorMini/editor',array('myeditor','content',$post['content'],'378px','250px',$config))}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary " href="{:U('Issue/Index/doPost')}">提交</button>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <!-- /.modal -->
+    <block name="script">
+        <script type="text/javascript" src="__STATIC__/uploadify/jquery.uploadify.min.js"></script>
+        <script>
+            $(function () {
+                $('#top_nav >li >a ').mouseenter(function () {
+                    $('.children_nav').hide();
+                    $('#children_' + $(this).attr('data')).show();
+                });
+                $('.open-popup-link').magnificPopup({
+                    type: 'inline',
+                    midClick: true, // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+                    closeOnBgClick:false
+                });
+
+                $('.open-popup-ajax').magnificPopup({
+                    type: 'iframe',
+                    midClick: true, // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+                    closeOnBgClick:false
+
+                });
+
+
+
+
+                bindSupport();
+            })
+        </script>
+
+        <script type="text/javascript">
+            var SUPPORT_URL="{:addons_url('Support://Support/doSupport')}";
+            //上传图片
+            /* 初始化上传插件 */
+            $("#upload_picture_cover").uploadify({
+                "height"          : 30,
+                "swf"             : "__STATIC__/uploadify/uploadify.swf",
+                "fileObjName"     : "download",
+                "buttonText"      : "上传封面",
+                "buttonClass":"uploadcover",
+                "uploader"        : "{:U('Home/File/uploadPicture',array('session_id'=>session_id()))}",
+                "width"           : 250,
+                'removeTimeout'	  : 1,
+                'fileTypeExts'	  : '*.jpg; *.png; *.gif;',
+                "onUploadSuccess" : uploadPicturecover,
+                'overrideEvents':['onUploadProgress','onUploadComplete','onUploadStart','onSelect'],
+                'onFallback' : function() {
+                    alert('未检测到兼容版本的Flash.');
+                }, 'onUploadProgress': function (file, bytesUploaded, bytesTotal, totalBytesUploaded, totalBytesTotal) {
+                    $("#cover_id_cover").parent().find('.upload-img-box').html(totalBytesUploaded + ' bytes uploaded of ' + totalBytesTotal + ' bytes.');
+                },'onUploadComplete' : function(file) {
+                    //alert('The file ' + file.name + ' finished processing.');
+                },'onUploadStart' : function(file) {
+                    //alert('Starting to upload ' + file.name);
+                },'onQueueComplete' : function(queueData) {
+                    // alert(queueData.uploadsSuccessful + ' files were successfully uploaded.');
+                }
+            });
+            function uploadPicturecover(file, data){
+                var data = $.parseJSON(data);
+                var src = '';
+                if(data.status){
+                    $("#cover_id_cover").val(data.id);
+                    src = data.url ||  data.path
+                    $('.upload-img-box').html(
+                            '<div class="upload-pre-item"><img src="' + src + '"/></div>'
+                    );
+                } else {
+                    toast.error('封面上传失败。','温馨提示');
+                }
+            }
+        </script>
+    </block>
+</if>

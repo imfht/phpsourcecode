@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" style="background: #252c34">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <!--响应式布局 各模块可以根据需求自定义meta-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <title>{:lang("_LOGIN_BACKGROUND_")}</title>
+        <link rel="stylesheet" href="__STATIC__/common/lib/bootstrap/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="__STATIC__/common/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" type="text/css" href="__STATIC__/admin/css/main.min.css" media="all">
+    </head>
+    <body>
+        <div id="main-content">
+            <!-- 主体 -->
+            <div class="login-body">
+                <div class="login-main">
+                    <form action="{:url('login')}" method="post" class="login-form">
+                        <div class="welcome">
+                            <div class="muucmf"><img class="logo" src="__STATIC__/admin/images/120x120icon.png"></div>
+                        </div>
+
+                        <div id="itemBox" class="item-box">
+                            <div class="input-group user-name" >
+                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                <input type="text" name="username" class="form-control" placeholder={:lang("_USER_NAME_WITH_DOUBLE_")}>
+                            </div>
+                            <div class="input-group password">
+                                <span class="input-group-addon"><i class="fa fa-key"></i></span>
+                                <input type="password" name="password"  class="form-control" placeholder={:lang("_PASSWORD_WITH_DOUBLE_")}>
+                            </div>
+
+                        {if condition="check_verify_open('login')"}
+                        <div class="pull-left">
+                            <div class="input-group verifycode">
+                                <span class="input-group-addon"><i class="fa fa-ok"></i></span>
+                                <input type="text" name="verify"  class="form-control" placeholder={:lang("_VERIFICATION_CODE_WITH_DOUBLE_")}  autocomplete="off">
+                                <span class="input-group-btn">
+                                <button  class="btn btn-default reloadverify" type="button"><i class="fa fa-refresh"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="pull-right">
+                            <img class="verifyimg reloadverify pull-right" alt={:lang("_CLICK_SWITCH_WITH_DOUBLE_")} src="{:captcha_src(1)}">
+                        </div>
+                        {/if}
+
+                        </div>
+                        <div class="login_btn_panel">
+                            <button class="login-btn" type="submit">
+                                <span class="in"><i class="fa fa-loading"></i>{:lang("_RECORD_WITH_SPACE_")} 中 ..</span>
+                                <span class="on">{:lang("_RECORD_WITH_SPACE_")}</span>
+                            </button>
+                            <div class="check-tips"></div>
+                        </div>
+
+                        <div class="copyright">Powered By <a href="http://www.muucmf.cn" target="_blank">MuuCmf T5</a></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <script src="__STATIC__/common/lib/zui/lib/jquery/jquery.js"></script>
+    <script src="__STATIC__/common/lib/zui/js/zui.min.js"></script>
+    <script type="text/javascript">
+    	/* 登陆表单获取焦点变色 */
+    	$(".login-form").on("focus", "input", function(){
+            $(this).closest('.item').addClass('focus');
+        }).on("blur","input",function(){
+            $(this).closest('.item').removeClass('focus');
+        });
+
+    	//表单提交
+    	$(document)
+	    	.ajaxStart(function(){
+	    		$("button:submit").addClass("log-in").attr("disabled", true);
+	    	})
+	    	.ajaxStop(function(){
+	    		$("button:submit").removeClass("log-in").attr("disabled", false);
+	    	});
+
+    	$("form").submit(function(){
+    		var self = $(this);
+    		$.post(self.attr("action"), self.serialize(), success, "json");
+    		return false;
+
+    		function success(data){
+    			if(data.code==1){
+    				window.location.href = data.url;
+    			} else {
+                    var msg = new $.zui.Messager(data.msg, {
+                        placement: 'bottom', // 定义显示位置
+                        type: 'danger',
+                        close: true,
+                    });
+                    msg.show();
+    				//刷新验证码
+                    $('[name=verify]').val('');
+    				$(".reloadverify").click();
+    			}
+    		}
+    	});
+
+		$(function(){
+			//初始化选中用户名输入框
+			$("#itemBox").find("input[name=username]").focus();
+			//刷新验证码
+			var verifyimg = $(".verifyimg").attr("src");
+            $(".reloadverify").click(function(){
+                if( verifyimg.indexOf('?')>0){
+                    $(".verifyimg").attr("src", verifyimg+'&random='+Math.random());
+                }else{
+                    $(".verifyimg").attr("src", verifyimg.replace(/\?.*$/,'')+'?'+Math.random());
+                }
+            });
+
+            //placeholder兼容性
+                //如果支持
+            function isPlaceholer(){
+                var input = document.createElement('input');
+                return "placeholder" in input;
+            }
+                //如果不支持
+            if(!isPlaceholer()){
+                $(".placeholder_copy").css({
+                    display:'block'
+                })
+                $("#itemBox input").keydown(function(){
+                    $(this).parents(".item").next(".placeholder_copy").css({
+                        display:'none'
+                    })
+                })
+                $("#itemBox input").blur(function(){
+                    if($(this).val()==""){
+                        $(this).parents(".item").next(".placeholder_copy").css({
+                            display:'block'
+                        })
+                    }
+                })
+            }
+		});
+    </script>
+</body>
+</html>

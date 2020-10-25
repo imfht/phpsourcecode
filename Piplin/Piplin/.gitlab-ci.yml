@@ -1,0 +1,49 @@
+# Before Script
+before_script:
+  - docker-php-ext-enable zip
+  - docker-php-ext-enable mbstring
+  - docker-php-ext-enable gd
+#  - docker-php-ext-enable pdo_mysql
+#  - ping -c 3 mysql  
+ # - composer self-update
+  - composer config repo.packagist composer https://packagist.phpcomposer.com
+  - composer install --no-progress --no-interaction
+  - touch storage/database.sqlite
+  - cp .env.example .env
+  - sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/g' .env
+  - sed -i 's/QUEUE_DRIVER=redis/QUEUE_DRIVER=database/g' .env
+  - php artisan key:generate
+  - php artisan migrate --seed --env="testing"
+  - php vendor/bin/codecept build
+  - make file-permission
+  - sleep 5
+  - php -S 127.0.0.1:8000 -t public/ 2>&1 >/dev/null &
+
+after_script:
+  - cat storage/logs/*.log
+
+# Services
+services:
+#  - mysql:latest
+
+# Variables
+variables:
+  WITH_XDEBUG: "1"
+  MYSQL_ROOT_PASSWORD: secret
+  MYSQL_DATABASE: homestead
+  MYSQL_USER: homestead
+  MYSQL_PASSWORD: secret
+  COMPOSER_HOME: /cache/composer
+
+#Stages
+stages:
+  - test
+
+#PHP 7.0
+php-7.0:
+  type: test
+  image: tetraweb/php:7.0
+  script:
+    - php -v
+    - make cs
+    - php vendor/bin/codecept run

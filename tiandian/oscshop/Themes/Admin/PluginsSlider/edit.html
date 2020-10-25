@@ -1,0 +1,148 @@
+<extend name="Public:base" />
+<block name="content">
+<div class="page-header">
+		<h1>
+			轮播图
+			<small>
+				<i class="icon-double-angle-right"></i>
+				{$crumbs}
+			</small>
+		</h1>
+	</div>
+<div class="row">
+	<div class="col-xs-12">	
+		<form class="form-horizontal"  id="validation-form" method="post" action='{$action}'>
+			
+			<notempty name="Think.get.id">
+			<input name="slider_id" type="hidden" value="{$Think.get.id}" />
+			</notempty>
+			
+			<div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-image">图片：</label>
+                
+                <div class="col-sm-10" id="thumb">
+                  <a href="#" id="thumb-image" data-toggle="image" class="img-thumbnail">
+                  	<img osctype="image" <if condition="isset($slider['image'])"> 
+						src="__ROOT__{$thumb_image}" 
+						<else /> 
+						src="__ROOT__/Common/image/no_image_100x100.jpg" 
+						</if>  />
+						</a>
+                  <input osctype="image_input" type="hidden" name="image" value="<?php echo $slider['image']; ?>" id="input-image" />
+            </div>
+            
+            </div>  
+			
+			<div class="form-group required">
+						<label class="col-sm-2 control-label" for="input-name2">链接：</label>
+						<div class="col-sm-10">
+							<input id="input-name2" class="form-control" type="text" placeholder="链接" name="url"  value="{$slider.url|default=''}" />
+						</div>
+			</div>
+			
+			<div class="form-group required">
+						<label class="col-sm-2 control-label" for="input-name2">排序：</label>
+						<div class="col-sm-10">
+							<input id="input-name2" class="form-control" type="text" placeholder="排序" name="sort_order"  value="{$slider.sort_order|default=''}" />
+						</div>
+			</div>
+			
+			<div class="form-group">
+				<label class="col-sm-1 control-label no-padding-left"> </label>	
+				<div class="col-sm-11">
+					<input name="send" type="submit" value="提交" class="btn btn-primary" />
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</block>
+
+<block name="jquery">
+<script src="__PUBLIC__/js/jquery/jquery-1.10.2.min.js"></script>
+
+</block>	
+
+<block name="javascript">
+<script src="__PUBLIC__/fileupload/jquery.ui.widget.js"></script>
+<script src="__PUBLIC__/fileupload/jquery.fileupload.js"></script>
+<script>
+$(function(){
+		// Image Manager
+	$(document).delegate('a[data-toggle=\'image\']', 'click', function(e) {
+		e.preventDefault();
+	
+		var element = this;
+	
+		$(element).popover({
+			html: true,
+			placement: 'right',
+			trigger: 'manual',
+			content: function() {
+				return '<button type="button" id="button-image" class="btn btn-primary"><i class="icon-edit"></i></button> <button type="button" id="button-clear" class="btn btn-danger"><i class="icon-trash"></i></button>';
+			}
+		});
+		
+		$(element).popover('toggle');		
+	
+		$('#button-image').on('click', function() {
+			$('#modal-image').remove();
+			
+			$('#form-upload').remove();
+			
+			$('body').prepend('<form enctype="multipart/form-data" id="form-upload" style="display: none;"><input osctype="btn_upload_image" type="file" name="file" /></form>');
+	
+			$('#form-upload input[name=\'file\']').trigger('click');
+			
+			$(element).popover('hide');
+			
+			$('[osctype="btn_upload_image"]').fileupload({
+				
+	        	dataType: 'json',
+	            url: "{:U('Image/upload_image',array('dir'=>'slider'))}",
+	            add: function(e, data) {
+	                $parent = $('#thumb');
+	                $input = $parent.find('[osctype="image_input"]');
+	                $img = $parent.find('[osctype="image"]');
+	                data.formData = {old_product_image:$input.val()};
+	                $img.attr('src', "__IMG__/loading.gif");
+	                data.submit();
+	            },
+	            done: function (e,data) {
+					
+	            	var image=data.result;
+	            	
+	            	
+	                $parent = $('#thumb');
+	                $input = $parent.find('[osctype="image_input"]');
+	                $img = $parent.find('[osctype="image"]');
+	                if(image) {
+	                   // $img.prev('i').hide();
+	                    $img.attr('src', '__ROOT__'+image.image_thumb);
+	                    $img.show();
+	                    $input.val(image.image);
+	                } else {
+	                    alert('上传失败');
+	                }
+	            }
+   		 });
+			
+			
+			
+		});
+	
+		$('#button-clear').on('click', function() {
+			$(element).find('img').attr('src', $(element).find('img').attr('data-placeholder'));
+			
+			$(element).parent().find('input').attr('value', '');
+	
+			$(element).popover('hide');
+		});
+	});
+	
+	
+	
+	
+});
+</script>
+</block>

@@ -1,0 +1,121 @@
+name: Build Image
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build_image:
+    runs-on: ubuntu-latest
+    if: |
+      contains( github.event.head_commit.message, '[build image]')
+      || contains( github.ref, 'refs/tags/')
+      || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: azure/docker-login@v1
+        with:
+          # login-server: contoso.azurecr.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: |
+          github.event_name == 'push'
+          || github.event_name == 'workflow_dispatch'
+      - uses: docker-practice/actions-setup-docker@master
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 1
+      - run: git clone --depth=1 https://github.com/pcit-ce/ui frontend
+        name: Clone frontend
+      - run: |
+          set -x
+
+          git -C frontend log
+
+          VCS_REF=`git rev-parse --short HEAD`
+
+          UI_VCS_REF=`git -C frontend rev-parse --short HEAD`
+
+          TAG=`echo $GITHUB_REF | cut -d '/' -f 3`
+          docker buildx build \
+            -t pcit/pcit \
+            -t pcit/pcit:${TAG} \
+            -t pcit/pcit:server \
+            -t pcit/pcit:${TAG}-server \
+            -t pcit/pcitd \
+            -t pcit/pcitd:${TAG} \
+            -t pcit/server \
+            -t pcit/server:${TAG} \
+            --build-arg VCS_REF=$VCS_REF \
+            --build-arg UI_VCS_REF=$UI_VCS_REF \
+            --platform ${PLATFORM} \
+            --target=pcit --push .
+
+          docker buildx build \
+            -t pcit/pcit:cli \
+            -t pcit/pcit:${TAG}-cli \
+            -t pcit/cli \
+            -t pcit/cli:${TAG} \
+            --build-arg VCS_REF=$VCS_REF \
+            --build-arg UI_VCS_REF=$UI_VCS_REF \
+            --platform ${PLATFORM} \
+            --target=pcit_cli --push .
+
+          docker buildx build \
+            -t pcit/pcit:fpm \
+            -t pcit/pcit:${TAG}-fpm \
+            -t pcit/fpm \
+            -t pcit/fpm:${TAG} \
+            --build-arg VCS_REF=$VCS_REF \
+            --build-arg UI_VCS_REF=$UI_VCS_REF \
+            --platform ${PLATFORM} \
+            --target=pcit_fpm --push .
+
+          docker buildx build \
+            -t pcit/pcit:unit \
+            -t pcit/pcit:${TAG}-unit \
+            -t pcit/unit \
+            -t pcit/unit:${TAG} \
+            --build-arg VCS_REF=$VCS_REF \
+            --build-arg UI_VCS_REF=$UI_VCS_REF \
+            --platform ${PLATFORM} \
+            --cache-from=pcit/unit:cache \
+            --cache-to=pcit/unit:cache \
+            --target=unit --push .
+
+          docker buildx build \
+            -t pcit/pcit:all-in-one \
+            -t pcit/pcit:${TAG}-all-in-one \
+            -t pcit/all-in-one \
+            -t pcit/all-in-one:${TAG} \
+            --build-arg VCS_REF=$VCS_REF \
+            --build-arg UI_VCS_REF=$UI_VCS_REF \
+            --platform ${PLATFORM} \
+            --cache-from=pcit/all-in-one:cache \
+            --cache-to=pcit/all-in-one:cache \
+            --target=all-in-one --push .
+
+          docker buildx build \
+            -t pcit/pcit:frontend \
+            -t pcit/pcit:${TAG}-frontend \
+            -t pcit/frontend \
+            -t pcit/frontend:${TAG} \
+            --build-arg VCS_REF=$VCS_REF \
+            --build-arg UI_VCS_REF=$UI_VCS_REF \
+            --platform ${PLATFORM} \
+            --target=frontend --push .
+        env:
+          GITHUB_REF: ${{github.ref}}
+          PLATFORM: linux/amd64,linux/arm64
+        name: Build image
+      - run: docker run -i --rm --entrypoint=sh pcit/pcit -c "ls -la /app/pcit"
+        name: List files
+      - name: Test image
+        run: |
+          set -x
+
+          echo docker run -i --rm pcit/pcit list > /dev/null
+
+          docker run -i --rm pcit/pcit:cli list
+
+          docker run -i --rm -v $PWD/dist:/var/www/pcit/public pcit/pcit:frontend
+          ls -la dist

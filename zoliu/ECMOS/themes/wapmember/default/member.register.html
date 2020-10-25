@@ -1,0 +1,97 @@
+{include file=header.html} 
+<script type="text/javascript">
+	$(function(){
+		$('#send_phonecode').click(function(){
+			if($.trim($("input[name='phone_mob']").val())=='' || !is_mobile($.trim($("input[name='phone_mob']").val()))){
+				layer.open({content: "{$lang.input_phone_mob}", className:'layer-popup', time: 3});
+				return;
+			}
+			send_phonecode();
+		});
+	});
+	function time(o, wait) {
+		if (wait == 0) {
+			o.removeClass('btn_graylong_disable');
+			o.attr('disabled', false);			
+			o.val("{$lang.get_phone_captcha}");
+			wait = 120;
+		} else {
+			o.addClass('btn_graylong_disable');
+			o.attr('disabled', true);
+			o.val("{$lang.get_captcha_again}(" + wait + "{$lang.miao_hou})");
+			wait--;
+			setTimeout(function() {
+				time(o, wait)
+			},
+			1000)
+		}
+	}
+	function send_phonecode(){
+		var phone_mob = $.trim($("input[name='phone_mob']").val());
+    	$.ajax({
+        	type:"POST",
+        	url: REAL_SITE_URL + "/index.php?app=default&act=sendcode",
+			data: {from: "register", phone_mob: phone_mob},
+        	dataType:"json",
+        	success:function(data){
+           	 	if(data.done){
+					time($('#send_phonecode'), 120);
+            	}
+                layer.open({content: data.msg, className:'layer-popup', time: 3});
+        	},
+        	error: function(){
+				layer.open({content: "{$lang.mail_send_failure}", className:'layer-popup', time: 5});
+			}
+    	});
+	}
+</script>
+<div id="main">
+	<div id="page-auth" class="page-register page-body">
+		<form class="J_AjaxForm" method="post">
+			<dl class="form pb20">
+				<dd>
+					<input type="text" id="user_name" name="user_name" class="J_AjaxFormFields input" placeholder=" {$lang.user_name_limit}"/>
+				</dd>
+				<dd>
+					<input type="password" id="password" name="password" class="J_AjaxFormFields input" placeholder=" {$lang.password_length_limit}"/>
+				</dd>
+				<dd>
+					<input type="password" name="password_confirm" id="password_confirm" class="J_AjaxFormFields input" placeholder=" {$lang.input_comfirm_password}"/>
+				</dd>
+				<dd>
+					<input type="text" name="email" id="email" class="J_AjaxFormFields input" placeholder=" {$lang.input_email}"/>
+				</dd>
+				<dd>
+					<input type="text" name="phone_mob" id="phone_mob" class="J_AjaxFormFields input" placeholder=" {$lang.input_phone_mob}"/>
+				</dd>
+				<!--{if $phone_captcha}-->
+				<dd class="captcha-box">
+					<input type="text" name="check_code" class="J_AjaxFormFields input captcha" placeholder=" {$lang.phone_captcha}" />
+					<input id="send_phonecode" type="button" class="btn_graylong" value="{$lang.get_phone_captcha}">
+					</input>
+				</dd>
+				<!--{/if}-->
+				
+				<!--{if $captcha}-->
+				
+				<dd class="captcha-box">
+					<input type="text" name="captcha" class="J_AjaxFormFields input captcha" id="captcha1" placeholder=" {$lang.input_captcha}" />
+					<img id="captcha" src="{$real_site_url}/index.php?app=captcha&amp;{$random_number}" onclick="javascript:change_captcha($('#captcha'));" /><br />
+				</dd>
+				
+				<!--{/if}-->
+				
+				<dd class="block mb10 clearfix read-licence">
+					<input id="clause" type="checkbox"  name="agree" value="1" checked="checked" class="J_AjaxFormFields"  />
+					<label for="clause" style="color:#333;" > {$lang.i_have_read} <a href="{url app=article&act=system&code=eula}" >{$lang.mall_eula}</a> </label>
+				</dd>
+				<dd>
+					<input type="hidden" class="J_AjaxFormSuccessRet J_AjaxFormFields" name="ret_url" value="{$ret_url}"  />
+					<input type="submit" class="J_AjaxFormSubmit btn-alipay"  value="{$lang.register}" />
+					<p class="mt20"><a href="{url app=member&act=login}">{$lang.already_have_account}</a></p>
+				</dd>
+			</dl>
+		</form>
+	</div>
+</div>
+{include file=footer.html} 

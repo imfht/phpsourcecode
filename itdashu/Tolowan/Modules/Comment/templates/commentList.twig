@@ -1,0 +1,39 @@
+{%- macro comment_list(comments,children,pid) %}
+    <ul class="{% if children %}ds-children{% else %}ds-comments{% endif %}">
+        {% for item in comments.items %}
+            <li>
+                <div class="comment-self">
+                    <div class="ds-avatar">
+                        <a href="{{ url(['for':'user','id':item.uid]) }}">
+                            <img alt="角落" src="https://avatar.duoshuo.com/avatar-50/214/226670.jpg">
+                        </a>
+                    </div>
+                    <div class="ds-comment-body">
+                        <div class="ds-comment-header"><a href="{{ url(['for':'user','id':item.uid]) }}" class="ds-user-name">角落</a></div>
+                        <div class="comment-body">{{ item.body }}</div>
+                        <div class="ds-comment-footer ds-comment-actions"><span title="{{ timeTran(item.created) }}"
+                                                                                class="ds-time">{{ timeTran(item.created) }}</span>
+                            <div class="comment-action">
+                                <a pid="{{ item.id }}" href="#" class="ds-post-reply"><span
+                                            class="ds-icon ds-icon-reply"></span>回复
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% set children = commentList(item.nid,item.id) %}
+                {% if children.items %}{{ comment_list(children,true,item.id) }}{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% if comments.total_pages > 1 %}
+        {{ partial("Themes/AdminLTE/templates/paginator-item", ['routerParams':['for':'commentList','nid':item.nid,'pid':pid,'page':1],'data':comments]) }}
+    {% endif %}
+{%- endmacro %}
+<div class="comment-list">
+    {% if data.items %}
+        {{ comment_list(data,false,0) }}
+    {% else %}
+        <p>还没有评论～</p>
+    {% endif %}
+</div>

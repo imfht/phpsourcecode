@@ -1,0 +1,199 @@
+<!--{include header.htm}-->
+
+<div class="width">
+	<div class="right">
+		<!--{if empty($do)}-->
+			<form action="?mod-manageuser.htm" method="post" id="search_user_form">
+				<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+				<div class="div">
+					<div class="header">搜索用户</div>
+					<div class="body">
+						<dl>
+							<dt><label for="email">用户名/Email/UID：</label></dt>
+							<dd><input type="text" size="16" value="$email" name="email" id="email" /></dd>
+							
+							<dt></dt>
+							<dd>
+								<input type="submit" class="button bigblue" id="search_user_submit" value="查找用户" />
+							</dd>
+						</dl>
+					</div>
+				</div>
+			</form>
+			<!--{if !empty($user)}-->
+			<div class="div">
+				<div class="header">用户资料:$user[username]</div>
+				<div class="body">
+					<dl>
+						<dt><label for="username">用户名：</label></dt>
+						<dd><a href="?you-index-uid-$user[uid].htm" target="_blank">$user[username]</a></dd>
+						
+						<dt><label for="email">Email：</label></dt>
+						<dd>$user[email]</dd>
+						
+						<dt><label for="groupid">用户组：</label></dt>
+						<dd>$user[groupname] (groupid=$user[groupid])</dd>
+						
+						<dt><label for="threads">主题数：</label></dt>
+						<dd>$user[threads]</dd>
+						
+						<dt><label for="posts">回帖数：</label></dt>
+						<dd>$user[posts]</dd>
+						
+						<dt><label for="credits">总积分：</label></dt>
+						<dd>$user[credits]</dd>
+						
+						<dt>金币：</dt>
+						<dd>$user[golds]</dd>
+						
+						<dt>注册时间：</dt>
+						<dd>$user[regdate_fmt]</dd>
+						
+					<!--{if $_group[allowviewip]}-->
+						
+						<dt>注册IP：</dt>
+						<dd>$user[regip]</dd>
+					<!--{/if}-->
+					
+						<dt></dt>
+						<dd>
+						<!--{if $_group[allowbanuser]}-->
+							<input type="submit" class="button bigblue" id="user_ban_submit" value="禁止用户" />
+						<!--{/if}-->
+						
+						<!--{if $_group[allowdeleteuser]}-->
+							<input type="submit" class="button bigblue" id="user_delete_submit" value="删除用户" />
+						<!--{/if}-->
+						</dd>
+					</dl>
+				</div>
+			</div>
+			<!--{/if}-->
+		<!--{elseif $do == 'banuser'}-->
+			<form action="?mod-manageuser-do-banuser-uid-$user[uid].htm" method="post" id="user_access_form">
+				<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+				
+				<div class="div">
+					<div class="header">禁止的用户名：$user[username]</div>
+					<div class="body">
+						<dl>
+							<dt><label for="allowthread">禁止发帖：</label></dt>
+							<dd>$input[allowthread]</dd>
+							
+							<dt><label for="allowpost">禁止回帖：</label></dt>
+							<dd>$input[allowpost]</dd>
+							
+							<dt><label for="allowattach">禁止上传附件：</label></dt>
+							<dd>$input[allowattach]</dd>
+							
+							<dt><label for="allowdown">禁止下载附件：</label></dt>
+							<dd>$input[allowdown]</dd>
+							
+							<dt><label for="allowread">禁止读帖：</label></dt>
+							<dd>$input[allowread]</dd>
+							
+							<dt><label for="expiry">截止日期：</label></dt>
+							<dd>$input[expiry] <span class="grey"> 默认一年</span></dd>
+							
+							<p>其他选项</p>
+							<hr />
+							
+							<dt><label for="regip">禁止注册IP：</label></dt>
+							<dd>
+								<input type="checkbox" name="banregip" id="banregip" value="1" /> $regip <!--{if $regip_banned}--><span class="red">(已禁止)</span><!--{/if}-->
+							</dd>
+							
+							<dt><label for="postip">禁止发帖IP：</label></dt>
+							<dd>
+								<input type="checkbox" name="banpostip" id="banpostip" value="1" /> $postip <!--{if $postip_banned}--><span class="red">(已禁止)</span><!--{/if}-->
+							</dd>
+							
+							<dt><label for="expiry">截止日期：</label></dt>
+							<dd>$input[expiry_banip] <span class="grey"> 默认三天</span></dd>
+							
+							
+							<dt><label for="deletepost"><b>删除所有帖子</b>：</label></dt>
+							<dd><input type="checkbox" name="deletepost" id="deletepost" value="1" /> $user[posts] 篇</dd>
+							
+							<dt></dt>
+							<dd>
+								<input type="submit" class="button bigblue" id="user_access_submit" value="确定" />
+								<div class="notice" id="notice" style="display: none;"></div>
+							</dd>
+						</dl>
+					</div>
+				</div>
+			</form>
+		<!--{/if}-->	
+	</div>
+</div>	
+
+<!--{include footer.htm}-->
+
+<!--{if empty($do)}-->
+
+<script type="text/javascript">
+$('#search_user_submit').click(function() {
+	$('#search_user_form').submit();
+	return false;
+});
+
+$('#banregip').click(function() {$('#regip').toggle();});
+$('#banpostip').click(function() {$('#postip').toggle();});
+
+{if !empty($error['email'])}
+$('#email').alert('$error['email']').focus();
+{/if}
+
+</script>
+
+<!--{if !empty($user)}-->
+<script type="text/javascript">
+$('#user_ban_submit').click(function() {
+	window.location = '?mod-manageuser-do-banuser-uid-$user[uid].htm';
+	return false;
+});
+
+$('#user_delete_submit').click(function() {
+	if(window.confirm('您确定删除该用户吗？')) {
+		if($user[groupid] < 6) {
+			if(window.confirm('该用户不是普通用户，您确定删除吗？')) {
+				window.open('?mod-manageuser-do-deleteuser-uid-$user[uid].htm');
+			}
+		} else if($user[posts] > 5000) {
+			if(window.confirm('该用户发帖超过了5000，删除该用户可能会导致超时，您确定删除吗？')) {
+				window.location = '?mod-manageuser-do-deleteuser-uid-$user[uid].htm';
+			}
+		} else {
+			window.location = '?mod-manageuser-do-deleteuser-uid-$user[uid].htm';
+		}
+	}
+	return false;
+});
+</script>
+<!--{/if}-->
+
+<!--{elseif $do == 'banuser'}-->
+	
+<script type="text/javascript">
+$('#user_access_submit').click(function() {
+	$('#user_access_form').submit();
+	return false;
+});
+
+<!--{if $error}-->
+$('#notice').alert('$error');
+<!--{/if}-->
+
+<!--{if !empty($_POST) && empty($error)}-->
+$('#notice').html('修改用户权限成功！').show();
+<!--{/if}-->
+
+
+
+</script>
+
+<!--{/if}-->	
+
+</body>
+</html>

@@ -1,0 +1,241 @@
+{extend name="default/base" /}
+{block name="css"}
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+<style>
+.goodsCat{display:inline-block;width:150px}
+.webuploader-container{float:left;}
+.accreditPreview{cursor: pointer;}
+.select-brand{cursor: pointer;}
+.select-brand-img{margin:0 5px;}
+.brand-item{margin-right:10px;}
+</style>
+{/block}
+{block name="js"}
+<script src="__STATIC__/plugins/webuploader/webuploader.js?v={$v}" type="text/javascript" ></script>
+<script src="__STATIC__/plugins//kindeditor/NKeditor-all.js?v={$v}" type="text/javascript" ></script>
+<script src="__SHOP__/brandapplys/brandapplys.js?v={$v}" type="text/javascript"></script>
+<script>
+$(function () {
+	   {if condition="$object['applyId'] !=0"}
+		WST.setValues({$object});
+	   {/if}
+		$('#brandForm').validator({
+		    fields: {
+		    	brandName: {
+		    		tip: "请输入品牌名称",
+		    		rule: '品牌名称:required;length[~16];'
+		    	},
+		    	catIds: {
+		    		tip: "请选择分类",
+		    		rule: 'checked(1~);length[~16];'
+		    	},
+		    	brandImg:{
+	                tip:"请上传品牌图片",
+	                rule:"品牌图片:required;",
+		    	},
+		    	brandDesc: {
+		    		tip: "请输入品牌介绍",
+		    		rule: '品牌介绍:required;'
+		    	},
+                accreditImg:{
+                    tip:"请上传品牌授权书",
+                    rule:"品牌授权书:required;",
+                },
+		    },
+		    valid: function(form){
+		    	var applyId = $('#applyId').val();
+		    	toEdits(applyId,{$p});
+		    }
+		})
+});
+</script>
+{/block}
+{block name="main"}
+<input type='hidden' id='applyId' value='{$object["applyId"]}'/>
+<input type='hidden' id='isNew' name='isNew' class='ipt' value='{$object["isNew"]}'/>
+<input type='hidden' id='brandId' name='brandId' class='ipt' value='{$object["brandId"]}'/>
+<div class="l-loading" style="display: block" id="wst-loading"></div>
+<form id="brandForm" autocomplete="off">
+<table class='wst-form wst-box-top'>
+    {if $object['applyId']!=0}
+    <tr >
+        <th width='150'>品牌名称<font color='red'>*</font>：</th>
+        <td><input type="text" id='brandName' name='brandName' value="{$object['brandName']}" maxLength='20' style='width:300px;' class='ipt' /></td>
+    </tr>
+    {else}
+    <tr>
+        <th width='170'>新增类型<font color='red'>*</font>：</th>
+        <td class='layui-form'>
+            <label>
+                <input type='radio' class='a-ipt' name='isNew' id='isNew1' value='1' onclick='javascript:WST.showHide(1,".newBrandTr1");WST.showHide(0,"#newBrandTr0");cleanBrandInfo();' checked title='新品牌'>
+            </label>
+            <label>
+                <input type='radio' class='a-ipt' name='isNew' value='0' onclick='javascript:WST.showHide(0,".newBrandTr1");WST.showHide(1,"#newBrandTr0");cleanBrandInfo();' title='已有品牌'>
+            </label>
+        </td>
+    </tr>
+    <tr id='newBrandTr0' style='display:none'>
+        <th width='170'  valign="top" >请输入品牌名称<font color='red'>*</font>：</th>
+        <td>
+            <input type="text" id='keyName' name='keyName' class='ipt' placeholder='请输入品牌名称'/>
+            <input type='button' value='查询' class='btn btn-primary' onclick='javascript:getBrandByKey()'>
+            <div id='brandNameBox' class="wst-flex-row wst-ac wst-fw"></div>
+        </td>
+    </tr>
+    <tr id='newBrandTr1'>
+        <th width='150'>品牌名称<font color='red'>*</font>：</th>
+        <td><input type="text" id='brandName' name='brandName' maxLength='20' style='width:300px;' class='ipt' /></td>
+    </tr>
+    {/if}
+   <tr>
+     <th width='150' align='right'>所属分类<font color='red'>*</font>：</th>
+     <td>
+     {volist name="gcatList" id="vo"}
+	     <label class='goodsCat'>
+	     <input type='checkbox' id='catIds' name='catIds' class="ipt goods-cat" value='{$vo["catId"]}'
+       {if condition="$object['applyId'] !=0 "}
+       {if in_array($vo["catId"],$object['catIds'])==1}checked{/if}
+       {/if}
+       >&nbsp;{$vo["catName"]}&nbsp;
+	     </label>
+	 {/volist}
+     </td>
+   </tr>
+   <tr width='150'>
+     <th align='right'>品牌图标<font color='red'>*</font>：</th>
+     <td>
+     	   <input id="brandImg" name="brandImg" class="text ipt" data-target='#msg_brandImg' autocomplete="off" type="text" readonly="readonly" value="{$object.brandImg}" data-rule="品牌图标: required;" style="float: left;width: 250px;margin:0;"/>
+    	   <div id="filePicker">上传</div>
+     	    <span style='margin-left:5px;float:left;line-height: 30px;'>图片大小:400 x 200 (px)，格式为 gif, jpg, jpeg,bmp, png </span>
+          <span class='msg-box' id='msg_brandImg'></span>
+     	    <div id="preview" style="float: left;margin-left: 5px;">
+            {if $object['applyId']!=0}
+            <img src="__RESOURCE_PATH__/{$object['brandImg']}" class="ipt" height='30'/>
+            {/if}
+        </div>
+     </td>
+   </tr>
+    <tr width='150'>
+        <th align='right'>品牌授权书<font color='red'>*</font>：</th>
+        <td style="line-height:0px;">
+            <input id="accreditImg" name="accreditImg" class="text ipt" data-target='#msg_accreditImg' autocomplete="off" type="text" readonly="readonly" value="{$object.accreditImg}" data-rule="品牌授权书: required;" style="float: left;width: 250px;margin:0;"/>
+            <div id="accreditFilePicker">上传</div>
+            <span style='margin-left:5px;float:left;line-height: 30px;'>图片格式为 gif, jpg, jpeg,bmp, png ，最多只能上传三张图片</span>
+            <span class='msg-box' id='msg_accreditImg'></span>
+            <div id="accreditPreview" style="float: left;margin-left: 5px;">
+                {if $object['applyId']!=0}
+                {php}$imgArr = explode(',',$object['accreditImg']);{/php}
+                    {volist name="$imgArr" id='voo'}
+                    <div style="height:30px;float:left;margin-right:5px;">
+                        <div class="accreditPreview">
+                            <img class="step_pic" height="30" src="__RESOURCE_PATH__/{$voo}" v="{$voo}" layer-src="__RESOURCE_PATH__/{$voo}">
+                        </div>
+                        <div style="position: relative;top: -35px;right: -20px;cursor: pointer;background: rgba(0,0,0,0.5);width: 18px;height: 18px;text-align: center;border-radius: 50%;" onclick='javascript:delVO(this)'>
+                            <img src="__ROOT__/wstmart/shop/View/default/img/seller_icon_error.png">
+                        </div>
+                    </div>
+                    {/volist}
+                {/if}
+            </div>
+        </td>
+    </tr>
+   <tr>
+       <th width='150'>品牌介绍<font color='red'>*</font>：</th>
+       <td>
+       	<textarea id='brandDesc' name='brandDesc' class="form-control ipt" style='width:80%;height:400px'></textarea>
+       </td>
+    </tr>
+    <tr {if $object['applyStatus']!=-1}style='display:none'{/if}>
+    <th>不通过原因：</th>
+    <td>
+        <textarea id='applyDesc' class='ipt' style='width:500px;height:100px;margin-top:10px;' maxLength='100' readonly >{$object['applyDesc']}</textarea>
+    </td>
+    </tr>
+     <tr>
+       <td colspan='2' align='center'>
+           {if $object['applyStatus']==0}
+           <button type="submit" class="btn btn-primary btn-mright"><i class="fa fa-check"></i>保&nbsp;存</button>
+           {/if}
+           <button type="button" class="btn" onclick="javascript:location.href='{:Url(\'shop/brandapplys/index\',\'p=\'.$p)}'"><i class="fa fa-angle-double-left"></i>返&nbsp;回</button>
+       </td>
+     </tr>
+</table>
+ </form>
+ <script>
+$(function(){
+    layer.photos({
+        photos: '.accreditPreview',
+        area: ['50%','auto']
+    });
+    //文件上传
+	WST.upload({
+  	  pick:'#filePicker',
+  	  formData: {dir:'brands',mWidth:500,mHeight:250},
+  	  accept: {extensions: 'gif,jpg,jpeg,png',mimeTypes: 'image/jpg,image/jpeg,image/png,image/gif'},
+  	  callback:function(f){
+  		  var json = WST.toJson(f);
+  		  if(json.status==1){
+        	$('#preview').html('<img src="'+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.thumb+'" height="30" />');
+        	$('#brandImg').val(json.savePath+json.thumb);
+  		  }
+	  }
+    });
+
+    var uploader = WST.upload({
+        pick:'#accreditFilePicker',
+        formData: {dir:'brandapplys',mWidth:500,mHeight:250},
+        accept: {extensions: 'gif,jpg,jpeg,png',mimeTypes: 'image/jpg,image/jpeg,image/png,image/gif'},
+        fileNumLimit:3,
+        callback:function(f,file){
+            var json = WST.toJson(f);
+            if(json.status==1){
+                var tdiv = $("<div style='height:30px;float:left;margin:0px 5px;position:relative'><a target='_blank' href='"+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.name+"'>"+
+                    "<img class='step_pic"+"' height='30' src='"+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.thumb+"' v='"+json.savePath+json.name+"'></a></div>");
+                var btn = $('<div style="position: absolute;top: -5px;right: 0px;cursor: pointer;background: rgba(0,0,0,0.5);width: 18px;height: 18px;text-align: center;border-radius: 50%;" ><img src="'+WST.conf.ROOT+'/wstmart/shop/view/default/img/seller_icon_error.png"></div>');
+                tdiv.append(btn);
+                $('#accreditPreview').append(tdiv);
+                $('#msg_accreditImg').hide();
+                var imgPath = [];
+                $('.step_pic').each(function(){
+                    imgPath.push($(this).attr('v'));
+                });
+                $('#accreditImg').val(imgPath.join(','));
+                btn.on('click','img',function(){
+                    uploader.removeFile(file);
+                    $(this).parent().parent().remove();
+                    uploader.refresh();
+                    var imgPath = [];
+                    $('.step_pic').each(function(){
+                        imgPath.push($(this).attr('v'));
+                    });
+                    $('#accreditImg').val(imgPath.join(','));
+                    if($('#accreditPreview').children().size()<=0){
+                        $('#msg_accreditImg').show();
+                    }
+                });
+            }
+        }
+    });
+  //编辑器
+    KindEditor.ready(function(K) {
+		editor1 = K.create('textarea[name="brandDesc"]', {
+			height:'350px',
+			uploadJson : WST.conf.ROOT+'/shop/brandapplys/editorUpload',
+			allowFileManager : false,
+			themeType : "default",
+      items:[     'source', 'undo', 'redo',  'preview', 'print', 'template', 'code', 'cut', 'copy', 'paste',
+                'plainpaste', 'wordpaste', 'justifyleft', 'justifycenter', 'justifyright',
+                'justifyfull', 'insertorderedlist', 'insertunorderedlist', 'indent', 'outdent', 'subscript',
+                'superscript', 'clearhtml', 'quickformat', 'selectall',  'fullscreen',
+                'formatblock', 'fontname', 'fontsize',  'forecolor', 'hilitecolor', 'bold',
+                'italic', 'underline', 'strikethrough', 'lineheight', 'removeformat', 'image','multiimage','media','table', 'hr', 'emoticons', 'baidumap', 'pagebreak',
+                'anchor', 'link', 'unlink'
+      ],
+			afterBlur: function(){ this.sync(); }
+		});
+        initBrandInfo();
+	});
+
+});
+</script>
+{/block}

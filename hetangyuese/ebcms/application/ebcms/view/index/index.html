@@ -1,0 +1,233 @@
+{include file='common/header' /}
+    <script>
+        var M = {};
+        $(function() {
+            M.runtime = function runtime(){
+                EBCMS.CORE.submit({
+                    url:'{:url('runtime')}',
+                    queryParams:{},
+                    success:function(res){
+                       EBCMS.MSG.notice(res.msg);
+                    }
+                });
+            };
+            setTimeout(function() {
+                art.dialog.notice({
+                    title: '欢迎！',
+                    width: 220,
+                    content: '欢迎使用易贝云系统！如有好的创意或点子，欢迎反馈给我们。谢谢！',
+                    icon: 'face-smile',
+                    time: 5
+                });
+            }, 500);
+            M.tools = function(opt){
+                switch (opt.tool) {
+                    case 'jisuanqi':
+                        art.dialog({
+                            id:'jisuanqi',
+                            title:'计算器',
+                            time:0,
+                            lock: false,
+                            fixed: false,
+                            drag: true,
+                            content: '<iframe src="__ROOT__/tools/jisuanqi/base.html" width="390" height="266" frameborder="0"></iframe>',
+                            padding:'0px',
+                            button: [{
+                                name: '普通计算器',
+                                callback: function () {
+                                    this.content('<iframe src="__ROOT__/tools/jisuanqi/base.html" width="390" height="266" frameborder="0"></iframe>');
+                                    return false;
+                                }
+                            },{
+                                name: '科学计算器',
+                                callback: function () {
+                                    this.content('<iframe src="__ROOT__/tools/jisuanqi/ext.html" width="700" height="360" frameborder="0"></iframe>');
+                                    return false;
+                                }
+                            }]
+                        });
+                        break;
+                    case 'email':
+                        $('#main').attr('src', '{:url('email')}');
+                        break;
+                    default:
+                        /*statements_def*/
+                        break;
+                }
+            };
+            M.password = function(){
+                art.dialog({
+                    id:'xiugaimima',
+                    title:'修改密码',
+                    time:0,
+                    lock: true,
+                    fixed: false,
+                    drag: true,
+                    content: '<p>旧密码：<p/><p><input type="text" class="form-control" value="" id="oldpassword"><p/><p>新密码：<p/><p><input type="text" class="form-control" value="" id="password"><p/><p>再次确认密码：<p/><p><input type="text" class="form-control" value="" id="password2"><p/>',
+                    padding:'15px',
+                    button: [{
+                        name: '提交',
+                        focus: true,
+                        callback: function () {
+                            if ($('#password').val() != $('#password2').val()) {
+                                alert('两次密码不一致！');
+                            }else{
+                                EBCMS.CORE.submit({
+                                    url:'{:url('password')}',
+                                    queryParams:{
+                                        oldpassword:$('#oldpassword').val(),
+                                        password:$('#password').val(),
+                                    },
+                                    success:function(res){
+                                        if (!res.code) {
+                                            EBCMS.MSG.alert(res.msg);
+                                        }else{
+                                            EBCMS.MSG.notice(res.msg);
+                                            art.dialog({id: 'xiugaimima'}).close();
+                                        };
+                                    }
+                                });
+                            }
+                            return false;
+                        }
+                    },{
+                        name: '关闭',
+                        callback: function () {
+                            return true;
+                        }
+                    }]
+                });
+            };
+        });
+    </script>
+    <div class="layout" style="border-top: 4px solid #00655b;">
+        <div class="layout-left" style="width: auto; background: #e2e9ea; overflow: hidden;z-index: 100;">
+            {php}
+                $menu = \ebcms\Tree::tree(my_menu());
+            {/php}
+            <style>
+                .navtabs{
+                    width: 60px;
+                    height: 100%;
+                    float: left;
+                    background: #125a54;
+                    color: #fff;
+                }
+                .navtabs div{
+                    line-height: 3em;
+                    text-align: center;
+                    border-bottom: 1px solid #03312e;
+                    cursor: pointer;
+                    font-size: 1.3em;
+                    border-top: 1px solid #2c736d;
+                }
+                .navtabs div.selected{
+                    background: #00796B;
+                }
+                .navbody{
+                    width: 0px;
+                    height: 100%;
+                    float: left;
+                    overflow: hidden;
+                    /*display: none;*/
+                }
+                .navbody div{
+                    display: none;
+                }
+                .navbody div ul{
+                    margin: 15px 0 0 15px;
+                    list-style: none;
+                }
+                .navbody div ul li a{
+                    display: block;
+                    margin: 0px 0;
+                    text-decoration: none;
+                    padding: 10px;
+                    border-left: 3px solid #e6e6e6;
+                    white-space: nowrap;
+                }
+                .navbody div ul li span{
+                    white-space: nowrap;
+                }
+                .navbody div ul li.cur a{
+                    color: #009688;
+                    background: #fff;
+                    border-left: 3px solid #009688;
+                }
+                .navbody div ul li a:hover{
+                    color: #009688;
+                    background: #fff;
+                    border-left: 3px solid #009688;
+                }
+            </style>
+            <script>
+                $(function() {
+                    $('.navtabs div').bind('click', function(event) {
+                        var index = $(this).index();
+                        $(this).addClass('selected').siblings().removeClass('selected');
+                        $('.navbody div').eq(index).show().siblings().hide();
+                    });
+                    $('.layout-left').mouseenter(function(event) {
+                        $(".navbody").animate({width:'120px'},100);
+                    });
+                    $('.layout-left').mouseleave(function(event) {
+                        $(".navbody").animate({width:'0px'},100);
+                    });
+                    $('.navbody ul li a').bind('click', function(event) {
+                        $('.navbody ul li').removeClass('cur');
+                        $(this).parent().addClass('cur');
+                    });
+                });
+            </script>
+            <div class="navtabs">
+                <div class="selected">主页</div>
+                {foreach name='menu' item='vo'}
+                <div>{$vo.title}</div>
+                {/foreach}
+                <div style="position: fixed;bottom: 0px;width: 60px;">关于</div>
+            </div>
+            <div class="navbody">
+                <div style="display: block;">
+                    <ul>
+                        <li class="cur"><a href="{:url('index?tpl=main')}" target="main">主页</a></li>
+                        <li><a href="{:url('index/index/index')}" target="main">前台</a></li>
+                        <li><span style="margin-left: 13px;">---------</span></li>
+                        <li><a href="{:url('email')}" target="main">发邮件</a></li>
+                        <li><a href="javascript:M.tools({tool:'jisuanqi'});">计算器</a></li>
+                        <li><span style="margin-left: 13px;">---------</span></li>
+                        <li><a href="javascript:M.password();">修改密码</a></li>
+                        <li><a href="{:url('auth/logout')}">退出</a></li>
+                    </ul>
+                </div>
+                {foreach name='menu' item='vo'}
+                <div>
+                    <ul>
+                    {foreach name='vo.rows' item='sub'}
+                        {if condition="$sub['title'] === '__DIVIDER__'"}
+                            <li><span style="margin-left: 13px;">---------</span></li>
+                        {else}
+                            <li><a href="{$sub.url}" {php}if(mb_substr($sub['url'],0,11) !== 'javascript:'){echo 'target="main"';}{/php}>{$sub.title}</a></li>
+                        {/if}
+                    {/foreach}
+                    </ul>
+                </div>
+                {/foreach}
+                <div>
+                    <ul>
+                        <li><a href="http://www.ebcms.com/" target="main">官网</a></li>
+                        <li><a href="http://www.ebcms.com/thread/42.html" target="main">授权</a></li>
+                        <li><a href="http://www.ebcms.com/thread/41.html" target="main">简介</a></li>
+                        <li><span style="margin-left: 13px;">---------</span></li>
+                        <li><a href="http://www.ebcms.com/forum" target="main">论坛</a></li>
+                        <li><a href="http://www.ebcms.com/forum/4.html" target="main">模板手册</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="layout-rightbox">
+            <div class="layout-right" style="height:100%;overflow:auto;margin-left: 60px;">
+                <iframe src="{:url('ebcms/index/index?tpl=main')}" name="main" id="main" frameborder="0" style="width:100%;height:100%;display: block;"></iframe>
+            </div>
+        </div>
+    </div>
+{include file='common/footer' /}

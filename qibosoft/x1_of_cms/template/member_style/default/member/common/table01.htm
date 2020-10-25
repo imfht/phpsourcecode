@@ -1,0 +1,116 @@
+<style type="text/css">
+body{
+	background: #F5F5F5;
+}
+.sideBox{
+	margin: 0px 10px 10px 10px;
+	background: #FFF;
+	border-radius: 5px;
+	box-shadow: 2px 2px 2px #CCC;
+	padding: 0 15px;
+	overflow: hidden;
+	font-size:16px;
+}
+.sideBox ul{
+	position: relative;
+	display: table;
+	width: 100%;
+	border-bottom: #DDD dotted 1px;
+}
+.sideBox ul ol,.sideBox ul li{
+	display: table-cell;
+	padding:10px 5px;
+	line-height: 20px;
+}
+.sideBox ul ol{
+	color: #888;	
+}
+.sideBox ul li{
+	text-align: right;
+}
+.sideBox .showimg,.sideBox .content{
+	border-bottom: #DDD dotted 1px;
+	padding: 8px 0;
+	color: #666;
+	font-size: 14px;
+	line-height: 20px;
+}
+.sideBox .showimg img{
+	max-width: 100%;
+}
+.sideBox .actions{
+	height: 40px;
+	padding: 10px 0;
+}
+.sideBox .actions a{
+	display: block;
+	width: 33%;
+	line-height: 40px;
+	text-align: center;
+	float: left;
+	color: #777;
+	font-size:16px;
+}
+.sideBox .actions a:before{
+	padding-right: 8px;
+}
+.sideBox .actions a.fa-eye{
+	border-left:#DDD solid 1px;
+	border-right:#DDD solid 1px;
+}
+</style>
+
+
+
+{volist name="listdb" id="rs"}
+<div class="sideBox" data-status="{$rs.status}" data-id="{$rs.id}">
+	
+	{notempty name="$rs.title"}<!--标题单独显示-->
+		<ul><a href="{:iurl('show',['id'=>$rs.id])}">{$rs.title}</a><ol>&nbsp;</ol></ul>
+	{/notempty}
+
+	{notempty name="$rs.picurl"}<!--图片单独显示-->
+		<div class="showimg"><img src="{$rs.picurl|tempdir}"/></div>
+	{/notempty}
+
+	{volist name=":fun('field@fields_to_table',$f_array,$rs)" id="vs"} <!--自定义字段-->
+		{if (in_array($vs['type'],['textarea','ueditor']))}	<!--文本内容单独显示-->
+			{notempty name="$vs.value"}
+			<div class="content">{$vs.value}</div>
+			{/notempty}
+		{elseif($vs.value!==''&&!in_array($vs['name'],['title','picurl','create_time','status'])) /}<!--把标题\图片\时间过滤掉-->
+			<ul>
+				<ol>{$vs.title}</ol>
+				<li>{$vs.value}</li>		
+			</ul>
+		{/if}
+	{/volist}
+
+		{if $rs.create_time}<!--时间单独显示-->
+		<ul>
+			<ol>日期</ol>
+			<li>{$rs.create_time|format_time="Y-m-d H:i"}<div></div></li>		
+		</ul>
+		{/if}
+
+		{if isset($rs.status)}	
+		<ul>
+			<ol>状态</ol>
+			<li>{if $rs.status==0} <i style="color:blue;">未审核</i> {elseif($rs.status>1) /} 推荐 {elseif($rs.status==1) /} 已审核 {elseif($rs.status==-1) /} <i style="color:green;">回收站</i> {/if}<div></div></li>		
+		</ul>
+		{/if}
+	
+
+	<div class="actions">
+	{volist name=":fun('field@get_rbtn',$tab_ext['right_button'],$rs,true)" id="vs"}
+      {$vs.value}
+	{/volist}
+
+	{if empty($f_array)}
+		<a href="{:auto_url('delete','ids='.$rs[id])}" class="fa fa-trash">删除</a>
+		<a href="{:iurl('show','id='.$rs[id])}" target="_blank" class="fa fa-eye">浏览</a>
+		<a href="{:auto_url('edit','id='.$rs[id])}" class="fa fa-edit">修改</a>
+	{/if}
+	</div>
+</div>
+{/volist}

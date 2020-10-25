@@ -1,0 +1,112 @@
+<layout name="layout" />
+                <div class="page-header"><!-- Page header -->
+                    <h5><i class="font-home"></i>长尾关键词管理</h5>               
+                </div><!-- /page header -->
+                <div class="body">                
+                    <!-- Content container -->
+                    <div class="container">
+                    	
+<FORM METHOD="POST" ACTION="__URL__/search">                    	
+<table class="table-block table-checks tableform">         	
+<tr>
+	<th style="padding-right:10px;">目标关键词 </th>
+	<td style="padding-right:10px;"><INPUT TYPE="text" NAME="wd" id="wd" value="{$_POST[wd]}" title="要挖掘的目标关键词" class="td-input-xlarge" /></td>
+	<if condition="$swlist"><td style="padding-right:10px;"><select class="td-input-xlarge" onchange="jQuery('#wd').val(this.value)"><option>--选择目标关键词--</option><volist id="vo" name="swlist"><option value="{$vo}">{$vo}</option></volist></select></td></if>
+	<th style="padding-right:10px;">挖掘深度</th>
+	<td style="padding-right:10px;"><INPUT TYPE="text" style="width:50px;" NAME="dp" id="dp" value="<if condition="$_POST[dp]">{$_POST[dp]}<else/>2</if>" title="挖掘深度" /></select></td>
+	<td class="inputtext" style="padding-right:10px;padding-top:5px;"><label><input type="checkbox" class="style" name="start" value="1"> 重新挖掘</label></td>
+	<td style="padding-right:10px;"><button type="submit" class="btn btn-small btn-success"><i class="icon-search"></i> 开始挖掘</button></td>
+	<td><button type="button"<if condition="$wid"> onclick="stopsearch()"</if> class="btn btn-small btn-danger"><i class="icon-off"></i> 停止挖掘</button></td>
+</tr>
+</table>
+</FORM>
+                        <!-- Site Summary -->
+                        <div class="block well"> 
+
+                        	<div class="navbar"><div class="navbar-inner"><h5><i class="font-th-list"></i>长尾关键词挖掘</h5></div></div>
+                            <ul class="toolbar">
+                                <li><a href="{:U('Admin/Seokey/search_delete')}" message="确定要删除选中的长尾关键词吗？" dialog="true" checkbox="true" class="dialog-action"><i class="font-remove"></i><span>批量删除</span></a></li>
+                                <li style="border-right:0px solid #ffffff;display:none;" id="search_status"><a style="color:#ff0000;">
+                                	<img src="http://themes.kopyov.com/amsterdam/1/images/elements/loaders/8.gif" alt="" style="float: left; height:18px;"/>
+                                	<img src="http://themes.kopyov.com/amsterdam/1/images/elements/loaders/8.gif" alt="" style="float: left; height:18px;"/> 关键词正在挖掘中...<span id="totalcount">(0)</span></a></li>
+                                <li class="rightbar"><form method="GET" class="navbar-form pull-right" action="{:U('Admin/Seokey/search')}"><input type="text" name="searchtitle" value="{$_GET['searchtitle']}">	<button type="submit" class="btn btn-small btn-primary"><i class="icon-search"></i>搜索</button></form></li>
+                            </ul>
+                              
+<div class="table-overflow">
+<TABLE class="table table-block table-bordered table-checks">
+<thread><tr>
+	<th width="10px;"><input type="checkbox" class="style checkboxall" /></th>
+	<th>长尾关键词</th>
+	<th style="width:80px;">目标关键词</th>
+	<th style="width:40px;">深度</th>
+	<th style="width:310px;">发布操作</th>
+</tr></thread>
+<tbody id="seokeyList">
+<volist name="list" id="vo">
+<tr class="row">
+	<td class="notallow"><input type="checkbox" value="{$vo.id}" class="style checkboxrow" /></td>
+	<td>{$vo.title}</td>
+	<td>{$vo.wd}</td>
+	<td>{$vo.dp}</td>
+	<td class="notallow">
+		<a href="{:U('Admin/New/add?wd='.$vo['title'])}"><i class="font-list-alt"></i> 新闻</a> &nbsp;&nbsp;&nbsp;	
+		<a href="{:U('Admin/Product/add?wd='.$vo['title'])}"><i class="font-magnet"></i> 产品</a> &nbsp;&nbsp;&nbsp;	
+		<a href="{:U('Admin/Case/add?wd='.$vo['title'])}"><i class="font-eye-open"></i> 案例</a> &nbsp;&nbsp;&nbsp;	
+		<a href="{:U('Admin/Down/add?wd='.$vo['title'])}"><i class="font-download-alt"></i> 下载</a> &nbsp;&nbsp;&nbsp;	
+		<a href="{:U('Admin/Blog/add?wd='.$vo['title'])}"><i class="font-file"></i> 博客</a> &nbsp;&nbsp;&nbsp;	
+		<a href="{:U('Admin/Pages/add?wd='.$vo['title'])}"><i class="font-pushpin"></i> 单页</a>
+	</td>
+</tr>
+</volist>
+<tr class="row"></tr>
+</tbody>
+</table>
+</div>
+<div class="table-footer">
+	{$page}
+</div>
+</div>
+</div>
+</div>
+<if condition="$wid">
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+var mt, totalcount;
+var wid = '{$wid}';
+var dp = 0;
+jQuery(document).ready(function(){
+		totalcount = jQuery('#seokeyList tr').size();
+		dp = $('#dp').val();
+		jQuery('#search_status').show();
+		mt = setInterval(searchSeoword,1000);
+});
+function searchSeoword(){
+		var url = '__URL__/seoword?wid='+wid+'&dp='+dp;
+		jQuery.post(url, function(result){
+				if(result == 'failed'){
+					clearInterval(mt);
+					var count = jQuery('#seokeyList tr').size() - totalcount;
+					if(dp==0 && wid==''){
+						alert("关键词挖掘已停止！共挖掘到关键词 "+count+" 个。");
+					}else{
+						alert("关键词已挖掘完毕！共挖掘到关键词 "+count+" 个。");
+					}
+					jQuery('#search_status').hide();
+				}else{
+				  jQuery('#seokeyList tr:last').before(result);
+				  var count = jQuery('#seokeyList tr').size() - totalcount;
+				  jQuery('#totalcount').html('('+count+')');
+					clearInterval(mt);
+					mt = setInterval(searchSeoword,5000);
+				}
+		});
+}
+
+function stopsearch(){
+	dp = 0;
+	wid = '';
+}
+
+//-->
+</SCRIPT>
+</if>

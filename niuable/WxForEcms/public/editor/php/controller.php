@@ -1,0 +1,360 @@
+<?php
+/**
+ * UEditor for ECMS 前后端互交上传处理文件
+ * User: pkkgu 910111100@qq.com
+ * Date: 2014年5月29日
+ * ECMS 7.0
+ * UEditor 1.4.3
+ *
+ * @param $classid   int
+ * @param $filepass  int    增加信息时为时间戳，修改信息为信息ID
+ * @param $isadmin   int    前后台控制,0前台、1后台
+ * @param $userid    int
+ * @param $username  string
+ * @param $rnd       string
+ *
+ * @param $Field     string 字段名称
+ * @param $FieldVal  string 字段内容
+ *
+	
+	帝国数据表 字段HTML
+	<?php if(!isset($Field)){ ?>
+	<script type="text/javascript" src="/e/extend/ueditor/ueditor.config.js"></script>
+	<script type="text/javascript" src="/e/extend/ueditor/ueditor.all.min.js"></script>
+	<?php } ?>
+	<?php
+	$Field    = 'newstext'; //*字段名称
+	$FieldVal = $ecmsfirstpost==1?"":stripSlashes($r[$Field]);
+	$isadmin  = 0;
+	if($enews=='AddNews'||$enews=='EditNews')
+	{ $isadmin=1; }
+	else
+	{ $FieldVal  = empty($ecmsfirstpost)?DoReqValue($mid,$Field,$FieldVal):$r[$Field]; }
+	?>
+	<script id="<?=$Field?>" name="<?=$Field?>" type="text/plain"><?=$FieldVal?></script>
+	<script type="text/javascript">
+	var ue = UE.getEditor('<?=$Field?>',{
+		pageBreakTag:'[!--empirenews.page--]' //分页符
+		, serverUrl: "/e/extend/ueditor/php/controller.php?isadmin=<?=$isadmin?>"
+		//,toolbars:[['FullScreen', 'Source', 'Undo', 'Redo','Bold']] //选择自己需要的工具按钮名称
+	});
+	ue.ready(function(){
+		ue.execCommand('serverparam', {
+			'classid' : '<?=$classid?>',
+			'filepass': '<?=$filepass?>',
+			'userid'  : '<?=$isadmin?$logininid:$muserid?>',
+			'username': '<?=$isadmin?$loginin:$musername?>',
+			'rnd'     : '<?=$isadmin?$loginrnd:$mrnd?>'
+		});
+	});
+	</script>
+ */
+require('../../../../../class/connect.php'); //引入数据库配置文件和公共函数文件
+require('../../../../../class/db_sql.php'); //引入数据库操作文件
+require("../../../../../data/dbcache/class.php");
+
+$link=db_connect(); //连接MYSQL
+$empire=new mysqlquery(); //声明数据库操作
+
+// 必须参数
+$action      = RepPostVar($_GET['action']);
+$classid     = (int)$_GET['classid'];
+$filepass    = (int)$_GET['filepass'];
+// 用户信息
+$isadmin     = (int)$_GET['isadmin'];
+$userid      = (int)$_GET['userid'];
+$username    = RepPostVar($_GET['username']);
+$rnd         = RepPostVar($_GET['rnd']);
+$loginin     = $isadmin?$username:'[Member]'.$username;
+$CONFIG = json_decode(preg_replace("/\/\*[\s\S]+?\*\//", "", file_get_contents("config.json")), true);
+
+if(empty($action))
+{
+    Ue_Print('请求类型不能明确');
+}
+// else if($action!='config'&&(empty($classid)||empty($filepass)))
+// {
+//     Ue_Print("上传参数不正确！栏目ID：".$classid."，信息ID：".$filepass."，action：".$action);
+// }
+//获取配置
+$pr=$empire->fetch1("select * from {$dbtbpre}enewspublic");
+if(empty($isadmin)) // 重定义前台配置
+{
+    if($action!='config')
+	{
+		if($pr['addnews_ok']==1)
+		{
+			Ue_Print("网站投稿功能未开启");
+		}
+		else if(($action=='uploadimage'||$action=='uploadscrawl'||$action=='catchimage')&&empty($pr['qaddtran']))
+		{
+			Ue_Print("图片上传功能关闭");
+		}
+		else if(($action=='uploadvideo'||$action=='uploadfile')&&empty($pr['qaddtranfile']))
+		{
+			Ue_Print("附件上传功能关闭");
+		}
+		
+		$cr=$empire->fetch1("select openadd,qaddgroupid from {$dbtbpre}enewsclass where classid='$classid'");
+		if($cr['openadd']==1)
+		{
+			Ue_Print("栏目关闭投稿功能");
+		}
+		else if($action=='listimage'||$action=='listfile'||$cr['qaddgroupid']) //list文件、上传权限检测
+		{
+			if(empty($userid)||empty($username)||empty($rnd))
+			{
+				Ue_Print("未登录1");
+			}
+			$ur=$empire->fetch1("select userid,groupid from {$dbtbpre}enewsmember where userid='$userid' and username='$username' and rnd='$rnd'");
+			if(empty($ur['userid']))
+			{
+				Ue_Print("请重新未登录");
+			}
+			if ($cr['qaddgroupid']&&!stristr($cr['qaddgroupid'],",".$ur['groupid'].","))
+			{
+				Ue_Print("您没有上传附件的权限");
+			}
+		}
+	}
+    $qaddtransize = $pr['qaddtransize']*1024;
+    $CONFIG['imageMaxSize'] = $qaddtransize;
+    $CONFIG['scrawlMaxSize'] = $qaddtransize;
+    $CONFIG['catcherMaxSize'] = $qaddtransize;
+    $qaddtranimgtype = substr($pr['qaddtranimgtype'],1,strlen($pr['qaddtranimgtype'])-2);
+    $qaddtranimgtype = explode('|',$qaddtranimgtype);
+    $CONFIG['imageAllowFiles'] = $qaddtranimgtype;
+    $CONFIG['imageManagerAllowFiles'] = $qaddtranimgtype;
+    $CONFIG['catcherAllowFiles'] = $qaddtranimgtype;
+    
+    $qaddtranfilesize = $pr['qaddtranfilesize']*1024;
+    $CONFIG['fileMaxSize'] = $qaddtranfilesize;
+    $CONFIG['videoMaxSize'] = $qaddtranfilesize;
+    $qaddtranfiletype = substr($pr['qaddtranfiletype'],1,strlen($pr['qaddtranfiletype'])-2);
+    $qaddtranfiletype = explode('|',$qaddtranfiletype);
+    $CONFIG['fileAllowFiles'] = $qaddtranfiletype;
+    $CONFIG['fileManagerAllowFiles'] = $qaddtranfiletype;
+    $CONFIG['videoAllowFiles'] = array(".flv",".swf",".mkv",".avi",".rm",".rmvb",".mpeg",".mpg",".ogg",".ogv",".mov",".wmv",".mp4",".webm",".mp3",".wav",".mid");
+}
+else if($isadmin==1) // 重定义后台配置
+{
+    if($action!='config')
+	{
+		if(empty($userid)||empty($username)||empty($rnd))
+		{
+			Ue_Print("未登录");
+		}
+		$ur=$empire->fetch1("select userid from {$dbtbpre}enewsuser where userid='$userid' and username='$username' and rnd='$rnd'");
+		if(empty($ur['userid']))
+		{
+			Ue_Print("请重新未登录");
+		}
+	}
+    $filesize = $pr['filesize']*1024;
+    $CONFIG['imageMaxSize']   = $filesize;
+    $CONFIG['scrawlMaxSize']  = $filesize;
+    $CONFIG['catcherMaxSize'] = $filesize;
+    $CONFIG['videoMaxSize']   = $filesize;
+    $CONFIG['fileMaxSize']    = $filesize;
+}
+
+//目录
+$classpath = ReturnFileSavePath($classid); //栏目附件目录
+//在帝国后台设置的基础上，增加一级自定义目录以便管理
+$classpath['filepath']=$classpath['filepath'].'wx/';
+$timepath  = $classpath['filepath']."{yyyy}-{mm}-{dd}/{time}{rand:6}"; //日期栏目目录
+// 重定义存放目录
+$CONFIG['imagePathFormat']      = $timepath;
+$CONFIG['scrawlPathFormat']     = $timepath;
+$CONFIG['snapscreenPathFormat'] = $timepath;
+$CONFIG['videoPathFormat']      = $timepath;
+$CONFIG['filePathFormat']       = $timepath;
+$CONFIG['catcherPathFormat']    = $timepath;
+// 前缀补全
+$CONFIG['imageUrlPrefix']       = $public_r['newsurl'];
+$CONFIG['scrawlUrlPrefix']      = $public_r['newsurl'];
+$CONFIG['snapscreenUrlPrefix']  = $public_r['newsurl'];
+$CONFIG['catcherUrlPrefix']     = $public_r['newsurl'];
+$CONFIG['videoUrlPrefix']       = $public_r['newsurl'];
+$CONFIG['fileUrlPrefix']        = $public_r['newsurl'];
+
+$CONFIG['imageManagerListPath'] = $public_r['newsurl'].$classpath['filepath'];
+$CONFIG['fileManagerListPath']  = $public_r['newsurl'].$classpath['filepath'];
+
+switch ($action) {
+	case 'config':
+		$result = json_encode($CONFIG);
+		break;
+
+	/* 上传图片 */
+	case 'uploadimage':
+		$type=1;
+		$result = include("action_upload.php");
+		break;
+
+	/* 上传涂鸦 */
+	case 'uploadscrawl':
+		$type=2;
+		$result = include("action_upload.php");
+		break;
+
+	/* 上传视频 */
+	case 'uploadvideo':
+		$type=4;
+		$result = include("action_upload.php");
+		break;
+
+	/* 上传文件 */
+	case 'uploadfile':
+		$type=5;
+		$result = include("action_upload.php");
+		break;
+
+	/* 列出图片 */
+	case 'listimage':
+		$result = action_list($classid,$username);
+		//$result = include("action_list.php");
+		break;
+	/* 列出文件 */
+	case 'listfile':
+		$result = action_list($classid,$username);
+		//$result = include("action_list.php");
+		break;
+
+	/* 抓取远程文件 */
+	case 'catchimage':
+		$type=1;
+		$result = include("action_crawler.php");
+        break;
+
+    default:
+		$result = json_encode(array('state'=> '请求地址出错'));
+        break;
+}
+/*
+ * 写入数据库
+ * eInsertFileTable(文件名、文件大小，存放日期目录，上传者，栏目id,文件编号,文件类型,信息ID,文件临时识别编号(原文件名称),文件存放目录方式,信息公共ID,归属类型,附件副表ID)
+ * 1.文件类型:1为图片，2为涂鸦，3为音频，4为视频，5为其他附件
+ * 2.归属类型:0信息，4反馈，5公共，6会员，其他
+ * 3.文件临时识别编号:0非垃圾信息
+ * 4.文件存放目录方式:0为栏目目录($classpath['filepath']默认为'd/file/p/'），1为/d/file/p目录，2为/d/file目录，注意“/”
+ * 5.统一增加一级路径 wx 以示区别
+ */
+// if($public_r[fpath]==0)$public_r[fpath]='/'.$classpath['filepath'].'wx/';
+// elseif($public_r[fpath]==1) $public_r[fpath]='/d/file/p/wx/';
+// elseif($public_r[fpath]==2) $public_r[fpath]='/d/file/wx/';
+$public_r['fpath']=$public_r['newsurl'].$classpath['filepath'];
+if($action=="uploadimage"||$action=="uploadscrawl"||$action=="uploadvideo"||$action=="uploadfile"||$action=="catchimage")
+{
+	$file_r   = json_decode($result,true);
+	$filepath = $public_r[fpath].date("Y-m-d");
+	$username = RepPostStr(trim($loginin));
+	$classid  = (int)$classid;
+	$type     = (int)$type;
+	if ($type==4) {
+		if ($file_r['type']=='.mp3' || $file_r['type']=='.wav' || $file_r['type']=='.wmv' || $file_r['type']=='.ogg' || $file_r['type']=='.mid'|| $file_r['type']=='.amr')$type=3;
+	}
+	$filepass = (int)$filepass;
+	$time	  = time();
+	if($action=="catchimage") //远程保存写数据库
+	{
+		for($i=0;$i<count($file_r['list']);$i++)
+		{
+			if($file_r['list'][$i]['state']=="SUCCESS")
+			{
+				$title    = RepPostStr(trim($file_r['list'][$i]['title']));
+				$filesize = RepPostStr(trim($file_r['list'][$i]['size']));
+				$original = RepPostStr(trim($file_r['list'][$i]['original']));
+				$r=$empire->fetch1("select `id` from {$dbtbpre}wx_wx where `active`=1;");
+ 				$res=$empire->query("insert {$dbtbpre}wx_file 
+ 					(`aid`,`title`,`name`,`is_ok`,`path`,`size`,`ext`,`create_time`,`update_time`,`type`,`description`)
+ 					values('$r[id]','$original','$title','1','$filepath','$filesize','$file_r[type]','$time','$time','$type','$original');
+ 					");
+				if(!$res)Ue_Print('数据库保存错误');
+				//eInsertFileTable($title,$filesize,$filepath,$username,$classid,$original,$type,$filepass,$filepass,$public_r[fpath],0,0,0);
+			}
+		}
+	}
+	else if($file_r['state']=="SUCCESS")
+	{
+		$title    = RepPostStr(trim($file_r[title]));
+		$filesize = RepPostStr(trim($file_r[size]));
+		$original = RepPostStr(trim($file_r[original]));
+		$original = strstr($original,'.',true);
+		$r=$empire->fetch1("select `id` from {$dbtbpre}wx_wx where `active`=1;");
+		$res=$empire->query("insert into {$dbtbpre}wx_file
+			(`aid`,`title`,`name`,`is_ok`,`path`,`size`,`ext`,`create_time`,`update_time`,`type`,`description`)
+			values('$r[id]','$original','$title','1','$filepath','$filesize','$file_r[type]','$time','$time','$type','$original');");
+		if(!$res)Ue_Print('数据库保存错误');
+		//eInsertFileTable($title,$filesize,$filepath,$username,$classid,$original,$type,$filepass,$filepass,$public_r[fpath],0,0,0);
+	}
+	// 反馈附件入库
+	//eInsertFileTable($tfr[filename],$filesize,$filepath,'[Member]'.$username,$classid,'[FB]'.addslashes(RepPostStr($add[title])),$type,$filepass,$filepass,$public_r[fpath],0,4,0);
+}
+
+/* 输出结果 */
+if (isset($_GET["callback"])) {
+    if (preg_match("/^[\w_]+$/", $_GET["callback"])) {
+        echo htmlspecialchars($_GET["callback"]) . '(' . $result . ')';
+    } else {
+        echo json_encode(array('state'=> 'callback参数不合法'));
+    }
+} else {
+    echo $result;
+}
+
+db_close();
+$empire=null;
+exit();
+
+// Error提示
+function Ue_Print($msg="SUCCESS"){
+    echo '{"state": "'.$msg.'"}';
+    db_close();
+    $empire=null;
+    exit();
+}
+// 列出已经上传的文件
+function action_list($classid,$username){
+	global $empire,$class_r,$dbtbpre,$public_r;
+	$action=$_GET['action'];
+	$classid= (int)$_GET['classid'];
+	$list=array();
+	$result = json_encode(array("state" => "no match file","list" => $list,"start" => 0,"total" => 0));
+	$where = "";
+	if($action=='listimage') //图片 
+	{
+		$where= ' and type=1';
+	}
+	else if($action=='listfile') //附件
+	{
+		$where= ' and type!=1';
+	}
+	else
+	{
+		return $result;
+	}
+	$size=(int)$_GET['size'];
+	$start=(int)$_GET['start'];
+	$limit=$start.",".$size;
+	// 统计总数
+	$r=$empire->fetch1("select `id` from {$dbtbpre}wx_wx where `active`=1;");
+	$total=$empire->gettotal("select count(*) as total from {$dbtbpre}wx_file where `aid`='$r[id]'".$where);
+	$sql=$empire->query("select * from {$dbtbpre}wx_file where `aid`='$r[id]'".$where." order by id DESC limit ".$limit);
+	$bqno=0;
+	while($r=$empire->fetch($sql))
+	{
+		//$classpath = ReturnFileSavePath($r['classid']);
+		$list[$bqno]['url'] = $r[path].'/'.$r['name'];
+		$list[$bqno]['mtime'] =$r['create_time'];
+		$bqno++;
+	}
+	/* 返回数据 */
+	if (!count($list)) { return $result; }
+	return $result = json_encode(array(
+		"state" => "SUCCESS",
+		"list" => $list,
+		"start" => $start,
+		"total" => $total
+	));
+}

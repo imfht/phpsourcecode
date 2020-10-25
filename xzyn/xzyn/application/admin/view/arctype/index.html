@@ -1,0 +1,129 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>列表</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>文章分类</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> 文章分类</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"></h3>
+                    <div class="pull-left">
+					{:BTN(C_NAME.'/create','','新增','btn btn-primary btn-sm','fa-save')}
+                    </div>
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <tr>
+                            <th>ID</th>
+                            <th>分类名称	</th>
+                            <th>前台发布</th>
+                            <th>分类模型</th>
+                            <th>分类目录</th>
+                            <th>状态</th>
+                            <th>导航显示</th>
+                            <th>排序</th>
+                            <th width="258">操作</th>
+                        </tr>
+                        {volist name="dataList" id="vo"}
+                        <tr>
+                            <td>{$vo.id}</td>
+                            <td>
+                                {if condition=" $vo.h_layer eq 1 "}
+                                {else /}{for start="1" end="$vo.h_layer"}　　　{/for}├
+                                {/if}
+                                <span class="editable" data-pk="{$vo.id}" data-name="typename" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.typename}</span>
+                            </td>
+                            <td>
+                            	<button data-type="select"  data-pk="{$vo.id}"data-value="{$vo.is_release}" data-name="is_release" data-source="[ {value: 0, text: '不允许'}, {value: 1, text: '允许'} ]"
+                            		data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" class="lists btn btn-xs {eq name='$vo.is_release' value='1'}btn-success{else/}btn-danger{/eq}">
+                            		{eq name="$vo.is_release" value="0"}不允许{else/}允许{/eq}
+                            	</button>
+                            </td>
+                            <td>{$vo.ArctypeMod->name}</td>
+                            <td><span class="editable" data-pk="{$vo.id}" data-name="dirs" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.dirs}</span></td>
+                            <td>
+                                <a href="javascript:void(0);" data-id="{$vo.id}" data-field="status"
+                                data-value="{$vo.status}" data-url="{:url('edit', 'id='.$vo['id'])}"
+                                class='editimg fa {if condition=" $vo.status == 1 "}fa-check-circle text-green{else /}fa-times-circle text-red{/if}'></a>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0);" data-id="{$vo.id}" data-field="is_daohang"
+                                data-value="{$vo.is_daohang}" data-url="{:url('edit', 'id='.$vo['id'])}"
+                                class='editimg fa {if condition=" $vo.is_daohang == 1 "}fa-check-circle text-green{else /}fa-times-circle text-red{/if}'></a>
+                            </td>
+                            <td>{$vo.sorts}</td>
+                            <td>
+                                <a class="btn btn-primary btn-xs" href="{$vo.typelink}" target="_blank"><i class="fa fa-eye"></i> 预览</a>
+                                {if condition=" $vo.mid == 20 || $vo.mid == 22 "}
+                                <button class="btn btn-default btn-xs disabled"><i class="fa fa-edit"></i> 新增文章</button>
+                                {else /}
+								{:BTN('Archive/create','typeid='.$vo.id,' 新增文章','btn btn-primary btn-xs','fa-edit')}
+                                {/if}
+								{:BTN(C_NAME.'/edit','id='.$vo.id,'编辑','btn btn-primary btn-xs','fa-edit')}
+                            	{:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+    $('.lists').editable({
+        params: function(params) { //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+        	if( newValue == 1){
+        		$(this).removeClass('btn-danger');
+        		$(this).addClass('btn-success');
+        	}else{
+        		$(this).removeClass('btn-success');
+        		$(this).addClass('btn-danger');
+        	}
+            var res = $.parseJSON(response);
+            if(res.status == 1) {
+                layer.msg(res.info,{offset:'100px'});
+            } else {
+                return res.info;
+            }
+        }
+
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

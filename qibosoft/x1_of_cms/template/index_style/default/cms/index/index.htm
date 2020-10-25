@@ -1,0 +1,85 @@
+{extend name="$index_style_layout" /}
+
+<!--SEO相关-->
+{block name="head_title"}{$webdb.mseo_title?:$webdb.seo_title}{/block}
+{block name="head_keword"}{$webdb.mseo_keyword?:$webdb.seo_keyword}{/block}
+{block name="head_description"}{$webdb.mseo_description?:$webdb.seo_description}{/block}
+
+
+{block name="body_content"}
+<link rel="stylesheet" href="__STATIC__/index/default/list.css">
+<script src='__STATIC__/js/iscroll.js'></script>
+<div class="ListMainCont">
+	<div class="SortBoxCont">
+		<ul>
+			{volist name="0|get_sort=###,'other'" id="vo"}
+			<li><a href="{:urls('content/index',['fid'=>$key])}">{$vo}</a></li>
+			{/volist}
+		</ul>
+	</div>
+	<div class="ListArticles">
+<!--name是标签名，跟通用标签不能重名，rows取几条数据,order按什么方式排序，list代表可控排序，id即时间,view代表浏览量-->
+{qb:listpage name="news_list_page_listdata002" rows="3" order="view desc,id asc"}
+		<div class="Lists">
+			<div class="title"><a href="{$rs.url}">{$rs.title|get_word=60}</a></div>
+			<ul>
+	{switch name="rs.image_type"}
+		{case value="1"}
+				<ol><a href="{$rs.url}"><img src="{$rs.picurl}" onmouseover='thisimg_over($(this))' onmouseout='thisimg_out($(this))'></a></ol>
+				<li><a href="{$rs.url}">{$rs.content|get_word=80}</a></li>
+		{/case}
+		{case value="2"}
+			{volist name="rs.picurls" id="imgurl"}
+				<ol><a href="{$rs.url}"><img src="{$imgurl.picurl}" onmouseover='thisimg_over($(this))' onmouseout='thisimg_out($(this))'></a></ol>
+
+			{/volist}
+		{/case}
+		{default /}
+				<li><a href="{$rs.url}">{$rs.content|get_word=120}</a></li>
+	{/switch}
+			</ul>
+			<div class="mores"><span><i class="glyphicon glyphicon-time"></i> {$rs.create_time|date="Y-m-d",###}</span><em> <i class="si si-eye"></i> {$rs.view}</em></div>
+		</div>
+{/qb:listpage} 
+	</div>
+	<div class="ShowMoreInfos"><button type="butter" onclick="ShowMoreInfo()">查看更多</button></div>
+</div>
+<!--{$pages}-----显示分页的代码---->
+<script>
+var morepage=1;
+function ShowMoreInfo(){	
+	morepage++;
+	$.get('{qb:list_url name="news_list_page_listdata002" /}'+morepage+'&'+Math.random(),function(res){
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("已经显示完了！",{time:500});
+				$('.ShowMoreInfos button').attr('onclick','');
+				$('.ShowMoreInfos button').html('显示完了');
+				$('.ShowMoreInfos button').css({'background':'#CCC'});
+			}else{
+				res.data="<span class='pages"+morepage+"'>"+res.data+"</span>";			
+				$('.ListArticles').append(res.data);
+				$('.ListArticles .pages'+morepage).hide();
+				$('.ListArticles .pages'+morepage).show(500);
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+function thisimg_over(imgobjs){
+	imgobjs.animate({"max-width":"150%","max-height":"150%"},300);
+}
+function thisimg_out(imgobjs){
+	imgobjs.animate({"max-width":"100%","max-height":"100%"},300);
+}
+//统计总宽度
+var mysortBoxW=0;
+$('.SortBoxCont ul li').each(function(){
+	mysortBoxW+=$(this).width();
+});
+$('.SortBoxCont ul').width(mysortBoxW+10);
+var myScroll; 
+myScroll = new IScroll('.SortBoxCont', { scrollX: true, scrollY: false, mouseWheel: true,preventDefault: false,preventDefaultException: { tagName: /^(INPUT|TEXTAREA|BUTTON|SELECT|LI)$/ } });
+</script>
+{/block}

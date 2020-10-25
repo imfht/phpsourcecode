@@ -1,0 +1,99 @@
+<div class="container">
+    <div class="panel panel-primary"  style="margin-left: 100px;max-width: 1000px;min-height: 200px;margin-top: 60px">
+        <div class="panel-heading">
+            <h3 class="panel-title">CURD代码生成辅助工具[步骤二]</h3>
+        </div>
+        <div class="panel-body">
+            <form id="frm" action="" method="get" class="form-horizontal" role="form">
+
+                <input type="hidden" name="model-id" required class="form-control" value="{{?echo request('model-id');}}" placeholder="模型英文名">
+                <input type="hidden" name="model-name" required class="form-control" value="{{?echo request('model-name');}}" placeholder="模型中文名">
+                <input type="hidden" name="model-db" required class="form-control" value="{{?echo request('model-db');}}" placeholder="数据库配置">
+                <input type="hidden" name="model-db-type" required class="form-control" value="{{:db_type}}" placeholder="数据库配置">
+                <input type="hidden" name="model-table-name" required class="form-control" value="{{?echo request('model-table-name');}}" placeholder="数据表名">
+                <input type="hidden" value="{{?echo $step+1;}}" name="step">
+
+                <div class="form-group">
+                    <label for="model-col-new" class="col-sm-1 control-label">
+                        <a id="btn-new" class="btn btn-info btn-xs" style="width:100%;">新增列</a>
+                    </label>
+                    <div class="col-sm-3">
+                        <input required  id="model-col-new" class="form-control" type="text" value="" placeholder="选择或自定义一个列（如id）">
+                    </div>
+                    <div class="col-sm-2">
+                        <select  id="model-dbcol-sel" onchange="$('#model-col-new').val($(this).val())" class="form-control">
+                            {{each $db_cols}}
+                            <option value="{{:v}}">{{:v}}</option>
+                            {{/}}
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <input id="model-col-new-name" onkeyup="$('#model-col-new-doc').val($(this).val())" class="form-control" type="text" value="" placeholder="别名">
+                    </div>
+                    <div class="col-sm-4">
+                        <input id="model-col-new-doc" class="form-control" type="text" value="" placeholder="说明文字">
+                    </div>
+                </div>
+
+                <div class="form-group" id="grp-next">
+                    <div class="col-sm-10 col-sm-offset-2">
+                        <button type="submit" class="btn btn-primary" id="btn-next">下一步</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        //初始化列名
+        $("#model-col-new").val($("#model-dbcol-sel").val());
+
+        //新建一个列选项
+        $('#btn-new').click(function () {
+            //model-col-new
+            //model-col-new-name
+            //model-col-new-doc
+            var model_col_new=$("#model-col-new").val();
+            var model_col_new_name=$("#model-col-new-name").val();
+            var model_col_new_doc=$("#model-col-new-doc").val();
+            if (model_col_new=='' || $("#col-grp-"+model_col_new).length > 0){
+                alert('列名为空或重复！');
+                return false;
+            }
+            if (model_col_new_name==''){model_col_new_name=model_col_new;}
+            if (model_col_new_doc==''){model_col_new_doc=model_col_new;}
+            var new_col='<div id="col-grp-'+model_col_new+'" class="form-group">'+
+                '<label for="model-col-new" class="col-sm-1 control-label">'+
+                '<a class="btn btn-danger btn-xs btn-del" style="width:100%;">删除列</a>'+
+                '</label>'+
+                '<div class="col-sm-3">'+
+                '<input readonly name="cols-new-'+model_col_new+'" type="text" class="form-control" value="'+model_col_new+'" placeholder="英文名">'+
+                '</div>'+
+                '<div class="col-sm-3">'+
+                '<input readonly name="cols-name-'+model_col_new+'" type="text" class="form-control" value="'+model_col_new_name+'" placeholder="别名">'+
+                '</div>'+
+                '<div class="col-sm-5">'+
+                '<input readonly name="cols-doc-'+model_col_new+'"  class="form-control" type="text" value="'+model_col_new_doc+'" placeholder="说明文字">'+
+                '</div>'+
+                '</div>';
+            $("#grp-next").before(new_col);
+            return false;
+        });
+
+        //删除一个列
+        $("#frm").on('click','.btn-del',function () {
+            $(this).parent().parent().remove();
+            return false;
+        });
+
+        //提交更改前的检查
+        $("#btn-next").click(function () {
+            if($(".btn-del").length==0){
+                alert('至少需要一个列！');
+                return false;
+            }
+        })
+    });
+
+</script>

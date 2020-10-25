@@ -1,0 +1,219 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<form method="post" action="{$ADMIN_SCRIPT}/bbs/topic/{$dispatches[method]}&id={$_var[gp_id]}&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}" onsubmit="javascript:return check_form(this);">
+				<input type="hidden" name="formsubmit" value="yes" />
+				
+				<div class="well widget">
+					<div class="widget-header">
+						<p class="text">* {lang admin.validate.require}</p>
+					</div>
+					<div class="widget-content">
+						<fieldset>
+							<label>{lang bbs.topic_edit.view.forum.label} *</label>
+							<select name="sltForumId">
+			                	<option value="0">{lang bbs.topic_edit.view.forum.select}</option>
+			                	<!--{loop $forum_list $key $forum}-->
+			                	<option value="{$forum[FORUMID]}" {if $forum[FORUMID] == $topic[FORUMID]}selected="selected"{/if}>{$forum[NAME]}</option>
+			                	<!--{/loop}-->
+			                </select>
+			                <span class="help-inline">{lang bbs.topic_edit.view.forum.tips}</span>
+							
+							<label>{lang bbs.topic_edit.view.username.label} *</label>
+							<input type="text" class="input"  name="txtUserName" placeholder="{lang bbs.topic_edit.view.username.placeholder}..."  maxlength="20" value="{$topic[USERNAME]}"/> 
+							<span class="help-inline">{lang bbs.topic_edit.view.username.tips}</span>
+							
+							<label>{lang bbs.topic_edit.view.title.label} *</label>
+							<input type="text"  class="input-xlarge" name="txtTitle" placeholder="{lang bbs.topic_edit.view.title.placeholder}..."  maxlength="50" value="{$topic[TITLE]}"/> 
+							<span class="help-inline">{lang bbs.topic_edit.view.title.tips}</span>
+							
+							<label>{lang bbs.topic_edit.view.commend.label}</label>
+							<select name="eleIsCommend">
+						        <option value="0">{lang bbs.topic_edit.view.commend.select.0}</option>
+						        <option value="3" {if $record['ISCOMMEND'] == 3}selected="selected"{/if}>{lang bbs.topic_edit.view.commend.select.3}</option>
+						        <option value="2" {if $record['ISCOMMEND'] == 2}selected="selected"{/if}>{lang bbs.topic_edit.view.commend.select.2}</option>
+						        <option value="1" {if $record['ISCOMMEND'] == 1}selected="selected"{/if}>{lang bbs.topic_edit.view.commend.select.1}</option>
+					        </select>
+					        <span class="help-inline">{lang bbs.topic_edit.view.commend.tips}</span>
+					        
+					        <label>{lang bbs.topic_edit.view.keywords.label}</label>
+					        <input type="text" name="txtKeywords" maxlength="30" class="input-xxlarge" value="{$topic[KEYWORDS]}"/>
+					        <span class="help-inline">{lang bbs.topic_edit.view.keywords.tips}</span>
+							
+							<label>{lang bbs.topic_edit.view.other.label}</label>
+							<label class="checkbox inline">
+								<input type="checkbox" name="cbxIsTop" class="fancy" value="1"  {if $topic['ISTOP'] == 1}checked="checked"{/if} /> {lang bbs.topic_edit.view.other.top} 
+							</label>
+							<label class="checkbox inline">
+               					<input type="checkbox" name="cbxClosed" class="fancy" value="1" {if $topic['CLOSED'] == 1}checked="checked"{/if} /> {lang bbs.topic_edit.view.other.close}
+							</label>
+							<hr/>
+            				
+							<label>{lang bbs.topic_edit.view.content.label} *</label>
+							<textarea class="span10" rows="18" cols="45" name="txtContent" id="txt_content">{$topic[CONTENT]}</textarea>
+					   		<span class="help-inline">{lang bbs.topic_edit.view.content.tips}</span>
+					    </fieldset>
+					    
+						<h5>{lang admin.validate.swfupload}({lang admin.validate.swfupload.limit}{$table[FILENUM]}{lang admin.validate.swfupload.unit})</h5>
+						<div id="div_upload_image">
+							<hr />
+							<div id="divFileUploadButton" class="upload-button"><span id="spnButtonPlaceholder"></span></div>
+							<div id="divFileProgressContainer" class="upload-progress">{lang admin.validate.swfupload.echo.container}</div>
+							<div id="divThumbnails">
+							<table class="table" style="width:auto;">
+								<thead>
+									<tr>
+						    			<th width="60">{lang admin.validate.swfupload.th.pic}</th>
+						    			<th>{lang admin.validate.swfupload.th.name}</th>
+						    			<th width="60">{lang admin.validate.swfupload.th.no}</th>
+						    			<th width="80">{lang admin.validate.swfupload.th.delete}</th>
+									</tr>
+								</thead>
+								<tbody id="tbl_body_column">
+								<!--{loop $topic_files $key $image}-->
+								<tr>
+						        	<td>
+						        		<input type="hidden" name="hdnImagePath[]" value="{$image[4]}" />
+						        		<a href="{$image[3]}" target="_blank"><img class="image" style="width:60px;" src="{$image[0]}" border="0" /></a>
+						        	</td>
+						        	<td>
+						        		<span class="imageTitle">{$image[1]}<!--{if $image[5]}--><br/>[{$image[5]}px * {$image[6]}px]<!--{/if}--></span>
+						        	</td>
+						        	<td>
+						            	<input type="text" name="txtImageDisplayOrder[]" value="{echo $key + 1;}" class="input-mini" />
+						        	</td>
+						        	<td>
+						        		<a class="btn btn-mini btn-delete" href="javascript:void(null);" onclick="removeImage(this)">{lang admin.operation.delete}</a>
+						        	</td>
+						        </tr>
+								<!--{/loop}-->
+								<tr id="tbl_no_record"{if count($topic_files) > 0} style="display:none;"{/if}>
+									<td colspan="4">{lang admin.validate.swfupload.empty}</td>
+								</tr>
+						    	<tr style="display:none;">
+						        	<td>
+						        		<input type="hidden" name="hdnImagePath[]" value="" />
+						        		<img class="image" style="width:60px;" src="" />
+						        	</td>
+						        	<td>
+						            	<span class="imageTitle"></span>
+						        	</td>
+						        	<td>
+						            	<input type="text" name="txtImageDisplayOrder[]" value="" class="input-mini" />
+						        	</td>
+						        	<td>
+						        		<a class="btn btn-mini btn-delete" href="javascript:void(null);" onclick="removeImage(this)">{lang admin.operation.delete}</a>
+						        	</td>
+						        </tr>
+						        </tbody>
+						    </table>
+						    </div>
+						</div>
+						
+						<hr/>
+						
+						<fieldset>
+					   		<!--{if $dispatches['method'] == '_pub'}-->
+							<button type="submit" name="btnSubmit" class="btn btn-small btn-primary" {$dispatches[operations][add]}>{lang admin.operation.submit}</button>
+							<!--{else}-->
+							<button type="submit" name="btnSubmit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</button>
+							<!--{/if}-->
+							<button type="reset" class="btn btn-small">{lang admin.operation.reset}</button>
+							<button type="button" name="btnBack" class="btn btn-small" onclick="javascript:location.href='{$ADMIN_SCRIPT}/bbs/topic&page={$_var[gp_ppage]}&psize={$_var[gp_ppsize]}{$search[querystring]}';">{lang admin.operation.go.back}</button>
+						</fieldset>
+					</div>
+				</div>	
+			</form>
+		</div>
+	</div>
+</div>
+<script type="text/javascript" src="static/plugins/swfupload.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_handlers.js"></script>
+<script type="text/javascript" src="static/plugins/swfupload_images.js"></script>
+
+<script type="text/javascript" src="editor/kindeditor.js"></script>
+<script type="text/javascript" src="editor/lang/zh_CN.js"></script>
+
+<script>
+var kindEditor = null;
+var swfu;
+
+swfupload_params.limit = {echo $table[FILENUM];};
+swfupload_params.uploaded = 0;
+
+function check_form(frm){
+    if(frm.sltForumId.selectedIndex == 0){
+    	$(frm.sltForumId).next('.help-inline').css('color', 'red');
+    	frm.sltForumId.focus();
+    	return false;
+    }
+    
+    if(frm.txtUserName.value.trim().length == 0){
+    	$(frm.txtUserName).next('.help-inline').css('color', 'red');
+    	frm.txtUserName.focus();
+    	return false;
+    }
+    
+    if(frm.txtTitle.value.trim().length == 0){
+    	$(frm.txtTitle).next('.help-inline').css('color', 'red');
+    	frm.txtTitle.focus();
+    	return false;
+    }
+    
+    if(kindEditor.html().length == 0){
+    	$(frm.txtContent).next('.help-inline').css('color', 'red');
+    	kindEditor.focus();
+    	return false;
+    }
+
+    return true;
+}
+
+$(function(){
+   	$('.fancy').uniform();
+   	
+   	$('fieldset input,textarea,select').blur(function(){
+		$(this).next('.help-inline').css('color', '#333');
+	});
+	
+   	kindEditor = KindEditor.create('#txt_content', kind_editor_onfig);
+   	
+	swfu = new SWFUpload({
+		upload_url: "{$ADMIN_SCRIPT}/bbs/topic/_upload&_SALT={$_var[current][SALT]}",
+		
+		file_size_limit : "200KB", 
+		file_types : "*.jpg;*.bmp;*.gif;*.png",
+		file_types_description : "JPG Images",
+		file_upload_limit : "0",
+		
+		file_queue_error_handler : fileQueueError,
+		file_dialog_complete_handler : fileDialogComplete,
+		upload_progress_handler : uploadProgress,
+		upload_error_handler : uploadError,
+		upload_success_handler : uploadSuccess,
+		upload_complete_handler : uploadComplete,
+		
+		button_image_url : "static/images/swfupload/swfupload.png",
+		button_placeholder_id : "spnButtonPlaceholder",
+		button_width: 150,
+		button_height: 18,
+		button_text : '{lang admin.validate.swfupload.lang.button}({lang admin.validate.swfupload.lang.button.size.200})',
+		button_text_style : '',
+		button_text_top_padding: 0,
+		button_text_left_padding: 18,
+		button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,
+		button_cursor: SWFUpload.CURSOR.HAND,
+		
+		flash_url : "static/swfupload.swf",
+		
+		custom_settings : {
+			upload_target : "divFileProgressContainer"
+		},
+		
+		debug: false
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

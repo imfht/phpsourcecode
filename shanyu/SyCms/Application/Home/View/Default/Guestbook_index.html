@@ -1,0 +1,112 @@
+<include file="Public/head" />
+
+<div class="main mtp10 mbt10">
+	<div class="wrap">
+		<div class="row">
+			<div class="span-8">
+				<div class="guestbook-box">
+					<div class="tit">提交建议</div>
+					<div class="con">
+						<div class="alert mbt10">欢迎提交意见</div>
+						<foreach name="list" item="v">
+						<div class="msg-box">
+							<div class="tit">昵称: {$v.username} <span class="fr">留言时间: {$v.add_time}</span class="fr"></div>
+							<div class="con">留言: {$v.content}</div>
+							<notempty name="v.reply">
+							<div class="fot blue">回复：{$v.reply} <span class="fr">回复时间: {$v.reply_time}</span class="fr"></div>
+							</notempty>
+						</div>
+						</foreach>
+					</div>
+					<div class="page tr">
+						{$page}
+					</div>
+					<div class="fot mtp20">
+						<div class="alert mbt10">提交建议</div>
+						<form id="Form" action="{:UU('guestbook/index')}" method="post">
+							<table>
+								<tr>
+									<td width="10%">昵称: </td>
+									<td><input id="username" type="text" name="username"></td>
+									<td width="10%">邮箱:</td>
+									<td><input id="email" type="text" name="email"></td>
+								</tr>
+								<tr>
+									<td>留言:</td>
+									<td colspan="3"><textarea name="content" style="width:80%;height:60px;"></textarea></td>
+								</tr>
+								<tr>
+									<td>验证码:</td>
+									<td colspan="3">
+										<input type="text" name="code" size="10">
+										<img id="CodeImg" class="code-img" src="{:U('Public/verify',array('w'=>100,'h'=>25),'',true)}" alt="验证码">
+									</td>
+								</tr>
+								<tr>
+									<td></td>
+									<td colspan="3">
+									<input class="btn-blue btn-big" type="submit" value="提交留言">
+									<span id="AlertMsg"></span>
+									</td>
+								</tr>
+							</table>
+						</form>
+					</div>
+				</div>
+			</div>
+			<div class="span-4">
+				<include file="Public/right" />
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+$(function(){
+
+	//刷新验证码
+	var verifyimg = $("#CodeImg").attr("src");
+    $("#CodeImg").click(function(){
+        if( verifyimg.indexOf('?')>0){
+            $("#CodeImg").attr("src", verifyimg+'&random='+Math.random());
+        }else{
+            $("#CodeImg").attr("src", verifyimg.replace(/\?.*$/,'')+'?'+Math.random());
+        }
+    });
+    //防止重复提交
+	$(document).ajaxStart(function(){
+	    $("input:submit").attr("disabled", true);
+	}).ajaxStop(function(){
+	    $("input:submit").attr("disabled", false);
+	});
+	//验证提交
+	$("#Form").submit(function(){
+		var self = $(this);
+		//验证规则
+		var msg='';
+		if(self.find("#username").val() == '') msg+='请填写留言昵称,';
+		if(self.find("#email").val() == '') msg+='请填写联系邮箱,';
+		if(self.find("#CodeImg").val() == '') msg+='请填写验证码';
+		if(msg != '') { self.find("#AlertMsg").addClass('red').show().text(msg);return false; }
+
+		//提交
+		$.post(self.attr("action"), self.serialize(), success, "json");
+		return false;
+
+		function success(data){
+			if(data.status){
+				self.find("#AlertMsg").removeClass('red').addClass('green').show().text(data.info);
+				setTimeout(function() {
+					window.location.href = data.url;
+				}, 1000);
+				
+			} else {
+				self.find("#AlertMsg").addClass('red').show().text(data.info);
+				//刷新验证码
+				$("#CodeImg").click();
+			}
+		}
+		
+	});
+});
+</script>
+<include file="Public/foot" />

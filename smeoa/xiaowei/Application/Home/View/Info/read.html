@@ -1,0 +1,128 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	<input type="hidden" id="id" name="id" value="{$vo.id}">
+	{:W('PageHeader/simple',array('name'=>$vo['name'],'search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<a onclick="go_return_url();" class="btn btn-sm btn-primary">返回</a>
+				<if condition="$auth['admin'] ">
+					<a onclick="del();" class="btn btn-sm btn-danger">删除</a>
+				</if>
+			</div>
+			<div class="pull-right">
+				<if condition="$is_sign eq 1">
+					<empty name="sign_info">
+						<a onclick="sign()" class="btn btn-sm btn-primary">请签收</a>
+						<else/>
+						<a onclick="sign_info()" class="btn btn-sm btn-primary">已签收</a>
+					</empty>
+				</if>
+				<a onclick="winprint()" class="btn btn-sm btn-primary hidden-xs">打印</a>
+				<if condition="$auth['write'] and ($vo.user_id eq $user_id)">
+					<a onclick="edit();" class="btn btn-sm btn-primary">修改</a>
+				</if>
+			</div>
+		</div>
+	</div>
+	<form method='post' id="frm_content" name="frm_content" enctype="multipart/form-data"  class="well form-horizontal">
+		<input type="hidden" id="id" name="id" value="{$vo.id}">
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label">编号：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.doc_no}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >登录日期：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.create_time|to_date='Y年m月d日 H:i'}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >登录人：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$vo.user_name}
+				</p>
+			</div>
+		</div>
+
+		<div class="form-group col-sm-6">
+			<label class="col-sm-4 control-label" >管理员：</label>
+			<div class="col-sm-8">
+				<p class="form-control-static">
+					{$admin|show_contact}
+				</p>
+			</div>
+		</div>
+		<div class="clearfix"></div>
+		<div class="form-group">
+			<div class="col-xs-12">
+				<div class="content_wrap" >
+					<iframe class="content_iframe"></iframe>
+					<textarea  class="editor content" name="content" style="width:100%;display:none">{$vo.content}</textarea>
+				</div>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="name">附件：</label>
+			<div class="col-sm-10">
+				{:W('FileUpload/view',array('add_file'=>$vo['add_file'],'mode'=>'show'))}
+			</div>
+		</div>
+
+	</form>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		$(function() {
+			show_content();
+		});
+
+		function del() {
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('del',array('id'=>$vo['id']))}",'', function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							go_return_url();
+						});
+					}
+				});
+			});
+		}
+
+		function attach_down(obj) {
+			winopen("{:U('down')}?attach_id=" + $(obj).attr("file_id") + "&id/" + $("#id").val(),560, 470);
+		}
+
+		function edit() {
+			window.open(fix_url("{:U('edit')}?id=" + $("#id").val()), "_self");
+		}
+
+		//增加签收
+		function sign() {
+			sendAjax("{:U('sign')}", 'id=' + $("#id").val(), function(data) {
+				if (data.status) {
+					ui_alert(data.info, function() {
+						location.reload(true);
+						//重载当前页
+						//go_return_url();//返回上一页
+					});
+				}
+			});
+		}
+
+		function sign_info() {
+			winopen("{:U('sign_info',array('id'=>$vo['id']))}",560, 470);
+		}
+
+		//增加签收
+	</script>
+</block>

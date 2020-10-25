@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+    <meta charset="UTF-8">
+    <title>用户账号管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="stylesheet" href="/css/font.css">
+    <link rel="stylesheet" href="/css/xadmin.css">
+    <script src="/lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/js/xadmin.js"></script>
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        .layui-table thead span {
+            /*background-color: #acd3ed;*/
+            font-size: 15px;
+        }
+
+        .layui-table tbody tr td div {
+            font-size: 14px;
+        }
+
+        .layui-table tbody tr:hover {
+            background-color: #d3f7cd;
+        }
+
+        .layui-table tbody tr:hover td div {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<style>
+    .layui-form-switch {
+        width: 70px;
+        /*height: 25px;*/
+    }
+</style>
+<body class="layui-anim layui-anim-scale flag" style="display: none"><br/>
+<div class="x-nav">
+            <span class="layui-breadcrumb">
+                <a>首页</a>
+                <a>
+                    用户管理
+                </a>
+            </span>
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:5px;float:right"
+       id="refresh" title="刷新">
+        <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+    </a>
+</div>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card" style="border-radius: 20px;">
+                <div class="layui-card-body"
+                     style="background-image: linear-gradient(#d3f7cd,#ffffff , #d3f7cd);border-radius: 20px;">
+                    <form class="layui-form layui-col-space5" style="margin-top: 5px" id="myForm">
+
+                        <div class="layui-input-inline">
+                            <select lay-verify="choose" lay-filter="choose" name="option">
+                                <option value="">选择要查找的内容</option>
+                                <option value="用户名">用户名</option>
+                                <option value="手机号">手机号</option>
+                                <option value="邮箱">邮箱</option>
+                            </select>
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <input style="display: none" lay-verify="message" type="text" id="findText" name="message"
+                                   placeholder="输入信息" autocomplete="off"
+                                   class="layui-input">
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <button class="layui-btn" lay-submit="" lay-filter="search">
+                                <i class="layui-icon">&#xe615;</i>查找
+                            </button>
+                        </div>
+
+                    </form>
+
+                    <table id="demo" lay-filter="demo"></table>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-radius layui-btn-normal layui-icon layui-icon-edit  "
+       lay-event="edit"> 修改</a>
+    <a class="layui-btn layui-btn-danger layui-icon layui-icon-delete  layui-btn-xs" value="{{d.id}}" lay-event="del">
+        删除</a>
+</script>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-radius layui-btn-lg" lay-event="getCheckData"
+                style="background-color: #bd2b28"><i class="layui-icon "></i>批量删除
+        </button>
+        <button class="layui-btn layui-btn-radius layui-btn-lg" lay-event="addUser">
+            <i class="layui-icon"></i>添加用户
+        </button>
+    </div>
+</script>
+<script type="text/html" id="titleTpl">
+    <i>******</i>
+</script>
+<script type="text/html" id="checkboxTpl">
+    <input type="checkbox" name="lock" value="{{d.uid}}" lay-skin="switch" lay-text="已冻结|未冻结" lay-filter="switchBan" {{
+           d.status== 0 ? '' : 'checked' }}>
+</script>
+
+<script>
+    layui.use(['table', 'form', 'jquery', 'layer'], function () {
+        var $ = layui.jquery;
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+
+        //动态显示
+        parent.layui.notice.remove();
+        parent.layui.notice.info('用户管理界面', '已进入', parent.noticeOpt1);
+        $('.flag').show();
+
+        $("#refresh").click(function () {
+            $('#myForm')[0].reset();
+            layui.form.render();
+            $("#findText").hide();
+            parent.layui.notice.remove();
+            parent.layui.notice.success("用户数据列表已校准", "<div class = 'layui-icon layui-icon-heart-fill'> 同步成功</div>", parent.noticeOpt6);
+            table.render({
+                elem: '#demo'
+                , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+                , url: '/index/Administrator/userMsg' //数据接口
+                , loading: true
+                , size: 'lg'
+                , page: {
+                    layout: ['prev', 'page', 'next', 'count', 'limit']//自定义布局顺序
+                    , first: false //不显示首页
+                    , last: false //不显示尾页
+                }
+                , cols: [[ //表头
+                    {type: 'checkbox', width: 80}
+                    , {field: 'id', title: 'ID', align: 'center', width: 80, sort: true, hide: true}
+                    , {field: 'uid', title: '用户名', minWidth: 150, align: 'center'}
+                    , {field: 'password', title: '密码', width: 80, align: 'center', templet: '#titleTpl', hide: true}
+                    , {
+                        field: 'status',
+                        title: '状态',
+                        width: 124,
+                        align: 'center',
+                        templet: '#checkboxTpl',
+                        unresize: true
+                    }
+                    , {field: 'count_times', title: '登录次数', minWidth: 80, align: 'center'}
+                    , {field: 'ip', title: '最近登录ip', minWidth: 120, align: 'center'}
+                    , {field: 'tel', title: '手机号', minWidth: 160, align: 'center'}
+                    , {field: 'email', title: '邮箱', minWidth: 250, align: 'left'}
+                    , {field: 'create_time', title: '加入时间', minWidth: 200, align: 'center', sort: true}
+                    , {
+                        field: 'operation',
+                        title: '操作',
+                        minWidth: 170,
+                        align: 'center',
+                        fixed: 'right',
+                        toolbar: '#barDemo'
+                    }
+
+                ]]
+            });
+        });
+
+        //生成数据表格
+        var tableIns = table.render({
+            elem: '#demo'
+            , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+            , url: '/index/Administrator/userMsg' //数据接口
+            , loading: true
+            , size: 'lg'
+            , page: {
+                layout: ['prev', 'page', 'next', 'count', 'limit']//自定义布局顺序
+                , first: false //不显示首页
+                , last: false //不显示尾页
+            }
+            , cols: [[ //表头
+                {type: 'checkbox', width: 80}
+                , {field: 'id', title: 'ID', align: 'center', width: 80, sort: true, hide: true}
+                , {field: 'uid', title: '用户名', minWidth: 150, align: 'center'}
+                , {field: 'password', title: '密码', width: 80, align: 'center', templet: '#titleTpl', hide: true}
+                , {field: 'status', title: '状态', width: 124, align: 'center', templet: '#checkboxTpl', unresize: true}
+                , {field: 'count_times', title: '登录次数', minWidth: 80, align: 'center'}
+                , {field: 'ip', title: '最近登录ip', minWidth: 120, align: 'center'}
+                , {field: 'tel', title: '手机号', minWidth: 160, align: 'center'}
+                , {field: 'email', title: '邮箱', minWidth: 250, align: 'left'}
+                , {field: 'create_time', title: '加入时间', minWidth: 200, align: 'center', sort: true}
+                , {field: 'operation', title: '操作', minWidth: 170, align: 'center', fixed: 'right', toolbar: '#barDemo'}
+
+            ]]
+        });
+
+        // 动态显示搜索选项提示
+        form.on('select(choose)', function (data) {
+            // console.log(data.elem); //得到select原始DOM对象
+            // console.log(data.value); //得到被选中的值
+            // console.log(data.othis); //得到美化后的DOM对象
+            var findText = $("#findText");
+            var select = data.value;
+            findText.val('');
+            // console.log(findText.val);
+            switch (select) {
+                case "用户名":
+                    findText.attr('placeholder', "请输入要搜索的用户名");
+                    // findText.attr('lay-reqText', '请输入要搜索的用户名');
+                    findText.show();
+
+                    break;
+                case "手机号":
+                    findText.show();
+                    findText.attr('placeholder', '请输入要搜索的手机号');
+                    // findText.attr('lay-reqText', '请输入要搜索的手机号');
+                    break;
+                case "邮箱":
+                    findText.show();
+                    findText.attr('placeholder', '请输入要搜索的邮箱');
+                    // findText.attr('lay-reqText', '请输入要搜索的邮箱');
+                    break;
+                default:
+                    findText.hide();
+                    break;
+            }
+
+        });
+
+// 自定义验证规则
+        form.verify({
+            choose: function (value) {
+                if (!value) {
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('请选择搜索项', '操作异常', parent.noticeOpt5);
+                    return '请选择搜索项！'
+                }
+
+            },
+            message: function (value) {
+                if (!value) {
+                    parent.layui.notice.remove();
+                    parent.layui.notice.error('请输入要搜索的内容', '操作异常', parent.noticeOpt5);
+                    return '请输入要搜索的内容';
+                }
+
+            }
+        });
+
+        //搜索功能
+        form.on('submit(search)',
+            function (data) {
+                layer.msg('搜索中', {time: 1000});
+                var load = layer.load();
+                tableIns.reload({
+                    where: { //设定异步数据接口的额外参数，任意设
+                        choose: data.field.option
+                        , message: data.field.message
+                    }
+                    , page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , done: function (res, curr, count) {
+                        layer.close(load);
+                        parent.layui.notice.remove();
+                        if (count === 0) {
+                            parent.layui.notice.success(res.msg, '搜索完成', parent.noticeOpt4);
+                            layer.msg('搜索完成，' + res.msg, {time: 1500});
+                        } else {
+                            parent.layui.notice.success('找到' + count + '条数据', '搜索完成', parent.noticeOpt4);
+                            layer.msg('搜索完成，找到' + count + '条数据', {time: 1500});
+                        }
+                    }
+                });
+                return false;
+            });
+
+
+        // 冻结账号
+        form.on('switch(switchBan)', function (data) {
+            var status = this.checked ? 'true' : 'false';
+            parent.layui.notice.remove();
+            $.ajax({
+                type: "POST",
+                url: "/index/Administrator/banUser",
+                data: {
+                    uid: data.value,
+                    type: status
+                },
+                success: function (msg) {
+                    if (msg === 'ok') {
+                        parent.layui.notice.success('用户：' + data.value + (status === 'true' ? ' 已冻结' : ' 已恢复'), '操作成功', parent.noticeOpt4);
+                        layer.tips('' + (status === 'true' ? '已冻结' : '已恢复'), data.othis, {time: 600});
+                        form.render('checkbox'); //刷新checkbox开关渲染
+                    } else {
+                        parent.layui.notice.error(msg, '操作异常', parent.noticeOpt5);
+                        layer.alert('停用失败', {icon: 2});
+                    }
+                },
+                error: function () {
+                    parent.layui.notice.error('数据传输失败，请联系后台管理员', '操作异常', parent.noticeOpt5);
+                    layer.alert('数据传输失败，请联系后台管理员！', {icon: 5})
+                }
+            });
+
+            // console.log(data.value);
+        });
+        //监听编辑和删除工具条
+        table.on('tool(demo)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'edit') {
+                // layer.msg('ID：'+ data.id + ' 的查看操作');
+                parent.layui.notice.remove();
+                parent.layui.notice.warning('正在修改用户：' + data.uid + ' 的信息', '操作提示：', parent.noticeOpt3);
+                xadmin.open('修改用户', '/index/tools/user_edit?id=' + data.id, 400, 500, window.screen.width);
+            } else if (obj.event === 'del') {
+                parent.layui.notice.remove();
+                parent.layui.notice.warning('正在删除用户：' + data.uid, '操作提示：', parent.noticeOpt3);
+                layer.confirm('真的要删除 ' + data.uid + ' 用户吗？', {
+                        closeBtn: 0,
+                        title: '提示',
+                        shade: [0.7, '#dc7069']
+                    }, function (index) {
+                        var more = false;
+                        layer.confirm('是否同时解除与用户：' + data.uid + '绑定的所有设备？'
+                            , {
+                                btn: ['是', '否'],
+                                title: '若该用户有已经绑定的设备',
+                                shade: [0.7, '#8c261f'],
+                                cancel: function () {
+                                    layer.msg('您取消了操作', {time: 600});
+                                }
+                            }
+                            , function () {
+                                layer.msg('删除中……');
+                                var load = layer.load();
+                                more = true;
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/index/Administrator/delUser",
+                                    data: {
+                                        uid: data.uid,
+                                        more: more,
+                                    },
+                                    success: function (msg) {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        if (msg === 'ok') {
+                                            parent.layui.notice.success('成功删除用户：' + data.uid + ' 并解除与之绑定的设备', '操作完成', parent.noticeOpt4);
+                                            layer.msg('成功删除用户：' + data.uid + ' 并解除与之绑定的设备', {time: 1400, icon: 1});
+                                            setTimeout(function () {
+                                                $("#refresh").click();
+                                            }, 1000);
+
+                                        } else {
+                                            parent.layui.notice.error(msg, '操作异常', parent.noticeOpt5);
+                                            layer.msg(msg, {time: 1000});
+                                        }
+
+                                    },
+                                    error: function () {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        parent.layui.notice.error('数据传输失败，请联系后台管理员', '操作异常', parent.noticeOpt5);
+                                        layer.alert('数据提交失败，请联系后台管理员！', {icon: 2})
+                                    }
+                                });
+
+                            }
+                            , function () {
+                                layer.msg('删除中……');
+                                var load = layer.load();
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/index/Administrator/delUser",
+                                    data: {
+                                        uid: data.uid,
+                                        more: more,
+                                    },
+                                    success: function (msg) {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        if (msg === 'ok') {
+                                            parent.layui.notice.success('用户：' + data.uid + '删除成功', '操作完成', parent.noticeOpt4);
+                                            layer.msg('成功删除用户' + data.uid, {time: 1200, icon: 1});
+                                            setTimeout(function () {
+                                                $("#refresh").click();
+                                            }, 1000);
+
+                                        } else {
+                                            parent.layui.notice.error(msg, '操作异常', parent.noticeOpt5);
+                                            layer.msg(msg, {time: 1000});
+                                        }
+
+                                    },
+                                    error: function () {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        parent.layui.notice.error('数据传输失败，请联系后台管理员', '操作异常', parent.noticeOpt5);
+                                        layer.alert('数据传输失败，请联系后台管理员！', {icon: 2})
+                                    }
+                                });
+                            }
+                        );
+
+                        layer.close(index);
+                    },
+                    function () {
+                        layer.msg('您取消了操作', {time: 600});
+                        // location.reload();
+                    }
+                );
+            }
+        });
+
+        //头工具栏批量删除事件
+        table.on('toolbar(demo)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            // 添加用户
+            if (obj.event === 'addUser') {
+                parent.layui.notice.remove();
+                parent.layui.notice.warning('正在添加用户', '操作提示', parent.noticeOpt3);
+                xadmin.open('添加用户', '../tools/user_add', 400, 500, window.screen.width)
+            }
+            if (obj.event === 'getCheckData') {
+                var data = checkStatus.data;
+                // console.log(data);
+                // console.log(data[0]['id']);
+                // console.log(data[0]['uid']);
+
+                //判断是否为空
+                parent.layui.notice.remove();
+                if (!data[0]) {
+                    // parent.layui.notice.options = parent.noticeOpt5;
+                    parent.layui.notice.error('请选择要删除的用户！', '操作异常', parent.noticeOpt5);
+                    return layer.msg('请选择要删除的用户！', {icon: 2, time: 800});
+                }
+                var arrId = new Array();
+                var arrAcc = '';
+                for (var i = 0, len = data.length; i < len; i++) {
+                    arrId.push(data[i]['uid']);
+                    arrAcc += (data[i]['uid']) + ' ';
+                }
+                // console.log(arrAcc);
+                parent.layui.notice.warning('正在删除用户: ' + arrAcc, '操作提示', parent.noticeOpt3);
+                layer.confirm('确定要删除用户:' + arrAcc + '吗？', {
+                        closeBtn: 0,
+                        title: '提示',
+                        shade: [0.7, '#dc7069']
+                    }, function (index) {
+                        var more = false;
+                        layer.confirm('是否同时删除他们与设备的绑定信息？', {
+                                btn: ['是', '否'],
+                                title: '若该用户有已经绑定的设备',
+                                shade: [0.7, '#8c261f'],
+                                cancel: function () {
+                                    layer.msg('您取消了操作', {time: 600});
+                                }
+                            }, function () {
+                                more = true;
+                                layer.msg('删除中……');
+                                var load = layer.load();
+                                $.ajax({
+                                    type: "POST",
+                                    url: "../Administrator/delAllUser",
+                                    data: {
+                                        uid: arrId,
+                                        log: arrAcc,
+                                        more: more,
+                                    },
+                                    success: function (msg) {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        if (msg == 'ok') {
+                                            parent.layui.notice.success('成功删除用户：' + arrAcc + ' 并解除与之绑定的设备', '操作完成', parent.noticeOpt4);
+                                            layer.msg('成功删除用户：' + arrAcc + ' 并解除与之绑定的设备', {time: 1400, icon: 1});
+                                            setTimeout(function () {
+                                                $("#refresh").click();
+                                            }, 1000);
+
+                                        } else {
+                                            parent.layui.notice.error(msg, '操作异常', parent.noticeOpt5);
+                                            layer.msg(msg, {time: 1000});
+                                        }
+
+                                    },
+                                    error: function () {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        parent.layui.notice.error('数据传输失败，请联系后台管理员', '操作异常', parent.noticeOpt5);
+                                        layer.alert('数据传输失败，请联系后台管理员！', {icon: 2})
+                                    }
+                                });
+                            },
+                            function () {
+                                layer.msg('删除中……');
+                                var load = layer.load();
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/index/Administrator/delAllUser",
+                                    data: {
+                                        uid: arrId,
+                                        log: arrAcc,
+                                        more: more,
+                                    },
+                                    success: function (msg) {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        if (msg == 'ok') {
+                                            parent.layui.notice.success('用户：' + arrAcc + '删除成功', '操作完成', parent.noticeOpt4);
+                                            layer.msg('用户：' + arrAcc + '删除成功', {time: 1400, icon: 1});
+                                            setTimeout(function () {
+                                                $("#refresh").click();
+                                            }, 1000);
+
+                                        } else {
+                                            parent.layui.notice.error(msg, '操作异常', parent.noticeOpt5);
+                                            layer.msg(msg, {time: 1000});
+                                        }
+
+                                    },
+                                    error: function () {
+                                        layer.close(load);
+                                        parent.layui.notice.remove();
+                                        parent.layui.notice.error('数据传输失败，请联系后台管理员', '操作异常', parent.noticeOpt5);
+                                        layer.alert('数据传输失败，请联系后台管理员！', {icon: 2})
+                                    }
+                                });
+                            });
+
+                        layer.close(index);
+                    },
+                    function () {
+                        layer.msg('您取消了操作', {time: 600});
+                        // location.reload();
+                    });
+
+
+            }
+        });
+
+
+    });
+
+
+</script>
+
+</html>

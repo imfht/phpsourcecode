@@ -1,0 +1,133 @@
+<extend name="Public/base"/>
+<block name="head">
+	<link href="__MOBILE__/css/article.css" rel="stylesheet">
+</block>
+<block name="body">
+	<div class="container" >
+
+        <div class="row">
+			<div class="col-xs-12">
+				<div class="main-title" >
+					<h3 class="article-title">{$info.title}</h3>
+					<div clas="">
+						<span class="col-xs-6">{$info.create_time|date='Y-m-d H:i:s',###}</span>
+						<span class="col-xs-6">
+							<i class="glyphicon glyphicon-eye-open"></i>
+										{$info.view}
+							</span>
+					</div>
+					
+				</div>
+				
+				<div class="main-content">
+					
+					<img class="img-responsive" src="{$info.cover_id|get_cover=path}" alt="{$info.title}">
+					<section id="contents">{:get_tag_url($info['id'],$info['content'])}</section>
+				</div>
+			</div>
+			<div class="col-xs-12">
+					<ul class="col-xs-6 post-info padding-clear">
+						<li class="info-item">
+							<i class="info-icon icon-like" data-id="{$info.id}"></i>
+							<span>{$info.favor}</span>			
+						</li>
+						<li class="info-item">
+							<i class="info-icon icon-comment"></i>
+							<span>{$info.comment}</span>
+						</li>
+					
+					</ul>
+						
+					{:hook('documentDetailAfter',$info)}
+				</div>
+			<div class="col-xs-12">
+				<div class="jiathis_style_m"></div>
+			</div>
+			<script type="text/javascript" src="http://v3.jiathis.com/code/jiathis_m.js" charset="utf-8"></script>
+				<div class="col-xs-12">
+					<notempty name="info.tag">
+					<p class="tags">
+						<em>继续阅读：</em>
+						<volist name="info.tag" id="vo">
+							<a class="label label-info" href="{:U('Article/tag',array('id'=>$vo['id']))}">{$vo.tag_name}</a>
+						</volist>
+					</p>
+					</notempty>
+				</div>
+				<div class="col-xs-12 comment">
+					<h5>评论</h5>
+					<ul class="padding-clear">
+						<notempty name="comment_list">
+							<volist name="comment_list" id="vo">
+							<li class="comment-cell col-xs-12 padding-clear">
+								<div class="comment-user col-xs-2 padding-clear">
+									<div class="avatar">
+										<notempty name="vo.avatar">
+										<img alt="{$vo.nickname}" src="{$vo.avatar}">
+										<else/>
+											<img alt="{$vo.nickname}" src="__IMG__/headicon_128.png">
+										</notempty>
+									</div>
+									<div class="user">{$vo.nickname}</div>
+								</div>
+								<div class="comment-body col-xs-10 padding-clear">
+									<div class="comment-content col-xs-12 padding-clear">
+										{$vo.content}
+									</div>
+									<div class="comment-operate col-xs-12 padding-clear">
+										<div class="create-time">{$vo.create_time|date='Y-m-d H:i:s',###}</div>
+									</div>
+								</div>
+							</li>
+							</volist>
+						</notempty>
+					</ul>
+				</div>
+				<div class="col-xs-12">
+					<form class="form-horizontal" method="post" action="{:U('Article/comment')}">
+						<textarea class="form-control" name="content" rows="3"></textarea>
+						<input type="hidden" name="object_id" value="{$info['id']}">
+						<button class="ajax-post btn btn-success fr" style="margin-top:20px;" type="submit" target-form="form-horizontal">提交评论</button>
+					</form>
+				</div>
+				
+
+			
+        </div>
+    </div>
+    <script>
+    showGoodsImgInArticle = "{:C('SHOW_GOODS_IMG_IN_ARTICLE')}";
+	var img = '';
+	$(function(){
+		$('#contents').find('img').each(function(){
+			$(this).addClass('img-responsive');
+		});
+		$('#contents').find('.article-goods').each(function(){
+			var id = $(this).attr('name');
+			var p  = $(this).parent();
+			
+			if(id!='' && id!='undefinded'){
+				$.post("{:U('Goods/buttonInfo')}", {'id':id}, function (result) { 
+    				if(result.errno <=0){
+    					goods = result.content;
+    					var title = '<h5 class= "goods-title">'+goods.name+'</h5>'
+    					if(showGoodsImgInArticle >0){
+    						img = '<img class="img-responsive goods-img" src="'+goods.src+'">';
+    					}
+    					var div = title+img+'<div>'+'<span class="price">￥:'+goods.price+'</span>'+'<a class="btn btn-circle" href="'+goods.url+'"><span>查看详细</span></a>'+'</div>';
+    					p.html(div);
+    					p.addClass('goods-extend');
+    				}else{
+    					p.remove();
+    				}
+    			},'json');
+			}
+			
+		});
+		heightlight_bottom_nav("{$default_url}"); 
+	});
+
+    	
+    </script>
+</block>
+

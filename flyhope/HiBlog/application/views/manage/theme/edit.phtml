@@ -1,0 +1,89 @@
+<?php $this; /* @var $this \Comm\View */  ?>
+<?php $this->_block('header') ?>
+<?php $this->css('manage/theme/edit.css'); ?>
+<?php $this->_blockEnd() ?>
+<?php $this->_block('content'); ?>
+
+<h2><?= _('编辑主题') ?> : <?= $theme['name'] ?></h2>
+<?php if($resource['locked']) : ?>
+<div class="panel panel-danger">
+	<div class="panel-heading"><?= _('模板锁定') ?></div>
+	<div class="panel-body">
+		<?= _('模板已锁定，与复制时模板相关联，解锁后解除关联，可自行编辑。') ?>
+		<a id="theme-unlock" data-id="<?= $theme['id'] ?>" role="button" class="btn btn-danger" href="javascript:void(0)"><?= _('解锁') ?></a>
+	</div>
+</div>
+<?php endif; ?>
+
+<form id="form-theme-resource-create" action="<?= $this->path('aj/manage/theme/resource/create') ?>" class="form-inline" method="post" onsubmit="return false">
+<input type="hidden" name="tpl_id" value="<?= $theme['id'] ?>" />
+<div class="panel panel-info">
+	<div class="panel-body">
+		<div class="form-group">
+			<label class="sr-only" for="form-input-name"></label>
+			<div class="input-group">
+				<div class="input-group-addon"><?= _('名称') ?></div>
+				<input type="text" class="form-control" id="form-input-name" name="resource_name" />
+			</div>
+		</div>
+		<input type="submit" class="btn btn-info" value="<?= _('创建模板资源') ?>" />
+	</div>
+</div>
+</form>
+
+<?php if($resource['resource']) : ?>
+<div class="panel panel-default" id="resource-result">
+	<table class="table table-hover table-bordered">
+		<thead>
+			<tr>
+				<th width="100" class="text-center">ID</th>
+				<th class="text-center"><?= _('名称') ?></th>
+				<th width="150" class="text-center"><?= _('更新时间') ?></th>
+				<th width="100" class="text-center"><?= _('操作') ?></th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php foreach($resource['resource'] as $value) : ?>
+			<tr>
+				<td class="text-center" node-type="id"><?= $value['id'] ?></td>
+				<td node-type="resource-name"><?= $value['resource_name'] ?></td>
+				<td class="text-center"><?= $value['update_time'] ?></td>
+				<td class="text-center">
+				    <a href="javascript:void(0)" class="btn btn-xs btn-default" role="button" action-type="show-resource">查看</a>
+				    
+				    <?php if(\Model\Theme\Resource::isProtected($value['resource_name'])) : ?>
+					<a target="_blank" href="<?= $this->path('manage/theme/demo?' . http_build_query(['theme' => $value['tpl_id'], 'resource' => $value['resource_name']])) ?>" class="btn btn-xs btn-default" role="button">预览</a>
+				    <?php elseif(!$resource['locked']) : ?>
+				    <a href="javascript:void(0)" class="btn btn-xs btn-danger" role="button" action-type="destroy">删除</a>
+				    <?php endif; ?>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+</div>
+<div class="modal fade" id="modal-show-resource" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" action-type="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" node-type="title"></h4>
+      </div>
+      <div class="modal-body">
+        <div class="theme-resource-content xml" id="theme-content"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" action-type="close"><?= _('关闭') ?></button>
+        <button type="button" class="btn btn-primary" action-type="save"><?= _('保存') ?></button>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+<?php $this->_blockEnd(); ?>
+<?php $this->_block('body_end')?>
+<?php $this->jsLib('ace'); ?>
+<?php $this->js('manage/theme/edit.js'); ?>
+
+<?php $this->_blockEnd()?>
+<?php $this->_blockLoad('_block/manage', ['nav'=>'theme']) ?>

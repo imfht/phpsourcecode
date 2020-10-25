@@ -1,0 +1,122 @@
+{extend name="index:layout" /}
+
+{block name="menu"}{/block}
+
+{block name="content"}
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+function CheckAll(va){
+	form=document.form_work
+	for (var i=0;i<form.elements.length;i++){
+		var e = form.elements[i];
+		if(va=='all'){
+			e.checked = true;
+		}else{
+			e.checked == true ? e.checked = false : e.checked = true;
+		}
+	}
+}
+function ckdel(){
+	msg=confirm('你确认要批量删除选中用户吗？你慎重考虑，不可恢复！');
+	if(!msg){
+		return false;
+	}
+}
+function check_wx_attention(uid){
+	var checkhtml="";
+	$.get("index.php?lfj=$lfj&job=check_wx&uid="+uid+"&"+Math.random(),function(d){
+		if(d=='yes'){
+			checkhtml="<img src='../member/images/check_yes.gif'>";
+		}else{
+			checkhtml="<img src='../member/images/check_no.gif'>";
+		}	
+		$('.wx_attention'+uid).html(checkhtml);
+	});
+}
+//-->
+</SCRIPT>
+<div class="MainContainers">
+  <div class="Header"><span class="tag">用户资料管理</span><span class="more">&gt;&gt;</span></div>
+  <div class="Conter">
+	<form name="form1" method="post" action="index.php?lfj=$lfj&job=$job">
+		<table width="100%" style="margin-bottom:15px;">
+		  <tr>
+		  	 <td style="width:400px;">只列出指定用户组的用户{$select_group}</td>
+			 <td>
+			 	搜索&gt;&gt; 关键字
+				<input type="text" name="keywords" value="$keywords">
+				<select name="type">
+{php}
+foreach($field_title AS $t=>$v){
+$ck=$type==$t?' selected  style="color:red;"':'';
+{/php}
+					<option value="$t" $ck>$v</option>
+{php}
+}
+{/php} 
+				 </select>
+				 <input type="submit" name="Submit" value="搜 索" class='btn'>
+				 [<a href="index.php?lfj=$lfj&job=$job">查看全部用户</a>]
+			 </td>
+		  </tr>
+		</table>
+	</form>
+<form name="form_work" id="form_work" method="post" action="?lfj=$lfj&action=delete" onsubmit="return ckdel();">
+<table class="ListTable">
+  <tr> 
+    <th width="7%">UID</th>
+    <th >用户名</th>
+    <th width="18%">日期</th>
+    <th width="15%">IP</th>
+    <th width="11%">积分 </th>
+    <th width="10%">余额</th>
+    <th width="9%">修改/删除</th>
+    <th width="8%">关注</th>
+	 <th width="5%">角色</th>
+  </tr>
+{volist name="listdb" id="rs"}
+  <tr> 
+    <td><input type="checkbox" name="uid_db[]" value="{$rs.uid}">{$rs.uid}</td>
+      <td><img src="$rs[icon]" onerror="this.src='__STATIC__/images/nobody.gif'" width="60" height="60"><br />
+          <a href="$webdb[www_url]/member/userinfo.php?uid=$rs[uid]" target="_blank">{$rs.username}</a> 
+      </td>
+      <td>注册:{$rs.regdate}<br>访问:{$rs.lastvist}</td>
+    <td>注册:{$rs.regip}<br/>
+      访问:{$rs.lastip}</td>
+    <td>{$rs.money} 个 </td>
+    <td><span class="red">{$rs.rmb}元</span><br><a href="index.php?lfj=$lfj&job=rmbconsume&uid=$rs[uid]">明细</a></td>
+    <td>  
+      <a href="index.php?lfj=$lfj&job=editmember&uid=$rs[uid]"  title="修改会员资料" class='edit'></a>
+      <a href="index.php?lfj=$lfj&action=delete&uid=$rs[uid]" onclick="{$rs[alert]};return confirm('你确实要删除此会员吗?不可恢复,请慎重!')" title="删除当前会员" class='del'></a>  
+    </td>
+    <td>
+		<span class="wx_attention$rs[uid]">{$rs.yz}</span>
+		<script type="text/javascript">
+		check_wx_attention({$rs.uid});
+		</script>
+	</td>
+	 <td> <a href="index.php?lfj=page&amp;job=member&amp;uid=$rs[uid]" alt='以他的角色进入会员中心' target="_blank" ><img src='images/man.png' border="0" /></a>  </td>
+  </tr>
+{/volist}
+  </table>
+      <div class="ShowPage">$showpage</div>
+      <div class="AtcCont">
+        <div class="submits">
+          <input type="button" onclick="CheckAll('all')" name="Submit2" value="全选" />
+          <input type="button" onClick='CheckAll()' name="Submit2" value="反选" /> 
+          <input type="submit" name="Submit2" value="批量删除" /> 
+        </div>
+      </div>
+</form>
+</div>
+</div>
+<div class="MainContainers">
+  <div class="Header"><span class="tag">说明</span></div>
+  <div class="Conter">
+    <ul class="notes">
+      <li>1、用户退出关注，系统不会删除他的用户资料，下次再关注，还会对应到之前的资料。</li>
+    </ul>
+  </div>
+</div>
+<br />
+{/block}

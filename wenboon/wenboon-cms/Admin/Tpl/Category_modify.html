@@ -1,0 +1,303 @@
+<html>
+<head>
+    <css file="__PUBLIC__/css/body.css"/>
+    <css file="__STATIC__/icon/icon.css"/>
+    <css file="__PUBLIC__/css/tab.css"/>
+    <js file="__STATIC__/jquery-1.7.2.min.js"/>
+    <css file="__STATIC__/kindeditor/themes/default/default.css" />
+    <js file="__STATIC__/kindeditor/kindeditor-min.js"/>
+    <js file="__STATIC__/kindeditor/lang/zh_CN.js"/>
+    <css file="__STATIC__/uploadify/uploadify.css"/>
+    <js file="__STATIC__/uploadify/jquery.uploadify.js"/>
+    <script type="text/javascript">
+        function cc(obj)
+        {
+            if($(obj).attr('leve')==1) 
+            {
+                alert('不能超过五级！');
+                $("#pid").get(0).selectedIndex=0;
+            }
+        }
+          //模型选择
+        function bb(obj,_this){
+            var mid="{$mCategory['id']}";
+            if($(obj).val()){
+                 $('#f_load').css('display','');
+                 var f_url="{:U('Category/getfields')}";
+                 $.get(f_url, { mtag: $(obj).val()},
+                    function(data){
+                        var json_obj = eval(data);
+                        var tab_obj=$("<table class='list-tb tableTd'></table>");
+                        var line=json_obj.length;
+                        for(i=0;i<line;i++){
+                            if(json_obj[i].cid.indexOf('|'+mid)==-1)
+                            {
+                                var newtr="<tr><td width=10% class='textRight'>"+json_obj[i].title+
+                                        ":</td><td><input name='tagfields[]' value='"+json_obj[i].tag+"' type='checkbox' style='float:left;height:30px;'/><span style='float:left;height:35px;line-height:35px;font-weight:normal;'>"+
+                                         json_obj[i].tag+"</span></td></tr>";
+                            }
+                            else{
+                                var newtr="<tr><td width=10% class='textRight'>"+json_obj[i].title+
+                                        ":</td><td><input checked='' name='tagfields[]' value='"+json_obj[i].tag+"' type='checkbox' style='float:left;height:30px;'/><span style='float:left;height:35px;line-height:35px;font-weight:normal;'>"+
+                                         json_obj[i].tag+"</span></td></tr>";
+                            }
+                            tab_obj.append(newtr);
+                        }
+                        
+                        $('.tab_body_3').html('');
+                        $('.tab_body_3').append(tab_obj);
+                        $('#f_load').css('display','none');
+                  });
+                 
+            }
+            else{
+                $('.tab_body_3').html("请在'基本'选项中选择'模型'");
+            }
+            
+        }
+        function deleImg(){
+            $("#thumb").attr("value","");
+        }
+        
+        $(function() {
+        	$("#file_upload").uploadify({
+        		height        : 22,
+        		swf           : '__STATIC__/uploadify/uploadify.swf',
+        		uploader      : '{:U("Upload/upload_tp")}',
+        		width         : 60,
+                multi         :false, //ture多文件，false单文件
+                queueID:'uploadify_ppt',
+                buttonText:'',
+                removeCompleted : true,
+                fileTypeDesc : '图片文件(*.jpg,*.jpeg,*.gif,*.png)',
+                fileTypeExts : '*.jpg;*.jpeg;*.gif;*.png',
+                'onUploadSuccess':function(file,data,response){
+                        $('#thumb').val(data);
+                        $('#img').attr('src',data);
+                }
+        	});
+        });
+        
+        $(function(){
+                var url1="{:U('upload/upload_ke_json','',0)}";
+                var url2="{:U('upload/upload_ke_manager','',0)}";
+                var editor;
+    			KindEditor.ready(function(K) {
+    				editor = K.create('.elem1', {
+                        uploadJson : url1,
+                        fileManagerJson : url2,
+                        allowFileManager : true
+    				});
+    			});
+        }); 
+        function tab_f(x,_this){
+            $('.tab span').removeClass('tab-c');
+            $('.tab_body').css('display','none');
+            $(x).css('display','block');
+            $(_this).addClass('tab-c');
+        }
+    </script>
+    
+    <style type="text/css">
+        .lock span{float:left;height:30px;line-height:30px;font-weight: normal;}
+        .lock input{float:left;border: 0px;background: #f8f8f8;}
+        .uplods{list-style-type: none;margin:0px;padding:0px;}
+        .uplods li{float:left;margin:0px;padding:0px;margin-right:5px;}
+        #thumb{font-size: 12px;width:145px;}
+        .tab_body{display:none;padding-top:10px;}
+    </style>
+</head>
+<body>
+<form action="{:U('Category/modifyHandle')}" enctype="multipart/form-data" method="post">
+    <div class="top">
+        <div class="position"><span class="icon icon-31"></span>当前位置：修改分类信息</div>
+        <div class="top-title">
+            <span class="icon icon-32"></span>
+            <div class="top-tool">
+                <a href="{:U('Category/index')}" class="button-a">返回列表</a>
+                <input type="submit" class="button-b" value="提交保存"/>
+                <input type="hidden" name="id" value="{$mCategory['id']}"/>
+            </div>
+        </div>
+    </div>
+    <div class="body">
+        <div class="tab">
+            <span class="tab-c" onclick="tab_f('.tab_body_1',this)">基本</span>
+            <span onclick="tab_f('.tab_body_2',this)">详情</span>
+            <span onclick="tab_f('.tab_body_3',this)">字段分配</span>
+        </div>
+        <div class="tab_body tab_body_1" style="display: block;padding-top:0px;">
+            <table class="list-tb tableTd" border="0" cellpadding="0" cellspacing="4">
+              <tr>
+                <td width="10%" class="textRight">上级类目：</td>
+                    <td>
+                       <select name="pid" id="pid" onchange="cc(this[selectedIndex]);">
+                               <if condition="$mCategory['pid']==0">
+                                    <option value ="0">作为顶级分类</option>
+                               <else/>
+                                    <option value ="{$pCategory['id']}">{$pCategory['title']}</option>
+                               </if>
+                              
+                              <foreach name="Category" item="v">
+                                 <option value ="{$v['id']}">{$v['title']}</option>
+                                 <foreach name="v.child" item="v1">
+                                    <option value ="{$v1['id']}">|-{$v1['title']}</option>
+                                    <foreach name="v1.child" item="v2">
+                                        <option value ="{$v2['id']}">|--{$v2['title']}</option>
+                                        <foreach name="v2.child" item="v3">
+                                            <option value ="{$v3['id']}" >|---{$v3['title']}</option>
+                                            <foreach name="v3.child" item="v4">
+                                                <option value ="{$v4['id']}" leve="1">|----{$v4['title']}</option>
+                                            </foreach>
+                                        </foreach>
+                                    </foreach>
+                                 </foreach>
+                              </foreach>
+                       </select>
+                    </td>
+                </tr>
+                 <tr>
+                    <td class="textRight">类目名称：</td>
+                    <td>
+                        <input type="text" name="title" value="{$mCategory['title']}"/><span class="remark">最大可输入50个字符,支持中英文</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td  class="textRight">类目扩展名称：</td>
+                    <td>
+                        <input type="text" name="retitle" value="{$mCategory['retitle']}"/><span class="remark">其他名称,字段名：retitle</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">URL别名：</td>
+                    <td>
+                        <input type="text" name="urlname" value="{$mCategory['urlname']}"/><span class="remark">唯一字段，只有在URL模式不为一时可用</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">关键字：</td>
+                    <td>
+                        <input type="text" name="keywords" value="{$mCategory['keywords']}"/><span class="remark">本栏目的关键字</span>
+                    </td>
+                </tr>
+               
+                <tr>
+                    <td class="textRight">排序：</td>
+                    <td>
+                        <input type="text" name="orders" value="{$mCategory['orders']}"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">访问权限：</td>
+                    <td>
+                        <select name="access">
+                            <option <if condition="$mCategory['access'] eq 1">selected=""</if> value="1">游客</option>
+                            <option <if condition="$mCategory['access'] eq 2">selected=""</if> value="2">会员</option>
+                            <option <if condition="$mCategory['access'] eq 3">selected=""</if> value="3">禁止访问</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">评论权限：</td>
+                    <td>
+                        <select name="review">
+                            <option <if condition="$mCategory['review'] eq 1">selected=""</if> value="1">游客</option>
+                            <option <if condition="$mCategory['review'] eq 2">selected=""</if> value="2">会员</option>
+                            <option <if condition="$mCategory['review'] eq 3">selected=""</if> value="3">禁止评论</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">发布权限：</td>
+                    <td>
+                        <select name="release">
+                            <option <if condition="$mCategory['release'] eq 0">selected=""</if> value="0">游客</option>
+                            <option <if condition="$mCategory['release'] eq 1">selected=""</if> value="1">会员</option>
+                            <option <if condition="$mCategory['release'] eq 2">selected=""</if> value="2">禁止发布</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">是否显示：</td>
+                    <td class="lock">
+                            <input type="radio" name="show" value="0" <if condition="!$mCategory['show']">checked=""</if>/><span>显示</span>
+                            <input type="radio" name="show" value="1" <if condition="$mCategory['show']">checked=""</if>/><span>隐藏</span>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">模型：</td>
+                    <td>
+                        <select name="module" onchange="bb(this[selectedIndex],this);">
+                            <foreach name="Module" item="v">
+                                <option <if condition="$v['tag'] eq $mModule['tag']">selected="selected"</if> value ="{$v['tag']}">{$v['title']}</option>
+                            </foreach>
+                        </select>
+                        <span id="f_load" style="display: none;"><img src="__PUBLIC__/images/load.gif" height="13px"/></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="textRight">列表页：</td>
+                    <td>
+                            <input type="text" name="list" value="{$mCategory['list']}"/><span class="remark">进入本分类，会调用该名称的列表页</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td  class="textRight">内容页：</td>
+                    <td>
+                            <input type="text" name="content" value="{$mCategory['content']}"/><span class="remark">进入本分类，会调用该名称的内容页</span>
+                    </td>
+                </tr>
+                 <tr>
+                    <td rowspan="2" class="textRight">分类图片：</td>
+                    <td><a href="{$mCategory['thumb']}" target="_blank"><img id="img" width="30px" height="30px" <if condition="$mCategory['thumb'] eq NULL">src="__PUBLIC__/images/imgs.gif" <else/>src="{$mCategory['thumb']}"</if> /></a></td>
+                </tr>
+                <tr>
+                    <td>
+                        <ul class="uplods">
+                            <li><input type="text" name="thumb" id="thumb" value="{$mCategory['thumb']}"/></li>
+                            <li><input type="file" name="file_upload" id="file_upload"/></li>
+                            <li><div id="uploadify_ppt" style="width: 300px;"></div></li>
+                        </ul>
+                    </td>
+                </tr>
+                 <tr>
+                    <td class="textRight">类目简介：</td>
+                    <td>
+                        <textarea name="description">{$mCategory['description']}</textarea>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div  class="tab_body tab_body_2">
+            <table>
+                <tr>
+                    <td><textarea style="width: 700px;height:300px;" class="elem1" name="body">{$mCategory['body']}</textarea></td>
+           
+                </tr>
+                <tr>
+                    <td style="font-size: 12px;">
+                        如果分类介绍比效复杂，请使用此字段。具体调用方法请参考
+                        <a href="http://www.wenboon.com/wenbon/a/cid/15.html" target="_blank">帮助</a>
+                    </td>
+                </tr>
+            </table>
+            
+        </div> 
+        <div class="tab_body tab_body_3">
+            <table class='list-tb tableTd'>
+                    <foreach name="mFields" item="v">
+                        <tr>
+                            <td width=10% class='textRight'>{$v[title]}:</td>
+                            <td>
+                                <input <?php if(strstr($v['cid'],'|'.$mCategory['id'])){echo "checked=''";};?> type="checkbox" name="tagfields[]" value="{$v[tag]}" style='float:left;height:30px;'/>
+                                <span style='float:left;height:35px;line-height:35px;font-weight:normal;'>{$v[tag]}</span>
+                            </td>
+                        </tr>
+                    </foreach>
+            </table>
+        </div>
+    </div>
+</form>
+</body>
+</html>

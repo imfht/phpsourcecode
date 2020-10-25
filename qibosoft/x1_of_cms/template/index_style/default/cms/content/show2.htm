@@ -1,0 +1,90 @@
+{extend name="$index_style_layout" /}
+
+<!--SEO相关-->
+{block name="head_title"}{$info.title}{/block}
+{block name="head_keword"}{$info.keywords?:$info.title}  {$s_info.name} {/block}
+{block name="head_description"}{:get_word(del_html($info['content']),300)}{/block}
+
+{block name="body_content"}
+<link rel="stylesheet" href="__STATIC__/index/default/showpic.css">
+
+<!-- mui图片特效 对应DIV里的mui-content-padded类 图片要加参数 data-preview-src="" data-preview-group="1" -->
+<link rel="stylesheet" href="__STATIC__/mui/css/mui.min.css">
+<link rel="stylesheet" href="__STATIC__/mui/css/mui.preview.css">
+
+<div class="ShowPhotoCont">
+{qb:showpage name="photo_show_pic0"}
+	<div class="PhotoBox mui-content-padded">
+		<div class="BigPic"><span><a href="#"><img src="{$listdb.0.picurl}" data-preview-src="" data-preview-group="1" /></a></span></div>
+		<ul class="MorePic">
+{volist name="listdb" id="rs"}
+			<li><span><a href="#"><img src="{$rs.picurl}" data-preview-src="" data-preview-group="1"/></a></span></li>
+{/volist}
+		</ul>
+	</div>
+{/qb:showpage}
+<script type="text/javascript">
+function add_fav(id){
+	var url="{:purl('fav/api/add')}?type={:config('system_dirname')}&id="+id;
+	$.get(url,function(res){
+		if(res.code==0){
+			layer.msg('收藏成功');
+		}else{
+			layer.alert(res.msg);
+		}
+	})
+}
+</script>
+<style type="text/css">.infos{font-size:14px;color:#999;}.infos span{margin-right:10px;}</style>
+	<div class="ContentBox">
+		<div class="title">{$info.title}</div>
+		<div class="infos">
+			<span><i class="glyphicon glyphicon-time"></i> {:date("Y-m-d H:i:s",$info.create_time)}</span>
+			<span><i class="si si-eye"></i> {$info.view}</span>
+			<span onclick="add_fav({$id})"> <li class="fa fa-fw fa-heart"></li>收藏</span> 
+			<span class="manage_topic"> <li class="fa fa-cogs"></li> 管理</span> 
+			{include file="index@common/manage_btn" /}
+		</div>
+		<div class="Cont">
+			<i class="glyphicon glyphicon-paperclip"></i>
+			{$info.content}
+		</div>
+	</div>
+	<!--引用评论碎片-->
+	{qb:comment name="commentwap02" rows='5' tpl="comment/wap01"}{/qb:comment}
+</div>
+
+<!-- mui图片特效 -->
+<script src="__STATIC__/mui/js/mui.min.js"></script>
+<script src="__STATIC__/mui/js/mui.zoom.js"></script>
+<script src="__STATIC__/mui/js/mui.previewimage.js"></script>
+<script>mui.previewImage();</script>
+
+<!-- 微动态自动收录用户感兴趣的主题,时间60代表用户停留60秒将自动收藏 -->
+{:fun('sns@fav',$info,60,'系统帮你订阅了本主题,下次本主题有回复,将会通知你')}
+
+<script>
+$('.PhotoBox img').hover(
+	function(){
+		$(this).animate({"width":"150%"},300);
+	},
+	function(){
+		$(this).animate({"width":"100%"},300);
+	}
+);
+</script>
+
+<script type="text/javascript">
+//解决MUI链接无法点击的问题
+mui('body').on('tap','a',function(){
+	window.top.location.href=this.href;
+});
+</script>
+
+<!-- 分享海报二维码宣传推广图片 -->
+{include file="$haibao" /}
+{include file="../../../haibao_style/btn" /}
+<!--<div style="position:fixed;right:30px;top:80px;z-index:200;width:30px;font-size:10px;line-height:10px;color:#000;opacity:0.7;"><i id="share_code" onclick="share_btn()" style="font-size:30px;" class="fa fa-qrcode"></i>海报</div>-->
+
+
+{/block}

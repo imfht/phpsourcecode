@@ -1,0 +1,231 @@
+{extends file="base.html"}
+{block name=global}
+<form id="prompt_form" method="post" enctype="multipart/form-data" class="layui-form layui-form-pane box_form">
+<div class="layui-form-item form-item-{$data.$mdl.type}" >
+<label class="layui-form-label">{$data.$mdl.title}：</label>
+<div class="layui-input-inline">
+{if $data.$mdl.type=='text'}
+	{$form->text("$mdl.value",['class' => 'layui-input text-input medium-input'])}
+{elseif $data.$mdl.type=='password'}
+	{$form->password("$mdl.value",['class' => 'layui-input text-input medium-input'])}
+{elseif $data.$mdl.type=='textarea'}
+	{$form->textarea("$mdl.value",['class' => 'layui-textarea text-input textarea'])}
+{elseif $data.$mdl.type=='color'}
+	{$local.val=$data.$mdl.value}
+    <div class="colorBox">
+        {$form->hidden("$mdl.value",['class' => 'color'])}
+        <div class="color color_{$field}" style="{if $local.val}background-color:{$local.val};{/if}"></div>
+    </div>
+    <script type="text/javascript">
+    $('.color_{$field}').ColorPicker({
+        onShow : function(colpkr){
+            $(colpkr).stop(true,true).fadeIn(500);
+            var color  = $('.color_{$field}').parent().find('input').val();
+            if(color)  $('.color_{$field}').ColorPickerSetColor(color);
+            return false;
+        },
+        onHide: function (colpkr) {
+    		$(colpkr).stop(true,true).fadeOut(500);
+    		return false;
+    	},
+        onChange : function(hsb, hex, rgb){
+            $('.color_{$field}').css('background-color', '#' + hex).parent().find('input').val('#' + hex) ;
+        }
+    });
+    </script> 
+{elseif $data.$mdl.type=='file'}
+    {$form->text("$mdl.value",['class' => 'layui-input text-input medium-input readonly','readonly'=>true])}
+    <div class="clearfix" style="margin-top: 10px;">
+        <a href="javascript:void(0);" class="upload_elem_box">
+            {$form->file("Setting.upload.value",['class'=>'form_upload'])}
+            <i class="fa fa-cloud-upload fa-lg"></i>文件上传
+        </a><span class="upload_elem_info"></span>
+    </div> 
+{elseif $data.$mdl.type=='checkbox'}
+    {$form->checkbox("$mdl.value",$data.$mdl.options|parse_json,['div' => false,'lay-skin'=>'primary'])}
+{elseif $data.$mdl.type=='radio'}
+    {$form->radio("$mdl.value",$data.$mdl.options|parse_json,['class'=>'form_item','label'=>false,'title'=>true,'notext'=>true])}
+{elseif $data.$mdl.type=='select'}
+    {$form->select("$mdl.value",$data.$mdl.options|parse_json,['class'=>'form_item','multiple'=>$col.multiple,'lay-search'=>'','empty'=>"≡请选择≡"])}
+{elseif $data.$mdl.type=='checker'}
+    {$form->checkbox("$mdl.value",[],['class' => "form_item" ,'lay-skin'=>'switch'])}
+{elseif $data.$mdl.type=='array'}
+{$form->hidden("$mdl.value",['class'=>'form_item'])}
+<div class="array">
+   
+</div>
+<a class="javascript edit_array layui-btn" rel="edit_array" >编辑</a>
+{elseif $data.$mdl.type=='keyvalue'}
+{$form->hidden("$mdl.value",['class'=>'form_item'])}
+<div class="array">
+    
+</div>
+<a class="javascript edit_array  layui-btn  keyvalue" rel="edit_array" >编辑</a>
+{/if}
+</div>
+
+</div>
+{if $data.$mdl.info}
+<div class="setting_info" style="color: #666;margin-bottom: 15px;"><em>{$data.$mdl.info}</em></div>
+{/if}
+<div class="layui-form-item form-item-btns">
+<div class="layui-input-inline">
+  <button class="layui-btn layui-btn-normal" lay-submit >确定</button>
+</div>
+</div>
+</form>
+<script>
+layui.use(['form','element','layer'], function(){
+    var form = layui.form;
+});
+$('.form_upload').change(function(){
+    $(this).closest('div').find('.upload_elem_info').html('新文件：'+$(this).val()).css('display','block') ;
+})
+
+if(typeof(TPL) != 'undefined'){
+
+//{literal}
+	TPL.show_array=function(){/*
+<table cellspacing="1" cellpadding="0" border="0" style="width:auto">
+	{each $value as $p_val $p_index}
+	<tr><td align="right" style=" border:0; padding:3px;">{$p_index}.</td><td style="border:0; padding:3px;">=></td><td style="border:0; padding:3px;{if $p_val===''}background:#039; color:#fff;{else}background:#f3f3f3;{/if}" align="left">{if $p_val===''}空{else}{$p_val}{/if}</td></tr>
+	{/each}
+</table>
+*/}
+	TPL.show_keyvalue=function(){/*
+<table cellspacing="1" cellpadding="0" border="0" style="width:auto">
+	{each $value as $p_val $p_key}
+	<tr><td align="right" style="border:0; padding:3px;{if $p_key===''}background:#039; color:#fff;{else}background:#f3f3f3;{/if}">{if $p_key===''}空{else}{$p_key}{/if}</td><td  style="border:0; padding:3px;">=></td><td style="border:0; padding:3px;{if $p_val===''}background:#039; color:#fff;{else}background:#f3f3f3;{/if}" align="left">{if $p_val===''}空{else}{$p_val}{/if}</td></tr>
+	{/each}
+</table>
+*/}
+	
+	TPL.edit_array=function(){/*
+<div class="edit_array">
+	<div class="copy_template" style="display:none;">
+		<div class="array_item">
+		<div class="array_item">
+		<table class="form_item" border="0" cellpadding="0" cellspacing="0"><tr><td>
+		<input type="text" value="" class="layui-input text-input form_item" name="array_value[]">
+		</td><td><a class="javascript" rel="array_item_remove" title="删除" ><i class="fa fa-minus-circle"></i> 删除</a> <a class="javascript" rel="array_item_insert" title="插入"><i class="fa fa-plus-circle"></i> 插入</a></td></tr></table>
+		</div>
+		</div>
+	</div>
+	<div class="array_items">
+		{each $value as $p_val}
+		<div class="array_item">
+		<table class="form_item" border="0" cellpadding="0" cellspacing="0"><tr><td>
+		<input type="text" value="{$p_val}" class="layui-input text-input form_item" name="array_value[]">
+		</td><td><a class="javascript" rel="array_item_remove" title="删除" ><i class="fa fa-minus-circle"></i> 删除</a> <a class="javascript" rel="array_item_insert" title="插入"><i class="fa fa-plus-circle"></i> 插入</a></td></tr></table>
+		</div>
+		{/each}
+	</div>
+	<a class="javascript add-item" rel="array_item_create" title="添加新项"><i class="fa fa-plus"></i> 添加新项</a>
+</div>
+*/}
+	TPL.edit_keyvalue=function(){/*
+<div class="edit_array">
+	<div class="copy_template" style="display:none;">
+		<div class="array_item">
+		<div class="array_item">
+		<table class="form_item" border="0" cellpadding="0" cellspacing="0"><tr><td>
+		<input type="text" value="" class="layui-input text-input form_item form_key" name="array_value[key][]"></td>
+        <td>
+		<input type="text" value="" class="layui-input text-input form_item form_value" name="array_value[value][]">
+		</td><td><a class="javascript" rel="array_item_remove" title="删除" ><i class="fa fa-minus-circle"></i> 删除</a><a class="javascript  " rel="array_item_insert" title="插入"><i class="fa fa-plus-circle"></i> 插入</a></td></tr></table>
+		</div>
+		</div>
+	</div>
+	<div class="array_items">
+		{each $value as $p_val $p_key}
+		<div class="array_item">
+		<table class="form_item" border="0" cellpadding="0" cellspacing="0"><tr><td>
+		<input type="text" value="{$p_key}" class="layui-input text-input form_item form_key" name="array_value[key][]"></td>
+        <td>
+		<input type="text" value="{$p_val}" class="layui-input text-input form_item form_value" name="array_value[value][]">
+		</td><td><a class="javascript" rel="array_item_remove" title="删除" ><i class="fa fa-minus-circle"></i> 删除</a><a class="javascript " rel="array_item_insert" title="插入"><i class="fa fa-plus-circle"></i> 插入</a></td></tr></table>
+		</div>
+		{/each}
+	</div>
+	<a class="javascript add-item" rel="array_item_create" title="添加新项"><i class="fa fa-plus"></i> 添加新项</a>
+</div>
+*/}
+
+//{/literal}
+	
+}
+
+function show_array(){
+	var is_keyvalue=$(this).is('.keyvalue'); 
+	var value=get_array_value.call(this);
+	
+	$(this).removeClass('editing').html('编辑').siblings('.array').html((is_keyvalue?TPL.show_keyvalue:TPL.show_array).render({
+		$value:value
+	}));
+}
+function edit_array(){
+	var $this=$(this);
+    
+	var is_keyvalue=$this.is('.keyvalue');
+	
+	if($this.is('.editing')){
+		var value=HKUC.parse_serial_array($this.siblings('.array').find('.array_items input[type=text]').serializeArray());
+		
+		(is_keyvalue?set_keyvalue_value:set_array_value).call(this,value.array_value);
+		show_array.call(this);
+	}
+	else{
+		var value=get_array_value.call(this);
+		
+		$this.addClass('editing').html('保存').siblings('.array').html((is_keyvalue?TPL.edit_keyvalue:TPL.edit_array).render({
+			$value:value
+		}));
+	}
+}
+function get_array_value(){
+	var raw_value=$(this).siblings('.form_item').val();
+	
+	if(HKUC.isJsonValidate(raw_value)){
+		return eval('('+raw_value+')');
+	}
+	else{
+		return [];
+	}
+}
+function set_array_value(value){
+	$(this).siblings('.form_item').val(JSON.stringify(value));
+}
+function set_keyvalue_value(value){
+	var ret={};
+	if(value && value.key)
+	for(key in value.key){
+		ret[value.key[key]]=value.value[key];
+	}
+	
+	$(this).siblings('.form_item').val(JSON.stringify(ret));
+}
+function array_item_create($obj){
+	var $this=$(this);
+	var new_item_str=$this.closest('.array').find('.copy_template').html();
+
+	if($obj){
+		$(new_item_str).find(':disabled').attr('disabled',false).end().insertBefore($obj);
+	}
+	else{
+		$(new_item_str).find(':disabled').attr('disabled',false).end().appendTo($this.siblings('.array_items'));
+	}
+}
+function array_item_insert(){
+	array_item_create.call(this,$(this).closest('.array_item'));
+}
+function array_item_remove(){
+	var $this=$(this);
+	var $item=$this.closest('.array_item');
+
+	$item.remove();
+}
+$('.edit_array').each(function(){
+	show_array.call(this)
+});
+</script>
+{/block}

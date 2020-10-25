@@ -1,0 +1,176 @@
+<extend name="Public/common"/>
+<block name="style">
+</block>
+<block name="body">
+<div id="main-container" class="container">
+	<div class="col-md-2">
+		<!--用户中心导航-->
+		<include file="User/_nav"/>
+	</div>
+	<div class="col-md-10">
+		<div class="orders-num-content clearfix">
+			<div class="col-xs-3">
+	    		<div class="orders-num-box status-1" data-status="1">
+		    		<h3 class="text-center">待付款</h3>
+		    		<p class="text-center" data-toggle="num">0</p>
+	    		</div>
+	    	</div>
+	    				<div class="col-xs-3">
+	    		<div class="orders-num-box status-2" data-status="2">
+		    		<h3 class="text-center">待发货</h3>
+		    		<p class="text-center" data-toggle="num">0</p>
+	    		</div>
+	    	</div>
+	    				<div class="col-xs-3">
+	    		<div class="orders-num-box status-3" data-status="3">
+		    		<h3 class="text-center">待收货</h3>
+		    		<p class="text-center" data-toggle="num">0</p>
+	    		</div>
+	    	</div>
+	    				<div class="col-xs-3">
+	    		<div class="orders-num-box status-4" data-status="4">
+		    		<h3 class="text-center">待评价</h3>
+		    		<p class="text-center" data-toggle="num">0</p>
+	    		</div>
+	    	</div>
+		</div>
+		<div class="margin-top-10">
+			<h3>我的订单</h3>
+			<div class="index-orders-list row">
+			<notempty name="order_list.list">
+			<volist name="order_list.list" id="order">
+				<div class="order-item  clearfix">
+					<div class="order-base-info clearfix">
+						<span class="pull-left">
+							订单号：{$order.order_no}
+						</span>
+						<span class="order-status pull-right">
+							<switch name="order.status">
+							    <case value="1">待付款</case>
+							    <case value="2">待发货</case>
+							    <case value="3">已发货</case>
+							    <case value="4">已收货</case>
+							    <case value="5">退货中</case>
+							    <case value="6">退货完成</case>
+							    <case value="10">已取消</case>
+							    <case value="12">已完成</case>
+							    <default />待付款
+							</switch>
+						</span>
+					</div>
+					<div class="col-md-9">
+						<div class="goods-box clearfix">
+							<volist name="order.products" id="products">
+							<div class="goods-item clearfix">
+								<div class="p-img">
+									<a href="{:U('Index/product',array('id'=>$products['id']))}" target="_blank">
+	                        			<img src="{$products.main_img}" title="{$products.title}" width="60" height="60">
+	                        		</a>
+								</div>
+								<div class="p-msg">
+									<div class="p-name">
+										<a href="{:U('Index/product',array('id'=>$products['id']))}" class="a-link" target="_blank" title="{$products.title}">{$products.title}
+	                        			</a>
+									</div>
+									<notempty name="products.sku">
+		                        	<div class="sku_box">
+		                        		<foreach name="products.sku" item="sku" >
+		                                 <span class="sku_li_span">{$sku}</span>  
+		                                </foreach>
+		                        	</div>
+		                        	</notempty>
+									<div class="goods-number">x{$products.quantity}</div>
+								</div>
+							</div>
+							</volist>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="row">
+							<div class="col-md-6 col-xs-12">
+							<div class="amount text-center">合计：<span>¥{$order.paid_fee}</span></div>
+							<div class="paytype text-center">
+								<span>
+								<switch name="order.pay_type">
+								    <case value="onlinepay">在线支付</case>
+								    <case value="balance">余额支付</case>
+								    <case value="delivery">货到付款</case>
+								    <default />未设置
+								</switch>
+								</span>
+							</div>
+							</div>
+						<div class="col-md-6 col-xs-12">
+							<div class="operate">
+								<switch name="order.status">
+								    <case value="1">
+								    	<a href="{:U('Muushop/pay/charge',array('order_no'=>$order['order_no'],'result_url'=>$result_url))}" class="btn btn-success btn-block" data-toggle="pay_order">
+				                        	立即支付
+										</a>
+								    	<a class="btn btn-warning btn-block" data-toggle="cannel_order" data-id="{$order.id}">
+			                        		取消订单
+				                        </a>
+				                    </case>
+								    <case value="2">
+								    	<if condition="($order.pay_type eq delivery)">
+								    	<a class="btn btn-warning btn-block" data-toggle="cannel_order" data-id="{$order.id}">
+			                        		取消订单
+				                        </a>
+				                    	</if>
+				                    	<a class="btn btn-block disabled">
+				                        	配货中
+				                        </a>
+								    </case>
+								    <case value="3">
+								    	<a target="_blank" class="btn btn-danger btn-block" data-toggle="do_receipt" data-id={$order.id}>
+								    		确认收货
+								    	</a>
+								    	<a class="btn btn-block" data-remote="{:U('Muushop/User/orders',array('action'=>'delivery_info','id'=>$order['id']))}" data-toggle="modal">查看物流</a>
+								    </case>
+								    <case value="4">
+								    	<a class="btn  btn-info btn-block" href="{:U('Muushop/User/comment',array('id'=>$order['id']))}">
+			                        		评价
+				                        </a>
+				                        
+								    </case>
+								    <case value="5">
+									    <a href="#" class="btn btn-danger btn-block">
+				                        	查看进度
+										</a>
+								    </case>
+								    <case value="8">
+								    	维权中
+								    </case>
+								    <case value="10">
+								    </case>
+								    <case value="12">
+								    	<a class="btn btn-block disabled">
+			                        		已评价
+										</a>
+								    </case>
+								    <default />
+								</switch>
+							</div>
+						</div>
+						</div>
+					</div>
+				</div>
+			</volist>
+			<else />
+	            还没有订单...快去下个单喽！
+	        </notempty>
+		</div>
+	</div>
+
+    <div class="common_box margin-top-10 clearfix">
+	    <div class="text-right">
+	        {:getPagination($order_list['totalCount'],20)}
+	    </div>
+    </div>
+	</div>
+</div>
+</block>
+<block name="script">
+<script src="__JS__/common.js"></script>
+<script src="__JS__/order.js"></script>
+</block>

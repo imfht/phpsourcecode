@@ -1,0 +1,256 @@
+<?php
+
+namespace PHPDish\Bundle\PostBundle\Controller;
+
+use Carbon\Carbon;
+use Doctrine\Common\Collections\Criteria;
+use PHPDish\Bundle\CmsBundle\Utility\StringManipulator;
+use PHPDish\Bundle\ResourceBundle\Controller\ResourceController;
+use PHPDish\Bundle\PostBundle\Event\Events;
+use PHPDish\Bundle\PostBundle\Event\PostEvent;
+use PHPDish\Bundle\PostBundle\Form\Type\CommentType;
+use PHPDish\Bundle\PostBundle\Form\Type\PostType;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use PHPDish\Bundle\UserBundle\Controller\ManagerTrait as UserManagerTrait;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Translation\TranslatorInterface;
+
+class PostController extends ResourceController
+{
+    use ManagerTrait;
+    use UserManagerTrait;
+
+    /**
+     * @Route("/posts", name="post")
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function indexAction(Request $request)
+    {
+        $posts = $this->getPostManager()->findLatestEnabledPosts($request->query->getInt('page', 1));
+
+        return $this->render($this->configuration->getTemplate('Post:index.html.twig'), [
+            'posts' => $posts,
+        ]);
+    }
+
+    /**
+     * 创建文章.
+     *
+     * @Route("/posts/new", name="post_add")
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function createAction(Request $request)
+    {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_REMEMBERED');
+
+        /**@var TranslatorInterface*/
+        $translator = $this->get('translator');
+        //如果用户没有专栏，则跳转专栏创建页面
+        if ($this->getCategoryManager()->getUserCategoriesNumber($this->getUser()) === 0) {
+            $this->addFlash('warning', $translator->trans('post.add_category_first'));
+            return $this->redirectToRoute('category_add');
+        }
+
+        $manager = $this->getPostManager();
+        $post = $manager->createPost($this->getUser());
+        $form = $this->createForm(PostType::class, $post, [
+            'user' => $this->getUser(),
+        ]);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            if ($manager->savePost($post)) {
+                //触发事件
+                $this->get('event_dispatcher')->dispatch(Events::POST_CREATED, new PostEvent($post));
+
+                return $this->redirectToRoute('post_view', [
+                    'id' => $post->getId(),
+                ]);
+            } else {
+                $this->addFlash('error', $translator->trans('post.cannot_add'));
+            }
+        }
+
+        return $this->render($this->configuration->getTemplate('Post:create.html.twig'), [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * 查看文章.
+     *
+     * @Route("/posts/{id}", name="post_view", requirements={"id": "\d+"}, methods={"GET"})
+     *
+     * @param int    $id
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function viewAction($id, Request $request)
+    {
+        $post = $this->getPostManager()->findPostById($id);
+        if (!$post->isEnabled()) {
+            throw $this->createNotFoundException();
+        }
+        //如果是电子书则跳转到阅读页面
+        if ($post->getCategory()->isBook()) {
+            return $this->redirectToRoute('book_read', [
+                'slug' => $post->getCategory()->getSlug(),
+                'chapterId' => $post->getId()
+            ], 301);
+        }
+        $form = $this->createForm(CommentType::class);
+        $criteria = Criteria::create()->where(Criteria::expr()->eq('post', $post->getId()));
+        $comments = $this->getPostCommentManager()->findCommentsPager($criteria, $request->query->getInt('page', 1));
+
+        $this->getPostManager()->increasePostViews($post);
+
+        //SEO
+        $seoPage = $this->get('sonata.seo.page');
+        $summary = StringManipulator::stripLineBreak($post->getSummary());
+        $seoPage
+            ->setTitle($post->getTitle())
+            ->removeMeta('name', 'keywords')
+            ->addMeta('name', 'description', $summary)
+            ->addMeta('property', 'og:title', $post->getTitle())
+            ->addMeta('property', 'og:type', 'article')
+            ->addMeta('property', 'og:url',  $this->generateUrl('post_view', ['id' => $post->getId()], UrlGeneratorInterface::ABSOLUTE_URL))
+            ->addMeta('property', 'og:description', $summary);
+
+        return $this->render($this->configuration->getTemplate('Post:view.html.twig'), [
+            'post' => $post,
+            'comments' => $comments,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * 修改文章.
+     *
+     * @Route("/post/{id}/edit", name="post_edit", requirements={"id": "\d+"})
+     *
+     * @param int     $id
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function editAction($id, Request $request)
+    {
+        $post = $this->getPostManager()->findPostById($id);
+        if (!$post) {
+            throw $this->createNotFoundException();
+        }
+        $this->denyAccessUnlessGranted('edit', $post);
+        $form = $this->createForm(PostType::class, $post, [
+            'user' => $this->getUser(),
+        ]);
+        $form->handleRequest($request);
+        if ($form->isValid() && $form->isSubmitted()) {
+            $this->getPostManager()->savePost($post);
+
+            return $this->redirectToRoute('post_view', [
+                'id' => $post->getId(),
+            ]);
+        }
+
+        return $this->render($this->configuration->getTemplate('Post:create.html.twig'), [
+            'form' => $form->createView(),
+            'post' => $post,
+        ]);
+    }
+
+    /**
+     * 删除文章.
+     *
+     * @Route("/posts/{id}", name="post_delete", requirements={"id": "\d+"}, methods={"DELETE"})
+     *
+     * @param int $id
+     *
+     * @return Response
+     */
+    public function deleteAction($id)
+    {
+        $manager = $this->getPostManager();
+        $post = $manager->findPostById($id);
+        if (!$post) {
+            throw $this->createNotFoundException();
+        }
+        $this->denyAccessUnlessGranted('edit', $post);
+        $manager->blockPost($post);
+
+        return $this->handleView($this->view([
+            'result' => true,
+        ]));
+    }
+
+    /**
+     * 用户文章.
+     *
+     * @Route("/users/{username}/posts", name="user_posts")
+     *
+     * @param string  $username
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getUserPostsAction($username, Request $request)
+    {
+        $user = $this->getUserManager()->findUserByName($username);
+        $posts = $this->getPostManager()->findUserEnabledPosts($user, $request->query->getInt('page', 1));
+
+        return $this->render($this->configuration->getTemplate('Post:user_posts.html.twig'), [
+            'user' => $user,
+            'posts' => $posts,
+        ]);
+    }
+
+    /**
+     * 推荐的文章.
+     *
+     * @param int $limit
+     *
+     * @return Response
+     */
+    public function recommendPostsAction($limit)
+    {
+        $criteria = Criteria::create()->orderBy(['isRecommended' => 'desc', 'createdAt' => 'desc'])
+            ->andWhere(Criteria::expr()->gte('createdAt', Carbon::parse('-100 days')))
+            ->setMaxResults($limit);
+        $posts = $this->getPostManager()->findPosts($criteria);
+
+        return $this->render($this->configuration->getTemplate('Post:recommend_posts.html.twig'), [
+            'posts' => $posts,
+        ]);
+    }
+
+    /**
+     * 切换点赞状态
+     *
+     * @Route("/posts/{id}/voters", name="post_toggle_voter", methods={"POST"})
+     */
+    public function toggleVoterAction($id)
+    {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_REMEMBERED');
+
+        $post = $this->getPostManager()->findPostById($id);
+        if (!$post) {
+            throw new \InvalidArgumentException($this->get('translator')->trans('post.not_exists'));
+        }
+        if ($isVoted = $post->isVotedBy($this->getUser())) {
+            $this->getPostManager()->removeVoter($post, $this->getUser());
+        } else {
+            $this->getPostManager()->addVoter($post, $this->getUser());
+        }
+        return $this->json([
+            'vote_count' => $post->getVoteCount(),
+            'is_voted' => !$isVoted
+        ]);
+    }
+}

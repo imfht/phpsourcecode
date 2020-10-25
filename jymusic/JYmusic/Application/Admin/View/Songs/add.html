@@ -1,0 +1,306 @@
+<extend name="Public/base"/>
+<block name="style">
+<link rel="stylesheet" type="text/css" href="__STATIC__/bootstrap-fileinput/css/fileinput.css">
+<link rel="stylesheet" type="text/css" href="__STATIC__/bootstrap-3.1.1/tagsinput/bootstrap-tagsinput.css">
+</block>
+<block name="content">
+<h3>歌曲管理</h3>
+<div class="panel panel-default">
+	<div class="panel-heading"><{:isset($data['id'])?'编辑':'新增'}>歌曲</div>
+ 	<div class="panel-body">
+        <form class="form-horizontal" enctype="multipart/form-data" action="<{:U()}>" name="songs"  method="post">	
+       		<div class="form-group">	
+				<label class=" col-sm-2 control-label">歌曲名称</label>
+				<div class="col-sm-3">
+					<input  type="text"  name="name" value="<{$data.name|default=''}>" class="form-control">					
+				</div>
+				<span class="help-block">此项不能为空</span>
+			</div>	
+
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">所属曲风</label>
+				<div class="col-sm-3">
+					<select name="genre_id" class="form-control">
+	        		<volist name=":get_genre_tree()" id="genre">	        			
+	            		<option <notempty name="data['genre_id']"> <if condition="$data['genre_id'] eq $genre['id'] ">selected='selected'</if></notempty> value="<{$genre.id}>"><{$genre.title_show}></option>
+	        		</volist>
+					</select>
+				</div>	
+			</div>	
+
+    		<div class="form-group">	
+    			<label class="col-sm-2 control-label">所属艺术家</label>
+    			<div class="col-sm-3">    				
+    				<div class="input-group">
+    					<input type="text" class="hide" id="artist-id" name="artist_id" value="<{$data.artist_id|default='0'}>">	
+    					<input type="text" class="form-control" id="artist-name" name="artist_name"  value="<{$data.artist_name|default='佚名'}>">	
+						<a href="#" class="input-group-addon ajax-find" rel="artist">
+                         	<span class="fa-search fa"></span>
+                    	</a>
+                    </div>
+    			</div>	
+    			
+    			<label class="col-sm-1 control-label">所属用户</label>
+    			<div class="col-sm-1">
+    				<div class="input-group">	
+    					<input type="text" class="form-control"  name="up_uid"  value="<{$data.up_uid|default='0'}>">	
+                    </div>                   
+    			</div>	
+    			<p class="help-block col-sm-2">填写会员ID</p>						
+    		
+    		</div>
+    		
+    
+    		<div class="form-group">	
+    			<label class="col-sm-2 control-label">所属专辑</label>
+    			<div class="col-sm-3">
+   					<div class="input-group">
+    					<input type="text"  class="hide" name="album_id" id="album-id" value="<{$data.album_id|default='0'}>">
+    					<input type="text" class="form-control"  name="album_name" id="album-name" value="<{$data.album_name|default='单曲'}>">
+						<a href="<{:U('Album/find')}>" class="input-group-addon ajax-find"  rel="album">
+                         	<span class="fa-search fa"></span>
+                    	</a>
+                    </div>
+    			</div>	
+    		</div>
+    		
+    		<div class="form-group">	
+				<label class=" col-sm-2 control-label">所属标签</label>
+				<div class="col-sm-10">
+					<div class="input-group inline">
+						<input type="text" class="form-control" name="tags" id="tagsinput" value="<notempty name="data.tags"> <{:get_song_tag($data['tags'])}></notempty>">
+                    </div>
+                    <a href="javascript:;"  class="btn btn-default inline find-tag">
+                         <span class="fa-search fa"></span>
+                    </a>
+                    <div class="tag-box" style="display:none">
+                    	<button class="close tag-close mr-xl" type="button">×</button>
+                    	<div class="box-placeholder tag-content m0 p">
+                  		</div>
+                  	</div>		
+				</div>
+			</div>	
+			<div class="form-group">	
+				<label class="col-sm-2 control-label">所属服务器</label>
+				<div class="col-sm-3">
+					<select name="server" class="form-control">
+	        		<volist name=":get_server()" id="s">	        			
+	            		<option <notempty name="data['server']"> <if condition="$data['server'] eq $s['id'] ">selected='selected'</if></notempty> value="<{$s.id}>"><{$s.name}></option>
+	        		</volist>
+					</select>
+				</div>	
+			</div>	
+    		
+    		<div class="form-group">	
+    			<label class="col-sm-2 control-label">试听地址</label>
+    			<div class="col-sm-5 uplod">
+    				<div class="input-group">
+    					<input type="hidden" name="listen_file_id" id="listen_file_id" value="">
+    					<input type="text" class="form-control" name="music_url"  id="songs_url"  value="<{$data.music_url|default=""}>">
+    					<a href="#" class="input-group-addon up_music" url="<{:U('File/uploadMusic',array('session_id'=>session_id()))}>" rel_url="#songs_url" rel_fileid="#listen_file_id">                        	
+                    	<span class="fa fa-cloud-upload"></span>
+						</a>
+                    </div>                   	                     				
+    			</div>
+    			<span class="help-block">本地上传自动获取URL,可填写外链</span>
+    		</div>		
+    	
+    		<div class="form-group">	
+    			<label class="col-sm-2 control-label">下载地址</label>
+    			<div class="col-sm-5">
+    				<div class="input-group">
+    					<input type="hidden" name="down_file_id" id="down_file_id" value="">
+    					<input type="text"  class="form-control" name="music_down" id="music-down" value="<{$data.music_down|default=""}>">
+    					<a href="#" class="input-group-addon up_music" url="<{:U('File/uploadMusic',array('session_id'=>session_id()))}>"  rel_url="#music-down" rel_fileid="#down_file_id">
+                        	<span class="fa fa-cloud-upload"></span>
+                    	</a>
+    					<a href="#" class="input-group-addon" id="set-down-url" rel="#songs_url">同上</a>
+    				</div> 
+    			</div>
+    			<span class="help-block">本地上传自动获取URL,可填写外链</span>
+    		</div>
+    		
+    		<div class="form-group">	
+    			<label class="col-sm-2 control-label">歌曲封面</label>
+    			<div class="col-sm-5">
+    				<div class="input-group">
+    					<input type="text" class="form-control" name="cover_url" id="cover"  value="<{$data.cover_url|default=""}>">
+    					<a href="javascript:;"  class="input-group-addon up_pic" rel_url="#cover" rel_fileid="#cover_id" url="<{:U('File/uploadPicture',array('session_id'=>session_id(),'type'=>'song'))}>">
+                        	<span class="fa fa-cloud-upload"></span>
+                    	</a>
+                    	<notempty name="data['cover_url']">
+                    	<a href="javascript:;" class="input-group-addon look_pic" >预览</a>
+                    	</notempty>
+                    </div>    				
+    			</div>
+    			<span class="help-block">本地上传自动获取URL,可填写外链</span>
+    		</div>    		   	
+	
+			<div class="form-group">						
+    			<label class="col-sm-2 control-label ">试听次数</label>
+    			<div class="col-sm-1 controls">
+    				<input type="text" class="form-control"  value="<{$data.listens|default=''}>" name="listens">
+    			</div>	
+		
+    			<label class="col-sm-1 control-label ">评分</label>
+    			<div class="col-sm-1">
+    				<input type="text" class="form-control input-mini"  value="<{$data.rater|default='0'}>" name="rater">    				
+    			</div>
+    			<span class="help-block col-sm-1">最高10分</span>
+				
+				<label class="col-sm-1 control-label ">下载积分</label>
+    			<div class="col-sm-1">
+    				<input type="text" class="form-control input-mini"  value="<{$data.gold|default='0'}>" name="gold">    				
+    			</div>
+    			
+    			<label class="col-sm-1 control-label ">下载音质</label>
+    			<div class="col-sm-1">
+    				<input type="text" class="form-control input-mini"  value="<{$data.tone|default='320Kbps'}>" name="down_bit">    				
+    			</div>
+    			    			    							
+    		</div>
+    		
+    		<div class="form-group">		
+				<label class="col-sm-2 control-label">推荐</label>
+    			<div class="col-sm-3 controls">
+					<input class="hide" name="recommend" value="<{$data['recommend'] |default='0'}>">
+					<div class="switch-wrapper">
+						<span class="switch-enable">是</span>
+						<span class="switch-disable selected">否</span>
+					</div>
+					<present name="data">
+					<if condition="$data.recommend == 1">					
+						<script type="text/javascript">
+							$('.switch-disable').removeClass('selected');
+							$('.switch-enable').addClass('selected');
+						</script>	
+					</if>
+					</present>
+                </div>	
+    	    </div>	
+    		
+    		<!--div class="form-group">
+				<label class="col-sm-2 control-label">推荐位</label>
+		        <div class="col-sm-3">
+			    	<label class="checkbox">
+		             	<input type="checkbox" name="position[]" value="1">列表推荐	
+		            </label>
+		            <label class="checkbox">
+		            	<input type="checkbox" name="position[]" value="2">置顶推荐	
+		             </label>  	            		            	
+	            </div>				                   		            	
+	            <span class="check-tips">默认不推荐</span>
+			</div>
+    		<div class="form-group">		
+    			<label class="col-sm-2 control-label ">bmp</label>
+    			<div class="col-sm-1">
+    				<input type="text" class="form-control input-mini"  value="<{$data.bpm|default=''}>" name="bpm">    				
+    			</div>
+    	    </div-->  
+			
+			<div class="form-group">	
+				<label class=" col-sm-2 control-label">歌词</label>
+				<div class="col-sm-4">
+					<textarea  name="lrc" class="form-control"><{$data.lrc|default='暂无歌词'}></textarea>				
+				</div>
+			</div>	
+    	    
+    	    <div class="form-group">	
+				<label class=" col-sm-2 control-label">标题</label>
+				<div class="col-sm-3">
+					<input  type="text"  name="title" value="<{$data.title|default=''}>" class="form-control">					
+				</div>
+				<span class="help-block">SEO标题</span>
+			</div>	
+			
+			<div class="form-group">	
+				<label class=" col-sm-2 control-label">关键字</label>
+				<div class="col-sm-3">
+					<input  type="text"  name="kerwords" class="form-control" value="<{$data.kerwords|default=''}>">					
+				</div>
+				<span class="help-block">SEO关键字</span>
+			</div>	
+			
+			<div class="form-group">	
+				<label class=" col-sm-2 control-label">描述</label>
+				<div class="col-sm-4">
+					<input  type="text"  name="description" class="form-control" value="<{$data.description|default=''}>">				
+				</div>
+				<span class="help-block">SEO描述</span>
+			</div>
+			
+			<div class="form-group">	
+				<label class=" col-sm-2 control-label">歌曲介绍</label>
+				<div class="col-sm-4">
+					<textarea  name="introduce" class="form-control"><{$data.introduce|default=''}></textarea>				
+				</div>
+			</div>	
+    	    
+    		<div class="form-group">
+    			<input type="hidden" name="status" value="<{$data.status|default=''}>">       		
+    			<input type="hidden" name="id" value="<{$data.id|default=''}>">
+            	<div class="col-sm-4 col-sm-offset-2">
+                	<button class="btn btn-default" type="button" onclick="javascript:history.back(-1);return false;">取消</button>
+                	<button class="btn btn-primary ajax-post" target-form="form-horizontal" type="submit">保存</button>
+            	</div>
+        	</div>
+        </form>
+	</div>
+</div>
+
+<div class="col-md-12 upload-content" id="file-up">		                    	
+	<div class="upload-box">
+		<div class="dz-default dz-message  fileinput-button">
+			<span>点击或将文件拖拽到这里</span>		                    		
+		    <input id="fileupload" type="file" name="user_file" multiple>
+	    </div>
+	    <div id="files" class="files"></div>
+		<div id="progress" class="progress">
+	        <div class="progress-bar progress-bar-info"></div>
+	    </div>
+	</div>
+</div>  
+</block>
+
+<block name="script">
+<script type="text/javascript" src="__STATIC__/bootstrap-fileinput/js/fileinput.js"></script>
+<script type="text/javascript" src="__STATIC__/bootstrap-3.1.1/tagsinput/bootstrap-tagsinput.min.js"></script>
+<script type="text/javascript" src="__JS__/other.js?v=0.1"></script>
+<script type="text/javascript">			
+highlight_subnav("<{:U('Songs/index')}>");		
+var findUrl="<{:U('Ajax/findData')}>",
+	savePath = "<{:trim(C('ADMIN_UPMUSIC_PATH'))}>",
+	savePicPath	=	"<{:trim(C('ADMIN_UPPIC_PATH'))}>";
+$(function () {		
+	$("select[name='server_id']").change( function() {
+		var option = $(this).find("option:selected");
+		$('#songs_url').val(option.attr('data-listen'));
+		$('#music-down').val( option.attr('data-down'));
+	});
+	$('#tagsinput').tagsinput({maxTags: 5});
+	$(document).on("click",'.add-tag', function(e){
+		var tag = $(this).text();
+		$('#tagsinput').tagsinput('add',tag);
+		$(this).addClass('disabled').attr('autocomplete','off');
+	});
+	
+	$('.find-tag').click(function () {	
+		if($('.add-tag').length){
+			$('.tag-box').slideDown('normal');
+		}else{
+			var box = $('.tag-content');
+			box.html('<p class="csspinner ringed">正在获取数据.....</p>');
+			$('.tag-box').slideDown('normal');
+			$.get("<{:U('Tag/showTag')}>", function(data){			
+				box.html(data);
+				box.slimScroll({ height: '200px'});
+			});	
+		}		
+	});	
+	$('.tag-close').click(function () {	$('.tag-box').slideUp("slow");});
+})
+</script>
+
+</block>	
+
+

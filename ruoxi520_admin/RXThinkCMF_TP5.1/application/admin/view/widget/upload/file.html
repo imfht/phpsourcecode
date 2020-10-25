@@ -1,0 +1,153 @@
+<style type="text/css">
+
+.multiple a {
+    padding: 2px 5px;
+    background: #5FB878;
+    border-radius: 2px;
+    color: #fff;
+    display: block;
+    line-height: 20px;
+    height: 20px;
+    margin: 10px 5px 2px 0;
+    float: left;
+}
+
+</style>
+
+<button type="button" class="layui-btn" id="uploadFile"><i class="layui-icon">&#xe67c;</i>上传{$nameStr}【最多上传{$maxNum}个文件】</button>
+<input type="hidden" id="{$name}" name="{$name}" value="{$file_list|default=''}">
+<input type="hidden" id="{$name}_name" name="{$name}_name" value="{$file_name|default=''}">
+<div class="multiple">
+
+</div>
+<script type="text/javascript">
+layui.use(['upload'],function(){
+
+	//声明变量
+	var upload = layui.upload,
+		$ = layui.$;
+
+	//文件上传
+	var uploadInst = upload.render({
+	    elem: '#uploadFile'
+		,url: "/upload/uploadFile"
+		,exts: "{$uploadVideoExt}"
+	    ,accept: 'file' //允许上传的文件类型
+	    ,size: {$uploadVideoSize} //最大允许上传的文件大小
+	    ,method: 'post'  //可选项。HTTP类型，默认post
+	    ,data: {} //可选项。额外的参数，如：{id: 123, abc: 'xxx'}
+        ,multiple: true
+        ,number: {$maxNum} //最大上传张数
+		,before: function(obj){
+			//预读本地文件
+			layer.msg('上传并处理中。。。', {
+                icon: 16
+                ,shade: 0.01
+                ,time: 0
+            });
+		}
+		,done: function(res){
+			//上传完毕回调
+
+			//如果上传失败
+			if(res.status <= 0){
+				return layer.msg('上传失败');
+			}
+
+			//上传成功处理
+			layer.closeAll();
+            if(res.success){
+
+            	var itemStr = $('#{$name}').val();
+            	var nameStr = $("#{$name}_name").val();
+            	var item = [];
+            	var name = [];
+            	if(itemStr) {
+            		item = itemStr.split(',');
+            	}
+
+                if(item.length>={$maxNum}) {
+            		layer.msg("最多上传【{$maxNum}】个文件",{ icon: 5 });
+            		return false;
+            	}
+
+            	item.push(res.data.savePath);
+            	$('#{$name}').val(item.join(','));
+
+            	if(nameStr) {
+            		name = nameStr.split(',');
+            	}
+            	name.push(res.data.fileName);
+            	$('#{$name}_name').val(name.join(','));
+
+            	var html = '<a href="javascript:;"><span lay-value="'+res.data.savePath+'">'+res.data.fileName+'</span><i class="layui-icon" onclick="removeFile(this);">ဆ</i></a>';
+            	$(".multiple").append(html);
+
+            }else{
+                layer.msg(res.msg,{ icon: 5 });
+            }
+            return false;
+		}
+		,error: function(){
+			//请求异常回调
+			return layer.msg('数据请求异常');
+		}
+	});
+
+	// 渲染文件列表
+    var itemStr = $('#{$name}').val();
+    var nameStr = $("#{$name}_name").val();
+    var item = [];
+    var name = [];
+    if(itemStr) {
+        item = itemStr.split(',');
+    }
+    if(nameStr) {
+        name = nameStr.split(',');
+    }
+    for (var i=0;i<name.length;i++) {
+        var html = '<a href="javascript:;"><span lay-value="'+item[i]+'">'+name[i]+'</span><i class="layui-icon" onclick="removeFile(this);">ဆ</i></a>';
+        $(".multiple").append(html);
+    }
+});
+
+/**
+ * 移除文件
+ */
+function removeFile(obj) {
+	// 移除当前对象
+	layui.$(obj).parent().remove();
+
+	// 文件地址
+	var fileName = layui.$(obj).parent().children('span').text();
+	var savePath = layui.$(obj).parent().children('span').attr("lay-value");
+	console.log("文件名称："+fileName);
+	console.log("保存路径："+savePath);
+
+	// 获取保存路径的值
+	var pathStr = layui.$('#{$name}').val();
+	// 获取文件名称的值
+	var nameStr = layui.$('#{$name}_name').val();
+	// 声明变量
+	var list = [], name = [];
+	var pathList = [], nameList=[];
+	if(pathStr) {
+		pathList = pathStr.split(',');
+	}
+	if(nameStr) {
+		nameList = nameStr.split(',');
+	}
+	layui.$.each(pathList, function(i, item){
+		if(item===savePath) {
+			//TODO...
+		}else{
+			list.push(item);
+			name.push(nameList[i]);
+		}
+	});
+	layui.$('#{$name}').val(list.join(','));
+	layui.$('#{$name}_name').val(name.join(','));
+
+}
+
+</script>

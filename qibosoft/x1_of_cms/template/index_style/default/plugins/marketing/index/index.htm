@@ -1,0 +1,107 @@
+﻿{extend name="$index_style_layout" /}
+<!--SEO相关-->
+{block name="head_title"}{$webdb.mseo_title?:$webdb.seo_title}{/block}
+{block name="head_keword"}{$webdb.mseo_keyword?:$webdb.seo_keyword}{/block}
+{block name="head_description"}{$webdb.mseo_description?:$webdb.seo_description}{/block}
+
+{block name="body_content"}
+<link rel="stylesheet" href="__STATIC__/group/member.css">
+<div class="MainMemberBox ShowContentType">
+	<div class='TopBox'>
+	  <div class='name sign_btn'><a href="{:purl('signin/index/index',[],'index')}"><i class="fa fa-calendar"></i> 查看签到榜单</a></div>
+	</div>
+
+	<div class='ShowTypes'>
+	  <div class="ck">积分排名</div>
+	  <div>余额排名</div>
+	</div>
+
+	<div class='listmemberBox wap_marketing_index001'>
+{qb:tag name="wap_marketing_index001" js="wap_marketing_index001" type="member" union="order" order="money" by="desc" rows="10"}
+	    <div class='lists list{$rs.rank}'>
+	      <div class='icon'><a href="{:get_url('user',$rs['uid'])}"><img src="{$rs.uid|get_user_icon}" onerror="this.src='__STATIC__/images/nobody.gif'"></a></div>
+	      <div class='infos'>
+	        <div class='name'><div class='num'>NO.{$rs.rank}</div><text>{$rs.uid|get_user_name}</text></div>
+	        <div class='more'>
+	          <div class='iconfont'><i class="fa fa-database"></i>积分：<text>{$rs.money}个</text></div>
+	          <div class='time glyphicon glyphicon-yen'>{$rs.rmb}</div>
+	        </div>
+	      </div>
+	    </div>
+{/qb:tag}
+	</div>
+	<div class='listmemberBox'></div>
+	<!--<div class="ShowMores"><span>查看更多</span></div>-->
+</div>
+<script type="text/javascript">
+
+var ajax_url_db = ['&order=money','&order=rmb'];
+var choose_i = 0; //选中第几项
+var haveshowpage = []; //每一项,作个标志,已经已显示到第几页
+    haveshowpage[0] = 1; //第一项就从第二页开始
+
+//显示更多
+function showMoreContent(){
+	haveshowpage[choose_i]++;
+	layer.load(1);
+	$.get('{qb:url name="wap_marketing_index001" /}' + haveshowpage[choose_i] + ajax_url_db[choose_i] ,function(res){
+		layer.closeAll();
+		if(res.code==0){
+			if(res.data==''){
+				layer.msg("已经显示完了！",{time:500});
+			}else{
+				scroll_get[choose_i]  = true;
+				if(haveshowpage[choose_i]==1){
+					$('.ShowContentType .listmemberBox').eq(choose_i).html(res.data);
+				}else{
+					$('.ShowContentType .listmemberBox').eq(choose_i).append(res.data);
+				}
+			}
+		}else{
+			layer.msg(res.msg,{time:2500});
+		}
+	});
+}
+
+
+//切换显示
+function showContentType(num){
+
+	choose_i = num;
+	//$('.ShowMores').off("click");	//先移除,避免重复加多次click事件
+	//$('.ShowMores').on("click",showMoreContent);
+	//$('.ShowMores span').html('查看更多');
+	//$('.ShowMores').css({'background':'orange'});
+
+	if(haveshowpage[num]==undefined){
+		haveshowpage[num] = 0;
+		showMoreContent();
+	}
+
+	$('.ShowContentType .ShowTypes div').removeClass('ck');
+	$('.ShowContentType .ShowTypes div').eq(num).addClass('ck');
+	$('.ShowContentType .listmemberBox').hide();
+	$('.ShowContentType .listmemberBox').eq(num).show();
+}
+$('.ShowContentType .ShowTypes div').click(function(){
+	showContentType( $(this).index() );
+});
+//showContentType(0);
+
+
+//滚动显示更多
+var scroll_get = [];
+$(document).ready(function () {
+	if(typeof(scroll_get[choose_i])=='undefined'){
+		scroll_get[choose_i] = true;
+	}
+	$(window).scroll(function () {
+		if (scroll_get[choose_i]==true &&  (200 + $(window).scrollTop())>($(document).height() - $(window).height())) {
+			scroll_get[choose_i] = false;
+			showMoreContent();
+		}
+	});
+});
+
+</script>
+{/block}

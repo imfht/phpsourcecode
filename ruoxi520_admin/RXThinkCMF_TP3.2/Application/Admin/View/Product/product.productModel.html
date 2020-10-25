@@ -1,0 +1,59 @@
+<form class="layui-form info-form" action="">
+	<div id="sku" data-item="" data-data=""></div>
+	<input name="product_id" id="product_id" type="hidden" value="{$product_id}">
+	<div class="layui-form-item">
+		<div class="layui-input-block">
+			<a class="layui-btn" id="getSKU">立即提交</a>
+		</div>
+	</div>
+</form>
+
+<script type="text/javascript">
+	//设定扩展的Layui模块的所在目录，一般用于外部模块扩展
+	layui.config({
+	   version:"2.0.7",
+	   base:'__ADMIN__/lib/module/'
+	}).extend({
+	    //larry:'js/base',
+	}).use(['sku','form'],function(){
+		var sku = layui.sku,
+			form = layui.form,
+			$ = layui.$;
+		
+		//商品属性
+		var item = {$list};
+		var data = {$skuList};
+		var SKU = sku.init({ id:'sku', item: item, data:data });
+		
+		SKU.uploadImgs();
+		
+		$("#getSKU").click(function(){
+			var data = SKU.getData();
+			var data2 = SKU.getItem();
+			var product_id = $("#product_id").val();
+			
+			//提交SKU数据
+			var index = layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.2});
+			$.post(aUrl, {"product_id":product_id,"result":JSON.stringify(data)}, function(data){
+				if (data.success) {
+					layer.close(index);
+					layer.msg("保存成功！");
+					layer.closeAll("iframe");
+					
+					//刷新父页面
+		            parent.location.reload();
+					
+					return false ;
+				}else{
+					layer.close(index);
+					layer.msg(data.msg);
+				}
+			}, 'json');
+			
+			return false;
+			
+		});
+		
+	});
+	
+</script>

@@ -1,0 +1,668 @@
+<script type="text/javascript">
+	$(document).ready(function(){
+
+		$.formValidator.initConfig({
+			formid:"userForm1",
+			onerror:function(msg){
+			},
+			onsuccess:function(){
+				if ($('#qr_code').val() == '' && $('#weixin_verify').attr('checked')){
+					$("#alert_box").jk_alert({msg: "请上传微信二维码", type: 'danger', show_time: 8000});
+                	return false;
+				}
+			}
+		}); 
+		$("#weibo_name").formValidator({empty:false, onshow:"请输入微博名称", onfocus:"您可以打开新浪微博查看微博名称", oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			if (val.length >= 2 && val.length <= 40){
+				return true;
+			}else if(!$('#weibo_verify').attr('checked')){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+		$("#weixin_name").formValidator({empty:false,onshow:"请输入微信名称",onfocus:"您可以打开微信客户端查看微信名称",oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			if (val.length >= 2 && val.length <= 40){
+				return true;
+			}else if(!$('#weixin_verify').attr('checked')){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+
+
+
+		$("#ad_times").formValidator({onshow:"倒计时间（3-12秒）到期才能上网",onfocus:"范围为（3-12秒）",oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			if (val >= 3 && val <= 12){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+		$(".online_times").formValidator({onshow:"连网时间超出认证有效期后需再次认证才能上网,0表示不限制",onfocus:"范围为（0-23小时）（0-59分钟）",oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+			var online_times = $('#online_times').val();
+			var online_times1 = $('#online_times1').val();
+			if (online_times >= 0 && online_times <= 23 && online_times1>=0 && online_times1 <=59){
+				return true;
+			}else{
+				return 	'输入错误';
+			}
+		}});
+
+		$("#href_website").formValidator({onshow:"请设置认证完成后需要跳转的地址" ,onfocus:"如：www.test.com",oncorrect:" "})
+		.functionValidator({fun:function(val,elem){
+
+				if(!val.match(regexEnum.http) && $("input[name='href']:checked").val() == 'fixedwebsite'){
+					return "域名格式不正确";
+				}else{
+					return true;	
+				}
+			}
+		});
+		$("#one_auth_href").formValidator({empty:true, onshow:"请设置认证完成后需要跳转的地址（可选）" ,onfocus:"如：www.test.com",oncorrect:" ", onempty:' '})
+		.functionValidator({fun:function(val,elem){
+
+				if(!val.match(regexEnum.http) && $("#one_auth_type").val() != ''){
+					return "域名格式不正确";
+				}else{
+					return true;	
+				}
+			}
+		});
+		$("#two_auth_href").formValidator({empty:true, onshow:"请设置认证完成后需要跳转的地址（可选）" ,onfocus:"如：www.test.com",oncorrect:" ", onempty:' '})
+		.functionValidator({fun:function(val,elem){
+
+				if(!val.match(regexEnum.http) && $("#two_auth_type").val() != ''){
+					return "域名格式不正确";
+				}else{
+					return true;	
+				}
+			}
+		});
+
+
+		var imagename = "{$info['qr_code']}";
+		var fullbackuptab = $('#config_upload_process').html5uploader({
+			fileTypeExts:'image/jpeg,image/png,image/jpg', //支持上传的后缀名，多个用逗号隔开, 填写mime类型
+			auto:true,  //是否自动上传
+			removeTimeout:3000,  //上传成功后，进度条多少毫秒后消失
+			url:"{:U('Merchant/upload_img')}",
+			input_file_id:'input-file-config',  //上传控件的id
+			formData:{'type':'merchantqrcode', 'imagename':imagename},  //附加的参数,POST方式提交
+			onCheckFileTypeExts:function(){   //文件类型不对的回调函数
+				$("#alert_box_qrcode").jk_alert({msg:'文件类型错误!', type:'danger', show_time:8000});
+			},
+			onSelect: function(file){
+				
+			},
+			onUploadStart:function(){  //开始上传的回调函数
+				
+			},
+			onInit:function(){  //初始化的回调函数
+				//美化上传框
+				$('#input-file-config').ace_file_input({no_file:'点击选择文件 ...', btn_choose:'上传', btn_change:'修改', droppable:false});
+			},
+			onUploadComplete:function(){   //上传完成的回调函数
+				//$("#alert_box_config").jk_alert({msg:'上传完成，正在升级，请稍候...', type:'success', show_time:8000});
+			
+			},
+			onUploadSuccess:function(file, responseText){  //上传成功的回调函数
+				var data = JSON.parse(responseText);
+				if ( 1 == data.ret) { 
+					$('#demo_qrcode').attr('src', '__PUBLIC__/'+data.data.savepath+data.data.savename).show();
+					$('#qr_code').val(data.data.savename);
+					fullbackuptab.formData = {'type':'merchantqrcode', 'imagename':data.data.savename};
+				}else{
+					$("#alert_box_qrcode").jk_alert({msg: data.msg, type:'danger', show_time:12000});
+				}
+			
+			},
+			onUploadError:function(file, responseText){
+				$("#alert_box_qrcode").jk_alert({msg:responseText.msg, type:'danger', show_time:8000});
+			}
+		});
+			
+		if ($('#weixin_verify').attr('checked')){
+			$('.weixinbox').show();
+		}
+		if ($('#weibo_verify').attr('checked')){
+			$('.weibobox').show();
+		}
+		$('#weixin_verify').change(function(){
+			if ($(this).attr('checked')){
+				$('.weixinbox').show();
+			}else{
+				$('.weixinbox').hide();
+			}
+		});
+		$('#weibo_verify').change(function(){
+			if ($(this).attr('checked')){
+				$('.weibobox').show();
+			}else{
+				$('.weibobox').hide();
+			}
+		});
+
+
+		if ($('#online_type').val() != ''){
+			$('.online_typebox').show();
+		}
+		$('#online_type').change(function(){
+			if ($(this).val() != ''){
+				$('.online_typebox').show();
+			}else{
+				$('.online_typebox').hide();
+			}
+		});
+		var hourlist = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
+		//hour
+		
+		var html = '';
+		$.each(hourlist, function(k, v){
+			html += '<option value="'+v+'">'+v+'</option>';
+		});
+		$('#hour').html(html);
+		$('#hour1').html(html);
+		var now_hour = '{$info.rest_online_times}';
+		if (now_hour != ''){
+			var temp = now_hour.split('-');
+			$('#hour').val(temp[0]);
+			$('#hour1').val(temp[1]);
+		}
+		$("input[type='radio']").iCheck({
+		    radioClass: 'iradio_minimal-blue',
+		    increaseArea: '20%' // optional
+		});
+		var href = '{$info.href}';
+		$("input[name='href']").each(function(){
+			if ($(this).val() == href){
+				$(this).iCheck('check');
+			}
+		});
+		if (href == 'fixedwebsite'){
+			$('.hrefbox').show();
+		}
+		$("input[name='href']").on('ifChecked', function(event){
+			if ($(this).val() == 'fixedwebsite'){
+				$('.hrefbox').show();
+			}else{
+				$('.hrefbox').hide();
+			}
+		});
+		//收集认证方式
+		var auth_type_list = [];
+		$('.auth_type').each(function(){
+			var temp = $(this).attr('id');
+			if ($(this).attr('checked')){
+				auth_type_list.push(temp);
+			}
+
+		});
+		set_auth_type_list(auth_type_list);
+		//设置第一次认证和第二次认证
+		$('#one_auth_type').val('{$info.one_auth_type}');
+		$('#two_auth_type').val('{$info.two_auth_type}');
+		if ($('#one_auth_type').val() == ''){
+			$('.one_auth_typebox').hide();
+		}else{
+			$('.one_auth_typebox').show();
+		}
+		if ($('#two_auth_type').val() == ''){
+			$('.two_auth_typebox').hide();
+		}else{
+			$('.two_auth_typebox').show();
+		}
+		$('#one_auth_type').change(function(){
+			if ($(this).val() == ''){
+				$('.one_auth_typebox').hide();
+			}else{
+				$('.one_auth_typebox').show();
+			}
+		});
+		$('#two_auth_type').change(function(){
+			if ($(this).val() == ''){
+				$('.two_auth_typebox').hide();
+			}else{
+				$('.two_auth_typebox').show();
+			}
+		});
+		$('.auth_type').change(function(){
+			var temp = $(this).attr('id');
+			if ($(this).attr('checked')){
+				var b = false;
+				$.each(auth_type_list, function(k, data){
+					if (data == temp){
+						b = true;
+					}
+				});
+				if (!b){
+					auth_type_list.push(temp);
+				}
+			}else{
+				var b = false;
+				var temp1 = [];
+				$.each(auth_type_list, function(k, data){
+					if (data != temp){
+						temp1.push(data);
+					}
+				});
+				auth_type_list = temp1;
+			}
+			set_auth_type_list(auth_type_list);
+		});
+		var old_user_auth_type = '{$info.old_user_auth_type}';
+		$('#old_user_auth_type').bootstrapSwitch({'onText':'开启', 'offText':'关闭', 'state': old_user_auth_type==0 ? false : true, 'onSwitchChange':function(e, data){
+		    $('#old_user_auth_type').attr('checked', data);
+		}});
+		var ad_status = '{$info.ad_status}';
+		if (ad_status == 1){
+			$('.ad_statusbox').show();
+		}else{
+			$('.ad_statusbox').hide();
+		}
+		$('#ad_status').bootstrapSwitch({'onText':'开启', 'offText':'关闭', 'state': ad_status==0 ? false : true, 'onSwitchChange':function(e, data){
+		    $('#ad_status').attr('checked', data);
+		    if (data){
+		    	$('.ad_statusbox').show();
+		    }else{
+		    	$('.ad_statusbox').hide();
+		    }
+		}});
+		
+	});
+	function set_auth_type_list(list){
+		var data = {
+			'akey_verify'	: '一键认证',
+			'mobile_verify'	: '手机短信认证',
+			'virtual_verify'	: '手机虚拟认证',
+			'qq_verify'	: 'QQ认证',
+			'weibo_verify'	: '新浪微博认证',
+			'weixin_verify'	: '微信认证'
+		};
+		var html = '<option value="">请选择</option>';
+		$.each(list, function(k, v){
+			html+= '<option value="'+v+'">'+data[v]+'</option>';
+		})
+		$('#one_auth_type').html(html);
+		$('#two_auth_type').html(html);
+	}
+</script>
+
+
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+			<div class="tabbable">
+				<nav class="navbar navbar-default abc" role="navigation">
+					<div class="container-fluid">
+						<!-- Brand and toggle get grouped for better mobile display -->
+						<div class="navbar-header">
+							<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+							<span class="sr-only"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							</button>
+						</div>
+
+						<!-- Collect the nav links, forms, and other content for toggling -->
+						<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+							<ul class="nav navbar-nav">
+								<li class="active">
+									<a href="#">
+										<i class="blue icon-cloud bigger-110"></i>
+										认证设置
+									</a>
+								</li>
+								<li>
+									<a href="{:U('Merchant/page_set')}">
+										<i class="green icon-cog bigger-110"></i>
+										页面设置
+									</a>
+								</li>
+								<li>
+									<a  href="{:U('Merchant/ad_set')}" >
+										<i class="red icon-list bigger-110"></i>
+										广告设置
+									</a>
+								</li>
+								
+
+							</ul>
+						</div><!-- /.navbar-collapse -->
+					</div><!-- /.container-fluid -->
+				</nav>
+				<div class="tab-content">
+					<div class="tab-pane active">
+						<div id="status-pane" class="form-horizontal">
+							<form name="userForm1" id="userForm1" novalidate="" action="{:U('Merchant/save_auth')}" method="post"> 
+								<div class="form-horizontal">
+	
+									
+									<div class="form-group">
+										<label class="col-sm-2 control-label no-padding-right" for="form-field-1">认证方式：</label>
+										<div class="col-sm-8">
+											<div class="input-group col-xs-10">
+										
+													<label class="middle right10"> 
+														<input name="akey_verify" id="akey_verify" value="1" type="checkbox" class="ace auth_type" <if condition="($info['akey_verify'] eq 1)">checked</if> >
+														<span class="lbl">一键认证</span>
+													</label>
+													
+													<label class="middle right10"> 
+														<input name="mobile_verify" id="mobile_verify" value="1"  type="checkbox" class="ace auth_type" <if condition="($info['mobile_verify'] eq 1)">checked</if>>
+														<span class="lbl">手机短信认证</span>
+													</label>
+												
+													<label class="middle right10"> 
+														<input name="virtual_verify" id="virtual_verify" value="1"  type="checkbox" class="ace auth_type" <if condition="($info['virtual_verify'] eq 1)">checked</if>>
+														<span class="lbl">手机虚拟认证</span>
+													</label>
+													
+													<label class="middle right10"> 
+														<input name="qq_verify" id="qq_verify" type="checkbox" value="1"  class="ace auth_type" <if condition="($info['qq_verify'] eq 1)">checked</if>>
+														<span class="lbl">QQ认证</span>
+													</label>
+													
+													<label class="middle right10"> 
+														<input name="weibo_verify" id="weibo_verify" value="1"  type="checkbox" class="ace auth_type" <if condition="($info['weibo_verify'] eq 1)">checked</if>>
+														<span class="lbl">新浪微博认证</span>
+													</label>
+													
+													<label class="middle right10"> 
+														<input name="weixin_verify" id="weixin_verify" value="1"  type="checkbox" class="ace auth_type" <if condition="($info['weixin_verify'] eq 1)">checked</if>>
+														<span class="lbl">微信认证</span>
+													</label>
+												
+											</div>
+									
+										</div>
+										
+									</div>
+									<div class="form-group">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5"> 
+											第一次登录认证方式：
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-sm-12" >
+												<select name="one_auth_type" id="one_auth_type" class="form-control">
+									    			
+												</select>
+											
+												
+											</div>
+											
+										</div>
+										<div class="help-block col-sm-6" >
+											<span class="dp">用户第一次认证时使用的认证方式(可选)</span>
+										</div>
+									</div>
+									<div class="form-group one_auth_typebox" >
+										<label class="col-sm-2 control-label no-padding-right margintop5" > 
+											认证完成后跳转地址： 
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<input type="text" id="one_auth_href" value="{$info.one_auth_href}" name="one_auth_href"  class="form-control" />
+											</div>
+											
+										</div>
+										<div class="help-block col-sm-6" >
+											<span id="one_auth_hrefTip"></span>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5"> 
+											第二次登录认证方式：
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-sm-12" >
+												<select name="two_auth_type" id="two_auth_type" class="form-control">
+									    			
+												</select>
+											
+												
+											</div>
+											
+										</div>
+										<div class="help-block col-sm-6" >
+											<span class="dp">用户第二次认证时使用的认证方式(可选)</span>
+										</div>
+									</div>
+									<div class="form-group two_auth_typebox" >
+										<label class="col-sm-2 control-label no-padding-right margintop5" > 
+											认证完成后跳转地址： 
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<input type="text" id="two_auth_href" value="{$info.two_auth_href}" name="two_auth_href"  class="form-control" />
+											</div>
+											
+										</div>
+										<div class="help-block col-sm-6" >
+											<span id="two_auth_hrefTip"></span>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5"> 
+											老用户使用一键认证：
+										</label>
+										<div class="col-sm-2">
+											<input type="checkbox" id="old_user_auth_type" name="old_user_auth_type" <if condition="$info['old_user_auth_type'] eq 1 "> checked </if>/>
+											
+										</div>
+										<div class="help-block col-sm-8" >
+											<span class="dp">当设置了第一次（第二次）登录方式时，用户在使用完第二次认证方式后，系统才认为该用户为老用户</span>
+										</div>
+									</div>
+									<div class="form-group weibobox" style="display:none;">
+										<label class="col-sm-2 control-label no-padding-right margintop5" > 
+											新浪微博名称： 
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<input type="text" id="weibo_name" name="weibo_name"  class="form-control" value="{$info.weibo_name}"/>
+											</div>
+											
+										</div>
+										<div class="help-block col-sm-6" >
+											<span id="weibo_nameTip"></span>
+										</div>
+									</div>
+									<div class="form-group weixinbox" style="display:none;">
+										<label class="col-sm-2 control-label no-padding-right margintop5"> 
+											微信名称： 
+										</label>
+										<div class="col-sm-4">
+											<div class="input-group col-xs-12">
+												<input type="text" id="weixin_name" name="weixin_name" class="form-control" value="{$info.weixin_name}"/>
+											</div>
+										</div>
+										<div class="help-block col-sm-6" >
+											<span id="weixin_nameTip"></span>
+										</div>
+									</div>
+
+									<div class="form-group weixinbox" style="display:none;">
+										<label class="col-sm-2 control-label no-padding-right" for="form-field-1"> 
+											微信认证接口： 
+										</label>
+										<div class="col-sm-9">
+											<label class="inline">{$info.url}</label>
+											
+										</div>
+									</div>
+									<div class="form-group weixinbox" style="display:none;">
+										<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+											微信二维码： 
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-xs-10 col-sm-6 ">
+												<div id="config_upload_process"></div>
+												<input type="hidden" name="qr_code" id="qr_code" value="{$info.qr_code}"> 
+												<img id="demo_qrcode" src="__PUBLIC__/upload/merchantqrcode/{$info['qr_code']}" class="img-thumbnail col-xs-12 col-sm-4" style="<if condition="($info['qr_code'] eq '')">display:none;</if>" >
+												<div class="space-4"></div>
+												<div id="alert_box_qrcode"></div>
+												<div style="clear:both;"></div>
+												<p class="help-block dp">png/jpg/jpeg图片，小于500KB，分辨率建议宽度100px，高度100px</p>
+											</div>
+
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5"> 
+											观看广告：
+										</label>
+										<div class="col-sm-2">
+											<input type="checkbox" id="ad_status" name="ad_status" <if condition="$info['ad_status'] eq 1 "> checked </if>/>
+											
+										</div>
+										<div class="help-block col-sm-8" >
+											<span class="dp">用户认证过后是否需要观看广告</span>
+										</div>
+									</div>
+									<div class="form-group ad_statusbox">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5" for="form-field-5"> 
+											广告时间：
+										</label>
+										<div class="col-sm-2">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<input type="number"  id="ad_times" name="ad_times" class="form-control" value="{$info.ad_times}"/>
+											</div>
+											
+										</div>
+										<div class="help-block col-sm-8" >
+											<span id="ad_timesTip"></span>
+										</div>
+									</div>
+									
+				
+									<div class="form-group">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5" for="form-field-5"> 
+											上网时间限制：
+										</label>
+										<div class="col-sm-3">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<input type="number" id="online_times" name="online_times"  class="form-control online_times" value="{$info.online_times}"/>
+												<span class="input-group-btn" >
+													<button type="button" disabled style="border-radius:0px; height: 34px;" class="btn btn-default" >小时</button>
+												</span>
+												<input type="number" id="online_times1" name="online_times1"  class="form-control online_times" value="{$info.online_times1}"/>
+												<span class="input-group-btn">
+													<button type="button" disabled style="border-radius:0px; height: 34px;" class="btn btn-default" >分钟</button>
+												</span>
+											</div>
+
+										</div>
+										<div class="help-block col-sm-7" >
+											<span id="online_timesTip"></span>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-xs-12 col-sm-2 control-label no-padding-right margintop5"> 
+											上网时段控制：
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-sm-8" >
+												<select name="online_type" id="online_type" class="form-control" ng-change="select_month()">
+									    			<option value="">请选择</option>
+									    			<option <if condition="($info['online_type'] eq 'everyday')">selected</if> value="everyday">每天</option>
+									    			<option <if condition="($info['online_type'] eq 'days')">selected</if> value="days">工作日</option>
+									    			<option <if condition="($info['online_type'] eq 'weekend')">selected</if> value="weekend">周末</option>
+												</select>
+												<span class="input-group-btn online_typebox" style="display:none;">
+													<button type="button" disabled style="border-radius:0px; height: 32px;" class="btn btn-default" ></button>
+												</span>
+												<select name="hour" id="hour" class="form-control online_typebox" style="display:none;"></select>
+
+												
+												<span class="input-group-btn online_typebox" style="display:none;">
+													<button type="button" disabled style="border-radius:0px; height: 32px;" class="btn btn-default" >至</button>
+												</span>
+									
+												<select name="hour1" id="hour1" class="form-control online_typebox" style="display:none;"></select>
+												
+											</div>
+											<div style="clear:both;"></div>
+											<p class="help-block dp">如果不选择，则是全天可以进行认证上网;起始时间与结束时间相等，代表全天可以进行认证上网</p>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-sm-2 control-label no-padding-right" for="form-field-1">认证后跳转：</label>
+										<div class="col-sm-9">
+												
+												<label class="inline middle">
+													<input type="radio" name="href" value="website" >
+													<span class="lbl">跳转到微站</span>
+												</label>
+												<label class="inline left10 middle">
+													<input type="radio" name="href" value="sourcewebsite" >
+													<span class="lbl">跳转请求网页</span>
+												</label>
+												<label class="inline left10 middle">
+													<input type="radio" name="href" value="fixedwebsite" >
+													<span class="lbl">跳转指定网页</span>
+												</label>
+												<label class="inline left10 middle">
+													<input type="radio" name="href" value="not" >
+													<span class="lbl">不跳转</span>
+												</label>
+										</div>
+									</div>
+									<div class="form-group hrefbox" style="display:none;">
+										<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1">指定跳转URL： </label>
+										<div class="col-sm-6">
+											<div class="input-group col-xs-10 col-sm-12 ">
+												<input type="text" id="href_website" name="href_website" value="{$info.href_website}" class="form-control"/>
+											</div>
+										
+										</div>
+										<div class="help-block col-sm-4" >
+											<span id="href_websiteTip"></span>
+										</div>
+									</div>
+									
+									
+									<div id="alert_box"></div>
+									<div class="clearfix form-actions">
+										<div class="col-md-offset-3 col-md-9 col-sm-9">
+											<button id="save" class="col-sm-2 btn btn-success" data-loading-text="正在提交,请稍候..." type="submit">
+												<i class="icon-save bigger-110"></i>
+											 	<span id="submitbutton">保存</span>
+											</button>
+											<button class="col-sm-2 btn btn-default left10" type="reset">
+												<i class="icon-reply bigger-110"></i>
+											 	<span id="submitbutton">取消</span>
+											</button>
+										</div>
+									</div>
+								</div>
+							</form>
+							<div id="table-list" class="widget-box transparent" ng-if="info1 && info1.length>0">
+								<div class="widget-header widget-header-flat widget-header-small"><h5><i class="icon-bell bigger-110 purple"></i>帮助</h5>
+								</div>
+								<div class="widget-body">
+									<div class="widget-main">
+										<ul class="tips_msg">
+											<li>
+												手机虚拟认证：用户输入一个手机号码后，系统自动生成一个验证码并呈现在认证页面中
+											</li>
+											<li>
+												微信认证接口：将该链接填写在微信公众平台中的自动回复或者自定义菜单按钮中
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>	
+		</div>
+	</div>
+</div>

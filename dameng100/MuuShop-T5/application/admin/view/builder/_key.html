@@ -1,0 +1,717 @@
+<div class="builder_item">
+<label class="item-label">{$field.title|htmlspecialchars}
+    {if condition="$field['subtitle']"}
+        <span class="suggest check-tips">（{$field.subtitle}）</span>
+    {/if}
+</label>
+{if condition="$field['name'] == 'action'"}
+    <p>{:lang("_DEVELOPMENT_STAFF_ATTENTION_")}{:lang("_YOU_USE_A_FIELD_NAMED_ACTION_")}，{:lang("_BECAUSE_THIS_FIELD_NAME_WILL_BE_WITH_FORM_")}[action]{:lang("_CONFLICT_WHICH_CAUSES_THE_FORM_TO_BE_UNABLE_TO_COMMIT_PLEASE_USE_ANOTHER_NAME_")}
+    </p>
+{/if}
+<div class="controls">
+{switch name="field.type"}
+
+    {case value="text"}
+        <input type="text" name="{$field.name}" value="{$field.value|htmlspecialchars}"
+               class="text input-large form-control" />
+    {/case}
+
+    {case value="label"}
+        {$field.value}
+    {/case}
+
+    {case value="hidden"}
+        <input type="hidden" name="{$field.name}" value="{$field.value}" class="text input-large"/>
+    {/case}
+
+    {case value="readonly"}
+        <input type="hidden" name="{$field.name}" value="{$field.value}" class="text input-large form-control"
+                placeholder={:lang("_NO_NEED_TO_FILL_IN_WITH_DOUBLE_")} readonly/>
+        <p class="" >{$field.value}</p>
+    {/case}
+    {case value="readonlytext"}
+        <input type="text" name="{$field.name}" value="{$field.value}" class="text input-large form-control"
+                placeholder={:lang("_NO_NEED_TO_FILL_IN_WITH_DOUBLE_")} readonly/>
+    {/case}
+    {case value="readonlyhtml"}
+        {$field.value}
+    {/case}
+    {case value="integer"}
+        <input type="number" name="{$field.name}" value="{$field.value}" class="text input-large form-control"/>
+    {/case}
+    {case value="uid"}
+        <input type="number" name="{$field.name}" value="{$field.value}" class="text input-large form-control"
+               />
+    {/case}
+    {case value="select"}
+        <select name="{$field.name}" class="form-control">
+            {volist name="field.opt" id="option"}
+                {php}
+                    $selected = $field['value']==$key ? 'selected' : '';
+                {/php}
+                <option value="{$key}"
+                {$selected}>{$option|htmlspecialchars}</option>
+            {/volist}
+        </select>
+    {/case}
+    {case value="colorPicker"}
+        {php}
+            $colorPicker = 1;
+        {/php}
+        <div class="color-picker" style="width:100px;height: 30px;">
+            <input type="text" name="{$field.name}" class="simple_color_callback form-control" onchange="setColorPicker(this);" value="{$field.value|default=''}">
+        </div>
+            <script type="text/javascript" src="__LIB__/jquery.simple-color/jquery.simple-color.js"></script>
+            <script>
+                $(function(){
+                    $('.simple_color_callback').simpleColor({
+                        boxWidth:20,
+                        cellWidth: 20,
+                        cellHeight: 20,
+                        chooserCSS:{ 'z-index': 500 },
+                        displayCSS: { 'border': 0 ,
+                            'width': '32px',
+                            'height': '32px',
+                            'margin-top': '-32px'
+                        },
+                        onSelect: function(hex, element) {
+                            $('#tw_color').val('#'+hex);
+                        }
+                    });
+                    $('.simple_color_callback').show();
+                    $('.simpleColorContainer').css('margin-left','105px');
+                    $('.simpleColorDisplay').css('border','1px solid #DFDFDF');
+                });
+                var setColorPicker=function(obj){
+                    var color=$(obj).val();
+                    $(obj).parents('.color-picker').find('.simpleColorDisplay').css('background',color);
+                }
+            </script>
+    {/case}
+    {case value="radio"}
+        {volist name="field.opt" id="option"}
+            {php}
+                $checked = $field['value']==$key ? 'checked' : '';
+                $inputId = "id_$field[name]_$key";
+            {/php}
+            <label for="{$inputId}"> <input id="{$inputId}" name="{$field.name}" value="{$key}" type="radio"
+                {$checked}/>
+                {$option}</label> &nbsp;&nbsp;&nbsp;&nbsp;
+        {/volist}
+    {/case}
+    {case value="icon"}
+        <div class='icon-chose' title={:lang("_SELECT_ICON_WITH_DOUBLE_")}>
+            <select name="{$field.name}" title={:lang("_SELECT_ICON_WITH_DOUBLE_")} class="chosen-icons" data-value="{$field.value|default='icon-star'}"></select>
+        </div>
+        
+        <script>
+            $(function(){
+                $('.chosen-container').remove()
+                $('form select.chosen-icons').attr('class','chosen-icons');
+                $('form select.chosen-icons').data('zui.chosenIcons',null);
+                $('form select.chosen-icons').data('chosen',null);
+                $('form select.chosen-icons').chosenIcons();
+            });
+        </script>
+    {/case}
+
+    {case value="singleFile"}
+        <div class="file-upload singleFile">
+        <input name="{$field.name}" id="file_upload_{$field.name}" type="hidden" value="{$field.value}">
+        <div id="file_list_{$field.name}" class="file_list_box">
+            {empty name="file"}
+            
+            {else/}
+                <div class="file_item" data-id="$file.id">
+                    <span>{$file.name}</span>
+                    <a class="remove"><i class="icon-trash"></i></a>
+                </div>
+            {/empty}
+        </div>
+
+        <div id="uploader_{$field.name}">
+            <div class="btns">
+                <div id="picker">{:lang('_FILE_SELECT_')}</div>
+            </div>
+        </div>
+        </div>
+        <script>
+        $(function () {
+            
+            var uploader_{$field.name} = WebUploader.create({
+                // 选完文件后，是否自动上传。
+                auto: true,
+                // swf文件路径
+                swf: 'Uploader.swf',
+                // 文件接收服务端。
+                server: "{:Url('api/file/uploadFile',array('session_id'=>session_id()))}",
+                // 选择文件的按钮。可选。
+                // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+                pick: "#uploader_{$field.name}",
+                // 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+                resize: false
+            });
+            // 当有文件被添加进队列的时候
+            uploader_{$field.name}.on( 'fileQueued', function( file ) {
+                uploader_{$field.name}.upload();
+                toast.showLoading();
+            });
+            // 文件上传过程中创建进度条实时显示。
+            uploader_{$field.name}.on( 'uploadSuccess', function( file ,ret ) {
+                if(ret.code==1){
+                    toast.success("{:lang('_SUCCESS_UPLOAD_')}{:lang('_PERIOD_')}");
+                    $('#file_list_{$field.name}').html(
+                        '<div class="file_item" data-id="'+ret.data[0].id+'">'+
+                            '<span>'+ret.data[0].name+'</span>'+
+                            '<a class="remove"><i class="icon-trash"></i></a>'+
+                        '</div>'
+                    );
+                   $('#file_upload_{$field.name}').val(ret.data[0].id);
+                }else{
+                    toast.error("{:lang('_FAIL_UPLOAD_')}{:lang('_PERIOD_')}"+ret.msg);
+                }
+                //重启webuploader,可多次上传
+                uploader_{$field.name}.reset();
+            });
+
+            uploader_{$field.name}.on( 'uploadError', function( file ) {
+                toast.error("{:lang('_ERROR_UPLOAD_')}{:lang('_PERIOD_')}")
+            });
+
+            uploader_{$field.name}.on( 'uploadComplete', function( file ) {
+                toast.hideLoading();
+            });
+            //移除事件
+            $('#file_list_{$field.name}').on("click",".remove",function(){
+                $('#file_upload_{$field.name}').val('');
+                $(this).parent('div').remove();
+            });
+        });
+        </script>
+
+    {/case}
+    {case value="multiFile"}
+    <div class="file-upload multiFile">
+        <div id="file_list_{$field.name}">
+        {notempty name="field.value"}
+            {php}$aIds = explode(',',$field['value']);{/php}
+            {volist name="$aIds" id="vo"}
+                <div class="file_item" data-id="{$vo}">
+                    <span>{$vo.name}</span>
+                    <a class="remove"><i class="icon-trash"></i></a> 
+                </div>
+            {/volist}
+        {/notempty}
+
+        </div>
+
+        <div id="uploader_{$field.name}">
+            <div class="btns">
+                <div id="picker">{:lang('_FILE_SELECT_')}</div>
+            </div>
+        </div>
+        <input name="{$field.name}" id="file_upload_{$field.name}" type="hidden" value="{$field.value}">
+        <script>
+            $(function(){
+                var uploader_{$field.name} = WebUploader.create({
+                    // 选完文件后，是否自动上传。
+                    auto: true,
+                    // swf文件路径
+                    swf: 'Uploader.swf',
+                    // 文件接收服务端。
+                    server: "{:Url('api/File/uploadFile',array('session_id'=>session_id()))}",
+                    // 选择文件的按钮。可选。
+                    // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+                    pick: "#uploader_{$field.name}",
+                    // 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+                    resize: false
+                });
+                // 当有文件被添加进队列的时候
+                uploader_{$field.name}.on( 'fileQueued', function( file ) {
+                    uploader_{$field.name}.upload();
+                    toast.showLoading();
+                });
+                // 文件上传成功
+                uploader_{$field.name}.on( 'uploadSuccess', function( file ,ret ) {
+
+                    if(ret.code==1){
+                        toast.success("{:lang('_SUCCESS_UPLOAD_')}{:lang('_PERIOD_')}");
+                        $('#file_list_{$field.name}').append(
+                            '<div class="file_item" data-id="'+ret.data[0].id+'">'+
+                                '<span>'+ret.data[0].name+'</span>'+
+                                '<a class="remove"><i class="icon-trash"></i></a>'+
+                            '</div>'
+                        );
+                        upAttachVal($('#file_upload_{$field.name}'),'add',ret.data[0].id);
+                    }else{
+                        toast.error("{:lang('_FAIL_UPLOAD_')}{:lang('_PERIOD_')}"+ret.msg);
+                    }
+
+                    //重启webuploader,可多次上传
+                    uploader_{$field.name}.reset();
+                });
+                //上传错误
+                uploader_{$field.name}.on( 'uploadError', function( file ) {
+                    toast.error("{:lang('_ERROR_UPLOAD_')}{:lang('_PERIOD_')}")
+                });
+                //上传完成
+                uploader_{$field.name}.on( 'uploadComplete', function( file ) {
+                    toast.hideLoading();
+                });
+
+                function upAttachVal(input,type, attachId) {
+                    var $attach_ids =input ;
+                    var attachVal = $attach_ids.val();
+                    var attachArr = attachVal.split(',');
+                    var newArr = [];
+
+                    for (var i in attachArr) {
+                        if (attachArr[i] !== '' && attachArr[i] !== attachId.toString()) {
+                            newArr.push(attachArr[i]);
+                        }
+                    }
+                    type === 'add' && newArr.push(attachId);
+                    $attach_ids.val(newArr.join(','));
+                }
+                //移除事件
+                $('#file_list_{$field.name}').on("click",".remove",function(){
+                    var attachId = $(this).parent('div').data('id');
+                    upAttachVal($('#file_upload_{$field.name}'),'del', attachId);
+                    $(this).parent('div').remove();
+                });
+            })
+            
+        </script>
+    </div>  
+    {/case}
+    {case value="singleImage"}
+        <div class="singleImage">
+        <div id="upload_single_image_{$field.name}" style="padding-bottom: 5px;">{:lang("_SELECT_PICTURES_")}</div>
+        <input class="attach" type="hidden" name="{$field.name}" value="{$field['value']}"/>
+        <div class="upload-img-box">
+            <div class="upload-pre-item popup-gallery">
+
+            {notempty name="field.value"}
+                <div class="each">
+                <a href="{$field.value|get_cover='path'}" title={:lang("_CLICK_TO_SEE_THE_BIG_PICTURE_WITH_DOUBLE_")}>
+                    <img src="{$field.value|get_cover='path'}">
+                </a>
+                    <div class="text-center opacity del_btn" ></div>
+                    <div onclick="admin_image.removeImage($(this),'{$field.value}')"  class="text-center del_btn">{:lang("_DELETE_")}</div>
+                </div>
+            {/notempty}
+            </div>
+        </div>
+        </div>
+
+        <script>
+            $(function () {
+                var uploader_{$field.name}= WebUploader.create({
+                    // 选完文件后，是否自动上传。
+                    auto: true,
+                    // swf文件路径
+                    swf: 'Uploader.swf',
+                    // 文件接收服务端。
+                    server: "{:Url('api/file/uploadPicture',array('session_id'=>session_id()))}",
+                    // 选择文件的按钮。可选。
+                    // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+                    pick: {id:'#upload_single_image_{$field.name}',multiple: false},
+                    // 只允许选择图片文件
+                    accept: {
+                        title: 'Images',
+                        extensions: 'gif,jpg,jpeg,bmp,png',
+                        mimeTypes: 'image/jpg,image/jpeg,image/png'
+                    }
+                });
+                uploader_{$field.name}.on('fileQueued', function (file) {
+                    uploader_{$field.name}.upload();
+                    toast.showLoading();
+                });
+                /*上传成功**/
+                uploader_{$field.name}.on('uploadSuccess', function (file, data) {
+                    if (data.code) {
+                        $("[name='{$field.name}']").val(data.data[0].id);
+                        $("[name='{$field.name}']").parent().find('.upload-pre-item').html(
+                                ' <div class="each"><a href="'+ data.data[0].path+'" title={:lang("_CLICK_TO_SEE_THE_BIG_PICTURE_WITH_DOUBLE_")}><img src="'+ data.data[0].path+'"></a><div class="text-center opacity del_btn" ></div>' +
+                                        '<div onclick="admin_image.removeImage($(this),'+data.data[0].id+')"  class="text-center del_btn">{:lang("_DELETE_")}</div></div>'
+                        );
+                        //重启webuploader,可多次上传
+                        uploader_{$field.name}.reset();
+                    } else {
+                        updateAlert(data.msg);
+                        setTimeout(function () {
+                            $('#top-alert').find('button').click();
+                            $(that).removeClass('disabled').prop('disabled', false);
+                        }, 1500);
+                    }
+                });
+                //上传完成
+                uploader_{$field.name}.on( 'uploadComplete', function( file ) {
+                    toast.hideLoading();
+                });
+
+            })
+        </script>
+
+    {/case}
+
+    {case value="multiImage"}
+        <div class="multiImage">
+            <div id="upload_multi_image_{$field.name}">{:lang("_SELECT_PICTURES_")}</div>
+            <input class="attach" type="hidden" name="{$field.name}" value="{$field['value']}"/>
+            <div class="upload-img-box">
+                <div class="upload-pre-item popup-gallery">
+                    {notempty name="field.value"}
+                        {php}$aIds = explode(',',$field['value']);{/php}
+                        {volist name="aIds" id="aId"}
+                            <div class="each">
+                                <a href="{$aId|get_cover='path'}" data-toggle="lightbox" title={:lang("_CLICK_TO_SEE_THE_BIG_PICTURE_WITH_DOUBLE_")}>
+                                    <img src="{$aId|get_cover='path'}">
+                                </a>
+                                <div class="text-center opacity del_btn" ></div>
+                                <div onclick="admin_image.removeImage($(this),'{$aId}')"  class="text-center del_btn">
+                                    {:lang("_DELETE_")}
+                                </div>
+                            </div>
+                        {/volist}
+                    {/notempty}
+                </div>
+            </div>
+        </div>
+        <script>
+            $(function () {
+                var id = "#upload_multi_image_{$field.name}";
+                var limit = parseInt('{$field.opt}');
+                var uploader_{$field.name}= WebUploader.create({
+                    // 选完文件后，是否自动上传。
+                      // sw{:lang("_F_FILE_PATH_")}
+                    swf: 'Uploader.swf',
+                    // 文件接收服务端。
+                    server: "{:Url('api/file/uploadPicture',array('session_id'=>session_id()))}",
+                    // 选择文件的按钮。可选。
+                    // 内部根据当前运行是创建，可能是input元素，{:lang("_AND_IT_COULD_BE_FLASH_")}.
+                    //pick: '#upload_multi_image_{$field.name}',
+                    pick: {'id': id, 'multi': true},
+                    fileNumLimit: limit,
+                    // 只允许{:lang("_SELECT_PICTURES_")}文件。
+                    accept: {
+                        title: 'Images',
+                        extensions: 'gif,jpg,jpeg,bmp,png',
+                        mimeTypes: 'image/image/jpg,image/jpeg,image/png'
+                    }
+                });
+                uploader_{$field.name}.on('fileQueued', function (file) {
+                    uploader_{$field.name}.upload();
+                    toast.showLoading();
+                });
+                uploader_{$field.name}.on('uploadFinished', function (file) {
+                    uploader_{$field.name}.reset();
+                });
+                /*上传成功**/
+                uploader_{$field.name}.on('uploadSuccess', function (file, data) {
+                  if (data.code) {
+
+                    var ids = $("[name='{$field.name}']").val();
+                    ids = ids.split(',');
+
+                  if( ids.indexOf(data.data[0].id) == -1){
+                        var rids = admin_image.upAttachVal('add',data.data[0].id, $("[name='{$field.name}']"));
+                      if(rids.length>limit){
+                          updateAlert({:lang('_EXCEED_THE_PICTURE_LIMIT_WITH_SINGLE_')});
+                          return;
+                      }
+                      $("[name='{$field.name}']").parent().find('.upload-pre-item').append(
+                            '<div class="each">'+
+                            '<a href="'+ data.data[0].path+'" data-toggle="lightbox" title={:lang("_CLICK_TO_SEE_THE_BIG_PICTURE_WITH_DOUBLE_")}>'+
+                            '<img src="'+ data.data[0].path+'">'+
+                            '</a>'+
+                            '<div class="text-center opacity del_btn" ></div>' +
+                                '<div onclick="admin_image.removeImage($(this),'+data.data[0].id+')"  class="text-center del_btn">{:lang("_DELETE_")}</div>'+
+                            '</div>'
+                        );
+                    }else{
+                        updateAlert({:lang('_THE_PICTURE_ALREADY_EXISTS_WITH_SINGLE_')});
+                    }
+                } else {
+                    updateAlert(data.msg);
+                    setTimeout(function () {
+                        $('#top-alert').find('button').click();
+                        $(that).removeClass('disabled').prop('disabled', false);
+                    }, 1500);
+                }
+                });
+                //上传完成
+                uploader_{$field.name}.on( 'uploadComplete', function( file ) {
+                    toast.hideLoading();
+                });
+            })
+        </script>
+
+    {/case}
+
+    {case value="checkbox"}
+        {php}
+            $importCheckBox = true;
+        {/php}
+        {php}
+            $field['value_array'] = explode(',', $field['value']);
+        {/php}
+        {volist name="field.opt" id="option"}
+            {php}
+                $checked = in_array($key,$field['value_array']) ? 'checked' : '';
+                $inputId = "id_$field[name]_$key";
+            {/php}
+            <label for="{$inputId}">
+                <input type="checkbox" value="{$key}" id="{$inputId}" class="oneplus-checkbox"
+                data-field-name="{$field.name}" {$checked}/>
+                {$option}</label>
+
+        {/volist}
+        <input type="hidden" name="{$field.name}" class="oneplus-checkbox-hidden"
+               data-field-name="{$field.name}" value="{$field.value}"/>
+
+    {/case}
+    {case value="ueditor"}
+            {:widget('common/ueditor/editor',array($field['name'],$field['name'],$field['value'],$field['config'],$field['style'],$field['param'],$field['width']))}
+    {/case}
+
+    {case value="wangeditor"}
+            {:widget('common/wangeditor/editor',array($field['name'],$field['name'],$field['value'],$field['config'],$field['style'],$field['param'],$field['width']))}
+    {/case}
+    {case value="textarea"}
+        <textarea name="{$field.name}" class="text input-large form-control">{$field.value|htmlspecialchars}</textarea>
+    {/case}
+    {case value="time"}
+        {php}
+            $importDatetimePicker = true;
+            //默认为当前时间
+            if(!$field['value']){
+            $field['value'] = time();
+            }
+        {/php}
+        <input type="hidden" name="{$field.name}" value="{$field.value}"/>
+        <input type="text" data-field-name="{$field.name}" class="text input-large form-time time form-control"
+                value="{$field.value|time_format='H:i'}" placeholder={:lang("_PLEASE_CHOOSE_TIME_WITH_DOUBLE_")}/>
+    {/case}
+    {case value="date"}
+        {php}
+            $importDatetimePicker = true;
+            //默认为当前时间
+            if(!$field['value']){
+            $field['value'] = time();
+            }
+        {/php}
+        <input type="hidden" name="{$field.name}" value="{$field.value}"/>
+        <input type="text" data-field-name="{$field.name}" class="text input-large form-date time form-control"
+            value="{$field.value|time_format='Y-m-d'}" placeholder={:lang("_PLEASE_CHOOSE_TIME_WITH_DOUBLE_")}/>
+    {/case}
+    {case value="datetime"}
+        {php}
+            $importDatetimePicker = true;
+            //默认为当前时间
+            if(!$field['value']){
+            $field['value'] = time();
+            }
+        {/php}
+        <input type="hidden" name="{$field.name}" value="{$field.value}"/>
+        <input type="text" data-field-name="{$field.name}" class="text input-large form-datetime time form-control"
+            value="{$field.value|time_format}" placeholder={:lang("_PLEASE_CHOOSE_TIME_WITH_DOUBLE_")}/>
+    {/case}
+
+    <!--添加城市选择（需安装城市联动插件,css样式不好处理排版有点怪）-->
+    {case value="city"}
+    <div class="city">
+        <style>
+            #J_province,#J_city,#J_district {
+                display: inline-block;
+                width:120px;
+            }
+        </style>
+        <!--修正在编辑信息时无法正常显示已经保存的地区信息-->
+        {:hook('Chinacity',array('province'=>$field['value']['0'],'city'=>$field['value']['1'],'district'=>$field['value']['2'],'community'=>$field['value']['3']))}
+    </div>
+    {/case}
+
+    <!--弹出窗口选择并返回值（目前只支持返回ID）开始->
+    {case value="dataselect">
+        <input type="text" name="{$field.name}" id="{$field.name}" value="{$field.value|htmlspecialchars}"
+               class="text input-large form-control" style="width: 400px;display:inline-block;"/><input class="btn" style="margin-left:10px" type="button" value={:lang("_CHOICE_WITH_DOUBLE_")} onclick="openwin('{$field.opt}','600','500')">
+			     <script type="text/javascript">
+						//弹出窗口
+						function openwin(url,width,height){
+						    var l=window.screen.width ;
+						    var w= window.screen.height;
+						    var al=(l-width)/2;
+						    var aw=(w-height)/2;
+						    var OpenWindow=window.open(url,{:lang("_POP_UP_WINDOW_WITH_DOUBLE_")},"toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width="+width+",height="+height+",top="+aw+",left="+al+"");
+						    OpenWindow.focus();
+						if(OpenWindow!=null){ //弹出窗口关闭事件
+						//if(window.attachEvent) OpenWindow.attachEvent("onbeforeunload",   quickOut);
+						if(window.attachEvent) OpenWindow.attachEvent("onunload",   quickOut);
+						}
+						}
+						//关闭触发方法
+						function quickOut()
+						{
+						alert({:lang("_THE_WINDOW_IS_CLOSED_WITH_DOUBLE_")});
+						}
+				 </script>
+    {/case}
+	<!-- 弹出窗口选择并返回值（目前只支持返回ID）结束 -->
+
+    {case value="kanban"}
+
+        <input type="hidden" name="{$field.name}" value='{:json_encode($field["value"])}'/>
+        <!-- 使用 .boards 类来管理多个 .board -->
+        <div class="boards" id="{$field.name}">
+          <!-- .board 为单个容器 -->
+          {notempty name="$field['value']"}
+          {php}foreach($field['value'] as $key =>$kanban){{/php}
+          <div class="board panel" data-id="{$kanban['id']}" data-title="{$kanban['title']}">
+            <div class="panel-heading">
+              <strong>{$kanban['title']}</strong>
+            </div>
+            <div class="panel-body">
+              <div class="board-list">
+                    {notempty name="kanban.items"}
+                        {volist name="kanban.items" id="vo"}
+                            <div class="board-item" data-id="{$vo.id}" data-title="{$vo.title}">
+                                {$vo.title}
+                            </div>
+                        {/volist}
+                    {/notempty}
+              </div>
+            </div>
+          </div>
+          {php}}{/php}
+          {/notempty}
+        </div>
+
+    <script type="text/javascript">
+        $(function(){
+
+            var flag = "{$field.name}"
+            $('#{$field.name}').boards({
+                drop: function(e){
+                    setTimeout(function(){
+
+                        newVal();
+
+                    },100);
+                }
+            });
+
+            function newVal(){
+                var v =new Array();
+                $('.boards .board').each(function (index, element) {
+                    if ($(element).data('id')) {
+                        v[index] =  new Object();
+                        v[index]['id'] =  $(element).data('id');
+                        v[index]['title'] =  $(element).data('title');
+                        v[index]['items'] =  new Array();
+                        var obj = $(element).find('.board-item[data-id]');
+                        if(obj){
+                            for (var i = 0; i < obj.length; i++) {
+                                v[index]['items'][i] = new Object();
+                                v[index]['items'][i]['id'] = $(obj[i]).data('id');
+                                v[index]['items'][i]['title'] = $(obj[i]).data('title');
+                            };
+                        }
+                    }
+                });
+                var kanban_str = JSON.stringify(v);
+                $('[name="'+flag+'"]').val(kanban_str);
+                console.log(kanban_str);
+            }
+        });
+    </script>
+{/case}
+
+{case value="chosen"}
+    <div class="chosen chosen_{$field.name}">
+        <select data-placeholder="" name="{$field.name}[]" class="chosen-select form-control" tabindex="2" multiple="">
+            {php}
+                if( key($field['opt']) === 0){
+            {/php}
+            {volist name="field['opt']" id="option"}
+                {php}
+                    $selected = '';
+
+                    if($field['value']){
+                        $selected = in_array(reset($option),$field['value'])? 'selected' : '';
+                    }
+                {/php}
+                <option value="{:reset($option)}" {$selected}>{$option|end|htmlspecialchars}</option>
+            {/volist}
+            {php}
+                }else{
+                foreach($field['opt'] as $optgroupkey =>$optgroup){
+            {/php}
+            <optgroup label="{$optgroupkey}">
+                {volist name="optgroup" id="option"}
+                    {php}
+                        $selected = '';
+                        if($field['value']){
+                            $selected = in_array(reset($option),$field['value'])? 'selected' : '';
+                        }
+                    {/php}
+                    <option value="{:reset($option)}" {$selected}>{$option|end|htmlspecialchars}</option>
+                {/volist}
+            </optgroup>
+            {php}
+                }
+                }
+            {/php}
+        </select>
+        <script>
+        $(function(){
+            $('.chosen_{$field.name} select.chosen-select').chosen({
+                lang:'zh_cn',
+                width:'100%',
+                no_results_text: '没有找到',    // 当检索时没有找到匹配项时显示的提示文本
+                disable_search_threshold: 10, // 10 个以下的选择项则不显示检索框
+                search_contains: true         // 从任意位置开始检索
+            });
+        });
+        </script>
+    </div>
+{/case}
+
+{case value="multiInput"}
+    <div class="clearfix" style="{$field['style']}">
+    {php}
+        $field['name'] = is_array($field['name'])?$field['name']:explode('|',$field['name']);
+        foreach($field['name'] as $key=>$val){
+
+    {/php}
+        {switch name="field['config'][$key]['type']"}
+            {case value="text"}
+                <input type="text" name="{$val}" value="{$field['value'][$key]|htmlspecialchars}"
+                       class=" pull-left text input-large form-control" style="{$field['config'][$key]['style']}" />
+            {/case}
+            {case value="select"}
+                <select name="{$val}" class="pull-left form-control" style="{$field['config'][$key]['style']}" >
+                    {php}foreach($field['config'][$key]['opt'] as $key_opt =>$option){{/php}
+                    {php}
+                        $selected = $field['value'][$key]==$key_opt ? 'selected' : '';
+                    {/php}
+                    <option value="{$key_opt}" {$selected}>{$option|htmlspecialchars}</option>
+                    {php}}{/php}
+                </select>
+            {/case}
+        {/switch}
+    {php}
+        }
+    {/php}
+    </div>
+{/case}
+{case value="userDefined"}
+    {$field.definedHtml}
+{/case}
+
+    {default/}
+    <span>{:lang("_ERROR_")}{:lang("_COLON_")}{:lang("_UNKNOWN_FIELD_TYPE_")}{$field.type}</span>
+    <input type="hidden" name="{$field.name}" value="{$field.value|htmlspecialchars}"/>
+{/switch}
+</div>
+</div>

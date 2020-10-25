@@ -1,0 +1,639 @@
+{extend name="common@base/common" /}
+
+{block name="style"}
+<link href="__CSS__/main.min.css" rel="stylesheet" type="text/css"/>
+{/block}
+
+{block name="body"}
+<div class="container">
+  <ol class="breadcrumb">
+      <li><a href="{:url('index/index')}">演示首页</a></li>
+      <li>图表</li>
+  </ol>
+<section class="demo-section">
+<div id="pageContent">
+<style>
+.text-middle th, .text-middle td {
+    vertical-align: middle;
+}
+</style>
+
+
+
+
+<article><p>ZUI中的图表视图使用 <a href="http://www.chartjs.org/">Chart.js</a> 实现。</p><p>目前提供曲线图、饼图和柱状图的实现。</p><p>在ZUI中 Chart.js 绘制所使用的颜色已经经过更改，可以直接使用 <a href="#javascript/colorset">配色表</a> 中列明的颜色作为色彩主题，与ZUI的风格保持一致。</p></article>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section><header><h3>创建图表</h3></header><article><p>图表视图为独立组件，你需要从本地或 CDN 单独引入 lib 目录下的资源：</p><pre class="prettyprint prettyprinted" style=""><code class="lang-html"><span class="tag">&lt;script</span><span class="pln"> </span><span class="atn">src</span><span class="pun">=</span><span class="atv">"lib/chart/zui.chart.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span></code></pre><p>为了创建图表，首先需要在HTML中置入一个<code>&lt;canvas&gt;</code>标签。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-html"><span class="tag">&lt;canvas</span><span class="pln"> </span><span class="atn">id</span><span class="pun">=</span><span class="atv">"myChart"</span><span class="pln"> </span><span class="atn">width</span><span class="pun">=</span><span class="atv">"400"</span><span class="pln"> </span><span class="atn">height</span><span class="pun">=</span><span class="atv">"400"</span><span class="tag">&gt;&lt;/canvas&gt;</span></code></pre><p>第二步是实例化一个<code>Chart</code>对象。有两种方法来创建<code>Chart</code>实例。</p><h4>通过$.zui.Chart创建实例</h4><p>创建实例需要首先得到<code>&lt;canvas&gt;</code>的用于绘图的<code>2d context</code>，然后调用<code>$.zui.Chart</code>构造函数。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="com">// 使用jquery方法获取 2d context 对象</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> ctx </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">"#myChart"</span><span class="pun">).</span><span class="kwd">get</span><span class="pun">(</span><span class="lit">0</span><span class="pun">).</span><span class="pln">getContext</span><span class="pun">(</span><span class="str">"2d"</span><span class="pun">);</span><span class="pln">
+</span><span class="com">// 或者使用 document.getElementById 获取 2d context 对象</span><span class="pln">
+</span><span class="com">// var ctx = document.getElementById("myChart").getContext("2d");</span><span class="pln">
+
+</span><span class="com">// 使用$.zui.Chart构造Chart实例</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> myNewChart </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">new</span><span class="pln"> $</span><span class="pun">.</span><span class="pln">zui</span><span class="pun">.</span><span class="typ">Chart</span><span class="pun">(</span><span class="pln">ctx</span><span class="pun">);</span></code></pre><h4>通过$.fn.chart创建实例</h4><p>ZUI扩展了jQuery的功能函数，可以使用jQuery选择canvas节点对象来创建Chart实例。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="com">// 创建指定Canvas的Chart实例</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> myChart </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">"#myChart"</span><span class="pun">).</span><span class="pln">chart</span><span class="pun">();</span></code></pre><p>如果jQuery实例包含多个canvas，则会以数组的形式返回所有Chart实例。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="com">// 以数组的形式返回所有canvas的Chart实例</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> allMyCharts </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">"canvas"</span><span class="pun">).</span><span class="pln">chart</span><span class="pun">();</span></code></pre><div class="alert alert-warning">
+  <h4>提示</h4>
+  <p>通常情况下，在 jQuery 对象上调用 jQuery 方法会返回 jQuery 对象本身，但在调用 <code>$().chart()</code> 系列方法（包括 <code>$().lineChart()</code>，<code>$().doughnutChart()</code>，<code>$().pieChart()</code>，<code>$().barChart()</code>）<strong>返回的是图表对象实例</strong>。</p>
+</div></article></section>
+
+
+<section><header><h3>全局选项</h3></header><article><p>全局选项适用于所有可用的图标类型（包括曲线图、饼图和柱状图）。以下列出所有可用的全局选项及默认值：</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pun">{</span><span class="pln">
+    </span><span class="com">// Boolean - 是否执行动画效果</span><span class="pln">
+    animation</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 动画执行的步数，数值越大，动画执行的时间越长</span><span class="pln">
+    animationSteps</span><span class="pun">:</span><span class="pln"> </span><span class="lit">60</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 动画效果</span><span class="pln">
+    </span><span class="com">// 可以选用的动画效果包括:</span><span class="pln">
+    </span><span class="com">// [easeInOutQuart, linear, easeOutBounce, easeInBack, easeInOutQuad,</span><span class="pln">
+    </span><span class="com">//  easeOutQuart, easeOutQuad, easeInOutBounce, easeOutSine, easeInOutCubic,</span><span class="pln">
+    </span><span class="com">//  easeInExpo, easeInOutBack, easeInCirc, easeInOutElastic, easeOutBack,</span><span class="pln">
+    </span><span class="com">//  easeInQuad, easeInOutExpo, easeInQuart, easeOutQuint, easeInOutCirc,</span><span class="pln">
+    </span><span class="com">//  easeInSine, easeOutExpo, easeOutCirc, easeOutCubic, easeInQuint,</span><span class="pln">
+    </span><span class="com">//  easeInElastic, easeInOutSine, easeInOutQuint, easeInBounce,</span><span class="pln">
+    </span><span class="com">//  easeOutElastic, easeInCubic]</span><span class="pln">
+    animationEasing</span><span class="pun">:</span><span class="pln"> </span><span class="str">"easeOutQuart"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否显示坐标网格</span><span class="pln">
+    showScale</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否使用自定义的策略绘制坐标网格来覆盖默认方案</span><span class="pln">
+    scaleOverride</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// ** 以下选项在 scaleOverride 设置为 true 的情况下为必填项 **</span><span class="pln">
+    </span><span class="com">// Number - 自定义坐标网格时的格子数目</span><span class="pln">
+    scaleSteps</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">null</span><span class="pun">,</span><span class="pln">
+    </span><span class="com">// Number - 自定义坐标网格每个格子的大小</span><span class="pln">
+    scaleStepWidth</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">null</span><span class="pun">,</span><span class="pln">
+    </span><span class="com">// Number - 自定义坐标网格时起始刻度值</span><span class="pln">
+    scaleStartValue</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">null</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 坐标网格线条颜色</span><span class="pln">
+    scaleLineColor</span><span class="pun">:</span><span class="pln"> </span><span class="str">"rgba(0,0,0,.1)"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 坐标网格线条宽度</span><span class="pln">
+    scaleLineWidth</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否为坐标网格显示刻度标签文本</span><span class="pln">
+    scaleShowLabels</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Interpolated JS string - 坐标刻度格式化文本</span><span class="pln">
+    scaleLabel</span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;%=value%&gt;"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否仅仅在坐标为整数值时显示刻度，分数刻度会被跳过</span><span class="pln">
+    scaleIntegersOnly</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 坐标的刻度值是否必须从0开始，否则会以数据中的最小值开始</span><span class="pln">
+    scaleBeginAtZero</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 坐标刻度文本字体</span><span class="pln">
+    scaleFontFamily</span><span class="pun">:</span><span class="pln"> </span><span class="str">"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 坐标刻度文本字体大小</span><span class="pln">
+    scaleFontSize</span><span class="pun">:</span><span class="pln"> </span><span class="lit">12</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 坐标刻度文本样式</span><span class="pln">
+    scaleFontStyle</span><span class="pun">:</span><span class="pln"> </span><span class="str">"normal"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 坐标刻度文本颜色</span><span class="pln">
+    scaleFontColor</span><span class="pun">:</span><span class="pln"> </span><span class="str">"#666"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否启用响应式设计，在窗口尺寸变化时进行重绘</span><span class="pln">
+    responsive</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 当启用响应式设计时，是否在缩放时保持原始比例，如果设置为 false，则重新以新的容器大小进行绘制</span><span class="pln">
+    maintainAspectRatio</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否在触摸或鼠标移动时显示工具提示文本</span><span class="pln">
+    showTooltips</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否在绘制工具提示文本时使用自定义的函数</span><span class="pln">
+    customTooltips</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Array - 显示工具提示的触发事件</span><span class="pln">
+    tooltipEvents</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="str">"mousemove"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"touchstart"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"touchmove"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"mouseout"</span><span class="pun">],</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示背景颜色</span><span class="pln">
+    tooltipFillColor</span><span class="pun">:</span><span class="pln"> </span><span class="str">"rgba(0,0,0,0.8)"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示字体</span><span class="pln">
+    tooltipFontFamily</span><span class="pun">:</span><span class="pln"> </span><span class="str">"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示字体大小</span><span class="pln">
+    tooltipFontSize</span><span class="pun">:</span><span class="pln"> </span><span class="lit">14</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示字体样式</span><span class="pln">
+    tooltipFontStyle</span><span class="pun">:</span><span class="pln"> </span><span class="str">"normal"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示字体颜色</span><span class="pln">
+    tooltipFontColor</span><span class="pun">:</span><span class="pln"> </span><span class="str">"#fff"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示标题字体</span><span class="pln">
+    tooltipTitleFontFamily</span><span class="pun">:</span><span class="pln"> </span><span class="str">"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示标题字体大小</span><span class="pln">
+    tooltipTitleFontSize</span><span class="pun">:</span><span class="pln"> </span><span class="lit">14</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示标题字体样式</span><span class="pln">
+    tooltipTitleFontStyle</span><span class="pun">:</span><span class="pln"> </span><span class="str">"bold"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示标题字体颜色</span><span class="pln">
+    tooltipTitleFontColor</span><span class="pun">:</span><span class="pln"> </span><span class="str">"#fff"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示在垂直方向上的内边距大小</span><span class="pln">
+    tooltipYPadding</span><span class="pun">:</span><span class="pln"> </span><span class="lit">6</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示在水平方向上的内边距大小</span><span class="pln">
+    tooltipXPadding</span><span class="pun">:</span><span class="pln"> </span><span class="lit">6</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示三角箭头大小</span><span class="pln">
+    tooltipCaretSize</span><span class="pun">:</span><span class="pln"> </span><span class="lit">8</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示边框圆角大小</span><span class="pln">
+    tooltipCornerRadius</span><span class="pun">:</span><span class="pln"> </span><span class="lit">6</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 工具提示在 X 坐标上的偏移量</span><span class="pln">
+    tooltipXOffset</span><span class="pun">:</span><span class="pln"> </span><span class="lit">10</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 工具提示模板字符串</span><span class="pln">
+    tooltipTemplate</span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;%if (label){%&gt;&lt;%=label%&gt;: &lt;%}%&gt;&lt;%= value %&gt;"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 多条目工具提示的模板字符串</span><span class="pln">
+    multiTooltipTemplate</span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;%if (datasetLabel){%&gt;&lt;%=datasetLabel%&gt;: &lt;%}%&gt;&lt;%= value %&gt;"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 多条目工具提示的背景色</span><span class="pln">
+    multiTooltipKeyBackground</span><span class="pun">:</span><span class="pln"> </span><span class="str">'#fff'</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Function - 当动画执行过程中的回调函数</span><span class="pln">
+    onAnimationProgress</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">function</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{},</span><span class="pln">
+
+    </span><span class="com">// Function - 当动画执行完成时的回调函数</span><span class="pln">
+    onAnimationComplete</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">function</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{}</span><span class="pln">
+</span><span class="pun">}</span></code></pre></article></section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section><header><h3>曲线图</h3></header><article><p>曲线图用连接一组或多组点集的曲线来展示数据。通常用曲线图来展示数据的变化趋势，或对比多个数据集的趋势。</p><h4>实例</h4><div class="example">
+  <div class="chart-canvas"><canvas id="myLineChart" width="1054" height="379" style="width: 1054px; height: 379px;"></canvas></div>
+</div><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="kwd">var</span><span class="pln"> data </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="com">// labels 数据包含依次在X轴上显示的文本标签</span><span class="pln">
+    labels</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="str">"一月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"二月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"三月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"四月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"五月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"六月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"七月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"八月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"九月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"十月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"十一月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"十二月"</span><span class="pun">],</span><span class="pln">
+    datasets</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[{</span><span class="pln">
+        </span><span class="com">// 数据集名称，会在图例中显示</span><span class="pln">
+        label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"红队"</span><span class="pun">,</span><span class="pln">
+
+        </span><span class="com">// 颜色主题，可以是'#fff'、'rgb(255,0,0)'、'rgba(255,0,0,0.85)'、'red' 或 ZUI配色表中的颜色名称</span><span class="pln">
+        </span><span class="com">// 或者指定为 'random' 来使用一个随机的颜色主题</span><span class="pln">
+        color</span><span class="pun">:</span><span class="pln"> </span><span class="str">"red"</span><span class="pun">,</span><span class="pln">
+        </span><span class="com">// 也可以不指定颜色主题，使用下面的值来分别应用颜色设置，这些值会覆盖color生成的主题颜色设置</span><span class="pln">
+        </span><span class="com">// fillColor: "rgba(220,220,220,0.2)",</span><span class="pln">
+        </span><span class="com">// strokeColor: "rgba(220,220,220,1)",</span><span class="pln">
+        </span><span class="com">// pointColor: "rgba(220,220,220,1)",</span><span class="pln">
+        </span><span class="com">// pointStrokeColor: "#fff",</span><span class="pln">
+        </span><span class="com">// pointHighlightFill: "#fff",</span><span class="pln">
+        </span><span class="com">// pointHighlightStroke: "rgba(220,220,220,1)",</span><span class="pln">
+
+        </span><span class="com">// 数据集</span><span class="pln">
+        data</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">65</span><span class="pun">,</span><span class="pln"> </span><span class="lit">59</span><span class="pun">,</span><span class="pln"> </span><span class="lit">80</span><span class="pun">,</span><span class="pln"> </span><span class="lit">81</span><span class="pun">,</span><span class="pln"> </span><span class="lit">56</span><span class="pun">,</span><span class="pln"> </span><span class="lit">55</span><span class="pun">,</span><span class="pln"> </span><span class="lit">40</span><span class="pun">,</span><span class="pln"> </span><span class="lit">44</span><span class="pun">,</span><span class="pln"> </span><span class="lit">55</span><span class="pun">,</span><span class="pln"> </span><span class="lit">70</span><span class="pun">,</span><span class="pln"> </span><span class="lit">30</span><span class="pun">,</span><span class="pln"> </span><span class="lit">40</span><span class="pun">]</span><span class="pln">
+    </span><span class="pun">},</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+        label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"绿队"</span><span class="pun">,</span><span class="pln">
+        color</span><span class="pun">:</span><span class="pln"> </span><span class="str">"green"</span><span class="pun">,</span><span class="pln">
+        data</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">28</span><span class="pun">,</span><span class="pln"> </span><span class="lit">48</span><span class="pun">,</span><span class="pln"> </span><span class="lit">40</span><span class="pun">,</span><span class="pln"> </span><span class="lit">19</span><span class="pun">,</span><span class="pln"> </span><span class="lit">86</span><span class="pun">,</span><span class="pln"> </span><span class="lit">27</span><span class="pun">,</span><span class="pln"> </span><span class="lit">90</span><span class="pun">,</span><span class="pln"> </span><span class="lit">60</span><span class="pun">,</span><span class="pln"> </span><span class="lit">30</span><span class="pun">,</span><span class="pln"> </span><span class="lit">44</span><span class="pun">,</span><span class="pln"> </span><span class="lit">50</span><span class="pun">,</span><span class="pln"> </span><span class="lit">66</span><span class="pun">]</span><span class="pln">
+    </span><span class="pun">}]</span><span class="pln">
+</span><span class="pun">};</span><span class="pln">
+
+</span><span class="kwd">var</span><span class="pln"> options </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{};</span><span class="pln"> </span><span class="com">// 图表配置项，可以留空来使用默认的配置</span><span class="pln">
+
+</span><span class="kwd">var</span><span class="pln"> myLineChart </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">"#myLineChart"</span><span class="pun">).</span><span class="pln">lineChart</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> options</span><span class="pun">);</span></code></pre><h5>配置项</h5><p>以下列出可配置的选项及其默认值：</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pun">{</span><span class="pln">
+    </span><span class="com">///Boolean - 是否在图表上显示网格</span><span class="pln">
+    scaleShowGridLines </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 网格线条颜色</span><span class="pln">
+    scaleGridLineColor </span><span class="pun">:</span><span class="pln"> </span><span class="str">"rgba(0,0,0,.05)"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 网格宽度</span><span class="pln">
+    scaleGridLineWidth </span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示水平坐标，即X轴</span><span class="pln">
+    scaleShowHorizontalLines</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示垂直坐标，即Y轴</span><span class="pln">
+    scaleShowVerticalLines</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示为平滑曲线</span><span class="pln">
+    bezierCurve </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 平滑曲线时所使用的贝塞尔曲线参数</span><span class="pln">
+    bezierCurveTension </span><span class="pun">:</span><span class="pln"> </span><span class="lit">0.4</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示顶点</span><span class="pln">
+    pointDot </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 顶点半径，单位像素</span><span class="pln">
+    pointDotRadius </span><span class="pun">:</span><span class="pln"> </span><span class="lit">4</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 顶点描边线条宽度，单位像素</span><span class="pln">
+    pointDotStrokeWidth </span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 检测鼠标点击所使用依据的半径大小，单位像素</span><span class="pln">
+    pointHitDetectionRadius </span><span class="pun">:</span><span class="pln"> </span><span class="lit">20</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否</span><span class="pln">
+    datasetStroke </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 数据集线条宽度，单位为像素</span><span class="pln">
+    datasetStrokeWidth </span><span class="pun">:</span><span class="pln"> </span><span class="lit">2</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否用颜色来填充数据集</span><span class="pln">
+    datasetFill </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 图例模板</span><span class="pln">
+    legendTemplate </span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;ul class='&lt;%=name.toLowerCase()%&gt;-legend'&gt;&lt;% for (var i=0; i&lt;datasets.length; i++){%&gt;&lt;li&gt;&lt;span style='background-color:&lt;%=datasets[i].strokeColor%&gt;'&gt;&lt;/span&gt;&lt;%if(datasets[i].label){%&gt;&lt;%=datasets[i].label%&gt;&lt;%}%&gt;&lt;/li&gt;&lt;%}%&gt;&lt;/ul&gt;"</span><span class="pln">
+</span><span class="pun">};</span></code></pre><h4>方法</h4><p>创建图表后得到的图表实例拥有一些有用的方法。</p><h5>.getPointsAtEvent(event)</h5><p>传入一个jQuery点击事件参数，则返回鼠标在图表上点击所在的水平方向刻度对应的点集合。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pln">$</span><span class="pun">(</span><span class="str">"#myLineChart"</span><span class="pun">).</span><span class="pln">on</span><span class="pun">(</span><span class="str">"click"</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">function</span><span class="pun">(</span><span class="pln">evt</span><span class="pun">){</span><span class="pln">
+    </span><span class="kwd">var</span><span class="pln"> activePoints </span><span class="pun">=</span><span class="pln"> myLineChart</span><span class="pun">.</span><span class="pln">getPointsAtEvent</span><span class="pun">(</span><span class="pln">evt</span><span class="pun">);</span><span class="pln">
+    </span><span class="com">// activePoints 为一个数组，如果当前点击所在的位置没有对应的数据，则为空</span><span class="pln">
+</span><span class="pun">});</span></code></pre><h5>.update()</h5><p>更新数据集，并重新绘制图表。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="com">// 更新第一个数据集的第三个数据值为50</span><span class="pln">
+myLineChart</span><span class="pun">.</span><span class="pln">datasets</span><span class="pun">[</span><span class="lit">0</span><span class="pun">].</span><span class="pln">points</span><span class="pun">[</span><span class="lit">2</span><span class="pun">].</span><span class="pln">value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">50</span><span class="pun">;</span><span class="pln">
+
+</span><span class="com">// 调用update方法根据更新后的数据集重新绘制图表</span><span class="pln">
+myLineChart</span><span class="pun">.</span><span class="pln">update</span><span class="pun">();</span></code></pre><h5>.addData(valuesArray, label)</h5><p>向图表数据集增加一组新的数据，并立即重回图表。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="com">// 向数据集添加一组新的数据</span><span class="pln">
+myLineChart</span><span class="pun">.</span><span class="pln">addData</span><span class="pun">([</span><span class="lit">40</span><span class="pun">,</span><span class="pln"> </span><span class="lit">60</span><span class="pun">],</span><span class="pln"> </span><span class="str">"十三月"</span><span class="pun">);</span></code></pre><h5>.removeData()</h5><p>移除数据集中的第一组数据，并重绘图表，会应用动画效果。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pln">myLineChart</span><span class="pun">.</span><span class="pln">removeData</span><span class="pun">();</span></code></pre></article></section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section><header><h3>饼图</h3></header><article><h4>实例</h4><p>饼图支持一般饼图和环行饼图。</p><div class="example">
+  <div class="row">
+    <div class="col-xs-6 text-center"><canvas id="myPieChart" width="320" height="200" style="width: 320px; height: 200px;"></canvas></div>
+    <div class="col-xs-6 text-center"><canvas id="myDoughnutChart" width="320" height="200" style="width: 320px; height: 200px;"></canvas></div>
+  </div>
+</div><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="kwd">var</span><span class="pln"> data </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[{</span><span class="pln">
+    value</span><span class="pun">:</span><span class="pln"> </span><span class="lit">150</span><span class="pun">,</span><span class="pln">
+    color</span><span class="pun">:</span><span class="pln"> </span><span class="str">"blue"</span><span class="pun">,</span><span class="pln"> </span><span class="com">// 使用颜色名称</span><span class="pln">
+    label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"蓝队"</span><span class="pln">
+</span><span class="pun">},</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    value</span><span class="pun">:</span><span class="pln"> </span><span class="lit">250</span><span class="pun">,</span><span class="pln">
+    color</span><span class="pun">:</span><span class="str">"#F7464A"</span><span class="pun">,</span><span class="pln"> </span><span class="com">// 自定义颜色</span><span class="pln">
+    </span><span class="com">// highlight: "#FF5A5E", // 自定义高亮颜色</span><span class="pln">
+    label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"红队"</span><span class="pln">
+</span><span class="pun">},</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    value</span><span class="pun">:</span><span class="pln"> </span><span class="lit">50</span><span class="pun">,</span><span class="pln">
+    color</span><span class="pun">:</span><span class="pln"> </span><span class="str">'green'</span><span class="pun">,</span><span class="pln">
+    label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"绿队"</span><span class="pln">
+</span><span class="pun">},</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="com">// 不指定color值，使用随机颜色</span><span class="pln">
+    </span><span class="com">// </span><span class="pln">
+    value</span><span class="pun">:</span><span class="pln"> </span><span class="lit">100</span><span class="pun">,</span><span class="pln">
+    label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"随机颜色队"</span><span class="pln">
+</span><span class="pun">}];</span><span class="pln">
+
+</span><span class="com">// 图表配置项，可以留空来使用默认的配置</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> options </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    scaleShowLabels</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln"> </span><span class="com">// 展示标签</span><span class="pln">
+</span><span class="pun">};</span><span class="pln">
+
+</span><span class="com">// 创建饼图</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> myPieChart </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">"#myPieChart"</span><span class="pun">).</span><span class="pln">pieChart</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> options</span><span class="pun">);</span><span class="pln">
+
+</span><span class="com">// 创建环形饼图</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> myDoughnutChart </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">"#myDoughnutChart"</span><span class="pun">).</span><span class="pln">doughnutChart</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> </span><span class="pun">{</span><span class="pln">segmentShowStroke</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">});</span></code></pre><h4>配置项</h4><p>以下列出所有可以配置的选项及其默认值：</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pun">{</span><span class="pln">
+    </span><span class="com">//Boolean - 是否显示描边</span><span class="pln">
+    segmentShowStroke </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 描边分割线的颜色</span><span class="pln">
+    segmentStrokeColor </span><span class="pun">:</span><span class="pln"> </span><span class="str">"#fff"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 描边分割线的宽度，单位像素</span><span class="pln">
+    segmentStrokeWidth </span><span class="pun">:</span><span class="pln"> </span><span class="lit">2</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 环形中间留空圆形半径的百分比</span><span class="pln">
+    percentageInnerCutout </span><span class="pun">:</span><span class="pln"> </span><span class="lit">50</span><span class="pun">,</span><span class="pln"> </span><span class="com">// 如果设置为0则为一般实心饼图</span><span class="pln">
+
+    </span><span class="com">// Boolean - 是否显示标签</span><span class="pln">
+    scaleShowLabels</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// 标签文本模板</span><span class="pln">
+    scaleLabel</span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;%=value%&gt;"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// String - 标签位置，可选值有：</span><span class="pln">
+    </span><span class="com">// 'outside' - 在扇形区域外显示</span><span class="pln">
+    </span><span class="com">// 'inside' - 在扇形区域内显示</span><span class="pln">
+    </span><span class="com">// 'auto' - 自动决定显示位置</span><span class="pln">
+    scaleLabelPlacement</span><span class="pun">:</span><span class="pln"> </span><span class="str">"auto"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">// Number - 标签行高</span><span class="pln">
+    scaleLineHeight</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 动画执行总步数</span><span class="pln">
+    animationSteps </span><span class="pun">:</span><span class="pln"> </span><span class="lit">60</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 动画效果</span><span class="pln">
+    animationEasing </span><span class="pun">:</span><span class="pln"> </span><span class="str">"easeOutBounce"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否启用旋转动画</span><span class="pln">
+    animateRotate </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否启用缩放动画</span><span class="pln">
+    animateScale </span><span class="pun">:</span><span class="pln"> </span><span class="kwd">false</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 图例模板</span><span class="pln">
+    legendTemplate </span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;ul class='&lt;%=name.toLowerCase()%&gt;-legend'&gt;&lt;% for (var i=0; i&lt;segments.length; i++){%&gt;&lt;li&gt;&lt;span style='background-color:&lt;%=segments[i].fillColor%&gt;'&gt;&lt;/span&gt;&lt;%if(segments[i].label){%&gt;&lt;%=segments[i].label%&gt;&lt;%}%&gt;&lt;/li&gt;&lt;%}%&gt;&lt;/ul&gt;"</span><span class="pln">
+</span><span class="pun">}</span></code></pre><h4>方法与事件</h4><h5>.getSegmentsAtEvent(event)</h5><p>传入一个鼠标点击事件参数，以数组的形式返回当前点击的扇形区域对应的数据。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pln">$</span><span class="pun">(</span><span class="str">"#myPieChart"</span><span class="pun">).</span><span class="pln">on</span><span class="pun">(</span><span class="str">"click"</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">function</span><span class="pun">(</span><span class="pln">evt</span><span class="pun">){</span><span class="pln">
+    </span><span class="kwd">var</span><span class="pln"> activePoints </span><span class="pun">=</span><span class="pln"> myPieChart</span><span class="pun">.</span><span class="pln">getSegmentsAtEvent</span><span class="pun">(</span><span class="pln">evt</span><span class="pun">);</span><span class="pln">
+    </span><span class="com">// activePoints 为一个数组，如果当前点击所在的位置没有对应的数据，则为空</span><span class="pln">
+</span><span class="pun">});</span></code></pre><h5>.update()</h5><p>更新数据集，并重新绘制图表。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="com">// 更新第一个数据集（默认只有一个数据集）的第二个数据值为50</span><span class="pln">
+myPieChart</span><span class="pun">.</span><span class="pln">segments</span><span class="pun">[</span><span class="lit">1</span><span class="pun">].</span><span class="pln">value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">10</span><span class="pun">;</span><span class="pln">
+
+</span><span class="com">// 调用update方法根据更新后的数据集重新绘制图表</span><span class="pln">
+myPieChart</span><span class="pun">.</span><span class="pln">update</span><span class="pun">();</span></code></pre><h5>.addData(segmentData, index)</h5><p>向图表数据集增加一组新的数据，并立即重回图表。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pln">myPieChart</span><span class="pun">.</span><span class="pln">addData</span><span class="pun">({</span><span class="pln">
+    value</span><span class="pun">:</span><span class="pln"> </span><span class="lit">130</span><span class="pun">,</span><span class="pln">
+    color</span><span class="pun">:</span><span class="pln"> </span><span class="str">"purple"</span><span class="pun">,</span><span class="pln">
+    label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"紫队"</span><span class="pln">
+</span><span class="pun">});</span></code></pre><h5>.removeData(index)</h5><p>移除指定索引位置的数据，如果不指定索引，则默认移除最后一个数据。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pln">myPieChart</span><span class="pun">.</span><span class="pln">removeData</span><span class="pun">();</span></code></pre><h5>综合示例</h5><div class="example">
+  <div class="row">
+    <div class="col-xs-6">
+      <table class="table table-bordered text-middle">
+        <tbody>
+          <tr><th>getSegmentsAtEvent</th><td id="pieGetSegmentsAtEvent"><span class="text-muted"><i class="icon icon-info-sign"></i> 点击图表来获取点击的数据</span></td></tr>
+          <tr><th>update</th><td>
+            <div class="input-group">
+              <span class="input-group-addon">更改第</span>
+              <input type="text" id="updatePieNum" name="updatePieNum" class="form-control" value="0">
+              <span class="input-group-addon fix-border">个数据值为</span>
+              <input type="text" id="updatePieValue" name="updatePieValue" class="form-control" value="100">
+              <span class="input-group-btn"><button type="button" id="updatePie" class="btn btn-primary">确定</button></span>
+            </div>
+          </td></tr>
+          <tr><th>addData</th><td>
+            <div class="input-group">
+              <span class="input-group-addon">增加值为</span>
+              <input type="text" id="addPieValue" name="addPieValue" class="form-control" value="50" placeholder="value">
+              <span class="input-group-addon fix-border">标题为</span>
+              <input type="text" id="addPieLabel" name="addPieLabel" class="form-control" value="新队" placeholder="label">
+              <span class="input-group-btn"><button type="button" id="addPie" class="btn btn-primary">确定</button></span>
+            </div>
+          </td></tr>
+          <tr><th>update</th><td>
+            <div class="input-group">
+              <span class="input-group-addon">移除第</span>
+              <input type="text" id="removePieIndex" name="removePieIndex" class="form-control" placeholder="默认最后一个">
+              <span class="input-group-addon fix-border">个数据</span>
+              <span class="input-group-btn"><button type="button" id="removePieData" class="btn btn-primary">确定</button></span>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-xs-3 text-center"><canvas id="myPieChart2" width="200" height="200" style="width: 200px; height: 200px;"></canvas></div>
+    <div class="col-xs-3 text-center"><canvas id="myDoughnutChart2" width="200" height="200" style="width: 200px; height: 200px;"></canvas></div>
+  </div>
+</div></article></section>
+
+
+
+
+
+
+
+
+
+
+
+
+<section><header><h3>柱状图</h3></header><article><h4>实例</h4><div class="example"><div class="chart-canvas"><canvas id="myBarChart" width="1054" height="421" style="width: 1054px; height: 421px;"></canvas></div></div><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="kwd">var</span><span class="pln"> data </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    labels</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="str">"一月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"二月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"三月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"四月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"五月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"六月"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"七月"</span><span class="pun">],</span><span class="pln">
+    datasets</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="pln">
+        </span><span class="pun">{</span><span class="pln">
+            label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"蓝队"</span><span class="pun">,</span><span class="pln">
+            color</span><span class="pun">:</span><span class="pln"> </span><span class="str">'blue'</span><span class="pun">,</span><span class="pln">
+            data</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">65</span><span class="pun">,</span><span class="pln"> </span><span class="lit">59</span><span class="pun">,</span><span class="pln"> </span><span class="lit">80</span><span class="pun">,</span><span class="pln"> </span><span class="lit">81</span><span class="pun">,</span><span class="pln"> </span><span class="lit">56</span><span class="pun">,</span><span class="pln"> </span><span class="lit">55</span><span class="pun">,</span><span class="pln"> </span><span class="lit">40</span><span class="pun">]</span><span class="pln">
+        </span><span class="pun">},</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+            label</span><span class="pun">:</span><span class="pln"> </span><span class="str">"绿队"</span><span class="pun">,</span><span class="pln">
+            color</span><span class="pun">:</span><span class="pln"> </span><span class="str">'green'</span><span class="pun">,</span><span class="pln">
+            data</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">28</span><span class="pun">,</span><span class="pln"> </span><span class="lit">48</span><span class="pun">,</span><span class="pln"> </span><span class="lit">40</span><span class="pun">,</span><span class="pln"> </span><span class="lit">19</span><span class="pun">,</span><span class="pln"> </span><span class="lit">86</span><span class="pun">,</span><span class="pln"> </span><span class="lit">27</span><span class="pun">,</span><span class="pln"> </span><span class="lit">90</span><span class="pun">]</span><span class="pln">
+        </span><span class="pun">}</span><span class="pln">
+    </span><span class="pun">]</span><span class="pln">
+</span><span class="pun">};</span><span class="pln">
+
+</span><span class="kwd">var</span><span class="pln"> options </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{</span><span class="pln">responsive</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">};</span><span class="pln"> </span><span class="com">// 图表配置项，可以留空来使用默认的配置</span><span class="pln">
+</span><span class="kwd">var</span><span class="pln"> myBarChart </span><span class="pun">=</span><span class="pln"> $</span><span class="pun">(</span><span class="str">'#myBarChart'</span><span class="pun">).</span><span class="pln">barChart</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> options</span><span class="pun">);</span></code></pre><h4>配置项</h4><p>以下列出所有可用的选项及其默认值</p><pre class="prettyprint prettyprinted" style=""><code class="lang-js"><span class="pun">{</span><span class="pln">
+    </span><span class="com">//Boolean - 垂直刻度是否从0开始，如果为false，则从最小值开始</span><span class="pln">
+    scaleBeginAtZero</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示网格线</span><span class="pln">
+    scaleShowGridLines</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 网格线条颜色</span><span class="pln">
+    scaleGridLineColor</span><span class="pun">:</span><span class="pln"> </span><span class="str">"rgba(0,0,0,.05)"</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 网格线条宽度</span><span class="pln">
+    scaleGridLineWidth</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示水平轴线</span><span class="pln">
+    scaleShowHorizontalLines</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 是否显示垂直轴线</span><span class="pln">
+    scaleShowVerticalLines</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Boolean - 柱状条是否绘制描边</span><span class="pln">
+    barShowStroke</span><span class="pun">:</span><span class="pln"> </span><span class="kwd">true</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 柱状条描边宽度</span><span class="pln">
+    barStrokeWidth</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 每一组值在水平轴上的间隔宽度</span><span class="pln">
+    barValueSpacing</span><span class="pun">:</span><span class="pln"> </span><span class="lit">5</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//Number - 每个数据集相邻的间隔</span><span class="pln">
+    barDatasetSpacing</span><span class="pun">:</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln">
+
+    </span><span class="com">//String - 图例模板</span><span class="pln">
+    legendTemplate</span><span class="pun">:</span><span class="pln"> </span><span class="str">"&lt;ul class=\"&lt;%=name.toLowerCase()%&gt;-legend\"&gt;&lt;% for (var i=0; i&lt;datasets.length; i++){%&gt;&lt;li&gt;&lt;span style=\"background-color:&lt;%=datasets[i].fillColor%&gt;\"&gt;&lt;/span&gt;&lt;%if(datasets[i].label){%&gt;&lt;%=datasets[i].label%&gt;&lt;%}%&gt;&lt;/li&gt;&lt;%}%&gt;&lt;/ul&gt;"</span><span class="pln">
+</span><span class="pun">}</span></code></pre><h4>方法</h4><h5>.getBarsAtEvent(event)</h5><h5>.update()</h5><h5>.addData(valuesArray, label)</h5><h5>.removeData()</h5></article></section>
+
+
+<script src="__ZUI__/lib/chart/zui.chart.min.js"></script>
+<script>
+$(function(){
+	afterPageLoad();
+});
+function afterPageLoad() {
+    var data = {
+        labels: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+        datasets: [
+        {
+            label: "红队",
+            color: "red",
+            data: [65, 59, 80, 81, 56, 55, 40, 44, 55, 70, 30, 40]
+        }, {
+            label: "绿队",
+            color: "green",
+            data: [28, 48, 40, 19, 86, 27, 90, 60, 30, 44, 50, 66]
+        }]
+    };
+    var myLineChart = $("#myLineChart").lineChart(data, {bezierCurve: true, responsive: true});
+
+    var data2 = [
+        {
+            value: 150,
+            color: "blue", // 使用颜色名称
+            label: "蓝队"
+        }, {
+            value: 250,
+            color:"#F7464A", // 自定义颜色
+            // highlight: "#FF5A5E", // 自定义高亮颜色
+            label: "红队"
+        }, {
+            value: 50,
+            color: 'green',
+            label: "绿队"
+        }, {
+            // 不指定color值，使用随机颜色
+            // 
+            value: 100,
+            label: "随机颜色队"
+        }
+    ];
+    // 创建饼图
+    var myPieChart = $("#myPieChart").pieChart(data2, {scaleShowLabels: true});
+    // 创建环形饼图
+    var myDoughnutChart = $("#myDoughnutChart").doughnutChart(data2, {segmentShowStroke: false, scaleShowLabels: true, scaleLabelPlacement: 'outside'});
+
+    // 综合示例
+    var myPieChart2 = $("#myPieChart2").pieChart(data2);
+    var myDoughnutChart2 = $("#myDoughnutChart2").doughnutChart(data2, {segmentShowStroke: false});
+    $("#myPieChart2").on('click', function(e){
+        var point = myPieChart2.getSegmentsAtEvent(e)[0];
+        $('#pieGetSegmentsAtEvent').html(point ? '你点击了 <strong><i class="icon text-muted icon-circle"></i> 饼图 </strong>的 <span style="color: #fff; display: inline-block; padding: 0 5px; background-color: ' + point.fillColor + '">' + point.label + '</span>，当前值为 <strong>' + point.value + '</strong>' : '你点击了空白地方。');
+    });
+    $("#myDoughnutChart2").on('click', function(e){
+        var point = myDoughnutChart2.getSegmentsAtEvent(e)[0];
+        $('#pieGetSegmentsAtEvent').html(point ? '你点击了 <strong><i class="icon text-muted icon-circle"></i> 环图 </strong>的 <strong style="color: #fff; display: inline-block; padding: 0 5px; background-color: ' + point.fillColor + '">' + point.label + '</strong>，当前值为 <strong>' + point.value + '</strong>' : '你点击了空白地方。');
+    });
+    $('#updatePie').on('click', function(){
+        var num = parseInt($('#updatePieNum').val());
+        var val = parseInt($('#updatePieValue').val());
+        if(!isNaN(num) && !isNaN(val)) {
+            myPieChart2.segments[num].value = val;
+            myPieChart2.update();
+            myDoughnutChart2.segments[num].value = val;
+            myDoughnutChart2.update();
+            var next = Math.max(1,Math.round(Math.random() * 100));
+            var nextIndex = Math.floor(Math.random() * myPieChart2.segments.length);
+            $('#updatePieValue').val(next);
+            $('#updatePieNum').val(nextIndex);
+        } else {
+            $.zui.messager.warning('请输入有效的数据。', {placement: 'center'});
+        }
+    });
+
+    $('#addPie').click(function(){
+        var val = parseInt($('#addPieValue').val());
+        var label = $('#addPieLabel').val();
+        if(!isNaN(val) && label) {
+            var dt = {
+                value: val,
+                label: label
+            };
+            myPieChart2.addData(dt);
+            myDoughnutChart2.addData(dt);
+
+            var next = Math.max(1,Math.round(Math.random() * 100));
+            $('#addPieValue').val(next);
+            $('#addPieLabel').val('幸运' + next);
+        } else {
+            $.zui.messager.warning('请输入有效的数据。', {placement: 'center'});
+        }
+    });
+
+    $('#removePieData').click(function(){
+        var idx = parseInt($('#removePieIndex').val());
+        if(!isNaN(idx) || !idx) {
+            idx = undefined;
+            myPieChart2.removeData(idx);
+            myDoughnutChart2.removeData(idx);
+            var nextIndex = Math.floor(Math.random() * myPieChart2.segments.length);
+            $('#removePieIndex').val(nextIndex);
+        } else {
+            $.zui.messager.warning('请输入有效的数据。', {placement: 'center'});
+        }
+    });
+
+    var data3 = {
+        labels: ["一月", "二月", "三月", "四月", "五月", "六月", "七月"],
+        datasets: 
+        [        
+            {
+                label: "蓝队",
+                color: 'blue',
+                data: [65, 59, 80, 81, 56, 55, 40]
+            }, {
+                label: "绿队",
+                color: 'green',
+                data: [28, 48, 40, 19, 86, 27, 90]
+            }
+        ]
+    };
+    var myBarChart = $('#myBarChart').barChart(data3, {responsive: true});
+}
+</script><section><header><h3>兼容IE8浏览器</h3></header><article><p>因为IE8及早期版本不支持Canvas，所以需要引入 <a href="https://code.google.com/p/explorercanvas/">ExplorerCanvas</a> 来支持绘图功能。</p><pre class="prettyprint prettyprinted" style=""><code class="lang-html"><span class="com">&lt;!--[if lt IE 9]&gt;
+  &lt;script src="dist/lib/ieonly/excanvas.js"&gt;&lt;/script&gt;
+&lt;![endif]--&gt;</span></code></pre></article></section></div>
+
+
+</section>
+{/block}

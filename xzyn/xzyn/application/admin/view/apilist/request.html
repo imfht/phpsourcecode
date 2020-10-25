@@ -1,0 +1,117 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>{$title}</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>{$title}</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> {$title}</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                	{:BTN(C_NAME.'/editrs','type='.$type.'&hash='.$hash,'新增','btn btn-primary btn-sm','fa-save')}
+                    {:BTN(C_NAME.'/deleters','','删除','btn btn-danger btn-sm delete-all','fa-trash','data-url="'.url(C_NAME.'/deleters','type='.$type.'&hash='.$hash).'"')}
+                    <a href="{:url('index')}" class="btn btn-success btn-sm"><i class="fa fa-list"></i> 返回</a>
+                    {include file="public/search" /}
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover table-sort">
+                        <tr>
+                            <th width="35"><input type="checkbox" class="minimal checkbox-toggle"></th>
+                            <th>ID{:table_sort('id')}</th>
+                            <th>字段名称{:table_sort('fieldName')}</th>
+                            <th>数据类型</th>
+                            <th>是否必须</th>
+                            <th>默认值</th>
+                            <th>字段说明</th>
+                            <th width="124">操作</th>
+                        </tr>
+                        {volist name="apiData" id="vo"}
+                        <tr>
+                            <td><input type="checkbox" name="id[]" value="{$vo.id}" class="minimal"></td>
+                            <td>{$vo.id}</td>
+                            <td>
+                            	<span class="{if $type !=1}editable{/if}"{if $type !=1} data-pk="{$vo.id}" data-name="fieldName" data-url="{:url(C_NAME.'/editrs','type='.$type.'&hash='.$hash)}"{/if} >
+                            	{$vo.fieldName}
+                            	</span>
+                            </td>
+                            <td><span class="label label-success">{$vo.dataType_turn}</span></td>
+                            <td>
+
+                                <span class="label {eq name="$vo['isMust']" value="0"}label-success {else /}label-danger{/eq} ">{$vo.isMust_turn}</span>
+
+                            </td>
+                            <td>
+                            	<span class="editable" data-pk="{$vo.id}" data-name="default" data-url="{:url(C_NAME.'/editrs','type='.$type.'&hash='.$hash)}" >
+                            	{$vo.default}
+                            	</span>
+                            </td>
+                            <td>
+                                <span class="editable" data-pk="{$vo.id}" data-name="info" data-url="{:url(C_NAME.'/editrs','type='.$type.'&hash='.$hash)}" title="{$vo.info}" >
+                            	{$vo.info}
+                            	</span>
+                            </td>
+                            <td>
+                                {:BTN(C_NAME.'/editrs','id='.$vo.id.'&type='.$type.'&hash='.$hash,'编辑','btn btn-primary btn-xs','fa-edit')}
+                            	{:BTN(C_NAME.'/deleters','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/deleters','type='.$type.'&hash='.$hash).'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+        checkboxClass: 'icheckbox_minimal-blue',
+        radioClass: 'iradio_minimal-blue'
+    });
+
+    /*ajax页面加载icheck，有该控件的页面才需要*/
+    $(".select2").select2({language:"zh-CN"});
+
+    /*全选-反选*/
+    $('.checkbox-toggle').on('ifChecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("check");
+    });
+    $('.checkbox-toggle').on('ifUnchecked', function(event){
+        var _this = $(this);
+        var _table = _this.closest('.table');
+        _table.find("tr td input[type='checkbox']").iCheck("uncheck");
+    });
+
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

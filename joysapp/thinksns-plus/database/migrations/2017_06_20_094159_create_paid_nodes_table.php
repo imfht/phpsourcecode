@@ -1,0 +1,56 @@
+<?php
+
+/*
+ * +----------------------------------------------------------------------+
+ * |                          ThinkSNS Plus                               |
+ * +----------------------------------------------------------------------+
+ * | Copyright (c) 2016-Present ZhiYiChuangXiang Technology Co., Ltd.     |
+ * +----------------------------------------------------------------------+
+ * | This source file is subject to enterprise private license, that is   |
+ * | bundled with this package in the file LICENSE, and is available      |
+ * | through the world-wide-web at the following url:                     |
+ * | https://github.com/slimkit/plus/blob/master/LICENSE                  |
+ * +----------------------------------------------------------------------+
+ * | Author: Slim Kit Group <master@zhiyicx.com>                          |
+ * | Homepage: www.thinksns.com                                           |
+ * +----------------------------------------------------------------------+
+ */
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreatePaidNodesTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('paid_nodes', function (Blueprint $table) {
+            $table->increments('id')->comment('付费记录ID');
+            $table->string('channel', 100)->comment('付费频道');
+            $table->integer('raw')->comment('付费原始信息');
+            $table->string('subject')->comment('付费主题');
+            $table->string('body')->comment('付费内容详情');
+            $table->bigInteger('amount')->unsigned()->comment('付费金额');
+            $table->integer('user_id')->unsigned()->nullable()->defaul(null)->comment('用户ID，主要用于排除付费用户。');
+            $table->text('extra')->nullable()->default(null)->comment('拓展信息');
+            $table->timestamps();
+
+            $table->unique(['channel', 'raw']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('paid_nodes');
+    }
+}

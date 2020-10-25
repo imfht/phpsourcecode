@@ -1,0 +1,816 @@
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12"> 
+	
+			<div id="alert_box_table"></div>
+
+			<div class="row">
+				<div class="col-sm-4 padding0">
+					<div class="input-group">
+						<div class="input-group-btn" dropdown is-open="status.isopen1">
+							<button type="button" class="btn btn-default dropdown-toggle"  dropdown-toggle>{{seach_date_type.title}} <span class="caret"></span></button>
+							<ul class="dropdown-menu" role="menu">
+								<li ng-repeat="data in seach_date_field" ng-click="select_date_type(data)"><a href="javascript:void(0)">{{data.title}}</a></li>
+							</ul>
+						</div>
+						<input ng-model="skeyvalue" type="text" placeholder="请输入关键字" class="form-control">
+						<span class="input-group-btn">
+							<button type="button" id="seach_btn" class="btn btn-default" ng-click="seach()"><i class="icon-search green"></i>
+							<span class="">搜索</span></button>
+						</span>
+					</div>
+				</div>
+				<div class="action-buttons" style="float:right;">
+					<button ng-click="show()" class="btn btn-sm btn-success" >
+						<i class="icon-plus bigger-130"></i>
+						<span class="bigger-110 no-text-shadow">新增</span>
+					</button>
+					<button ng-click="del_list()" class="btn btn-sm btn-danger" id="btn_del" data-loading-text="正在提交,请稍候...">
+						<i class="icon-trash bigger-130"></i>
+						<span class="bigger-110 no-text-shadow">删除</span>
+					</button>
+
+				</div>
+			</div>
+			<div class="space-4"></div>
+			<div class="table-responsive">
+				<table id="grid-table" class="table table-striped table-bordered table-hover dataTable" aria-describedby="sample-table-2_info">
+					<thead>
+						<tr>
+							<th class="center">
+								<label>
+									<input ng-model="allChecked" ng-change="checkAll(allChecked)" type="checkbox" class="ace">
+									<span class="lbl"></span>
+								</label>
+							</th>
+							<th class="center">热点账号</th>
+							<!-- _desc
+							_asc -->
+							<th ng-class="fields_sorting['username']" ng-click="field_sort('username')">帐号</th>
+
+							<th class="center" ng-class="fields_sorting['shop_name']" ng-click="field_sort('shop_name')">店名</th>
+							<th ng-class="fields_sorting['manager']" ng-click="field_sort('manager')">负责人</th>
+						
+							<th ng-class="fields_sorting['created_at']" ng-click="field_sort('created_at')">开通日期</th>
+							<th ng-class="fields_sorting['account_type']" ng-click="field_sort('account_type')">到期时间</th>
+							<th ng-class="fields_sorting['industry']" ng-click="field_sort('industry')" class="center">所属行业</th>
+								
+							<th class="center" width="100">操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="center"  data-row-style="{{item.activated}}" ng-repeat="item in merchant_list" >
+							<td class="center" width="50">
+								<label>
+									<input ng-model="item.$checked" type="checkbox" class="ace">
+									<span class="lbl"></span>
+								</label>
+							</td>
+							<td width="50">{{item.mid}}</td>
+							<td width="10%">{{item.username}}</td>
+							<td width="10%">{{item.shop_name}}</td>
+							<td width="10%">{{item.manager}}</td>
+							<td width="20%">{{item.created_at}}</td>
+							<td width="16%">{{item.account_type | accountTypeFilter:item}}</td>
+							<td width="8%">{{item.industry | industryFilter:industry}}</td>
+							<td width="12%">
+								<div class="action-buttons">
+									<a class="green" href="javascript:void(0);" title="编辑" ng-click="edit_accounts(item)">
+										<i class="icon-pencil bigger-130"></i>
+									</a>
+									<a class="grey" href="javascript:void(0);" title="认证设置" ng-click="edit_auth(item)">
+										<i class="icon-android bigger-130"></i>
+									</a>
+									<a id="resetpassword{{item.user_id}}" class="red" href="javascript:void(0);" title="点击后直接将密码重置为默认密码123456" ng-click="reset_password(item.user_id)">
+										<i class="icon-refresh bigger-130"></i>
+									</a>
+									
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 col-xs-12">
+					<div id="sample-table-2_length" class="dataTables_length">
+						<label>
+							每页显示
+							<select size="1" ng-model="itemsPerPage" ng-change="seach()">
+								<option ng-repeat="page in pagelist" ng-selected="itemsPerPage==page" value="{{page}}" >{{page}}</option>
+							</select> 
+							条,共{{bigTotalItems}}条数据，当前{{bigCurrentPage}} / {{numPages}}
+						</label>
+					</div>
+				</div>
+				<div class="col-sm-6 col-xs-12"  style="text-align:right;">
+					
+					<pagination total-items="bigTotalItems" ng-model="bigCurrentPage" max-size="maxSize" class="pagination-sm" previous-text="上一页" next-text="下一页" first-text="首页" last-text="尾页" boundary-links="true" items-per-page="itemsPerPage" align="left" rotate="false" num-pages="numPages" ng-change="seach()"></pagination>
+					<label style="float:right; line-height: 31px; margin-left: 10px;">
+						
+					</label>
+				</div>
+			</div>
+			
+
+			<div id="table-list" class="widget-box transparent" ng-show="is_show">
+				<div class="widget-header widget-header-flat widget-header-small"><h5><i class="icon-pencil"></i>{{fromtitle}}商户</h5>
+				</div>
+				<div class="widget-body  col-sm-12 col-xs-12">
+					<div class="widget-main">
+						<form name="userForm" id="userForm" novalidate="" role="form"> 
+							<div class="form-horizontal">
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5"><i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;帐号：</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="username" name="username" ng-disabled="edit" ng-blur="usernamedisplay = {'display': !userForm.username.$invalid ? 'none' : 'block'}" ng-focus="usernamedisplay={'display':'block'}" ng-model="accounts.username" ng-pattern="/^[0-9A-Za-z_@]{1,19}(\-{1}[0-9A-Za-z_@]{1,19}|[0-9A-Za-z_@]{1,19})$/" class="form-control" required length-unique="2,20" />
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="usernameTip" tip-location="-30px" ng-style="usernamedisplay" style="min-width:400px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.username.$pristine, 'no red1':userForm.username.$error.pattern, 'yes':!userForm.username.$error.pattern}" class="msg_tips">由字母、数字、下划线、@和"-"组成，其中"-"不能在首位和末位。</div>
+													<div ng-class="{'default black1':userForm.username.$pristine, 'no red1':userForm.username.$error.unique, 'yes':!userForm.username.$error.unique}" class="msg_tips">长度为2-20个字符</div>
+													<div ng-class="{'default':userForm.username.$pristine, 'no red1':userForm.username.$error.required, 'yes':!userForm.username.$error.required}" class="msg_tips">不能为空</div>
+												</div>
+										    </div>						
+										</div>
+									</div>
+								</div>
+								<div class="form-group" ng-if="!edit">
+									<label class="col-sm-3 control-label no-padding-right margintop5"><i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;密码：</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="password" id="password" name="password" ng-model="accounts.password" class="form-control" ng-blur="passworddisplay = {'display': !userForm.password.$invalid ? 'none' : 'block'}" ng-focus="passworddisplay={'display':'block'}" ng-pattern="/^[0-9A-Za-z_~!@#\$%\^&\*<>,\.\?\(\)_]{6,12}$/"/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="passwordTip" tip-location="-20px" ng-style="passworddisplay" style="min-width:350px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.password.$pristine, 'no red1':userForm.password.$error.pattern, 'yes':!userForm.password.$error.pattern}" class="msg_tips">不能包含空格,长度为6-12个字符</div>
+													<div ng-class="{'default':userForm.password.$pristine, 'no red1':userForm.password.$error.required, 'yes':!userForm.password.$error.required}" class="msg_tips">密码不能为空</div>
+												</div>
+										    </div>	
+										</div>
+									</div>
+								</div>
+								<div class="form-group" ng-if="!edit">
+									<label class="col-sm-3 control-label no-padding-right margintop5"><i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;重复密码：</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="password" id="passwordconfirm" name="passwordconfirm" ng-model="accounts.passwordconfirm" class="form-control" ng-blur="passwordconfirmdisplay = {'display': !userForm.passwordconfirm.$invalid ? 'none' : 'block'}" ng-focus="passwordconfirmdisplay={'display':'block'}" ng-pattern="passConsistency"/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="passwordconfirmTip" tip-location="-20px" ng-style="passwordconfirmdisplay" style="min-width:350px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.passwordconfirm.$pristine, 'no red1':userForm.passwordconfirm.$error.pattern, 'yes':!userForm.passwordconfirm.$error.pattern}" class="msg_tips">两次新密码必须一致</div>
+													<div ng-class="{'default':userForm.passwordconfirm.$pristine, 'no red1':userForm.passwordconfirm.$error.required, 'yes':!userForm.passwordconfirm.$error.required}" class="msg_tips">密码不能为空</div>
+												</div>
+										    </div>	
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;店名： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="shop_name" name="shop_name" ng-model="accounts.shop_name" class="form-control" ng-blur="shop_namedisplay = {'display': !userForm.shop_name.$invalid ? 'none' : 'block'}" ng-focus="shop_namedisplay={'display':'block'}" length-unique="2,12" required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="shop_nameTip" tip-location="-20px" ng-style="shop_namedisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.shop_name.$pristine, 'no red1':userForm.shop_name.$error.unique, 'yes':!userForm.shop_name.$error.unique}" class="msg_tips">店名的长度范围为[2-12]个字符</div>
+													<div ng-class="{'default':userForm.shop_name.$pristine, 'no red1':userForm.shop_name.$error.required, 'yes':!userForm.shop_name.$error.required}" class="msg_tips">店名不能空</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;负责人： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="manager" name="manager" ng-model="accounts.manager" class="form-control" ng-blur="managerdisplay = {'display': !userForm.manager.$invalid ? 'none' : 'block'}" ng-focus="managerdisplay={'display':'block'}" length-unique="2,12" required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="managerTip" tip-location="-20px" ng-style="managerdisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.manager.$pristine, 'no red1':userForm.manager.$error.unique, 'yes':!userForm.manager.$error.unique}" class="msg_tips">负责人的长度范围为[2-12]个字符</div>
+													<div ng-class="{'default':userForm.manager.$pristine, 'no red1':userForm.manager.$error.required, 'yes':!userForm.manager.$error.required}" class="msg_tips">负责人不能空</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;联系方式： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="telephone" name="telephone" ng-model="accounts.telephone" class="form-control" ng-blur="telephonedisplay = {'display': !userForm.telephone.$invalid ? 'none' : 'block'}" ng-focus="telephonedisplay={'display':'block'}" length-unique="8,20" required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="telephoneTip" tip-location="-20px" ng-style="telephonedisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.telephone.$pristine, 'no red1':userForm.telephone.$error.unique, 'yes':!userForm.telephone.$error.unique}" class="msg_tips">联系方式的长度范围为[8-20]个字符</div>
+													<div ng-class="{'default':userForm.telephone.$pristine, 'no red1':userForm.telephone.$error.required, 'yes':!userForm.telephone.$error.required}" class="msg_tips">负责人不能空</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;所属行业： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6">
+											<select id="industry" name="industry" ng-model="accounts.industry" class="form-control" ng-blur="industrydisplay = {'display': !userForm.industry.$invalid ? 'none' : 'block'}" ng-focus="industrydisplay={'display':'block'}" required>
+								    			<option value="">请选择</option>
+								    			<option data-ng-repeat="(key, value) in industry" value="{{key}}" ng-selected="accounts.industry==key">{{value}}</option>
+											</select>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="industryTip" tip-location="-10px" ng-style="industrydisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+											
+													<div ng-class="{'default':userForm.manager.$pristine, 'no red1':userForm.manager.$error.required, 'yes':!userForm.manager.$error.required}" class="msg_tips">所属行业不能空</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;所在区域： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-sm-6">
+											<select name="province" id="province" class="form-control"></select>
+											<span class="input-group-btn"></span>
+											<select name="city" id="city" class="form-control"></select>
+											<span class="input-group-btn"></span>
+											<select name="area" id="area" class="form-control"></select>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right margintop5"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;账号类型： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6">
+											<label class="inline marginleft5">
+				
+												<input type="radio" iradio ng-model="accounts.account_type" data-ng-change="account_type11()" name="account_type"  value="0" >
+												<span class="lbl">终身账号</span>
+											</label>
+								
+											<label class="inline marginleft5">
+
+												<input type="radio" iradio ng-model="accounts.account_type" data-ng-change="account_type11()" name="account_type"  value="1" >
+												
+												<span class="lbl">月收费账号</span>
+											</label>
+										</div>
+									</div>
+								</div>
+								<div class="form-group" ng-show="accounts.account_type=='1'">
+									<label class="col-sm-3 control-label no-padding-right margintop5"><i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;过期日期：</label>
+									<div class="col-sm-9">
+										<label class="inline">
+											<input  type="number" min="1" id="month" name="month" ng-change="getDate()" max="999" class="input-mini" style="height:34px;" ng-model="accounts.month" ng-blur="monthdisplay = {'display': !userForm.month.$invalid && !userForm.expiredate.$invalid && !userForm.day.$invalid ? 'none' : 'block'}" ng-focus="monthdisplay={'display':'block'}"/>
+										</label>
+
+										<label class="inline">
+											<span class="lbl">个月</span>
+										</label>
+										<label class="inline">
+											<input  type="number" min="1" style="height:34px;" ng-change="getDate()" max="99" id="day" name="day" class="input-mini" ng-model="accounts.day" ng-blur="monthdisplay = {'display': !userForm.day.$invalid && !userForm.expiredate.$invalid && !userForm.month.$invalid ? 'none' : 'block'}" ng-focus="monthdisplay={'display':'block'}"/>
+										</label>
+										<label class="inline">
+											<span class="lbl">天</span>
+
+										</label>
+										<label class="inline" tipbr>
+											<div style="position: relative; ">
+												<div class="popover right" id="monthTip" tip-location="-50px" ng-style="monthdisplay" style="min-width:300px">
+													<div class="arrow"></div>
+													<div class="popover-content">
+														<div ng-class="{'default black1':userForm.month.$pristine, 'no red1':userForm.month.$error.min || userForm.month.$error.max, 'yes':!userForm.month.$error.max && !userForm.month.$error.min}" class="msg_tips">请填写过期日期，范围[1-999]</div>
+														<div ng-class="{'default black1':userForm.day.$pristine, 'no red1':userForm.day.$error.min || userForm.day.$error.max, 'yes':!userForm.day.$error.max && !userForm.day.$error.min}" class="msg_tips">请填写过期日期，范围[1-99]</div>
+														
+														<div ng-class="{'default':userForm.expiredate.$pristine, 'no red1':userForm.expiredate.$error.required, 'yes':!userForm.expiredate.$error.required}" class="msg_tips">过期时间不能为空</div>
+														<div ng-class="{'default':userForm.expiredate.$pristine, 'no red1':userForm.expiredate.$error.pattern, 'yes':!userForm.expiredate.$error.pattern}" class="msg_tips">过期时间不能大于2030</div>
+													</div>
+											    </div>			
+																
+											</div>
+										</label>
+										<div class="space-4"></div>
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="deadline" name="deadline" ng-pattern="dateConsistency" disabled ng-model="accounts.deadline" class="form-control" required/>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-xs-12 col-sm-3 control-label no-padding-right margintop5" for="form-field-5"> 
+										可发短信数：
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-1 ">
+											<input type="number"  min="0" max="9999" id="smscount" name="smscount" ng-model="accounts.smscount" class="form-control" ng-blur="smscountdisplay = {'display': !userForm.smscount.$invalid ? 'none' : 'block'}" ng-focus="smscountdisplay={'display':'block'}"/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="smscountTip" tip-location="-20px" ng-style="smscountdisplay" style="min-width:380px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.smscount.$pristine, 'no red1':userForm.smscount.$error.min || userForm.smscount.$error.max, 'yes':!userForm.smscount.$error.max && !userForm.smscount.$error.min}" class="msg_tips">短信数的范围为[0-9999]，
+														<span style="color:red;" ng-if="allow_modify==0">您的短信数用完了，请及时充值</span>
+														<span style="color:green;" ng-if="allow_modify>0">您当前还剩{{allow_modify}}条短信</span>
+													</div>
+													<div class="msg_tips default">可以为空</div>
+													<div class="msg_tips default">如果商户的短信数为0，则不能使用短信认证</div>
+
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-xs-12 col-sm-3 control-label no-padding-right margintop5" for="form-field-5"> 
+										路由数：
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-1 ">
+											<input type="number"  min="0" max="999" id="router_num" name="router_num" ng-model="accounts.router_num" class="form-control" ng-blur="router_numdisplay = {'display': !userForm.router_num.$invalid ? 'none' : 'block'}" ng-focus="router_numdisplay={'display':'block'}"/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="smscountTip" tip-location="-20px" ng-style="router_numdisplay" style="min-width:380px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm.router_num.$pristine, 'no red1':userForm.router_num.$error.min || userForm.router_num.$error.max, 'yes':!userForm.router_num.$error.max && !userForm.router_num.$error.min}" class="msg_tips">路由数的范围为[0-999]，
+													</div>
+													<div class="msg_tips default">可以为空</div>
+													<div class="msg_tips default">路由数为空或者为0，则表示不限制</div>
+
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								
+								<h5 class="header blue bolder smaller"><a href="javascript:void(0);" ng-click="isCollapsed = !isCollapsed">高级选项</a></h5>
+								<div collapse="isCollapsed">
+									<div class="form-group">
+										<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+											商家logo： 
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-xs-10 col-sm-6 " ng-mouseleave="merchantlogodisplay = {'display': 'none'}" ng-mouseover="merchantlogodisplay={'display':'block'}">
+												<input type="file" nv-file-select="" uploader="uploader" options="{formData:{'type':'merchantlogo', 'imagename':accounts.homepage_logo ? accounts.homepage_logo : ''} }" class="form-control"  data-file-input />
+												<div ng-show="is_upload" class="progress progress-striped active " data-percent="{{progress}}%"><div class="progress-bar" ng-style="{ 'width': progress + '%' }"></div></div>
+												<img ng-show="accounts.homepage_logo" ng-src="{{accounts.homepage_logo}}"  class="img-thumbnail col-xs-12 col-sm-12">
+												<div class="space-4"></div>
+												<div id="alert_box_logo"></div>
+											</div>
+											<label class="inline" tipbr="">
+												<div style="position: relative; ">
+													<div class="popover right" id="merchantlogoTip" tip-location="-40px" ng-style="merchantlogodisplay" style="min-width: 350px; top: -50px; display: none;">
+														<div class="arrow"></div>
+														<div class="popover-content">
+															<div class="msg_tips default">图片规格为200 * 200。</div>
+															<div class="msg_tips default">大小为2MB，格式为：jpg，png，gif</div>
+															<div class="msg_tips default">该图片显示在认证页和微网站</div>
+														</div>
+												    </div>			
+																	
+												</div>
+											</label>
+										</div>
+									</div>
+								
+									<div class="form-group">
+										<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+											商家banner： 
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-xs-10 col-sm-6 " ng-mouseleave="forcereloaddisplay = {'display': 'none'}" ng-mouseover="forcereloaddisplay={'display':'block'}">
+												<input type="file" nv-file-select="" uploader="uploader1" options="{formData:{'type':'merchantbanner', 'imagename':accounts.homepage_banner ? accounts.homepage_banner : ''} }"  class="form-control"  data-file-input />
+												<div ng-show="is_upload1" class="progress progress-striped active " data-percent="{{progress1}}%"><div class="progress-bar" ng-style="{ 'width': progress1 + '%' }"></div></div>
+												<img ng-show="accounts.homepage_banner" ng-src="{{accounts.homepage_banner}}"  class="img-thumbnail col-xs-12 col-sm-12">
+												<div class="space-4"></div>
+												<div id="alert_box_banner"></div>
+											</div>
+											<label class="inline" tipbr="">
+												<div style="position: relative; ">
+													<div class="popover right" id="lcpfailcountTip" tip-location="-40px" ng-style="forcereloaddisplay" style="min-width: 350px; top: -50px; display: none;">
+														<div class="arrow"></div>
+														<div class="popover-content">
+															<div class="msg_tips default">图片规格为720*480。</div>
+															<div class="msg_tips default">大小为2MB。</div>
+															<div class="msg_tips default">该图片显示在认证页和微网站头部</div>
+														</div>
+												    </div>			
+																	
+												</div>
+											</label>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+											商家地址： 
+										</label>
+										<div class="col-sm-9" >
+											<div class="input-group col-xs-10 col-sm-6 ">
+												<input type="text" id="shop_address" name="shop_address" ng-model="accounts.shop_address" class="form-control" ng-blur="shop_addressdisplay = {'display': !userForm.shop_address.$invalid ? 'none' : 'block'}" ng-focus="shop_addressdisplay={'display':'block'}" length-unique="2,30"/>
+											</div>
+											<div class="col-sm-1 col-xs-12" style="position: relative;">
+												<div class="popover right" id="shop_addressTip" tip-location="-10px" ng-style="shop_addressdisplay" style="min-width:270px">
+													<div class="arrow"></div>
+													<div class="popover-content">
+														<div ng-class="{'default black1':userForm.shop_address.$pristine, 'no red1':userForm.shop_address.$error.unique, 'yes':!userForm.shop_address.$error.unique}" class="msg_tips">商家地址的长度范围为[2-30]个字符</div>
+													</div>
+											    </div>			
+																
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+											商家介绍： 
+										</label>
+										<div class="col-sm-9">
+											<div class="input-group col-xs-12 col-sm-12 ">
+												<textarea rows="10" id="introduce" name="introduce" ng-model="accounts.introduce" class="col-sm-6 col-xs-12" ng-blur="introducedisplay = {'display': !userForm.introduce.$invalid ? 'none' : 'block'}" ng-focus="introducedisplay={'display':'block'}" length-unique="2,200"></textarea>
+												<div class="col-sm-1 col-xs-12" style="position: relative;">
+													<div class="popover right" id="introduceTip" tip-location="-10px" ng-style="introducedisplay" style="min-width:270px">
+														<div class="arrow"></div>
+														<div class="popover-content">
+															<div ng-class="{'default black1':userForm.introduce.$pristine, 'no red1':userForm.introduce.$error.unique, 'yes':!userForm.introduce.$error.unique}" class="msg_tips">商家介绍的长度范围为[2-200]个字符</div>
+														</div>
+												    </div>			
+																	
+												</div>
+											</div>
+											
+										</div>
+									</div>
+									
+								
+
+									<div class="form-group" ng-show="edit">
+										<label class="col-sm-3 control-label no-padding-right margintop5">状态：</label>
+										<div class="col-sm-9">
+											<input bs-switch ng-model="accounts.disable" type="checkbox" switch-handle-width="40" switch-on-text="启用" switch-off-text="禁用" switch-size="small" ng-true-value="1" ng-false-value="0">
+											
+										</div>
+									</div>
+								</div>
+								<div id="alert_box"></div>
+								<div class="clearfix form-actions">
+									<div class="col-md-offset-3 col-md-9 col-sm-9">
+										<button id="save" class="col-sm-2 btn btn-success" ng-disabled='userForm.$invalid' data-loading-text="正在提交,请稍候..." type="button" ng-click="save()">
+											<i class="icon-save bigger-110"></i>
+										 	<span id="submitbutton">保存</span>
+										</button>
+										<button class="col-sm-2 btn btn-default left10" type="button" ng-click="is_show=false">
+											<i class="icon-reply bigger-110"></i>
+										 	<span id="submitbutton">取消</span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>	
+			<div id="table-list1" class="widget-box transparent" ng-show="is_show1">
+				<div class="widget-header widget-header-flat widget-header-small"><h5><i class="icon-pencil"></i>认证设置</h5>
+				</div>
+				<div class="widget-body  col-sm-12 col-xs-12">
+					<div class="widget-main">
+						<form name="userForm1" id="userForm1" novalidate="" role="form"> 
+							<div class="form-horizontal">
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right" for="form-field-1"><i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;认证方式：</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-2 " ng-mouseleave="authtypedisplay = {'display': 'none'}" ng-mouseover="authtypedisplay={'display':'block'}">
+											<div>
+												<label class="middle right10"> 
+													<input ng-model="auth.akey_verify" type="checkbox" class="ace" ng-true-value="1" ng-false-value="0">
+													<span class="lbl">一键认证</span>
+												</label>
+												<br/>
+												<label class="middle right10"> 
+													<input ng-model="auth.mobile_verify" type="checkbox" class="ace" ng-true-value="1" ng-false-value="0">
+													<span class="lbl">手机短信认证</span>
+												</label>
+												<br/>
+												<label class="middle right10"> 
+													<input ng-model="auth.virtual_verify" type="checkbox" class="ace" ng-true-value="1" ng-false-value="0">
+													<span class="lbl">手机虚拟认证</span>
+												</label>
+												<br/>
+												<label class="middle right10"> 
+													<input ng-model="auth.qq_verify" type="checkbox" class="ace" ng-true-value="1" ng-false-value="0">
+													<span class="lbl">QQ认证</span>
+												</label>
+												<br/>
+												<label class="middle right10"> 
+													<input ng-model="auth.weibo_verify" type="checkbox" class="ace" ng-change="change_authtype1()" ng-true-value="1" ng-false-value="0">
+													<span class="lbl">新浪微博认证</span>
+												</label>
+												<br/>
+												<label class="middle right10"> 
+													<input ng-model="auth.weixin_verify" ng-change="change_authtype()" type="checkbox" class="ace" ng-true-value="1" ng-false-value="0">
+													<span class="lbl">微信认证</span>
+												</label>
+											</div>	
+										</div>
+										<label class="inline" tipbr="">
+											<div style="position: relative; ">
+												<div class="popover right" id="authtypeTip" tip-location="0px" ng-style="authtypedisplay" style="min-width: 550px; top: -50px; display: none;">
+													<div class="arrow"></div>
+													<div class="popover-content">
+														<div class="msg_tips default">一键认证和其他认证无法同时开启。</div>
+														<div class="msg_tips default">手机短信认证和手机虚拟认证无法同时开启。</div>
+														<div class="msg_tips default">如果商家的短信数为0，则无法开启手机短信认证</div>
+														<div class="msg_tips default">手机虚拟认证：用户输入一个手机号码后，系统自动生成一个验证码并呈现在认证页面中</div>
+													</div>
+											    </div>			
+																
+											</div>
+										</label>
+									</div>
+								</div>
+								<div class="form-group" ng-show="auth.weibo_verify == '1'">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;新浪微博名称： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="weibo_name" name="weibo_name" ng-model="auth.weibo_name" class="form-control" ng-blur="weibo_namedisplay = {'display': !userForm1.weibo_name.$invalid ? 'none' : 'block'}" ng-focus="weibo_namedisplay={'display':'block'}" length-unique="1,30" required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="weibo_nameTip" tip-location="-20px" ng-style="weibo_namedisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm1.weibo_name.$pristine, 'no red1':userForm1.weibo_name.$error.unique, 'yes':!userForm1.weibo_name.$error.unique}" class="msg_tips">新浪微博名称的长度范围为[1-30]个字符</div>
+													<div ng-class="{'default':userForm1.weibo_name.$pristine, 'no red1':userForm1.weibo_name.$error.required, 'yes':!userForm1.weibo_name.$error.required}" class="msg_tips">新浪微博名称不能空</div>
+
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+
+								<div class="form-group" ng-show="auth.weixin_verify == '1'">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;微信名称： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="weixin_name" name="weixin_name" ng-model="auth.weixin_name" class="form-control" ng-blur="weixin_namedisplay = {'display': !userForm1.weixin_name.$invalid ? 'none' : 'block'}" ng-focus="weixin_namedisplay={'display':'block'}" length-unique="1,30" required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="weixin_nameTip" tip-location="-20px" ng-style="weixin_namedisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm1.weixin_name.$pristine, 'no red1':userForm1.weixin_name.$error.unique, 'yes':!userForm1.weixin_name.$error.unique}" class="msg_tips">微信名称的长度范围为[1-30]个字符</div>
+													<div ng-class="{'default':userForm1.weixin_name.$pristine, 'no red1':userForm1.weixin_name.$error.required, 'yes':!userForm1.weixin_name.$error.required}" class="msg_tips">微信名称不能空</div>
+													
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group" ng-show="auth.weixin_verify == '1'">
+									<label class="col-sm-3 control-label no-padding-right" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;微信认证接口： 
+									</label>
+									<div class="col-sm-9">
+										<label class="inline">{{auth.weixin_url}}</label>
+					
+									</div>
+								</div>
+								<div class="form-group" ng-show="auth.weixin_verify == '1'">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;微信二维码： 
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 " ng-mouseleave="qrcodedisplay = {'display': 'none'}" ng-mouseover="qrcodedisplay={'display':'block'}">
+											<input type="file" nv-file-select="" uploader="uploader2" options="{formData:{'type':'merchantqrcode', 'imagename':qrcode ? qrcode : ''} }" class="form-control"  data-file-input />
+											<div ng-show="is_upload2" class="progress progress-striped active " data-percent="{{progress2}}%"><div class="progress-bar" ng-style="{ 'width': progress2 + '%' }"></div></div>
+											<img ng-show="auth.qr_code" ng-src="{{auth.qr_code}}"  class="img-thumbnail col-xs-12 col-sm-4">
+											<div class="space-4"></div>
+											<div id="alert_box_qrcode"></div>
+										</div>
+										<label class="inline" tipbr="">
+											<div style="position: relative; ">
+												<div class="popover right" id="qrcodeTip" tip-location="-40px" ng-style="qrcodedisplay" style="min-width: 350px; top: -50px; display: none;">
+													<div class="arrow"></div>
+													<div class="popover-content">
+														<div class="msg_tips default">图片规格为200 * 200。</div>
+														<div class="msg_tips default">大小为2MB，格式为：jpg，png，gif</div>
+														<div class="msg_tips default">该图片用于微信认证</div>
+													</div>
+											    </div>			
+																
+											</div>
+										</label>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-xs-12 col-sm-3 control-label no-padding-right margintop5" for="form-field-5"> 
+										<i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;广告时间：
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-1 ">
+											<input type="number"  min="8" max="20" id="ad_times" name="ad_times" ng-model="auth.ad_times" class="form-control" ng-blur="ad_timesdisplay = {'display': !userForm1.ad_times.$invalid ? 'none' : 'block'}" ng-focus="ad_timesdisplay={'display':'block'}" required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="ad_timesTip" tip-location="-30px" ng-style="ad_timesdisplay" style="min-width:380px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm1.ad_times.$pristine, 'no red1':userForm1.ad_times.$error.min || userForm1.ad_times.$error.max, 'yes':!userForm1.ad_times.$error.max && !userForm1.ad_times.$error.min}" class="msg_tips">广告显示时间，范围为[8-20]秒</div>
+													<div ng-class="{'default':userForm1.ad_times.$pristine, 'no red1':userForm1.ad_times.$error.required, 'yes':!userForm1.ad_times.$error.required}" class="msg_tips">不能为空</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-xs-12 col-sm-3 control-label no-padding-right margintop5"> 
+										上网时段控制：
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-sm-8" ng-mouseleave="online_typedisplay = {'display': 'none'}" ng-mouseover="online_typedisplay={'display':'block'}">
+											<select ng-model="auth.online_type" class="form-control" ng-change="select_month()">
+								    			<option value="">请选择</option>
+								    			<option value="everyday">每天</option>
+								    			<option value="days">工作日</option>
+								    			<option value="weekend">周末</option>
+											</select>
+											<span class="input-group-btn" ng-show="auth.online_type != '' && auth.online_type">
+												<button type="button" disabled style="border-radius:0px; height: 32px;" class="btn btn-default" ></button>
+											</span>
+											<select ng-model="auth.hour" class="form-control" ng-show="auth.online_type != '' && auth.online_type">
+								    			<option value="">请选择</option>
+								    			<option data-ng-repeat="data in hourlist" value="{{data}}">{{data}}</option>
+											</select>
+
+											
+											<span class="input-group-btn" ng-show="auth.online_type != '' && auth.online_type">
+												<button type="button" disabled style="border-radius:0px; height: 32px;" class="btn btn-default" >至</button>
+											</span>
+								
+											<select ng-model="auth.hour1" class="form-control" ng-show="auth.online_type != '' && auth.online_type">
+								    			<option value="">请选择</option>
+								    			<option data-ng-repeat="data in hourlist" value="{{data}}">{{data}}</option>
+											</select>
+											
+										</div>
+										<label class="inline" tipbr="1">
+											<div style="position: relative; ">
+												<div class="popover right" id="" tip-location="0" ng-style="online_typedisplay" style="min-width: 450px; top: -50px; display: none;">
+													<div class="arrow"></div>
+													<div class="popover-content">
+														<div class="msg_tips default">如果不选择，则是全天可以进行认证上网</div>
+														<div class="msg_tips default">如果选择了一个时间，那只能在选择的时间进行认证上网</div>
+														<div class="msg_tips default">如果起始时间与结束时间相等，代表全天可以进行认证上网</div>
+														
+													</div>
+											    </div>			
+																
+											</div>
+										</label>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-xs-12 col-sm-3 control-label no-padding-right margintop5" for="form-field-5"> 
+										每日认证次数：
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-1 ">
+											<input type="number"  min="0" max="9999" id="auth_num" name="auth_num" ng-model="auth.auth_num" class="form-control" ng-blur="auth_numdisplay = {'display': !userForm1.auth_num.$invalid ? 'none' : 'block'}" ng-focus="auth_numdisplay={'display':'block'}"/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="auth_numTip" tip-location="-20px" ng-style="auth_numdisplay" style="min-width:380px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm1.auth_num.$pristine, 'no red1':userForm1.auth_num.$error.min || userForm1.auth_num.$error.max, 'yes':!userForm1.auth_num.$error.max && !userForm1.auth_num.$error.min}" class="msg_tips">每日认证次数的范围为[0-9999]</div>
+													<div class="msg_tips default">可以为空,为空或者0都代表不限制认证次数</div>
+
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-xs-12 col-sm-3 control-label no-padding-right margintop5" for="form-field-5"> 
+										强制重连时间：
+									</label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-1 ">
+											<input type="number"  min="0" max="24" id="online_times" name="online_times" ng-model="auth.online_times" class="form-control" ng-blur="online_timesdisplay = {'display': !userForm1.online_times.$invalid ? 'none' : 'block'}" ng-focus="online_timesdisplay={'display':'block'}"/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="online_timesTip" tip-location="-30px" ng-style="online_timesdisplay" style="min-width:380px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm1.online_times.$pristine, 'no red1':userForm1.online_times.$error.min || userForm1.online_times.$error.max, 'yes':!userForm1.online_times.$error.max && !userForm1.online_times.$error.min}" class="msg_tips">上网时间限制的范围为[0-24]，单位为：小时</div>
+													<div class="msg_tips default">可以为空,为空或者0都代表不限制上网时间</div>
+													<div class="msg_tips default">上网时间限制指：用户认证后多长时间强制重新认证</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label class="col-sm-3 control-label no-padding-right" for="form-field-1">认证后跳转：</label>
+									<div class="col-sm-9" ng-mouseleave="hrefdisplay = {'display': 'none'}" ng-mouseover="hrefdisplay={'display':'block'}">
+										
+											<label class="inline middle">
+												<input type="radio" iradio ng-model="auth.href" name="href" ng-change="change_href123()"  value="website" >
+												<span class="lbl">跳转到微官网</span>
+											</label>
+											<label class="inline left10 middle">
+												<input type="radio" iradio ng-model="auth.href" name="href" ng-change="change_href123()"  value="sourcewebsite" >
+												<span class="lbl">跳转请求网页</span>
+											</label>
+											<label class="inline left10 middle">
+												<input type="radio" iradio ng-model="auth.href" name="href" ng-change="change_href123()" value="fixedwebsite" >
+												<span class="lbl">跳转指定网页</span>
+											</label>
+											<label class="inline left10 middle">
+												<input type="radio" iradio ng-model="auth.href" name="href" ng-change="change_href123()"  value="not" >
+												<span class="lbl">不跳转</span>
+											</label>
+									</div>
+								</div>
+								<div class="form-group" ng-show="auth.href=='fixedwebsite'">
+									<label class="col-sm-3 control-label no-padding-right margintop5" for="form-field-1"><i class="icon-asterisk light-red smaller-60 middle"></i>&nbsp;指定跳转URL： </label>
+									<div class="col-sm-9">
+										<div class="input-group col-xs-10 col-sm-6 ">
+											<input type="text" id="href_website" name="href_website" ng-model="auth.href_website" class="form-control" ng-blur="websitedisplay = {'display': !userForm1.href_website.$invalid ? 'none' : 'block'}" ng-focus="websitedisplay={'display':'block'}" ip-domain required/>
+										</div>
+										<div class="col-sm-1 col-xs-12" style="position: relative;">
+											<div class="popover right" id="" tip-location="-20px" ng-style="websitedisplay" style="min-width:270px">
+												<div class="arrow"></div>
+												<div class="popover-content">
+													<div ng-class="{'default black1':userForm1.href_website.$pristine, 'no red1':userForm1.href_website.$error.ipDomain, 'yes':!userForm1.href_website.$error.ipDomain}" class="msg_tips">指定跳转URL为域名。</div>
+													<div ng-class="{'default':userForm1.href_website.$pristine, 'no red1':userForm1.href_website.$error.required, 'yes':!userForm1.href_website.$error.required}" class="msg_tips">指定跳转URL不能为空</div>
+												</div>
+										    </div>			
+															
+										</div>
+									</div>
+								</div>
+								
+								
+								<div id="alert_box12"></div>
+								<div class="clearfix form-actions">
+									<div class="col-md-offset-3 col-md-9 col-sm-9">
+										<button id="save1" class="col-sm-2 btn btn-success" ng-disabled='userForm1.$invalid' data-loading-text="正在提交,请稍候..." type="button" ng-click="save_auth()">
+											<i class="icon-save bigger-110"></i>
+										 	<span id="submitbutton">保存</span>
+										</button>
+										<button class="col-sm-2 btn btn-default left10" type="button" ng-click="is_show1=false">
+											<i class="icon-reply bigger-110"></i>
+										 	<span id="submitbutton">取消</span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>	
+		</div>
+	</div>
+</div>
+

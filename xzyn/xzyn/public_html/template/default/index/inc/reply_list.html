@@ -1,0 +1,122 @@
+{volist name="$reply_list" id="vo"}
+{if condition="$vo['h_layer'] eq 1"}
+   <div class="box box-default">	<!--一级回复-->
+         <div class="box-header with-border">
+              <div class="user-block">
+                <img class="img-circle" src="{$vo['userinfo']['avatar']|default='/static/common/img/default.png'}" alt="">
+                <div class="username x-mb-5">
+                   <a class="x-t-no1" href="/userinfo/{$vo['user']['id']}">{$vo['user']['name'] ?: $vo['user']['username']}</a>
+                </div>
+                <div class="description">
+                   <span class="x-t-no2">{:csubstr(strip_tags(htmlspecialchars_decode($vo['userinfo']['info'])),40)}</span>
+                </div>
+              </div>
+         </div>
+         <div class="box-body">
+              <p>{$vo['contents']}</p>
+               <div class="">
+              <form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+                 <input type="hidden" name="ar_id" value="{$vo['id']}" />
+                 <input type="hidden" name="type" value="reply" />
+                     <span class="text-muted"><i class="fa fa-clock-o x-pr-5"> {$vo['create_time']}</i></span>
+                    <button type="button" class="huifu_btn pull-right btn btn-warning btn-xs">
+                       <i class="fa fa-thumbs-o-up"></i> {$vo['zan_num']} 赞
+                    </button>
+                    <button type="button" data-toggle="collapse" data-target="#huifu-neirong{$vo['id']}" class="x-mr-10 pull-right btn btn-primary btn-xs">
+                       <i class="fa fa-commenting-o"> {$vo['reply_num']} 条回复</i>
+                    </button>
+                    <button type="button" data-toggle="collapse" data-target="#huifu-neirong{$vo['id']}{$archive['id']}" class="x-mr-10 pull-right btn btn-warning btn-xs">
+                       <i class="fa fa-pencil-square-o"> 回复</i>
+                    </button>
+                 </form>
+               </div>
+         </div>
+         <div class="box-footer box-comments collapse" id="huifu-neirong{$vo['id']}">
+         {volist name="$reply_list" id="to"}
+         {if condition="$to['pid'] eq $vo['id']"}
+              <div class="box-comment">	<!--二级回复-->
+                <img class="img-circle img-sm" src="{$to['userinfo']['avatar']|default='/static/common/img/default.png'}" >
+                <div class="comment-text">
+                      <div class="username x-ptb-5">
+                         <a href="/userinfo/{$to['user']['id']}" class="x-t-no1">{$to['user']['name'] ?: $to['user']['username']}</a>
+                      </div>
+                      <div class="">{$to['contents']}</div>
+                     <div class="text-right x-mt-5">
+                       <form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+                           <span class="pull-left text-muted"><i class="fa fa-clock-o x-pr-5"> {$to['create_time']}</i></span>
+                       <input type="hidden" name="ar_id" value="{$to['id']}" />
+                       <input type="hidden" name="type" value="reply" />
+                           <button type="button" data-toggle="collapse" data-target="#huifu-form{$to['id']}" class="btn btn-primary btn-xs x-ml-5" {if condition="$to['uid'] eq $user['id']"}disabled{/if}>
+                             <i class="fa fa-pencil-square-o"></i> 回复
+                          </button>
+                           <button type="button" class="huifu_btn btn btn-warning btn-xs x-ml-5">
+                             <i class="fa fa-thumbs-o-up"></i> {$to['zan_num']} 赞
+                          </button>
+                     </form>
+                     </div>
+                     <div class="x-mt-5 collapse" id="huifu-form{$to['id']}">
+                        <form action="{:url('arc_reply')}" method="post" onsubmit="return false">
+                           <input type="hidden" name="pid" value="{$to['id']}" />
+                           <input type="hidden" name="aid" value="{$archive['id']}" />
+                         <div class="input-group input-group-sm">
+                            <input type="text" name="contents" class="form-control" placeholder="回复:{$to['user']['name'] ?: $to['user']['username']}">
+                             <span class="input-group-btn">
+                                {notempty name="$user"}
+                                  <button type="button" class="huifu_btn btn btn-info btn-flat">回复</button>
+                                  {else /}
+                                  <a onclick="poplogin()" class="btn btn-info btn-flat">登录回复</a>
+                                  {/notempty}
+                             </span>
+                          </div>
+                       </form>
+                     </div>
+                     {volist name="$reply_list" id="so"}
+               {if condition="$so['pid'] eq $to['id']"}
+                  <div class="x-x-t x-mt-5">	<!--三级回复-->
+                     <div class="username x-ptb-5">
+                        <div class="x-t-no1">
+                           <a href="/userinfo/{$so['user']['id']}">{$so['user']['name'] ?: $so['user']['username']}</a> 回复 <a href="/userinfo/{$to['user']['id']}">{$to['user']['name'] ?: $to['user']['username']}</a>
+                        </div>
+                     </div>
+                     <div>{$so['contents']}</div>
+                     <form action="{:url('arc_zan')}" method="post" onsubmit="return false">
+                          <input type="hidden" name="ar_id" value="{$so['id']}" />
+                          <input type="hidden" name="type" value="reply" />
+                        <div>
+                           <span class="text-muted x-f12"><i class="fa fa-clock-o x-pr-5"> {$so['create_time']}</i></span>
+                                 <button type="button" class="huifu_btn pull-right btn btn-warning btn-xs x-ml-5">
+                                   <i class="fa fa-thumbs-o-up"></i> {$so['zan_num']} 赞
+                                </button>
+                        </div>
+                     </form>
+                  </div>
+               {/if}
+               {/volist}
+                </div>
+              </div>
+         {/if}
+         {/volist}
+         </div>
+
+         <form class="collapse" action="{:url('arc_reply')}" method="post" onsubmit="return false" id="huifu-neirong{$vo['id']}{$archive['id']}">
+             <input type="hidden" name="pid" value="{$vo['id']}" />
+             <input type="hidden" name="aid" value="{$archive['id']}" />
+            <div class="box-footer ">
+                <!--<img class="img-responsive img-circle img-sm" src="http://127.0.0.20/dist/img/user4-128x128.jpg" >-->
+                <div class="img-push">
+                   <div class="input-group input-group-sm">
+                      <input type="text" name="contents" class="form-control" placeholder="回复:{$vo['user']['name'] ?: $vo['user']['username']}">
+                       <span class="input-group-btn">
+                          {notempty name="$user"}
+                            <button type="button" class="huifu_btn btn btn-info btn-flat">回复</button>
+                            {else /}
+                            <a onclick="poplogin()" class="btn btn-info btn-flat">登录回复</a>
+                            {/notempty}
+                       </span>
+                    </div>
+                </div>
+            </div>
+         </form>
+       </div>
+  {/if}
+{/volist}

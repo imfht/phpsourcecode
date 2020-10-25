@@ -1,0 +1,194 @@
+{extend name="base" /}
+{block name="css"}
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/mmgrid/mmGrid.css?v={$v}" />
+<link href="__STATIC__/plugins/validator/jquery.validator.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="js"}
+<script src="__STATIC__/plugins/mmgrid/mmGrid.js?v={$v}" type="text/javascript"></script>
+<script type="text/javascript" src="__STATIC__/plugins/validator/jquery.validator.min.js?v={$v}"></script>
+<script src="__ADMIN__/shopflows/shopbase.js?v={$v}" type="text/javascript"></script>
+{/block}
+{block name="main"}
+<div id='alertTips' class='alert alert-success alert-tips fade in'>
+    <div id='headTip' class='head'><i class='fa fa-lightbulb-o'></i>操作说明</div>
+    <ul class='body'>
+        <li>添加步骤内容所需填写的字段。</li>
+        <li>无法删除则为必填字段。</li>
+        <li>标识“*”的选项为必填项。</li>
+        <li>表单字段名称请勿包含数值或者其他特殊字符、建议使用纯字母（如telephone，shopCompany）。</li>
+        <li>表单类型为其他(other)，选择类型为日期类型，若填了日期关联字段，则需将关联字段的是否显示设置为否，否则前台会重复显示。（同理选择类型为时间类型） </li>
+        <li>日期关联字段请按照提示的格式进行设置，否则前台不会进行相应的显示。 </li>
+        <li>新增的表单类型为单选按钮(radio)的字段，单选按钮名称格式：值||内容，以,分隔。若要有默认选中的效果，需设置其中的值为0，例如：1||营业中,0||休息中（默认选中“休息中”） </li>
+    </ul>
+</div>
+<input type="hidden" id="fId" class="s-ipt" value="{$flowId}"/>
+<div class="wst-toolbar">
+    <input type='text' class='fieldName'  placeholder='表单字段' value=""/>
+    <select class="dataType">
+        <option value="-1">数据类型</option>
+        <option value="varchar">varchar</option>
+        <option value="char">char</option>
+        <option value="int">int</option>
+        <option value="mediumint">mediumint</option>
+        <option value="smallint">smallint</option>
+        <option value="tinyint">tinyint</option>
+        <option value="text">text</option>
+        <option value="decimal">decimal</option>
+    </select>
+    <input type='text' class='fieldTitle' placeholder='表单标题'/>
+    <select class="isRequire" >
+        <option value="-1">是否必填</option>
+        <option value="1" >是</option>
+        <option value="0" >否</option>
+    </select>
+    <select class="fieldType">
+        <option value="-1">表现形式</option>
+        <option value="input">文本字段(input)</option>
+        <option value="textarea">文本区域(textarea)</option>
+        <option value="radio">单选按钮(radio)</option>
+        <option value="checkbox">多选按钮(checkbox)</option>
+        <option value="select">下拉菜单(select)</option>
+        <option value="other">其他(other)</option>
+    </select>
+    <button class="btn btn-primary" onclick='javascript:loadGrid(0)'><i class='fa fa-search'></i>查询</button>
+    <button type="button" class='f-right btn' onclick="javascript:history.go(-1)"><i class="fa fa-angle-double-left"></i>返回</button>
+    <button class="btn btn-success f-right btn-mright" onclick="javascript:getForEdit(0)"><i class='fa fa-plus'></i>新增</button>
+    <div style="clear:both"></div>
+</div>
+<div class='wst-grid'>
+    <div id="mmg" class="mmg"></div>
+    <div id="pg" style="text-align: right;"></div>
+</div>
+<div id='fieldBox' style='display:none;'>
+    <form id='fieldForm' autocomplete="off">
+        <table class='wst-form wst-box-top field-table'>
+            <input type="hidden" name="id" id="id" class='ipt' value=""/>
+            <input type="hidden" name="flowId" id="flowId" class='ipt' value=""/>
+            <tr>
+                <th width='150' align="right"><span>表单字段<font color='red'>*</font>：</span></th>
+                <td >
+                    <input type="text" id="fieldName" name="fieldName" style='width:70%;' class='ipt' value="" data-rule='表单字段:required;'  data-msg-required='请填写表单字段' data-target="#fieldNameMsg" placeholder='表单字段名称请勿包含数值或者其他特殊字符、建议使用纯字母（如telephone，shopCompany）'/><span id="fieldNameMsg"></span>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>数据类型&nbsp;：</span></th>
+                <td>
+                    <select id='dataType' name="dataType"  class="ipt" style='padding-left:10px;' onchange="changeDataType(this)">
+                        <option value="varchar">varchar</option>
+                        <option value="char">char</option>
+                        <option value="int">int</option>
+                        <option value="mediumint">mediumint</option>
+                        <option value="smallint">smallint</option>
+                        <option value="tinyint">tinyint</option>
+                        <option value="text">text</option>
+                        <option value="decimal">decimal</option>
+                        <option value="date">date</option>
+                        <option value="time">time</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>表单标题<font color='red'>*</font>：</span></th>
+                <td>
+                    <input type="text"  id="fieldTitle" name="fieldTitle" style='width:70%;' class='ipt' value="" data-rule='表单标题:required;'  data-msg-required='请填写表单标题' data-target="#fieldTitleMsg"/><span id="fieldTitleMsg"></span>
+                </td>
+            </tr>
+            <tr class="dataLength">
+                <th ><span>数据长度<font color='red'>*</font>：</span></th>
+                <td>
+                    <input type="text"  id="dataLength" name="dataLength"  style='width:30%;' class='ipt' value="" data-rule='数据长度:required;'  data-msg-required='请填写数据长度' data-target="#dataLengthMsg"/><span id="dataLengthMsg"></span>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>显示排序&nbsp;：</span></th>
+                <td>
+                    <input type="text" id="fieldSort" name='fieldSort'  style='width:70%;' class='ipt' value=""/>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>是否必填&nbsp;：</span></th>
+                <td>
+                    <select id="isRequire" name="isRequire" class="ipt" style='padding-left:10px;'>
+                        <option value="1" >是</option>
+                        <option value="0" >否</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>是否关联字段：</span></th>
+                <td>
+                    <select id="isRelevance" name="isRelevance" class="ipt" style='padding-left:10px;'>
+                        <option value="0" >否</option>
+                        <option value="1" >是</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>关联字段：</span></th>
+                <td >
+                    <div>
+                        <input type="text" id="fieldRelevance" name="fieldRelevance"  style='width:70%;' class='ipt' value="" placeholder='请填写关联的表单字段'/>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th > <span>表单注释&nbsp;：</span></th>
+                <td>
+                    <input type="text"  id="fieldComment" name='fieldComment'  style='width:70%;' class='ipt' value=""/>
+                </td>
+            </tr>
+            <tr>
+                <th ><span>表现形式&nbsp;：</span></th>
+                <td>
+                    <select id="fieldType" name="fieldType" class="ipt" onchange="changeFieldType(this)" style='padding-left:10px;'>
+                        <option value="input">文本字段(input)</option>
+                        <option value="textarea">文本区域(textarea)</option>
+                        <option value="radio">单选按钮(radio)</option>
+                        <option value="checkbox">多选按钮(checkbox)</option>
+                        <option value="select">下拉菜单(select)</option>
+                        <option value="other">其他(other)</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th ><span class="fieldAttrTitle">表单长度<font color='red'>*</font>：</span></th>
+                <td >
+                    <div class="fieldAttr">
+                        <input type="text" id="fieldAttr" name="fieldAttr"  style='width:70%;' class='ipt' value="" data-rule='表单属性:required;'  data-msg-required='请填写表单属性' data-target="#fieldAttrMsg"/><span id="fieldAttrMsg"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr class="isShow" >
+                <th ><span>是否显示&nbsp;：</span></th>
+                <td>
+                    <select id="isShow" name="isShow" class="ipt" style='padding-left:10px;'>
+                        <option value="1" >是</option>
+                        <option value="0" >否</option>
+                    </select>
+                </td>
+            </tr>
+            <tr class="dateRelevance" style="display: none;">
+                <th><span >日期关联字段：</span></th>
+                <td>
+                    <input type="text" id="dateRelevance" name="dateRelevance"  style='width:70%;' class='ipt' value="" placeholder='格式：结束日期字段,是否长期字段,是否长期标题'/>
+                </td>
+            </tr>
+            <tr class="timeRelevance" style="display: none;">
+                <th><span >时间关联字段：</span></th>
+                <td>
+                    <input type="text" id="timeRelevance" name="timeRelevance"  style='width:70%;' class='ipt' value="" placeholder='格式：关联字段名'/>
+                </td>
+            </tr>
+            <tr class="fileNum" style="display: none;">
+                <th><span >上传文件数量：</span></th>
+                <td>
+                    <input type="text" id="fileNum" name="fileNum"  style='width:70%;' class='ipt' value="1" maxLength='3' placeholder='不填写代表上传文件数量为1' onkeyup="javascript:WST.isChinese(this,1)" onkeypress="return WST.isNumberKey(event)"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+<script>
+    $(function(){initGrid({$p})});
+</script>
+{/block}

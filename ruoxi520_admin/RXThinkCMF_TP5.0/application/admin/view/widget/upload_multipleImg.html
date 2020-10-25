@@ -1,0 +1,145 @@
+<style type="text/css">
+	.layui-upload-drag {
+	    position: relative;
+	    padding: 10px;
+	    border: 1px dashed #e2e2e2;
+	    background-color: #fff;
+	    text-align: center;
+	    cursor: pointer;
+	    color: #999;
+		margin-right:10px;
+		margin-bottom:10px;
+	}
+	.del_img{
+		position: absolute;
+		z-index: 99;
+		right: 0;
+		top: 0;
+		width: 25px;
+		height: 25px;
+		display: block;
+	}
+	.del_img img{
+		position: absolute;
+		z-index: 9;
+		right: 0px;
+		top: 0px;
+		width: 25px;
+		height: 25px;
+		display: inline-block;
+	}
+</style>
+
+{if $imageList neq null}
+	{volist name="imageList" id="row"}
+	<div class="layui-upload-drag">
+		<div class="del_img" onclick="removeImage_{$name}(this);">
+			<img src="__ADMIN__/images/delete.png">
+		</div>
+		<a href="{$row}" target="_blank">
+			<img name="imageSrc_{$name}" src="{$row}" alt="{$imgMsg}(点击放大预览)" title="{$imgMsg}(点击放大预览)" width="{$imgW}" height="{$imgH}">
+		</a>
+	</div>
+	{/volist}
+{/if}
+<div class="layui-upload-drag imgUp_{$name}">
+ 	<img id="btnUploadImg_{$name}" src="__ADMIN__/images/default_upload.png" alt="上传{$imgMsg}" title="上传{$imgMsg}" width="{$imgW}" height="{$imgH}">
+ 	<input type="hidden" id="{$name}" name="{$name}" value="">
+</div>
+
+<script type="text/javascript">
+
+layui.use(['upload'],function(){
+	
+	// 声明变量
+	var upload = layui.upload
+		,$ = layui.$;
+	
+	// 初始化图片隐藏域
+	var ids = '';
+	$('img[name="imageSrc_{$name}"]').each(function(){  
+		ids += $(this).attr('src') + ","
+	});
+	ids = ids.substr(0, (ids.length - 1));
+	$("#{$name}").val(ids);
+	
+	/**
+	 * 普通图片上传
+	 */
+	var uploadInst = upload.render({
+	    elem: '#btnUploadImg_{$name}'
+		,url: "/upload/uploadImg"
+		,accept:'images'
+		,acceptMime:'image/*'
+		,exts: "{$uploadImgExt}"
+		,field:'file'//文件域字段名
+		,size: {$uploadImgSize} //最大允许上传的文件大小
+	  	,multiple: true
+	  	,number: {$uploadImgMax} //最大上传张数
+		,before: function(obj){
+			//预读本地文件
+			
+		}
+		,done: function(res){
+			//上传完毕回调
+
+			var hideStr = $("#{$name}").attr("value");
+			var itemArr = hideStr.split(',');
+			if(itemArr.length>={$maxNum}){
+				layer.msg("最多上传{$maxNum}张图片",{ icon: 5,time: 1000}, function () {
+                	//TODO...
+                });
+				return false;
+			}
+			
+			//如果上传失败
+			if(res.status <= 0){
+				return layer.msg('上传失败');
+			}
+
+			//渲染界面
+			var attStr = '<div class="layui-upload-drag">'+
+							'<div class="del_img" onclick="removeImage_{$name}(this);">'+
+								'<img src="__ADMIN__/images/delete.png"></img>'+
+							'</div>'+
+							'<a href="'+res.data+'" target="_blank">'+
+						 		'<img name="imageSrc_{$name}" src="'+res.data+'" alt="{$imgMsg}(点击放大预览)" title="{$imgMsg}(点击放大预览)" width="{$imgW}" height="{$imgH}">'+
+						 	'</a>'+
+						 '</div>';
+			$(".imgUp_{$name}").before(attStr);
+			
+			//获取最新的图集
+			var ids = '';
+			$('img[name="imageSrc_{$name}"]').each(function(){  
+				ids += $(this).attr('src') + ","
+			});
+			ids = ids.substr(0, (ids.length - 1));
+			//给隐藏域赋值
+			$("#{$name}").val(ids);
+			
+			return false;
+		}
+		,error: function(){
+			//请求异常回调
+			return layer.msg('数据请求异常');
+		}
+	});
+	
+});
+
+// 删除图片
+function removeImage_{$name}(obj) {
+	//obj.remove();
+	layui.$(obj).parent().remove();
+	
+	//获取最新的图集
+	var ids = '';
+	layui.$('img[name="imageSrc_{$name}"]').each(function(){  
+		ids += layui.$(this).attr('src') + ","
+	});
+	ids = ids.substr(0, (ids.length - 1));
+	//给隐藏域赋值
+	layui.$("#{$name}").val(ids);
+}
+
+</script>

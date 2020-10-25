@@ -1,0 +1,136 @@
+{include file="User@Public:header"/}
+{include file="User@Public:nav"/}
+{block name="style"}
+	<style type="text/css">
+		.form{margin-top:15px;}
+	</style>
+	<!-- <link rel="stylesheet" type="text/css" href="__PUBLIC__/css/bootstrap-datetimepicker.css">
+	<script type="text/javascript" src="__PUBLIC__/js/bootstrap-datetimepicker.js"></script> -->
+	<!-- <link href="__PUBLIC__/plugs/datepicker/css/foundation.min.css" rel="stylesheet" type="text/css"> -->
+	<link href="__PUBLIC__/plugs/datepicker/css/foundation-datepicker.min.css" rel="stylesheet" type="text/css">
+	<script src="__PUBLIC__/plugs/datepicker/js/foundation-datepicker.js"></script>
+	<script src="__PUBLIC__/plugs/datepicker/js/foundation-datepicker.zh-CN.js"></script>	
+{/block}
+<div class="container">
+	<div class="row">
+		<div class="col-md-2">
+			{include file="User@Public:left_menu"/}
+		</div>
+		<div class="col-md-10 cf">
+			<div class="panel panel-default cf">
+				<div class="panel-heading">
+					<h3 class="panel-title">修改资料</h3>
+				</div>
+				<div class="panel-body">
+					<div class="tabs-wrapper">
+						<ul class="nav nav-tabs">
+							<li {if condition="$tab_hover eq 'base'"}class="active"{/if}><a href="{:U('User/Config/index',array('tab'=>'base'))}">基础设置</a></li>
+							{volist name="_tab" id="item"}
+							<li {if condition="$tab_hover eq 'profile_'.$item['id']"}class="active"{/if}><a href="{:U('User/Config/index',array('tab'=>'profile_'.$item['id']))}">{$item['profile_name']}</a></li>
+							{/volist}
+						</ul>
+						<div class="tab-content">
+							<!-- 基础设置 -->
+							<div class="tab-pane fade in {if condition="$tab_hover eq 'base'"}active{/if}">
+								<form class="form form-horizontal form_base" method="post">
+									<div class="form-group">
+										<label class="col-md-3 control-label">用户名：</label>
+										<div class="col-md-8">
+											{$data['username']}
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">昵称：</label>
+										<div class="col-md-8">
+											<input type="text" name="nickname" class="form-control" value="{$data['nickname']}">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">性别：</label>
+										<div class="col-md-8">
+											<div class="btn-group" data-button>
+												<label class="btn btn-primary {eq name="data['sex']" value="0"}active{/eq}"><input type="radio" name="sex" value="0" class="hide sex">保密</label>
+												<label class="btn btn-primary {eq name="data['sex']" value="1"}active{/eq}"><input type="radio" name="sex" value="1" class="hide sex">男</label>
+												<label class="btn btn-primary {eq name="data['sex']" value="2"}active{/eq}"><input type="radio" name="sex" value="2" class="hide sex">女</label>
+											</div>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">生日：</label>
+										<div class="col-md-8">
+											<input type="text" name="birthday" class="form-control" value="{$data['birthday']}" placeholder="生日" data-date-format="yyyy-mm-dd hh:ii" id="datetimepicker" readonly>
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">所在地：</label>
+										<div class="col-md-8">
+											{:hook('J_China_City', array('province'=>$data['pos_province'], 'city'=>$data['pos_city'], 'district'=>$data['pos_district'], 'community'=>$data['pos_community']))}
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">QQ：</label>
+										<div class="col-md-8">
+											<input type="text" name="qq" class="form-control" value="{$data['qq']}">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-md-3 control-label">签名：</label>
+										<div class="col-md-8">
+											<textarea name="signature" class="form-control">{$data['signature']}</textarea>
+										</div>
+									</div>
+
+									<div class="form-group">
+										<div class="col-md-8 col-md-offset-2">
+											<button class="btn btn-primary submit-btn ajax-post" id="submit" type="submit" target-form="form_base">确 定</button>
+											<a class="btn btn-info btn-return" href="">返 回</a>
+										</div>
+									</div>
+								</form>
+								<script type="text/javascript">
+									var sex = $('.sex');
+									$.each(sex , function(index , value){
+										$(value).change(function(){
+											sex.parent().removeClass('active');
+											$(this).parent().addClass('active');
+										})
+									})
+									$('#datetimepicker').fdatepicker({
+										format: 'yyyy-mm-dd hh:ii',
+										pickTime: true
+									});
+								</script>
+							</div>
+							{volist name="_tab" id="item"}
+							<!--{$item['profile_name']}-->
+							<div class="tab-pane fade in {if condition="$tab_hover eq 'profile_'.$item['id']"} active{/if}">
+								<form class="form form-horizontal form_{$item['id']}" method="post">
+									{if condition="!empty($fields)"}
+										{php}$fields_list = $fields[$item['id']];{/php}
+										{foreach name="fields_list" item="vo"}
+											<div class="form-group">
+												<label class="col-md-3 control-label">{$vo['title']}：</label>
+												<div class="col-md-8">
+													{:W('Common/Form/show',array($vo['type'],$vo['name'],$vo['value'],'',$vo['extra']))}
+													<div class="form-help">{$vo['input_tips']}</div>
+												</div>
+											</div>
+										{/foreach}
+									{/if}
+									<div class="form-group">
+										<div class="col-md-8 col-md-offset-2">
+											<button class="btn btn-primary submit-btn ajax-post" id="submit" type="submit" target-form="form_{$item['id']}" url="{:U('User/Config/setuserinfo')}">确 定</button>
+											<a class="btn btn-info btn-return" href="">返 回</a>
+										</div>
+									</div>
+								</form>
+							</div>
+							{/volist}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{include file="User@Public:footer"/}

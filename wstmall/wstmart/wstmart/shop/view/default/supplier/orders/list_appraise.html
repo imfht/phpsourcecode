@@ -1,0 +1,119 @@
+{extend name="default/base" /}
+{block name="title"}供货商-待评价订单{/block}
+{block name="css"}
+<link href="__SHOP__/supplier/css/user.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="main"}
+  
+  <div class='wst-toolbar'>
+     <input type='text'  class="s-query" id='orderNo' placeholder="订单号"/> 
+     <input type='text' class="s-query" id='supplierName' placeholder="供货商名称"/> 
+     <button class="btn btn-primary" onclick="waitAppraiseByPage()"><i class="fa fa-search"></i>查询</button>
+  </div>
+  <div class='wst-user-content'>
+    <table class='wst-order-list'>
+       <thead>
+	      <tr class='head'>
+	         <th class="th-padding">订单详情</th>
+           <th width="115">支付方式/配送信息</th>
+           <th>金额</th>
+           <th width="110">操作</th>
+	      </tr>
+	   </thead>
+	   <tbody id='loadingBdy'>
+	       <tr id='loading' class='empty-row' style='display:none'>
+	            <td colspan='4'><img src="__SHOP__/supplier/img/loading.gif">正在加载数据...</td>
+	       </tr>
+       </tbody>
+       <script id="tblist" type="text/html">
+       {{# for(var i = 0; i < d.length; i++){ }}
+       <tbody class="j-order-row">
+         <tr class='empty-row'>
+            <td colspan='4'>&nbsp;</td>
+         </tr>
+         <tr class='order-head'>
+            <td colspan='4' align='right'>
+              <div class='time'>{{d[i].createTime}}</div>
+              <div class='orderno'>订单号：{{d[i].orderNo}}
+      			 </div>
+              <div class='supplier'>{{d[i].supplierName}}</div>
+              <div class='link'>{{WST.supplierQQ(d[i].supplierQQ)}}{{WST.supplierWangWang(d[i].supplierWangWang)}}</div>
+              <div>
+               {{d[i].status}}
+               {{#if(d[i].orderStatus==0){}}&nbsp;|&nbsp;<a href='#none' onclick='javascript:cancel(d[i].orderId)'>取消订单</a>{{# } }}
+              </div>
+            </td>
+         </tr>
+         {{# 
+            var tmp = null,rows = d[i]['list'].length;
+            for(var j = 0; j < d[i]['list'].length; j++){ 
+            tmp = d[i]['list'][j];
+         }}
+         <tr class='goods-box'>
+            <td>
+               <div class='goods-img'>
+                <a href="{{WST.U('shop/suppliergoods/detail','goodsId='+tmp.goodsId)}}" target='_blank'>
+                <img data-original='__RESOURCE_PATH__/{{tmp.goodsImg}}'  title='{{tmp.goodsName}}' class="gImg">
+                </a>
+               </div>
+               <div class='goods-name'>
+                 <div>{{tmp.goodsName}}</div>
+                 <div>{{tmp.goodsSpecNames}}</div>
+               </div>
+               <div class='goods-extra'>{{tmp.goodsPrice}} x {{tmp.goodsNum}}</div>
+            </td>
+            {{#if(j==0){}}
+            <td rowspan="{{rows}}">
+                <div>{{d[i].payTypeName}}</div>
+                <div>{{d[i].deliverTypeName}}</div>
+            </td>
+            <td rowspan="{{rows}}">
+                <div>商品金额：¥{{d[i].goodsMoney}}</div>
+                <div class='line'>运费：¥{{d[i].deliverMoney}}</div>
+                <div>实付金额：¥{{d[i].realTotalMoney}}</div>
+            </td>
+            <td rowspan="{{rows}}">
+                {{#if(d[i].isAppraise==0){}}
+                <div>
+                <a href='javascript:;' onclick='javascript:toAppraise({{d[i].orderId}})'>【评价订单】</a>
+                </div>
+                {{# } }}
+                <div><a href='#none' onclick="view({{d[i].orderId}},'waitAppraise')">【订单详情】</a></div>
+                {{# if(d[i].isComplain==''){ }}
+                <div><a href='#none' onclick='complain({{d[i].orderId}},"waitAppraise")'>【订单投诉】</a></div>
+                {{# } }}
+                {{# if(d[i].canAfterSale){ }}
+                <div><a href='javascript:void(0)' onclick='afterSale({{d[i].orderId}},"abnormal")'>【申请售后】</a></div>
+                {{# } }}
+            </td>
+            {{#}}}
+         </tr>
+         {{# } }}
+         <tr>
+          <td colspan="4">
+            {{# if(WST.blank(d[i].orderRemarks)!=''){  }}
+               <div class="order_remaker">【我的留言】{{d[i].orderRemarks}}</div>
+             {{# }  }}
+          </td>
+         </tr>
+       </tbody>
+       {{# } }}
+       </script>
+       <tr class='empty-row'>
+            <td colspan='4' id='pager' align="center" style='padding:5px 0px 5px 0px'>&nbsp;</td>
+       </tr>
+    </table>
+  </div>
+{/block}
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/js/jquery.min.js?v={$v}"></script>
+<script type="text/javascript" src="__STATIC__/plugins/layer/layer.js?v={$v}"></script>
+<script type="text/javascript" src="__STATIC__/plugins/lazyload/jquery.lazyload.min.js?v={$v}"></script>
+<script type='text/javascript' src='__SHOP__/supplier/js/common.js?v={$v}'></script>
+<script type='text/javascript' src='__SHOP__/supplier/orders/orders.js?v={$v}'></script>
+<script>
+$(function(){
+	waitAppraiseByPage({$p});
+})
+</script>
+{/block}

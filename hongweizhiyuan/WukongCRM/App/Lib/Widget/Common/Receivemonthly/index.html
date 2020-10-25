@@ -1,0 +1,76 @@
+<!-- 财务月度统计 -->
+<div class="span6 sort-item" rel="{$id}">
+	<div class="dash-border">
+		<div class="dash-title">
+			<img src="__PUBLIC__/img/chart.png" style="width:17.5px;" />&nbsp;&nbsp;{$title}&nbsp;
+			<small>
+				<a rel="{$id}" class="update" href="javascript:void(0)" id="update_widget"><i class="icon-pencil"></i></a> &nbsp;
+				<a href="{:U('index/widget_delete', 'id='.$id)}" id="delete_widget"><i class="icon-remove"></i></a> &nbsp; 
+			</small>
+			<a href="{:U('finance/analytics')}" class="dash-swtich">切换到财务统计 >></a>
+		</div>
+		<div class="cut-line"></div>
+		<div class="content-chart" id="finance_monthly_{$id}"></div>
+	</div>
+</div>
+<script type="text/javascript">
+	$(function () {
+		var chart = new Highcharts.Chart({
+			chart: {
+				renderTo: 'finance_monthly_{$id}',
+				type: 'column'
+			},
+			title:false,
+			subtitle:false,
+			 xAxis: {
+				categories: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+			},
+			yAxis: {
+				min: 0,
+				title:false
+			},
+			tooltip: {
+				headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+				pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+					'<td style="padding:0"><b>{point.y:.1f} 元</b></td></tr>',
+				footerFormat: '</table>',
+				shared: true,
+				useHTML: true
+			},
+			plotOptions: {
+				column: {
+					pointPadding: 0.2,
+					borderWidth: 0
+				}
+			},
+			legend: {
+				enabled: true
+			},
+			series: [
+				{name: '应收款',data: ''},
+				{name: '实收款',data: ''},
+				{name: '应付款',data: ''},
+				{name: '实付款',data: ''}
+			],
+			credits: {  
+				enabled: false  
+			} 
+		});
+		chart.showLoading('拼命加载中...');
+		//使用JQuery从后台获取JSON格式的数据赋值到图标
+		$.ajax({
+			type: "get",
+			url: "{:U('finance/getmonthlyreceive')}",    
+			dataType: "json",
+			success : function(result){
+				chart.series[0].setData(result.data.not_receive);
+				chart.series[1].setData(result.data.have_received);
+				chart.series[2].setData(result.data.not_pay);
+				chart.series[3].setData(result.data.have_paid);
+				chart.hideLoading();
+				chart.redraw();
+			}
+		});
+	});
+</script>
+<!-- 财务月度统计 END-->

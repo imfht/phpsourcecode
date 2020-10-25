@@ -1,0 +1,124 @@
+<extend name="Public/base"/>
+<block name="head">
+	<link href="__MOBILE__/css/goods.css" rel="stylesheet" />
+</block>
+<block name="body">
+	
+    <div class="container">
+        <div class="goods-header row">
+            <div class="">
+                <img class="img-responsive" alt="{$goods['seo_title']}" src="{$goods['pic_url']}" >
+            </div>
+            <div class="price-info">
+                <p class="title">{$goods['name']}</p>
+                <p class="price">
+                    优惠价:￥<span class=""> {$goods['price']}</span>
+                </p>
+                <p class="volume">
+                    月销:<span >{$goods['volume']}</span>
+                </p>
+            </div>
+        </div>
+        <div class="line"></div>
+        <div class="content row">
+            <div class="content-title">商品详情</div>
+             <div class="info_s1 clear" id='gdetial'>
+                 <if condition="$goods['item_body']">
+                     {$goods['item_body']}
+                 <else/>
+
+                  <script>
+                        var num_iid = "<php>echo $goods['num_iid']</php>";
+                        $.get('{:U("Goods/ajGetGoodsDetial")}',{num_iid:num_iid},function(data){
+                            if(data.status){
+                                $("#gdetial").html(data.content);
+                            }else{
+                                location.href="{:U('Goods/goBuy',array('id'=>$goods['num_iid']))}";
+                                updateAlert('即将为您跳转爱淘宝');
+                                setTimeout(function(){
+                                    $('#top-alert').find('button').click();
+                                   location.onload();
+                                },1500);
+                            }
+
+
+                        });
+                 </script>
+                           商品详情加载中，请稍等...
+                 </if>
+             </div>
+        </div>
+    </div>
+    <div id="tpwd-box">
+        <textarea id="tpwd" class="input" cols="36" rows="3">复制整段信息，打开天猫/淘宝APP，即可查看购买此商品:{$goods.tpwd}</textarea>
+    </div>
+    <div class="bjw row" style="margin:0;display: none">
+        <div class="col-xs-11" style="padding: 0;width:100%;">
+            <img src="__IMG__/bj.png" class="img-responsive">
+        </div>
+    </div>
+
+    <!-- /主体 -->
+  
+    <!--淘点金代码-->
+    <script type="text/javascript">
+    (function(win,doc){
+        var s = doc.createElement("script"), h = doc.getElementsByTagName("head")[0];
+        if (!win.alimamatk_show) {
+            s.charset = "utf8";
+            s.async = true;
+            s.src = "http://a.alimama.cn/tkapi.js";
+            h.insertBefore(s, h.firstChild);
+        };
+        var o = {
+            pid: "{:C('PID')}",/*推广单元ID，用于区分不同的推广渠道*/
+            appkey: "{:C('APP_KEY')}",/*通过TOP平台申请的appkey，设置后引导成交会关联appkey*/
+            unid: "",/*自定义统计字段*/
+            type: "click" /* click 组件的入口标志 （使用click组件必设）*/
+        };
+        win.alimamatk_onload = win.alimamatk_onload || [];
+        win.alimamatk_onload.push(o);
+    })(window,document);
+    </script>
+
+</block>
+<block name="footer">
+    <div class="goods-bar">
+        <div class="goods-share"><i class="icon icon-share"></i>分享</div>
+        <div class="goods-fav" href="javascript:;" onclick="favor({$goods['id']})"><i class="icon icon-heart"></i>喜欢</div>
+        <div class="goods-buy" href="{$goods['click_url']}" target="_blank"><i class="icon icon-shopping-cart" onclick="buy()"></i>购买</div>
+    </div>
+</block>
+<block name="script">
+	<script>
+	$(function(){
+        heightlight_bottom_nav("{:U('index')}");
+        $(".goods-share").click(function(){
+            if(isWeiXin()){
+                $(".bjw").show();
+                $(window).scrollTop(0);
+                $(".bjw").click(function () {
+                    $(this).hide();
+                });
+            }else{
+
+            }
+        });
+
+	});
+	function buy() {
+        if(isWeiXin()){
+            $('#tpwd-box').show();
+            $('.big-bg').show();
+            $('.big-bg').click(function () {
+                $('#tpwd-box').hide();
+                $('.big-bg').hide();
+            })
+            return;
+        }else {
+            location.href   =   $('.goods-buy').attr('href');
+        }
+    }
+	</script>
+</block>
+

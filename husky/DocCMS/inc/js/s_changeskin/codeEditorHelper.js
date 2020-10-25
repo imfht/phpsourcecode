@@ -1,0 +1,4 @@
+/**
+ * @author 一滴水 qq:348681066
+ */
+function getPath(path){var re=/http:\/\/[^\/]+/;return path.replace(re,"")};function getExt(str){$start=str.lastIndexOf('.');if($start!="-1"){return str.substr($start,str.length-$start)}else{return}};function getSuperiorPath(path){var pathArr=path.split('/');pathArr.pop();var SuperiorPath=pathArr.join('/');return SuperiorPath.length>0?(SuperiorPath+'/'):'/'};function valiDatas(data){var re=/^[^\[\]\{\}\+\*\|\^\$\?"'<>]*$/;if(!data){alert('请填写信息！');return false};if(!re.test(data)){alert('信息含有非法字符！');return false};return true};function reSetHandle(value){var value;HANDLE_saveing=value}

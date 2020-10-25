@@ -1,0 +1,200 @@
+{extend name="index:layout" /}
+
+{block name="menu"}{/block}
+
+{block name="content"}
+<style>
+.SideBox{
+	border-left:#DDD dotted 1px;
+	border-right:#DDD dotted 1px;
+}
+.SideBox .h{
+	background: #F5F5F5;
+	border-bottom:#DDD dotted 1px;
+	line-height: 35px;
+}
+.SideBox .h span{
+	display: inline-block;
+	color: #FFF;
+	width: 120px;
+	padding-left: 20px;
+	background: #1E99CB;
+	font-size:16px;
+}
+.SideBox .h span i{
+	margin-right: 5px;
+}
+.SideBox dl{
+	border-bottom:#DDD dotted 1px;
+	position: relative;
+	min-height: 40px;
+	padding-left: 140px;
+}
+.SideBox dl:hover{
+	background: #F9F9F9;
+}
+.SideBox dl dt{
+	position:absolute;
+	width:120px;
+	line-height: 20px;
+	font-size: 16px;
+	left:10px;
+	top:10px;
+}
+.SideBox dl dd{
+	border-left:#DDD dotted 1px;
+	min-height: 40px;
+	overflow: hidden;
+}
+.SideBox dl dd ul{
+	position: relative;
+	min-height: 40px;
+	padding-left: 180px;
+	font-size: 14px;
+}
+.SideBox dl dd ul:before{
+	content: '';
+	display: block;
+	width: 100%;
+	height: 2px;
+	position: absolute;
+	border-top:#DDD dotted 1px;
+	left:0;
+	top:-1px;
+}
+.SideBox dl dd ul ol{
+	position: absolute;
+	width: 160px;
+	height: 20px;
+	line-height: 20px;
+	overflow: hidden;
+	top:10px;
+	left:10px;
+}
+.SideBox dl dd ul li{
+	padding: 5px 0 10px 0;
+}
+.SideBox dl dd ul li:after{
+	content: '';
+	display: block;
+	clear: both;
+}
+.SideBox dl dd ul li div{
+	width:160px;
+	height: 20px;
+	line-height: 20px;
+	overflow: hidden;
+	float: left;
+	margin-top: 5px;
+	color: #666;
+}
+</style>
+<div class="MainContainers">
+  <div class="Header"><span class="tag">修改<span class="red">{$info.title}</span>后台权限</span> </div>
+  <div class="Conter">
+  	<form name="form_work" method="post" action="">
+  	{volist name="listdb" id="array"}{php}$_key = $key;{/php}
+  	<div class="SideBox">
+  		<div class="h"><span><i class="{$array.icon}"></i>{$array.title}</span></div>
+  		{volist name="array.sons" id="vs"}
+  		<dl>
+  			<dt>{$vs.title} <input type="checkbox" class="blockall">
+				 
+			</dt>
+  			<dd>
+  			{volist name="$vs.sons" id="rs"}
+			{php}
+				is_array($rs['link']) && $rs['link'] = $rs['link'][0];
+				$k=$_key.'-'.$rs['model'].'-'.$rs['link'];
+			{/php}
+
+  				<ul>
+  					<ol>
+						 <!--<input type="checkbox" class="rowall"> -->
+  						<input class="headtitle" type="checkbox" name="powerdb[{$k}]" value="1" {eq name="$info['admindb'][$k]" value="1"}checked{/eq}>
+  						<a href="{$rs.url}" target="_blank">{$rs.title}</a>
+  					</ol>
+
+  					<li>
+  						{php}
+							if(!isset($rs['power'])){
+								if(preg_match('/content\/index$/',$rs['link'])&&modules_config($rs['model'])){
+									$rs['power'] = ['add'=>'新增','edit'=>'修改','delete'=>'删除','index_fid'=>'改栏目',
+    								                'index_view'=>'改浏览量',
+    								                'index_list'=>'改排序值',
+    								                'index_status'=>'改状态',];
+								}elseif(preg_match('/\/index$/',$rs['link'])){
+									$rs['power'] = ['add','edit','delete'];
+								}
+							}
+							$power = [];
+							$_title=['add'=>'新增','edit'=>'修改','delete'=>'删除'];
+							foreach($rs['power'] AS $_k=>$_v)$power[is_numeric($_k)?$_v:$_k] = is_numeric($_k)?$_title[$_v]:$_v;
+							list($controller) = explode('/',$rs['link']);
+						{/php}
+							{volist name="power" id="ps"}
+								{php} $k=$_key.'-'.$rs['model'].'-'.(strstr($key,'/')?'':$controller.'/').$key;{/php}
+							<div><input type="checkbox" name="powerdb[{$k}]" value="1" {eq name="$info['admindb'][$k]" value="1"}checked{/eq}> {$ps}</div>
+							{/volist}
+  					</li>
+  				</ul>
+  			{/volist}
+  			</dd>
+  		</dl>
+  		{/volist}
+  	</div>
+  	{/volist}
+  	<div class="submits">
+	    <input type="button" onclick="CheckAll('all')" name="Submit2" value="全选" />
+	    <input type="button" onClick='CheckAll()' name="Submit2" value="反选" />
+	    <input type="submit" name="Submit" value="提交">
+	    <input type="hidden" name="id" value="{$info.id}">
+	  </div>
+  	</form>
+    </div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+function CheckAll(va){
+	form=document.form_work
+	for (var i=0;i<form.elements.length;i++){
+		var e = form.elements[i];
+		if(e.className=='myadgrdb')continue;
+		if(va=='all'){
+			e.checked = true;
+		}else{
+			e.checked == true ? e.checked = false : e.checked = true;
+		}
+	}
+}
+
+$('.rowall').on('click',function(){
+		var d = $(this).parents('ol').siblings('li');
+		var r = $(this).prop("checked"); //获取当前选择的按钮的句柄
+		var ht = $(this).parent().siblings(".headtitle");
+    		r == true ? ht.prop("checked",true) : ht.prop("checked",false);
+		d.find('input[type="checkbox"]').each(function () {
+            r == true ? $(this).prop("checked",true) : $(this).prop("checked",false);
+        });
+
+
+});
+
+$('.blockall').on('click',function(){
+  		var d = $(this).parents('dl').find('ul');
+  		var r = $(this).prop("checked");   //获取当前选择的按钮的句柄
+    	d.find('input[type="checkbox"]').each(function () {
+        r == true ? $(this).prop("checked",true) : $(this).prop("checked",false);
+    });
+
+
+
+  		// console.log(d);
+});
+
+
+
+
+//-->
+</SCRIPT>
+{/block}

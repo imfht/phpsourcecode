@@ -1,0 +1,148 @@
+{extends file='../global.html'}
+{block name=global}
+<!--[if lt IE 10]> 
+<p style="text-align: center;padding-top:100px;">请使用高版本浏览器进入后台管理（建议浏览器：Firefox、Chrome）</p>
+<p><a href="http://www.firefox.com.cn/">下载Firefox浏览器</a></p>
+<p><a href="http://www.google.cn/chrome/browser//">下载Chrome浏览器</a></p>
+<div style="display:none">
+<![endif]--> 
+
+<div id="login">
+    <h1>
+		 <strong><span class="en-font">{$dev.cms_title}</span>管理系统后台</strong>
+		 <em class="en-font">Management System</em>
+	</h1>
+    
+    <div class="user info">
+        <label>U</label>
+        {$form->text("User.username",['class'=>'en-font','placeholder'=>'账号','autocomplete'=>'off'])}
+    </div>
+    <div class="pwd info">
+        <label>P</label>
+        {$form->password("User.password",['class'=>'en-font','placeholder'=>'密码','autocomplete'=>'off'])}
+    </div>
+    <div class="code info">
+        <label>V</label>
+        {$form->text("captcha",['class'=>'en-font',name=>'captcha','value'=>'','autocomplete'=>'off','placeholder'=>'验证码'])}
+        <span class="vimg"><img  src="{captcha_src()}" class="tooltip" onclick="this.src='{captcha_src()}?'+Math.random()"/></span>
+    </div>
+    <div class="sub">
+        <input  type="submit" id="loginSubmit" value="立即登录"/>
+    </div>
+    <div class="copy">{$dev.cms_copyright}</div><button class="btn randomize">重新绘制</button>
+</div>
+<div class="auth">
+    <div class="loading"><div class="loader-inner ball-clip-rotate-multiple"></div></div>
+    <p>验证中...</p>
+</div>
+
+
+
+<script type="text/javascript">
+layui.use(['layer', 'carousel'],function(){
+    'use strict';
+    var layer=layui.layer;
+    
+    {if $error}
+    layer.msg('{$error}');
+    {/if}
+    
+});
+
+$('body').keydown(function(e){
+    if (e.keyCode == 13) {
+        $('#loginSubmit').trigger('click') ;
+    }
+})
+
+
+$('#loginSubmit').click(function(){
+    layer.closeAll();
+    var username = $.trim($('#UserUsername').val());
+    if (!username) {
+        layer.alert('请填写用户名', {
+            shade : 0,
+            anim : 2,
+            offset : '10px',
+            time : 3000
+        });
+        return false;
+    }
+    var password = $.trim($('#UserPassword').val());
+    if (!password) {
+        layer.alert('请填写密码', {
+            shade : 0,
+            anim : 2,
+            offset : '10px',
+            time : 3000
+        });
+        return false;
+    }
+    var captcha = $.trim($('input[name="captcha"]').val());
+    if (!captcha) {
+        layer.alert('请填写验证码', {
+            shade : 0,
+            anim : 2,
+            offset : '10px',
+            time : 3000
+        });
+        return false;
+    }
+    
+    $('#login').addClass('checking');
+    setTimeout(function(){
+        $('#login').animate({
+            'margin-left' : -450
+        }, 200, 'easeOutQuint')
+        $('.auth').addClass('checking');
+    }, 500)
+    
+    setTimeout(function(){
+        $.post("{url('User/ajax_login')}",{
+            username : username,
+            password : password,
+            captcha : captcha
+        }, function(data){
+            var json = $.parseJSON(data);
+            if (json['result'] == 'success') {
+                layer.alert(json['message'], {
+                    shade : 0,
+                    anim : 2,
+                    offset : '10px',
+                    time : 3000,
+                    title:'成功',
+                    icon: 6
+                });
+                setTimeout(function(){
+                    location.href = json['data']['url'];
+                }, 800)
+                
+                
+            } else {
+                $('#login').animate({
+                    'margin-left' : -180
+                }, 200, 'easeOutQuint')
+                $('.auth').removeClass('checking');
+                setTimeout(function(){
+                    $('#login').removeClass('checking');
+                }, 250)
+                setTimeout(function(){
+                    layer.alert(json['message'], {
+                        shade : 0,
+                        anim : 2,
+                        offset : '10px',
+                        time : 3000,
+                        title:'失败',
+                        icon: 5
+                    });
+                }, 550)
+            }
+        })
+    }, 1500)
+    
+})
+</script>
+<!--[if lt IE 10]>
+	</div>
+<![endif]--> 
+{/block}

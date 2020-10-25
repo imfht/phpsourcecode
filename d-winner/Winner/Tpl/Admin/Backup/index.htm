@@ -1,0 +1,206 @@
+<script language="javascript">
+$(function(){
+	var th = $(".top").height();
+	th = 212-th;
+	var wh = $(window).height()-th;
+	
+	$("#back").panel({
+		title:'备份选项',
+		collapsible:true
+	});
+	
+	$("#Backup").datagrid({
+		//title:'备份列表',	
+		height:wh,
+		autoRowHeight:false,
+		singleSelect:true,
+		striped:true,
+		rownumbers:true,
+		method:'get',
+		url:'__ACTION__/json/1',
+		fitColumns:true,
+		nowrap:Number('{$TC.config.DATA_NOWRAP}'),
+		onDblClickRow:function(e,rowIndex,rowData){
+			var len = $("#backupInfo").length;
+			var se = $(this).datagrid('getSelected');
+			var idd = se['name'];
+			if(idd && !len){
+				$.messager.confirm('提示','确定还原数据吗？',function(r){
+					if(r){
+						$.messager.progress();
+						$.post('__URL__/redb/act/1', {file:idd}, function(data){
+							$.messager.progress('close');
+							if(data>0){
+								$("<div/>").dialog({
+									title:'还原进度信息信息',
+									resizable:true,
+									width:520,
+									height:240,
+									href:'__URL__/show/act/re/total/'+data,
+									onOpen:function(){
+										cancel['addBackup'] = $(this);
+									},
+									onClose:function(){
+										cancel['addBackup'] = null;
+										$(this).dialog('destroy');
+									}
+								});
+							}else{
+								$.messager.alert('提示','获取数据表失败！','warning');
+							}
+						});
+					}
+				});
+			}
+		},
+		toolbar:[{
+		iconCls: 'icon-reset',
+			text : '还原',
+			handler: function(){
+				var len = $("#backupInfo").length;
+				var se = $("#Backup").datagrid('getSelected');
+				var idd = se['name'];
+				if(idd && !len){
+					$.messager.confirm('提示','确定还原数据吗？',function(r){
+						if(r){
+							$.messager.progress();
+							$.post('__URL__/redb/act/1', {file:idd}, function(data){
+								$.messager.progress('close');
+								if(data>0){
+									$("<div/>").dialog({
+										title:'还原进度信息',
+										resizable:true,
+										width:520,
+										height:240,
+										href:'__URL__/show/act/re/total/'+data,
+										onOpen:function(){
+											cancel['addBackup'] = $(this);
+										},
+										onClose:function(){
+											cancel['addBackup'] = null;
+											$(this).dialog('destroy');
+										}
+									});
+								}else{
+									$.messager.alert('提示','获取数据表失败！','warning');
+								}
+							});
+						}
+					});
+				}
+			}
+		},'-',{
+			iconCls: 'icon-excel',
+			text : '下载',
+			handler: function(){
+				var se = $("#Backup").datagrid('getSelected');
+				var idd = se['name'];
+				if(idd){
+					document.location = '__URL__/downzip/file/'+idd;
+				}
+			}
+		},'-',{
+			iconCls: 'icon-cancel',
+			text : '删除',
+			handler: function(){
+				var se = $("#Backup").datagrid('getSelected');
+				var idd = se['name'];
+				if(idd){
+					$.messager.confirm('提示','确定删除吗！',function(r){
+						if(r==true){
+							$.messager.progress();
+							$.post('__URL__/del', {file:idd}, function(data){
+								$.messager.progress('close');
+								if(data==1){
+									$.messager.alert('提示','刪除文件成功！','info',function(){
+										$("#Backup").datagrid('reload');
+									});
+								}else if(data==0){
+									$.messager.alert('提示','刪除文件失败！','warning');
+								}else if(data==2){
+									$.messager.alert('提示','没有可刪除的文件！','warning');
+								}else{
+									//alert(data);
+									$.messager.alert('提示','您没有刪除权限！','warning');
+								}
+							});
+						}
+					});	
+				}
+			}
+		},'-',{
+			iconCls: 'icon-reload',
+			text : '重载',
+			handler: function(){
+				$("#Backup").datagrid('reload');
+			}
+		}
+		],
+		columns:[[   
+			{field:'name',title:'备份文件名',width:250}, 
+			{field:'size',title:'文件大小',width:100},   
+			{field:'addtime',title:'备份时间',width:120}
+		]]
+	});
+});
+
+function onSubmitBackup(){
+	var len = $("#backupInfo").length;
+	if(!len){
+		$.messager.progress();
+		$("#addBackupOpt").form('submit',{
+			url:'__URL__/bakdb/act/1',
+			success:function(data){
+				$.messager.progress('close');
+				if(data>0){
+					$("<div/>").dialog({
+						title:'备份进度信息',
+						resizable:true,
+						width:520,
+						height:240,
+						href:'__URL__/show/act/bak/total/'+data,
+						onOpen:function(){
+							cancel['addBackup'] = $(this);
+						},
+						onClose:function(){
+							cancel['addBackup'] = null;
+							$(this).dialog('destroy');
+						}
+					});
+				}else{
+					$.messager.alert('提示','获取数据表失败！','warning');
+				}
+			}
+		});
+	}
+}
+</script>
+<div class="con" id="BackupCon" onselectstart="return false;" style="-moz-user-select:none;">
+   <div class="panel-border">
+	<div id="back" style="margin-bottom:3px; padding:3px">
+     <form id="addBackupOpt" method="post">
+     <table class="infobox table-border" width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td width="15%" height="30" class="rebg"><label for="charset">字符集编码</label></td>
+        <td width="27%">
+    <select class="easyui-combobox" name="charset" data-options="editable:false">  
+        <option value="utf8">UTF-8</option>  
+        <option  value="gb2312">GB2312</option>  
+    </select>
+    </td>
+        <td width="15%" class="rebg"><label for="filesize">限制大小</label></td>
+        <td width="43%"><input name="filesize" type="text" class="easyui-numberbox" size="5" maxlength="6" data-options="value:{$TC.config.backup_size}" /> KB (限制每个文件的大小)</td>
+      </tr>
+  <tr>
+    <td width="15%" height="30" class="rebg"><label for="version">数据库版本</label></td>
+    <td colspan="2"><input name="version" type="radio" value="4.1" <?php echo $mysql_version>4.1?'checked=\"checked\"':'' ?> /><span>MySQL 4.1.x/5.x &nbsp;</span><input name="version" type="radio" value="4.0" <?php echo $mysql_version<4.0?'checked=\"checked\"':'' ?> />
+      <span>MySQL 3.23/4.0.x</span></td>
+    <td><a href="javascript:void(0);" onclick="javascript:onSubmitBackup()" id="bsu" class="easyui-linkbutton" data-options="iconCls:'icon-save'">开始备份</a></td>
+    </tr>
+ </table>
+</form>
+  </div>
+</div>
+	<table id="Backup"></table>
+</div>
+<div id="addBackup"></div>

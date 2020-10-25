@@ -1,0 +1,71 @@
+{layout name="passport:layout" /}
+<div class="tipbox tipbox-warning">
+    1、自定义菜单最多包括3个一级菜单，每个一级菜单最多包含5个二级菜单。<br />
+    2、一级菜单最多4个汉字，二级菜单最多7个汉字，多出来的部分将会以“...”代替。<br />
+</div>  
+<form id="form" action="{:url('passport.official/menuEdit',['id' => $info.id])}">
+    <input type="hidden" name="menu_id" value="{$info.id}"/>
+    <input type="hidden" name="parent_id" value="{$info.parent_id}"/>
+    <table class="formtable"> 
+        <tr>
+            <th>链接类型:</th>
+            <td>
+                <select datatype="*" name="types" class="select">
+                    <option value="view" {if $info.types == 'view'}selected="selected"{/if}>网页类型</option>
+                    <option value="miniprogram" {if $info.types == 'miniprogram'}selected="selected"{/if}>小程序类型</option>
+                    <option value="click" {if $info.types == 'click'}selected="selected"{/if}>点击类型</option>
+                </select>
+            </td>
+        </tr>
+        <tr><th>菜单名称:</th><td><input class="input" datatype="*" type="text" name="name" value="{$info.name}" /></td></tr>
+        <tr class="click {if $info.types == 'click'}fn-show{else}fn-hide{/if}">
+            <th>触发关键字:</th><td><input class="input" type="text" name="key" value="{$info.key}" /></td>
+        </tr>                        
+        <tr class="view {if $info.types == 'click'}fn-hide{else}fn-show{/if}">
+            <th>链接地址:</th><td><input class="input w400" type="text" name="url" value="{$info.url}" /></td>
+        </tr>
+        <tr class="miniprogram {if $info.types == 'miniprogram'}fn-show{else}fn-hide{/if}">
+            <th>小程序链接:</th>
+            <td><input id="pagepath" class="input w400" type="text" name="pagepath" value="{$info.pagepath}" /></td>
+        </tr>
+        <tr><th></th><td><input type="submit" value="确定" class="button button-blue submit" /><input type="reset" value="重置" class="button button-blank"/></td></tr>
+    </table>
+</form> 
+<script type="text/javascript">
+Do('base','layer','form',function(){
+    var index = parent.layer.getFrameIndex(window.name); 
+    $("#form").Validform({
+        btnSubmit:".submit",ajaxPost:true,tiptype:4,postonce:true,
+        callback:function(data){
+            if(data.code == 200){
+                parent.layer.alert(data.msg,{icon:1},function(alertIndex){
+                    parent.layer.close(alertIndex);
+                    parent.layer.close(index);
+                    parent.$("#iframe")[0].src = data.url
+                });
+            }else{
+                parent.layer.alert(data['msg'],{icon:5})
+            }
+        }
+    });
+    $(".select").change(function(){
+        var types = $(this).val();
+        if(types == 'view'){
+            $(".miniprogram").hide();
+            $(".click").hide();
+            $(".view").show();
+        }
+        if(types == 'miniprogram'){
+            $(".miniprogram").show();
+            $(".click").hide();
+            $(".view").show();
+        }
+        if(types == 'click'){
+            $(".miniprogram").hide();
+            $(".view").hide();
+            $(".click").show();
+            
+        }
+    });
+})
+</script>

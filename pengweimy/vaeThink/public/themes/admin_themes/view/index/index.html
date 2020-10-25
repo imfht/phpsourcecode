@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>{:vae_get_config('webconfig.admin_title') ? vae_get_config('webconfig.admin_title') : 'vaeThink'}</title>
+  <link rel="stylesheet" href="__ADMIN__/lib/layui/css/layui.css">
+  <link rel="stylesheet" href="__ADMIN__/lib/vaeyo/css/vaeyo.css">
+  <script>
+  /^http(s*):\/\//.test(location.href) || alert('请先部署到 localhost 下再访问');
+  </script>
+</head>
+<body class="layui-layout-body">
+
+	<div class="layui-layout layui-layout-admin">
+		
+	  	<div class="layui-header">
+		    <div class="layui-logo" vaeyo-home>{:vae_get_config('webconfig.admin_title') ? vae_get_config('webconfig.admin_title') : 'vaeThink'}</div>
+		    <div class="vaeyo-loading" vaeyo-loading><i class="layui-icon layui-icon-loading layui-icon layui-anim layui-anim-rotate layui-anim-loop"></i></div>
+		    <ul class="layui-nav layui-layout-right">
+		      <li class="layui-nav-item" lay-unselect>
+		      	<a href="javascript:;" vaeyo-refresh class="refreshThis" id="vaeyo-refresh" title="刷新当前页">
+			      	<i class="layui-icon layui-icon-refresh-3"></i> 
+			    </a>
+		      </li>
+		      <li class="layui-nav-item" lay-unselect>
+		        <a href="javascript:;" vaeyo-logout title="点击退出登录">
+		          <img src="{:vae_get_login_admin('thumb')}" class="layui-nav-img">
+		        </a>
+		      </li>
+		      <li class="layui-nav-item" lay-unselect>
+			      <div>
+					  <div id="vaeyo-color"></div>
+				  </div>
+			  </li>
+		    </ul>
+		</div>
+
+		<div class="layui-side vaeyo-bg-gray">
+		    <div class="vaeyo-menulist">
+				<div class="vaeyo-menulist-1">
+					<div class="vaeyo-menulist-top">
+						<a href="javascript:;" title="修改个人信息" vaeyo_tab vae-id="10000" vae-title="修改个人信息" vae-src="/admin/api/editPersonal"><i class="layui-icon layui-icon-username"></i></a>
+						<a href="javascript:;" title="修改密码" style="background-color: #01AAED" vaeyo_tab vae-id="10001" vae-title="修改密码" vae-src="/admin/api/editPassword"><i class="layui-icon layui-icon-password"></i></a>
+						<a href="/" title="门户首页" style="background-color: #FFB800" target="_blank"><i class="layui-icon layui-icon-website"></i></a>
+						<a href="javascript:;" style="background-color: #FF5722" vaeyo_tab vae-id="13" vae-title="回收站" vae-src="/admin/recycle/index"><i class="layui-icon layui-icon-log"></i></a>
+						<a href="javascript:;" title="清空缓存" vaeyo-del-cache style="background-color: #009688"><i class="layui-icon layui-icon-delete"></i></a>
+					</div>
+					{volist name=":vae_set_admin_menu()" id="v"}
+						<div class="vaeyo-menulist-2"><i class="layui-icon layui-icon-triangle-r"></i> {$v.title}</div>
+						{notempty name="$v.list"}
+						<div class="vaeyo-menulist-3">
+							<ul>
+								{volist name="$v.list" id="a"}
+								{empty name="$a.list"}
+								<li vaeyo_tab vae-id="{$a.id}" vae-title="{$a.title}" vae-src="{:url($a.src,$a.param)}"><i class="layui-icon layui-icon-triangle-r"></i> {$a.title}</li>
+								{else /}
+								<li class="vaeyo-menulist-2"><i class="layui-icon layui-icon-triangle-r"></i> {$a.title}</li>
+								<div class="vaeyo-menulist-3 vae-menulist-4">
+									<ul>
+										{volist name="$a.list" id="e"}
+										<li vaeyo_tab vae-id="{$e.id}" vae-title="{$e.title}" vae-src="{:url($e.src,$e.param)}"><i class="layui-icon layui-icon-triangle-r"></i> {$e.title}</li>
+										{/volist}
+									</ul>
+								</div>
+								{/empty}
+								{/volist}
+							</ul>
+						</div>
+						{/notempty}
+					{/volist}
+				</div>
+			</div>
+		</div>
+	  
+	    <div class="layui-body">
+		    <div class="layui-tab layui-tab-brief vaeyo-tab" lay-filter="vaeyo-tab" lay-allowClose="true" style="height: 100%;">
+			  <ul class="layui-tab-title">
+			    <li class="layui-this vaeyo-tab-home" lay-id="0">首页</li>
+			  </ul>
+			  <div class="layui-tab-content" style="height: 100%;" vaeyo-tab-content>
+			    <div class="layui-tab-item layui-show">
+			    	<iframe id="0" name="myiframe" src="/admin/main/index" frameborder="0" align="left" width="100%" height="100%" scrolling="yes"></iframe>
+			    </div>
+			  </div>
+			</div>   
+	    </div>
+
+	</div>
+ 
+	<script src="__ADMIN__/lib/layui/layui.js"></script>
+	<script>
+		layui.config({
+		  base: '/themes/admin_themes/'
+		}).use(['index'], function(){
+			var $ = layui.$;
+			$("[vaeyo-logout]").on("click", function(){
+				layer.confirm('确认注销登录吗?', {icon: 7, title:'警告'}, function(index){
+				  //注销
+				  $.ajax({
+				  	url:"/admin/publicer/logout",
+				  	success:function(res){
+				  		layer.msg(res.msg);
+				  		if(res.code == 1){
+				  			setTimeout(function(){
+				  				location.href="{:url('admin/publicer/login')}"
+				  			},1000)
+				  		}
+				  	}
+				  })
+				  layer.close(index);
+				});
+			})
+		});
+	</script> 
+	  
+</body>
+</html>

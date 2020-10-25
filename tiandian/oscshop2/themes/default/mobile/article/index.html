@@ -1,0 +1,72 @@
+{extend name="public:base" /}
+{block name="head"}
+<link href="__PUBLIC__/jquery-weui/dist/lib/weui.min.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/css/jquery-weui.min.css" type="text/css" rel="Stylesheet" />
+<script src="__PUBLIC__/jquery-weui/dist/js/jquery-weui.min.js"></script>
+<link href="__PUBLIC__/view_res/mobile/css/article.css" type="text/css" rel="Stylesheet" />
+{/block} 
+
+
+{block name="content"}
+<header class='demos-header'>
+      <h1 class="demos-title">{$article.title}</h1>
+    </header>
+
+    <article class="weui_article">      
+        <section>
+         {$article.content}
+        </section>      
+    </article>
+{/block}
+{block name="script"}
+<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>    
+<script type="text/javascript">
+wx.config({
+    debug: false,            
+    appId: '{$signPackage.appId}',
+    timestamp: {$signPackage.timestamp},
+    nonceStr: '{$signPackage.nonceStr}',
+    signature: '{$signPackage.signature}',            
+    jsApiList: [
+    'checkJsApi',
+    'onMenuShareTimeline',
+    'onMenuShareAppMessage'
+    ]
+});	
+
+wx.ready(function(){	         
+	
+   		var url = '<?php echo request()->url(true); ?>';
+   		var site_url='<?php echo request()->domain(); ?>';
+        //获取“分享到朋友圈”按钮点击状态及自定义分享内容接口
+        wx.onMenuShareTimeline({
+            title: '{$article.title}',
+            link: url, 
+            imgUrl: site_url+'/uploads/<?php echo config("SITE_ICON"); ?>',
+            success: function () {
+               pvShareCallback(url,'分享到朋友圈');
+            }
+        });
+        //获取“分享给朋友”按钮点击状态及自定义分享内容接口
+        wx.onMenuShareAppMessage({
+            title: '{$article.title}',
+            desc: '{$article.title}',
+            link: url,
+            imgUrl: site_url+'/uploads/<?php echo config("SITE_ICON"); ?>',
+            success: function () {
+              pvShareCallback(url,'分享给朋友');
+            }
+        });
+        function pvShareCallback(url,type) {
+        	
+            $.post("{:url('Index/add_share')}", {
+                url: url,
+                uid:'<?php echo user("uid"); ?>',
+                type:type                    
+            });
+        }  
+        
+});	        
+
+</script>
+{/block}

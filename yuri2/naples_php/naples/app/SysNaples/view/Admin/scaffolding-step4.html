@@ -1,0 +1,84 @@
+{{*dump $data}}
+<div class="row">
+	<div class="col-md-6">
+        <div class="panel panel-primary" style="">
+            <div class="panel-heading">
+                <h3 class="panel-title">创建目标CURD控制器</h3>
+            </div>
+            <div class="panel-body">
+                <form action="#" id="frm_sub" method="post" class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label for="ctrlName" class="col-sm-2 control-label">控制器名</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" value="{{:_GET.ctrl_name}}" required id="ctrlName" placeholder="ctrlName">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="module_name" class="col-sm-2 control-label">所属模块</label>
+                        <div class="col-sm-10">
+                            <select id="module_name" class="form-control">
+                                {{each $modules}}
+                                <option {{if $v==get('module_name')}}selected{{/}} value="{{:v}}">  {{:v}}  </option>
+                                {{/}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">文件保存</label>
+                        <div class="col-sm-10">
+                            <textarea id="txt_file_content" spellcheck="false" placeholder="此处内容将作为文件保存到“模块目录/控制器目录/model.model_id.create.log.html”。在文件前部将自动添加一些信息。十分推荐在此保存表结构和测试数据的sql语句。如果您确定用不到这个文件了，请将它删除，以免造成安全隐患。" style="width: 100%;height:348px;resize: none">{{:txt_file_content_cache}}</textarea>
+                        </div>
+                    </div>
+                    <input name="is_safe" id="ipt_is_safe" type="hidden" value="safe">
+                    <div class="btn-group pull-right" style="margin-top: 30px">
+                        <button type="submit" onclick="$('#ipt_is_safe').val('unsafe')" title="产生的代码文件直接覆盖源文件，不发出警告" id="btn-submit-ctrl-unsafe" class="btn btn-warning">覆盖生成代码</button>
+                        <button type="submit" onclick="$('#ipt_is_safe').val('safe')" title="如果文件已经存在，不允许直接覆盖代码" id="btn-submit-ctrl-safe" class="btn btn-primary">安全生成代码</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-info" style="min-height: 600px">
+        	  <div class="panel-heading">
+        			<h3 class="panel-title" id="title">等待操作</h3>
+        	  </div>
+        	  <div class="panel-body" id="content" style="word-break: break-all">
+                  <h3 class="text-primary">
+                      请于左侧创建一个新的控制器，将用于完成CURD操作
+                  </h3>
+        	  </div>
+        </div>
+    </div>
+</div>
+<script>
+    $("#frm_sub").submit(function () {
+        var data={{:data |no}};
+        $.ajax({
+            type: "POST",
+            url: "{{url scaffoldingModelBuilder based}}",
+            data: {
+                ctrl_name:$("#ctrlName").val(),
+                module_name:$("#module_name").val(),
+                is_safe:$('#ipt_is_safe').val(),
+                txt:$('#txt_file_content').val(),
+                data:data
+            },
+            dataType: "json",
+            async:true,
+            success: function(data){
+                if (data.errno!=0){
+                    alert('很抱歉，操作发生错误。错误码:'+data.errno+'错误信息:'+data.msg)
+                }else{
+                    $("#title").html(data.title);
+                    $("#content").html(data.content);
+                }
+            },
+            error:function () {
+                alert('错误，远程服务器没有响应.')
+            }
+        });
+        return false;
+    })
+</script>
+

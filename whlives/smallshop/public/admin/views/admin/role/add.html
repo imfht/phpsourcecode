@@ -1,0 +1,106 @@
+<form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+    <div class="layui-form-item">
+        <label class="layui-form-label">角色名称</label>
+        <div class="layui-input-inline">
+            <input type="text" name="title" lay-verify="required" lay-reqText="名称不能为空" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">权限</label>
+        <div class="layui-input-block">
+            <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/admin/right/rights" lay-done="layui.data.sendParams(d.params);">
+                {{# layui.each(d.data, function(index, top){ }}
+                <input type="checkbox" lay-skin="primary" lay-filter="select_top" title="{{ top.name }}" value="select_{{ top.id }}" data-top="{{ top.id }}">
+                <hr>
+                {{# layui.each(top.right, function(index2, child){ }}
+                <fieldset class="layui-elem-field" id="select_{{ top.id }}">
+                    <legend>
+                        <input type="checkbox" lay-skin="primary" lay-filter="select_child" title="{{ child.name }}" value="select_{{ child.id }}" data-top="{{ top.id }}" data-child="{{ child.id }}">
+                    </legend>
+                    <div class="layui-field-box" id="select_{{ child.id }}">
+                        {{# layui.each(child.right, function(index3, right){ }}
+                        <input type="checkbox" name="right[{{ top.id }}][{{ child.id }}][]" lay-filter="right" title="{{ right.title }}" value="{{ right.id }}" data-top="{{ top.id }}" data-child="{{ child.id }}" {{# if(d.params.right && d.params.right[top.id]){ }}{{# if(layui.jquery.inArray(right.id, d.params.right[top.id][child.id])>=
+                        0){ }}checked{{# } }}{{# } }}>
+                        {{# }); }}
+                    </div>
+                </fieldset>
+                {{# }); }}
+                {{# }); }}
+            </script>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label"></label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="id" value="">
+            <input type="button" lay-submit lay-filter="form-submit" value="确认" class="layui-btn">
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<!--获取默认参数-->
+<script>
+    layui.data.sendParams = function (params) {
+        layui.use(['admin', 'form'], function () {
+            var admin = layui.admin,
+                form = layui.form,
+                $ = layui.jquery;
+
+            //自定义函数
+            var my_function = {
+                //检查设置全选状态
+                check_right: function (top_id, child_id) {
+                    var top_num = $('#select_' + top_id + ' [lay-filter="right"]').length;
+                    var child_num = $('#select_' + child_id + ' [lay-filter="right"]').length;
+                    var checked_top_num = $('#select_' + top_id + ' [lay-filter="right"]:checked').length;
+                    var checked_child_num = $('#select_' + child_id + ' [lay-filter="right"]:checked').length;
+
+                    if (top_num <= checked_top_num) {
+                        $('[value="select_' + top_id + '"]').prop('checked', true);
+                    } else {
+                        $('[value="select_' + top_id + '"]').prop('checked', false);
+                    }
+                    if (child_num <= checked_child_num) {
+                        $('[value="select_' + child_id + '"]').prop('checked', true);
+                    } else {
+                        $('[value="select_' + child_id + '"]').prop('checked', false);
+                    }
+                    form.render('checkbox');
+                }
+            }
+            //监听顶级菜单选择
+            form.on('checkbox(select_top)', function (data) {
+                if (this.checked == true) {
+                    $('#' + data.value + ' [type="checkbox"]').prop('checked', true);
+                } else {
+                    $('#' + data.value + ' [type="checkbox"]').prop('checked', false);
+                }
+                form.render('checkbox');
+            });
+            //监听二级菜单选择
+            form.on('checkbox(select_child)', function (data) {
+                if (this.checked == true) {
+                    $('#' + data.value + ' [type="checkbox"]').prop('checked', true);
+                } else {
+                    $('#' + data.value + ' [type="checkbox"]').prop('checked', false);
+                }
+                my_function.check_right($(this).attr('data-top'), $(this).attr('data-child'));
+                form.render('checkbox');
+            });
+            //监听多选框
+            form.on('checkbox(right)', function (data) {
+                my_function.check_right($(this).attr('data-top'), $(this).attr('data-child'));
+            });
+
+            //编辑给定默认选择状态
+            if (params.right) {
+                $.each(params.right, function (index, child) {
+                    $.each(child, function (index2, right) {
+                        my_function.check_right(index, index2);
+                    })
+                })
+            }
+            form.render();
+        })
+    };
+</script>

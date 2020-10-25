@@ -1,0 +1,143 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <?=$this->HelpUrl('shopOrderList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="erp-bg-thead">
+                                <th width="12%"><?=$this->translate('商品编号')?></th>
+                                <th><?=$this->translate('商品名称')?></th>
+                                <th width="10%"><?=$this->translate('商品规格')?></th>
+                                <th width="6%"><?=$this->translate('数量')?></th>
+                                <th width="10%"><?=$this->translate('订单号')?></th>
+                                <th width="6%"><?=$this->translate('订单状态')?></th>
+                                <th width="8%"><?=$this->translate('所属商城')?></th>
+                                <th width="10%"><?=$this->translate('仓库')?></th>
+                                <th width="8%"><?=$this->translate('配货状态')?></th>
+                                <th width="10%"><?=$this->translate('操作')?></th>
+                            </tr>
+                            <?php
+                            $sForm = $this->searchForm;
+                            $sForm->prepare();
+                            $sForm->get('order_state')->setEmptyOption('选择');
+                            $sForm->get('distribution_state')->setEmptyOption('选择');
+                            ?>
+                            <?= $this->form()->openTag($sForm); ?>
+                            <tr>
+                                <td>
+                                    <?= $this->formElement($sForm->get('goods_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('goods_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('goods_name')); ?>
+                                    <?=$this->formElementErrors($sForm->get('goods_name'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('goods_spec')); ?>
+                                    <?=$this->formElementErrors($sForm->get('goods_spec'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <p>
+                                        <?= $this->formElement($sForm->get('start_buy_num')); ?>
+                                    </p>
+                                    <div>
+                                        <?= $this->formElement($sForm->get('end_buy_num')); ?>
+                                    </div>
+                                    <?=$this->formElementErrors($sForm->get('start_buy_num'), ['class'=>'error-message']);?>
+                                    <?=$this->formElementErrors($sForm->get('end_buy_num'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('shop_order_sn')); ?>
+                                    <?=$this->formElementErrors($sForm->get('shop_order_sn'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('order_state')); ?>
+                                    <?=$this->formElementErrors($sForm->get('order_state'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('app_id')); ?>
+                                    <?=$this->formElementErrors($sForm->get('app_id'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('warehouse_id')); ?>
+                                    <?=$this->formElementErrors($sForm->get('warehouse_id'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <?= $this->formElement($sForm->get('distribution_state')); ?>
+                                    <?=$this->formElementErrors($sForm->get('distribution_state'), ['class'=>'error-message']);?>
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                    <?php
+                                    $formData = $sForm->getData();
+                                    if(!empty(array_filter($formData))
+                                        || $formData['order_state'] != ''
+                                        || $formData['warehouse_id'] != ''
+                                        || $formData['distribution_state'] != ''
+                                        || $formData['app_id'] != '') { ?>
+                                        <a href="<?=$this->url('app-shop-order-goods');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                            <?= $this->form()->closeTag(); ?>
+                            </thead>
+
+                            <?php if($this->orderGoodsList->getTotalItemCount() > 0) { foreach ($this->orderGoodsList as $goods) { ?>
+                                <tr>
+                                    <td><?=$this->escapeHtml($goods->getGoodsSn())?></td>
+                                    <td><?=$this->escapeHtml($goods->getGoodsName())?></td>
+                                    <td><?=$this->escapeHtml($goods->getGoodsSpec())?></td>
+                                    <td><?=$this->escapeHtml($goods->getBuyNum())?></td>
+                                    <td><?=$this->escapeHtml($goods->getOneShopOrder()->getShopOrderSn())?></td>
+                                    <td><?=$this->shop()->shopOrderState($goods->getOneShopOrder()->getShopOrderState())?></td>
+                                    <td><?=$this->escapeHtml($goods->getOneShopOrder()->getOneApp()->getAppName())?></td>
+                                    <td><?=$this->escapeHtml($goods->getWarehouseName())?></td>
+                                    <td><?=$this->shop()->shopDistributionState($goods->getDistributionState(), 2)?></td>
+                                    <td>
+                                        <?php if($goods->getDistributionState() == 3) { ?>
+                                            <a href="<?= $this->url('app-shop-order-goods',
+                                                ['action'=>'distributionGoods', 'id'=>$goods->getOrderGoodsId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>"
+                                               class="btn btn-xs btn-success"><i class="fa fa-check"></i> <?=$this->translate('匹配商品')?></a>
+                                        <?php } ?>
+                                        <?php if($goods->getDistributionState() == -1) { ?>
+                                            <a href="<?= $this->url('app-shop-order-goods',
+                                                ['action'=>'finishDistribution', 'id'=>$goods->getOrderGoodsId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>"
+                                               class="btn btn-xs btn-info"><i class="fa fa-info-circle"></i> <?=$this->translate('商品补货')?>
+                                            </a>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+                            <?php } } else { ?>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="8"><?=$this->translate('暂无订单商品信息')?></td>
+                                </tr>
+                                </tfoot>
+                            <?php } ?>
+                        </table>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <?=$this->paginationControl($this->orderGoodsList, 'Sliding', 'layout/page', ['route' => 'app-shop-order-goods']); ?>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

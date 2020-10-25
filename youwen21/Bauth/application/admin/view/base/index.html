@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>管理平台</title>
+    <link href="./favicon.ico" type="image/x-icon" rel="shortcut icon">
+    <link rel="stylesheet" type="text/css" href="/Admin/css/base.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/Admin/css/style.css" media="all">
+     <!--[if lt IE 9]>
+    <script type="text/javascript" src="/static/jquery-1.10.2.min.js"></script>
+    <![endif]--><!--[if gte IE 9]><!-->
+    <script type="text/javascript" src="/static/jquery-2.0.3.min.js"></script>
+    <!--<![endif]-->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <!-- Logo -->
+        <a href="/">
+        <span class="logo"></span>
+        </a>
+        <!-- /Logo -->
+
+        <!-- 主导航 -->
+        <ul class="main-nav">
+            {volist name="_topMenu" id="mvo"}
+                {eq name="mvo.id" value="$_reqRootId"}
+                <li class="current">
+                {else/}
+                <li>
+                {/eq}
+                    <a href="{:url($mvo.module.'/'.$mvo.controller.'/'.$mvo.action)}">{$mvo.title}</a>
+                </li>
+            {/volist}
+        </ul>
+        <!-- /主导航 -->
+
+        <!-- 用户栏 -->
+        <div class="user-bar">
+            <a href="javascript:;" class="user-entrance"><i class="icon-user"></i></a>
+            <ul class="nav-list user-menu hidden">
+                <li class="manager">你好，<em title="">{:session('userInfo.username')}</em></li>
+                <li><a target="contentIframe" href="{:url('Administrator/updatepassword')}">修改密码</a></li>
+                <li><a target="contentIframe" href="{:url('Administrator/updateNickname')}">修改昵称</a></li>
+                <li><a href="{:url('AdminPublic/logout')}">退出</a></li>
+            </ul>
+        </div>
+    </div>
+    <!-- /头部 -->
+
+    <!-- 边栏 -->
+    <!-- 子导航 -->
+    <div class="sidebar">
+        {block name="sidebar"}
+            <div id="subnav" class="subnav">
+                {volist name="_sideList" id="svo"}
+                <h3><i class="icon icon-unfold"></i>{$svo.group}</h3>
+                <ul class="side-sub-menu">
+                    {volist name="svo._child" id="cvo"}
+                    <li class="">
+                        <a target="contentIframe"  data-id="{$cvo.id}" class="item" href="{:url($cvo.module.'/'.$cvo.controller.'/'.$cvo.action)}">{$cvo.title}</a>
+                    </li>
+                    {/volist}
+                </ul>
+                {/volist}
+            </div>
+        {/block}
+    </div>
+    <!-- /子导航 -->
+    <!-- /边栏 -->
+
+        <!-- 内容区 -->
+        <iframe src="" name="contentIframe" id="myiframe" scrolling="auto" frameborder="0" style="width: 90%; float: right; ">
+        </iframe>
+        <!-- /内容区 -->
+
+
+</body>
+<script type="text/javascript">
+    /*iframe全宽全高*/
+function changeIframeHeight(){
+    var ifm= document.getElementById("myiframe");
+    var subHeight = $('.header').height();
+    ifm.height=document.documentElement.clientHeight - subHeight-25;
+    // alert(subHeight+'-'+ifm.height+'-'+document.documentElement.clientHeight);
+}
+//当浏览器窗口大小改变时，设置显示内容的高度  
+window.onresize = changeIframeHeight();  
+
+window.onload=changeIframeHeight();
+
+</script>
+
+<script type="text/javascript">
+    /*左侧菜单高亮*/
+$('.side-sub-menu li').bind('click',function(e) {
+    $('.side-sub-menu li').removeClass("current");
+    $(this).addClass("current");
+})
+    /* 左边菜单显示收起 */
+$("#subnav").on("click", "h3", function(e){
+    var $this = $(this);
+    $this.find(".icon").toggleClass("icon-fold");
+    $this.next("ul.side-sub-menu").toggle();
+});
+
+// $("#subnav h3 a").click(function(e){e.stopPropagation()})
+</script>
+
+
+<script type="text/javascript">
+/* 头部管理员菜单 */
+$(".user-bar").mouseenter(function(){
+    var userMenu = $(this).children(".user-menu ");
+    userMenu.removeClass("hidden");
+    clearTimeout(userMenu.data("timeout"));
+}).mouseleave(function(){
+    var userMenu = $(this).children(".user-menu");
+    userMenu.data("timeout") && clearTimeout(userMenu.data("timeout"));
+    userMenu.data("timeout", setTimeout(function(){userMenu.addClass("hidden")}, 100));
+});
+</script>
+<script type="text/javascript">
+/* 选一个左测菜单为  显示默认 */
+$(function(){
+$(".side-sub-menu a").bind("click", function(e){
+    $('#myiframe').attr('src', this);
+})
+
+var defaultSide = {$defaultSide|default=0};
+if("0" == defaultSide){
+    defaultSide = $(".subnav").find("a").eq(0).attr('data-id');
+}
+    $(".side-sub-menu").find("a[data-id="+defaultSide+"]").click();
+})
+</script>
+</html>

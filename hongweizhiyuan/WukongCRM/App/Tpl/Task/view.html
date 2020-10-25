@@ -1,0 +1,267 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header">
+		<h4><a name="tab">{:L('TASK_VIEW')}</a></h4>
+	</div>
+	<div class="row">
+		<div class="tabbable span12">
+			<include file="Public:alert" />
+			<ul class="nav nav-tabs">
+				<li><a href="#tab1">{:L('BASIC_INFO')}</a></li>
+				<li><a href="#tab2">{:L('PROGRESS_LOG')}({$task['log_count']})</a></li>
+			</ul>
+			<div class="tab-content">
+				<table class="table">
+					<thead>
+						<tr>
+							<td <if condition="C('ismobile') eq 1">colspan="2"<else />colspan="4"</if>>
+								<p style="font-size: 14px;">
+									<if condition="$task['is_deleted'] neq 1">
+									<present name="comment_role_id">
+									<a id="comment_btn" href="javascript:void(0);">{:L('COMMENT')}</a> &nbsp; | &nbsp; 
+									</present>
+									<if condition="$task['isclose'] eq 0"><a href="javascript:void(0);" class="add_log">{:L('ADD_PROGRESS_LOG')}</a> &nbsp; | &nbsp; </if>
+									<a href="{:U('task/edit','id='.$task['task_id'])}"/>{:L('EDIT')}</a> &nbsp; | &nbsp; 
+									<a href="{:U('task/delete','redirect=1&id='.$task['task_id'])}" class="del_confirm"/>{:L('DELETE')}</a> &nbsp; | &nbsp; 
+									<a href="javascript:void(0)" onclick="javascript:history.go(-1)">{:L('RETURN')}</a>
+									<else />
+									 <a href="javascript:void(0)" onclick="javascript:history.go(-1)">{:L('RETURN')}</a>
+									</if>
+								</p>
+							</td>
+						</tr>
+					</thead>
+					<tbody>
+						<tr><th <if condition="C('ismobile') eq 1">colspan="2"<else />colspan="4"</if>>{:L('BASIC_INFO')}</th></tr>
+						<tr>
+							<td class="tdleft" width="15%">{:L('THEME')}：</td>
+							<td width="35%">{$task.subject}</td>
+							<td <if condition="C('ismobile') neq 1">width="15%"</if> class="tdleft" >{:L('EXPIRATION_DATE')}：</td>
+							<td <if condition="C('ismobile') neq 1">width="35%"</if>><if condition="$task['due_date'] gt 0">{$task.due_date|date='Y-m-d H:i',###}</if></td>
+						</tr>
+						<tr>
+							<td class="tdleft"><font style="font-weight:700;">负责人：</span></td>
+							<td colspan="7">
+								<volist name="task['owner']" id="vo" >
+									<notempty name="vo.user_name">
+									<a class="role_info" rel="{$vo.role_id}" href="javascript:void(0)">{$vo.user_name}</a>&nbsp;,
+									</notempty>
+								</volist>
+							</td>
+						</tr>
+						<tr>
+							<td class="tdleft"><font style="font-weight:700;">任务相关人列表：</font></td>
+							<td colspan="7">
+								<volist name="task['about_roles']" id="vo" >
+									<notempty name="vo.user_name">
+									<a class="role_info" rel="{$vo.role_id}" href="javascript:void(0)">{$vo.user_name}</a>&nbsp;,
+									</notempty>
+								</volist>
+							</td>
+						</tr>
+						<tr>
+							<td class="tdleft" >{:L('STATUS')}：</td>
+							<td>{$task.status}</td>
+							<if condition="C('ismobile') eq 1"></tr><tr></if>
+							<td class="tdleft" >{:L('PRECEDENCE')}：</td>
+							<td >{$task.priority}</td>								
+						</tr>
+						<tr>
+							<td class="tdleft" >{:L('CREATE_TIME')}：</td>
+							<td><if condition="$task['create_date'] gt 0">{$task.create_date|date='Y-m-d H:i:s',###}</if></td>
+							<if condition="C('ismobile') eq 1"></tr><tr></if>
+							<td class="tdleft">{:L('CREATOR_ROLE')}：</td>
+							<td><notempty name="task.creator.user_name"><a class="role_info" rel="{$task.creator.role_id}" href="javascript:void(0)">{$task.creator.user_name}</a></notempty></td>							
+						</tr>
+						<tr>
+						<notempty name="task.module.module_name">
+							<td class="tdleft">{:L('RELATED_THINGS', array($task['module']['module_name']))}</td>
+							<td ><a  href="{:U($task['module']['module'].'/view','id='.$task['module']['module_id'])}">{$task.module.name}</a></td>
+							<if condition="C('ismobile') eq 1"><td colspan="2">&nbsp;</td></if>
+						</tr>
+						</notempty>
+						<tr>
+							<td class="tdleft" >
+								{:L('DESCRIPTION')}：
+							</td><td <if condition="C('ismobile') neq 1">colspan="3"</if> >
+								<if condition="$task.description neq null"><pre style="min-height: 200px;">{$task.description}</pre></if>
+							</td>
+						</tr>
+						<tr>
+							<td class="tdleft">{:L('COMMENT')}:</td>
+							<td <if condition="C('ismobile') neq 1">colspan="3"</if>>
+								<table width="100%">
+									<empty name="comment_list">
+										<tr>
+											<td colspan="2">{:L('NO_SUPERIORS_COMMENT')}</td>
+										</tr>
+									<else />
+										<volist name="comment_list" id="vo">
+											<tr>
+												<td colspan="2">{:L('COMMENTATOR')}:<a class="role_info" rel="{$vo.role_id}" href="javascript:void(0)">{$vo.user_name}</a>（{$vo.create_time|date="Y-m-d H:i",###}）<if condition="$vo['role_id'] == session('role_id')">
+														<a rel="{$vo['comment_id']}" class="edit_comment_btn" href="javascript:void(0);">{:L('EDIT')}</a>
+													</if></td>
+											</tr>
+											<tr>
+												<td colspan="2"><if condition="$vo.content neq ''"><pre>{$vo.content}</pre></if></td>
+											</tr>
+										</volist>
+									</empty>
+								</table>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<a name="tab2"></a><div style="height:40px;"></div>
+				<table class="table table-hover">
+					<tr>
+						<th colspan="5">{:L('PROGRESS_LOG')}</th>
+					</tr>
+				</table>
+				<a name="tab2">&nbsp;</a>
+				<volist name="task['log']" id="vo">
+					<table class="table table-bordered info">
+						<tr class="{$vo['style']}">
+							<td class="tdleft" width="12.5%"><font style="font-weight:700;">姓名</font></td>
+							<td width="37.5%">{$vo.owner.user_name}</td>
+							<td width="12.5%" class="tdleft"><font style="font-weight:700;">时间</font></td>
+							<td width="37.5%">{$vo.create_date|date="Y-m-d  H:i",###}</td>
+						</tr>
+						<tr class="{$vo['style']}">
+							<td class="tdleft"><font style="font-weight:700;">相关附件</font></td>
+							<td colspan="3">
+								<volist name="vo['files']" id="v">
+									<a href="{:U('file/filedownload','path='.urlencode($v['file_path']).'&name='.urlencode($v['name']))}" title="{$v.name}">{$v.subName}</a><br>
+								</volist>
+							</td>
+						</tr>
+						<tr class="{$vo['style']}">
+							<td class="tdleft"><font style="font-weight:700;">新增相关人</font></td>
+							<td colspan="3">{$vo.about_roles_name}</td>
+						</tr>
+						<tr class="{$vo['style']}">
+							<td class="tdleft"><font style="font-weight:700;">内容描述</font></td>
+							<td colspan="3"><pre>{$vo.content}</pre></td>
+						</tr>
+						
+					</table>
+				</volist>
+				<if condition="$task['isclose'] eq 0"><p class="pull-right">
+					<a href="javascript:void(0);" class="add_log btn btn-primary">+ 添加进度日志</a>
+				</p></if>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-file" title="{:L('DIALOG_ADD_ATTACHMENTS')}">loading...</div>
+<div class="hide" id="dialog-log" title="{:L('DIALOG_ADD_LOG')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<div class="hide" id="dialog-log-edit" title="{:L('DIALOG_EDIT_LOG')}">loading...</div>
+<if condition="session('role_id') eq $task['creator_role_id']">
+<div class="hide" id="dialog-comment" title="{:L('COMMENT')}">loading...</div>
+<div class="hide" id="dialog-editcomment" title="{:L('EDIT_COMMENT')}">loading...</div>
+</if>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-file").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-log").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 500,
+	position: ["center",100]
+});
+$("#dialog-log-edit").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-comment").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100],
+	buttons: { 
+		"{:L('OK')}": function () {
+			$('#comment').submit();
+			$(this).dialog("close"); 
+		},
+		"{:L('CANCEL')}": function () {
+			$(this).dialog("close");
+		}
+	}
+});
+$("#dialog-editcomment").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100],
+	buttons: { 
+		"{:L('OK')}": function () {
+			$('#editcomment').submit();
+			$(this).dialog("close"); 
+		},
+		"{:L('CANCEL')}": function () {
+			$(this).dialog("close");
+		}
+	}
+});
+$(function(){
+	$(".add_file").click(function(){
+		$('#dialog-file').dialog('open');
+		$('#dialog-file').load('{:U("file/add","r=RFileTask&module=task&id=".$task["task_id"])}');
+	});
+	<if condition="$task['isclose'] eq 0">
+	$(".add_log").click(function(){
+		$('#dialog-log').dialog('open');
+		$('#dialog-log').load('{:U("log/tasklog","r=RLogTask&module=task&id=".$task["task_id"])}');
+	});
+	</if>
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	$(".edit_log").click(function(){
+		$log_id = $(this).attr('rel');
+		$('#dialog-log-edit').dialog('open');
+		$('#dialog-log-edit').load('{:U("log/edit","id=")}'+$log_id);
+	});
+	
+	<if condition="$comment_role_id">
+	$("#comment_btn").click(function(){
+		$('#dialog-comment').dialog('open');
+		$('#dialog-comment').load('{:U("comment/add","to_role_id=".$task["owner_role_id"]."&module=task&module_id=".$task["task_id"])}');
+	});
+	$(".edit_comment_btn").click(function(){
+		comment_id = $(this).attr('rel');
+		$('#dialog-comment').dialog('open');
+		$('#dialog-comment').load('{:U("comment/edit","to_role_id=".$task["owner_role_id"]."&id=")}'+comment_id);
+	});
+	</if>
+	$(".more").click(function(){
+		log_id = $(this).attr('rel');
+		$('#llog_'+log_id).attr('class','');
+		$('#slog_'+log_id).attr('class','hide');
+	});
+});
+</script>
+<include file="Public:footer" />

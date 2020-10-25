@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
+    <meta name="keywords" content="橡皮音乐 橡皮音乐官网 网页版 橡皮音乐网页版 歌曲 下载 免费下载 在线播放 流行音乐 lifanko">
+    <meta name="description" content="橡皮音乐 橡皮音乐官网 网页版 橡皮音乐网页版 歌曲 下载 免费下载 在线播放 流行音乐 lifanko">
+    <title>橡皮音乐官网-最新最全音乐全部免费下载</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <link href="eraser.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h3 class="head">橡皮音乐
+        <span>本站所有音乐2020/12/31前均可免费下载</span>
+        <span style="font-size: 12px;color: #eee">Chrome浏览器80+版本已全部阻止从安全协议加载非安全内容，酷狗音乐和QQ音乐暂不支持在Chrome80+浏览器播放</span>
+    </h3>
+    <div class="box">
+        <label for="name"></label><input type="text" placeholder="输入 歌曲/歌手/专辑 以进行搜索" id="name" autocomplete="off">
+        <div class="btn">
+            <button onclick="search('kugou')">酷狗搜索</button>
+            <button onclick="search('tencent')">QQ搜索</button>
+            <button onclick="search('baidu')">百度搜索</button>
+            <button onclick="search('xiami')">虾米搜索</button>
+            <button onclick="search('netease')">网易搜索</button>
+        </div>
+        <div id="search">默认列表</div>
+    </div>
+
+    <div id="playerBox" class="aplayer" style="background-color: transparent;"></div>
+
+    <div style="margin-top: .6pc">
+        <a href="http://a6051308906702.qiniucdn.apicloud-system.com/79c5347e472e43227900ffea022cf536_d"
+           style="float: right;font-size: 12px;color: #F40;line-height: 23px">下载APP</a>
+        <label for="download"></label><input type="text" class="input" id="download" placeholder="歌曲名前面的序号">
+        <a id="downLoadA" class="extraBtn" onclick="downloadMusic()" href="#" target="_blank"
+           download="高品质超大曲库，尽在橡皮音乐.mp3">下载</a>
+        <label for="share"></label><input id="share" type="text" class="input" placeholder="分享歌单" autocomplete="off"
+                                          style="width: 180px;padding-right: 90px">
+        <a class="extraBtn" style="margin-left: -90px"
+           onclick="to_clipboard(document.getElementById('share'))">复制分享链接</a>
+    </div>
+    <div class="hotWord">
+        <h3>热搜
+            <a onclick="getHotSearch()" style="font-size: 12px;cursor: pointer;text-decoration: underline">加载更多</a>
+        </h3>
+        <ul id="hotSearch"></ul>
+    </div>
+    <footer>
+        Copyright &copy; <a href='https://hpu.lifanko.cn' style='color: #ddd'>lifanko</a>
+        2017-2020 <a href='http://www.beian.miit.gov.cn/' style='color: #ddd'>豫ICP备16040860号-1</a>
+    </footer>
+</div>
+<canvas id="blur_cover" style="position: fixed;top: 0;left: 0;z-index: -1;"></canvas>
+<script src="https://cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
+<script src="https://cdn.lifanko.cn/js/APlayer.min.js"></script>
+<script src="https://cdn.lifanko.cn/js/tip.min.js"></script>
+<script src="https://cdn.bootcss.com/stackblur-canvas/2.2.0/stackblur.min.js"></script>
+<script src="https://cdn.lifanko.cn/js/MTitle.min.js"></script>
+<script>
+    var host = 'https://www.lifanko.cn/music/';
+
+    // 播放器
+    var player = null;
+    // 用于存储播放列表
+    var buffer;
+    // 热搜词计数
+    var hotSearchNum = 20;
+    // 标题滚动
+    const mTitle = new MTitle(document.title);
+
+    window.onload = function (ev) {
+        // 初始化播放器
+        initial();
+
+        // 加载热搜词
+        getHotSearch();
+
+        tip("欢迎使用橡皮音乐", "25%", 2000, "1", false);
+    };
+
+    function initial() {
+        var share = false;
+
+        var href = window.location.href;
+        var key_pos = href.indexOf('key=');
+        var s_pos = href.indexOf('&s=');
+        if (key_pos !== -1 && s_pos !== -1) {
+            var key = href.substring(key_pos + 4, s_pos);
+            var s = href.substring(s_pos + 3);
+            if (key !== '') {
+                share = true;
+
+                document.getElementById("name").value = decodeURI(key);
+
+                switch (s) {
+                    case 'k':
+                        s = 'kugou';
+                        break;
+                    case 't':
+                        s = 'tencent';
+                        break;
+                    case 'b':
+                        s = 'baidu';
+                        break;
+                    case 'x':
+                        s = 'xiami';
+                        break;
+                    case 'n':
+                        s = 'netease';
+                        break;
+                    default:
+                        s = 'netease';
+                }
+
+                search(s);
+            }
+        }
+
+        if (!share) {
+            // 根据存储的列表实例化播放器
+            $.get("eraser.php", {
+                o: 'pl'
+            }, function (data) {
+                //初始化播放器，使用默认列表
+                buffer = eval("(" + data + ")");
+
+                // 关闭预加载，防止出错
+                if (buffer.length) {
+                    player = new APlayer({
+                        container: document.getElementById('playerBox'),
+                        listMaxHeight: 33 * buffer.length + 'px',
+                        loop: 'none',
+                        preload: 'none',
+                        volume: 1,
+                        lrcType: 1,
+                        audio: buffer
+                    });
+                }
+
+                mtitle();
+            }).error(function () {
+                tip("网络错误，请稍后再试", "10%", 3000, "1", false);
+            });
+        }
+    }
+
+    // 搜索功能（搜索功能返回15个项目，但是仅第一个项目有完整的信息，剩余14个项目在后台继续加载，可大大提高搜索速度！）
+    function search(source) {
+        var search = document.getElementById("search");
+
+        // 获取歌曲关键词
+        var name = $("#name").val();
+
+        var share = document.getElementById('share');
+
+        share.value = host + 'index.html?key=' + encodeURI(name) + '&s=' + source.substr(0, 1);
+
+        // 改变url地址，用于SEO
+        history.pushState({}, null, share.value.substring(host.length));
+
+        if (name !== "") {
+            var lib = [];
+            lib['kugou'] = '酷狗';
+            lib['tencent'] = 'QQ';
+            lib['baidu'] = '百度';
+            lib['xiami'] = '虾米';
+            lib['netease'] = '网易';
+
+            search.innerText = "正在 " + lib[source] + "音乐库 中搜索...";
+
+            $.get("eraser.php", {
+                o: 'search',
+                s: source,
+                k: name
+            }, function (data) {
+                search.innerText = "《" + name + "》搜索结果";
+
+                buffer = eval("(" + data + ")");
+
+                // 当搜索成功时
+                if (buffer.length) {
+                    // 当播放器已经存在时销毁播放器
+                    if (player != null) {
+                        player.destroy();
+                    }
+
+                    // 播放器选项
+                    player = new APlayer({
+                        container: document.getElementById('playerBox'),
+                        listMaxHeight: 33 * buffer.length + 'px',
+                        loop: 'none',
+                        preload: 'none',
+                        volume: 1,
+                        lrcType: 1,
+                        autoplay: true,
+                        audio: buffer
+                    });
+
+                    if (player.audio.paused) {
+                        tip("搜索成功，请选择歌曲播放", "10%", 3000, "1", false);
+                    } else {
+                        tip("搜索成功，已自动开始播放", "10%", 3000, "1", false);
+                    }
+
+                    mtitle();
+
+                    var progress = 1;
+                    var error = 0;
+                    var offset = 0;
+                    // index是列表项目索引，这里作为参数传入，便于直接修改播放列表
+                    for (var i = 1; i < buffer.length; i++) {
+                        $.get("eraser.php", {
+                            o: 'sd',
+                            s: source,
+                            url_id: buffer[i].url,
+                            pic_id: buffer[i].cover,
+                            lyric_id: buffer[i].lrc,
+                            index: i
+                        }, function (song_data) {
+                            var index = parseInt(song_data.substring(0, 2));
+                            song_data = song_data.substring(2);
+                            song_data = eval("(" + song_data + ")");
+
+                            if (song_data.url !== 'fail') {
+                                player.list.audios[index - offset].url = song_data.url;
+                                player.list.audios[index - offset].cover = song_data.cover;
+                                player.list.audios[index - offset].lrc = song_data.lrc;
+
+                                progress++;
+                            } else {
+                                player.list.remove(index - offset);
+                                console.log('remove: ' + index);
+
+                                error++;
+                                offset++;
+                            }
+
+                            search.innerText = "《" + name + "》搜索结果（已加载 " + progress + "/" + buffer.length + " 首，" + error + "首加载失败）";
+
+                            if ((progress + error) === buffer.length) {
+                                tip("歌曲加载完毕！", "25%", 3000, "1", false);
+                            }
+                        }).error(function (XMLHttpRequest, textStatus, errorThrown) {
+                            error++;
+
+                            search.innerText = "《" + name + "》搜索结果（已加载 " + progress + "/" + buffer.length + " 首，" + error + "首加载失败）";
+
+                            if ((progress + error) === buffer.length) {
+                                tip("歌曲加载完毕！", "25%", 3000, "1", false);
+                            }
+
+                            // 若发生错误则在控制台显示错误信息
+                            console.log(XMLHttpRequest.responseText);
+                        });
+                    }
+                } else {
+                    tip("未搜索到相关歌曲", "10%", 3000, "1", false);
+                }
+            }).error(function () {
+                tip("网络错误，请稍后再试", "10%", 3000, "1", false);
+            });
+        } else {
+            tip("请输入 歌曲/歌手/专辑 后搜索", "10%", 3000, "1", false);
+        }
+    }
+
+    function mtitle() {
+        player.on('play', function () {
+            var song = player.list.audios[player.list.index];
+
+            mTitle.newTitle('正在播放：' + song.name + ' - ' + song.artist + '【橡皮音乐】');
+            mTitle.start();
+        });
+
+        player.on('pause', function () {
+            var song = player.list.audios[player.list.index];
+
+            mTitle.newTitle('已暂停：' + song.name + ' - ' + song.artist + '【橡皮音乐】');
+            mTitle.stop(true);
+        });
+
+    }
+
+    function to_clipboard(element) {
+        element.select();
+        document.execCommand('copy');
+        tip("复制链接成功~", "80%", 2000, "1", false);
+    }
+
+    // 获取热搜词函数
+    function getHotSearch() {
+        $.get("eraser.php", {
+            o: 'hs',
+            max: hotSearchNum
+        }, function (data) {
+            document.getElementById("hotSearch").innerHTML = data;
+
+            if (hotSearchNum > 20) {
+                tip("加载成功！", "85%", 3000, "1", false);
+            }
+
+            // 加载成功后才允许在加载更多
+            hotSearchNum += 20;
+
+            // 刷新热搜词绑定
+            clickHotSearch();
+
+        }).error(function () {
+            tip("加载失败！请稍后重试", "85%", 3000, "1", false);
+        });
+    }
+
+    // 点击热搜词事件绑定
+    function clickHotSearch() {
+        var obj_lis = document.getElementById("hotSearch").getElementsByTagName("li");
+        for (var i = 0; i < obj_lis.length; i++) {
+            obj_lis[i].onclick = function () {
+                // 添加关键词进输入框
+                document.getElementById("name").value = this.innerText;
+
+                tip("《" + this.innerText + "》已经复制到搜索框", "85%", 3000, "1", false);
+            }
+        }
+    }
+
+    // 下载音乐
+    function downloadMusic() {
+        var download = document.getElementById('download');
+
+        if ((parseInt(download.value) < buffer.length + 1) && (parseInt(download.value) > 0)) {
+            // 改变href对象
+            document.getElementById('downLoadA').href = buffer[parseInt(download.value) - 1]['url'];
+        } else {
+            // 无对应歌曲则阻止下载进行
+            document.getElementById('downLoadA').href = "javascript:void(0)";
+            tip("无对应歌曲", "25%", 3000, "1", false);
+        }
+    }
+
+    window.onresize = function () {
+        resize();
+    };
+
+    function resize() {
+        var cover = document.getElementById('blur_cover');
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        if (width >= height) {
+            cover.style.width = cover.style.height = width + 'px';
+            cover.style.top = Math.floor((height - width) / 2) + 'px';
+        } else {
+            cover.style.width = cover.style.height = height + 'px';
+            cover.style.left = Math.floor((width - height) / 2) + 'px';
+        }
+    }
+
+    // 回车搜索（默认使用酷狗进行搜索）
+    document.onkeydown = function (e) {
+        var theEvent = window.event || e;
+        var code = theEvent.keyCode || theEvent.which;
+
+        if (code === 13) {
+            search('kugou');
+        }
+    };
+
+    // 百度统计
+    var _hmt = _hmt || [];
+    (function () {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?a258eee7e1b38615e85fde12692f95cc";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+</body>
+</html>

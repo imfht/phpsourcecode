@@ -1,0 +1,205 @@
+<!-- 适合pc端或浏览器界面比较大的，方便编辑表格记录 -->
+<div class="easyui-navpanel" style="position:relative;padding:20px">
+    <form id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Form"></form>
+    <table id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item"></table>
+    <div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_toolbar">
+        <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_add" href="#" class="easyui-linkbutton"
+           iconCls="icon-add" plain="true">{:lang('新增')}</a>
+        <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_save" href="#" class="easyui-linkbutton"
+           iconCls="icon-save" plain="true">{:lang('结束')}</a>
+        <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_remove" href="#" class="easyui-linkbutton"
+           iconCls="icon-remove" plain="true">{:lang('删除')}</a>
+    </div>
+</div>
+
+
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Fun_Win"></div>
+
+<script>
+    $(function () {
+        var record = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        // 重置选择器
+        record.init().select();
+
+//        record.gui_build_state = {
+//            form: false,
+//            linkbutton: false,
+//        };
+
+        // 刷新单据数据, 新增或编辑时运行
+        record.event._create_voucher = function () {
+            if (record.edit_state == 'add') {
+                record.Fm.form('clear');
+
+                $.post('vr_get_default_row_data', function (data) {
+                    record.Fm.form('load', data);
+                    // 异步顺序
+                    record.seq.run_next();
+                });
+            } else if (record.edit_state == 'edit') {
+                if (record.edit_row_data) {
+                    $.post('vr_get_voucher_data', {voucher_id: record.edit_row_data.voucher_id}, function (data) {
+                        console.log(data);
+                        record.Fm.form('load', data.vr[0]);
+//                        $(record.CA + 'Form').form('load', data.vr[0]);
+                        record.datagrid().load_data({
+                            grid_id: record.MG_Item,
+                            data: data.vr_item,
+                            footer_sum_field: ['inp_num']
+                        });
+                    });
+                }
+            }
+        };
+
+        console.log(record);
+
+        record.father = new Page({
+            Module: '{$Think.P_M}',
+            Controller: '{$Think.P_C}',
+            Action: '{$Think.P_A}',
+        });
+
+        // 传递的 js_json 数据
+        record.data = JSON.parse('{$js_data}');
+        console.log(record.data);
+
+//        record.menubutton().linkbutton_init(record.data.Top_Buttons, 'close', 'after');
+        // 关闭之前，需要检测此单据有没有明细数据，
+        // 如果有明细数据，没有保存过，提示是否需要保存
+        record.linkbutton().win_close('close');
+
+        record.form().mb_field_init();
+
+        var onEndEdit = function (index, row) {
+            console.log('on_end_edit');
+            var ed = $(this).datagrid('getEditor', {
+                index: index,
+                field: 'res_id'
+            });
+            row.res_name = $(ed.target).combobox('getText');
+        };
+
+
+        var onClickCell = function (index, field) {
+            console.log('点击了第几行: ' + index);
+            console.log(index);
+            console.log(field);
+
+            if (record.MG_Item.edit_index != index) {
+                if (record.datagrid().end_edit(record.MG_Item)) {
+                    record.MG_Item.datagrid('selectRow', index).datagrid('beginEdit', index);
+                    record.MG_Item.edit_index = index;
+                    var ed = record.MG_Item.datagrid('getEditor', {
+                        index: index,
+                        field: field
+                    });
+                    console.log(ed);
+                    if (ed) {
+                        ($(ed.target).data('textbox') ? $(ed.target).textbox('textbox') : $(ed.target)).focus();
+                    }
+                } else {
+                    setTimeout(function () {
+                        record.MG_Item.datagrid('selectRow', record.MG_Item.edit_index);
+                    }, 0);
+
+                }
+            }
+        };
+
+        record.datagrid().init({
+            grid_id: 'MG_Item',
+            o: {
+                singleSelect: true,
+                toolbar: "#{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Item_toolbar",
+                // 这里不同于原easyui的列定义，去掉外层数组，为了与后台数据传递保持一致
+                columns: [
+                    {
+                        field: 'res_id', title: '产品名称', width: 120,
+                        editor: {
+                            type: 'combobox', options: {
+                                valueField: 'res_id',
+                                textField: 'res_name',
+                                data: record.data.dict.res,
+                                required: true
+                            }
+                        },
+                        formatter: function (value, row, index) {
+                            return row.res_name;
+                        }
+                    },
+                    {
+                        field: 'inp_num', title: '数量', width: 50,
+                        editor: {
+                            type: 'numberbox',
+                            options: {
+                                precision: 1
+                            }
+                        }
+                    },
+                    {
+                        field: 'a_color', title: '颜色', width: 60, editor: 'textbox'
+                    },
+                    {
+                        field: 'sub_attr_val_1', title: '长', width: 40,
+                        editor: {
+                            type: 'numberbox',
+                            options: {
+                                precision: 1
+                            }
+                        }
+                    },
+                    {
+                        field: 'sub_attr_val_2', title: '宽', width: 40,
+                        editor: {
+                            type: 'numberbox',
+                            options: {
+                                precision: 1
+                            }
+                        }
+                    },
+                    {
+                        field: 'sub_attr_val_3', title: '厚', width: 40,
+                        editor: {
+                            type: 'numberbox',
+                            options: {
+                                precision: 1
+                            }
+                        }
+                    },
+                    {
+                        field: 'note_info', title: '备注', width: 40, editor: 'textbox'
+                    },
+                ],
+                idField: 'res_id',
+//                toolbar: '{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG_Toolbar',
+                showFooter: true,
+                onClickCell: onClickCell,
+                onClickRow: function () {
+                    console.log('on click row');
+                },
+                onEndEdit: onEndEdit,
+                validateRow: function (edit_index) {
+                    console.log('validateRow: ' + edit_index);
+                    return true;
+                },
+            },
+        });
+
+        record.datagrid().row_add('MG_Item_add', record.MG_Item);
+        record.datagrid().row_remove('MG_Item_remove', record.MG_Item);
+        record.datagrid().row_save('MG_Item_save', record.MG_Item);
+
+        record.auto_run().when_build_ele_finish();
+
+//            $('#dg').datagrid({
+//                data: data
+//            });
+
+
+    })
+</script>

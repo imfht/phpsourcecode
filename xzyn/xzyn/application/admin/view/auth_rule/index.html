@@ -1,0 +1,91 @@
+{extend name="public/base" /}
+
+{block name="title"}<title>节点列表</title>{/block}
+
+{block name="pjax_container"}
+<section class="content-header">
+    <h1>节点列表</h1>
+    <ol class="breadcrumb">
+        <li class="active"><i class="fa fa-dashboard"></i> 节点列表</li>
+    </ol>
+</section>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"></h3>
+                    <div class="pull-left">
+                    	{:BTN(C_NAME.'/create','','新增','btn btn-primary btn-sm','fa-save')}
+                    </div>
+                </div>
+                <div class="box-body table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <tr>
+                            <th>节点名称</th>
+                            <th>节点地址</th>
+                            <th>节点类型</th>
+                            <th>状态</th>
+                            <th>是否菜单</th>
+                            <th>节点图标</th>
+                            <th>排序</th>
+                            <th width="124">操作</th>
+                        </tr>
+                        {volist name="dataList" id="vo"}
+                        <tr>
+                            <td>
+                                {eq name="vo['level']" value="2"}&nbsp;&nbsp;└─{/eq}
+                                {eq name="vo['level']" value="3"}&nbsp;&nbsp;└───┴──{/eq}
+                                <span class="editable" data-pk="{$vo.id}" data-name="title" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.title}</span>
+                            </td>
+                            <td><span class="editable" data-pk="{$vo.id}" data-name="name" data-url="{:url(C_NAME.'/edit', 'id='.$vo['id'])}" >{$vo.name}</span></td>
+                            <td>{$vo.level_turn}</td>
+                            <td>
+                                <a href="javascript:void(0);" data-id="{$vo.id}" data-field="status"
+                                data-value="{$vo.status}" data-url="{:url('edit', 'id='.$vo['id'])}"
+                                class='editimg fa {if condition=" $vo.status == 1 "}fa-check-circle text-green{else /}fa-times-circle text-red{/if}'></a>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0);" data-id="{$vo.id}" data-field="ismenu"
+                                data-value="{$vo.ismenu}" data-url="{:url('edit', 'id='.$vo['id'])}"
+                                class='editimg fa {if condition=" $vo.ismenu == 1 "}fa-check-circle text-green{else /}fa-times-circle text-red{/if}'></a>
+                            </td>
+                            <td align="center"><i class="{$vo.icon}"></td>
+                            <td>{$vo.sorts}</td>
+                            <td>
+                            	{:BTN(C_NAME.'/edit','id='.$vo.id,'编辑','btn btn-primary btn-xs','fa-edit')}
+                            	{:BTN(C_NAME.'/delete','','删除','btn btn-danger btn-xs delete-one','fa-trash','data-id="'.$vo.id.'" data-url="'.url(C_NAME.'/delete').'"')}
+                            </td>
+                        </tr>
+                        {/volist}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="text/javascript">
+$(function(){
+    $('.editable').editable({
+        emptytext: "empty",
+        params: function(params) {      //参数
+            var data = {};
+            data['id'] = params.pk;
+            data[params.name] = params.value;
+            return data;
+        },
+        success: function(response, newValue) {
+            var res = $.parseJSON( response );
+            if(res.status == 1){
+            }else{
+                return res.info;
+            }
+        }
+    });
+
+    {if condition=" $rest_login == 1 "}
+    restlogin('{$rest_login_info}');   //登录超时
+    {/if}
+})
+</script>
+{/block}

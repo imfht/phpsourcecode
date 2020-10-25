@@ -1,0 +1,101 @@
+{extend name="admin/public/base"/}
+{block name="style"}
+<link rel="stylesheet" type="text/css" href="__static__/common/css/bootstrap-editable.css">
+{/block}
+{block name="body"}
+<div class="box box-primary">
+	<div class="box-header with-border">
+		<h3 class="box-title">{$meta_title}</h3>
+		<div class="box-tools pull-right">
+			<a class="btn btn-sm btn-primary" href="{:url('/admin/category/add')}"><i class="fa fa-plus-circle fa-lg"></i> 新 增</a>
+		</div>
+	</div>
+	<div class="box-body">
+		<!-- 表格列表 -->
+		<div class="table-responsive clearfix">
+			<div class="nav-tabs-custom">
+				<ul class="nav nav-tabs">
+					<li {if $model_id == ''}class="active"{/if}><a href="{:url('/admin/category/index')}">全部</a></li>
+					{volist name="model_list" id="item"}
+					<li {if $item['id'] == $model_id}class="active"{/if}>
+						<a href="{:url('/admin/category/index',array('model_id'=>$item['id']))}">{$item['title']}</a>
+					</li>
+					{/volist}
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane fade in active" id="tab-home">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th width="30"><input class="checkbox check-all" type="checkbox"></th>
+									<th width="60">ID</th>
+									<th>名称</th>
+									<th width="120">排序</th>
+									<th width="120">发布</th>
+									<th width="120">状态</th>
+									<th width="120">生成导航</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								{volist name="tree" id="list"}
+								<tr>
+									<td><input class="ids row-selected" type="checkbox" name="id[]" value="{$list.id}"></td>
+									<td>{$list['id']}</td>
+									<td>
+										{$list['level_show']|raw}
+										<a href="#" class="editable editable-click" data-id="{$list['id']}" data-name="title" data-type="text" data-pk="{$list['id']}" data-url="{:url('/admin/category/editable')}">{$list['title']}</a>
+										<a class="add-sub-cate" title="添加子分类" href="{:url('/admin/category/add', ['pid' =>$list['id']])}">
+											<i class="fa fa-plus-square"></i>
+										</a>
+									</td>
+									<td><a href="#" class="editable editable-click" data-id="{$list['id']}" data-name="sort" data-type="text" data-pk="{$list['id']}" data-url="{:url('/admin/category/editable')}">{$list['sort']}</a></td>
+									<td>{$list['allow_publish']?'是':'否'}</td>
+									<td>
+										{if $list['status']}
+										<span class="label label-primary">启用</span>
+										{else/}
+										<span class="label label-danger">禁用</span>
+										{/if}
+									</td>
+									<td>                                                       
+										{if $list['ismenu']}
+										<a href="{:url('/admin/channel/del?id='.$list['ismenu'])}" class="ajax-get"><span class="label label-primary">已生成</span></a>
+										{else/}
+										<a href="{:url('/admin/category/add_channel', ['id' => $list['id'], 'model_id'=>$list['model_id']])}" ><span class="label label-danger">未生成</span></a>
+										{/if}
+									</td>
+									<td>
+										<a title="编辑" href="{:url('/admin/category/edit', ['id' => $list['id'], 'pid' =>$list['pid']])}">编辑</a>
+										{if $list['status']}
+										<a href="{:url('/admin/category/status', ['id' => $list['id'], 'status' => 0])}" class="ajax-get">禁用</a>
+										{else/}
+										<a href="{:url('/admin/category/status', ['id' => $list['id'], 'status' => 1])}" class="ajax-get">启用</a>
+										{/if}
+										<a title="删除" href="{:url('/admin/category/remove', ['id' => $list['id']])}" class="confirm ajax-get">删除</a>
+										<a title="移动" href="{:url('/admin/category/operate', ['from' => $list['id'], 'type'=>'move'])}">移动</a>
+										<a title="合并" href="{:url('/admin/category/operate', ['from' => $list['id'], 'type'=>'merge'])}">合并</a>
+									</td>
+								</tr>
+								{/volist}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- /表格列表 -->
+	</div>
+</div>
+{/block}
+{block name="script"}
+<script type="text/javascript" src="__static__/common/js/bootstrap-editable.min.js"></script>
+<script type="text/javascript">
+$(function(){
+	$.fn.editable.defaults.mode = 'popup';
+	$.fn.editableform.buttons = '<button type="submit" class="btn btn-success editable-submit btn-mini"><i class="fa fa-check-square-o fa-white"></i></button>' +
+	'<button type="button" class="btn editable-cancel btn-mini"><i class="fa fa-times"></i></button>';
+	$('.editable').editable();
+})
+</script>
+{/block}

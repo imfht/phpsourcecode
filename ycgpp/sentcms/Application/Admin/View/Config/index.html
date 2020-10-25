@@ -1,0 +1,114 @@
+{extend name="Public/base"/}
+{block name="body"}
+<div class="main-box clearfix">
+    <header class="main-box-header clearfix">
+        <div class="pull-left">
+            <h2>网站设置</h2>
+        </div>
+        <div class="pull-right">
+            <a href="{:U('Config/group')}" class="btn btn-danger">
+                <i class="fa fa-list"></i> 
+                配置管理
+            </a>
+        </div>
+    </header>
+    <div class="main-box-body clearfix">
+        <div class="tabs-wrapper">
+            <ul class="nav nav-tabs">
+                <li {if condition="!isset($_GET['group'])"}class="active"{/if}><a href="{:U('index')}">全部</a></li>
+                {volist name="group" id="item"}
+                <li {if condition="$group_id eq $key"}class="active"{/if}>
+                    <a href="{:U('index?group='.$key)}">{$item}</a>
+                </li>
+                {/volist}
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade in active">
+                    <div class="table-responsive clearfix">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="row-selected">
+                                        <input class="checkbox check-all" type="checkbox">
+                                    </th>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th>标题</th>
+                                    <th>分组</th>
+                                    <th>类型</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {notempty name="list"}
+                                {volist name="list" id="config"}
+                                    <tr>
+                                        <td><input class="ids row-selected" type="checkbox" name="id[]" value="{$config.id}"></td>
+                                        <td>{$config.id}</td>
+                                        <td><a href="{:U('edit?id='.$config['id'])}">{$config.name}</a></td>
+                                        <td>{$config.title}</td>
+                                        <td>{$config.group|get_config_group}</td>
+                                        <td>{$config.type|get_config_type}</td>
+                                        <td>
+                                            <a title="编辑" href="{:U('edit?id='.$config['id'])}">编辑</a>
+                                            <a class="confirm ajax-get" title="删除" href="{:U('del?id='.$config['id'])}">删除</a>
+                                        </td>
+                                    </tr>
+                                {/volist}
+                            {else/}
+                                <td colspan="7" class="text-center"> aOh! 暂时还没有内容!</td>
+                            {/notempty}
+                            </tbody>
+                        </table>
+                    </div>
+                    {$_page}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/block}
+{block name="script"}
+    <script type="text/javascript">
+        $(function () {
+            //搜索功能
+            $("#search").click(function () {
+                var url = $(this).attr('url');
+                var query = $('.search-form').find('input').serialize();
+                query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g, '');
+                query = query.replace(/^&/g, '');
+                if (url.indexOf('?') > 0) {
+                    url += '&' + query;
+                } else {
+                    url += '?' + query;
+                }
+                window.location.href = url;
+            });
+            //回车搜索
+            $(".search-input").keyup(function (e) {
+                if (e.keyCode === 13) {
+                    $("#search").click();
+                    return false;
+                }
+            });
+            //点击排序
+            $('.list_sort').click(function () {
+                var url = $(this).attr('url');
+                var ids = $('.ids:checked');
+                var param = '';
+                if (ids.length > 0) {
+                    var str = new Array();
+                    ids.each(function () {
+                        str.push($(this).val());
+                    });
+                    param = str.join(',');
+                }
+
+                if (url != undefined && url != '') {
+                    window.location.href = url + '/ids/' + param;
+                }
+            });
+        });
+    </script>
+{/block}

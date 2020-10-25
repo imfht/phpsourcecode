@@ -1,0 +1,161 @@
+<div class='editable-page-model'>
+<form id="editable_model_form" action="{$Request.url}">
+    <div class="dssc-form-default">
+        <dl>
+            <dt>{$Think.lang.ds_goodsclass}</dt>
+            {if $Request.controller=='EditablePage'}
+            <dd id="searchgc_td"></dd>
+            <input type="hidden" id="choose_gcid" name="choose_gcid" value="0"/>
+            {else}
+            <dd>
+                <select name="choose_gcid" class="w150">
+                    <option value="0">{$Think.lang.ds_please_choose}</option>
+                    {notempty name="store_goods_class"}
+                    {foreach name="store_goods_class" item="val"}
+                    <option value="{$val.storegc_id}" {if $goods_info.gc_id == $val.storegc_id}selected=selected{/if}>{$val.storegc_name}</option>
+                    {if isset($val['child']) && count($val['child'])>0}
+                    {foreach name="$val.child" item="child_val"  }
+                    <option value="{$child_val.storegc_id}" {if $goods_info.gc_id == $child_val.storegc_id}selected=selected{/if}>&nbsp;&nbsp;&nbsp;&nbsp;{$child_val.storegc_name}</option>
+                    {/foreach}
+                    {/if}
+                    {/foreach}
+                    {/notempty}
+                </select>
+            </dd>
+            {/if}
+        </dl>
+        <dl>
+            <dt>{$Think.lang.ds_sort}</dt>
+            <dd>
+                <label class="radio-label">
+                    <i  class="radio-common{if $goods_info.sort=='new'} selected{/if}">
+                        <input type="radio" name="sort" value="new"{if $goods_info.sort=='new'} checked="checked"{/if}>
+                    </i>
+                    <span>{$Think.lang.sort_by_new}</span>
+                </label>
+                <label class="radio-label">
+                    <i  class="radio-common{if $goods_info.sort=='hot'} selected{/if}">
+                        <input type="radio" name="sort" value="hot"{if $goods_info.sort=='hot'} checked="checked"{/if}>
+                    </i>
+                    <span>{$Think.lang.sort_by_hot}</span>
+                </label>
+                <label class="radio-label">
+                    <i  class="radio-common{if $goods_info.sort=='good'} selected{/if}">
+                        <input type="radio" name="sort" value="good"{if $goods_info.sort=='good'} checked="checked"{/if}>
+                    </i>
+                    <span>{$Think.lang.sort_by_good}</span>
+                </label>
+            </dd>
+        </dl>
+        <dl>
+            <dt>{$Think.lang.if_fix_goods}</dt>
+            <dd class="onoff">
+                <label for="if_fix1" class="cb-enable {if $goods_info.if_fix==1}selected{/if}" onclick="$('#fix_goods').show();$(this).parent().find('.cb-disable').removeClass('selected');$(this).addClass('selected')"><span>{$Think.lang.ds_yes}</span></label>
+                <label for="if_fix0" class="cb-disable {if $goods_info.if_fix==0}selected{/if}" onclick="$('#fix_goods').hide();$(this).parent().find('.cb-enable').removeClass('selected');$(this).addClass('selected')"><span>{$Think.lang.ds_no}</span></label>
+                <input type="radio" id="if_fix0" name="if_fix" value="0"{if $goods_info.if_fix==0} checked="checked"{/if}>
+                <input type="radio" id="if_fix1" name="if_fix" value="1"{if $goods_info.if_fix==1} checked="checked"{/if}>
+                
+            </dd>
+        </dl>
+        <div class="p15" id="fix_goods"{if $goods_info.if_fix==0} style='display: none'{/if}>
+                <table class="dssc-default-table mb15">
+                  <thead>
+                    <tr>
+                      <th class="tl" style="padding-left: 10px" colspan="2">{$Think.lang.ds_goods_name}</th>
+                      <th class="w90">{$Think.lang.ds_goods_price}</th>
+                      <th class="w90">{$Think.lang.ds_sort}</th>
+                      <th class="w90">{$Think.lang.ds_handle}</th></tr>
+                  </thead>
+                  <tbody dstype="bundling_data" class="bd-line tip">
+                    <tr{notempty name="goods_info.goods_id"} style="display:none;"{/notempty}>
+                      <td colspan="20" class="norecord">
+                        <div class="no-promotion">
+                          <i class="zh"></i>
+                          <span>{$Think.lang.ds_no_record}</span></div>
+                      </td>
+                    </tr>{notempty name="goods_info.goods_id"} {foreach name="goods_list" item="val"}
+                    <tr id="bundling_tr_{$val.goods_id}" class="off-shelf">
+                      <td class="w50">
+                        <div class="shelf-state">
+                          <div class="pic-thumb">
+                            <img src="{:goods_cthumb($val.goods_image,240,$val.store_id)}" ncname="{$val.goods_image}" dstype="bundling_data_img"></div></div>
+                      </td>
+                      <td class="tl">
+                        <dl class="goods-name">
+                          <dt style="width: 300px;">{$val.goods_name}</dt></dl>
+                      </td>
+                      <td class="goods-price w90" dstype="bundling_data_price">{$val.goods_price}</td>
+                      <td class="w90"><input type="number" min="0" max="255" size="1" name="goods_id[{$val.goods_id}][sort]" value="{if(isset($goods_info['goods_id'][$val['goods_id']]['sort']))}{$goods_info['goods_id'][$val['goods_id']]['sort']}{else}255{/if}" /></td>
+                      <td class="dscs-table-handle w90">
+                        <span>
+                          <a onclick="bundling_operate_delete($('#bundling_tr_{$val.goods_id}'), {$val.goods_id})" href="JavaScript:void(0);" class="btn-orange">
+                            <i class="iconfont">&#xe754;</i>
+                            <p>{$Think.lang.ds_del}</p>
+                          </a>
+                        </span>
+                      </td>
+                    </tr>{/foreach} {/notempty}</tbody>
+                </table>
+                <a id="editable_model_add_goods" href="{:url(request()->controller().'/search_goods')}" class="dssc-btn dssc-btn-acidblue selected">{$Think.lang.ds_please_choose}</a>
+                <div class="div-goods-select-box">
+                  <div id="editable_model_goods_ajaxContent"></div>
+                  <a id="editable_model_goods_delete" class="close" href="javascript:void(0);" style="display: none; right: -10px;">X</a>
+                </div>
+        </div>
+    </div>
+    <div class='tc pb20 pt20'><a class="dssc-btn" dstype="select-124" href="javascript:void(0)" onclick="submitEditableModelForm()">{$Think.lang.ds_submit}</a></div>
+</form>
+</div>
+<script>
+{if $Request.controller=='EditablePage'}
+var gc_choose_json={$gc_choose_json|raw};
+var gc_json={$gc_json|raw};
+//商品分类
+init_gcselect(gc_choose_json, gc_json);
+{/if}
+    $(function () {
+    $(".radio-common").on("click", function () {
+        var radio = $(this).children("input");
+        var name = radio.attr("name");
+        if (radio.is(":checked")) {
+            $(".radio-common>input[type='radio'][name='" + name + "']").parent().removeClass("selected");
+            $(this).addClass("selected");
+        } else {
+            $(this).removeClass("selected");
+        }
+    });
+
+        /* ajax添加商品  */
+        $('#editable_model_add_goods').ajaxContent({
+            event:'click', //mouseover
+            loaderType:"img",
+            loadingMsg:"{$Think.HOME_SITE_ROOT}/images/loading.gif",
+            target:'#editable_model_goods_ajaxContent'
+        }).click(function(){
+            $(this).hide();
+            $('#editable_model_goods_delete').show();
+        });
+        $('#editable_model_goods_delete').click(function(){
+            $(this).hide();
+            $('#editable_model_goods_ajaxContent').html('');
+            $('#editable_model_add_goods').show();
+        });
+        $('#editable_model_goods_ajaxContent').on('click', '.pagination li a', function() {
+            $('#editable_model_goods_ajaxContent').load($(this).attr('href'));
+            return false;
+        });
+    })
+
+    /* 删除商品 */
+    function bundling_operate_delete(o, id){
+        o.remove();
+        check_bundling_data_length();
+        $('li[dstype="'+id+'"]').children(':last').html('<a href="JavaScript:void(0);" onclick="bundling_goods_add($(this))" class="dssc-btn-mini dssc-btn-green"><i class="iconfont">&#xe6db;</i>{$Think.lang.ds_add}</a>');
+    }
+    function check_bundling_data_length(){
+        if ($('tbody[dstype="bundling_data"] tr').length == 1) {
+            $('tbody[dstype="bundling_data"]').children(':first').show();
+        }
+    }
+</script>
+

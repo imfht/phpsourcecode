@@ -1,0 +1,254 @@
+<!--{template /module/admin/view/head}-->
+
+<style type="text/css">
+body {background:#f5f5f5;}
+
+#main_content.container-fluid {padding:0; background:#f5f5f5;}
+#container {height:270px;}
+#pannel {height:27s0px; font-size:12px; overflow:auto;}
+#pannel .error {color:red;}
+#pannel .item {position:relative; padding-left:19px; cursor:pointer;}
+#pannel .item p {margin:0; font-size:12px;}
+#pannel .item p.title {font-size:13px; color:#5688CB;}
+#pannel .item p.address {color:#999;}
+#pannel .item .icon {position:absolute; top:2px; left:0; width:17px; height:17px;}
+#pannel .item .icon-1 {background: url(static/images/map/marker_n.png) -54px 0 no-repeat;}
+#pannel .item .icon-2 {background: url(static/images/map/marker_n.png) -71px 0 no-repeat;}
+#pannel .item .icon-3 {background: url(static/images/map/marker_n.png) -88px 0 no-repeat;}
+#pannel .item .icon-4 {background: url(static/images/map/marker_n.png) -105px 0 no-repeat;}
+#pannel .item .icon-5 {background: url(static/images/map/marker_n.png) -122px 0 no-repeat;}
+#pannel .item .icon-6 {background: url(static/images/map/marker_n.png) -139px 0 no-repeat;}
+#pannel .item .icon-7 {background: url(static/images/map/marker_n.png) -156px 0 no-repeat;}
+#pannel .item .icon-8 {background: url(static/images/map/marker_n.png) -173px 0 no-repeat;}
+#pannel .item .icon-9 {background: url(static/images/map/marker_n.png) -190px 0 no-repeat;}
+#pannel .item .icon-10 {background: url(static/images/map/marker_n.png) -207px 0 no-repeat;}
+#pannel .item-hover {background-color:#f7f7f7;}
+#pannel .item-active {background-color:#f7f7f7;}
+#result {margin:0; font-size:12px; color:#999;}
+</style>
+
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<div class="row-fluid">
+			<form class="form-search">
+			<div class="action-wrapper">
+				<div class="pull-left">
+					<select name="sltSProvinceId">
+			        <option value="0">{lang cms.module.view.map.dialog.province}</option>
+			        <!--{loop $provinces $province}-->
+					<option value="{$province[DISTRICTID]}" {if $province[DISTRICTID] == $provinceid}selected="selected"{/if}>{$province[CNAME]}</option>
+					<!--{/loop}-->
+			        </select>
+			        <select name="sltSCityId">
+			        <option value="0">{lang cms.module.view.map.dialog.city}</option>
+			        <!--{loop $cities $city}-->
+					<option value="{$city[DISTRICTID]}" {if $city[DISTRICTID] == $cityid}selected="selected"{/if}>{$city[CNAME]}</option>
+					<!--{/loop}-->
+			        </select>
+				</div>
+				<div class="pull-right">
+					<div class="input-append">
+						<input type="text" name="txtKeyword" value="" class="input-small search-query" />
+						<button type="button" class="btn btn-search">{lang admin.search.submit}</button>
+					</div>
+				</div>
+			</div>
+			</form>
+			
+			<hr/>
+			
+			<table width="100%" cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<td width="250" valign="top">
+					<div id="pannel">
+						{lang cms.module.view.map.dialog.tips}
+					</div>
+				</td>
+				<td width="10">&nbsp;</td>
+				<td>
+					<div id="container"></div>
+					<p id="result">
+						<span class="point"></span>
+						<span class="address"></span>
+					</p>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="http://map.qq.com/api/js?v=2.exp&key=7FXBZ-GQXWU-5JNVC-4DPNJ-P6EX7-MUBWS"></script>
+
+<script>
+var container, map, label;
+var cityService;
+var cityResult;
+var marker = null;
+var markers = [];
+
+$(function(){
+	$("select[name='sltSProvinceId']").change(function(){
+		$("select[name='sltSCityId']").get(0).options.length = 1;
+		if($(this).val() - 0 == 0) return;
+		
+		$.getJSON('{$ADMIN_SCRIPT}/cms/{$dispatches[control]}/_city', {provinceid:$(this).val()}, function(data){
+			var sltOfCity = $("select[name='sltSCityId']").get(0);
+			for(var i = 0; i < data.length; i++) sltOfCity.options[i + 1] = new Option(data[i].CNAME, data[i].DISTRICTID);
+		});
+	});
+	
+	$("select[name='sltSCityId']").change(function(){
+		$('#pannel').html('{lang cms.module.view.map.dialog.tips}');
+		$("input[name='txtKeyword']").val('');
+		
+		if($(this).val() - 0 == 0) return;
+		
+		var cityName = $('option:selected', this).text();
+		var cityServiceUrl = encodeURI("http://apis.map.qq.com/ws/geocoder/v1/?region=" + cityName + "&address=" + cityName + "&key=7FXBZ-GQXWU-5JNVC-4DPNJ-P6EX7-MUBWS&output=jsonp&&callback=?");
+		$.getJSON(cityServiceUrl, function(result){
+            map.setCenter(new qq.maps.LatLng(result.result.location.lat, result.result.location.lng));
+            map.setZoom(12);
+        });
+	});
+	
+	container = document.getElementById('container');
+	
+	map = new qq.maps.Map(container, {zoom:{$maps[zoom]}});
+	map.panTo(new qq.maps.LatLng({$maps[lat]}, {$maps[lng]}));
+	marker = new qq.maps.Marker({
+        position: new qq.maps.LatLng({$maps[lat]}, {$maps[lng]}),
+        map: map
+    });
+    
+	label = new qq.maps.Label({map:map, offset:new qq.maps.Size(15, -12), draggable:false, clickable:false}); 
+	
+	cityService = new qq.maps.CityService({
+        complete: function (result){
+        	cityResult = result; 
+            map.setCenter(result.detail.latLng); 
+        }
+    });
+	
+	map.setOptions({draggableCursor: 'crosshair'});
+	
+	$(container).mouseenter(function(){
+	    label.setMap(map);
+	});
+	
+	$(container).mouseleave(function () {
+	    label.setMap(null);
+	});
+	
+	qq.maps.event.addListener(map, 'mousemove', function(evt){
+	    var latlng = evt.latLng;
+	    label.setPosition(latlng);
+	    label.setContent(latlng.getLat().toFixed(6) + ',' + latlng.getLng().toFixed(6));
+	});
+	
+	qq.maps.event.addListener(map, 'click', function(evt){
+		marker.setMap(null);
+		
+		marker = new qq.maps.Marker({
+	        position: new qq.maps.LatLng(evt.latLng.getLat(), evt.latLng.getLng()),
+	        map: map
+	    });
+	    
+	    $('#result .point').text('{lang cms.module.view.map.dialog.point}' + evt.latLng.getLat().toFixed(6) + ',' + evt.latLng.getLng().toFixed(6));
+	    
+	    var locationUrl = encodeURI("http://apis.map.qq.com/ws/geocoder/v1/?location=" + evt.latLng.getLat() + ',' + evt.latLng.getLng() + "&key=7FXBZ-GQXWU-5JNVC-4DPNJ-P6EX7-MUBWS&output=jsonp&&callback=?");
+	    $.getJSON(locationUrl, function(result){
+	       $('#result .address').text(result.result != undefined ? ' ' + result.result.address : '');
+	       
+	       var provinceid = $("select[name='sltSProvinceId']").val();
+	       var cityid = $("select[name='sltSCityId']").val();
+	       
+	       window.parent.hdnModule.value = 'map|' + evt.latLng.getLat() + '|' + evt.latLng.getLng() + '|' + map.getZoom() + '|' + provinceid + '|' + cityid;
+	    })
+	});
+	
+	qq.maps.event.addListener(map, 'zoom_changed', function(evt){
+		var provinceid = $("select[name='sltSProvinceId']").val();
+		var cityid = $("select[name='sltSCityId']").val();
+		
+		window.parent.hdnModule.value = 'map|' + map.getCenter().getLat() + '|' + map.getCenter().getLng() + '|' + map.getZoom() + '|' + provinceid + '|' + cityid;
+	});
+	
+	$('.btn-search').click(function(){
+		$('#pannel').html('{lang cms.module.view.map.dialog.tips}');
+		
+		var keyword = $("input[name='txtKeyword']").val();
+		if(!keyword){
+			$('#pannel').html('<span class="error">{lang cms.module.view.map.dialog.error}</span>');
+			return;
+		}
+		
+		var cityName = $("select[name='sltSCityId'] option:selected").text();
+	    var searchUrl = encodeURI("http://apis.map.qq.com/ws/place/v1/search?keyword=" + keyword + "&boundary=region(" + cityName + ",0)&page_size=9&page_index=1&key=7FXBZ-GQXWU-5JNVC-4DPNJ-P6EX7-MUBWS&output=jsonp&&callback=?");
+	    var latlngBounds = new qq.maps.LatLngBounds(); 
+	    
+	    $.getJSON(searchUrl, function(result){
+	        for(var i = 0; i < markers.length; i++) markers[i].setMap(null);
+	        markers.length = 0;
+	        
+	        if(!result.count){
+	        	$('#pannel').html('<span class="error">{lang cms.module.view.map.dialog.error}</span>');
+	        	return;
+	        }
+	        
+	        var tempHTML = '';
+	        
+	        for(var i = 0; i < 10 && i < result.data.length; i++){
+	        	var ele = result.data[i];
+	        	var latlng = new qq.maps.LatLng(ele.location.lat, ele.location.lng);
+	        	latlngBounds.extend(latlng); 
+	        	
+	        	var left = i * 27;
+                var tmarker = new qq.maps.Marker({
+                    map:map,
+                    position:latlng,
+                    zIndex:10
+                });
+                
+                tmarker.index = i;
+                tmarker.isClicked = false;
+                
+                var anchor = new qq.maps.Point(10, 30); 
+                var origin = new qq.maps.Point(left, 0); 
+                var size = new qq.maps.Size(27, 33); 
+                var icon = new qq.maps.MarkerImage('static/images/map/marker10.png', size, origin, anchor); 
+                tmarker.setIcon(icon);
+                
+                markers.push(tmarker);
+                
+                map.fitBounds(latlngBounds); 
+                
+                tempHTML += '<div latlng="' + ele.location.lat + ',' + ele.location.lng+ '" index="' + i + '" class="item">';
+                tempHTML += '<p class="icon icon-' + (i + 1) + '"></p>';
+                tempHTML += '<p class="title">' + ele.title + '</p>';
+                tempHTML += '<p class="address">' + ele.address + '</p>';
+                tempHTML += '</div>';
+	        }
+	        
+	        $('#pannel').html(tempHTML);
+	        
+	        $('#pannel .item').hover(function(){
+	        	$(this).addClass('item-hover');
+	        }, function(){
+	        	if(!$(this).hasClass('item-active')) $(this).removeClass('item-hover');
+	        }).click(function(){
+	        	$('#pannel .item').removeClass('item-hover item-active');
+	        	$(this).addClass('item-active');
+	        	
+	        	var latlng = $(this).attr('latlng');
+	        	var index = $(this).attr('index');
+	        	var tmparr = latlng.split(',');
+	        	
+	        	map.panTo(new qq.maps.LatLng(tmparr[0], tmparr[1])); 
+	        	map.setZoom(16);
+	        });
+	    });
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

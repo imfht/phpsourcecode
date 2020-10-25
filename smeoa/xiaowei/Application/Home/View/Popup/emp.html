@@ -1,0 +1,244 @@
+<extend name="Layout/ins_popup" />
+<block name="content">
+	<input class="left dis" type="radio" id="rb_dept" name="type" value="dept" >
+	{:W('PageHeader/simple',array('name'=>'选择人员','search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left">
+				<label class="checkbox inline">
+					<input class="left" type="radio" id="rb_dept" name="type" value="dept" >
+					部门</label>
+				<label class="checkbox inline hidden">
+					<input class="left" type="radio" id="rb_rank" name="type" value="rank">
+					职级</label>
+				<label class="checkbox inline">
+					<input class="left" type="radio" id="rb_position" name="type" value="position">
+					职位</label>
+			</div>
+			<div class="pull-right">
+				<a  onclick="save();" class="btn btn-sm btn-primary">确定</a>
+				<a  onclick="myclose();" class="btn btn-sm btn-default">关闭</a>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-5">
+			<div class="row form-horizontal">
+				<div class="form-group">
+					<b>地址簿</b>
+				</div>
+			</div>
+			<div class="row popup_tree_menu">
+				<div id="dept" class="hidden" style="height:200px;">
+					{$list_dept}
+				</div>
+				<div id="position" class="hidden" style="height:200px;">
+					{$list_position}
+				</div>
+			</div>
+			<div class="row">
+				<div id="addr_list" style="width:100%;height:200px;"></div>
+			</div>
+		</div>
+		<div class="col-sm-7">
+			<div class="row form-horizontal">
+				<div class="form-group">
+					<label class="col-sm-2 control-label" ></label>
+					<div class="col-sm-10">
+						<b>人员</b>
+						<span id="rc_count"></span>
+					</div>
+				</div>
+			</div>
+			<div class="row form-horizontal">
+				<div class="form-group">
+					<label class="col-sm-2 control-label" > <a onclick="add_address('rc');" class="btn btn-sm btn-primary"> <i class="fa fa-angle-double-right"></i> </a> </label>
+					<div class="col-sm-10">
+						<div id="rc" style="width:100%;height:400px;overflow:hidden">
+							<select size="6" style="height:100%;width:100%;"></select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function save() {
+			$("#rc select option").each(function(i) {
+				$("#emp_list .address_list", parent.document).append('<span title="' + $(this).text() + '" emp_no="' + $(this).val() + '">' + jQuery.trim($(this).text()) + ' </span>');
+			});
+			myclose();
+		}
+
+		// 显示AJAX 读取的数据
+		function showdata(result) {
+			$("#addr_list").html("");
+			if ( type = $("input[name='type']:checked").val() == "dept") {
+				var id = $("#dept a.active").attr("node");
+				//var dept_name = $("#dept a.active span").text();
+				//var email = "dept@group";
+				//var html_string = "<label><input type=\"checkbox\" name=\"addr_id\" value=\"dept_" + id + "\"><a id=\"D" + id + "\" title=" + email + " onmousedown=\"return false\" href=\"javascript:void(0);\">" + dept_name + "&lt;" + email + "&gt; </a></label>";
+				//$("#addr_list").html(html_string);
+			}
+			for (s in result.data) {
+				var id = result.data[s].id;
+				var position_name = result.data[s].position_name;
+				var emp_no = result.data[s].id;
+				var name = result.data[s].name;
+				var email = result.data[s].id;
+				if (position_name == undefined) {
+					var html_string = "<label><input type=\"checkbox\" name=\"addr_id\" value=\"" + emp_no + "\"><a  title=" + email + " onmousedown=\"return false\" href=\"javascript:void(0);\">" + name + " &lt;" + email + "&gt; </a></label>";
+				} else {
+					var html_string = "<label><input type=\"checkbox\" name=\"addr_id\" value=\"" + emp_no + "\"><a  title=" + email + " onmousedown=\"return false\" href=\"javascript:void(0);\">" + name + " / " + position_name + " </a></label>";
+				}
+				$("#addr_list").html($("#addr_list").html() + html_string);
+			}
+		}
+
+
+		$(document).ready(function() {
+
+			$("#rb_{$type}").attr("checked", true);
+			// 选择用户默认选择的类型
+
+			$("#{$type}").removeClass("dis");
+
+			$("input[name='type']").change(function() {
+				$("input[name='type']").each(function() {
+					$("#" + $(this).val()).addClass("dis");
+				});
+				$("#" + $(this).val()).removeClass("dis")
+			});
+			//点击节点时读取相应的数据
+			$(".tree_menu  a").click(function() {
+				$(".tree_menu a").each(function() {
+					$(this).attr("class", "");
+				});
+				var type = $("input[name='type']:checked").val();
+				$(this).attr("class", "active");
+				sendAjax("{:U('read')}", "type=" + type + "&id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+				//禁止连接生效
+			});
+			// 双击添加到收件人 因后添加的数据 所以需要用live函数
+			$("#addr_list a").on("dblclick", function() {
+				$text = $(this).text();
+				$val = $(this).parent().find("input").val();
+				if ($("#rc select option[value='" + $val + "']").val() == undefined) {
+					$option = $("<option></option>");
+					$option.val($val);
+					$option.text($text).appendTo("#rc select");
+					$("#rc_count").text("(" + $("#rc select option").length + ")");
+				};
+			});
+			/* 双击添加到收件人 因后添加的数据 所以需要用live函数 */
+			$("#rc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#rc_count").text("(" + $("#rc select option").length + ")");
+			});
+
+			$("#cc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#cc_count").text("(" + $("#cc select option").length + ")");
+			});
+
+			$("#bcc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#bcc_count").text("(" + $("#bcc select option").length + ")");
+			});
+
+			$("#addr_list").on("mouseover", function() {
+				$("#addr_list label").draggable({
+					appendTo : "body",
+					helper : "clone"
+				});
+			});
+
+			$("#rc select").droppable({
+				activeClass : "ui-state-default",
+				hoverClass : "ui-state-hover",
+				accept : ":not(.ui-sortable-helper)",
+				drop : function(event, ui) {
+					$text = ui.draggable.text();
+					$val = ui.draggable.find("input").val();
+					if ($("#rc select option[value='" + $val + "']").val() == undefined) {
+						$option = $("<option></option>");
+						$option.val($val);
+						$option.text($text).appendTo(this);
+						$("#rc_count").text("(" + $("#rc select option").length + ")");
+					};
+				},
+			}).sortable({
+				items : "option:not(.placeholder)",
+				sort : function() {
+					// gets added unintentionally by droppable interacting with sortable
+					// using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+					$(this).removeClass("ui-state-default");
+				}
+			});
+
+			$("#cc select").droppable({
+				activeClass : "ui-state-default",
+				hoverClass : "ui-state-hover",
+				accept : ":not(.ui-sortable-helper)",
+				drop : function(event, ui) {
+					$text = ui.draggable.text();
+					$val = ui.draggable.find("input").val();
+					if ($("#cc select option[value='" + $val + "']").val() == undefined) {
+						$option = $("<option></option>");
+						$option.val($val);
+						$option.text($text).appendTo(this);
+						$("#cc_count").text("(" + $("#cc select option").length + ")");
+					};
+				},
+			}).sortable({
+				items : "li:not(.placeholder)",
+				sort : function() {
+					// gets added unintentionally by droppable interacting with sortable
+					// using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+					$(this).removeClass("ui-state-default");
+				}
+			});
+
+			$("#bcc select").droppable({
+				activeClass : "ui-state-default",
+				hoverClass : "ui-state-hover",
+				accept : ":not(.ui-sortable-helper)",
+				drop : function(event, ui) {
+					$text = ui.draggable.text();
+					$val = ui.draggable.find("input").val();
+					if ($("#bcc select option[value='" + $val + "']").val() == undefined) {
+						$option = $("<option></option>");
+						$option.val($val);
+						$option.text($text).appendTo(this);
+						$("#bcc_count").text("(" + $("#bcc select option").length + ")");
+					};
+				},
+			}).sortable({
+				items : "li:not(.placeholder)",
+				sort : function() {
+					$(this).removeClass("ui-state-default");
+				}
+			});
+		});
+		//最终确认
+
+		function add_address(name) {
+			$("input:checked[name='addr_id']").each(function() {
+				$(this).prop('checked',false);
+				$text = $(this).parent().find("a").text().trim();
+				$val = $(this).val();
+				if ($("#" + name + " select option[value='" + $val + "']").val() == undefined) {
+					$option = $("<option></option>");
+					$option.val($val);
+					$option.text($text).appendTo("#" + name + " select");
+					$("#" + name + "_count").text("(" + $("#" + name + " select option").length + ")");
+				};
+			});
+		}
+	</script>
+</block>

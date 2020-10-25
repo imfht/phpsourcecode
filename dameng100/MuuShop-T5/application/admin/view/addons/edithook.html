@@ -1,0 +1,123 @@
+{extend name="common/main"/}
+{block name="style"}
+<link href="__ZUI__/lib/board/zui.board.min.css" rel="stylesheet">
+{/block}
+{block name="body"}
+
+	<!-- 标题栏 -->
+	<div class="main-title cf">
+		<h2>
+            {present name="data"}
+            {:lang("_EDIT_")}
+            {else /}
+            {:lang("_NEWLY_ADDED_")}
+            {/present}
+            {:lang("_HOOK_")}
+    </h2>
+	</div>
+
+	<!-- 修改密码表单 -->
+	<form action="{:url('updateHook')}" method="post" class="form-horizontal">
+        <div class="with-padding">
+            <div class="form-item builder_item">
+                <label class="item-label">{:lang("_HOOK_NAME_")}<span class="check-tips"></span></label>
+                <div class="controls">
+                    <input type="text" value="{$data.name}" name="name" class="text form-control" style="width: 400px">
+                </div>
+            </div>
+            <div class="form-item builder_item">
+                <label class="item-label">{:lang("_HOOK_DESCRIPTION_")}<span class="check-tips">{:lang("_HOOKS_DESCRIPTION_")}</span></label>
+                <div class="controls">
+                    <label class="textarea input-large"><textarea name="description" class="form-control" style="width: 400px" >{$data.description}</textarea></label>
+                </div>
+            </div>
+            <div class="form-item builder_item">
+                <label class="item-label">{:lang("_HOOK_TYPE_")}<span class="check-tips">{:lang("_THE_MAIN_USE_OF_THE_HOOK_")}</span></label>
+                <div class="controls">
+                    <select name="type" class="form-control" style="width: auto">
+                        {volist name=":config('HOOKS_TYPE')" id="vo"}
+                            <option value="{$key}" {eq name="data.type" value="$key"} selected{/eq}>{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            {present name="data"}
+                <div class="form-item builder_item">
+                    <label class="item-label">{:lang("_HOOK_MOUNTED_PLUGIN_SORTING_")}
+                        <span class="check-tips">{:lang("_ORDER_PRESERVING_DRAG_EFFECT_WITH_A_HOOK_MOUNT_PLUGIN_EXECUTION_ORDER_")}</span>
+                    </label>
+
+                    <div id="drag-container" class="controls" style="position:relative;">
+                        <div class="boards" id="myBoards">
+                          <!-- 未挂载 -->
+                          <div class="board panel">
+                            <div class="panel-heading">
+                              <strong>未挂载</strong>
+                            </div>
+                            <div class="panel-body">
+                              <div class="board-list">
+                                {volist name="all_addons_arr" id="all_addons"}
+                                <div class="board-item" data-value="{$all_addons.name}">
+                                    {$all_addons.name}【{$all_addons.title}】
+                                </div>
+                                {/volist}
+                              </div>
+                            </div>
+                          </div>
+                          <!-- 已挂载 -->
+                          <div class="board panel panel-success" id="ok_addons">
+                            <div class="panel-heading">
+                              <strong>已挂载</strong>
+                            </div>
+                            <div class="panel-body">
+                              <div class="board-list">
+                                {volist name="ok_addons_arr" id="ok_addons"}
+                                <div class="board-item" data-value="{$ok_addons.name}">
+                                    {$ok_addons.name}【{$ok_addons.title}】
+                                </div>
+                                {/volist}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+            {/present}
+
+            <div class="">
+                <input type="hidden" name="id" value="{$data.id}">
+                <input type="hidden" name="addons" value="{$data.addons}" style="width: 100%" readonly>
+
+                <button type="submit" class="btn btn-success submit-btn ajax-post" target-form="form-horizontal">{:lang("_SURE_WITH_SPACE_")}</button>
+                <button class="btn btn-return" onclick="javascript:history.back(-1);return false;">{:lang("_RETURN_WITH_SPACE_")}</button>
+            </div>
+        </div>
+	</form>
+
+</div>
+{/block}
+
+{block name="script"}
+    <!--新版看板资源引入-->
+    <script src="__ZUI__/lib/board/zui.board.min.js"></script>
+    <script>
+        $('#myBoards').boards({
+            drop: function(e){
+                
+                if(e.isNew){
+                    //有BUG延迟执行
+                    setTimeout("updateVal()",100);
+                }
+            }
+        });
+        function updateVal() {
+            var sortVal = [];
+            $('#ok_addons .board-item').each(function(){
+                if(typeof $(this).data('value') != 'undefined'){
+                    sortVal.push($(this).data('value'));
+                }
+            });
+            $("input[name='addons']").val(sortVal.join(','));
+        }
+    </script>
+{/block}

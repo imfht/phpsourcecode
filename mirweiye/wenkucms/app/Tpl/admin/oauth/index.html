@@ -1,0 +1,164 @@
+<include file="public:top" />
+<!--网站设置-->
+<body class="body">
+<style type="text/css">
+    .red {color: #FF5722!important;}
+    .green {color: #5FB878!important;}
+</style>
+<fieldset class="layui-elem-field layui-field-title" style="margin-top:0px;">
+    <legend>{$menuid|getmenuname}</legend>
+</fieldset>
+
+<form class="layui-form layui-form-pane" action="">
+    <table class="layui-table">
+        <colgroup>
+            <col width="100">
+            <col width="200">
+            <col width="100">
+            <col width="">
+            <col width="100">
+            <col width="100">
+         </colgroup>
+        <thead>
+        <tr>
+            <th>{:L('oauth_code')}</th>
+            <th>{:L('oauth_name')}</th>
+            <th>{:L('sort_order')}</th>
+            <th>{:L('oauth_desc')}</th>
+            <th>{:L('enabled')}</th>
+            <th>管理操作</th>
+        </tr>
+        </thead>
+         <tbody id="userList">
+            <volist name="list" id="val">
+            <if condition="$val.status gt -1">
+            <tr>
+                <td>{$val.code}</td>
+                <td><span data-tdtype="edit" data-field="name" data-id="{$val.id}" class="tdedit">{$val.name}</span></td>
+                <td><span data-tdtype="edit" data-field="ordid" data-id="{$val.id}" class="tdedit">{$val.ordid}</span></td>
+                <td>{$val.desc}</td>
+                <td>
+                    <input type="checkbox" name="status" value="{$val.status}" data-uri="{:U('oauth/ajax_edit',array('field'=>'status','id'=>$val['id']))}" lay-skin="switch" lay-filter="status" lay-text="启用|禁止" <if condition="$val.status eq 1">checked </if>>
+                </td>
+                <td>
+                    <a href="javascript:;" class="J_showdialog" data-uri="{:U('oauth/edit', array('id'=>$val['id']))}" data-title="{:L('edit')} - {$val.name}"  id="edit">{:L('edit')}</a> | 
+                    <a href="javascript:;" class="J_confirmurl" data-acttype="ajax" data-uri="{:U('oauth/delete', array('id'=>$val['id']))}" data-msg="{:sprintf(L('confirm_uninstall_one'),$val['name'])}" id="delete">{:L('uninstall')}</a>
+                </td>
+            </tr>
+            <else/>
+            <tr>
+               
+                <td>{$val.code}</td>
+                <td>{$val.name}</td>
+                <td>未安装</td>
+                <td>{$val.desc}</td>
+                <td>{$val.author}</td>
+                <td>未安装</td>
+                <td>
+                    <a href="javascript:;" class="J_showdialog" data-uri="{:U('oauth/install', array('code'=>$val['code']))}" data-title="{:L('install')} - {$val.name}" id="install">{:L('install')}</a>
+                </td>
+            </tr> 
+            </if>
+            </volist>
+        </tbody>
+
+    </table>
+</form>
+<div id="test-laypage-demo0">
+  <div class="layui-box layui-laypage layui-laypage-default" id="layui-laypage-29">
+  {$page}
+  </div>
+</div>
+<script type="text/javascript" src="__PUBLIC__/admin/layui/layui.js"></script>
+<script>
+//Demo
+layui.use(['layer','jquery','form','element','table'], function () {
+   // 操作对象
+    var layer = layui.layer,$ = layui.jquery,form = layui.form, element = layui.element,table = layui.table;
+
+    //监听指定开关
+     form.on('switch(status)', function(data){
+     s_url = $(this).attr('data-uri') ;
+     var val = '';
+        if (data.elem.checked == true) {val = 1;}else{val = 0;}
+        $.post(s_url + "&val="+val,data.field,function(res){
+            if(res.status ==  1){
+                layer.msg('更新成功',{time:1800});
+            }else{
+                layer.msg('更新失败',{time:1800});
+            }
+        });
+    });
+
+     
+
+    //编辑
+    $("tbody#userList tr td #edit").click(function(data){
+        var s_title   = $(this).attr('data-title'), delurl = $(this).attr('data-uri');  
+            $.getJSON(delurl,function(res){
+                if(res.status ==  1){
+                    layer.open({
+                      type: 1,
+                      title: s_title,
+                      area: ['450px', '410px'],
+                      fixed: true, 
+                      content: res.data
+                    });
+                }else{
+                    layer.msg(res.msg,{time:1800});
+                    return false;
+                }
+            });
+    });  
+
+    //install
+    $("tbody#userList tr td #install").click(function(data){
+        var s_title   = $(this).attr('data-title'), delurl = $(this).attr('data-uri');  
+            $.getJSON(delurl,function(res){
+                if(res.status ==  1){
+                    layer.open({
+                      type: 1,
+                      title: s_title,
+                      area: ['450px', '410px'],
+                      fixed: true, 
+                      content: res.data
+                    });
+                }else{
+                    layer.msg(res.msg,{time:1800});
+                    return false;
+                }
+            });
+    }); 
+
+
+
+
+  
+ 
+    //卸载
+    $("tbody#userList tr td #delete").click(function(data){
+        var s_id   = $(this).attr('data-id'), delurl = $(this).attr('data-uri');  
+        layer.confirm('确认卸载吗？', {btn: ['确认','取消']}, function(){  
+            $.post(delurl,function(res){
+                if(res.status ==  1){
+                    layer.msg(res.msg,{time:1800},function(){
+                     location.reload();  //成功后刷新当前页
+                    });
+                }else{
+                    layer.msg(res.msg,{time:1800});
+                    return false;
+                }
+            });
+        }, function(){  
+            layer.msg('取消删除');  
+            return false;  
+            });  
+        return false; 
+    });  
+  
+
+
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+<?php echo $this->getHtml()->jsFile($this->js_url . '/mods/member.js?v=' . $this->version); ?>

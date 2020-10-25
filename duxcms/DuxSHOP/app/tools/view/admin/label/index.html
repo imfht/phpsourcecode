@@ -1,0 +1,230 @@
+<div>
+    <div class="dux-box">
+        <div class="box-side">
+            <div class="uk-card uk-card-small uk-card-default dux-panel">
+                <div class="uk-card-header">标签类型</div>
+                <div class="uk-card-body">
+                    <div class="dux-tree">
+                        <ul>
+                            <!--loop{$list as $key => $vo}-->
+                            <!--if{$label == $key}-->
+                            <li class="active">
+                                <!--{else}-->
+                            <li>
+                                <!--{/if}-->
+                            <h2><a href="{url('index', ['label' => $key])}">{$vo.name}</a></h2></li>
+                            <!--{/loop}-->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box-body">
+            <div class="uk-card uk-card-small uk-card-default dux-panel">
+                <div class="uk-card-header">标签生成</div>
+                <div class="uk-card-body">
+                    <div class="dux-form uk-form  uk-form-horizontal  ">
+                        <fieldset>
+                            <div class="uk-form-group">
+                                <label class=" uk-form-label">标签类型</label>
+                                <div class="uk-form-controls">
+                                    <select data-dux="form-select" id="label">
+                                        <option value="null">==选择标签==</option>
+                                        <!--loop{(array)$info.list as $key => $vo}-->
+                                        <option value="{$key}">{$vo.name}</option>
+                                        <!--{/loop}-->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="uk-form-group loop" style="display: none">
+                                <label class=" uk-form-label">前缀标签</label>
+                                <div class="uk-form-controls">
+                                    <input type="text" id="sign-label">
+                                    <div class="uk-form-help">只支持英文数字且已英文开头的前缀</div>
+                                </div>
+                            </div>
+                            <div id="attr-layout" class="loop" style="margin-bottom: 20px"></div>
+                            <div class="uk-form-group loop" style="display: none">
+                                <label class=" uk-form-label">内标签</label>
+                                <div class="uk-form-controls" id="content-list">
+
+                                </div>
+                            </div>
+
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+            <p class="dux-tips" id="help">暂无帮助信息</p>
+            <code class="dux-code" id="code">
+                <div id="label-l"></div>
+                <div id="html">选择标签后生成对应的标签信息</div>
+                <div id="label-r"></div>
+            </code>
+        </div>
+    </div>
+</div>
+
+<script id="tpl-select" type="text/html">
+    <div class="uk-form-group">
+        <label class=" uk-form-label">{{ d.name }}</label>
+        <div class="uk-form-controls">
+            <select class="attr" name="{{ d.label }}">
+                <option value="null">==选择==</option>
+                {{# for (var k in d.list ){ }}
+                <option value="{{ k }}">{{ d.list[k] }}</option>
+                {{# } }}
+            </select>
+        </div>
+    </div>
+</script>
+
+<script id="tpl-select-multiple" type="text/html">
+    <div class="uk-form-group">
+        <label class=" uk-form-label">{{ d.name }}</label>
+        <div class="uk-form-controls">
+            <select class="attr" name="{{ d.label }}" multiple>
+                {{# for (var k in d.list ){ }}
+                <option value="{{ k }}">{{ d.list[k] }}</option>
+                {{# } }}
+            </select>
+        </div>
+    </div>
+</script>
+
+<script id="tpl-int" type="text/html">
+    <div class="uk-form-group">
+        <label class=" uk-form-label">{{ d.name }}</label>
+        <div class="uk-form-controls">
+            <input type="number" name="{{ d.label }}"  class="attr" value="" placeholder="{{ d.help }}">
+        </div>
+    </div>
+</script>
+
+<script id="tpl-input" type="text/html">
+    <div class="uk-form-group">
+        <label class=" uk-form-label">{{ d.name }}</label>
+        <div class="uk-form-controls">
+            <input type="text" name="{{ d.label }}"  class="attr" value="" placeholder="{{ d.help }}">
+        </div>
+    </div>
+</script>
+
+<script>
+
+    Do('tpl', function () {
+
+        var data = {json_encode($info['list'])};
+        var sign = '';
+        var attr = [];
+
+        var labelEl = $('#label'), htmlEl = $('#html'), labelLEl = $('#label-l'),  labelREl = $('#label-r'), helpEl = $('#help'), loopEl = $('.loop'), attrLayoutEl = $('#attr-layout'), contentListEl = $('#content-list'), signLabelEl = $('#sign-label');
+
+        labelEl.change(function() {
+            var type = $(this).val();
+            clearLalbel();
+            htmlEl.html('');
+            var $info = data[type];
+            if($info.loop) {
+                loopEl.show();
+                $.each($info.content, function(k, v) {
+                    contentListEl.append("<button class='uk-button uk-button-primary content-label' data-label='" + v.label + "' type='button'>" + v.name + "</button> ");
+                });
+                signLabelEl.val($info.sign);
+                sign = $info.sign;
+                if($info.attr) {
+                    $.each($info.attr, function(k, v) {
+                        var tpl = '';
+                        switch (v.type) {
+                            case 'select' :
+                                tpl = $('#tpl-select').html();
+                                break;
+                            case 'select-multiple' :
+                                tpl = $('#tpl-select-multiple').html();
+                                break;
+                            case 'int' :
+                                tpl = $('#tpl-int').html();
+                                break;
+                            case 'input' :
+                            default :
+                                tpl = $('#tpl-input').html();
+                        }
+                        v.label = k;
+                        laytpl(tpl).render(v, function(html){
+                            attrLayoutEl.append(html);
+                        });
+                    });
+                }
+            }
+            submitLabel(type);
+        });
+
+        signLabelEl.on('input propertychange', function() {
+            sign = $(this).val();
+            $('.sign').html(sign);
+        });
+
+        contentListEl.on('click', '.content-label', function() {
+            var label = $(this).data('label');
+            htmlEl.append($(this).text() + ': {' + '$' + '<span class="sign">' + sign + '</span>.' + label + '}</br>');
+            $(this).attr('disabled', true);
+        });
+
+        attrLayoutEl.on('change', 'select', function() {
+            var el = $(this), val = el.val();
+            if(val == 'null' || val == null) {
+                attr[el.attr('name')] = '';
+            }else{
+                attr[el.attr('name')] = val;
+            }
+            submitLabel(labelEl.val());
+        });
+
+        attrLayoutEl.on('propertychange input', 'input', function() {
+            var el = $(this), val = el.val();
+            if(val == 'null' || val == null) {
+                attr[el.attr('name')] = '';
+            }else{
+                attr[el.attr('name')] = val;
+            }
+            submitLabel(labelEl.val());
+        });
+
+        var submitLabel = function(type) {
+            var $info = data[type];
+            helpEl.html($info.help);
+            if(!$info.loop) {
+                htmlEl.html($info.label);
+            } else {
+                var label = $info.label;
+                var reg = new RegExp("\{sign\}","g");
+                label = label.replace(reg, "<span class='sign'></span>");
+                label = label.replace('{attr}', "<span id='attr'></span>");
+                labelArray = label.split('{html}');
+                labelLEl.html(labelArray[0]);
+                labelREl.html(labelArray[1]);
+                $('.sign').html(sign);
+                for (k in attr) {
+                    var v = attr[k];
+                    if(v == '') {
+                        continue;
+                    }
+                    $('#attr').append(k + '="' + v + '" ');
+                }
+            }
+        };
+
+        var clearLalbel = function() {
+            contentListEl.html('');
+            attrLayoutEl.html('');
+            loopEl.hide();
+            attr = [];
+            sign = '';
+            labelLEl.html('');
+            labelREl.html('');
+            helpEl.html('暂无帮助信息');
+            htmlEl.html('选择标签后生成对应的标签信息');
+        };
+
+    });
+</script>

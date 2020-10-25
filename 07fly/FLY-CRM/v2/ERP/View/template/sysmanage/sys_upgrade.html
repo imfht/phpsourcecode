@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5><i class="fa fa-home"></i>在线升级 当前版本#{$version}#</h5>
+                </div>
+                <div class="ibox-content">
+                    #{if $list neq ''}#
+                    <table class="table table-hover dataTables-example">
+                        <tbody>
+                        #{foreach from=$list key=k item=v}#
+                        <tr>
+                            <td>更新包文件:#{$v.version}#</td>
+                            <td>状态:#{$v.status}#</td>
+                            <td>#{$v.operate}#</td>
+                            <td><a href="#" class="ajax-open" data-url="#{$smarty.const.ACT}#/sysmanage/Upgrade/upgrade_remark/ver/#{$v.version}#/">本次更新内容</a></td>
+                        </tr>
+                        #{/foreach}#
+                        </tbody>
+                    </table>
+                    #{else}#
+                    <h3>当前版为最新版：#{$version}#</h3>
+                    #{/if}#
+                </div>
+                <div class="upgrade-text text-left"></div>
+                <div class="ibox-content">
+                    <p>从零起飞研发中心服务器(www.07fly.top)上面下载可用更新文件列表....</p>
+                    <p>更新包用法:更新安装包以日期时间命名,时间早的先的安装,时间晚的后安装.</p>
+                    <p class="text-danger">注意：升级有一定的风险，请事先做好系统和数据的备份。</p>
+                </div>
+
+                <div class="ibox-title">系统授权信息</div>
+                <div class="ibox-content">
+                <p>通信状态：#{$signal.message}#</p>
+                </div>
+                <div class="ibox-content">
+                    #{if $authorize.code eq '1'}#
+                    <p>授权名称：<span>#{$authorize.data.name}#</span></p>
+                    <p>到期日期：<span>#{$authorize.data.stop_date}#</span></p>
+                    <p>授权码：<span>#{$authorize.data.syskey}#</span></p>
+                    <p>授权域名：<span>#{$authorize.data.domain}#</span></p>
+                    #{else}#
+                    <p><span class="help-block m-b-none">(注册码需要联系软件开发商获取,访问<a href="http://www.07fly.top" target="_blank">开发商网站</a>) </span></p>
+                    <p>
+                    <div class="input-group m-b">
+                        <input name="syskey" id="syskey" class="form-control" type="text" placeholder="密钥KEY"/>
+                        <span class="input-group-btn"><button type="button" class="btn btn-primary auth_reg">提交注册码</button></span>
+                    </div>
+                    </p>
+                    #{/if}#
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 自定义js -->
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+</body>
+<script>
+    $(document).ready(function () {
+        //点击下载
+        $("body").on("click", ".downfile", function () {
+            version = $(this).attr("data-id");
+            $.ajax({
+                type: "POST",
+                url: '#{$smarty.const.ACT}#/sysmanage/Upgrade/upgrade_down/ver/' + version + '/act/down/',
+                data: {"act": 'down', 'ver': version},
+                dataType: "json",
+                async: false,
+                beforeSend: function () {
+                    layer.msg('正在下载升级程序，请不要关闭浏览器，数据下载中...',
+                        {
+                            time: 1000,
+                            icon: 16,
+                            shade: 0.01
+                        }
+                    );
+                },
+                success: function (data) {
+                    if (data.error == '0') {
+                        layer.msg('操作成功', {icon: 1});
+                        window.location.reload();
+                    } else {
+                        layer.msg(data.message, {icon: 5});
+                    }
+                }
+            });
+        });
+
+        //点击升级
+        $("body").on("click", ".upgrade", function () {
+            var ver = $(this).attr("data-id");
+            var step = $(this).attr("data-step");
+            $.ajax({
+                type: "POST",
+                url: '#{$smarty.const.ACT}#/sysmanage/Sys/sys_upgrade_online/ver/' + ver + '/step/' + step + '/',
+                data: {"ver": ver, 'step': step},
+                dataType: "json",
+                beforeSend: function () {
+                    layer.msg('数据升级，正在备份程序，请不要关闭浏览器...',
+                        {
+                            time: 1000,
+                            icon: 16,
+                            shade: 0.01
+                        }
+                    );
+                },
+                async: false,
+                success: function (data) {
+                    if (data.statusCode == '300') {
+                        //layer.msg(data.message, {icon: 1});
+                        $('.upgrade-text').append('<p class="ibox-title">版本：' + ver + ' 升级执行状态：</p>');
+                        $('.upgrade-text').append('<p style="padding-left: 15px;">' + data.message + '</p>');
+                        upgrade(data.step, data.ver);
+                    } else {
+                        layer.msg(data.message, {icon: 2});
+                    }
+                }
+            });
+
+        });
+
+        //点击注册
+        $("body").on("click", ".auth_reg", function () {
+            var syskey = $("#syskey").val();
+            $.ajax({
+                type: "POST",
+                url: '#{$smarty.const.ACT}#/sysmanage/Upgrade/upgrade_auth_reg/',
+                data: {"syskey": syskey},
+                dataType: "json",
+                beforeSend: function () {
+                },
+                async: false,
+                success: function (data) {
+                    if (data.statusCode == '300') {
+                        layer.msg(data.message, {icon: 5});
+                    } else {
+                        layer.msg(data.message, {icon: 1});
+                        window.location.reload();
+                    }
+                }
+            });
+        });
+
+        //升级函数
+        function upgrade(step, ver) {
+            $.ajax({
+                type: "POST",
+                url: '#{$smarty.const.ACT}#/sysmanage/Sys/sys_upgrade_online/ver/' + ver + '/step/' + step + '/',
+                data: {"ver": ver, 'step': step},
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.statusCode == '300') {
+                        //layer.msg(data.message, {icon: 1});
+                        $('.upgrade-text').append('<p style="padding-left: 15px;">' + data.message + '</p>');
+                        upgrade(data.step, data.ver);
+                    } else if (data.statusCode == '200') {
+                        $('.upgrade-text').append('<p style="padding-left: 15px;">' + data.message + '</p>');
+                        //layer.msg(data.message, {icon: 5});
+                    }
+                }
+            });
+        }
+
+    });
+</script>
+<!-- Mirrored from www.upfine.cn/theme/hplus/table_basic.html by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 20 Jan 2016 14:20:01 GMT -->
+</html>

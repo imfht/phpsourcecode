@@ -1,0 +1,239 @@
+<include file="Public:header" />
+<div class="container">
+	<!-- Docs nav ================================================== -->
+	<div class="page-header">
+		<h4>{:L('SHORT_MESSAGE')}</h4>
+	</div>
+	<include file="Public:alert" />
+	<div class="pull-right">
+		<a href="javascript:void(0);" id="send"  class="btn btn-primary"><i class="icon-pencil"></i>&nbsp; {:L('WRITE_LETTER')}</a>
+	</div>
+	<ul class="nav nav-tabs">
+		<li id="n1" <if condition="(strtolower($_GET['type']) neq 'send')">class="active"</if>><a id="t1" href="#tab1" data-toggle="tab">{:L('INBOX')}(<span style="color:red">{$new_num}</span>/{$receive_list_num})</a></li>
+		<li id="n2" <if condition="(strtolower($_GET['type']) eq 'send')">class="active"</if>><a id="t2" href="#tab2" data-toggle="tab">{:L('OUTBOX')}({$send_list_num})</a></li>
+	</ul>
+	<div class="row">
+	<div class="tab-content">
+		<div class="span12 nav">
+				<div class="pull-left">
+					<ul class="nav pull-left">	
+						<li class="nav pull-left">
+							<div class="btn-group pull-left">
+								<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+									&nbsp;{:L('BATCH_OPERATION')}
+									<span class="caret"></span>
+								</a>
+								<ul class="dropdown-menu">
+									<li class="pull-left">
+										<a  <if condition="(strtolower($_GET['type']) neq 'send')">id="delete_receive"<else />id="delete_send"</if> class="delete"><i class="icon-remove"></i>{:L('DELETE')}</a>
+									</li>
+									<li>
+										<a id="set_read_receive"><i class="icon-flag"></i>{:L('SET_READ')}</a>
+										<a id="set_read_send" style="display:none;"><i class="icon-flag"></i>{:L('SET_READ')}</a>
+									</li>
+								</ul>
+							</div>
+						</li>
+						<li class="pull-left">
+							<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action='' method="get">
+								<ul class="nav pull-left">
+									<li class="pull-left">
+										<select id="field" style="width:auto" onchange="changeCondition()" name="field">
+											<option class="" value="">{:L('SEARCH_OPTION')}</option>
+											<option class="text" value="content">{:L('CONTENT')}</option>
+											<if condition="(strtolower($_GET['type']) neq 'send')">
+											<option class="text" value="from_role_id">{:L('THE_SENDER')}</option><else/>
+											<option class="text" value="to_role_id">{:L('THE_RECIPIENT')}</option></if>
+											
+											<option class="date" value="send_time">{:L('SEND_TIME')}</option>
+											<option class="date" value="read_time">{:L('READING_TIME')}</option>
+										</select>&nbsp;&nbsp;
+									</li>
+									<li id="conditionContent" class="pull-left">
+										<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">	
+											<option value="contains">{:L('CONTAINS')}</option>
+											<option value="is">{:L('IS')}</option>
+											<option value="start_with">{:L('START_WITH')}</option>
+											<option value="end_with">{:L('END_WITH')}</option>
+											<option value="is_empty">{:L('IS_EMPTY')}</option>
+										</select>&nbsp;&nbsp;
+									</li>
+									<li id="searchContent" class="pull-left">
+										<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+									</li>
+									<li class="pull-left">
+										<input type="hidden" name="m" value="message"/>
+										<input type="hidden" name="type" id="type" value="<?php echo $_GET['type'];?>"/>
+										<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+										<button type="submit" class="btn"> <img src="__PUBLIC__/img/search.png"/>{:L('SEARCH')}</button>
+									</li>
+								</ul>
+							</form>
+						</li>
+					</ul>
+				</div>
+			</div>
+		<div <if condition="(strtolower($_GET['type']) neq 'send')">class="tab-pane active"<else />class="tab-pane"</if> id="tab1">
+			<div class="span12">
+			<form id="form1"  method="post">
+				<table class="table table-hover table-striped table_thead">
+					<if condition="$receive_list eq null">
+						<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+					<else/>
+					<thead>
+						<tr>
+						   <th><input class="receive_check_all" id="receive_check_all" type="checkbox" /> &nbsp;</th>
+						   <th>{:L('CONTENT')}</th>
+						   <th>{:L('THE_SENDER')}</th>
+						   <th>{:L('READING_TIME')}</th>
+						   <th>{:L('SEND_TIME')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+							<tr><td colspan="8">{$receive_page}</td></tr>
+					</tfoot>
+					<tbody>
+						<volist name="receive_list" id="vo">
+						<tr>
+							<td><input type="checkbox" class="receive_check_list" name="message_id[]" value="{$vo.message_id}"/> &nbsp;
+							</td>
+							<td><a <if condition="$vo.read_time eq 0">style="color:red;"</if> href="{:U('message/view','id='.$vo['message_id'])}" title="{:L('VIEW')}">{$vo.pre_content}</a></td>
+							<td><notempty name="vo['from_role_id']">{$vo.from_name}<else />{:L('SYSTEM_ADMINISTRATOR')}</notempty></td>
+							<td><if condition="$vo.read_time eq 0"><font color="red">{:L('UNREAD')}</font><else />{$vo.read_time|date="Y-m-d H:i:s",###}</if></td>
+							<td>{$vo.send_time|date="Y-m-d H:i:s",###}</td>
+						</tr> 
+						</volist>
+					</tbody>
+					</if>
+				</table>
+			</form>
+			</div>
+		</div>
+		<div <if condition="(strtolower($_GET['type']) eq 'send')">class="tab-pane active"<else />class="tab-pane"</if> id="tab2">
+			<div class="span12">
+			<form id="form2"  method="post">
+				<table class="table table-hover table-striped table_thead">
+					<if condition="$send_list eq null">
+						<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+					<else/>
+					<thead>
+						<tr>
+						   <th><input class="send_check_all" id="send_check_all" type="checkbox" /> &nbsp;</th>
+						   <th>{:L('CONTENT')}</th>
+						   <th>{:L('THE_SENDER')}</th>
+						   <th>{:L('READING_TIME')}</th>
+						   <th>{:L('SEND_TIME')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr><td colspan="8">{$send_page}</td></tr>
+					</tfoot>
+					<tbody>
+						<volist name="send_list" id="vo">
+						<tr>
+							<td><input type="checkbox" class="send_check_list" name="message_id[]" value="{$vo.message_id}"/> &nbsp;
+							</td>
+							<td><a href="{:U('message/view','id='.$vo['message_id'])}" title="{:L('VIEW')}">{$vo.pre_content}</a></td>
+							<td><if condition="$vo.to_name">{$vo.to_name}<else />{:L('MAIL_SYSTEM')}</if></td>
+							<td><if condition="$vo.read_time eq 0">{:L('UNREAD')}<else />{$vo.read_time|date="Y-m-d H:i:s",###}</if></td>
+							<td>{$vo.send_time|date="Y-m-d H:i:s",###}</td>
+						</tr> 
+						</volist>
+					</tbody>
+					</if>
+				</table>
+			</form>
+			</div>
+		</div>
+	</div>
+	</div>
+</div>
+<div class="hide" id="dialog-send" title="{:L('WRITE_LETTER_IN')}">loading...</div>
+<script type="text/javascript">
+$("#dialog-send").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 800,
+	maxHeight: 600,
+	position: ["center",100]
+});
+$(function(){
+	<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+	<else />
+	$("#field option[value='status_id']").prop("selected", true);changeCondition();
+	</if>
+	$("#receive_check_all").click(function(){
+		$("input[class='receive_check_list']").prop('checked', $(this).prop("checked"));
+	});
+	$("#send_check_all").click(function(){
+		$("input[class='send_check_list']").prop('checked', $(this).prop("checked"));
+	});
+	$("#send").click(function(){
+		$('#dialog-send').dialog('open');
+		$('#dialog-send').load('{:U("message/send")}');
+	});
+	
+});
+function changeContent(){
+	a = $("#select1  option:selected").val();
+	window.location.href="{:U('message/index', 'by=')}"+a;
+}
+$(function(){
+	$('#delete_receive').click(function(){
+		if(confirm('{:L('ARE_YOU_DELETE')}')){
+			$("#form1").attr('action', '{:U("message/delete", "model=receive")}');
+			$("#form1").submit();
+		}
+	});
+	$('#delete_send').click(function(){
+		if(confirm('{:L('ARE_YOU_DELETE')}')){
+			$("#form2").attr('action', '{:U("message/delete", "model=send")}');
+			$("#form2").submit();
+		}
+	});
+	$('#set_read_receive').click(function(){
+		if(confirm('{:L('CONFIRM_TO_SET_MESAAGE_READ')}')){
+			$("#form1").attr('action', '{:U("message/setRead")}');
+			$("#form1").submit();
+		}
+	});
+	$('#set_read_send').click(function(){
+		if(confirm('{:L('CONFIRM_TO_SET_MESAAGE_READ')}')){
+			$("#form2").attr('action', '{:U("message/setRead")}');
+			$("#form2").submit();
+		}
+	});
+	$('#t1').click(function(){
+		$result = '<option class="" value="">{:L('SEARCH_OPTION')}</option><option class="text" value="content">{:L('CONTENT')}</option><option class="text" value="from_role_id">{:L('THE_SENDER')}</option><option class="date" value="send_time">{:L('SEND_TIME')}</option><option class="date" value="read_time">{:L('READING_TIME')}</option>';
+		$("#field").html($result);
+		$("#type").val('send1');
+		$(".delete").attr('id','delete_receive').unbind();
+		$('#delete_receive').click(function(){
+			if(confirm('{:L('ARE_YOU_DELETE_RECEIVE')}')){
+				$("#form1").attr('action', '{:U("message/delete", "model=receive")}');
+				$("#form1").submit();
+			}
+		});
+		$("#set_read_receive").css('display','block');
+		$("#set_read_send").css('display','none');
+	});
+	$('#t2').click(function(){
+		$result = '<option class="" value="">{:L('SEARCH_OPTION')}</option><option class="text" value="content">{:L('CONTENT')}</option><option class="text" value="to_role_id">{:L('THE_SENDER')}</option><option class="date" value="send_time">{:L('SEND_TIME')}</option><option class="date" value="read_time">{:L('READING_TIME')}</option>';
+		$("#type").val('send');
+		$("#field").html($result);
+		$(".delete").attr('id','delete_send').unbind();
+		$('#delete_send').click(function(){
+			if(confirm('{:L('ARE_YOU_DELETE')}')){
+				$("#form2").attr('action', '{:U("message/delete", "model=send")}');
+				$("#form2").submit();
+			}
+		});
+		$("#set_read_receive").css('display','none');
+		$("#set_read_send").css('display','block');
+	});
+})
+</script>
+<include file="Public:footer" />

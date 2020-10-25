@@ -1,0 +1,407 @@
+{extend name="$member_style_layout" /}
+
+{block name="title"}主题列表{/block}
+{block name="content"}
+<style type="text/css">
+.listshops{
+	border-bottom:#DDD dotted 1px;
+	padding:10px 10px 30px 150px;
+	min-height:60px;
+	position:relative;
+}
+.listshops .img{
+	width:90px;
+	height:75px;
+	border:#DDD solid 1px;
+	padding:1px;
+	overflow:hidden;
+	text-align:center;
+	line-height:85px;
+	position:absolute;
+	left:12px;
+	top:12px;
+}
+.listshops .img img{
+	max-width:90px;
+	max-height:75px;
+	vertical-align:middle;
+}
+.listshops .atcs{
+	width:500px;
+	height:32px;
+	position:absolute;
+	right:32px;
+	top:35px;
+	text-align:right;
+	line-height:30px;
+	word-spacing:10px;
+}
+.listshops .atcs a{
+	display:inline-block;
+	border:#F60 solid 1px;
+	border-radius:5px;
+	padding:0 15px;
+	background:#F90;
+	color:#FFF;
+}
+.listshops .atcs a.dels{
+	border:#F00 solid 1px;
+	background:#F30;
+}
+.listshops .atcs a.edits{
+	border:#124272 solid 1px;
+	background:#336699;
+}
+.listshops .title a{
+	display:block;
+	height:30px;
+	line-height:30px;
+	overflow:hidden;
+	font-size:16px;
+}
+.listshops .info{
+	height:25px;
+	line-height:25px;
+	overflow:hidden;
+	color:#888;
+	font-size:14px;
+}
+.listshops .info a{
+	color:#2BB8AA;
+}
+.listshops .info span{
+	color:#F60;
+}
+.listshops .price{
+	width:150px;
+	height:30px;
+	line-height:30px;
+	position:absolute;
+	left:150px;
+	bottom:20px;
+	font-size:14px;
+	color:#888;
+}
+.listshops .price span{
+	font-size:24px;
+	color:#F60;
+}
+.search{float:right; background:#fff; border-radius:3px; padding:5px; margin:10px 10px 0 0;}
+.search .keyWord{float:left; width:200px; height:30px; line-height:30px;}
+.search .keyWord input{width:100%; height:28px; padding-left:5px;}
+.search .button{float:left; width:60px; margin-left:20px;}
+.search .button input{width:100%; height:30px;}
+</style>
+
+ <!-- 分类列表 -->
+<style type="text/css">
+.scroll-sort{
+	width:100%;
+	margin:auto;
+	margin-bottom:10px;
+	background:#FFF;
+	height:65px;
+}
+.scroll-sort span a{
+	color:#666;
+}
+.scroll-sort span{
+	border-radius:4px;
+	margin-left:15px;
+	padding-left:13px;
+	padding-right:13px;
+	font-size:16px;
+	line-height:35px;
+	margin-top:15px;
+	height:35px;
+	background:#efefef;
+	display:block;
+	float:left;
+}
+.scroll-sort span:hover{
+	background:orange;
+}
+.scroll-sort span:hover a{
+	color:#fff;
+}
+.scroll-sort .choose{
+	background:orange;
+}
+.scroll-sort .choose a{
+	color:#fff;
+}
+.swiper-slide{width: auto!important;}
+</style>
+<link href="/public/static/libs/swiper/swiper.min.css" rel="stylesheet">
+<script src="/public/static/libs/swiper/swiper.min.js"></script>
+<div class="MainCont">
+	<div class="head">
+	  <div class="tag" id="tagname">主题列表 </div>
+	  <div class="search"> 
+	    
+		  <div class="keyWord"><input type="text" id="keyword" placeholder="请输入要搜索的标题"/></div>
+		  <div class="button"><input type="submit" name="submit1" onclick="search()" value="搜索"/></div>
+		  
+	  </div>
+	</div>
+    <div class="cont">
+		<div class="scroll-sort">
+			<div class="swiper-container">
+				<div class="swiper-wrapper" id="choose_mod"> </div>
+				<div class="swiper-button-next"></div>
+				<div class="swiper-button-prev"></div>
+			</div>
+		</div>
+		<div class="list-hack"></div>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+var type = 'bbs';
+var module = 'module';
+var uid = "{$uid}";
+var mod_array = {};
+var page = 1;
+var scroll_get = true;
+var keyword = '';
+
+var parents;
+if(window.parent.frames['iframe_msg']!=undefined){
+	parents = window.parent.frames['iframe_msg'];
+}else{
+	parents = window.parent;
+}
+
+function search(){
+	keyword = $("#keyword").val();
+	if(keyword==''){
+		layer.alert("关键字不能为空!");
+		return ;
+	}
+	page = 1;
+	layer.msg("请稍候");
+	get_list_data();
+}
+
+//群聊直接发送到短消息数据表
+function send_msg(id,m_title,m_content,m_picurl){
+		var content = `<ul class="model-list model-${type}" data-id="${id}" data-type="${type}" data-imgurl="${m_picurl}"><li class="model-title">${m_title}</li><li class="model-more"><div class="model-content">${m_content}</div><div class="model-picurl"><img src="${m_picurl}" onerror="$(this).parent().hide()"/></div></li></ul>`;
+
+		parents.postmsg({
+				'uid':uid,
+				'content':content,
+				'ext_id':id,
+				'ext_sys':type,
+				},function(res){
+					if(res.code==0){
+						layer.msg('添加成功');						
+					}else{
+						layer.alert('添加失败:'+res.msg);
+					}				
+				}
+		);
+		if(parents.quninfo.uid==parents.my_uid){
+			parents.ws_send({
+				type:"qun_to_alluser",
+				tag:"give_topic_state",
+				data: {
+					ext_sys:type,
+					ext_id:id,
+				},
+			});
+			$.get("/member.php/member/quote/live.html?aid="+Math.abs(uid)+"&ext_id="+id+"&ext_sys="+type,function(res){
+				if(res.code==0){
+					parent.layer.close(parent.layer.getFrameIndex(window.name));
+				}else{
+					layer.alert(res.msg);
+				}
+			});
+		}else{
+			setTimeout(function(){					
+				parent.layer.close(parent.layer.getFrameIndex(window.name));
+			},500);
+		}
+}
+
+
+
+
+function post_content(obj,path){
+		var mid = obj.data("mid");
+		var id = obj.data("id");
+		var m_title = obj.data("title");
+		var m_content = obj.data("content");
+		var m_picurl = obj.data("picurl");
+		var m_url = obj.data("url");
+		if(m_picurl==null) m_picurl = '';
+		m_title = m_title.toString().replace('"',"'");
+		if(m_content==''||m_content==null){
+			m_content = '暂无介绍';
+		}
+		if(uid!=0){
+			send_msg(id,m_title,m_content,m_picurl);
+		}else{
+			//var content = `[topic type=${type} id=${id} picurl=${m_picurl}]${m_title}##@@##${m_content}[/topic]`;
+			var labelpath = path==undefined ? '' : `data-labelpath="${path},${type},${id},${mid}"`;
+			var content = `
+				   <section ${labelpath} class='topic-box topic-type-${type}' data-id="${id}" data-type="${type}">
+						<div class='topic-img'><a href='${m_url}' target='_blank'><img width='100' src='${m_picurl}' onerror="this.src='/public/static/images/nopic.png';" /></a></div>
+						<div class='topic-text'>
+							<div class='topic-title'><a href='${m_url}' target='_blank'>${m_title}</a></div>
+							<div class='topic-content'><a href='${m_url}' target='_blank'>${m_content}</a></div>
+						</div>
+					</section>
+			`;
+			window.parent.layer.closeAll();
+			window.parent.insert_topic(content);
+		}
+}
+
+
+function add_action(){
+	$('.list-hack .edits').off("click");
+	$('.list-hack .edits').click(function(){
+		var obj = $(this);
+		var mid = obj.data("mid");
+		var id = obj.data("id");
+		layer.msg('请稍候...');
+		$.get("{:urls('get_template')}?type="+type+"&mid="+mid,function(res){
+			if(res.code==0){
+				var btn_title = ['默认设置'];
+				var o = {btn1:function(){
+					layer.close(index);
+					post_content(obj);
+				}};
+				res.data.forEach(function(rs,i){
+					btn_title.push(rs.title);
+					var key = 'btn'+(i+2);
+					o[key] = function(){
+						post_content(obj,rs.path);
+					}
+				});
+				o.btn = btn_title;
+				var index = layer.confirm('你可以选择一种风格',o);
+			}else{
+				post_content(obj);
+			}
+		});		
+	});
+}
+
+
+function get_list_data(){
+     layer.msg("加载中,请稍候...");
+    if(module=='plugin'){
+       var url = "/index.php/index/plugin/execute/plugin_name/"+type+"/plugin_controller/quote/plugin_action/listbyuid.html?page="+page+"&keyword="+keyword+"&rows=10";
+       }else{
+       var url = "/index.php/"+type+"/wxapp.index/listbyuid.html?page="+page+"&keyword="+keyword+"&rows=10";
+       }
+		
+		$.get(url,function(res){
+			layer.closeAll();
+			if(res.code==0){
+				if(res.data.length>0){
+					if(page==1){
+						$('.list-hack').html( format_list_data(res.data) );
+					}else{
+						$('.list-hack').append( format_list_data(res.data) );
+					}					
+					add_action();
+					page++;
+					scroll_get = true;
+				}else{
+					if(page==1){
+						layer.alert("没找到任何数据!");
+					}else{
+						layer.msg("没有了!");
+					}
+					
+				}
+			}
+		});		
+}
+get_list_data()
+function format_list_data(array){
+		var str = "";
+		array.forEach((rs)=>{
+			var content = rs.content.substring(0,20);
+			var title = rs.title.substring(0,15);
+			if(rs.url==undefined){
+				rs.url=`/index.php/${type}/content/show/id/${rs.id}.html`;
+			}
+			if(rs.picurl==null){
+				rs.picurl='';
+			}
+			if(rs.mid==undefined){
+				rs.mid = '';
+			}
+			str +=`
+			<div class="listshops">
+				<div class="img"><a href="${rs.url}" class="iframe"><img class="ring ring-group" src="${rs.picurl}" onerror="this.src='/public/static/images/nopic.png'"/></a> </div>
+				<div class="title"><a href="${rs.url}" target="_blank">${title}</a></div>
+				<div class="info">${content}</div>			
+				<div class="atcs">				 
+					<a href="javascript:" data-id="${rs.id}" data-mid="${rs.mid}" data-url="${rs.url}" data-title="${rs.title}" data-picurl="${rs.picurl}" data-content="${rs.content}" class="edits">添加</a>
+				</div>
+			</div>
+			`;
+		});
+		return str;
+}
+
+function get_mod(){
+		var url = "/index.php/index/wxapp.index/topic_mod.html";
+		$.get(url,function(res){
+			if(res.code==0){
+				var str = '';
+				res.data.forEach((rs)=>{
+					mod_array[rs.keywords] = rs;
+					var ck = rs.keywords == type?"choose":"";
+					str += `<span class='swiper-slide ${ck}' data-type="${rs.keywords}" data-module="${rs.module}"><a href="#">${rs.name}</a></span>`;
+				});
+				$("#choose_mod").html(str);
+				var swiper = new Swiper('.swiper-container', {
+					spaceBetween: 0,
+					slidesPerView:'auto',
+					freeMode: true,
+					navigation: {
+					nextEl: '.swiper-button-next',
+					prevEl: '.swiper-button-prev',
+				  },
+				});
+			}
+			$("#choose_mod .swiper-slide").click(function(){
+				$("#choose_mod .swiper-slide").removeClass("choose");
+				$(this).addClass("choose");
+				type = $(this).data("type");
+                module = $(this).data("module");
+				page = 1;
+				keyword = '';
+				$("#tagname").html(mod_array[type].name);
+				get_list_data();
+			});
+			$("#tagname").html(mod_array[type].name);
+		});
+}
+get_mod();
+
+$(document).ready(function () {
+	$(window).scroll(function () {		
+		var h = $(document).height() - $(window).height()-$(window).scrollTop();//console.log( h );
+		if (scroll_get==true && h<200) {
+			//window.parent.$(window).scrollTop(0);
+			scroll_get = false;
+			layer.msg('内容加截中,请稍候');
+			get_list_data();
+			if(page>2){
+				window.parent.document.body.scrollTop = window.parent.document.documentElement.scrollTop = 0;	//父窗口要返回到顶部,不然会看不到下面的内容
+			}
+		}
+	});
+});
+
+
+</script>
+{/block}

@@ -1,0 +1,247 @@
+<extend name="Public:base" />
+<block name="content">
+<div class="page-header">
+		<h1>
+			{$breadcrumb2}
+			<small>
+				<i class="icon-double-angle-right"></i>
+				{$crumbs}
+			</small>
+
+		</h1>
+	</div>
+	<div class="row">
+	<div class="col-xs-12">	
+	
+        <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="validation-form" class="form-horizontal">
+        
+	        <notempty name="Think.get.id">
+				<input name="nr_id" type="hidden" value="{$Think.get.id}" />
+			</notempty>
+	          		
+      		<div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-image">
+                <span title="" data-toggle="tooltip" data-original-title="上传360x200的图片">封面</span>
+                </label>
+                
+                <div class="col-sm-10" id="thumb">
+                  <a href="#" data-toggle="image" class="img-thumbnail">
+                  	<img osctype="image" <if condition="$reply['thumb']"> 
+						src="__ROOT__/<?php echo resize($reply['thumb'],100,100); ?>" 
+						<else /> 
+						src="__ROOT__/Common/image/no_image_100x100.jpg" 
+						</if>  />
+						</a>
+                  <input osctype="image_input" type="hidden" name="thumb" value="{$reply.thumb|default=''}" id="input-image" />
+            </div>
+            
+            </div> 		
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left"> * 关键字 </label>
+			<div class="col-sm-10">
+				<div class="clearfix">
+					<input name="keyword" id="keyword" class="col-xs-10 col-sm-10" placeholder="关键字" value="{$reply.keyword|default=''}" type="text">
+				</div>
+			</div>
+			</div>
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left"> * 标题 </label>
+			<div class="col-sm-10">
+				<div class="clearfix">
+					<input name="title" id="title" class="col-xs-10 col-sm-10" placeholder="标题" value="{$reply.title|default=''}" type="text">
+				</div>
+			</div>
+			</div>			
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label no-padding-left">  URL </label>
+			<div class="col-sm-10">
+				<div class="clearfix">
+					<input name="url" id="url" class="col-xs-10 col-sm-10" placeholder="URL" value="{$reply.url|default=''}" type="text">
+				</div>
+			</div>
+			</div>
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label"> 内容摘要</label>
+				<div class="col-sm-10">
+					<div class="clearfix">
+						<textarea id="description" class="form-control" placeholder="内容摘要" rows="5" name="description">{$reply.description|default=''}</textarea>
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label class="col-sm-2 control-label">启用</label>
+				<div class="col-sm-10">
+					<label class="radio-inline">
+					<input type="radio" checked="checked" value="1" name="status">是</label>
+					<label class="radio-inline">
+					<input type="radio" value="0" name="status">否</label>
+				</div>
+			</div>	          	
+          	
+          	<div class="form-group">
+				<label class="col-sm-1 control-label no-padding-left"> </label>	
+				<div class="col-sm-11">
+					<input name="send" type="submit" value="提交" class="btn btn-primary" />
+				</div>
+			</div>
+          	
+        </form>
+
+	</div>
+</div>
+</block>
+<block name="javascript">
+<style>
+.table thead > tr > td, .table tbody > tr > td {
+    vertical-align: middle;
+}	
+.table thead td span[data-toggle="tooltip"]:after, label.control-label span:after {
+	font-family: FontAwesome;
+	color: #1E91CF;
+	content: "\f059";
+	margin-left: 4px;
+}
+</style>	
+<script src="__JS__/jquery.validate.min.js"></script>
+<script src="__PUBLIC__/fileupload/jquery.ui.widget.js"></script>
+<script src="__PUBLIC__/fileupload/jquery.fileupload.js"></script>
+<script>		
+$(function(){
+	
+	// tooltips on hover button-upload
+	$('[data-toggle=\'tooltip\']').tooltip({container: 'body', html: true});
+
+	// Makes tooltips work on ajax generated content
+	//$(document).ajaxStop(function() {
+	//	$('[data-toggle=\'tooltip\']').tooltip({container: 'body'});
+	//});	
+	
+	
+	<present name="Think.get.id">
+			Oscshop.setValue("status", {$reply.status|default=1});		
+	</present>
+	
+	$('#validation-form').validate({
+			errorElement: 'div',
+			errorClass: 'help-block',
+			focusInvalid: false,
+			rules: {				
+				keyword: {
+					required: true,
+					minlength: 1
+				},			
+				title: {
+					required: true					
+				}	
+			},
+	
+			messages: {
+				
+				keyword: {
+					required: "必填",
+					minlength: "不得少于1个字"
+				},
+				title: {
+					required: "必填"					
+				}
+			},
+	
+			
+	
+			highlight: function (e) {
+				$(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+			},
+	
+			success: function (e) {
+				$(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+				$(e).remove();
+			},
+	
+			errorPlacement: function (error, element) {
+				 error.insertAfter(element.parent());
+			},
+
+		});
+		
+		
+		$(document).delegate('a[data-toggle=\'image\']', 'click', function(e) {
+		e.preventDefault();
+	
+		var element = this;
+	
+		$(element).popover({
+			html: true,
+			placement: 'right',
+			trigger: 'manual',
+			content: function() {
+				return '<button type="button" id="button-image" class="btn btn-primary"><i class="icon-edit"></i></button> <button type="button" id="button-clear" class="btn btn-danger"><i class="icon-trash"></i></button>';
+			}
+		});
+		
+		$(element).popover('toggle');		
+	
+		$('#button-image').on('click', function() {
+			$('#modal-image').remove();
+			
+			$('#form-upload').remove();
+			
+			$('body').prepend('<form enctype="multipart/form-data" id="form-upload" style="display: none;"><input osctype="btn_upload_image" type="file" name="file" /></form>');
+	
+			$('#form-upload input[name=\'file\']').trigger('click');
+			
+			$(element).popover('hide');
+			
+			$('[osctype="btn_upload_image"]').fileupload({
+				
+	        	dataType: 'json',
+	            url: "{:U('Image/upload_image',array('dir'=>'wechat_news'))}",
+	            add: function(e, data) {
+	                $parent = $('#thumb');
+	                $input = $parent.find('[osctype="image_input"]');
+	                $img = $parent.find('[osctype="image"]');
+	                data.formData = {old_product_image:$input.val()};
+	                $img.attr('src', "__IMG__/loading.gif");
+	                data.submit();
+	            },
+	            done: function (e,data) {
+					
+	            	var image=data.result;
+	            	
+	            	
+	                $parent = $('#thumb');
+	                $input = $parent.find('[osctype="image_input"]');
+	                $img = $parent.find('[osctype="image"]');
+	                if(image) {
+	                   // $img.prev('i').hide();
+	                    $img.attr('src', '__ROOT__'+image.image_thumb);
+	                    $img.show();
+	                    $input.val(image.image);
+	                } else {
+	                    alert('上传失败');
+	                }
+	            }
+   		 });
+			
+			
+			
+		});
+	
+		$('#button-clear').on('click', function() {
+			$(element).find('img').attr('src', $(element).find('img').attr('data-placeholder'));
+			
+			$(element).parent().find('input').attr('value', '');
+	
+			$(element).popover('hide');
+		});
+	});
+		
+
+});
+	
+</script>
+</block>

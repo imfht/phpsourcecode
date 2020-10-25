@@ -1,0 +1,33 @@
+dist: xenial
+language: php
+php:
+  - '7.2.5'
+
+env:
+  global:
+    - setup=stable
+
+matrix:
+  fast_finish: true
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+
+before_install:
+  - phpenv config-rm xdebug.ini || true
+  - travis_retry composer self-update
+
+install:
+  - travis_retry composer update --prefer-dist --no-interaction --prefer-stable --no-suggest;
+  - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install 12.16.1
+  - travis_retry npm install;
+  - travis_retry npm run prod;
+
+before_script:
+  - composer self-update
+  - composer install --prefer-source --no-interaction
+  - php artisan key:generate --env testing
+  - php artisan migrate --env testing
+
+script: php artisan test

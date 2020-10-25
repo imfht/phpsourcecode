@@ -1,0 +1,97 @@
+{function url url='' item=[]}{strip}
+    {if is_array($url)}
+        {if $url[1] && $url.parse && $item}
+            {foreach $url.parse as $key}
+            {if !$url[1].$key}continue{/if}
+            {$url[1].$key=$item.{$url[1].$key}}
+            {/foreach}
+        {/if}
+        {url($url[0],$url[1]|default:[],$url[2]|default:true)}
+    {else}
+        {$url}
+    {/if}
+{strip}{/function}
+{function furl url=''}{strip}
+	{if $url}
+   		{if strpos($url,'http://')===false && strpos($url,'https://')===false}
+        	{if $url[0]=='/'}{$url=substr($url,1)}{/if}
+        	{$url=$root|cat:$url}
+        {/if}
+       	{$url}
+    {/if}    
+{/strip}{/function}
+{function index_link}{strip}
+{url('home/Index/index')}
+{/strip}{/function}
+{function name=menu_link id=0}{strip}
+{$d_d=menu($id)}
+{if !$d_d}
+    #
+{else}
+    {if $d_d.type=='Exlink'}
+        {call furl url=$d_d.ex_link}
+    {else}
+        {$alias=trim(menu($id,'alias'))}
+        {if !$alias}
+            {url($d_d.type|cat:'/show',['menu_id'=>$id])}
+        {else}
+            {$root}{$alias}.{config('url_html_suffix')}
+        {/if}
+    {/if}
+{/if}
+{/strip}{/function}
+{function name=view_link item=[] m=null}{strip}
+{$id=$item.id}
+{if $m===null}{$m=$mdl}{/if}
+{if $id}
+{url($m|cat:'/view',['id'=>$id])}
+{else}
+你的数据没有id字段
+{/if}
+{/strip}{/function}
+{function layui_nav length=0 class=""}
+{if $length==0}{$length=count(menu('nav'))}{/if}
+<ul class="layui-nav {$class}" lay-filter="">
+    <li class="layui-nav-item {if !$top_id}layui-this{/if}"><a href="{call index_link}">网站首页</a></li>                
+    {foreach menu('nav') as $level1_id=>$level1}
+    {if $level1@iteration>$length}{break}{/if}
+    <li class="layui-nav-item {if $top_id==$level1_id}layui-this{/if}">
+        <a href="{call menu_link id=$level1_id}">{menu($level1_id,'title')}</a>
+        {if $level1}
+        <dl class="layui-nav-child">
+        {foreach $level1 as $level2_id=>$level2}
+            <dd><a href="{call menu_link id=$level2_id}">{menu($level2_id,'title')}</a></dd>
+        {/foreach}
+        </dl>
+        {/if}
+    </li>
+    {/foreach}
+</ul>
+{/function}
+{function bootstrap_nav length=0 class="nav-tabs"}
+{if $length==0}{$length=count(menu('nav'))}{/if}
+<ul class="nav {$class}">
+    <li role="presentation" class="{if !$top_id}active{/if}"><a href="{call index_link}">网站首页</a></li>                
+    {foreach menu('nav') as $level1_id=>$level1}
+    {if $level1@iteration>$length}{break}{/if}
+    <li role="presentation" class="{if $top_id==$level1_id}active{/if} {if $level1}dropdown{/if}">
+        <a href="{call menu_link id=$level1_id}" {if $level1}class="dropdown-toggle" data-toggle="dropdown"  role="button" aria-haspopup="true" aria-expanded="false"{/if}>{menu($level1_id,'title')}</a>
+        {if $level1}
+            <span class="caret"></span>
+            <ul class="dropdown-menu">
+                {foreach $level1 as $level2_id=>$level2}
+                <li><a href="{call menu_link id=$level2_id}">{menu($level2_id,'title')}</a></li>
+                {/foreach}
+            </ul>
+        {/if}
+    </li>
+    {/foreach}
+</ul>
+{/function}
+{function trim_content html='' length=0 etc='...'}{strip}
+{if $length}
+{$html|regex_replace:'/<script\s(.*)?\/script>/s':''|regex_replace:'/<style\s(.*)?\/style>/s':''|strip_tags|regex_replace:'/\&nbsp;/s':' '|regex_replace:'/\s+/':' '|cn_truncate:$length:$etc}
+{else}
+{$html|regex_replace:'/<script\s(.*)?\/script>/s':''|regex_replace:'/<style\s(.*)?\/style>/s':''|regex_replace:'/\&nbsp;/s':' '|strip_tags|regex_replace:'/\&nbsp;/s':' '|regex_replace:'/\s+/':' '}
+{/if}
+{/strip}{/function}

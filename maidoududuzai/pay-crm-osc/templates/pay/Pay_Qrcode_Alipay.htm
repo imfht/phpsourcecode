@@ -1,0 +1,68 @@
+<script type="text/javascript">
+var out_trade_no = "";
+var trade_no = "";
+var user_id = "{$user_id}";
+var qrcode_id = "{$qrcode_id}";
+var index_loading = 0;
+$(document).ready(function(){
+	$(".complete").click(function() {
+		if(!total_amount || parseFloat(total_amount) <= 0) {
+			return false;
+		}
+		$.ajax({
+			type: "POST",
+			dataType: "json",
+			timeout: 30000,
+			url: "{echo url('/pay/alipay/create')}",
+			data: {
+				ajax: "json",
+				user_id: user_id,
+				qrcode_id: qrcode_id,
+				"{$qrc_key}": "{$qrc_val}",
+				"total_amount": total_amount,
+			},
+			success: function(data){
+				//console.log(data);
+				if(data.status == 1) {
+					out_trade_no = data.contents.out_trade_no;
+					trade_no = data.contents.trade_no;
+					tradePay(trade_no);
+				}
+			},
+			error: function(xhr, status){
+				console.log(xhr);
+			},
+			complete: function(){
+				layer.close(index_loading);
+			},
+			beforeSend: function(){
+				index_loading = layer.open({
+					type: 2,
+					shadeClose: false
+				});
+			}
+		});
+	});
+});
+function ready(callback) {
+	if(window.AlipayJSBridge) {
+		callback && callback();
+	} else {
+		document.addEventListener("AlipayJSBridgeReady", callback, false);
+	}
+}
+function tradePay(tradeNO) {
+	ready(function(){
+		AlipayJSBridge.call("tradePay", {
+			tradeNO: tradeNO
+		}, function(data){
+			//console.log(data);
+			//tradeQuery(out_trade_no);
+			if("9000" == data.resultCode) {
+				window.location.reload();
+				//window.location = "out_trade_no";
+			}
+		});
+	});
+}
+</script>

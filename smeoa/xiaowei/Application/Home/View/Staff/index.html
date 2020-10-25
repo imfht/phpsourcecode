@@ -1,0 +1,178 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'职员查询','search'=>'N'))}
+	<div class="row">
+		<div class="col-sm-4 sub_left_menu">
+			<div class="well">
+				<?php echo $menu ?>
+			</div>
+		</div>
+		<div class="col-sm-8" >
+			<div class="ul_table border-bottom user_list ul_table-responsive"  >
+				<ul>
+					<li class="thead">
+						<div class="pull-left">
+							<span class="col-8 hidden-xs" >员工编码</span>
+							<span class="col-8" >姓名</span>
+							<span class="col-8">职位</span>
+							<span class="col-6 hidden" >职级</span>
+							<span class="col-10" >手机</span>
+						</div>
+						<div class="auto autocut hidden-xs">
+							<span style="width:100%;">邮件</span>
+						</div>
+					</li>
+				</ul>
+			</div>
+			<div class="hidden-xs">
+				<div class="col-sm-4 text-center">
+					<img id="emp_pic" class="img-thumbnail" onerror="javascript:this.src='/Uploads/emp_pic/no_avatar.jpg'"/>
+				</div>
+				<div class="col-sm-8 user_info">
+					<table class="table table-bordered">
+						<tr>
+							<th class="th" style="width:30%;">姓名</th>
+							<td style="width: 70%" class="name "></td>
+						</tr>
+						<tr>
+							<th class="th" style="width:30%;">办公电话</th>
+							<td style="width: 70%" class="office_tel "></td>
+						</tr>
+						<tr>
+							<th class="th" style="width:30%;">手机</th>
+							<td style="width: 70%" class="mobile_tel "></td>
+						</tr>
+						<tr>
+							<th class="th" style="width:30%;">邮箱</th>
+							<td style="width: 70%" class="email "></td>
+						</tr>
+						<tr>
+							<th class="th" style="width:30%;">业务</th>
+							<td style="width: 70%" class="duty "></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="sample" class="hidden">
+		<li class="tbody">
+			<div class="pull-left">
+				<span class="col-8 emp_no hidden-xs" ></span>
+				<span class="col-8 name" ></span>
+				<span class="col-8 position" ></span>
+				<span class="col-6 rank hidden-xs hidden" ></span>
+				<span class="col-10 mobile_tel"></span>
+			</div>
+			<div class="auto autocut hidden-xs">
+				<span style="width:100%;" class="email">邮件</span>
+			</div>
+		</li>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+
+		function showdata(result) {
+			$(".user_list li.tbody").remove();
+			for (var s in result.data) {
+				$("#sample .emp_no").text(result.data[s].emp_no);
+				$("#sample .name").text(result.data[s].name);
+				$("#sample .position").text(result.data[s].position_name);
+				$("#sample .rank").text(result.data[s].rank_name);
+				$("#sample .email").text(result.data[s].email);
+				$mobile = $("<a></a>");
+				$mobile.attr("href", "tel:" + result.data[s].mobile_tel);
+				$mobile.html(result.data[s].mobile_tel);
+
+				$("#sample .mobile_tel").html($mobile);
+
+				$("#sample li").attr("email", result.data[s].email);
+				$("#sample li").attr("duty", result.data[s].duty);
+				$("#sample li").attr("name", result.data[s].name);
+				$("#sample li").attr("office_tel", result.data[s].office_tel);
+				$("#sample li").attr("mobile_tel", result.data[s].mobile_tel);
+				$("#sample li").attr("pic", result.data[s].pic);
+				
+				$img_url=result.data[s].pic;
+				if($img_url!=""){
+					$("#emp_pic").prop("src", $(this).attr("pic"));
+				}else{
+					$("#emp_pic").prop("src","/Uploads/emp_pic/no_avatar.jpg");
+				}
+				html = $("#sample").html();
+
+				$(".user_list ul").append(html);
+
+				$("#sample li span").text("");
+			}
+			if ($(".user_list li.tbody").length > 0) {
+				$(".user_list li.tbody").get(0).click();
+			} else {
+				$(".user_info .info").text("");
+				$("#emp_pic").prop('src', "");
+			}
+		}
+
+		function btn_local_search() {
+			$(".sub_left_menu .tree_menu a").each(function() {
+				$(this).attr("class", "");
+			});
+			sendAjax("{:U('read')}", "keyword=" + $("#keyword").val(), function(data) {
+				showdata(data);
+			});
+			return false;
+		}
+
+		function key_local_search() {
+			$(".sub_left_menu .tree_menu a").each(function() {
+				$(this).attr("class", "");
+			});
+			if (event.keyCode == 13) {
+				sendAjax("{:U('read')}", "keyword=" + $("#keyword").val(), function(data) {
+					showdata(data);
+				});
+			}
+			return false;
+		}
+
+
+		$(document).ready(function() {
+			$(".sub_left_menu .tree_menu a").click(function() {
+				$(".sub_left_menu .tree_menu a").each(function() {
+					$(this).attr("class", "");
+				});
+				$(this).attr("class", "active");
+				sendAjax("{:U('read')}", "id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+
+			$(document).on("click", ".user_list .tbody", function() {
+				$(".user_info .name").text($(this).attr("name"));
+
+				$office_tel = $("<a></a>");
+				$office_tel.attr("href", 'tel:' + $(this).attr("office_tel"));
+				$office_tel.html($(this).attr("office_tel"));
+				$(".user_info .office_tel").html($office_tel);
+
+				$mobile_tel = $("<a></a>");
+				$mobile_tel.attr("href", 'tel:' + $(this).attr("mobile_tel"));
+				$mobile_tel.html($(this).attr("mobile_tel"));
+				
+				$(".user_info .mobile_tel").html($mobile_tel);
+				$(".user_info .email").text($(this).attr("email"));
+				$(".user_info .duty").text($(this).attr("duty"));
+				$img_url=$(this).attr("pic");
+				if($img_url!=""){
+					$("#emp_pic").prop("src", "__ROOT__/"+$(this).attr("pic"));
+				}else{
+					$("#emp_pic").prop("src","/Uploads/emp_pic/no_avatar.jpg");
+				}
+				
+			});
+		});
+
+	</script>
+</block>

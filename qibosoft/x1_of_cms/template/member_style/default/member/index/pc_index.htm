@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>会员中心 </title>
+<link rel="stylesheet" type="text/css" href="__STATIC__/member/default/blue/css.css">
+<link rel="stylesheet" type="text/css" href="__STATIC__/member/default/style7/index.css?j">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=8"><!-- 强制ie8,for 360 -->
+<SCRIPT LANGUAGE="JavaScript" src="__STATIC__/js/core/jquery.min.js"></SCRIPT>
+<link rel="stylesheet" href="__STATIC__/icon/icon.css">
+</head>
+<body>
+<!--下面是钩子插件,做风格的时候尽量加上,方便扩展  -->
+{:hook_listen('layout_member_body_head',$userdb,['webdb'=>$webdb,'info'=>$info],true)}
+<div class="TopContainer">
+	<div class="Infos">
+		<div class="Citys">  <span>{$webdb.webname}</span>  <a href="/">返回主页</a></div>
+		<div class="times">
+			你好!<a href="{:get_url('user',"uid=$userdb[uid]")}">{$user.username}</a>
+			<span id="liveclock"></span>
+<script type="text/javascript">
+function qb_time(){ 
+	var Digital=new Date();
+	var hours=Digital.getHours();
+	var minutes=Digital.getMinutes();
+	var seconds=Digital.getSeconds();
+	var year=Digital.getFullYear();
+	var month=Digital.getMonth()+1; 
+	var day=Digital.getDate();	
+	if(month<=9) month="0"+month;
+	if(day<=9) day="0"+day;
+	if(minutes<=9) minutes="0"+minutes;
+	if(seconds<=9) seconds="0"+seconds ;
+	myclock=" <em class='si si-clock'> "+year+"-"+month+"-"+day+" "+hours+":"+minutes+":"+seconds+"</em>";
+	$('#liveclock').html(myclock);
+	setTimeout("qb_time()",1000) 
+} 
+qb_time();
+</script>
+		</div>
+	</div>
+	<div class="LogoMenu">
+		<div class="logo"><a href="/"><span><img src="__STATIC__/member/default/style7/logo.png"/></span></a></div>
+		<div class="MainMenus">
+			<dl class="changemenu">
+				<dt></dt>
+				<dd></dd>
+			</dl>
+			<div class="ListMenuBox">
+				<div class="MenuContent">
+
+{volist name="menu" id="vo"}
+
+{php}
+if(empty($vo['sons'])){continue;}	//没有子菜单的就不要显示了
+if($menu['often']['sons'] && $key!='often'){continue;}	//如果有个性菜单,就不显示其它菜单了
+{/php}
+<dl>
+	<dt><span><i class="{$vo.icon|default='fa fa-list-ul'}"></i>{$vo.title}</span></dt>
+	<dd>
+		{volist name="vo.sons" id="ar"}
+ 		<ul>
+ 			<ol><i class="{$ar.icon|default='fa fa-map-o'}"></i>{$ar.title|get_word=16}</ol>
+			{volist name="ar.sons" id="rs"}
+ 			<li onclick="linksthis($(this))"><A HREF="{$rs.url}" title="{$rs.title}" target="member_mainiframe" {notempty name='$rs.fontcolor'}style="color:{$rs.fontcolor};"{/notempty}>{$rs.title}</A>{$rs.script}</li>
+ 			{/volist}
+ 		</ul>
+		{/volist}
+	</dd>
+</dl>
+{/volist}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+//如果有个性菜单的话,就把头部选择区域隐藏掉
+if(($(".MainMenus .MenuContent dl").length)<2){
+	$(".MainMenus").hide();
+}
+</script>
+<div class="MainContainer">
+	<div class="LeftCont">
+		<div class="members">
+			<div class="icon"><a href="{:get_url('user',"uid=$userdb[uid]")}" target="_blank"><span><img src="{$user.icon|tempdir}" onerror="this.src='__STATIC__/index/base/noface.gif'"/></span></a></div>
+			<div class="username"><a href="{:get_url('user',"uid=$userdb[uid]")}" target="_blank">{$user.username}</a></div>
+			<div class="companyer" title="{$userdb['group_endtime']>time()?date('Y-m-d H:i到期',$userdb['group_endtime']):''}"><span><span>{:getGroupByid($userdb[groupid])}</span></span></div>
+			<div class="moneys"><div>积分: {$userdb.money} 个 可用余额: {$userdb.rmb} 元</div></div>
+		</div>
+		<dl class="LoginAct">
+			<dt><a href="{:get_url('quit')}">安全退出</a></dt>
+			<dd><a href="{:get_url('user',"uid=$userdb[uid]")}" target="_blank">个人信息</a></dd>
+		</dl>
+		<div class="LeftMenus"></div>
+	</div>
+	<div class="RightCont">
+		<iframe name="member_mainiframe" id="member_mainiframe" marginwidth="0" marginheight="0" frameborder="0" src="{$url}"></iframe>
+	</div>
+</div>
+<script type="text/javascript">
+$('.MainContainer .LeftCont').height($(window).height()-155);
+$('.MainContainer .RightCont').height($(window).height()-155);
+function selectMenu(num){
+	$('.MenuContent dl').find('dt').removeClass('ck');
+	$('.MenuContent dl').eq(num).find('dt').addClass('ck');
+	var leftMenus=$('.MenuContent dl').eq(num).find('dd').html();
+	$('.LeftMenus').html(leftMenus);
+	
+	$(".LeftMenus ul").each(function(){
+		var that = $(this);
+		that.find("ol").click(function(){
+			if(that.find("li").is(':hidden')){
+				that.find('li').show(200);
+				that.find("ol").removeClass('hide');
+			}else{
+				that.find('li').hide(200);
+				that.find("ol").addClass('hide');				
+			}			
+		});
+	});
+
+	if($(".LeftMenus ul").length>=4){	//超过4个就默认隐藏
+		$(".LeftMenus li").hide();
+		$(".LeftMenus ol").addClass('hide');
+	}
+}
+$('.MenuContent dl').click(function(){
+	var thisnum=$(this).index();
+	selectMenu(thisnum);
+});
+var totalmenus=$('.MenuContent dl').length;
+var menushow_W=770;
+var totalmenu_W=110*totalmenus;
+var topselects=1;
+var showmenus=7;
+var max_changes= Math.ceil(totalmenus/showmenus);
+if(totalmenu_W>menushow_W){
+	$('.changemenu dd').addClass('ck');
+}
+function next_topmenu(){
+	topselects++;
+	if(topselects>max_changes){
+		topselects=max_changes;
+	}else{
+		change_topmenu(topselects);
+	}
+}
+function prev_topmenu(){
+	topselects--;
+	if(topselects<1){
+		topselects=1;
+	}else{
+		change_topmenu(topselects);
+	}
+}
+function change_topmenu(num){
+	var thisnum=(num-1);
+	if(num<max_changes){
+		$('.changemenu dd').addClass('ck');
+	}else{
+		$('.changemenu dd').removeClass('ck');
+	}
+	if(num>1){
+		$('.changemenu dt').addClass('ck');
+	}else{
+		$('.changemenu dt').removeClass('ck');
+	}
+	var left_width=menushow_W*thisnum;
+	$('.MenuContent').animate({'left':'-'+left_width+'px'},500);
+}
+$('.changemenu dt').click(function(){
+	prev_topmenu();
+});
+$('.changemenu dd').click(function(){
+	next_topmenu();
+});
+selectMenu(0);
+function linksthis(objs){
+	var fobj=objs.parent();
+	fobj.find('li').removeClass('ck');
+	objs.addClass('ck');
+}
+</script>
+
+<!--下面是钩子插件,做风格的时候尽量加上,方便扩展-->
+{:hook_listen('layout_member_body_foot',$userdb,['webdb'=>$webdb,'info'=>$info],true)}
+
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <include file="public/css" />
+</head>
+<body>
+    <div class="layui-btn-container">
+        <a class="layui-btn"  href="{:url('add')}" > <i class="layui-icon">&#xe654;</i>新增</a>
+    </div>
+    <table class="layui-hide" id="datas" lay-filter="table1"></table>
+</body>
+<include file="public/js" />
+
+<script type="text/html" id="statusTpl">
+    <input type="checkbox" name="status" value="{{d.id}}" lay-skin="switch" lay-text="正常|禁用" lay-filter="status" {{ d.status == 1 ? 'checked' : '' }}>
+</script>
+
+<script type="text/html" id="toolbar">
+    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit"><i class="layui-icon">&#xe642;</i>修改</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"><i class="layui-icon">&#xe640;</i>删除</a>
+    <a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="log"><i class="layui-icon">&#xe60a;</i>日志</a>
+</script>
+
+<script>
+    layui.use(['table','form'], function(){
+        var table = layui.table,form = layui.form;
+
+        table.render({
+            elem: '#datas'
+            ,cellMinWidth: 80
+            ,url:"{:url('lists')}"
+            ,cols: [[
+                {field:'id',width:80,  title: '任务id'},
+                {field:'cate_name',width:100,  title: '分类名称'},
+                {field:'remark', width:250,title: '备注'}
+                ,{field:'cron_expression',width:150, title: 'cron表达式',style:"color:#FF5722"}
+                ,{field:'cmd', title: '命令',}
+                ,{field:'status',width:100, title: '状态',templet: '#statusTpl', unresize: true}
+                ,{fixed:'right', title: '操作', align:'center',toolbar:'#toolbar',width:200,}
+            ]],
+        });
+
+        //监听工具条
+        table.on('tool(table1)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+            if(layEvent === 'del'){ //删除
+                layer.confirm('真的删除行么', function(index){
+                    layer.close(index);
+                    var url = "{:url('doDel',[],false)}/ids/"+data.id;
+                    api.del(url,layer,obj);
+                });
+            } else if(layEvent === 'edit'){ //编辑
+                location.href = "{:url('edit',[],false)}/id/"+data.id;
+            } else if(layEvent === 'log'){ //编辑
+                var url = '{:url(\'CronTaskLog/index\')}';
+                url = appendParam(url,'ct_id',data.id);
+                openPage(url,3,'执行日志',true);
+            }
+        });
+
+        form.on('switch(status)', function(data){
+            var status = data.elem.checked ? 1 : 0;
+            var url = "{:url('doEdit')}";
+            api.update(url,{id:this.value,status:status})
+        });
+
+    });
+</script>
+</html>

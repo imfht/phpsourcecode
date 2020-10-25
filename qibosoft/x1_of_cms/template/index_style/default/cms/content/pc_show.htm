@@ -1,0 +1,108 @@
+﻿{extend name="$index_style_layout" /}
+
+<!--SEO相关-->
+{block name="head_title"}{$info.title}{/block}
+{block name="head_keword"}{$info.keywords?:$info.title}  {$s_info.name} {/block}
+{block name="head_description"}{:get_word(del_html($info['content']),300)}{/block}
+
+{block name="body_AllScorllSlide"}
+<!--通栏横幅图片__STATIC__/css/qb_ui.css中控制图片宽度百分百高度行内样式设置，如不设置不小于100px---->
+{qb:tag name="cms_pc_show001" type="image"}
+<div class="qb_ui_AllscrollBanner">
+	<a href="#1"><img src="__STATIC__/images/s2.jpg"></a>
+</div>
+{/qb:tag}
+{/block}
+{block name="body_content"}
+
+<!--视频播放器-->
+{if $info.mid==3} {include file="content/zhibo" /} {/if}
+
+<link rel="stylesheet" href="__STATIC__/index/default/pclist.css">
+<link rel="stylesheet" href="__STATIC__/index/default/left.css">
+<div class="ArticlMainContainer">
+	<div class="LeftsCnt">
+		<div class="LeftBoxInfo">
+			{qb:hy name="pc_cms_show_left001" type="labelmodel" val="datas" where="index_style/default/cms/pc_model/sort,kefu,contact,index_style/default/index/userkefu"} {$datas} {/qb:hy}
+		</div>
+	</div>
+	<div class="RightCnt">
+		<div class="ShowContent">
+			<div class="title">{$info.title}</div>
+			<div class="infos">
+				<span><i class="glyphicon glyphicon-time"></i> {:date("Y-m-d H:i:s",$info.create_time)}</span>
+				<span><i class="si si-eye"></i> {$info.view}</span>
+				<span onclick="add_fav({$id})"> <li class="fa fa-fw fa-heart"></li>收藏</span> 
+				<span class="manage_topic"> <li class="fa fa-cogs"></li> 管理</span> 
+				{include file="index@common/manage_btn" /}
+			</div>
+			<div class="cnt">
+				{$info.content}
+				
+				<!-- 组图 -->
+				{volist name="$info.picurls" id="rs"}
+				{php}if(strstr($info['content'],$rs['picurl']))continue;{/php}
+				<br><center><img src="{$rs.picurl}"></center><br>
+				{/volist}
+
+				{notempty name="$info.voice_url"}
+				<!-- 音频模型 -->
+				<br><center><audio controls="controls" autoplay>
+				  <source src="{$info['voice_url'][0]['url']}" type="audio/mp3" />
+				你的浏览器不支持
+				</audio></center>
+				{/notempty}
+
+			</div>
+		</div>
+<!--显示自定义字段内容 field="picurl,title,content,keywords" 就是过滤掉不在里边重复显示的字段-->
+<style type="text/css">.OtherInfos .SideBox{clear:both;}.OtherInfos img{height:100px;float:left;margin:3px;}</style>
+  	<div class="OtherInfos">
+{qb:showpage field="picurl,title,content,keywords,mv_url,myfid"}
+		<div class="SideBox">
+		{if in_array($rs['type'],['bmap','images','images2','image','file','files','files2'])}
+			<!-- 组图及多文件的显示方法\template\index_style\default\index\common\field.htm,其实不建议放在这里,影响布局,更多请查阅 http://help.php168.com/665693/  -->
+			<div class="tag"><span>{$rs.title}</span></div>
+			{include file="index@common/field" /}
+		{else /}
+			<div class="tag"><span>{$rs.title}</span></div>
+			<div class="cont">{$rs.value}</div>
+		{/if}
+		</div>
+{/qb:showpage}
+	</div>
+
+		<div>
+			<span>上一页：{:fun('content@prev',$info,100,'list')}</span>
+			<span style="float:right;">下一页：{:fun('content@next',$info,100,'list')}</span>
+		</div>
+
+		<!--引用评论碎片-->
+		{qb:comment name="commentpc01" rows='5'}
+			{include file="content/comment_pc" /}
+		{/qb:comment}
+	</div>
+</div>
+
+<script type="text/javascript">
+layer.photos({
+  photos: '.ShowContent .cnt',
+  anim: 0, //0-6的选择 动画类型
+}); 
+</script>
+
+<script type="text/javascript">
+function add_fav(id){
+	var url="{:purl('fav/api/add')}?type={:config('system_dirname')}&id="+id;
+	$.get(url,function(res){
+		if(res.code==0){
+			layer.msg('收藏成功');
+		}else{
+			layer.alert(res.msg);
+		}
+	})
+}
+</script>
+
+
+{/block}

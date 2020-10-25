@@ -1,0 +1,112 @@
+<?php require_once('finance/inc/item_status.php'); ?>
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) { 
+	header('Location:?c=user&a=login');
+	die;
+}
+
+if (empty($_GET)) die;
+
+$page = @intval($_GET['page']);
+
+if (empty($page)) { $page = 1; }
+$limit = 5;
+$user_id = $auth['id'];
+$cond = 'WHERE user_id = '.$user_id;
+
+$items = dt_query("SELECT id, name, money, revenue, term, audited, invest, c_at FROM finance_item $cond ORDER BY c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$items) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/nav_sub_xm.html') ?>
+<div class="container">
+	<h3 style="font-size:18px">[<?php echo $auth['name'] ?>] 发布的项目</h3>
+	<hr style="border-top:1px solid #ccc">
+	<div class="row clearfix">
+		<div class="col-md-9 column" style="border-right: 1px solid #ddd">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>项目名称</th>
+						<th>投资人</th>
+						<th>融资额（元）</th>
+						<th>年化收益率</th>
+						<th>期限</th>
+						<th>审核</th>
+						<th>发布时间</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php while($item = mysql_fetch_array($items)) { ?>
+				<tr id="<?php echo $item['id'] ?>">
+					<td><a href="?c=finance&a=item_show&item_id=<?php echo $item['id']; ?>"><?php echo $item['name'] ?></a></td>
+					<td><?php echo $item['invest'] ?></td>
+					<td><?php echo $item['money'] ?></td>
+					<td><?php echo $item['revenue'].'%' ?></td>
+					<td><?php echo $item['term'],'个月' ?></td>
+					<td><?php echo $item['audited'] ?></td>
+					<td><?php echo date('Y-m-d', $item['c_at']) ?></td>
+					<td>
+						<a class="btn btn-default btn-sm" href="javascript:get_i_is(<?php echo $item['id'] ?>, 1)">查看投资人</a>
+					</td>
+				</tr>
+				<?php } ?>
+				</tbody>
+			</table>
+
+			<?php pagination('finance_item', $cond, $page, $limit, '?c=finance&a=item_my_item&page=') ?>
+		</div>
+
+		<div class="col-md-3 column">
+			<section>
+				<h3 style="font-size:18px">融资概况</h3>
+				<hr style="border-top:1px dashed #ccc">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>状态</th>
+							<th class="text-center">项目数</th>
+							<th class="text-right">金额（元）</th>
+						</tr>
+					</thead>
+					<tbody>
+					<tr>
+						<td><?php echo $item_status[FINANCE_ITEM_STATUS_TB]['name'] ?></td>
+						<td class="text-center"><?php echo dt_count('finance_item', $cond." AND status = ".FINANCE_ITEM_STATUS_TB) ?></td>
+						<td class="text-right"><?php echo dt_sum('finance_item', 'money', $cond." AND status = ".FINANCE_ITEM_STATUS_TB) ?></td>
+					</tr>
+					<tr>
+						<td><?php echo $item_status[FINANCE_ITEM_STATUS_HK]['name'] ?></td>
+						<td class="text-center"><?php echo dt_count('finance_item', $cond." AND status = ".FINANCE_ITEM_STATUS_HK) ?></td>
+						<td class="text-right"><?php echo dt_sum('finance_item', 'money', $cond." AND status = ".FINANCE_ITEM_STATUS_HK) ?></td>
+					</tr>
+					<tr>
+						<td><?php echo $item_status[FINANCE_ITEM_STATUS_JS]['name'] ?></td>
+						<td class="text-center"><?php echo dt_count('finance_item', $cond." AND status = ".FINANCE_ITEM_STATUS_JS) ?></td>
+						<td class="text-right"><?php echo dt_sum('finance_item', 'money', $cond." AND status = ".FINANCE_ITEM_STATUS_JS) ?></td>
+					</tr>
+					</tbody>
+				</table>
+			</section>
+		</div>
+	</div>
+</div>
+
+<div class="container" id="i_is">
+</div>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+		$('li#finance_xm').addClass('active');
+		$('li#xm_fbxm').addClass('active');
+		});
+
+</script>

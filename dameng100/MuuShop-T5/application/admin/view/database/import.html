@@ -1,0 +1,77 @@
+{extend name="common/main"/}
+
+{block name="body"}
+
+    <div class="main-title">
+        <h2>{:lang("_DATA_BACKUP_")}</h2>
+    </div>
+
+    <div class="with-padding">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th width="200">{:lang("_BACKUP_NAME_")}</th>
+                    <th width="80">{:lang("_VOLUME_NUMBER_")}</th>
+                    <th width="80">{:lang("_COMPRESSION_")}</th>
+                    <th width="80">{:lang("_DATA_SIZE_")}</th>
+                    <th width="200">{:lang("_BACKUP_TIME_")}</th>
+                    <th>{:lang("_STATE_")}</th>
+                    <th width="120">{:lang("_OPERATION_")}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="list" id="data"}
+                    <tr>
+                        <td>{$data.time|date='Ymd-His',###}</td>
+                        <td>{$data.part}</td>
+                        <td>{$data.compress}</td>
+                        <td>{$data.size|format_bytes}</td>
+                        <td>{$key}</td>
+                        <td>-</td>
+                        <td class="action">
+                            <a class="db-import" href="{:Url('import?time='.$data['time'])}">{:lang("_REDUCTION_")}</a>&nbsp;
+                            <a class="ajax-get confirm" href="{:Url('del?time='.$data['time'])}">{:lang("_DELETE_")}</a>
+                        </td>
+                    </tr>
+                {/volist}
+            </tbody>
+        </table>
+    </div>
+
+{/block}
+
+{block name="script"}
+    <script type="text/javascript">
+        $(".db-import").click(function(){
+            var self = this, status = ".";
+            $.get(self.href, success, "json");
+            window.onbeforeunload = function(){ return {:lang("_RESTORING_DATABASE_PLEASE_DONT_TURN_OFF_WITH_DOUBLE_")} }
+            return false;
+        
+            function success(data){
+                if(data.code){
+                    if(data.gz){
+                        data.msg += status;
+                        if(status.length === 5){
+                            status = ".";
+                        } else {
+                            status += ".";
+                        }
+                    }
+                    $(self).parent().prev().text(data.msg);
+                    if(data.data.part){
+                        $.get(self.href, 
+                            {"part" : data.data.part, "start" : data.data.start}, 
+                            success, 
+                            "json"
+                        );
+                    }  else {
+                        window.onbeforeunload = function(){ return null; }
+                    }
+                } else {
+                    updateAlert(data.msg,'alert-error');
+                }
+            }
+        });
+    </script>
+{/block}

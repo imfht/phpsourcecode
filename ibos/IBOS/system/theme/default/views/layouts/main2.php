@@ -1,0 +1,440 @@
+<?php
+
+use application\core\utils\File;
+use application\core\utils\Ibos;
+use application\core\utils\StringUtil;
+use application\core\utils\Url;
+use application\modules\user\utils\User;
+
+$notSaas = strtolower(ENGINE) != 'saas';
+
+?>
+<!doctype html>
+<!--[if lt IE 9]>
+<html lang="en" class="ie8">
+<![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en">
+<![endif]-->
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta name="renderer" content="webkit"/>
+    <meta charset="<?php echo CHARSET; ?>">
+    <title><?php echo Ibos::app()->setting->get('title'); ?></title>
+    <link rel="shortcut icon" href="<?php echo STATICURL; ?>/image/favicon.ico?<?php echo VERHASH; ?>">
+    <link rel="apple-touch-icon-precomposed" href="<?php echo STATICURL; ?>/image/common/ios_icon.png">
+    <meta name="generator" content="IBOS <?php echo VERSION; ?>"/>
+    <meta name="author" content="IBOS Team"/>
+    <meta name="copyright" content="2013 IBOS Inc."/>
+    <!-- IE 8 以下跳转至浏览器升级页 -->
+    <!--[if lt IE 8]>
+    <script>
+        window.location.href = "<?php echo Ibos::app()->urlManager->createUrl("
+        main /
+        default/
+        unsupportedBrowser
+        "); ?>"
+    </script>
+    <![endif]-->
+    <!-- load css -->
+    <link rel="stylesheet" href="<?php echo STATICURL; ?>/css/base.css?<?php echo VERHASH; ?>"/>
+    <link rel="stylesheet" href="<?php echo STATICURL; ?>/css/common.css?<?php echo VERHASH; ?>"/>
+    <?php $skin = Ibos::app()->setting->get('setting/skin'); ?>
+    <?php if (!empty($skin)): ?>
+        <link rel="stylesheet"
+              href="<?php echo STATICURL; ?>/css/skin/<?php echo $skin; ?>.css?<?php echo VERHASH; ?>" /><?php endif; ?>
+    <link rel="stylesheet" href="<?php echo STATICURL; ?>/css/call.css?<?php echo VERHASH; ?>"/>
+    <!-- IE8 fixed -->
+    <!--[if lt IE 9]>
+    <link rel="stylesheet" href="<?php echo STATICURL; ?>/css/iefix.css?<?php echo VERHASH; ?>"/>
+    <![endif]-->
+    <!-- load css end -->
+
+    <!-- JS全局变量-->
+    <script>
+        <?php include PATH_ROOT . '/data/jsconfig.php'; ?>
+    </script>
+    <script src='<?php echo STATICURL; ?>/js/require.js?<?php echo VERHASH; ?>'></script>
+    <!-- 语言包 -->
+    <script src='<?php echo STATICURL; ?>/js/lang/zh-cn.js?<?php echo VERHASH; ?>'></script>
+    <!-- 核心库类 -->
+    <script src='<?php echo STATICURL; ?>/js/src/core.js?<?php echo VERHASH; ?>'></script>
+    <script src='<?php echo STATICURL; ?>/js/src/base.js?<?php echo VERHASH; ?>'></script>
+    <script src='<?php echo STATICURL; ?>/js/src/common.js?<?php echo VERHASH; ?>'></script>
+</head>
+<body class="ibbody">
+<div class="ibcontainer">
+    <!-- Header -->
+    <div class="header" id="header">
+        <div class="wrap">
+            <div class="logo">
+                <?php $unit = Ibos::app()->setting->get('setting/unit'); ?>
+                <a href="<?php echo Ibos::app()->setting->get('siteurl'); ?>"><img src="<?php
+
+                    if (!empty($unit['logourl'])): echo $unit['logourl'];
+                    else:
+
+                        ?><?php echo STATICURL; ?>/image/logo.png<?php endif; ?>?<?php echo VERHASH; ?>" alt="IBOS"
+                                                                                   height="40"></a>
+            </div>
+            <!-- Nav -->
+            <?php $navs = Ibos::app()->setting->get('cache/nav'); ?>
+            <?php if ($navs): ?>
+                <div class="nvw" id="nvw">
+                    <ul class="nv nl" id="nv">
+                        <?php foreach ($navs as $index => $nav): ?>
+                        <?php if ($nav['module'] == ''): ?>
+                            <?php if (!empty($nav['child'])): ?>
+                                <?php
+
+                                if ($nav['disabled']) {
+                                    continue;
+                                }
+                                $nav['url'] = Url::getUrl($nav['url']);
+
+                                ?>
+                                <!-- 这个判断，是应微信要求去掉首页，等套件上线再改回来-->
+                                <?php if ($nav['name'] != '首页'): ?>
+                                    <li data-target="#sub_nav_<?php echo $index; ?>"
+                                        data-id="<?php echo $index; ?>">
+                                        <a href="<?php echo $nav['url']; ?>"
+                                           target="<?php echo $nav['targetnew'] ? '_blank' : '_self'; ?>"><?php echo $nav['name']; ?></a>
+                                        <?php if (1 == 2): ?><i class="o-new-nav-tip"></i> <?php endif; ?>
+                                    </li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        <?php else: ?>
+                                <?php
+
+                                if ($nav['disabled']) {
+                                    continue;
+                                }
+                                $nav['url'] = Url::getUrl($nav['url']);
+
+                                ?>
+                                <!-- 这个判断，是应微信要求去掉首页，等套件上线再改回来-->
+                                <?php if ($nav['name'] != '首页'): ?>
+                                    <li data-target="#sub_nav_<?php echo $index; ?>" data-id="<?php echo $index; ?>">
+                                        <a href="<?php echo $nav['url']; ?>"
+                                           target="<?php echo $nav['targetnew'] ? '_blank' : '_self'; ?>"><?php echo $nav['name']; ?></a>
+                                        <?php if (1 == 2): ?><i class="o-new-nav-tip"></i> <?php endif; ?>
+                                    </li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+
+                <div id="subnv_wrap">
+                    <?php foreach ($navs as $index => $nav): ?>
+                        <!-- 这个判断，是应微信要求去掉首页，等套件上线再改回来-->
+                        <?php if ($nav['module'] == 'crm'): ?>
+                            <ul class="subnv" id="sub_nav_<?php echo $index; ?>" data-pid="<?php echo $index; ?>">
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/lead/index') ?>">线索</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/client/index') ?>">客户</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/contact/index') ?>">联系人</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/opportunity/index') ?>">商机</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/event/index') ?>">跟进</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/contract/index') ?>">合同</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/receipt/index') ?>">收款</a>
+                                </li>
+                                <li><a target="_self"
+                                       href="<?php echo Ibos::app()->urlManager->createUrl('crm/highseas/index') ?>">管理</a>
+                                </li>
+                            </ul>
+                        <?php endif; ?>
+                        <?php if ($nav['name'] != '首页' && !empty($nav['child'])): ?>
+                            <ul class="subnv" id="sub_nav_<?php echo $index; ?>" data-pid="<?php echo $index; ?>">
+                                <?php foreach ($nav['child'] as $subNav): ?>
+                                    <?php
+
+                                    if ($subNav['disabled']) {
+                                        continue;
+                                    }
+                                    $hasPurv = User::checkNavPurv($subNav);
+                                    $subNav['url'] = Url::getUrl($subNav['url']);
+
+                                    ?>
+                                    <?php if ($hasPurv): ?>
+                                        <li>
+                                            <a target="<?php echo $subNav['targetnew'] ? '_blank'
+                                                : '_self'; ?>"
+                                               href="<?php echo $subNav['url']; ?>"
+                                               data-id="<?php echo $subNav['id']; ?>">
+                                                <?php echo $subNav['name']; ?>
+                                                <?php if (1
+                                                    == 2
+                                                ): ?><i class="o-new-nav-tip"></i><?php endif; ?>
+                                            </a>
+                                        </li>
+                                    <?php else: ?>
+                                        <li class="disabled"><a href="javascript:;"
+                                                                title="暂无权限访问"><?php echo $subNav['name']; ?></a></li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+
+            <?php endif; ?>
+            <!-- Nav end -->
+            <div class="usi">
+                <div class="btn-group">
+                    <a href="javascript:;" data-toggle="dropdown" id="user_login_ctrl">
+                                <span class="ellipsis">
+                                    <?php if (mb_strlen(Ibos::app()->user->realname) > 16): ?>
+                                        <?php echo StringUtil::cutStr(Ibos::app()->user->realname, 6); ?>
+                                    <?php else: ?>
+                                        <?php echo Ibos::app()->user->realname; ?>
+                                    <?php endif; ?>
+                                </span>
+                        <i class="caret caret-small"></i>
+                    </a>
+                </div>
+                <a href="<?php echo Ibos::app()->createUrl('message/mention/index'); ?>" class="cbtn o-message"
+                   id="user_fun_ctrl" title="消息中心"><?php echo Ibos::lang('Message', 'default'); ?>
+                </a>
+                <?php if (Ibos::app()->user->isadministrator || Ibos::app()->user->roleType): ?>
+                    <a href="<?php echo Ibos::app()->urlManager->createUrl('dashboard/default/index'); ?>" class="cbtn link mls" target="_blank" title="管理后台">管理后台</a>
+                <?php endif; ?>
+            </div>
+            <div class="posr">
+                <div id="message_container" class="reminder" style="display: none;">
+                    <a href="javascript:void(0)" onclick="Ibosapp.dropnotify.hide()" class="o-close-small"></a>
+                    <ul class="reminder-list">
+                        <li rel="new_folower_count"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('weibo/personal/follower'); ?>"
+                                    class="anchor">查看粉丝</a></li>
+                        <li rel="unread_comment"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/comment/index'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="unread_message"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/pm/index'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="unread_atme"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/mention/index'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="unread_notify"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="user"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=user'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="diary"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=diary'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="report"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=report'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="calendar"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=calendar'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="workflow"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=workflow'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="article"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=article'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="officialdoc"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=officialdoc'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="email"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=email'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="assignment"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=assignment'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="message"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=message'); ?>"
+                                    class="anchor">查看详情</a></li>
+                        <li rel="unread_group_atme"><span></span>，<a href="" class="anchor">查看消息</a></li>
+                        <li rel="unread_group_comment"><span></span>，<a href="" class="anchor">查看消息</a></li>
+                        <li rel="meeting"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=meeting'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="car"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=car'); ?>"
+                                    class="anchor">查看消息</a></li>
+                        <li rel="assets"><span></span>，<a
+                                    href="<?php echo Ibos::app()->urlManager->createUrl('message/notify/index&module=assets'); ?>"
+                                    class="anchor">查看消息</a></li>
+                    </ul>
+                    <div class="all-msg-read" id="all-msg-read">
+                        全部设为已读
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 用户登录状态卡 -->
+        <div class="uil-card" id="user_login_card" style="display:none;">
+            <div class="uil-card-header">
+                <div class="media">
+                    <a href="<?php echo Ibos::app()->user->space_url; ?>" class="pull-left avatar-circle">
+                        <img src="<?php echo Ibos::app()->user->avatar_middle; ?>">
+                    </a>
+                    <div class="media-body">
+                        <h5 class="media-heading"><strong><?php echo Ibos::app()->user->realname; ?></strong></h5>
+                        <p class="fss"><?php echo trim(Ibos::app()->user->deptname . ':' . Ibos::app()->user->posname,
+                                ':'); ?></p>
+                    </div>
+                </div>
+            </div>
+            <div class="uil-card-body">
+                <div class="mbm">
+                            <span
+                                    class="exp-val"><em><?php echo Ibos::app()->user->credits; ?></em>/<?php echo Ibos::app()->user->next_group_credit; ?></span>
+                    <span><i
+                                class="lv lv<?php echo Ibos::app()->user->level; ?>"></i> <?php echo Ibos::app()->user->group_title; ?></span>
+                </div>
+                <div class="progress" title="Progress-bar">
+                    <div
+                            class="progress-bar <?php if (Ibos::app()->user->upgrade_percent > 90):
+
+                                ?>progress-bar-danger<?php else: ?>progress-bar-success<?php endif; ?>"
+                            style="width: <?php echo Ibos::app()->user->upgrade_percent; ?>%;"></div>
+                </div>
+                <div class="btn-group btn-group-justified">
+                    <a href="<?php echo Ibos::app()->urlManager->createUrl('user/home/personal', array('op' => 'profile', 'uid' => Ibos::app()->user->uid)); ?>"
+                       class="btn"><i class="om-user"></i>个人</a>
+                    <!-- 应微信要求，这里先做跳转到我的资料页，上线套件后记得改回来呀-->
+                    <!--                    <a href="-->
+                    <?php //echo Ibos::app()->user->space_url; ?><!--" class="btn"><i class="om-user"></i>个人</a>-->
+                        <a href="<?php echo Ibos::app()->urlManager->createUrl('user/default/logout', array('formhash' => FORMHASH));
+
+                        ?>"
+                           class="btn">
+                            <i class="om-shutdown"></i><?php echo Ibos::lang('Quit', 'default');
+
+                            ?>
+                        </a>
+                </div>
+            </div>
+        </div>
+        <div class="fun-card" id="user_fun_card" style="display:none;">
+            <div class="fill-ss">
+                <ul class="list-inline fun-opt-list">
+                    <?php if ($notSaas): ?>
+                        <li>
+                            <a class="fun-opt-box" href="javascript:;" data-action="calling">
+                                <i class="on-fun-call"></i>
+                                <span class="fss db fun-opt-title">打电话</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <li>
+                        <a class="fun-opt-box"
+                           href="<?php echo Ibos::app()->urlManager->createUrl('email/content/add'); ?>">
+                            <i class="on-fun-email"></i>
+                            <span class="fss db fun-opt-title">发邮件</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="fun-opt-box" href="javascript:;" data-action="sendPrivateLetter">
+                            <i class="on-fun-private-letter"></i>
+                            <span class="fss db fun-opt-title">发私信</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- Header end -->
+    <!-- load script end -->
+    <div class="wrap" id="mainer">
+        <?php if (!in_array(Ibos::app()->setting->get('module'),
+            array('user', 'weibo', 'app', 'main'))
+        ): ?>
+            <div class="mtw">
+                <h2 class="mt pull-left"><?php echo Ibos::app()->setting->get('pageTitle'); ?></h2>
+                <span class="pull-right"><?php echo Ibos::app()->setting->get('lunar'); ?></span>
+            </div>
+        <?php endif; ?>
+        <!-- Mainer -->
+        <?php echo $content; ?>
+        <!-- Mainer end -->
+    </div>
+    <!-- Footer -->
+    <div class="footer wrap" id="footer">
+        <!-- Breadcrumb -->
+        <div class="brc clearfix">
+            <a href="<?php echo Ibos::app()->setting->get('siteurl'); ?>" title="">
+                <i class="o-logo"></i>
+            </a>
+            <?php $breadCrumbs = Ibos::app()->setting->get('breadCrumbs'); ?>
+            <?php foreach ($breadCrumbs as $key => $value): ?>
+                <a href="<?php echo isset($value['url']) ? $value['url'] : 'javascript:;' ?>"><?php echo $value['name']; ?></a>
+            <?php endforeach; ?>
+        </div>
+        <!-- 授权获取 -->
+        <script type="text/javascript">
+            Ibos.app.s('LICENCE_VER', <?php if (defined("LICENCE_VER")): ?> true <?php else : ?> false <?php endif; ?>)
+            ;
+        </script>
+        <!-- Quick link -->
+        <div class="copyright">
+            <div class="quick-link">
+                <a target="_blank" href="http://doc.ibos.com.cn/"><?php echo Ibos::lang('Ibos help', 'default');
+
+                    ?></a>
+                <span class="ilsep">|</span>
+                <a target="_blank"
+                   href="http://kf.ibos.com.cn"><?php echo Ibos::lang('Ibos feedback', 'default');
+
+                    ?></a>
+                <span class="ilsep">|</span>
+                <a target="_blank"
+                   href="http://doc.ibos.com.cn/article/detail/id/256"><?php echo Ibos::lang('Chrome frame', 'default');
+
+                    ?></a>
+                <?php if ($notSaas): ?>
+                    <span class="ilsep">|</span>
+                    <a href="javascript:;" data-action="appDownload">客户端下载</a>
+                <?php endif; ?>
+                <?php
+
+                $qr = Ibos::app()->setting->get('setting/qrcode');
+                $qrcode = isset($qr) ? $qr : '';
+                if (!empty($qrcode)) :
+
+                    ?>
+                    <span class="ilsep">|</span>
+                    <a href="javascript:;" data-action="followWx" class="im-link">
+                        <i class="o-olw-crcode"></i>关注微信号
+                    </a>
+                <?php endif; ?>
+            </div>
+            <?php if ($notSaas): ?>
+                Powered by <strong>IBOS <?php echo VERSION; ?> <?php echo VERSION_TYPE; ?></strong>
+                <?php if (YII_DEBUG): ?>
+                    Processed in <code><?php echo Ibos::app()->performance->endClockAndGet(); ?></code> second(s).
+                    <code><?php echo Ibos::app()->performance->getDbstats(); ?></code> queries.
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!--数据包-->
+<?php echo File::getOrgJs() ?>
+<script src='<?php echo STATICURL; ?>/js/app/ibos.userData.js?<?php echo VERHASH; ?>'></script>
+<script src='<?php echo STATICURL; ?>/js/app/ibos.userSelect.js?<?php echo VERHASH; ?>'></script>
+
+<script src='<?php echo STATICURL; ?>/js/src/application.js?<?php echo VERHASH; ?>' defer asnyc="true"></script>
+<script src='<?php echo STATICURL; ?>/js/main.js?<?php echo VERHASH; ?>'></script>
+<script src='<?php echo STATICURL; ?>/js/src/service.js?<?php echo VERHASH; ?>'></script>
+</body>
+</html>

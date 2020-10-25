@@ -1,0 +1,62 @@
+{layout name="passport:layout" /}
+<form id="form" action="{:url('passport.member/staffEdit')}">
+<input type="hidden" name="id" value="{$info.id}" />
+<table class="formtable">
+   {notempty name="auth"}
+    <tr>
+        <th>权限设置:</th>
+        <td>
+            <select class="select w180" datatype="*" name="auth" class="select" id="authselect">
+                <option value="">- 请选择用户权限 -</option>
+                <option value="0" {$info.auth == 0?'selected':''}>超级管理员</option>
+                {foreach $auth as $vo}
+                <option value="{$vo.auth}" {$info.auth == $vo.auth?'selected':''}>{$vo.name}</option>
+                {/foreach}
+            </select>
+        </td>
+    </tr>
+    <tr><th></th><td id="authgroup">
+        {foreach $auth as $vo}
+            {if $info.auth == $vo.auth}{foreach $vo.group as $rs}{if isset($rs.name)}<span class="badge bg-green mr5">{$rs.name}</span>{/if}{/foreach}{/if}
+        {/foreach}
+    </td></tr>
+    {/notempty}
+    <tr>
+        <th>用户名称:</th>
+        <td><input datatype="*" class="input" type="text" name="username" value="{$info.username}" /></td>
+    </tr>
+    <tr>
+        <th>手机号:</th>
+        <td><input ajaxurl="{:url('passport.member/isphone',['id'=>$info.id])}" datatype="m" class="input" type="text" name="phone_id" value="{$info.phone_id}" /></td>
+    </tr>
+    <tr>
+        <th>登录密码:</th>
+        <td>
+            <input placeholder="请输入现登录密码" datatype="s6-18" class="input" type="password" name="login_password" />
+        </td>
+    </tr>
+    <tr>
+        <th></th>
+        <td>
+            <input type="submit" value="确定" class="button button-blue submit" />
+            <input type="reset" value="重置" class="button button-blank" />
+        </td>
+    </tr>
+</table>
+</form>
+{notempty name="auth"}
+<script id="authtpl" type="text/html">
+    {literal}{{each list value keys}}{{if value.name}}<span class="badge bg-green mr5">{{value.name}}</span>{{/if}}{{/each}}{/literal}
+</script>
+{/notempty}
+<script type="text/javascript">
+Do('base','layer','form','tpl',function () {
+    $('#form').isForm();
+    $("#authselect").change(function(){
+        var auth = $(this).val();
+        $.getJSON("{:url('passport.member/getuserAuth')}",{auth:auth},function (rel) {
+            $("#authgroup").html(template('authtpl',{list:rel.data}));
+        })
+    });
+});
+</script>

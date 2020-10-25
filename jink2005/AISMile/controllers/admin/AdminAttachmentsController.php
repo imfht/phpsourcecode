@@ -1,0 +1,166 @@
+<?php
+/**
+ * MILEBIZ 米乐商城
+ * ============================================================================
+ * 版权所有 2011-20__ 米乐网。
+ * 网站地址: http://www.milebiz.com
+ * ============================================================================
+ * $Author: zhourh $
+ */
+
+class AdminAttachmentsControllerCore extends AdminController
+{
+
+	protected $product_attachements = array();
+
+	public function __construct()
+	{
+	 	$this->table = 'attachment';
+		$this->className = 'Attachment';
+	 	$this->lang = true;
+
+		$this->addRowAction('edit');
+		$this->addRowAction('delete');
+
+		$this->fields_list = array(
+			'id_attachment' => array(
+				'title' => $this->l('ID'),
+				'align' => 'center',
+				'width' => 25
+			),
+			'name' => array(
+				'title' => $this->l('Name')
+			),
+			'file' => array(
+				'title' => $this->l('File')
+			)
+		);
+
+		parent::__construct();
+	}
+
+	public function renderForm()
+	{
+		$this->fields_form = array(
+			'legend' => array(
+				'title' => $this->l('Attachment'),
+				'image' => '../img/t/AdminAttachments.gif'
+			),
+			'input' => array(
+				array(
+					'type' => 'text',
+					'label' => $this->l('Filename:'),
+					'name' => 'name',
+					'size' => 33,
+					'required' => true,
+					'lang' => true,
+				),
+				array(
+					'type' => 'textarea',
+					'label' => $this->l('Description:'),
+					'name' => 'description',
+					'cols' => 40,
+					'rows' => 10,
+					'lang' => true,
+				),
+				array(
+					'type' => 'file',
+					'label' => $this->l('File:'),
+					'name' => 'file',
+					'desc' => $this->l('Upload file from your computer')
+				),
+			),
+			'submit' => array(
+				'title' => $this->l('   Save   '),
+				'class' => 'button'
+			)
+		);
+
+		return parent::renderForm();
+	}
+
+	public function getList($id_lang, $order_by = null, $order_way = null, $start = 0, $limit = null, $id_lang_shop = false)
+	{
+		parent::getList((int)$id_lang, $order_by, $order_way, $start, $limit, $id_lang_shop);
+
+		if (count($this->_list))
+		{
+			$this->product_attachements = Attachment::getProductAttached((int)$id_lang, $this->_list);
+
+			$list_product_list = array();
+			foreach ($this->_list as $list)
+			{
+				$product_list = '';
+				if (isset($this->product_attachements[$list['id_attachment']]))
+				{
+					foreach ($this->product_attachements[$list['id_attachment']] as $product)
+						$product_list .= $product.', ';
+				}
+				$list_product_list[$list['id_attachment']] = $product_list;
+			}
+
+			// Assign array in list_action_delete.tpl
+			$this->tpl_delete_link_vars = array(
+				'product_list' => $list_product_list,
+				'product_attachements' => $this->product_attachements
+			);
+		}
+	}
+
+	public function postProcess()
+	{
+		if (_PS_MODE_DEMO_)
+		{
+			$this->errors[] = Tools::displayError('This functionality has been disabled.');
+			return;
+		}
+
+		if (Tools::isSubmit('submitAdd'.$this->table))
+		{
+			$id = (int)Tools::getValue('id_attachment');
+			if ($id && $a = new Attachment($id))
+			{
+				$_POST['file'] = $a->file;
+				$_POST['mime'] = $a->mime;
+			}
+			if (!count($this->errors))
+			{
+				if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name']))
+				{
+					if ($_FILES['file']['size'] > (Configuration::get('PS_ATTACHMENT_MAXIMUM_SIZE') * 1024 * 1024))
+						$this->errors[] = sprintf(
+							$this->l('File too large, maximum size allowed: %1$d kB. File size you\'re trying to upload is:  %2$d kB.'),
+							(Configuration::get('PS_ATTACHMENT_MAXIMUM_SIZE') * 1024),
+							number_format(($_FILES['file']['size'] / 1024), 2, '.', '')
+						);
+					else
+					{
+						do $uniqid = sha1(microtime());
+						while (file_exists(_PS_DOWNLOAD_DIR_.$uniqid));
+						if (!copy($_FILES['file']['tmp_name'], _PS_DOWNLOAD_DIR_.$uniqid))
+							$this->errors[] = $this->l('File copy failed');
+						$_POST['file_name'] = $_FILES['file']['name'];
+						@unlink($_FILES['file']['tmp_name']);
+						$_POST['file'] = $uniqid;
+						$_POST['mime'] = $_FILES['file']['type'];
+					}
+				}
+				else if (array_key_exists('file', $_FILES) && (int)$_FILES['file']['error'] === 1)
+				{
+					$max_upload = (int)ini_get('upload_max_filesize');
+					$max_post = (int)ini_get('post_max_size');
+					$upload_mb = min($max_upload, $max_post);
+					$this->errors[] = sprintf(
+						$this->l('The File %1$s exceeds the size allowed by the server. The limit is set to %2$d MB.'),
+						'<b>'.$_FILES['file']['name'].'</b> ',
+						'<b>'.$upload_mb.'</b>'
+					);
+				}
+				else if (!empty($_FILES['file']['tmp_name']))
+					$this->errors[] = $this->l('No file or your file is not uploadable, please check your server configuration for the maximum upload size.');
+			}
+			$this->validateRules();
+		}
+		return parent::postProcess();
+	}
+}

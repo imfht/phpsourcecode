@@ -1,0 +1,186 @@
+<!--{layout:Header}-->
+<div class="wrap wrap_bg">
+    <div class="left">
+        <a class="home" href="<!--{:Config::get('baseUrl')}-->">首页</a>
+        <a class="avatar" href="<!--{:Router::buildUrl('User_Index', array('uid' => $uid))}-->">
+            <img src="<!--{:H($user['avatar'])}-->" />
+        </a>
+        <h1 class="name"><!--{:H($user['name'])}--></h1>
+        <ul id="category" class="category">
+            <li id="cid_0" <!--{if($cid == 0)}-->data-cur="1"<!--{/if}-->>
+                <a href="<!--{:Router::buildUrl('User_Index', array('uid' => $uid))}-->" <!--{if(!$cid)}-->class="hover"<!--{/if}-->>所有书签</a>
+            </li>
+            <!--{foreach($categoryList as $v)}-->
+            <!--{if($mid == $uid || !$v['is_private'])}-->
+            <li id="cid_<!--{$v['id']}-->" <!--{if($cid == $v['id'])}-->data-cur="1"<!--{/if}-->>
+                <a href="<!--{:Router::buildUrl('User_Index', array('uid' => $uid, 'cid' => $v['id']))}-->" <!--{if($cid == $v['id'])}-->class="hover"<!--{/if}-->><!--{:H($v['name'])}--></a>
+                <!--{if($mid == $uid)}-->
+                <span href="javascript:;" data-label="category_edit" data-id="<!--{$v['id']}-->">编辑</span>
+                <!--{/if}-->
+            </li>
+            <!--{/if}-->
+            <!--{/foreach}-->
+        </ul>
+        <div id="category_nav" class="category_nav">
+            <a href="javascript:;" class="prev">上一页</a>
+            <a href="javascript:;" class="next">下一页</a>
+        </div>
+    </div>
+    <div id="link_list" class="right" <!--{if($isPost)}-->style="display: none;"<!--{/if}-->>
+        <div class="tool">
+            <input id="search_input" type="text" class="search_input" />
+            <a id="search" href="javascript:;" class="search">搜索</a>
+            <!--{if($mid == $uid)}-->
+            <a href="javascript:;" class="link_add" title="添加网址">添加网址</a>
+            <a href="javascript:;" class="category_add" title="添加分类">添加分类</a>
+            <a href="javascript:;" class="setting" title="设置">设置</a>
+            <a href="<!--{:Router::buildUrl('User_Logout')}-->" class="logout" title="退出">退出</a>
+            <!--{/if}-->
+        </div>
+        <ul id="link" class="link">
+            <!--{foreach($linkList as $k => $v)}-->
+            <li>
+                <a href="<!--{:H($v['url'])}-->" title="<!--{:H($v['title'])}-->" target="_blank"><!--{:H($v['title'])}--></a>
+                <!--{if($mid == $uid)}-->
+                <span href="javascript:;" data-label="link_edit" data-id="<!--{$v['id']}-->">编辑</span>
+                <!--{/if}-->
+            </li>
+            <!--{/foreach}-->
+        </ul>
+        <div class="page"><!--{$pageHtml}--></div>
+    </div>
+    <div id="action" class="right" style="display: none;"></div>
+</div>
+<script type="text/javascript">
+function cpage(p) {
+    var each = 5;
+    var wrap = $("#category");
+    var items = $("#category li");
+    var len = items.length-1;
+    if(!wrap.data("p")) wrap.data("p", 1);
+    if(p == "next") p = wrap.data("p")+1;
+    else if(p == "prev") p = wrap.data("p")-1;
+    var total = Math.max(Math.ceil(len/each), 1);
+    if(p < 1) p = 1;
+    else if(p > total) p = total;
+    wrap.data("p", p);
+    var si = (p-1)*each+1;
+    var ei = Math.min(si+each-1, len);
+    items.hide();
+    $(items[0]).show();
+    for(var i=si; i<=ei; i++) {
+        $(items[i]).show();
+    }
+    if(total > 1) {
+        $("#category_nav").show();
+    }
+};
+
+function getCpage(id) {
+    var each = 5;
+    var items = $("#category li");
+    var len = items.length-1;
+    var _i = 1;
+    for(var i=1; i<=len; i++) {
+        if($(items[i]).attr("id") == "cid_"+id) {
+            _i = i;
+            break;
+        }
+    }
+    return Math.ceil(_i/each);
+}
+
+cpage(getCpage(<!--{$cid}-->));
+
+$(".next").click(function() {
+    cpage("next");
+});
+
+$(".prev").click(function() {
+    cpage("prev");
+});
+
+$("#category li").bind({
+    mouseover: function() {
+        $this = $(this);
+        $("a", $this).addClass("hover");
+        $("span", $this).show();
+    },
+    mouseout: function() {
+        $this = $(this);
+        var a = $("a", $this);
+        if(!$this.data("cur")) a.removeClass("hover");
+        $("span", $this).hide();
+    }
+});
+
+function search() {
+    var key = $.trim($("#search_input").val());
+    if(key.length > 0) {
+        var url = "<!--{:Router::buildUrl('User_Index', array('uid' => $uid, 'kw' => '[kw]'))}-->".replace("[kw]", encodeURIComponent(key));
+    } else {
+        var url = "<!--{:Router::buildUrl('User_Index', array('uid' => $uid))}-->";
+    }
+    location.href = url;
+}
+
+$("#search").click(search);
+$("#search_input").keydown(function(e) {
+    e = window.event || e;
+    if(e.keyCode == 13) search();
+});
+
+$("#link li").bind({
+    mouseover: function() {
+        $this = $(this);
+        $("a", $this).addClass("hover");
+        $("span", $this).show();
+    },
+    mouseout: function() {
+        $this = $(this);
+        $("a", $this).removeClass("hover");
+        $("span", $this).hide();
+    }
+});
+
+function showAction(url) {
+    $.get(url, function(r) {
+        if(r.status) {
+            $("#link_list").hide();
+            $("#action").show().html(r.data);
+        } else {
+            alert(r.msg);
+        }
+    }, "json");
+}
+
+function hideAction() {
+    $("#action").hide();
+    $("#link_list").show();
+}
+
+$(".link_add").click(function() {
+    showAction("<!--{:Router::buildUrl('Link_Add')}-->");
+});
+
+<!--{if($isPost)}-->
+$(".link_add").trigger("click");
+<!--{/if}-->
+
+$(".category_add").click(function() {
+    showAction("<!--{:Router::buildUrl('Category_Add')}-->");
+});
+
+$(".setting").click(function() {
+    showAction("<!--{:Router::buildUrl('Link_Export')}-->");
+});
+
+$("span[data-label='category_edit']").click(function() {
+    showAction("<!--{:Router::buildUrl('Category_Edit', array('id' => '[id]'))}-->".replace("[id]", $(this).data("id")));
+});
+
+$("span[data-label='link_edit']").click(function() {
+    showAction("<!--{:Router::buildUrl('Link_Edit', array('id' => '[id]'))}-->".replace("[id]", $(this).data("id")));
+});
+</script>
+<!--{layout:Footer}-->

@@ -1,0 +1,120 @@
+<include file="public:head" />
+<include file="public:sep" />
+<style type="text/css">
+  .layui-nav-tree{width: 200px!important;}
+</style>
+<div class="layui-container fly-marginTop fly-user-main">
+  <include file="ucleft" />
+
+  <div class="site-tree-mobile layui-hide">
+    <i class="layui-icon">&#xe602;</i>
+  </div>
+  <div class="site-mobile-shade"></div>
+  
+  <div class="site-tree-mobile layui-hide">
+    <i class="layui-icon">&#xe602;</i>
+  </div>
+  <div class="site-mobile-shade"></div>
+  
+  
+  <div class="fly-panel fly-panel-user" pad20>
+    <div class="layui-tab layui-tab-brief" lay-filter="user">
+      <ul class="layui-tab-title" id="LAY_mine">
+        <li <if condition="$type eq ''"> class="layui-this"</if>><a href="{:U('ucenter/mydoclist')}">已审核文档</a></li>
+        <li <if condition="$type eq '1'"> class="layui-this"</if>><a href="{:U('ucenter/mydoclist',array('type'=>1))}">未审核文档</a></li>
+      </ul>
+      <!-- 内容开始 -->
+      <div class="layui-tab-content" style="padding: 0;">
+        <div class="layui-form">
+          <table class="layui-table">
+            <colgroup>
+              <col width="">
+              <col width="80">
+              <col width="80">
+              <col width="80">
+              <col width="140">
+              <col width="140">
+              <col width="80">
+              
+            </colgroup>
+            <thead>
+              <tr>
+                <th>文档名称</th>
+                <th>评分</th>
+                <th>浏览</th>
+                <th>下载</th>
+                <th>转换状态</th>
+                <th>发布时间</th>
+                <th style="display: ;">操作</th>
+              </tr> 
+            </thead>
+            <tbody id="infolist">
+              <wkcms:doc type="lists" uid="$uid" own="1" status="$status" order="add_time desc" pagenum="15">
+              <volist name="data['list']" id="vo">
+              <tr>
+                <td><div class="ic ic-{$vo.ext}"></div><a href="{:U('doc/doccon',array('id'=>$vo['id']))}" target="_blank">{$vo.title|msubstr=###,0,50}</a></td>
+                <td><span class="ratyimg raty{$vo.raty|getratyint}">{$vo.raty}分</span></td>
+                <td>{$vo.hits}</td>
+                <td>{$vo.id|downcount}</td>
+                <td>
+                  <if condition="$vo.convert_status == 2"> <a style="color: #1E9FFF;">已转换</a>
+                  <elseif condition="$vo.convert_status == 1"/>转换中
+                  <else /><a style="color: #FF5722;">转换失败</a>
+                  </if>
+                </td>
+                <td>{$vo.add_time|fdate}</td>
+                <td><a href="javascript:;" data-uri="{:U('doc/delmydoc',array('id'=>$vo['id']))}"  id="delete">删除</a></td>
+              </tr>
+              </volist>
+            </wkcms:doc>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 内容结束 -->
+      <!-- 分页 -->
+      <div style="text-align: center;">
+        <div class="laypage-main"> {$data['page']} </div>
+      </div>
+      <!-- 分页结束 -->
+      </div>
+    </div>
+  </div>
+
+<include file="public:footer" />
+<script>
+ layui.use(['form' ,'jquery'], function(){  
+    var form = layui.form , $ = layui.jquery ;
+ 
+    //提交删除-单个
+    $("tbody#infolist tr td #delete").click(function(data){
+        var delurl = $(this).attr('data-uri');  
+        layer.confirm('删除将不能恢复，确认删除吗？', {btn: ['确认','取消']}, function(){  
+            $.post(delurl,function(res){
+                if(res.status ==  1){
+                    layer.msg(res.msg,{time:1800},function(){
+                     location.reload();  //成功后刷新当前页
+                    });
+                }else{
+                    layer.msg(res.msg,{time:1800});
+                    return false;
+                }
+            });
+        }, function(){  
+            layer.msg('取消删除');  
+            return false;  
+            });  
+        return false; 
+    });  
+
+  });
+ 
+</script>
+<script>
+  layui.cache.page = 'user';
+  layui.config({
+  base: '__PUBLIC__/theme/blueideal/mods/' //这里实际使用时，建议改成绝对路径
+  }).extend({
+    fly: 'index'
+  }).use('fly');
+</script>

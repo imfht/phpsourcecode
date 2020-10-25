@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+        <head>
+                <title>输入</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="js/inc.js"></script>
+        </head>
+        <body>
+                <fieldset>
+                        <legend>获取输入</legend>
+                        我们写WEB程序，可以同过$_GET,$_POST等超全局变量里面获取外界数据。
+                        但是直接使用这些数组是不方便的有时候我们经常需要进行很多的判断，
+                        为了方便Soter提供了获取各种外界数据的方法。
+			<br><b class="text_strong">提示：</b>
+			下面的方法的$key参数都支持点方式直接获取数组内层数据。
+			<pre class="brush:php">
+			Sr::get($key = null, $default = null, $xssClean = false)
+			Sr::getPost($key, $default = null, $xssClean = false)
+			Sr::post($key = null, $default = null, $xssClean = false) 
+			Sr::postGet($key, $default = null, $xssClean = false)
+			Sr::session($key = null, $default = null, $xssClean = false)
+			Sr::server($key = null, $default = null)
+			Sr::cookie($key = null, $default = null, $xssClean = false) 
+			Sr::cookieRaw($key = null, $default = null, $xssClean = false) 
+			</pre>			
+			比如$_SESSION数组是：
+			<pre class="brush:php">
+			$_SESSION=array(
+				'a'=>'1',
+				'b'=>array(
+					'd'=>'2'
+				)
+			);
+			</pre>
+			那么如果要直接获取$_SESSION['b']['d'],$key可以写为：b.d，即：Sr::session('b.d'),值是2。
+                       <br>
+			请看下面对这些方法的详细介绍：
+			<ol>
+                                <li>
+                                        <h2 class="title_h2">获取get数据</h2>
+                                        通过<b>Sr::get()</b>方法;我们可以方便的获取url传递过来的get数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+						//假如url是：http://127.0.0.1/index.php/Welcome/index.do?uid=1120
+						echo Sr::get('uid');
+						//上面将会输出：1120
+
+						//假如url是：http://127.0.0.1/index.php/Welcome/index.do?cid=312
+						echo Sr::get('cid',1);
+						//上面将会输出：312
+						//你会注意到我们调用的时候传递了第二个参数1，这是什么意思呢，如果我们不传递cid参数，
+						//那么Sr::get('cid',1)就会返回第二个参数设置的默认值1。
+
+						//假如url是：http://127.0.0.1/index.php/Welcome/index.do?keyword=test
+						echo Sr::get('keyword','',true);
+						//上面将会输出：test
+						//你肯定看到了，又多了第三个参数，它又是什么意思呢，
+						//如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+						//Sr::get()会帮你对参数值进行xss安全过滤。
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取post数据</h2>
+                                        通过<b>Sr::post()</b>方法;我们可以方便的获取表单传递过来的post数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                //首先模拟一个表单代码如下：
+                                                &lt;form action="http://127.0.0.1/index.php/Welcome/index.do" method="post"&gt;
+                                                        用户名:<input type="text" name="username" value="用户名" />
+                                                        姓名:<input type="text" name="names" value="word" />
+                                                        兴趣:<input type="text" name="hobby" value="" />
+                                                        <input type="submit" value="提交" />
+                                                &lt;/form&gt;
+
+                                                //假如你表单点击提交
+                                                echo Sr::post('username');
+                                                //上面将会输出:用户名
+
+                                                echo Sr::post('hobby','看书');
+                                                //上面将会输出:word
+                                                //你会注意到我们调用的时候传递了第二个参数"看书"，这是什么意思呢，如果我们不传递hobby参数，
+                                                //那么Sr::post('hobby','看书')就会返回第二个参数设置的默认值"看书"。
+
+                                                echo Sr::post('names','',true);
+                                                //上面将会输出：word
+                                                //你肯定看到了，又多了第三个参数，它又是什么意思呢，
+                                                //如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+                                                //Sr::post()会帮你对参数值进行xss安全过滤。   
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取get，post数据</h2>
+                                        通过<b>Sr::getPost()</b>方法;我们可以方便的获取get或者post数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                //首先模拟一个表单代码如下：
+                                                &lt;form action="http://127.0.0.1/index.php/Welcome/index.do?username=get数据" method="post"&gt;
+                                                        用户名:<input type="text" name="username" value="用户名" />
+                                                        姓名:<input type="text" name="names" value="word" />
+                                                        兴趣:<input type="text" name="hobby" value="" />
+                                                        <input type="submit" value="提交" />
+                                                &lt;/form&gt;
+
+                                                //假如你表单点击提交
+                                                echo Sr::getPost('username');
+                                                //上面将会输出:get数据
+                                                //为什么会输出"get数据"呢？http://127.0.0.1/index.php/Welcome/index.do?username=get数据 我们可以看到链接带username值。
+                                                //所以这个函数是先get抓取，如果没有再抓取post。
+
+                                                echo Sr::getPost('hobby','踢球');
+                                                //上面将会输出:word
+                                                //你会注意到我们调用的时候传递了第二个参数"踢球"，这是什么意思呢，如果我们不传递hobby参数，
+                                                //那么Sr::getPost('hobby','踢球')就会返回第二个参数设置的默认值"踢球"。
+
+                                                echo Sr::getPost('names','',true);
+                                                //上面将会输出：word
+                                                //你肯定看到了，又多了第三个参数，它又是什么意思呢，
+                                                //如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+                                                //Sr::getPost()会帮你对参数值进行xss安全过滤。   
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取post，get数据</h2>
+                                        通过<b>Sr::postGet()</b>方法;我们可以方便的获取post或者get数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                //首先模拟一个表单代码如下：
+                                                &lt;form action="http://127.0.0.1/index.php/Welcome/index.do?username=get数据" method="post"&gt;
+                                                        用户名:<input type="text" name="username" value="用户名" />
+                                                        姓名:<input type="text" name="names" value="word" />
+                                                        兴趣:<input type="text" name="hobby" value="" />
+                                                        <input type="submit" value="提交" />
+                                                &lt;/form&gt;
+
+                                                //假如你表单点击提交
+                                                echo Sr::postGet('username');
+                                                //上面将会输出:用户名
+                                                //这个函数是先post抓取，如果没有再抓取get。
+
+                                                echo Sr::postGet('hobby','打游戏');
+                                                //上面将会输出:word
+                                                //你会注意到我们调用的时候传递了第二个参数"打游戏"，这是什么意思呢，如果我们不传递hobby参数，
+                                                //那么Sr::postGet('hobby','打游戏')就会返回第二个参数设置的默认值"打游戏"。
+
+                                                echo Sr::postGet('names','',true);
+                                                //上面将会输出：word
+                                                //你肯定看到了，又多了第三个参数，它又是什么意思呢，
+                                                //如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+                                                //Sr::postGet()会帮你对参数值进行xss安全过滤。   
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取server数据</h2>
+                                        通过<b>Sr::server()</b>方法;我们可以方便的获取server数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">
+                                                //假如url是：http://127.0.0.1/index.php/Welcome/index.do
+                                                echo Sr::server('PHP_SELF');
+                                                //上面将会输出:/index.php/Welcome/index.do
+
+                                                //假如url是：http://127.0.0.1/index.php/Welcome/index.do
+                                                echo Sr::server('HTTP_HOST',1);
+                                                //上面将会输出:127.0.0.1
+                                                //你会注意到我们调用的时候传递了第二个参数1，这是什么意思呢，如果我们不传递HTTP_HOST参数，
+                                                //那么Sr::server('HTTP_HOST',1)就会返回第二个参数设置的默认值1。
+                                        </pre>
+                                </li>                                
+                                <li>
+                                        <h2 class="title_h2">获取cookie数据</h2>
+                                        通过<b>Sr::cookie()</b>方法;我们可以方便的获取cookie数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">                                                
+                                                Sr::setCookie('user_id',2);
+                                                Sr::setCookie('phone',13670345217);
+                                                Sr::setCookie('username','名称',3600);
+                                                //该如何使用请参考输出手册中的"设置cookie"
+                
+                                                echo Sr::cookie('user_id');  
+                                                //上面将会输出:2
+
+                                                echo Sr::cookie('phone',1);
+                                                //上面将会输出:13670345217
+                                                //你会注意到我们调用的时候传递了第二个参数1，这是什么意思呢，如果我们不传递phone参数，
+                                                //那么Sr::cookie('phone',1)就会返回第二个参数设置的默认值1。
+
+                                                echo Sr::cookie('username','',true);
+                                                //上面将会输出：名称
+                                                //你肯定看到了，又多了第三个参数，它又是什么意思呢，
+                                                //如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+                                                //Sr::cookie()会帮你对参数值进行xss安全过滤。   
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取原生cookie</h2>
+                                        通过<b>Sr::cookieRaw()</b>方法;我们可以方便的获取原生cookie。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">                                                
+                                                Sr::setCookieRaw('user_id',2);
+                                                Sr::setCookieRaw('phone',13670345217);
+                                                Sr::setCookieRaw('username','名称',3600);
+                                                //该如何使用请参考输出手册中的"设置原生cookie"
+                
+                                                echo Sr::cookieRaw('user_id');  
+                                                //上面将会输出:2
+
+                                                echo Sr::cookieRaw('phone',1);
+                                                //上面将会输出:13670345217
+                                                //你会注意到我们调用的时候传递了第二个参数1，这是什么意思呢，如果我们不传递phone参数，
+                                                //那么Sr::cookieRaw('phone',1)就会返回第二个参数设置的默认值1。
+
+                                                echo Sr::cookieRaw('username','',true);
+                                                //上面将会输出：名称
+                                                //你肯定看到了，又多了第三个参数，它又是什么意思呢，
+                                                //如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+                                                //Sr::cookieRaw()会帮你对参数值进行xss安全过滤。   
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取session数据</h2>
+                                        通过<b>Sr::session()</b>方法;我们可以方便的获取session数据。<br/>
+                                        使用示例：
+                                        <pre class="brush:php">                                                
+                                                //假如session值是：$_SESSION['key'] = '1';
+                                                echo Sr::session('key');
+                                                //上面将会输出：1
+
+                                                //假如session值是：$_SESSION['cid'] = '12';
+                                                echo Sr::session('cid',34);
+                                                //上面将会输出：12
+                                                //你会注意到我们调用的时候传递了第二个参数34，这是什么意思呢，如果我们不传递cid参数，
+                                                //那么Sr::session('cid',34)就会返回第二个参数设置的默认值34。
+
+                                                //假如session值是：$_SESSION['user_id'] = '15';
+                                                echo Sr::session('user_id','',true);
+                                                //上面将会输出：15
+                                                //你肯定看到了，又多了第三个参数，它又是什么意思呢，
+                                                //如果我们获取的参数内容有可能是html的时候，我们应该对它进行xss过滤，没错,第三个参数设置为true的时候，
+                                                //Sr::session()会帮你对参数值进行xss安全过滤。
+                                        </pre>
+                                </li>
+                                <li>
+                                        <h2 class="title_h2">获取原始的POST数据</h2>
+                                        通过<b>Sr::postRawBody()</b>方法;我们可以方便的获取原始的POST数据。 
+                                        <br>使用示例：
+                                        <pre class="brush:php"> 
+                                        //首先模拟一个表单代码如下：
+                                        &lt;form action="http://127.0.0.1/index.php/Welcome/index.do" method="post"&gt;
+                                                用户名:<input type="text" name="username" value="Jackson">
+                                                姓名:<input type="text" name="names" value="word">
+                                                <input type="submit" value="提交">
+                                        &lt;/form&gt;
+
+                                        //假如你表单点击提交
+                                        echo Sr::postRawBody();
+                                        //上面将会输出:username=Jackson&names=word 
+                                        </pre>
+                                </li>
+                        </ol>
+                </fieldset>
+                <script src="js/inc.foot.js"></script>
+
+        </body>
+</html>

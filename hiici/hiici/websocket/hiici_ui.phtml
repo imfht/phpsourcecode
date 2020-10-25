@@ -1,0 +1,97 @@
+<?php 
+
+$auth = @$_SESSION['auth'];
+echo '<script>var user = '.((!empty($auth)) ? json_encode($auth) : 'null').'</script>';
+$n_id_md5 = @filter_var($_GET['n_id_md5'], FILTER_SANITIZE_STRING);
+
+$p_cond = 'user_id, name, a_m, l_m, p_m,';
+
+if (!empty($n_id_md5)) {
+	$md5 = dt_query_one("SELECT $p_cond n_id FROM flex_n_id WHERE n_id_md5 = '$n_id_md5'");
+	if (!$md5) { put_info('该直播间间已关闭！^_^'); header('Location:?c=forum&a=index'); die; }
+	echo '<script>var n_id = \''.$md5['n_id'].'\', n_id_md5 = \''.$n_id_md5.'\'</script>';
+} else {
+	if (empty($auth)) die('用户未登录！^_^');
+	$md5 = dt_query_one("SELECT $p_cond password FROM flex_n_id WHERE user_id = '".$auth['id']."'");
+	echo '<script>var password = \''.$md5['password'].'\'</script>';
+}
+echo '<script>var a_m = '.$md5['a_m'].', l_m = '.$md5['l_m'].', p_m = '.$md5['p_m'].'</script>';
+
+?>
+<style type="text/css">
+@media (max-width: 970px) {
+.footerB, .footer {
+	display:none;
+}
+}
+</style>
+<script src="forum/inc/forum.js"></script>
+<link rel="stylesheet" href="forum/inc/forum.css">
+<?php require_once('forum/inc/pub_h.phtml') ?>
+<audio id="q_audio" src="forum/inc/notify.mp3" autoplay style="display:none"></audio>
+<div class="container-fluid websocket">
+	<div class="row clearfix">
+		<div class="col-md-8 column" style="text-align:center">
+			<video id="hiici_s" <?php if (empty($n_id_md5)) echo 'muted="true"'; if (1 == $md5['l_m']) echo 'style="display:none"' ?> autoplay onclick="$('div.msg_d').toggleClass('hidden-xs')"></video>
+		</div>
+		<div class="col-md-4 column msg_d">
+			<h3><?php echo $md5['name'] ?>
+				<a class="btn btn-default" target="_blank" href="?c=center&a=index&user_id=<?php echo $md5['user_id'] ?>">主播空间 <img src="<?php echo FACE_URL.$md5['user_id'] ?>_min.jpg" height="20" class="img-circle"/></a>
+			</h3>  
+			<div class="c_cont">
+				<div id="log"></div>  
+			</div>
+			<form class="form-inline" action="javascript:send()">
+				<input id="msg" type="textbox" class="form-control"/>  
+				<button class="btn btn-default">发送</button>  
+			</form>
+		</div>
+	</div>
+</div>
+<?php if (!empty($n_id_md5)) { ?>
+<div id="get_password" style="display:none">
+	<div class="container">
+		<div class="row clearfix">
+			<ol class="breadcrumb forum-breadcrumb">
+				<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+				<li class="active"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 直播密码 <small>>></small></li>
+			</ol>
+		</div>
+	</div>
+	<div class="container">
+		<div class="forum-add">
+			<div class="row clearfix">
+				<div class="col-md-12 column">
+					<h3><span class="glyphicon glyphicon-alert"></span> 访问 [<?php echo $md5['name'] ?>] 直播间</h3>
+					<hr class="solid">
+					<div class="col-md-11 column">
+						<form class="form-horizontal" id="password" action="javascript:do_get_password()">
+							<fieldset>
+								<div class="form-group">
+									<label class="col-md-2 control-label">直播密码</label>  
+									<div class="col-md-9">
+										<input id="password" type="password" placeholder="88-8888-8888" class="form-control input-md" required="">
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-md-2 control-label hidden-xs"></label>
+									<div class="col-md-2 col-xs-5">
+										<button class="btn btn-primary btn-block">访问</button>
+									</div>
+									<div class="col-md-7 col-xs-7">
+										<a class="btn btn-success btn-block" type="button" href="?c=center&a=index&user_id=<?php echo $md5['user_id'] ?>">主播空间</a>
+									</div>
+								</div>
+							</fieldset>
+						</form>	
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<?php } ?>
+<script src="websocket/inc/pr.js"></script>
+<script src="websocket/inc/hiici_<?php echo (!empty($n_id_md5)) ? 'c' : 's' ?>.js"></script>

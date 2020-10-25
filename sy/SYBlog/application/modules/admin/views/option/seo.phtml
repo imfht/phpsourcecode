@@ -1,0 +1,121 @@
+<?php
+use \sy\base\Router;
+use \blog\libs\Common;
+$baiduSubmit = unserialize(Common::option('seoBaiduSubmit'));
+$sitemap = unserialize(Common::option('seoSitemap'));
+$changefreq = [
+	'always' => '实时',
+	'hourly' => '每小时',
+	'daily' => '每天',
+	'weekly' => '每周',
+	'monthly' => '每月',
+	'yearly' => '每年',
+	'never' => '从不'
+];
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SEO设置 - SYBlog</title>
+	<?php $this->display('common/header'); ?>
+	<style>
+	h5 {
+		padding-left: 0.75rem;
+	}
+	.card-panel .col {
+		margin-top: 1.1rem;
+		margin-bottom: 10px;
+	}
+	</style>
+</head>
+<body>
+	<?php $this->display('common/navbar'); ?>
+	<div class="page-content">
+		<h2 class="title">SEO设置</h2>
+		<div class="row">
+			<div class="col s6">
+				<div class="row card-panel form">
+					<h5>Ping</h5>
+					<div class="input-field col s12">
+						<textarea type="text" name="ping" class="materialize-textarea getme"><?=Common::option('seoPing')?></textarea>
+						<label>Ping服务器地址（每行一个）</label>	
+					</div>
+					<button class="waves-effect waves-light btn seosave" data-type="ping">保存设置</button>
+				</div>
+				<div class="row card-panel form">
+					<h5>百度主动推送</h5>
+					<div class="switch col s12">
+						<label>Off<input name="enable" type="checkbox" class="getme seobox" <?php if ($baiduSubmit['enable'] == 1) echo 'checked'; ?>/><span class="lever"></span>On</label>
+					</div>
+					<div class="col s12 input-field">
+						<input name="site" type="text" class="getme" placeholder="例如www.example.com" value="<?=$baiduSubmit['site']?>"/>
+						<label>Site</label>
+					</div>
+					<div class="col s12 input-field">
+						<input name="token" type="text" class="getme" placeholder="token" value="<?=$baiduSubmit['token']?>"/>
+						<label>Token</label>
+					</div>
+					<button class="waves-effect waves-light btn seosave" data-type="baidusubmit">保存设置</button>
+				</div>
+			</div>
+			<div class="col s6">
+				<div class="row card-panel form">
+					<h5>Sitemap</h5>
+					<p>PS：想要自动更新？你需要结合Cron功能<a href="<?=Router::createUrl(['index/go/help', 'q' => 'cron'])?>" target="_blank">帮助?</a></p>
+					<div class="switch col s12">
+						<label>启用<input name="enable" type="checkbox" class="getme seobox" <?php if ($sitemap['enable'] == 1) echo 'checked'; ?>/><span class="lever"></span></label>
+					</div>
+					<div class="input-field col s12">
+						<select name="type" class="getme browser-default">
+							<option value="xml"<?php if ($sitemap['type'] === 'xml') echo ' selected'; ?>>单一xml模式</option>
+							<option value="index"<?php if ($sitemap['type'] === 'index') echo ' selected'; ?>>索引模式</option>
+						</select>
+						<label class="active">生成模式</label>
+					</div>
+					<div class="input-field col s12">
+						<select name="changefreq[article]" class="getme browser-default">
+						<?php
+						foreach ($changefreq as $k => $v) {
+							echo '<option value="', $k, '"';
+							if ($sitemap['changefreq']['article'] === $k) {
+								echo ' selected';
+							}
+							echo '>', $v, '</option>';
+						}
+						?>
+						</select>
+						<label class="active">文章更新频率</label>
+					</div>
+					<div class="input-field col s12">
+						<select name="changefreq[meta]" class="getme browser-default">
+						<?php
+						foreach ($changefreq as $k => $v) {
+							echo '<option value="', $k, '"';
+							if ($sitemap['changefreq']['meta'] === $k) {
+								echo ' selected';
+							}
+							echo '>', $v, '</option>';
+						}
+						?>
+						</select>
+						<label class="active">标签页更新频率</label>
+					</div>
+					<button class="waves-effect waves-light btn seosave" data-type="sitemap">保存设置</button>
+					<button id="updateSitemap" class="waves-effect waves-light btn">更新Sitemap</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+	window.sy = {
+		"url": {
+			"submit": "<?=Router::createUrl('admin/option/seoSave', 'json')?>",
+			"sitemap": "<?=Router::createUrl('cron/sitemap', 'json')?>"
+		},
+		"cronPassword": "<?=Common::option('cronPassword')?>",
+		"page": "OptionSEO"
+	};
+	</script>
+	<?php $this->display('common/footer'); ?>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!--{json width:"600",title:"用户注册"}-->
+
+<!--{hook user_create_start.htm}-->
+
+<form action="?user-create-ajax-1.htm" method="post" id="create_form">
+	<input type="hidden" name="FORM_HASH" value="{FORM_HASH}" />
+	<input type="hidden" name="clienttime" value="" />
+	<!--{hook common_form_hash_after.htm}-->
+	<dl>
+		<dt><label for="create_email">Email：</label></dt>
+		<dd><input type="text" name="email" id="create_email" value="$user[email]" tabindex="1" style="width: 250px;" /> <span id="create_check_email"><a href="?user-login-ajax-1.htm" onclick="return false;" class="ajaxdialog">登录</a></span></dd>
+		<dt><label for="create_username">用户名：</label></dt>
+		<dd><input type="text" name="username" id="create_username" size="24" value="$user[username]" title="请输入用户名" tabindex="2" style="width: 250px;" /> <span id="create_check_username"></span></dd>
+		<dt><label for="create_password">密　码：</label></dt>
+		<dd><input type="password" name="password" id="create_password" size="24" value="" title="请输入密码" tabindex="3" style="width: 250px;" /></dd>
+		<dt><label for="create_password2">重复密码：</label></dt>
+		<dd><input type="password" name="password2" id="create_password2" size="24" value="" title="请输入密码" tabindex="4" style="width: 250px;" /></dd>
+		<!--{hook user_create_submit_before.htm}-->
+		<dt></dt>
+		<dd>
+			<input type="submit" class="button bigblue" id="create_submit_ajax" value="注册" tabindex="5" />
+			<input type="button" class="button biggrey" value="关闭" id="create_cancel"/>
+		</dd>
+		<!--{hook user_create_submit_after.htm}-->
+	</dl>
+</form>
+
+<!--{hook user_create_end.htm}-->
+
+<script type="text/javascript">
+
+
+function check_username(username) {
+	if(!username) {
+		return false;
+	}
+	var username_url = urlencode(username);
+	$.get('?user-checkname-username-'+username_url+'-ajax-1.htm', function(s) {
+		var json = json_decode(s);
+		if(error = json_error(json)) {alert(error); return false;}
+		if(json.status <= 0) {
+			$('#create_check_username').html('<span class="red">'+json.message+'<span>');
+			return false;
+		} else {
+			$('#create_check_username').html('<span class="green">'+json.message+'<span>');
+			return false;
+		}
+	});
+}
+function check_email(email) {
+	if(!email) {
+		return false;
+	}
+	var email_url = urlencode(email);
+	$.get('?user-checkemail-email-'+email_url+'-ajax-1.htm', function(s) {
+		var json = json_decode(s);
+		if(error = json_error(json)) {alert(error); return false;}
+		if(json.status <= 0) {
+			$('#create_check_email').html('<span class="red">'+json.message+'<span>');
+			return false;
+		} else {
+			$('#create_check_email').html('<span class="green">'+json.message+'<span>');
+			return false;
+		}
+	});
+}
+
+// 延迟执行的脚本，约定名字为：delay_execute()
+function delay_execute(dialog, recall) {
+	
+	$('#create_email').focus();
+	var ajaxhandle = null;
+	$('#create_form').submit(function() {return false;});
+	$('#create_submit_ajax').click(function() {
+		
+		$('#create_submit_ajax').disable();
+		$('div.alert').remove();
+		
+		var postdata = $("#create_form").serialize();
+		$.post($('#create_form').attr('action'), postdata,  function(s){
+			
+			$('#create_submit_ajax').enable();
+			
+			var json = json_decode(s);
+			if(error = json_error(json)) {alert(error); return false;}
+			if(json.status <= 0) {alert(json.message); return false;}
+			json = json.message;
+
+			if(json.email) {
+				$('#create_email').alert(json.email).focus();
+				return false;
+			}
+			if(json.email_exists) {
+				$('#create_email').alert(json.email_exists).focus();
+				return false;
+			}
+			/*
+			if(json.emailsend) {
+				$('#create_email').alert(json.emailsend).focus();
+				return false;
+			}*/
+			if(json.username) {
+				$('#create_username').alert(json.username).focus();
+				return false;
+			}
+			if(json.username_exists) {
+				$('#create_username').alert(json.username_exists).focus();
+				return false;
+			}
+			if(json.password) {
+				$('#create_password').alert(json.password).focus();
+				return false;
+			}
+			if(json.password2) {
+				$('#create_password2').alert(json.password2).focus();
+				return false;
+			}
+			
+			// hook user_create_check_js.htm
+			
+			var user = json.user;
+			
+		<!--{if $conf['reg_email_on']}-->
+			dialog.set_width(780);
+			if(json.emailsend) {
+				dialog.set_body('<div class="ok">' + user.username + '您好，可能服务器繁忙，发送激活邮件失败，请您明天再来尝试。 <a href="./">【点击进入首页】</a>。</div>');
+			} else {
+		 		dialog.set_body('<div class="ok">' + user.username + '您好，激活邮件已发送，请进入您的邮箱激活账号: <a href="'+json.email_smtp_url+'" target="_blank">【点击进入'+json.email_smtp_name+'】</a>。</div>');
+			}
+		 <!--{else}-->
+		 
+			 // hook user_create_success_js.htm
+		 
+			g_uid = user.uid;
+	 		$('#user').html('<a href="?my-profile.htm">' + user.username + '</a>，您好!');
+	 		dialog.set_body('<div class="ok">注册完毕，自动登录成功。!</div>');
+	 		if(recall) {
+	 			dialog.close();
+	 			dialog.close_other();
+				recall();
+			} else {
+				setTimeout(function(){
+		 			dialog.close();
+		 			
+		 			// 关闭登录层
+		 			dialog.close_other();
+		 		}, 1000);
+			}
+		<!--{/if}-->
+		  });
+		return false;
+	});
+	
+	$('#create_form input').keyup(function(e) {
+		//e = e || document.parentWindow.event;
+		var e = e ? e : window.event;
+                var kc = e.keyCode ? e.keyCode : e.charCode;
+		if(kc == 13) {
+			$('#create_submit_ajax').trigger('click');
+		}
+	});
+	
+	$('#create_cancel').click(function() {
+		dialog.close();
+	});
+	
+	
+	$('#create_email').blur(function() {
+		check_email($('#create_email').val());
+	});
+	
+	$('#create_username').blur(function() {
+		check_username($('#create_username').val());
+	});
+
+	$('#create_form input[name=clienttime]').val(Math.round(new Date().getTime()/1000));
+	
+	// hook user_create_delay_execute_js.htm
+	
+	// hook common_form_hash_after_js.htm
+}
+</script>

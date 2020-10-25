@@ -1,0 +1,166 @@
+{extend name="default/base" /}
+{block name="title"}我的资金 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/logmoneys.css?v={$v}">
+{/block}
+{block name="header"}
+<div style="position: absolute;top:0px;">
+    <header style="background-color: rgba(0,0,0,0);border-bottom:0;" class="ui-header ui-header-positive wst-header">
+        <i style="color: #ffffff" class="ui-icon-return" onclick="history.back()"></i><h1 style="color: #ffffff">我的资金</h1>
+    </header>
+</div>
+{/block}
+{block name="main"}
+    <input type="hidden" name="" value="{$rs['isSetPayPwd']}" id="isSet" autocomplete="off">
+    <section class="ui-container">
+        <div class="head">
+            <div class="available">
+                <label class="available-title">可用资源</label> <!--<i class="available-i"></i>-->
+            </div>
+            <div class="available-money">
+                {$rs['userMoney']}
+            </div>
+            <div class="no-ava">
+                <label style="padding-left: 0.2rem" money="{$rs['userMoney']}" cash="{:WSTConf('CONF.drawCashUserLimit')}">冻结资金</label>
+                <div class="no-money">
+                    {$rs['lockMoney']}
+                </div>
+            </div>
+            <div class="no-ava">
+                <label style="padding-left: 0.2rem" money="{$rs['userMoney']}" cash="{:WSTConf('CONF.drawCashUserLimit')}">可提现金额（元）</label>
+                <div class="no-money">
+                    {:WSTBCMoney($rs['userMoney'],-$rs['rechargeMoney'])}
+                </div>
+            </div>
+        </div>
+        <div class="available-nav">
+            <label class="available-nav-title">可用余额（元）</label>
+            <label class="available-nav-money">{$rs['userMoney']}</label>
+            {if (int)WSTConf('CONF.isOpenRecharge')==1}
+            <label class="av-btn2" onclick="location.href='{:url('mobile/logmoneys/toRecharge')}'">充值</label>
+            {/if}
+            <label class="av-btn1" onclick="getCash()">提现</label>
+        </div>
+        <div class="item" onclick="javascript:toRecord()">
+            <i class="item-i1"></i><label>我的资金流水</label><i class="item-i3"></i>
+        </div>
+        <div class="item" onclick="check()" >
+            <i class="item-i2"></i>我的提现账户<i class="item-i3"></i>
+        </div>
+        <div class="item" onclick="location.href='{:url('mobile/cashdraws/index')}'">
+            <i class="item-i4"></i>提现记录<i class="item-i3"></i>
+        </div>
+    </section>
+{/block}
+{block name="include"}
+{include file="default/dialog" /}
+
+
+<input type="hidden" value="{:WSTConf('CONF.pwdModulusKey')}" id="key" autocomplete="off">
+{/* 对话框 prompt */}
+<div class="ui-dialog edit-price-box" id="payPwdBox">
+    <div class="ui-dialog-cnt">
+        <div class="ui-dialog-bd">
+            <div class="dialog-content wst-flex-column wst-jc wst-ac">
+                <p id="wst-dialog" class="wst-dialog-t">请输入支付密码</p>
+                <input type='password' id='payPwd' maxLength='6' style='width:150px;height:30px' />
+            </div>
+            <div class="dialog-btn wst-flex-row">
+                <button id="wst-event1" type="button" class="wst-dialog-b1" data-role="button">取消</button>
+                <button id="wst-event3" type="button" class="wst-dialog-b2">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+{/* 遮盖层  */}
+<div class="wst-cover" id="cover"></div>
+<div class="wst-cover1" id="cover1"></div>
+{/* 分类层  */}
+<div class="wst-fr-box" id="frame">
+    <div class="title" onclick="javascript:dataHide(3);">
+        <i class="ui-icon-return" style="position:absolute;top:-0.02rem;left: 0.02rem" ></i>
+        <h1 id="header-title" style="text-align: center">申请提现</h1>
+    </div>
+
+    <div class="warn-item">
+        <label class="warn-item-label">由于付款操作涉及第三方及银行，提现时间以实际到账时间为准</label>
+    </div>
+
+    <div class="item" onclick="dataShow(2)">
+        <label style="margin-left: 0.13rem">提现账号</label>
+        <i style="float: right;" class="item-i3"></i>
+        <div id="accNo" style="float: right;margin-right: 0.07rem"></div>
+
+    </div>
+
+    <div class="item">
+        <div class="mar-left">
+            <label class="av-item">可提现金额<label style="color: #F07D38">{:WSTBCMoney($rs['userMoney'],-$rs['rechargeMoney'])}</label>元</label>
+        </div>
+        
+    </div>
+    <div class="item" style="margin-top: 0">
+        <div style="margin-left: 0.13rem;font-size: 0.27rem;position: relative;">
+            ￥<input style="width: 70%;border: none;margin-left: 0.06rem" type="text"
+                    type="number" name="money" id="money" onkeypress="return WST.isNumberdoteKey(event)" onblur="javascript:WST.limitDecimal(this,2)" onkeyup="javascript:changeDrawMoney(this)" autocomplete="off" placeholder="0.00"/>
+            <i style="float: right;margin-top: 0.1rem" class="item-i5" onclick="cleverMoney()"></i>
+            <label class="rechargeall" onclick="allMoney({:WSTBCMoney($rs['userMoney'],-$rs['rechargeMoney'])})">全部提现</label>
+        </div>
+        <div class="tx-box">
+            <div class="left service-box">
+                手续费 <label id="chargeService" >0</label>元
+            </div>
+            <div class="right">
+                <label class="dz-item">实际到账金额<label id="actualMoney" style="color: #F07D38">0</label>元</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="item" style="padding: 0 0.12rem;">
+        
+    </div>
+    <div class="item" style="margin-top: 0">
+        <div class="mar-left">
+            {if (int)WSTConf('CONF.drawCashCommission')>0}<label class="av-item">提现有<span id="commission">{:WSTConf('CONF.drawCashCommission')}</span>%支付通道交易手续费</label>{/if}
+
+            {if (int)WSTConf('CONF.drawCashUserLimit')>0}
+            <div style="margin-top: -0.06rem">
+                <label class="av-item">单笔提现最低不少于{:WSTConf('CONF.drawCashUserLimit')}元</label>
+            </div>
+            {/if}
+        </div>
+    </div>
+
+    <div class="item" style="margin-bottom: 0.2rem">
+        <div class="mar-left wst-flex-row wst-jsb">
+            <label>支付密码</label>
+            <input type="password" style="margin-right: 0.13rem;border: none;text-align: right;"  id="cashPayPwd"  maxLength="6"  onkeyup="javascript:WST.isChinese(this,1)" autocomplete="off" placeholder="支付密码"/>
+        </div>
+    </div>
+
+    <button class="button" id="submit" onclick="drawMoney()" style="margin-top: 0.1rem">
+        提现
+    </button>
+
+
+
+    <div class="wst-fr-box1" id="frame2">
+        <div class="title" id="boxTitle"><span>提现账号</span><i class="ui-icon-close-page" onclick="javascript:dataHide(2);"></i><div class="wst-clear"></div></div>
+        <input type="hidden" name="accId" value="" id="accId" autocomplete="off">
+        <div class="content1" name="accInfo" id="accInfo">
+
+        </div>
+    </div>
+
+</div>
+{/block}
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/js/rsa.js"></script>
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__MOBILE__/users/logmoneys/logmoneys.js?v={$v}'></script>
+{/block}

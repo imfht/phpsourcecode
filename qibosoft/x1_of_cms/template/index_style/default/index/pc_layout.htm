@@ -1,0 +1,178 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{block name="head_title"}{$webdb.seo_title?:$webdb.webname}{/block}</title>
+<meta http-equiv="X-UA-Compatible" content="IE=8"><!-- 强制ie8,for 360 -->
+<meta name="keywords" content='{block name="head_keword"}{$webdb.seo_keyword}{/block}'>
+<meta name="description" content='{block name="head_description"}{$webdb.seo_description}{/block}'>
+{block name="head_base_css"}<link rel="stylesheet" href="__STATIC__/css/pc_reset.css">{/block}
+{block name="head_qb_ui"}<link rel="stylesheet" href="__STATIC__/css/qb_ui.css">{/block}
+{block name="head_font_icon"}<link rel="stylesheet" href="__STATIC__/icon/icon.css">{/block}
+{block name="head_jquery_js"}<script type="text/javascript" src="__STATIC__/js/core/jquery.min.js?fd2"></script>{/block}
+{block name="head_layer_js"}
+<script type="text/javascript" src="__STATIC__/layer/layer.js"></script>
+<script type="text/javascript" src="__STATIC__/layui/layui.js"></script>
+{/block}
+</head>
+<body>
+<!--下面是钩子插件,做风格的时候尽量加上,方便扩展  -->
+{:hook_listen('layout_body_head',$userdb,['webdb'=>$webdb,'info'=>$info],true)}
+
+{block name="body_Headcont"}
+<link rel="stylesheet" href="__STATIC__/index/default/pcheader.css"> 
+<div class="qb_pc_topBox">
+	<ul>		
+{notempty name="$userdb"}
+		<ol>{$userdb.username} 您好！欢迎来到{$webdb.webname}</ol>
+		<li><a href="{:get_url('member')}" target="_blank"><dd class="glyphicon glyphicon-user"></dd>会员中心</a> {if modules_config('weibo')}<a href="#" onclick="pc_open_weibo()"><dd class="fa fa-fw fa-weibo"></dd>微博动态</a><span style="color:#fff;margin-left:3px;padding:0 4px 0 4px;background:orange;font-size:10px;display:none;" class="weibo_msg_num">0</span> {/if}<a href="#" onclick="pc_open_msg()"><dd class="fa fa-envelope-o"></dd>短消息</a><span style="color:#fff;margin-left:3px;padding:0 4px 0 4px;background:red;font-size:10px;display:none;" class="msg-num">0</span> <a href="{:get_url('quit')}" target="_blank"><dd class="fa fa-sign-in"></dd>退出</a> </li>
+{else /}
+		<ol>您好！欢迎来到{$webdb.webname}</ol>
+		<li>
+			{include file="index@min_login" /}
+		</li>
+{/notempty}
+	</ul>
+</div>
+<script type="text/javascript">
+function pc_open_msg(){
+	layer.open({
+	  type: 2,
+	  maxmin:true,
+	  shade: 0,
+	  title: '短消息',
+	  //shade: [0.3,'#333'], 
+	  area: ['900px', '600px'],
+	  anim: 1,
+	  content: '{:urls("member/msg/index")}',
+	  end: function(){ //关闭事件
+		  if(typeof(close_msg_win)=="function"){
+			  close_msg_win();
+		  }
+	  },
+	  success: function(layero, index){ 
+		  if(typeof(oepn_msg_win)=="function"){
+			  oepn_msg_win();
+		  }
+	  },
+	});
+}
+function pc_open_weibo(){
+	layer.open({
+	  type: 2,
+	  title: '微博动态消息',
+	  shade: [0.3,'#333'], 
+	  area: ['1000px', '700px'],
+	  anim: 2,
+	  content: '{:urls("weibo/api/weibo")}',
+	  end: function(){ //关闭事件	
+	  }
+	});
+}
+</script>
+<div class="Logo_Menu">
+	<ul>
+		<ol><a href="/"><img src="{$webdb.logo?tempdir($webdb.logo):'__STATIC__/index/default/logo.png'}"></a></ol>
+		<li>
+{php}$menu_choose=config('system_dirname')?config('system_dirname'):'index';{/php}
+{volist name="pc|get_web_menu" id="rs"}
+			<dl {if ($rs['activate']==$menu_choose||$rs['activate']==$menu_choose.'-'.$fid)}class="ck"{/if}>
+				<dt {notempty name="$rs.bgcolor"}style="background-color:{$rs.bgcolor};"{/notempty}><a href="{$rs.url}" {notempty name="$rs.fontcolor"}style="color:{$rs.fontcolor};"{/notempty} {notempty name="$rs.target"}target="_blank"{/notempty}><i class="{$rs.style|default=''}"></i>{$rs.name}</a>{$rs.script}</dt>
+	{notempty name="rs.sons"}
+				<span></span>
+				<dd>
+			{volist name="rs.sons" id="vs"}
+					<div><a href="{$vs.url}" {notempty name="$rs.target"}target="_blank"{/notempty}><i class="{$rs.style|default=''}"></i>{$vs.name}</a></div>
+			{/volist}
+				</dd>
+	{/notempty}
+			</dl>
+{/volist}
+
+		</li>
+	</ul>
+</div>
+<script>
+$('.Logo_Menu dl').hover(
+	function(){
+		$(this).find('dd').show(300);
+		$(this).find('span').css({"transform":"rotate(180deg)",'border-top':'6px solid #FFF'});
+	},
+	function(){
+		$(this).find('dd').hide(300);
+		$(this).find('span').css({"transform":"rotate(0deg)",'border-top':'6px solid #666'});
+	}
+);
+</script>
+{/block}
+{block name="body_AllScorllSlide"}<!---通栏幻灯片----->{/block}
+{block name="body_LeftMenu"}<!---左边类京东菜单----->{/block}
+{block name="body_ContactSearch"}
+<!--通栏联系电话与搜索__STATIC__/css/qb_ui.css中控制---->
+<div class="qb_ui_ContactSearch">
+	<ul>
+		<ol><i class="fa fa-volume-control-phone"></i> 服务热线 <a href="tel:{$webdb.service_tel}">{$webdb.service_tel}</a></ol>
+		<li>
+<style type="text/css">
+.model_search{float:right;background: #35C4B8;margin-left:15px;border-radius:5px;}
+.model_search a{color:#fff;line-height:36px;margin:0 10px;}
+.model_search:hover{background: orange;}
+.model_search:hover a{color:#fff;}
+</style>
+		    {if config('system_dirname')&&modules_config(config('system_dirname'))}<em class="model_search"><a href="{:urls('search/index')}" target="_blank">精准搜索</a></em>{/if}
+			<form method="get" action="{:urls('search/index/lists')}">
+				<dl>
+					<dt><input type="text" name="keyword" placeholder="全站搜索" required/></dt>
+					<dd><button type="submit"><i class="fa fa-search"></i></button></dd>
+				</dl>
+			</form>
+		</li>
+	</ul>
+</div>
+{/block}
+
+{block name="model_content"}
+	<!--引用碎片-->
+	{qb:hy name="pc_layout_001" where="index_style/default/index/kefu" val="datas" type="labelmodel"}
+		{$datas}
+	{/qb:hy}
+{/block}
+
+
+<!--下面这一行是导航条-->
+{block name="nav"}{qb:nav title="" url="" /}{/block}
+{block name="body_content"}页面主体部分内容{/block}
+<!--下面是钩子插件,做风格的时候尽量加上,方便扩展-->
+{:hook_listen('layout_body',$userdb,['webdb'=>$webdb,'info'=>$info],true)}
+{block name="body_Footcont"}
+<link rel="stylesheet" href="__STATIC__/index/default/pcfooter.css"> 
+<div class="body_Footcont">
+	<ul>
+		<ol>
+			<dl>
+				<dt>{$webdb.copyright}</dt>
+				<dd>
+				{if $webdb.miibeian_gongan_gov_cn}
+				<img src="https://x1.php168.com/public/static/qibo/beian.png">
+				<a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode={:preg_replace('/([^\\d]+)([\\d]+)([^\\d]+)/', '\\\\2', $webdb.miibeian_gongan_gov_cn)}" target="_blank">{$webdb.miibeian_gongan_gov_cn}</a> 
+				{/if}
+				<a href="http://www.beian.miit.gov.cn/" target="_blank">{$webdb.miibeian_gov_cn}</a> Powered by <a href="http://www.php168.com" target="_blank">qibosoft {$webdb.QB_VERSION}</a> Code &copy;2003-2020</dd>
+			</dl>
+		</ol>
+		<li>
+			<dl>
+				<dt>扫一扫手机访问</dt>
+				<dd><img src="{:urls('index/qrcode/index')}?url={:urlencode(get_url('location'))}"/></dd>
+			</dl>
+		</li>
+	</ul>
+</div>
+{/block}
+
+{include file="index@weixingz" /}<!--若没有关注微信公众号,就做个提醒-->
+
+<!--下面是钩子插件,做风格的时候尽量加上,方便扩展-->
+{:hook_listen('layout_body_foot',$userdb,['webdb'=>$webdb,'info'=>$info],true)}
+<script type="text/javascript" src="__STATIC__/js/qibo.js"></script>
+</body>
+</html>

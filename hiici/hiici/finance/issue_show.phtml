@@ -1,0 +1,68 @@
+<?php 
+
+if (empty($_GET)) die;
+
+$issue_id = intval($_GET['issue_id']);
+
+$rs = dt_query("SELECT * FROM finance_issue WHERE id=$issue_id");
+$issue = mysql_fetch_array($rs);
+if (empty($issue)) {
+	put_info('公告不存在！');
+	header('Location:?c=finance');
+	die;
+}
+
+$more_issues = dt_query("SELECT id, title FROM finance_issue ORDER BY c_at DESC LIMIT 6");
+if (!$more_issues) {
+	put_info('获取信息数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+
+
+?>
+
+<div class="finance-nav-sub">
+	<div class="container">
+		<ul class="nav navbar-nav">
+			<li id="finance_issue_PTGG">
+			<a href="?c=finance&a=issue_list&kind=2">平台公告</a>
+			</li>
+			<li id="finance_issue_HKGG">
+			<a href="?c=finance&a=issue_list&kind=3">还款公告</a>
+			</li>
+			<li id="finance_issue_MTBD">
+			<a href="?c=finance&a=issue_list&kind=4">媒体报道</a>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<div class="container finance-issue-show">
+	<div class="row clearfix">
+		<div class="col-md-9 column">
+			<h3><?php echo $issue['title'] ?></h3>
+			<small><?php echo fmt_date($issue['c_at']) ?></small>
+			<hr class="dashed">
+
+			<div class="text-content"> <?php echo $issue['content'] ?> </div>        
+		</div>
+		<div class="col-md-3 column more-issue">
+			<h3>更多消息</h3>
+			<hr style="border-top: 1px solid #ccc">
+			<?php while($m_i = mysql_fetch_array($more_issues)) { ?>
+			<h5><a href="<?php echo s_url('?c=finance&a=issue_show&issue_id='.$m_i['id']) ?>"><?php echo $m_i['title']; ?></a></h5>
+			<hr class="dashed">
+			<?php } ?>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+		$('li#finance_issue_<?php echo $issue['kind'] ?>').addClass('active');
+		});
+
+</script>

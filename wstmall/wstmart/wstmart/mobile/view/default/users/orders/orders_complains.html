@@ -1,0 +1,172 @@
+{extend name="default/base" /}
+{block name="title"}订单投诉 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__MOBILE__/css/orders_complains.css?v={$v}">
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+<style>
+    .webuploader-pick,.webuploader-pick-hover{width:0.8rem;height:0.8rem;background: url(../../img/upload-btn.png) center center no-repeat;background-size:100%;}
+    #filePicker div:nth-child(2){top:0!important;left:0!important;width:100%!important;height:100%!important;}
+</style>
+{/block}
+{block name="footer"}
+{/block}
+{block name="header"}
+	<div id="useri_infos">
+      <header style="background:#ffffff;" class="ui-header ui-header-positive ui-border-b wst-header">
+        <a href="javascript:history.go(-1)"><i class="ui-icon-return"></i></a><h1 class="useri_info">订单投诉</h1>
+        <i onclick="javascript:closeUploadArea()" style="display:none;font-size: 0.15rem;" id="upload_close">关闭</i>
+        <a href="javascript:void(0);" style="display:none;float:right;font-size: 0.15rem;" id="upload_button">上传</a> 
+      </header>
+{/block}
+
+{block name="main"}
+<sction class="ui-container" id="upload_modal">
+    <div class="upload-modal">
+     <div id="clipArea" class="clipArea"></div>
+     <input type="hidden" id="imgData" autocomplete="off">
+  </div>
+</sction>
+    <input type="hidden" name="" value="" id="complainType" autocomplete="off">
+    <input type="hidden" name="" value="{$oId}" id="oId" autocomplete="off">
+    <section class="ui-container" id="Ccontrainer" >
+       <script type="text/html" id="detailBox">
+            <div id="detailBox">
+            <div class="ui-row-flex ui-whitespace detail-head">
+                <div class="ui-col ui-col o-gOrderNo">订单号：{{d.orderNo}}</div>
+                <div class="ui-col order-tr o-time">
+                {{d.createTime}}
+                </div>
+            </div>
+
+             <div class="o-g-container">
+                 <div class="ui-row-flex ui-row-flex-ver d-uInfo">
+                     <div class="ui-col d-sname wst-flex-row wst-ac"><i class="shopicon"></i><p>{{d.shopName}}</p></div>
+                 </div>
+
+                 {{# for(var i=0;i<d.goods.length;i++){ }}
+                 <div class="ui-row-flex ui-whitespace border-b d-goodsitme" style="padding:0 0.12rem;border-bottom:1px solid #f1f1f1;" onclick="javascript:WST.intoGoods({{d.goods[i].goodsId}})">
+                     <div class="">
+                         <img src="__RESOURCE_PATH__/{{d.goods[i].goodsImg}}" class="o-Img">
+                     </div>
+                     <div class="o-gInfo-container">
+                         <div class="o-gInfo">
+                             <p class="o-gName ui-nowrap-multi">{{d.goods[i].goodsName}}</p>
+                             {{# if(d.goods[i].goodsSpecNames){ }}
+                             <p class="o-gSpec ui-nowrap-multi ">{{d.goods[i].goodsSpecNames.replace(/@@_@@/g,' ')}}</p>
+                             {{# } }}
+                         </div>
+                         <div class="o-gInfo2 wst-flex-row wst-ac wst-jsb">
+                             {{# if(d.goods[i].goodsCode=='gift'){ }}
+                             <p style="font-size:0.14rem;color:#666;font-weight: 600;">【赠品】</p>
+                             {{# }else{ }}
+                             <p class="o-gPrice">¥ {{d.goods[i].goodsPrice}}</p><p class="o-gNum">x {{d.goods[i].goodsNum}}</p>
+                             {{# } }}
+                         </div>
+                     </div>
+                 </div>
+                 {{# } }}
+
+                 <div class="d-item" style="min-height:80px;">
+                     <div class="wst-flex-row wst-jsb item">
+                         <div class="wst-or-describe">商品总额</div><div class="wst-or-describe">¥ {{d.goodsMoney}}</div>
+                     </div>
+                     <div class="wst-flex-row wst-jsb item">
+                         <div class="wst-or-describe">运费</div><div class="wst-or-describe">¥ {{d.deliverMoney}}</div>
+                     </div>
+                     <div class="wst-flex-row wst-jsb item" style="padding-bottom:0.1rem;border-bottom:1px solid #f1f1f1;">
+                         <div class="wst-or-describe">积分抵扣金额</div><div class="wst-or-describe">¥- {{d.scoreMoney}}</div>
+                     </div>
+                     <div class="wst-flex-row wst-jfe item" style="padding-bottom:0.1rem;">
+                         <div class="wst-or-describe2">实付款：</div><div class="o-totalmoney">¥ {{d.realTotalMoney}}</div>
+                     </div>
+                 </div>
+             </div>
+
+         </div>
+</script>
+
+<div id="orderDetail">
+
+</div>
+
+<div class="d-item " style="margin-top:0.1rem;">
+    <div class="c-item wst-flex-row wst-jsb" style="border-bottom:1px solid #f1f1f1;">
+        <div class="ui-col ui-col wst-oc-describe">投诉类型</div>
+        <div class="ui-col ui-col-3 order-tr" onclick="dataShow(0)" id="complainText" ><span>请选择投诉类型</span> <i class="icon-right-arrow"></i></div>
+    </div>
+    <div class="c-item">
+        <div class="wst-oc-describe">投诉内容</div>
+    </div>
+    <div class="c-textarea">
+        <textarea id="complain" placeholder="请填写投诉内容"></textarea>
+    </div>
+    <div class="c-item">
+        <div class="wst-oc-describe">上传附件(最多5张)</div>
+    </div>
+    <div class="ui-col uploadfile-box">
+        <div class="complainFileBox wst-flex-row wst-fw">
+            <div id="filePicker" class="upload-btn"></div>
+        </div>
+    </div>
+    <div class="wst-clear"></div>
+</div>
+
+<div class="c-box">
+    <button class="ui-btn-lg ui-btn-danger c-btn" onclick="saveCom({$oId})">
+        提交
+    </button>
+</div>
+
+ {/* 遮盖层  */}
+<div class="wst-cover" id="cover"></div>
+{/* 订单详情层  */}
+<div class="wst-fr-box" id="frame">
+    <div class="title" id="boxTitle"><span>投诉类型</span><div class="wst-clear"></div></div>
+    <div class="content" id="content">
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">承诺的没有做到</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='1' >
+            </label>
+        </div>
+
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">未按约定时间发货</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='2' >
+            </label>
+        </div>
+
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">未按成交价格进行交易</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='3' >
+            </label>
+        </div>
+
+        <div class="wst-flex-row wst-jsb wst-ac item">
+            <div class="name">恶意骚扰</div>
+            <label class="ui-checkbox">
+                <input class="active" type="radio" name="data" value='4' >
+            </label>
+        </div>
+
+    </div>
+    <div class="bottom-two-btn-box wst-flex-row wst-center">
+        <button type="button" class="wst-dialog-b1" onclick="dataHide(0)" >取消</button>
+        <button type="button" class="wst-dialog-b2" onclick="dataHide(1)">确定</button>
+    </div>
+</div>
+</section>
+
+{/block}
+{block name="include"}
+{include file="default/dialog" /}<!-- 对话框模板 -->
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__MOBILE__/js/jquery.min.js'></script>
+<script type='text/javascript' src='__MOBILE__/users/orders/orders_complains.js?v={$v}'></script>
+
+
+<script type='text/javascript' src='__STATIC__/plugins/webuploader/webuploader.js?v={$v}'></script>
+{/block}

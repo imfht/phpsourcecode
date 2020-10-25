@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>vaeThink</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="__ADMIN__/lib/layui/css/layui.css"  media="all">
+</head>
+<body class="vae-body">
+
+<div class="vae-content">
+  <a class="layui-btn layui-btn-primary layui-btn-sm" href="http://think.vaethink.com/store.html" target="_blank">插件市场</a> 
+  <table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+
+<script type="text/html" id="status">
+   <i class="layui-icon {{#  if(d.status == 1){ }}layui-icon-ok{{#  } else { }}layui-icon-close{{#  } }}"></i>
+</script>
+
+<script type="text/html" id="barDemo">
+  {{#  if(d.status == 0){ }}
+    <button class="layui-btn layui-btn-xs layui-bg-blue" lay-event="install">安装</button>
+  {{#  }  else { }}
+    {{#  if(d.interface == 1){ }}
+    <button class="layui-btn layui-btn-xs layui-bg-blue" lay-event="setConfig" vaeyo_tab vae-id="6666" vae-title="插件配置" vae-src="/admin/plugin/setConfig/name/{{d.name}}">配置</button>
+    {{#  }  else { }}
+    <button class="layui-btn layui-btn-xs layui-btn-disabled">配置</button>
+    {{#  } }}
+    {{#  if(d.start == 1){ }}
+    <button class="layui-btn layui-btn-xs layui-bg-cyan" lay-event="disabled">禁用</button>
+    {{#  }  else { }}
+    <button class="layui-btn layui-btn-xs layui-bg-blue" lay-event="start">启用</button>
+    {{#  } }}
+    <button class="layui-btn layui-btn-xs layui-bg-red" lay-event="uninstall">卸载</button>
+  {{#  } }}
+</script>        
+          
+<script src="__ADMIN__/lib/layui/layui.js" charset="utf-8"></script>
+ 
+<script>
+layui.config({
+    base: '/themes/admin_themes/module/'
+}).use(['table','vaeyo','form'], function(){
+  var table = layui.table
+  ,vae = layui.vaeyo
+  ,$ = layui.$
+  ,form = layui.form;
+  
+  var tableIns = table.render({
+    elem: '#test'
+    ,toolbar: false
+    ,url: '/admin/plugin/getPluginList' //数据接口
+    ,page: false //开启分页
+    ,limit: 15
+    ,cols: [[ //表头
+      {field: 'title', title: '名称', align:'center'}
+      ,{field: 'name', title: '标识', align:'center'}
+      ,{field: 'desc', title: '描述', align:'center'}
+      ,{field: 'author', title:'作者', align:'center'}
+      ,{field: 'status', title: '安装状态', toolbar: '#status', align:'center'}
+      ,{field: 'right', toolbar: '#barDemo', width:200, align:'center'}
+    ]]
+  });
+  
+  //监听行工具事件
+  table.on('tool(test)', function(obj){
+    var data = obj.data;
+    if(obj.event === 'disabled'){
+      layer.confirm('确定要禁用此插件吗?', {icon: 3, title:'提示'}, function(index){
+        $.ajax({
+          url:"/admin/plugin/disabled",
+          data:{name:data.name},
+          success:function(res){
+            if(res.code==1){
+              window.location.reload();
+            } else {
+              layer.msg(res.msg);
+            }
+          }
+        })
+        layer.close(index);
+      });
+    } else if(obj.event === 'start'){
+      layer.confirm('确定要启用此插件吗?', {icon: 3, title:'提示'}, function(index){
+        $.ajax({
+          url:"/admin/plugin/start",
+          data:{name:data.name},
+          success:function(res){
+            if(res.code==1){
+              window.location.reload();
+            } else {
+              layer.msg(res.msg);
+            }
+          }
+        })
+        layer.close(index);
+      });
+    } else if(obj.event === 'uninstall'){
+      layer.confirm('确定要卸载此插件吗?', {icon: 3, title:'提示'}, function(index){
+        $.ajax({
+          url:"/admin/plugin/uninstall",
+          data:{name:data.name},
+          success:function(res){
+            if(res.code==1){
+              window.location.reload();
+            } else {
+              layer.msg(res.msg);
+            }
+          }
+        })
+        layer.close(index);
+      });
+    } else if(obj.event === 'install'){
+      layer.confirm('确定要安装此插件吗?', {icon: 3, title:'提示'}, function(index){
+        $.ajax({
+          url:"/admin/plugin/install",
+          data:data,
+          success:function(res){
+            if(res.code==1){
+              window.location.reload();
+            } else {
+              layer.msg(res.msg);
+            }
+          }
+        })
+        layer.close(index);
+      });
+    } else if(obj.event === 'interface'){
+      
+    }
+  });
+});
+</script>
+
+</body>
+</html>

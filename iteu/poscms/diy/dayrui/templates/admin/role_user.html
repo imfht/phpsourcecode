@@ -1,0 +1,199 @@
+{template nheader.html}
+<style>
+
+    .d_top {
+        width: 140px;
+        margin-bottom: 10px;
+        margin-left: 15px;
+        margin-right: 10px;
+        float: left;
+        border: 1px solid #eee
+    }
+
+    .d_name {
+        padding: 5px;
+        padding-left: 10px;
+        border-bottom: 1px solid #eee;
+        color: #3a6ea5;
+        font-weight: bold
+    }
+
+    .d_top ul {
+        margin: 0
+    }
+
+    .d_top li, .d_top ul {
+        padding: 5px;
+        list-style: none
+    }
+    .menu_qx {
+        width:10px;
+    }
+    .menu_gx {
+        width:200px;
+    }
+    .menu_gg {
+        width:120px;
+    }
+    .null_hover {
+        background-color: #FFF !important;
+    }
+    .fixed {
+        left: 85%;
+        padding: 10px;
+        position: fixed;
+        top: 50%;
+        background: none repeat scroll 0 0 #FFFCED;
+        border: 1px solid #FFBE7A;
+        padding: 8px 10px;
+    }
+    .d_top {
+        width:100%;
+        margin-bottom: 0px;
+        margin-left: 0px;
+        margin-right: 0px;
+        float: left;
+        border-top:none;
+        border-right:none;
+        border-bottom:none;
+    }
+    .d_name {
+        border-right: 1px solid #eee;
+    }
+    .ltable {
+        margin:5px 0;
+    }
+    .ltable td { padding: 5px 0  5px 10px;}
+</style>
+<script type="text/javascript">
+$(function() {
+	{if IS_POST}
+	dr_tips("{fc_lang('操作成功')}", 3, 1);
+	{/if}
+});
+function dr_left_selected(id) {
+    if ($("#dr_left_"+id).prop('checked')) {
+        $(".dr_left_"+id).attr("checked",true);
+    } else {
+        $(".dr_left_"+id).attr("checked",false);
+    }
+}
+function dr_auth_selected(id) {
+    if ($("#dr_link_"+id).prop('checked')) {
+        $(".dr_link_"+id).attr("checked",true);
+    } else {
+        $(".dr_link_"+id).attr("checked",false);
+    }
+}
+</script>
+<form class="form-horizontal" action="" method="post" id="myform" name="myform">
+    <input type="hidden" name="is_ajax" value="1">
+    <div class="page-bar">
+        <ul class="page-breadcrumb mylink">
+            {$menu.link}
+
+        </ul>
+        <ul class="page-breadcrumb myname">
+            {$menu.name}
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <button type="button" class="btn green btn-sm btn-outline dropdown-toggle" data-toggle="dropdown" aria-expanded="false" data-hover="dropdown"> {fc_lang('操作菜单')}
+                    <i class="fa fa-angle-down"></i>
+                </button>
+                <ul class="dropdown-menu pull-right" role="menu">
+                    {loop $menu.quick $t}
+                    <li>
+                        <a href="{$t.url}">{$t.icon} {$t.name}</a>
+                    </li>
+                    {/loop}
+                    <li class="divider"> </li>
+                    <li>
+                        <a href="javascript:window.location.reload();">
+                            <i class="icon-refresh"></i> {fc_lang('刷新页面')}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="page-title">
+        <small>{fc_lang('勾选之后表示此账号【'.$user['username'].'】拥有该功能权限，如果你在这里单独使用了权限划分，那么你的角色组权限就无效。')}</small>
+    </h3>
+
+    <div class="portlet light bordered ">
+
+        <div class="portlet-body row" style=" margin: 0">
+
+
+            {php $uris = array();$sys = 1;}
+            {loop $amenu $t}
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border: 1px solid #eee;">
+                <tr>
+                    <td width="80" align="center"><b><i class="{$t.icon}"></i> {$t.name}</b></td>
+                    <td>
+                        <div class="d_top">
+                            {loop $t.left  $left}
+                            <div class="d_name">
+                                <input type="checkbox" id="dr_left_{$left.id}" class="toggle md-check" onClick="dr_left_selected('{$left.id}')">&nbsp;
+                                <i class="{$left.icon}"></i>
+                                {$left.name}
+                            </div>
+                            <table class="ltable" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                {if $sys}
+                                {php $sys=0;$left.link = dr_array2array($left.link, $syslink);}
+                                {/if}
+                                {loop $left.link $link}
+                                {if !$link.url && !in_array($link.uri, $not_auth) && !in_array($link.uri, $uris) && (in_array($link.uri, $myrole) || $member.adminid==1)}
+                                <tr>
+                                    <td width="120">
+                                        <input name="data[]" type="checkbox" id="dr_link_{$link.id}" {if in_array($link.uri, $data.system)}checked{/if} class="toggle md-check dr_left_{$left.id}" value="{$link.uri}" onClick="dr_auth_selected('{$link.id}')">&nbsp;&nbsp;
+                                        <span title="{$link.uri}">{$link.name}</span>
+                                    </td>
+                                    <td>
+                                        {php $adata = $this->ci->_get_auth($link.uri);}
+                                        {loop $adata $uri $name}
+                                        {if $uri != $link.uri && !$mlink[$uri]}
+                                        <input name="data[]" type="checkbox" class="dr_link_{$link.id} dr_left_{$left.id} toggle md-check" {if in_array($uri, $data.system)}checked{/if} value="{$uri}">&nbsp;
+                                        <span title="{$uri}">{$name}</span>
+                                        {/if}
+                                        {/loop}
+                                        {if $link.mark != 'module-weixin' && strpos($link.mark, 'module-') === 0 && strpos($link.uri, '/admin/home/index')}
+                                        {php list($a, $dir) = explode('-', $link.mark);}
+
+
+                                        {/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                                {php $uris[] = $link.uri;}
+                                {/loop}
+                            </table>
+                            {/loop}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <div class="bk10"></div>
+            {/loop}
+
+        </div>
+    </div>
+
+    <div class="myfooter">
+        <div class="row">
+            <div class="portlet-body form">
+                <div class="form-body">
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn green"> <i class="fa fa-save"></i> {fc_lang('保存')}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{template nfooter.html}

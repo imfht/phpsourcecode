@@ -1,0 +1,1 @@
+<li><span><?php echo date('[Y-m-d]',strtotime($data['dtTime'])); ?></span><a href="<?php echo sys_href($data['channelId'],'list',$data['id'])?>" <?php echo $data['style']; ?>><?php echo $data['title']; ?></a></li>

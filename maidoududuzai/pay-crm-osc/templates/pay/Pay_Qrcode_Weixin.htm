@@ -1,0 +1,78 @@
+<script type="text/javascript">
+var out_trade_no = "";
+var trade_no = "";
+var openid = "{$openid}";
+var qrcode_id = "{$qrcode_id}";
+var index_loading = 0;
+$(document).ready(function(){
+	$(".complete").click(function() {
+		if(!total_amount || parseFloat(total_amount) <= 0) {
+			return false;
+		}
+		$.ajax({
+			type: "POST",
+			dataType: "json",
+			timeout: 30000,
+			url: "{echo url('/pay/weixin/create')}",
+			data: {
+				ajax: "json",
+				openid: openid,
+				qrcode_id: qrcode_id,
+				"{$qrc_key}": "{$qrc_val}",
+				"total_amount": total_amount,
+			},
+			success: function(data){
+				//console.log(data);
+				if(data.status == 1) {
+					out_trade_no = data.contents.out_trade_no;
+					trade_no = data.contents.trade_no;
+					tradePay(data.contents);
+				}
+			},
+			error: function(xhr, status){
+				console.log(xhr);
+			},
+			complete: function(){
+				layer.close(index_loading);
+			},
+			beforeSend: function(){
+				index_loading = layer.open({
+					type: 2,
+					shadeClose: false
+				});
+			}
+		});
+	});
+});
+wx.config({
+	debug: false,
+	appId: "{$wx_config[appId]}",
+	timestamp: "{$wx_config[timestamp]}",
+	nonceStr: "{$wx_config[nonceStr]}",
+	signature: "{$wx_config[signature]}",
+	jsApiList: ['chooseWXPay']
+});
+function tradePay(options) {
+	wx.ready(function(){
+		wx.chooseWXPay({
+			timestamp: options.timestamp,
+			nonceStr: options.nonceStr,
+			package: options.package,
+			signType: options.signType,
+			paySign: options.paySign,
+			success: function(res){
+				//console.log(res);
+				//tradeQuery(out_trade_no);
+				window.location.reload();
+				//window.location = "out_trade_no";
+			},
+			cancel: function(res){
+				//用户取消
+			},
+			fail:function(res){
+				//支付失败
+			}
+		});
+	});
+}
+</script>

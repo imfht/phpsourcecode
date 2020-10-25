@@ -1,0 +1,90 @@
+<?php 
+
+$date_m = @intval($_GET['date_m']);
+$date_Y = @intval($_GET['date_Y']);
+
+$date_t = empty($date_Y) ? time() : mktime(0,0,0,$date_m,1,$date_Y);
+
+$date_m = date('m', $date_t);
+$date_Y = date('Y', $date_t);
+$this_m = (date('Ym') == date('Ym', $date_t)) ? true : false;
+$after_m = (date('Ym') > date('Ym', $date_t)) ? true : false;
+
+$day_n = cal_days_in_month(CAL_GREGORIAN, $date_m, $date_Y);
+$w_1 = jddayofweek(cal_to_jd(CAL_GREGORIAN, $date_m, 1, $date_Y));
+$day = 1;
+$week = 1;
+
+$cond = "WHERE city = $forum_city AND pay > 0 AND start_t > 0 AND start_t_s >= ".mktime(0,0,0,$date_m,1,$date_Y)." AND start_t_s <= ".mktime(0,0,0,$date_m,$day_n+1,$date_Y);
+
+$topics = dt_query("SELECT title, start_t_s FROM forum_topic ".$cond." ORDER BY pay DESC");
+while($topic = mysql_fetch_array($topics)) { 
+	$topic_ts[date('d', $topic['start_t_s'])+1][] = $topic['title'];
+}
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><span class="glyphicon glyphicon-calendar"></span> 日历</li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="forum-add">
+		<div class="row clearfix">
+			<div class="col-md-12 column">
+				<h3><span class="glyphicon glyphicon-calendar"></span> <?php echo date('Y年m月', $date_t) ?> </h3>
+				<hr class="solid">
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>日</th>
+							<th>一</th>
+							<th>二</th>
+							<th>三</th>
+							<th>四</th>
+							<th>五</th>
+							<th>六</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php while($day <= $day_n) { ?>
+						<tr>
+							<?php for($w = 0; $w < 7; $w++) { ?>
+							<td class="forum-cal-td <?php if ($after_m || ($this_m && date('d') >= $day)) echo 'today' ?>">
+								<a target="_blank" href="?c=forum&a=topic_my_list&m_falter=6&date_m=<?php echo $date_m ?>&date_Y=<?php echo $date_Y ?>&date_d=<?php echo $day ?>">
+<?php 
+if (((1==$week && $w>=$w_1) || 1<$week) && $day<=$day_n) {
+	echo '<b>'.$day++.'</b>';
+	if (!empty($topic_ts[$day])) {
+		echo ' <span class="label label-success">'.count($topic_ts[$day]).'</span>';
+		echo ' <p class="hidden-xs">'.$topic_ts[$day][0].'</p>';
+	}
+}
+?>
+								</a>
+							</td>
+							<?php } ?>
+						</tr>
+						<?php $week++; } ?>
+					</tbody>
+				</table>
+
+
+			</div>
+		</div>
+	</div>
+	<ul class="pagination">
+		<li> <a href="<?php echo s_url('?c=forum&a=forum_cal&date_m='.($date_m-1).'&date_Y='.$date_Y) ?>"><span class="glyphicon glyphicon-chevron-left"></span> 上个月</a> </li>
+		<li> <a href="<?php echo s_url('?c=forum&a=forum_cal&date_m='.($date_m+1).'&date_Y='.$date_Y) ?>"><span class="glyphicon glyphicon-chevron-right"></span> 下个月</a> </li>
+	</ul>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$('li#forum_cal').addClass('active');
+});
+
+</script>

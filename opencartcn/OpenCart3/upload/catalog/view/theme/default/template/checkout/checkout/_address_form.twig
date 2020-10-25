@@ -1,0 +1,558 @@
+{{ header }}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <form id="address-form" class="form-horizontal mt-1 mb-1">
+        <fieldset>
+          <!-- firstname -->
+          <div class="form-group required">
+            <label class="col-sm-2 control-label" for="input-firstname">{{ entry_firstname }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="firstname" value="{{ firstname }}" placeholder="{{ entry_firstname }}" id="input-firstname" class="form-control" />
+            </div>
+          </div>
+          <!-- lastname -->
+          <div class="form-group required {{ not helper.is_ft() ? 'hidden' }}">
+            <label class="col-sm-2 control-label" for="input-lastname">{{ entry_lastname }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="lastname" value="{{ lastname }}" placeholder="{{ entry_lastname }}" id="input-lastname" class="form-control" />
+            </div>
+          </div>
+
+          <!-- telephone -->
+          <div class="form-group required">
+            <label class="col-sm-2 control-label" for="input-telephone">{{ entry_telephone }}</label>
+            <div class="col-sm-10">
+              {% if helper.is_ft() %}
+                <div class="row">
+                  <div class="col-sm-3">
+                    <select id="input-pre-telephone" name="calling_code" class="form-control">
+                      {% for country in helper.get_calling_codes() %}
+                        <option value="{{ country.code }}" {{ calling_code == country.code ? 'selected="selected"' }}>{{ country.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-sm-9">
+                    <input type="text" name="telephone" value="{{ telephone }}" id="input-telephone" class="form-control" placeholder="{{ entry_telephone }}" />
+                  </div>
+                </div>
+              {% else %}
+                <input type="hidden" name="calling_code" value="{{ calling_code }}">
+                <input type="text" name="telephone" value="{{ telephone }}" placeholder="{{ entry_telephone }}" id="input-telephone" class="form-control" />
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- company -->
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-company">{{ entry_company }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="company" value="{{ company }}" placeholder="{{ entry_company }}" id="input-company" class="form-control" />
+            </div>
+          </div>
+
+          <!-- location -->
+          <div class="form-group required">
+            <label class="col-sm-2 control-label" for="input-country">{{ entry_location }}</label>
+            <div class="col-sm-10">
+              <div class="row">
+                <div class="col-sm-3 {{ (not config_select_country) ? 'hidden' }}">
+                  <select name="country_id" id="input-country" class="form-control" autocomplete="new-country">
+                    <option value="">{{ text_select }}</option>
+                    {% for country in countries %}
+                      <option value="{{ country.country_id }}" {{ country.country_id == country_id ? 'selected="selected"' }}>{{ country.name }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if error.country %}
+                    <div class="text-danger">{{ error.country }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-sm-3">
+                  <select name="zone_id" id="input-zone" class="form-control">
+                  </select>
+                  {% if error.zone %}
+                    <div class="text-danger">{{ error.zone }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-sm-3 hidden">
+                  <select name="city_id" id="input-city" class="form-control"></select>
+                  {% if error.city %}
+                    <div class="text-danger">{{ error.city }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-sm-3 hidden">
+                  <select name="county_id" id="input-county" class="form-control">
+                  </select>
+                  {% if error.county %}
+                    <div class="text-danger">{{ error.county }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-sm-6 hidden">
+                  <input type="text" name="city" value="{{ city }}" placeholder="{{ entry_city }}" id="input-city" class="form-control" />
+                  {% if error.city %}
+                    <div class="text-danger">{{ error.city }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Address 1 -->
+          <div class="form-group required">
+            <label class="col-sm-2 control-label" for="input-address-1">{{ entry_address_1 }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="address_1" value="{{ address_1 }}" placeholder="{{ entry_address_1 }}" id="input-address-1" class="form-control" />
+            </div>
+          </div>
+
+          <!-- Address 2 -->
+          <div class="form-group {{ not helper.is_ft() ? 'hidden' }}">
+            <label class="col-sm-2 control-label" for="input-address-2">{{ entry_address_2 }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="address_2" value="{{ address_2 }}" placeholder="{{ entry_address_2 }}" id="input-address-2" class="form-control" />
+            </div>
+          </div>
+
+          <!-- Postcode -->
+          <div class="form-group required">
+            <label class="col-sm-2 control-label" for="input-postcode">{{ entry_postcode }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="postcode" value="{{ postcode }}" placeholder="{{ entry_postcode }}" id="input-postcode" class="form-control" />
+            </div>
+          </div>
+
+          {% for custom_field in custom_fields %}
+          {% if custom_field.type == 'select' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label" for="input-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <select name="custom_field[{{ custom_field.custom_field_id }}]" id="input-custom-field{{ custom_field.custom_field_id }}" class="form-control">
+                <option value="">{{ text_select }}</option>
+                {% for custom_field_value in custom_field.custom_field_value %}
+                {% set _selected = custom_field_value.custom_field_value_id == address_custom_field[custom_field.custom_field_id] %}
+                <option value="{{ custom_field_value.custom_field_value_id }}" {{ _selected ? 'selected="selected"' }}>
+                  {{ custom_field_value.name }}
+                </option>
+                {% endfor %}
+              </select>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'radio' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <div>
+                {% for custom_field_value in custom_field.custom_field_value %}
+                {% set _checked = custom_field_value.custom_field_value_id == address_custom_field[custom_field.custom_field_id] %}
+                <div class="radio">
+                  <label>
+                    <input type="radio" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ custom_field_value.custom_field_value_id }}" {{ _checked ? 'checked="checked"' }} />
+                    {{ custom_field_value.name }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'checkbox' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <div>
+                {% for custom_field_value in custom_field.custom_field_value %}
+                <div class="checkbox">
+                  {% set _checked = (custom_field_value.custom_field_value_id in address_custom_field[custom_field.custom_field_id]) %}
+                  <label>
+                    <input type="checkbox" name="custom_field[{{ custom_field.custom_field_id }}][]" value="{{ custom_field_value.custom_field_value_id }}" {{ _checked ? 'checked="checked"' }} />
+                    {{ custom_field_value.name }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %} </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'text' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label" for="input-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ address_custom_field[custom_field.custom_field_id] ?: custom_field.value }}" placeholder="{{ custom_field.name }}" id="input-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'textarea' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label" for="input-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <textarea name="custom_field[{{ custom_field.custom_field_id }}]" rows="5" placeholder="{{ custom_field.name }}" id="input-custom-field{{ custom_field.custom_field_id }}" class="form-control">{{ address_custom_field[custom_field.custom_field_id] ?: custom_field.value }}</textarea>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'file' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <button type="button" id="button-custom-field{{ custom_field.custom_field_id }}" data-loading-text="{{ text_loading }}" class="btn btn-default">
+                <i class="fa fa-upload"></i> {{ button_upload }}
+              </button>
+              <a href="{{ helper.handle_custom_file(address_custom_field[custom_field.custom_field_id]) }}" {{ not helper.handle_custom_file(address_custom_field[custom_field.custom_field_id]) ? 'style="display: none;"' }} target="_blank"> &nbsp; <i class="fa fa-eye"></i> {{ text_view }}</a>
+              <input type="hidden" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ address_custom_field[custom_field.custom_field_id] }}" />
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'date' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label" for="input-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <div class="input-group date">
+                <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ address_custom_field[custom_field.custom_field_id] ?: custom_field.value }}" placeholder="{{ custom_field.name }}" data-date-format="YYYY-MM-DD" id="input-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
+                <div class="input-group-btn">
+                <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
+                </div>
+              </div>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'time' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label" for="input-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <div class="input-group time">
+                <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ address_custom_field[custom_field.custom_field_id] ?: custom_field.value }}" placeholder="{{ custom_field.name }}" data-date-format="HH:mm" id="input-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
+                <div class="input-group-btn">
+                <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
+                </div>
+              </div>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if custom_field.type == 'time' %}
+          <div class="form-group {{ custom_field.required ? 'required' }} custom-field" data-sort="{{ custom_field.sort_order }}">
+            <label class="col-sm-2 control-label" for="input-custom-field{{ custom_field.custom_field_id }}">{{ custom_field.name }}</label>
+            <div class="col-sm-10">
+              <div class="input-group datetime">
+                <input type="text" name="custom_field[{{ custom_field.custom_field_id }}]" value="{{ address_custom_field[custom_field.custom_field_id] ?: custom_field.value }}" placeholder="{{ custom_field.name }}" data-date-format="YYYY-MM-DD HH:mm" id="input-custom-field{{ custom_field.custom_field_id }}" class="form-control" />
+                <div class="input-group-btn">
+                <button type="button" class="btn btn-default"><i class="fa fa-calendar"></i></button>
+                </div>
+              </div>
+              {% if error.custom_field[custom_field.custom_field_id] %}
+              <div class="text-danger">{{ error.custom_field[custom_field.custom_field_id] }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">{{ entry_default }}</label>
+            <div class="col-sm-10">
+              <label class="radio-inline">
+                <input type="radio" name="default" value="1" {% if default %}checked="checked"{% endif %} />
+                {{ text_yes }}
+              </label>
+              <label class="radio-inline">
+                <input type="radio" name="default" value="0" {% if not default %}checked="checked"{% endif %}/>
+                {{ text_no }}
+              </label>
+            </div>
+          </div>
+          <button id="button-submit" type="button" data-loading-text="{{ text_loading }}" class="btn btn-primary pull-right">{{ button_submit }}</button>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript"><!--
+// Sort the custom fields
+$('.form-group[data-sort]').detach().each(function() {
+  if ($(this).attr('data-sort') >= 0 && $(this).attr('data-sort') <= $('.form-group').length - 2) {
+    $('.form-group').eq(parseInt($(this).attr('data-sort')) + 2).before(this);
+  }
+
+  if ($(this).attr('data-sort') > $('.form-group').length - 2) {
+    $('.form-group:last').after(this);
+  }
+
+  if ($(this).attr('data-sort') == $('.form-group').length - 2) {
+    $('.form-group:last').after(this);
+  }
+
+  if ($(this).attr('data-sort') < -$('.form-group').length - 2) {
+    $('.form-group:first').before(this);
+  }
+});
+//--></script>
+<script type="text/javascript"><!--
+$('button[id^="button-custom-field"]').on('click', function() {
+  var element = this;
+
+  $('#form-upload').remove();
+
+  $('body').prepend('<form enctype="multipart/form-data" id="form-upload" style="display: none;"><input type="file" name="file" /></form>');
+
+  $('#form-upload input[name="file"]').trigger('click');
+
+  if (typeof timer != 'undefined') {
+    clearInterval(timer);
+  }
+
+  timer = setInterval(function() {
+    if ($('#form-upload input[name="file"]').val() != '') {
+      clearInterval(timer);
+
+      $.ajax({
+        url: 'index.php?route=tool/upload',
+        type: 'post',
+        dataType: 'json',
+        data: new FormData($('#form-upload')[0]),
+        cache: false,
+        contentType: false,
+        processData: false,
+        beforeSend: function() {
+          $(element).button('loading');
+        },
+        complete: function() {
+          $(element).button('reset');
+        },
+        success: function(json) {
+          $(element).parent().find('.text-danger').remove();
+
+          if (json['error']) {
+            $(element).parent().find('input').after('<div class="text-danger">' + json['error'] + '</div>');
+          }
+
+          if (json['success']) {
+            layer.msg(json['success']);
+
+            $(element).parent().find('input').val(json['code']);
+            $(element).siblings('a').show().prop('href',json['link']);
+          }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+          alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        }
+      });
+    }
+  }, 500);
+});
+//--></script>
+<script type="text/javascript"><!--
+$('.date').datetimepicker({
+  language: '{{ datepicker }}',
+  pickTime: false
+});
+
+$('.datetime').datetimepicker({
+  language: '{{ datepicker }}',
+  pickDate: true,
+  pickTime: true
+});
+
+$('.time').datetimepicker({
+  language: '{{ datepicker }}',
+  pickDate: false
+});
+//--></script>
+<script type="text/javascript"><!--
+$('select[name="country_id"]').on('change', function() {
+  $.ajax({
+    url: 'index.php?route=account/account/country&country_id=' + this.value,
+    dataType: 'json',
+    beforeSend: function() {
+      $('select[name="country_id"] .text-danger').remove();
+      $('select[name="country_id"]').prop('disabled', true);
+      $('select[name="city_id"]').parent().addClass('hidden');
+      $('select[name="county_id"]').parent().addClass('hidden');
+      $('input[name="city"]').parent().addClass('hidden');
+    },
+    complete: function() {
+      //
+    },
+    success: function(json) {
+      $('select[name="country_id"]').prop('disabled', false);
+
+      if (json['postcode_required'] == '1') {
+        $('input[name="postcode"]').parent().parent().addClass('required');
+      } else {
+        $('input[name="postcode"]').parent().parent().removeClass('required');
+      }
+
+      html = '<option value="">{{ text_select }}</option>';
+
+      if (json['zone'] && json['zone'] != '') {
+        for (i = 0; i < json['zone'].length; i++) {
+          html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+
+          if (json['zone'][i]['zone_id'] == '{{ zone_id }}') {
+            html += ' selected="selected"';
+          }
+
+          html += '>' + json['zone'][i]['name'] + '</option>';
+        }
+      }
+
+      $('select[name="zone_id"]').html(html);
+      $('select[name="city_id"]').html('');
+      $('select[name="county_id"]').html('');
+
+      if ($('select[name="zone_id"] option:selected').val() > 0) {
+        $('select[name="zone_id"]').trigger('change');
+      }
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      $('select[name="country_id"]').after('<div class="text-danger">' + xhr.responseText + '</div>');
+    }
+  });
+});
+
+$('select[name="country_id"]').trigger('change');
+
+var showCityOrCountyOptions = function(currentEl, changeEl, isTop, cityId, callback) {
+  var zoneId = currentEl.val();
+  if (zoneId == null) return;
+  var requestUrl = 'index.php?route=account/account/zone&zone_id=' + zoneId + '&is_top=' + isTop;
+  $.ajax({
+    url: requestUrl,
+    dataType: 'json',
+    beforeSend: function () {
+      currentEl.prop('disabled', true);
+      changeEl.prop('disabled', true);
+    },
+    complete: function () {
+      //
+    },
+    success: function (json) {
+      currentEl.prop('disabled', false);
+      changeEl.prop('disabled', false);
+
+      html = '<option value="">{{ text_select }}</option>';
+      if (json['city'] && json['city'] != '') {
+        for (i = 0; i < json['city'].length; i++) {
+          html += '<option value="' + json['city'][i]['city_id'] + '"';
+          if (json['city'][i]['city_id'] == cityId) {
+            html += ' selected="selected"';
+          }
+          html += '>' + json['city'][i]['name'] + '</option>';
+        }
+      }
+      changeEl.html(html);
+      if (typeof(callback) == 'function') {
+        callback();
+      }
+    },
+    error: function (xhr, ajaxOptions, thrownError) {
+      alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+    }
+  });
+};
+
+$('select[name="zone_id"]').bind('change', function() {
+  $('select[name="city_id"]').parent().addClass('hidden');
+  $('select[name="city_id"]').html('');
+  $('select[name="county_id"]').parent().addClass('hidden');
+  $('select[name="county_id"]').html('');
+  $('input[name="city"]').parent().addClass('hidden');
+  var changeEl = $('select[name="city_id"]');
+  var cityId = '{{ city_id  }}';
+  showCityOrCountyOptions($(this), changeEl, 1, cityId, function() {
+    if ($('select[name="city_id"] option').length > 1) {
+      $('select[name="city_id"]').parent().removeClass('hidden');
+      if ($('select[name="city_id"] option:selected').val() > 0) {
+        changeEl.trigger('change');
+      }
+    } else {
+      $('input[name="city"]').parent().removeClass('hidden');
+    }
+  });
+});
+
+$('select[name="city_id"]').bind('change', function() {
+  $('select[name="county_id"]').parent().addClass('hidden');
+  $('select[name="county_id"]').html('');
+  var changeEl = $('select[name="county_id"]');
+  var countyId = '{{ county_id }}';
+  showCityOrCountyOptions($(this), changeEl, 0, countyId, function() {
+    if ($('select[name="county_id"] option').length > 1) {
+      $('select[name="county_id"]').parent().removeClass('hidden');
+    }
+  });
+});
+//--></script>
+<script type="text/javascript"><!--
+$('#button-submit').on('click', function () {
+  $.ajax({
+    url: 'index.php?route=checkout/checkout/save_address&type={{ type }}&address_id=' + {{ address_id ?: 0 }},
+    type: 'post',
+    data: $('#address-form input[type="text"],#address-form input[type="hidden"], #address-form input[type="date"], #address-form input[type="datetime"], #address-form input[type="time"], #address-form input[type="password"], #address-form input[type="checkbox"]:checked, #address-form input[type="radio"]:checked, #address-form textarea, #address-form select'),
+    dataType: 'json',
+    beforeSend: function() {
+      $('.form-group').removeClass('has-error');
+      $('.alert-danger').remove();
+      $('.help-block').remove();
+      $('#button-submit').button('loading');
+      $('#address-form .alert-danger').remove();
+    },
+    success: function(json) {
+      if (json['redirect']) {
+        location = json['redirect'];
+        return;
+      }
+
+      if (json['error']) {
+        $('#button-submit').button('reset');
+        $.each(json['error'], function (key, value) {
+          if (key.indexOf('custom_field') === 0) {
+            var control = $('#address-form [name^="custom_field[' + key.replace('custom_field_', '') + ']"]').first();
+          } else {
+            var control = $('#address-form [name="' + key + '"]').first();
+          }
+
+          control.closest('.form-group').addClass('has-error');
+          control.closest("div[class^='col-']").append('<span class="help-block">' + value + '</span>');
+        });
+
+        if (json['error']['warning']) {
+          $('#address-form').append('<div class="alert alert-danger">' + json['error']['warning'] + '</div>')
+        }
+
+        return;
+      }
+
+      // Address saved, close current window
+      var index = parent.layer.getFrameIndex(window.name);
+      parent.layer.close(index);
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+    }
+  });
+});
+//--></script>
+
+{{ footer }}

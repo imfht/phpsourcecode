@@ -1,0 +1,252 @@
+<?php 
+
+if (empty($_GET)) die;
+
+$item_id = intval($_GET['item_id']);
+
+$rs = dt_query("SELECT * FROM finance_item WHERE id=$item_id");
+$item = mysql_fetch_array($rs);
+if (empty($item)) {
+	put_info('项目不存在！');
+	header('Location:?c=finance&a=item_list');
+	die;
+}
+
+if (file_exists('img/finance/item/'.$item_id)) {
+	$i_htxy_d = opendir('img/finance/item/'.$item_id.'/htxy/');
+	$i_sdzp_d = opendir('img/finance/item/'.$item_id.'/sdzp/');
+}
+
+?>
+
+<?php require_once('finance/inc/item_kind.php'); ?>
+<?php require_once('finance/inc/item_status.php'); ?>
+
+<?php require_once('finance/inc/nav_sub_tz.html') ?>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<div class="well finance-item-well">
+				<div class="row clearfix">
+					<div class="col-md-6 column">
+						<h4 style="font-size:18px;margin-bottom:25px"><?php echo $item['name']; ?></h4>
+						<span class="label label-info"><?php echo $item_status[$item['status']]['name']; ?></span>
+						<span class="label label-default"><span class="glyphicon glyphicon-retweet"></span> <?php echo $item_kind[$item['kind']]['name']; ?></span>
+						<a href="<?php echo s_url('?c=finance&a=item_list_cond&lmcy_id='.$item['lmcy_id']) ?>"><span class="label label-success"><span class="glyphicon glyphicon-th-large"></span> <?php echo dt_query_one('SELECT name FROM finance_lmcy WHERE id = '.$item['lmcy_id'])['name'] ?></span></a>
+					</div>
+					<div class="col-md-3 column">
+						<ul class="list-unstyled" style="margin-top:10px">
+							<li> <span class="info-item">融资金额</span> <?php echo $item['money']; ?> </li>
+							<li> <span class="info-item">年化收益</span>  <span class="important"><?php echo $item['revenue']; ?>%</span> </li>
+							<li> <span class="info-item">融资期限</span>  <?php echo $item['term']; ?> 个月 </li>
+						</ul>
+					</div>
+					<div class="col-md-3 column">
+						<h4>风险评估 <a class="btn btn-sm" href="#risk_control">详情</a></h4>
+						<div class="dl-horizontal">
+							<dt style="width:60px">
+							<h5 style="margin:2px">信用评级</h5>
+							</dt>
+							<dd style="margin-bottom:10px;margin-left:70px">
+							<h3 style="margin:2px">
+								<?php $c_s = $item['credit_s']; for (; $c_s >= 20; $c_s -= 20) { ?>
+								<span class="glyphicon glyphicon-star"></span> 
+								<?php } ?>
+								<?php if ($c_s >= 10) { ?>
+								<span class="glyphicon glyphicon-star-empty"></span> 
+								<?php } ?>
+							</h3>
+							</dd>
+
+							<dt style="width:60px">
+							<h5 style="margin:2px">财务实力</h5>
+							</dt>
+							<dd style="margin-bottom:10px;margin-left:70px">
+							<h5 style="float:right;margin:0"> <?php echo $item['financial_s'] ?>分</h5>
+							<div class="progress" style="margin:0;width:140px"> <div class="progress-bar progress-bar-success" style="width:  <?php echo $item['financial_s'] ?>%;"></div> </div>
+							</dd>
+
+							<dt style="width:60px">
+							<h5 style="margin:2px">经营情况</h5>
+							</dt>
+							<dd style="margin-bottom:10px;margin-left:70px">
+							<h5 style="float:right;margin:0"> <?php echo $item['operate_s'] ?>分</h5>
+							<div class="progress" style="margin:0;width:140px"> <div class="progress-bar progress-bar-success" style="width:  <?php echo $item['operate_s'] ?>%;"></div> </div>
+							</dd>
+
+						</div>
+					</div>
+				</div>
+				<div class="row clearfix" style="padding:15px 10px 0 0;margin:40px 0 6px 0;border-top: 1px dashed #ddd">
+					<div class="col-md-10 column">
+						<p style="margin-top:5px"> 项目<?php echo $item_status[$item['status']]['name'] ?>，已有 <?php echo $item['invest'] ?> 位意向投资人，项目融资金额 <span class="important"><?php echo $item['money'] ?></span> 元 </p>
+					</div>
+					<div class="col-md-2 column">
+						<a class="btn btn-default btn-lg btn-block" href="?c=finance&a=item_invest&item_id=<?php echo $item['id'] ?>">意向投资</a>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row clearfix">
+		<div class="col-md-9 column">
+			<div class="well finance-item-well">
+				<h3>项目信息</h3>
+				<hr class="dashed">
+				<div class="row clearfix">
+					<div class="col-md-10 column">
+						<dl class="dl-horizontal">
+							<dt>项目名称</dt>
+							<dd><?php echo $item['name'] ?></dd>
+						</dl>
+					</div>
+				</div>
+				<div class="row clearfix">
+					<div class="col-md-6 column">
+						<dl class="dl-horizontal">
+							<dt>融资方</dt>
+
+							<dd>
+							<a href="<?php echo s_url('?c=center&a=index&user_id='.$item['user_id']) ?>"><?php echo $item['user_name'] ?></a>
+							<a class="btn btn-sm" href="<?php echo s_url('?c=finance&a=item_list_cond&user_id='.$item['user_id']) ?>">所有融资项目</a>                </dd>
+							<dt>机构方</dt>
+							<dd> <a href="<?php echo s_url('?c=finance&a=item_list_cond&lmcy_id='.$item['lmcy_id']) ?>"><?php echo dt_query_one('SELECT name FROM finance_lmcy WHERE id = '.$item['lmcy_id'])['name'] ?> </a> </dd>
+							<dt>项目区域位置</dt>
+							<dd><?php echo $item['location'] ?></dd>
+							<dt>年化利率</dt>
+							<dd><?php echo $item['revenue'] ?>%</dd>
+							<dt>资金用途</dt>
+							<dd><?php echo $item['use_to'] ?></dd>
+						</dl>
+					</div>
+					<div class="col-md-6 column">
+						<dl class="dl-horizontal">
+							<dt>本期融资金额</dt>
+							<dd><?php echo $item['money']; ?> 万元</dd>
+							<dt>本次授信额度</dt>
+							<dd><?php echo $item['money_v']; ?> 万元</dd>
+
+							<dt>还款日期</dt>
+							<dd><?php echo date("Y-m-d",$item['c_at']+($item['term']+1)*31*24*3600); ?></dd>    
+							<dt>投标截止时间</dt>
+							<dd><?php echo date("Y-m-d H:i:s",$item['c_at']+31*24*3600); ?></dd>
+						</dl>
+					</div>
+				</div>
+				<div class="row clearfix">
+					<div class="col-md-10 column">
+						<dl class="dl-horizontal">
+							<dt>项目情况</dt>
+							<dd><?php echo $item['item_info']; ?></dd>
+						</dl>
+					</div>
+				</div>
+				<div class="row clearfix">
+					<div class="col-md-10 column">
+						<dl class="dl-horizontal">
+							<dt>借款用途</dt>
+							<dd><?php echo $item['use_to_do']; ?></dd>
+							<dt>还款来源</dt>
+							<dd><?php echo $item['income']; ?></dd>
+						</dl>
+					</div>
+				</div>
+			</div>
+
+			<div class="well finance-item-well">
+				<h3>主体信息</h3>
+				<hr class="dashed">
+				<?php echo $item['company_info']; ?>
+			</div>
+			<div class="well finance-item-well" id="risk_control">
+				<h3>风险控制</h3>
+				<hr class="dashed">
+				<?php echo $item['risk_control']; ?>
+			</div>
+			<div class="well finance-item-well">
+				<h3>还款模型</h3>
+				<hr class="dashed">
+				<table class="table table-responsive">
+					<thead>
+						<tr>
+							<th style="min-width: 150px">预期还款时间</th>
+							<th>类型</th>
+							<th style="min-width: 150px;" class="text-right">还款金额(元)</th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php for ($t = 1; $t <= $item['term']; $t++) { ?>
+					<tr>
+						<td><?php echo date("Y-m-d",$item['c_at']+$t*31*24*3600); ?></td>
+						<td>利息</td>
+						<td class="text-right"><?php echo ceil($item['money']*$item['revenue']/100/12*100)/100; ?></td>
+					</tr>       
+					<?php } ?>
+					<tr>
+						<td><?php echo date("Y-m-d",$item['c_at']+($item['term']+1)*31*24*3600); ?></td>
+						<td>本金</td>
+						<td class="text-right"><?php echo $item['money']; ?></td>
+					</tr>       
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="col-md-3 column">
+			<div class="well finance-item-well">
+				<h3>相关资料</h3>
+				<hr class="dashed">
+				<?php if (file_exists('img/finance/item/'.$item_id)) { ?>
+				<h4>合同协议</h4>
+				<?php while ($f = readdir($i_htxy_d)) { if (is_dir($f)) continue; ?>
+				<h5><a href="img/finance/item/<?php echo $item_id ?>/htxy/<?php echo $f ?>"><?php echo $f ?></a></h5> 
+				<?php } ?>
+
+				<hr class="dashed">
+				<h4>实地照片</h4>
+				<?php while ($f = readdir($i_sdzp_d)) { if (is_dir($f)) continue; ?>
+				<h5><a href="img/finance/item/<?php echo $item_id ?>/sdzp/<?php echo $f ?>"><?php echo $f ?></a></h5> 
+				<?php } ?>
+				<?php } ?>
+			</div>
+			<div class="well finance-item-well">
+				<h3>投标情况</h3>
+				<hr class="dashed">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>投资人</th>
+							<th style="text-align: right">意向投资额</th>
+						</tr>
+					</thead>
+					<tbody id="i_is"> </tbody>
+				</table>
+				<div style="text-align: right; display: block;" id="get_i_is"><a href="javascript:get_i_is()"> 显示更多</a></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	get_i_is();
+});
+
+function get_i_is() {
+	var c_at_l = $('tbody#i_is').find('tr:last').attr('title');
+	$.get('?c=finance&a=get_item_show_i_is&item_id=<?php echo $item_id ?>&c_at_l='+c_at_l, function(rs){
+		if ('e0' == rs) { 
+			alert(rs);
+			return;
+		} else if ('' == rs) {
+			$('div#get_i_is').remove();
+			return;
+		}
+		$('tbody#i_is').append(rs);
+	});
+}
+
+</script>
+

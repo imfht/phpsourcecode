@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>菜单列表</title>
+
+    <!-- Bootstrap -->
+    <link href="{:config('__public__')}/static/bootstrap-3.3.4/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link href="/Admin/css/iframeCommon.css" rel="stylesheet">
+</head>
+<body>
+<style type="text/css">
+    .menuClass{
+        /*margin-top: 10px;
+        margin-right: 10px;*/
+    }
+    .breadcrumb{
+        /*margin-top:15px; */
+        display: inline-block;
+        margin-bottom: 0px;
+    }
+</style>
+<div class="contentTop">
+
+    <h3>菜单管理</h3>
+  <div class="toolBar">
+    <div class="col-lg-3">
+    <a id="add-group" class="btn btn-info btn-sm" href="{:url('add', ['menu_module'=>$current_module, 'pid'=>$pid])}">新 增</a>
+    </div>
+    <div class="pull-right menuClass">
+        {volist name="modules" id="vo"}
+            {if $current_module EQ $vo['module']}
+            <a class="btn btn-sm btn-default active" href="{:url('index',['current_module'=>$vo['module']])}">{$vo.name}</a>
+            {else /}
+            <a class="btn btn-sm btn-default" href="{:url('index',['current_module'=>$vo['module']])}">{$vo.name}</a>
+            {/if}
+        {/volist}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a class="btn btn-danger" href="{:url('tree_show#'.input('pid', 0), ['module'=>$current_module, 'startId'=>input('pid', 0)])}">&nbsp;&nbsp;树型显示后台菜单&nbsp;&nbsp;</a>
+    </div>
+  </div>
+</div>
+
+    <table  class="table table-striped table-condensed table-responsive" >
+        <thead class="bg-info">
+            <tr>
+                <!-- <th class="row-selected">
+                    <input class="checkbox check-all" type="checkbox">
+                </th> -->
+                <th>ID</th>
+                <th>名称</th>
+                <th>上级菜单</th>
+                <th>分组</th>
+                <th>URL</th>
+                <th>排序</th>
+                <th>仅开发者模式显示</th>
+                <th>隐藏</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+		{notempty name="list"}
+        {volist name="list" id="menu"}
+            <tr>
+                <!-- <td><input class="ids row-selected" type="checkbox" name="id[]" value="{$menu.id}"></td> -->
+                <td>{$menu.id}</td>
+                <td>
+                    <a href="{:url('index?pid='.$menu['id'])}">{$menu.title}</a>
+                </td>
+                <td>{$menu.up_title|default='无'}</td>
+                <td>{$menu.group}</td>
+                <td>{$menu.url}</td>
+                <td>{$menu.sort}</td>
+                <td>
+                    <a href="{:url('toogleDev',array('id'=>$menu['id'],'value'=>abs($menu['is_dev']-1)))}" class="ajax-get">
+                    {$menu.is_dev_text}
+                    </a>
+                </td>
+                <td>
+                    <a href="{:url('toogleHide',array('id'=>$menu['id'],'value'=>abs($menu['hide']-1)))}" class="ajax-get">
+                    {$menu.hide_text}
+                    </a>
+                </td>
+                <td>
+                    <a title="编辑" href="{:url('edit?id='.$menu['id'].'&current_module='.$current_module)}">编辑</a>
+                    <a class="confirm ajax-get" title="删除" href="{:url('del?id='.$menu['id'])}">删除</a>
+                </td>
+            </tr>
+        {/volist}
+		{else/}
+		<td colspan="10" class="text-center"> aOh! 暂时还没有内容! </td>
+        {/notempty}
+        </tbody>
+    </table>
+    <!-- 分页 -->
+    <div class="page">
+    </div>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="{:config('__public__')}/static/jquery-2.0.3.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<!-- <script src="{:config('__public__')}/static/bootstrap-3.3.4/dist/js/bootstrap.min.js"></script> -->
+
+<link rel="stylesheet" href="{:config('__public__')}/static/artDialog-6.0.4/css/ui-dialog.css">
+<script src="{:config('__public__')}/static/artDialog-6.0.4/dist/dialog-min.js"></script>
+<script type="text/javascript" src="/Admin/js/ajaxSubmit.js"></script>
+
+<script type="text/javascript">
+$(function() {
+    //搜索功能
+    $("#search").click(function() {
+        var url = $(this).attr('url');
+        var query = $('.search-form').find('input').serialize();
+        query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g, '');
+        query = query.replace(/^&/g, '');
+        if (url.indexOf('?') > 0) {
+            url += '&' + query;
+        } else {
+            url += '?' + query;
+        }
+        window.location.href = url;
+    });
+    //回车搜索
+    $(".search-input").keyup(function(e) {
+        if (e.keyCode === 13) {
+            $("#search").click();
+            return false;
+        }
+    });
+    
+    //点击排序
+    $('.list_sort').click(function(){
+        var url = $(this).attr('url');
+        var ids = $('.ids:checked');
+        var param = '';
+        if(ids.length > 0){
+            var str = new Array();
+            ids.each(function(){
+                str.push($(this).val());
+            });
+            param = str.join(',');
+        }
+
+        if(url != undefined && url != ''){
+            window.location.href = url + '/ids/' + param;
+        }
+    });
+});
+</script>
+
+</body>
+</html>

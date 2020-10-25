@@ -1,0 +1,68 @@
+<?php
+
+$wd = @filter_var($_GET['wd'], FILTER_SANITIZE_STRING);
+
+?>
+<script src="forum/inc/forum.js"></script>
+<link rel="stylesheet" href="forum/inc/forum.css">
+<?php require_once('forum/inc/pub_h.phtml') ?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li class="active"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 全网搜索 <small>>></small></li>
+		</ol>
+	</div>
+</div>
+<div class="container forum-list-search">
+	<div class="row clearfix">
+		<div class="col-md-4 col-xs-2 column">
+		</div>
+		<div class="col-md-4 col-xs-8 column">
+			<form id="search" action="javascript:bd_search(1)">	
+				<div class="input-group">
+					<input id="bd_search" class="form-control" type="text" autocomplete="off" placeholder="全网搜索" value="<?php echo $wd ?>">
+					<ul class="bd_wd_s"></ul>
+					<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+				</div>
+			</form>	
+		</div>
+	</div>
+</div>
+<div class="container index-forum">
+<?php
+if (empty($wd)) {
+	$bs = array(1, 341, 342, 344, 11 ,176, 258, 26, 7, 4, 274); 
+	$html_h = mb_convert_encoding(file_get_contents_rand_ip('http://top.baidu.com/buzz?b='.$bs[array_rand($bs, 1)]), 'utf-8', 'gb2312');
+	if (preg_match('/<title>([^-]*)-/', $html_h, $m)) {
+		$title = $m[1];
+	}
+	if (preg_match_all('/href_top="[^"]*">([^<]*)<\/a>/', $html_h, $m)) {
+?>
+		<h3 class="hidden-xs"><a href="#"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> <?php echo $title ?> <small>>></small></a></h3>
+		<?php foreach ($m[1] as $k => $w) { ?><a target="_blank" class="btn btn-default hao123" href="?c=bd_search&a=bd_search&wd=<?php echo $w ?>"> <?php echo ($k+1).'、'.$w ?> </a><?php } ?>
+<?php 
+	}
+} else { 
+?>
+		<h3 class="hidden-xs"><a href="#"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 全网搜索 <small>>></small></a></h3>
+		<div class="col-md-12 column forum-topic-list"> </div>
+<?php
+}
+?>
+	</div>
+<script>
+var wd = '<?php echo $wd ?>', pn = 0;
+
+bd_search();
+$(window).scroll(function(){ if (700 > $('div.forum-topic-list').height() - $('body').scrollTop()) { bd_search(); } }); 
+$('li#bd_search').addClass('active');
+$('input#bd_search').focus();
+
+function bd_search(s) {
+	if (1 == s) location = '?c=bd_search&a=bd_search&wd='+$('input#bd_search').val();
+	$.get('?c=bd_search&a=get_bd_search&wd='+wd+'&pn='+(pn++)*10, function(rs){
+		$('div.forum-topic-list').append(rs);
+	});
+}
+</script>

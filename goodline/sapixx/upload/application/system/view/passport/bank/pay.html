@@ -1,0 +1,51 @@
+{layout name="passport:layout" /}
+<div class="tabs">
+    <ul class="tab_menu">
+        <a href="{:url('passport.bank/index')}"><li>我的应用</li></a>
+        <a href="{:url('passport.bank/bill')}"><li>我的帐单</li></a>
+        <a href="{:url('passport.bank/pay')}"><li class="current">账户充值</li></a>
+    </ul>
+</div>
+<div class="tipbox tipbox-message mt10">友情提示：<span class="gray">充值后不退款,充值前请慎重考虑。</span></div>
+<form id="form" action="{:url('system/passport.bank/pay')}" method="post">
+    <table class="formtable">
+        <tr>
+            <th class="w100">充值金额:</th>
+            <td><input placeholder="请输入充值金额" datatype="n" class="input" type="text" name="money" /> 元 <span class="red">充值最小金额：10元</span></td>
+        </tr>
+        <tr>
+            <th>支付方式:</th>
+            <td>
+                <input class="radio" name="payType" type="radio" value="0" checked />
+                <svg class="icon" aria-hidden="true" style="width:20px;height:20px;vertical-align: middle;"><use xlink:href="#icon-weixinzhifu1"></use></svg>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="立即支付" class="button submit button-green" /></td>
+        </tr>
+    </table>
+</form>
+<script type="text/javascript">
+Do('base', 'layer', 'form', 'qrcode', function () {
+    $("#form").Validform({ajaxPost: true,tiptype:function(){},postonce: true,callback:function (data) {
+        if (data.code == 200) {
+            parent.layer.confirm('<div id="qrcode" class="w260 h260"></div>',{btn: ['支付完成','取消'],title:'扫一扫付款'},function (index) {
+                parent.layer.close(index);
+                $('.tab_menu a:eq(1)')[0].click();
+            }, function (index){
+                parent.layer.close(index);
+            }, setTimeout(function () {
+                new QRCode(parent.document.getElementById("qrcode"), data.data.code_url);
+                $('.layui-layer-title').html('支付页面');
+            }, 10));
+        } else {
+            parent.layer.alert(data.msg, { icon: 5 }, function (index) {
+                parent.layer.close(index);
+            });
+        }
+    },beforeSubmit:function(curform){
+		parent.layer.load(0,{shade:0.3,time:3000});
+	}});
+})
+</script>

@@ -1,0 +1,68 @@
+<div class="form-group-select-info-area">
+    <label>Info：</label>
+    <select class="form-control select-info">
+        {% for info in infos %}
+            <option {% if info.isCurrent %}selected="selected"{% endif %} value="{{ info.id }}">{{ info.title }}</option>
+        {% endfor %}
+    </select>
+</div>
+<script>
+    $(document).ready(function () {
+        $("select.select-info").on("change", function (e) {
+            $("select.select-info").attr('disabled', true);
+            $.ajax({
+                type: "POST",
+                url: "{{ path('admin_general_info_set') }}",
+                dataType: 'json',
+                data: {"info_id": e.val},
+                success: function (result) {
+                    if (result.success) {
+                        new NoticeJs({
+                            text: 'Info 更新成功',
+                            type: 'success',
+                            position: 'topCenter',
+                            progressBar: true,
+                            timeout: 30,
+                            animation: {
+                                open: 'animated fadeIn',
+                                close: 'animated flipOutX'
+                            },
+                            callbacks: {
+                                onClose: [function () {
+                                    window.location.reload();
+                                }],
+                            }
+                        }).show();
+                    } else {
+                        new NoticeJs({
+                            text: result.message,
+                            type: 'error',
+                            position: 'topCenter',
+                            progressBar: true,
+                            timeout: 50,
+                            animation: {
+                                open: 'animated fadeIn',
+                                close: 'animated fadeOut'
+                            }
+                        }).show();
+                    }
+                    $("select.select-info").attr('disabled', false);
+                },
+                error: function (e) {
+                    new NoticeJs({
+                        text: '请求失败',
+                        type: 'error',
+                        position: 'topCenter',
+                        progressBar: true,
+                        timeout: 50,
+                        animation: {
+                            open: 'animated fadeIn',
+                            close: 'animated fadeOut'
+                        }
+                    }).show();
+                    $("select.select-info").attr('disabled', false);
+                }
+            });
+        });
+    });
+</script>

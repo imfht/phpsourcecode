@@ -1,0 +1,194 @@
+<extend name="Base/common"/>
+<block name="style">
+    <link href="__CSS__/articles.css" rel="stylesheet" type="text/css"/>
+    <link href="__CSS__/webuploader.css" rel="stylesheet" type="text/css"/>
+    <link href="__ZUI__/lib/datetimepicker/datetimepicker.css" rel="stylesheet" type="text/css">
+</block>
+<block name="body">
+<div id="main-container" class="container">
+    <div id="frm-post-popup " class="white-popup1 boxShadowBorder col-xs-12" >
+        <h2>{$title}</h2>
+
+        <div class="aline" style="margin-bottom: 10px"></div>
+        <div>
+            <div class="row">
+                <div class="col-xs-3">
+                    <div class="controls">
+                        <div class="webuploader-box">
+                            <div id="uploadimg">
+                                <div id="imgPicker">选择图片</div>
+                            </div>
+                        </div>
+                        <div class="progress-box">
+                              
+                        </div>
+                        <div id="fileList" class="uploader-list"></div>
+                        <div class="upload-img-box" style="margin-top: 20px;">
+                            <if condition="$data['cover']">
+                                <img src="{$data.cover|get_cover='path'}" style="width: 200px;height: 146px;">
+                                <else/>
+                                <div style="font-size:3em;padding:2em 0;color: #ccc;text-align: center">暂无封面</div>
+                            </if>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-9">
+                    <form class="form-horizontal ajax-form" role="form" action="{:U('Articles/Index/edit')}" method="post">
+                        <input type="hidden" name="id" id="id" value="{$data.id}"/>
+                        <input type="hidden" name="uid" value="{$data.uid}"/>
+                        <input type="hidden" name="cover" id="cover_id_cover" value="{$data.cover}"/>
+                        <div class="form-group has-feedback">
+                            <label for="title" class="col-xs-1 control-label">标题</label>
+
+                            <div class="col-xs-8">
+                                <input id="title" name="title" class="form-control form_check" check-type="Text" value="{$data.title}" placeholder="标题"/>
+                            </div>
+
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category" class="col-xs-1 control-label">分类</label>
+
+                            <div class="col-xs-5">
+                                <select id="category" name="category" class="form-control">
+                                    <volist name="category" id="top">
+                                        <option value="{$top.id}" <eq name="data['category']" value="$top['id']"> selected</eq>>
+                                        {$top.title}
+                                        </option>
+                                    </volist>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group has-feedback">
+                            <label for="source" class="col-xs-1 control-label">来源</label>
+
+                            <div class="col-xs-8">
+                                <input id="source" name="source" class="form-control" value="{$data.source}" placeholder="原文地址(选填)"/>
+                            </div>
+
+                        </div>
+                        
+                        <div class="form-group has-feedback">
+                            <label for="description" class="col-xs-1 control-label">摘要</label>
+
+                            <div class="col-xs-8">
+                                <textarea id="description" name="description" class="form-control" placeholder="简单描述一下资讯内容(选填)">{$data.description}</textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="content" class="col-xs-1 control-label">详情</label>
+
+                            <div class="col-xs-10">
+                                {:W('Common/Wangeditor/editor',array('myeditor_edit','content',$data['detail']['content'],'','height:auto;min-height:400px'))}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-1 col-xs-1">
+                                <button type="submit" class="btn btn-primary">提交</button>
+
+                            </div>
+                            <div class="col-xs-8">
+                                <button onclick="history.go(-1);" class="btn btn-default">返回</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+    <script type="text/javascript" src="__ZUI__/lib/datetimepicker/datetimepicker.min.js"></script>
+    <script type="text/javascript" src="__JS__/webuploader.min.js"></script>
+    <script>
+    $(function(){
+
+        //上传图片
+         // 初始化Web Uploader
+        var uploader = WebUploader.create({
+            // 选完文件后，是否自动上传。
+            auto: true,
+            // swf文件路径
+            swf: '__JS__/Uploader.swf',
+            // 文件接收服务端。
+            server: "{:U('Home/File/uploadPicture',array('session_id'=>session_id()))}",
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#imgPicker',
+            // 只允许选择图片文件。
+            accept: {
+                title: 'Images',
+                extensions: 'gif,jpg,jpeg,bmp,png',
+                mimeTypes: 'image/jpg,image/jpeg,image/png'
+            }
+        });
+
+        // 当有文件添加进来的时候
+        uploader.on( 'fileQueued', function( file ) {
+            uploader.upload();
+        });
+        // 文件上传过程中创建进度条实时显示。
+        uploader.on( 'uploadProgress', function( file, percentage ) {
+            var $percent = $('.upload-progress');
+
+            // 避免重复创建
+            if ( !$percent.length ) {
+                $percent = $('<div class="progress"><div class="progress-bar upload-progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"><span class="sr-only">0%</span></div></div>')
+                        .appendTo('.progress-box' )
+                        .find('.upload-progress');
+            }
+            $percent.find('span').html(percentage * 100 + '%');
+            $percent.css( 'width', percentage * 100 + '%' );
+        });
+
+        // 文件上传成功，给item添加成功class, 用样式标记上传成功。
+        uploader.on( 'uploadSuccess', function( file,data ) {
+            var data = data.data;
+            $( '#'+file.id ).addClass('upload-state-done');
+            //var data = $.parseJSON(data);
+            $('#cover_id_cover').val(data.file.id);
+            $('.progress').remove(); //移除进度条
+            $('.upload-img-box').html('<img src="'+data.file.path+'"/>');
+        });
+
+        // 文件上传失败，显示上传出错。
+        uploader.on( 'uploadError', function( file ) {
+            var $li = $( '#'+file.id ),
+                $error = $li.find('div.error');
+
+            // 避免重复创建
+            if ( !$error.length ) {
+                $error = $('<div class="error"></div>').appendTo( $li );
+            }
+
+            $error.text('上传失败');
+        });
+    });
+
+    $(function(){
+        $('.time').datetimepicker({
+            language:'zh-CN',
+            weekStart:1,
+            todayBtn:1,
+            autoclose:1,
+            todayHighlight:1,
+            startView:2,
+            minView:0,
+            forceParse:0,
+            format: 'yyyy-mm-dd hh:ii'
+        });
+
+        $('.time_d').datetimepicker({
+            language:'zh-CN',
+            weekStart:1,
+            todayBtn:1,
+            autoclose:1,
+            todayHighlight:1,
+            startView:2,
+            minView:2,
+            forceParse:0,
+            format: 'yyyy-mm-dd'
+        });
+    })
+    </script>
+</block>

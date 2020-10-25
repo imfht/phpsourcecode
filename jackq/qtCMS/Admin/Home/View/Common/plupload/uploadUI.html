@@ -1,0 +1,129 @@
+<script type="text/javascript" src="__PUBLIC__/javascripts/admin/plupload-2.1.2/js/plupload.full.min.js"></script>
+<script type="text/javascript" src="__PUBLIC__/javascripts/admin/plupload-2.1.2/js/i18n/zh_CN.js"></script>
+<style>
+    #upload_img_ul li{
+        margin-left: 2px;
+        float: left;
+        width:262px;
+    }
+    .file_action{
+        text-align: center;
+    }
+</style>
+<input type="hidden" id="plu_imageIds" name="plu_imageIds" />
+<input type="hidden" id="edit_id" name="edit_id" value="[keywords]"/>
+<div id="upload_main">
+    <div class="upload_img_show">
+        <ul id="upload_img_ul"></ul>
+        <div style="clear: both;"></div>
+    </div>
+    <div id="filelist"></div>
+    <div class="upload_button">
+        <a id="pickfiles" href="javascript:;">[选择文件]</a>
+        <a id="uploadfiles" href="javascript:;">[开始上传]</a>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // Custom example logic
+    var uploader = new plupload.Uploader({
+        runtimes : 'html5,flash,silverlight,html4',
+        browse_button : 'pickfiles', // you can pass in id...
+        container: document.getElementById('upload_main'), //
+        url : "{:U('ProductImage/upload')}",
+        flash_swf_url : '__PUBLIC__/javascripts/admin/plupload-2.1.2/js/Moxie.swf',
+        silverlight_xap_url : '__PUBLIC__/javascripts/admin/plupload-2.1.2/js/Moxie.xap',
+        filters : {
+            max_file_size : '2mb',
+            mime_types: [
+                {title : "Image files", extensions : "jpg,gif,png"}
+            ]
+        },
+        init: {
+            PostInit: function() {
+                document.getElementById('filelist').innerHTML = '';
+                document.getElementById('uploadfiles').onclick = function() {
+                    uploader.start();
+                    return false;
+                };
+            },
+            FilesAdded: function(up, files) {
+                plupload.each(files, function(file) {
+                    document.getElementById('filelist').innerHTML += '<div id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ') <b></b></div>';
+                });
+            },
+            UploadProgress: function(up, file) {
+                document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
+            },
+            Error: function(up, err) {
+                document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
+            },FileUploaded: function(up, file, info) {
+                var json = eval('(' + info.response + ')');
+                if(json.status){
+                    var data = json.info;
+                    showImg($("#upload_img_ul"),data);
+                    setImageId(data.id);
+                }
+            }
+        }
+    });
+    uploader.init();
+
+
+    function showImg(ul,item){
+        var checked = "";
+        if(item.type==1){
+            checked='checked="checked"';
+        }
+        ul.append(
+                '<li class="uploadImg" id="uploadImg_'+item.id+'">' +
+                '<div class="file_thumb"><img src="__ROOT__/'+item.path+'" width="260" height="180"/></div>' +
+                '<div class="file_action"><input type="radio" id="imageType_'+item.id+'" name="imageType" value="'+item.id+'" '+checked+' />主图 &nbsp;&nbsp;<a href="##" class="deleteImg_'+item.id+'" img_id="'+item.id+'" >[删除]</a></div>' +
+                '</li>'
+        );
+        $(".deleteImg_"+item.id).on("click",function(e){
+            e.preventDefault();
+            if(confirm("确定删除？")){
+                var imgId = $(this).attr("img_id");
+                $.post("{:U('ProductImage/delete')}",{id:imgId},function(data){
+                    if(data.status){
+                        $("#uploadImg_"+imgId).remove();
+                    }
+                },"json");
+            }
+        });
+        $("#imageType_"+item.id).on("click",function(e){
+            var imgId = $(this).val();
+            var allIds = $("#plu_imageIds").val();
+            $.post("{:U('ProductImage/changeImageType')}",{id:imgId,allIds:allIds},function(data){
+            },"json");
+        });
+    }
+
+    function setImageId(id){
+        var ids = $("#plu_imageIds").val();
+        if(ids==null||ids==""){
+            ids +=id;
+        }else{
+            ids +=","+id;
+        }
+        $("#plu_imageIds").val(ids);
+    }
+
+    $(function(){
+        var edit_id =$("#edit_id").val();
+        if(edit_id!=null&&edit_id!=""){
+            $.post("{:U('ProductImage/findByProductId')}",{productId:edit_id},function(json){
+                if(json.status){
+                    var data = json.info;
+                    for(var i=0;i<data.length;i++){
+                        showImg($("#upload_img_ul"),data[i]);
+                        setImageId(data[i].id);
+                    }
+
+                }
+            },"json");
+        }
+    });
+
+</script>

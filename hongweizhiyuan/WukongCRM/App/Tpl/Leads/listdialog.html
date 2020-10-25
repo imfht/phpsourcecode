@@ -1,0 +1,137 @@
+<div class="clearfix">
+	<ul class="nav pull-left">
+		<li class="pull-left">{:L('SEARCH_CONDITION')}
+			<select style="width:auto" name="field" id="field" onchange="changeCondition()">
+				<option class="role" value="owner_role_id">{:L('OWNER_ROLE')}</option>
+				<option class="word" value="name">{:L('COMPANY_NAME')}</option>
+				<option class="word" value="contacts_name">{:L('CONTACTS_NAME')}</option>
+				<option class="word" value="mobile">{:L('TELPHONE')}</option>
+				<option class="word" value="email">{:L('EMAIL')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="conditionContent" class="pull-left">
+			<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+				<option value="contains">{:L('CONTAINS')}</option>
+				<option value="not_contain">{:L('NOT_CONTAIN')}</option>
+				<option value="is">{:L('IS')}</option>
+				<option value="isnot">{:L('ISNOT')}</option>						
+				<option value="start_with">{:L('START_WITH')}</option>
+				<option value="end_with">{:L('END_WITH')}</option>
+				<option value="is_empty">{:L('IS_EMPTY')}</option>
+				<option value="is_not_empty">{:L('IS_NOT_EMPTY')}</option>
+			</select>&nbsp;&nbsp;
+		</li>
+		<li id="searchContent" class="pull-left">
+			<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+		</li>
+		<li class="pull-left">
+			<button type="submit" class="btn" onclick="d_changeCondition(0)">{:L('SEARCH')}</button>
+		</li>
+		&nbsp;<a target="_blank" href="{:U('leads/add')}">{:L('CREATE_LEADS')}</a>
+	</ul>
+</div>
+<empty name="leadsList">
+	<div class="alert">{:L('EMPTY_DATA')}</div>
+<else/>
+	<table class="table table-hover">
+			<thead>
+				<tr> 
+					<th></th>
+					<th width="40%">{:L('COMPANY_NAME')}</th>
+					<th width="20%">{:L('CONTACTS')}</th>
+					<th width="18%">{:L('TELPHONE')}</th>
+					<th width="18%">{:L('EMAIL')}</th>
+				</tr>
+			</thead>
+			<tfoot id="footer">
+				<tr>
+					<td colspan="5">
+						<div class="row pagination">
+							<div class="span2">{:L('PAGE_COUNT',array($count_num, $total))}</div>
+							<div class="span4">
+								<div><ul id="changepage">
+									<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('PRE_PAGE')}</span></li>
+									<if condition="1 lt $total">
+										<li><a class="page" href="javascript:void(0)" rel="2">{:L('NEXT_PAGE')}</a></li>
+									<else />
+										<li><span>{:L('NEXT_PAGE')}</span></li>
+									</if>
+								</ul></div>
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tfoot>
+			<tbody id="load" class="hide">
+				<tr><td class="tdleft" <if condition="C('ismobile') neq 1">colspan="5"<else />colspan="5"</if> style=" height:300px;text-align:center"><img src="./Public/img/load.gif"></td></tr>
+			</tbody>
+			<tbody id="data">
+				<volist name="leadsList" id="vo">
+					<tr> 
+						<td><input type="radio" name="leads" value="{$vo.leads_id}"/></td>
+						<td>{$vo.name}</td>
+						<td>{$vo.contacts_name}</td>
+						<td>{$vo.mobile}</td>
+						<td>{$vo.email}</td>
+					</tr>
+				</volist>
+			</tbody>
+	</table>
+<script type="text/javascript">
+	$('.page').click(function(){
+		var a = $(this).attr('rel');
+		d_changeCondition(a);
+	});
+	function d_changeCondition(p){
+		$('#data').addClass('hide');
+		$('#load').removeClass('hide');
+		
+		var field = $('#field').val();
+		var condition = $('#condition').val();
+		var asearch = encodeURI($("#search").val());
+		$.ajax({
+			type:'get',
+			url:'index.php?m=leads&a=changecontent&field='+field+'&search='+asearch+'&condition='+condition+'&p='+p,
+			async:false,
+			success:function(data){
+				var temp = '';
+				if(data.data.list != null){
+					$.each(data.data.list, function(k, v){
+						temp += "<tr><td><input type='radio' name='leads' value='"+v.leads_id+"'/></td><td>" + v.name + "</td><td>" + v.contacts_name + "</td><td>"+v.mobile+"</td><td>"+v.email+"</td></tr>";
+					});
+					var changepage = "";
+					if(data.data.p == 1){
+						changepage = "<li><span class='current'>{:L('HOME_PAGE')}</span></li><li><span>{:L('NEXT_PAGE')} </span></li>";
+						if(data.data.p < data.data.total){
+							changepage += "<li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>";
+						}else{
+							changepage += "<li><span>{:L('NEXT_PAGE')}</span></li>";
+						}
+					}else if(data.data.p == data.data.total){
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><span>{:L('NEXT_PAGE')}</span></li>";
+					}else if(data.data.p == data.data.total){
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><span>{:L('NEXT_PAGE')}</span></li>";
+					}else{
+						changepage = "<li><a class='page' href='javascript:void(0)' rel='1'>{:L('HOME_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p-1)+"'>{:L('PRE_PAGE')}</a></li><li><a class='page' href='javascript:void(0)' rel='"+(data.data.p+1)+"'>{:L('NEXT_PAGE')}</a></li>";
+					}
+					$('#p').html(data.data.p);
+					$('#changepage').html(changepage);
+					$('#count').html(data.data.count);
+					$('#total_page').html(data.data.total);
+					$('#data').html(temp);
+					$('.page').click(function(){
+						var a = $(this).attr('rel');
+						d_changeCondition(a);
+					});
+				}else{
+					$('#data').html('<tr><td colspan="4">{:L("DID_NOT_FIND_THE_RESULTS_YOU_WANT")}</tr>');
+					$('#footer').addClass('hide');
+				}
+				$('#load').addClass('hide');
+				$('#data').removeClass('hide');
+			},
+			dataType:'json'
+		});		
+	}
+</script>
+</empty>

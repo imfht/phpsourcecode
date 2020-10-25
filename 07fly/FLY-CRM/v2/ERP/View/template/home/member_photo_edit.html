@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>修改头像</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+<!--引入CSS-->
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/webuploader/webuploader.css">
+<!--引入JS-->
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/webuploader/jquery-1.7.2.js" charset="UTF-8"></script>
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/webuploader/webuploader.js"></script>
+</head>
+<body style="background:#F4F5F6;">
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>修改头像</h1>
+  <div></div>
+</header>
+<div class="hui-wrap">
+  <div style="margin:20px 10px; margin-bottom:15px;">
+      <div id="uploader-demo"> 
+        <!--用来存放item-->
+        <div id="fileList" class="uploader-list"></div>
+        <div id="filePicker">+上传头像</div>
+      </div>
+  </div>
+	<div style="padding:10px; padding-top:10px;">
+	  <button type="button" class="hui-button hui-button-large hui-primary" id="submit">确定</button>
+	</div>
+</div>
+
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-form.js" charset="utf-8"></script>
+<script type="text/javascript">
+$(function(){
+   var thumbnailWidth = 300;   //缩略图高度和宽度 （单位是像素），当宽高度是0~1的时候，是按照百分比计算，具体可以看api文档
+   var thumbnailHeight = 300;
+	// 初始化Web Uploader
+	var uploader = WebUploader.create({
+
+		// 选完文件后，是否自动上传。
+		auto: true,
+
+		// swf文件路径
+		swf: '#{$smarty.const.APP}#/View/template/home/webuploader/Uploader.swf',
+
+		// 文件接收服务端。
+		server: '#{$smarty.const.APP}#/View/template/home/webuploader/fileupload.php',
+		
+		crop: true,
+		//fileNumLimit:1,
+		
+		// 选择文件的按钮。可选。
+		// 内部根据当前运行是创建，可能是input元素，也可能是flash.
+		pick: '#filePicker',
+
+		// 只允许选择图片文件。
+		accept: {
+			title: 'Images',
+			extensions: 'gif,jpg,jpeg,bmp,png',
+			mimeTypes: 'image/*'
+		}
+	});
+	
+	// 当有文件添加进来的时候
+	uploader.on( 'fileQueued', function( file ) {
+		var $li = $(
+				'<div id="' + file.id + '" class="file-item thumbnail" style="text-align:center;">' +
+					'<img>' +
+					'<div class="info">' + file.name + '</div>' +
+				'</div>'
+				),
+			$img = $li.find('img');
+
+
+		// $list为容器jQuery实例
+		var $list = $("#fileList");
+		$list.append( $li );
+
+		// 创建缩略图
+		// 如果为非图片文件，可以不用调用此方法。
+		// thumbnailWidth x thumbnailHeight 为 100 x 100
+		uploader.makeThumb( file, function( error, src ) {
+			if ( error ) {
+				$img.replaceWith('<span>不能预览</span>');
+				return;
+			}
+
+			$img.attr( 'src', src );
+		}, thumbnailWidth, thumbnailHeight );
+	});
+	// 文件上传过程中创建进度条实时显示。
+	uploader.on( 'uploadProgress', function( file, percentage ) {
+		var $li = $( '#'+file.id ),
+			$percent = $li.find('.progress span');
+
+		// 避免重复创建
+		if ( !$percent.length ) {
+			$percent = $('<p class="progress"><span></span></p>')
+					.appendTo( $li )
+					.find('span');
+		}
+
+		$percent.css( 'width', percentage * 100 + '%' );
+	});
+
+	// 文件上传成功，给item添加成功class, 用样式标记上传成功。
+	uploader.on( 'uploadSuccess', function( file ) {
+		$( '#'+file.id ).addClass('upload-state-done');
+	});
+
+	// 文件上传失败，显示上传出错。
+	uploader.on( 'uploadError', function( file ) {
+		var $li = $( '#'+file.id ),
+			$error = $li.find('div.error');
+
+		// 避免重复创建
+		if ( !$error.length ) {
+			$error = $('<div class="error"></div>').appendTo( $li );
+		}
+
+		$error.text('上传失败');
+	});
+
+	// 完成上传完了，成功或者失败，先删除进度条。
+	uploader.on( 'uploadComplete', function( file ) {
+		$( '#'+file.id ).find('.progress').remove();
+	});	
+	
+});
+ </script>
+<script type="text/javascript">
+hui('#submit').click(function(){
+	//验证
+	var res = huiFormCheck('#form1');
+	var imgs =[];
+	hui('#fileList .info').each(function(cObj){
+		imgs.push(cObj.innerHTML);
+		console.log('index: ' + cObj.index);
+		console.log('html: '+ cObj.innerHTML);
+	});	
+	//提交
+	if(res){
+		hui.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/WxMember/member_photo_edit/',
+			data : {imgs:imgs},
+			backType:'json',
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.code=='sucess'){
+					hui.upToast(data.message);
+					var url='#{$smarty.const.ACT}#/home/WxMember/member_center/';
+					window.location.href=url;
+				}else{
+					hui.upToast(data.message);
+				}
+				
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});
+	}
+});
+</script>
+</body>
+</html>

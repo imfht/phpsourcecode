@@ -1,0 +1,468 @@
+<include file="Public:header" />
+<div class="container">
+	<div class="page-header">
+		<h4><a name="tab">{:L('VIEW_LEADS')}</a></h4>
+	</div>
+	<include file="Public:alert"/>
+	<div class="row">		
+		<div class="tabbable span12">
+			<ul class="nav nav-tabs">
+				<li><a href="#tab1">{:L('BASIC_INFO')}</a></li>
+				<li><a href="#tab2">{:L('COMMUNICATION_LOG')}({$leads['log_count']})</a></li>
+				<li><a href="#tab6">{:L('OWNER_LOG')}({$leads['record_count']})</a></li>
+				<li><a href="#tab4">{:L('TASK')}({$leads['task_count']})</a></li>
+				<li><a href="#tab5">{:L('EVENT')}({$leads['event_count']})</a></li>
+				<li><a href="#tab3">{:L('FILE')}({$leads['file_count']})</a></li>
+			</ul>
+			<div class="tab-content">
+					<table class="table" border="0" cellspacing="1" cellpadding="0">
+						<thead>
+							<tr>
+								<td <if condition="C('ismobile') eq 1">colspan="2"<else />colspan="4"</if>>
+									<p style="font-size: 14px;">
+										<if condition="$leads['is_deleted'] == 0">
+											<a href="javascript:void(0);" class="add_log">{:L('ADD_LOG')}</a> |
+											<a href="javascript:void(0);" class="add_task">{:L('ADD_TASK')}</a> |
+											<a href="javascript:void(0);" class="add_event">{:L('ADD_EVENT')}</a>&nbsp;|
+											<a href="javascript:void(0);" class="add_file">{:L('ADD_FILE')}</a>&nbsp;|
+											<if condition="$leads['is_transformed'] neq 1"><a href="{:U('customer/add','leads_id='.$leads['leads_id'])}">{:L('CONVERT_TO_CUSTOMER')}</a>&nbsp;|</if>
+											<a href="{:U('leads/edit','id='.$leads['leads_id'])}">{:L('EDIT')}</a>&nbsp;|
+											<a href="{:U('leads/delete','id='.$leads['leads_id'])}" class="del_confirm">{:L('DELETE')}</a>&nbsp;|
+											<a href="javascript:void(0)" onclick="javascript:history.go(-1)">{:L('RETURN')}</a>
+										<else />
+											<a href="javascript:void(0)" onclick="javascript:history.go(-1)">{:L('RETURN')}</a>
+										</if>
+									</p>
+								</td>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+                                <td class="tdleft" width="15%">{:L('CREATE_TIME')}</td>
+                                <td><if condition="$leads['create_time'] neq 0">{$leads.create_time|date='Y-m-d H:i:s',###}</if></td>
+                                <td class="tdleft">{:L('CREATOR_ROLE')}</td>
+                                <td><a class="role_info" href="javascript:void(0)" rel="{$leads.creator.role_id}">{$leads.creator.user_name}</if></a></td>
+                            </tr>
+                            <tr>
+                                <td class="tdleft">{:L('OWNER_ROLE')}</td>
+                                <td><a class="role_info" href="javascript:void(0)" rel="{$leads.owner.role_id}">{$leads.owner.user_name}</if></a></td>
+                                <td class="tdleft" width="15%">{:L('LAST_MODIFIED_TIME')}</td>
+                                <td><if condition="$leads['update_time'] gt 0">{$leads.update_time|date='Y-m-d H:i:s',###}</if></td>
+                            </tr>
+                            <php>$j=0;</php>
+                            <volist name="field_list" id="vo">
+                            <php>$j++;</php>
+                            <if condition="$vo['form_type'] == 'textarea' or $vo['form_type'] == 'editor'">
+                                <if condition="$i%2 == 0">
+                                <td colspan="2">&nbsp;</td>
+                                </tr>
+                                </if>
+                                <tr>
+                                    <td class="tdleft" width="15%">{$vo.name}:</td>
+                                    <td colspan="3">{$leads[$vo['field']]}</td>
+                                </tr>
+                                <if condition="$i%2 != 0 && count($field_list) != $j">
+                                <php>$i++;</php>
+                                </if>
+                            <else/>
+                                <if condition="$i%2 != 0">
+                                <tr>
+                                </if>
+                                    <td class="tdleft" width="15%">{$vo.name}:</td>
+                                    <td width="35%">
+                                        <span style="color:#{$vo['color']}">
+                                        <if condition="$vo['form_type'] eq 'datetime'">
+                                            <if condition="$leads[$vo['field']] gt 0">{$leads[$vo['field']]|date='Y-m-d',###}</if>
+										<elseif condition="$vo['form_type'] eq 'address'" />
+											{$leads[$vo['field']]}
+											<a href="javascript:void(0);" class="getMap" rel="{$leads[$vo['field']]}">
+												<img src="__PUBLIC__/img/location.png" style="height:20px; vertical-align: text-bottom;">
+											</a>
+                                        <else />
+                                            {$leads[$vo['field']]}
+                                        </if>
+                                        </span>
+                                    </td>
+                                <if condition="$i%2 == 0">
+                                </tr>
+                                </if>
+                                <if condition="$i%2 != 0 && count($field_list) == $j">
+                                    <td colspan="2">&nbsp;</td>
+                                </tr>
+                                </if>
+                            </if>
+                            </volist>
+						</tbody>
+					</table>
+					<a name="tab2"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('COMMUNICATION_LOG')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$leads.log eq null">
+							<tr>
+								<td>{:L('EMPTY_TPL_DATA')}</td>
+							</tr>
+						<else />
+							<volist name="leads.log" id="vo">
+								<tr>
+									<td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty> &nbsp; 
+										{$vo.create_date|date="Y-m-d  g:i a",###} &nbsp; 
+										<notempty name="vo.create_date"> &nbsp; </notempty>
+										<if condition="C('ismobile') eq 1"><br/></if>
+										{$vo.subject}
+									</td>
+									<td>
+										<if condition="$leads['is_deleted'] neq 1"><a href="javascript:void(0)" rel="{$vo.log_id}" class="edit_log">{:L('EDIT')}</a>&nbsp;<a href="{:U('log/delete','r=RLeadsLog&id='.$vo['log_id'])}" class="del_confirm">{:L('DELETE')}</a></if>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2">
+										<if condition="strlen($vo['content']) gt 100">
+											<div id="slog_{$vo.log_id}">
+											<pre>{$vo.content|msubstr=###,0,100}
+											<a class="more" rel="{$vo.log_id}" href="javascript:void(0)">{:L('VIEW_FULL_INFO')}</a></pre>
+											</div>
+											<div id="llog_{$vo.log_id}" class="hide">
+												<pre>{$vo.content}</pre>
+											</div>
+										<else/>
+											<pre>{$vo.content}</pre>
+										</if>
+									</td>
+								</tr>
+							</volist>
+						</if>
+						<if condition="$leads['is_deleted'] neq 1">
+							<tr>
+								<td colspan="2">
+									<a href="javascript:void(0);" class="add_log">{:L('ADD')}</a>
+								</td>
+							</tr>
+						</if>
+					</table>
+                    <a name="tab6"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('OWNER_LOG')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$leads.record eq null">
+							<tr>
+								<td>{:L('EMPTY_TPL_DATA')} </td>
+							</tr>
+						<else /> 
+							<tr>
+								<td>{:L('OWNER_ROLE')}</td>
+								<td>{:L('RECEIVE_TIME')}</td>
+							</tr>
+							<volist name="leads.record" id="vo">
+								<tr>
+									<td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty>
+									</td>
+									<td>
+										{$vo.start_time|date="Y-m-d",###}
+									</td>
+								</tr>
+							</volist>
+						</if>
+					</table>
+                    
+                    <a name="tab4"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('RELATED_TASKS')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$leads.task eq null">
+							<tr>
+								<td>{:L('EMPTY_TPL_DATA')}</td>
+							</tr>
+						<else /> 
+							<tr>
+								<td  width="12%">&nbsp;</td>
+								<td>{:L('THEME')}</td>
+								<if condition="C('ismobile') neq 1"><td>{:L('STATUS')}</td></if>
+								<td>负责人</td>
+                                <td>任务相关人</td>
+								<td>{:L('EXPIRATION_DATE')}</td>
+								<if condition="C('ismobile') neq 1"><td>{:L('UPDATE_TIME')}</td></if>
+							</tr>
+							<volist name="leads.task" id="vo">
+								<tr>
+									<td class="tdleft">
+										<if condition="$leads['is_deleted'] == 0">
+											<a href="{:U('task/view','id='.$vo['task_id'])}">{:L('VIEW')}</a>&nbsp; <a href="{:U('task/delete','id='.$vo['task_id'])}" class="del_confirm">{:L('DELETE')}</a>
+											<if condition="$vo.isclose eq 0">
+												<a href="{:U('task/close', 'id='.$vo['task_id'])}">{:L('CLOSE')}</a>
+											<elseif condition="$vo.isclose eq 1" />
+												<a href="{:U('task/open','id='.$vo['task_id'])}">{:L('OPEN')}</a> 
+											</if>
+										</if>
+									</td>
+									<td>
+										<a href="{:U('task/view','id='.$vo['task_id'])}">{$vo.subject}</a>
+									</td>
+									<if condition="C('ismobile') neq 1">
+									<td>
+										{$vo.status}
+									</td>
+									</if>
+									<td>
+										<notempty name="vo.owner"><volist name="vo.owner" id="v"><a class="role_info" rel="{$v.role_id}" href="javascript:void(0)">{$v.user_name}</a>,</volist></notempty>
+									</td>
+									<td>
+										<notempty name="vo.about_roles"><volist name="vo.about_roles" id="v"><a class="role_info" rel="{$v.role_id}" href="javascript:void(0)">{$v.user_name}</a>,</volist></notempty>
+									</td>
+									<td>
+										<notempty name="vo.due_date">{$vo.due_date|date="Y-m-d H:i:s",###}</notempty>
+									</td>
+									<if condition="C('ismobile') neq 1">
+									<td>
+										<notempty name="vo.update_date">{$vo.update_date|date="Y-m-d H:i:s",###}</notempty>
+									</td>
+									</if>
+								</tr>
+							</volist>
+						</if>
+						<tr>
+							<td <if condition="C('ismobile') neq 1">colspan="7"<else />colspan="4"</if>>
+								<if condition="$leads['is_deleted'] == 0"><a href="javascript:void(0);" class="add_task">{:L('ADD')}</a></if>
+							</td>
+						</tr>
+					</table>
+                    <a name="tab5"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('RELATED_EVENT')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$leads.event eq null">
+							<tr>
+								<td>{:L('EMPTY_TPL_DATA')} </td>
+							</tr>
+						<else /> 
+							<tr>
+								<td width="12%">&nbsp;</td>
+								<td>{:L('THEME')}</td>
+								<td>{:L('EVENT_ADDRESS')}</td>
+								<td>{:L('OWNER_ROLE')}</td>
+								<if condition="C('ismobile') neq 1"><td>{:L('START_TIME')}</td>
+								<td>{:L('END_TIME')}</td></if>
+							</tr>
+							<volist name="leads.event" id="vo">
+								<tr>
+									<td class="tdleft" >
+										<if condition="$leads['is_deleted'] == 0"><a href="{:U('event/view','id='.$vo['event_id'])}">{:L('VIEW')}</a>&nbsp; <a href="{:U('event/delete','id='.$vo['event_id'])}" class="del_confirm">{:L('DELETE')}</a>&nbsp; 
+										<if condition="$vo.isclose eq 0"><a href="{:U('event/close', 'id='.$vo['event_id'])}">{:L('CLOSE')}</a><elseif condition="$vo.isclose eq 1" /><a href="{:U('event/open','id='.$vo['event_id'])}">{:L('OPEN')}</a> </if>
+										</if>
+									</td>
+									<td>
+										{$vo.subject}
+									</td>
+									<td>
+										{$vo.venue}
+									</td>
+									<td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty>
+									</td>
+									<if condition="C('ismobile') neq 1">
+									<td>
+										<notempty name="vo.start_date">{$vo.start_date|date="Y-m-d H:i:s",###}</notempty>
+									</td>
+									<td>
+										<notempty name="vo.end_date">{$vo.end_date|date="Y-m-d H:i:s",###}</notempty>
+									</td>
+									</if>
+								</tr>
+							</volist>
+						</if>
+						<tr>
+							<td <if condition="C('ismobile') neq 1">colspan="6"<else />colspan="4"</if>>
+								<if condition="$leads['is_deleted'] == 0"><a href="javascript:void(0);" class="add_event">{:L('ADD')}</a></if>
+							</td>
+						</tr>
+					</table>
+                    <a name="tab3"></a><div style="height:40px;"></div>
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{:L('RELATED_FILE')}</th>
+                        </tr>
+                    </table>
+					<table class="table">
+						<if condition="$leads.file eq null">
+							<tr>
+								<td>{:L('EMPTY_TPL_DATA')} </td>
+							</tr>
+						<else /> 
+							<tr>
+								<td>&nbsp;</td>
+								<td>{:L('FILE_NAME')}</td>
+								<td>{:L('SIZE')}</td>
+								<if condition="C('ismobile') neq 1"><td>{:L('ADDED_BY')}</td>
+								<td>{:L('ADD_TIME')}</td></if>
+							</tr>
+							<volist name="leads.file" id="vo">
+								<tr>
+									<td class="tdleft"><if condition="$leads['is_deleted'] == 0">
+										<a href="{:U('file/delete','r=RFileLeads&id='.$vo['file_id'])}" class="del_confirm">{:L('DELETE')}</a></if>
+									</td>
+									<td>
+										<a target="_blank" href="{$vo.file_path}">{$vo.name}</a>
+									</td>
+									<td>
+										{$vo.size}{:L('BYTE')}
+									</td>
+									<if condition="C('ismobile') neq 1">
+									<td>
+										<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty>
+									</td>
+									<td>
+										<notempty name="vo.create_date">{$vo.create_date|date="Y-m-d H:i:s",###}</notempty>
+									</td>
+									</if>
+								</tr>
+							</volist>
+						</if>
+						<tr>
+							<td <if condition="C('ismobile') neq 1">colspan="5"<else />colspan="3"</if>>
+								<if condition="$leads['is_deleted'] == 0"><a href="javascript:void(0);" class="add_file">{:L('ADD')}</a></if>
+							</td>
+						</tr>
+					</table>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-file" title="{:L('DIALOG_ADD_FILE')}">loading...</div>
+<div class="hide" id="dialog-log" title="{:L('DIALOG_ADD_LOG')}">loading...</div>
+<div class="hide" id="dialog-log-edit" title="{:L('DIALOG_EDIT_LOG')}">loading...</div>
+<div class="hide" id="dialog-task" title="{:L('ADD_TASK')}">loading...</div>
+<div class="hide" id="dialog-event" title="{:L('ADD_EVENT')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<div class="hide" id="dialog-map" title="{:L('MAP')}">loading...</div>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=Z0Fo0ib1GUgWlylCWeLvQh2U"></script>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+$("#dialog-map").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 800,
+	minHeight: 600,
+	position: ["center",100]
+});
+$("#dialog-file").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-log-edit").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-log").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-task").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-event").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$(".edit_log").click(function(){
+	$log_id = $(this).attr('rel');
+	$('#dialog-log-edit').dialog('open');
+	$('#dialog-log-edit').load('{:U("log/edit","id=")}'+$log_id);
+});
+$("#dialog-role-list").dialog({
+	autoOpen: false,
+	modal: true,
+	width: width,
+	maxHeight: 400,
+	buttons: {
+		"Ok": function () {
+			var item = $('input:radio[name="owner"]:checked').val();
+			var name = $('input:radio[name="owner"]:checked').parent().next().html();
+			$('#owner_name').val(name);
+			$('#owner_id').val(item);
+			$(this).dialog("close"); 
+		},
+		"Cancel": function () {
+			$(this).dialog("close");
+		}
+	},
+	position: ["center", 100]
+});
+
+$(".add_file").click(function(){
+	$('#dialog-file').dialog('open');
+	$('#dialog-file').load('{:U("file/add","r=RFileLeads&module=leads&id=".$leads["leads_id"])}');
+});
+$(".add_log").click(function(){
+	$('#dialog-log').dialog('open');
+	$('#dialog-log').load('{:U("log/add","r=RLeadsLog&module=leads&id=".$leads["leads_id"])}');
+});
+$(".add_task").click(function(){
+	$('#dialog-task').dialog('open');
+	$('#dialog-task').load('{:U("task/add","r=RLeadsTask&module=leads&id=".$leads["leads_id"])}');
+});
+$(".add_event").click(function(){
+	$('#dialog-event').dialog('open');
+	$('#dialog-event').load('{:U("event/add","r=REventLeads&module=leads&id=".$leads["leads_id"])}');
+});
+$(function(){
+	$('#owner_name').click(
+		function(){
+			$('#dialog-role-list').dialog('open');
+			$('#dialog-role-list').load("{:U('user/listDialog')}");
+		}
+	);
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	$(".getMap").click(function(){
+		var map = $(this).attr('rel');
+		$('#dialog-map').dialog('open');
+		$('#dialog-map').load('{:U("setting/mapdialog","map=")}'+map);
+	});
+	$(".more").click(function(){
+		log_id = $(this).attr('rel');
+		$('#llog_'+log_id).attr('class','');
+		$('#slog_'+log_id).attr('class','hide');
+	});
+});
+</script>
+<include file="Public:footer" />

@@ -1,0 +1,217 @@
+<include file="Public:header" />
+	<div class="container">
+		<div class="page-header">
+			<h4>{:L('KNOWLEDGE_LIST')}</h4>
+		</div>
+		<include file="Public:alert" />
+		<div class="row">
+			<div class="span2 knowledgecate">
+				<ul class="nav nav-list">
+					<li class="active">
+						<a href="javascript:void(0);">{:L('KNOWLEDGE_CATEGORY_VIEW')}</a>
+					</li>
+					<li><a <if condition="$_GET['category_id'] eq null">class="active"</if> href="{:U('knowledge/index')}"><i class="icon-white icon-chevron-right"></i>{:L('ALL')}</a></li>
+					<volist name="categoryList" id="vo">
+					<li><a <if condition="$_GET['category_id'] eq $vo['category_id']">class="active"</if> href="{:U('knowledge/index','category_id='.$vo['category_id'])}"><i class="icon-chevron-right"></i>{$vo.name}</a></li>
+					</volist>
+				</ul>
+			</div>
+			<div class="span10">
+				<div class="bulk-actions align-left">
+					<div class="pull-left"><a id="delete" class="btn" style="margin-right: 8px;"><i class="icon-remove"></i>&nbsp;{:L('DELETE')}</a></div>
+					
+					<ul class="nav pull-left">
+						<form class="form-inline" id="searchForm" action="" method="get">
+							<li class="pull-left">
+								<select style="width:auto" id="field" name="field" id="selectCondition" onchange="changeCondition()">
+									<option class="all" value="all">{:L('ANY_FIELD')}</option>
+									<option class="word" value="title">{:L('TITLE')}</option>
+									<option class="word" value="content">{:L('CONTENT')}</option>
+									<option class="role" value="role_id">{:L('AUTHORS')}</option>
+									<option class="date" value="create_time">{:L('CREATOR_TIME')}</option>
+									<option class="date" value="update_time">{:L('UPDATE_TIME')}</option>
+									<option class="number" value="hits">{:L('CLICK_NUM')}</option>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li id="conditionContent" class="pull-left">
+							<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">		
+								<option value="contains">{:L('CONTAINS')}</option>
+								<option value="is">{:L('IS')}</option>
+								<option value="start_with">{:L('START_WITH')}</option>
+								<option value="end_with">{:L('END_WITH')}</option>
+								<option value="is_empty">{:L('IS_EMPTY')}</option>
+							</select>&nbsp;&nbsp;
+							</li>
+							<li id="searchContent" class="pull-left">
+								<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								<if condition="isset($_GET['category_id'])"><input name="category_id" type="hidden" value="{$_GET['category_id']}" /></if>
+								<input type="hidden" name="m" value="Knowledge"/>
+								<input type="hidden" name="act" id="act" value="search"/>
+								<if condition="$Think.get.by neq null"><input type="hidden" name="category_id" value="{$Think.get.category_id}"/></if>
+								<button type="submit" id="dosearch" class="btn"> <img src="__PUBLIC__/img/search.png"/>{:L('SEARCH')}</button>
+							</li>
+						</form>
+					</ul>
+					<div class="pull-right">
+						<a class="btn btn-primary" href="{:U('knowledge/add')}"><i class="icon-plus"></i>&nbsp; {:L('ADD_KNOWLEDGE')}</a>&nbsp;
+						<div class="btn-group">
+							<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><i class="icon-wrench"></i>&nbsp;{:L('KNOWLEDGE_TOOLS')} <span class="caret"></span></button>
+							<ul class="dropdown-menu">
+								<li><a href="javascript:return(0);" id="import_excel"  class="link"><i class="icon-upload"></i>&nbsp;{:L('IMPORT_KNOWLEDGE')}</a></li>
+								<li><a href="javascript:void(0);" id="excelExport" class="link"><i class="icon-download"></i>&nbsp;{:L('EXPORT_KNOWLEDGE')}</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="span10">
+				<form id="form1"  method="Post">
+					<table class="table table-hover table-striped table_thead_fixed">
+						<if condition="$list eq null">
+							<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+						<else/>
+						<thead>
+							<tr>
+								<th><input class="check_all" name="check_all" id="check_all" type="checkbox" /> &nbsp;</th>
+								<th>{:L('TITLE')}</th>
+								<th>{:L('AUTHORS')}</th>
+								<th>{:L('CATEGORY')}</th>
+								<th>
+								<if condition="$_GET['asc_order'] == 'hits'">
+									<a href="{:U('knowledge/index','desc_order=hits&'.$parameter)}">{:L('CLICK_NUM')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png"></a>
+								<elseif condition="$_GET['desc_order'] == 'hits'"/>
+									<a href="{:U('knowledge/index','asc_order=hits&'.$parameter)}">{:L('CLICK_NUM')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png"></a>
+								<else/>
+									<a href="{:U('knowledge/index','desc_order=hits&'.$parameter)}">{:L('CLICK_NUM')}</a>
+								</if>
+								</th>
+								<th>
+									<if condition="$_GET['asc_order'] == 'update_time'">
+										<a href="{:U('knowledge/index','desc_order=update_time&'.$parameter)}">{:L('UPDATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png"></a>
+									<elseif condition="$_GET['desc_order'] == 'update_time'"/>
+										<a href="{:U('knowledge/index','asc_order=update_time&'.$parameter)}">{:L('UPDATE_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png"></a>
+									<else/>
+										<a href="{:U('knowledge/index','desc_order=update_time&'.$parameter)}">{:L('UPDATE_TIME')}</a>
+									</if>
+								</th>
+								<th>{:L('OPERATING')}</th>
+							</tr>
+						</thead>
+						<tfoot>
+							<tr>
+								<td colspan="7">
+									{$page}
+								</td>
+							</tr>
+						</tfoot>
+						<tbody>
+							<volist name="list" id="vo">
+								<tr>
+									<td>
+										<input class="list" type="checkbox" name="knowledge_id[]" value="{$vo.knowledge_id}"/>
+									</td>
+									<td><a href="{:U('knowledge/view','id='.$vo['knowledge_id'])}">{$vo.title}</a></td>
+									<td><notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty></td>
+									<if condition="C('ismobile') neq 1">
+									<td>{$vo.name}</td>
+									<td>{$vo.hits}</td>
+									<td><notempty name="vo.update_time">{$vo.update_time|date="Y-m-d",###}<notempty></td>
+									</if>
+									<td><a href="{:U('knowledge/view','id='.$vo['knowledge_id'])}">{:L('VIEW')}</a> &nbsp;<a href="{:U('knowledge/edit','id='.$vo['knowledge_id'])}">{:L('EDIT')}</a></td>
+								</tr>
+							</volist>
+						</tbody>
+						</if>
+					</table>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-import" title="{:L('IMPORT_DATA')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+$("#dialog-import").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+	function changeContent(){
+		a = $("#select1  option:selected").val();
+		if(a=='1'){
+			window.location.href="{:U('knowledge/index')}";
+		}else if(a=='2'){
+			window.location.href="{:U('knowledge/category')}";
+		}else if(a=='3'){
+			window.location.href="{:U('knowledge/count')}";
+		}
+	}
+
+	function deleteConfirm(id,name){
+		if(confirm("{:L('DELETE_THE_ARTICLE')}"+name)){
+			window.location="{:U('knowledge/delete','id=')}"+id;
+		}
+	}
+	function searchByCategory(){
+		var objCategory=document.getElementById("categoryList");
+		var id=objCategory.options[objCategory.selectedIndex].value;
+		window.location="{:U('knowledge/index','by=all&category_id=')}"+id;
+	}
+
+$(function(){
+<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+</if>
+
+	$("#excelExport").click(function(){
+		if(confirm("{:L('EXPORT_THE_KNOWLEDGE')}")){ 
+			$("#act").val('excel');	
+			$("#searchForm").submit();
+		}
+	})
+	
+	$("#dosearch").click(function(){
+		result = checkSearchForm();
+		if(result) $("#act").val('search');$("#searchForm").submit();
+	});
+	
+	$("#check_all").click(function(){
+		$("input[class='list']").prop('checked', $(this).prop("checked"));
+	});
+	$("#add_category").click(function(){
+		$('#dialog-message1').dialog('open');
+		$('#dialog-message1').load("{:U('knowledge/categoryAdd')}");
+	});
+	$('#delete').click(function(){
+		if(confirm("{:L('ARE_YOU_SRUE_DELETE')}")){
+			$("#form1").attr('action', '{:U("knowledge/delete")}');
+			$("#form1").submit();
+		}
+		
+	});
+	$("#import_excel").click(function(){
+		$('#dialog-import').dialog('open');
+		$('#dialog-import').load('{:U("knowledge/excelimport")}');
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+});
+</script>
+<include file="Public:footer" />
+

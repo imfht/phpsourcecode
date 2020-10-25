@@ -1,0 +1,196 @@
+<div class="easyui-navpanel" style="position:relative;padding:20px">
+    <form id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Form"></form>
+    <!--<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Map" style="height:200px;"></div>-->
+
+    <img id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Img" style="height:180px;width:100%;" src="" alt="">
+
+</div>
+
+
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Fun_Win"></div>
+
+<script>
+    $(function () {
+        /**
+         * 已经定义在tool.js里了
+         * 很奇怪,用调试工具不需要将函数移到此处,图片能正常显示
+         * 但是企业微信浏览器中就会调用不到这个函数
+         * 0 手机企业微信中js缓存更新不及时
+         * 1 企业微信在哪个步骤限定或是有bug
+         *
+         *  返回在字符串中查找字符的位置
+         *  find_char 要查找的字符
+         *  n 第几次
+         */
+        function find_char_pos (that, find_char, n) {
+            var positions = [];
+            var pos = that.indexOf(find_char);
+            while(pos > -1) {
+                positions.push(pos);
+                pos = that.indexOf(find_char, pos + 1);
+            }
+
+            return positions[n - 1];
+        }
+
+        function map_init() {
+//        var center = new qq.maps.LatLng(100, 100);
+//        var map = new qq.maps.Map(document.getElementById('{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Map'), {
+//            center: center,
+//            zoom: 15
+//        });
+
+            //地址和经纬度之间进行转换服务
+            var geocoder = new qq.maps.Geocoder();
+
+            wx.getLocation({
+                type: 'gcj02', // 默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+                success: function (res) {
+                    var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                    var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                    var speed = res.speed; // 速度，以米/每秒计
+                    var accuracy = res.accuracy; // 位置精度
+
+                    var latLng = new qq.maps.LatLng(latitude, longitude);
+                    // 设置地图中心位置
+//                map.setCenter(latLng);
+
+                    //对指定经纬度进行解析
+                    geocoder.getAddress(latLng);
+                    //设置服务请求成功的回调函数
+                    geocoder.setComplete(function (result) {
+//                    map.setCenter(result.detail.location);
+//                    var marker = new qq.maps.Marker({
+//                        map: map,
+//                        position: result.detail.location
+//                    });
+//                    //点击Marker会弹出反查结果
+//                    var info = new qq.maps.InfoWindow({
+//                        map: map
+//                    });
+//                    qq.maps.event.addListener(marker, 'click', function() {
+//                        info.open();
+//                        info.setContent('<div style="width:280px;height:100px;">' +
+//                                result.detail.address + '</div>');
+//                        info.setPosition(result.detail.location);
+//                    });
+                        $(row_edit.CA + 'a_gps').val(result.detail.location.toString());
+                        $(row_edit.CA + 'a_address').textbox('setValue', result.detail.address);
+                    });
+                    //若服务请求失败，则运行以下函数
+                    geocoder.setError(function () {
+                        alert("出错了，请输入正确的经纬度！！！");
+                    });
+
+                }
+            });
+
+//        var middle_div = document.createElement("div");
+//        middle_div.style.left = "50%";
+//        middle_div.style.top = "50%";
+//        middle_div.style.position = "absolute";
+//        middle_div.style.width = "36px";
+//        middle_div.style.zIndex = "100000";
+//        middle_div.innerHTML = '<img src="https://www.cdlhome.com.sg/mobile_assets/images/icon-location.png" />';
+//        document.getElementById("map_container").appendChild(middle_div);
+
+        }
+
+        // ---------------------页面对象------------------------
+        var row_edit = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        row_edit.father = new Page({
+            Module: '{$Think.P_M}',
+            Controller: '{$Think.P_C}',
+            Action: '{$Think.P_A}',
+        });
+
+        // 重置选择器
+        row_edit.init().select();
+
+        // ----------------------事件---------------------------
+        // 新增或编辑 单据行
+        row_edit.event._create_voucher = function () {
+            var img_path = '';
+            if (row_edit.edit_state == 'add') {
+                row_edit.Fm.form('clear');
+
+                $.post('vr_get_default_row_data', function (data) {
+                    row_edit.Fm.form('load', data);
+                    $(row_edit.CA + 'a_time').timespinner('setValue', data.a_time);
+                });
+
+                // 照片的路径重置
+                img_path = '__STATIC__/images/weiwork/timer_img.png';
+                $(row_edit.CA + 'Img').attr('src', img_path);
+
+                map_init();
+            } else if (row_edit.edit_state == 'edit') {
+                row_edit.Fm.form('load', row_edit.edit_row_data);
+                img_path = row_edit.edit_row_data['a_img_path'];
+                img_path = img_path.replace(/\\/g, '/');
+                var pos_num = find_char_pos(img_path, '/', 4);
+                img_path = img_path.slice(pos_num);
+                $(row_edit.CA + 'Img').attr('src', img_path);
+            }
+            setTimeout(function () {
+                row_edit.seq.run_next();
+            }, 200);
+        };
+
+        row_edit.event._func_before_save = function () {
+            console.log('row_edit save');
+            // 需要处理一些表格所需要的列而表单中没有显示的 字典列
+            row_edit.form().save_data_to_datagrid('MG_Item');
+
+            setTimeout(function () {
+                row_edit.seq.run_next();
+            }, 200);
+        };
+
+        //----------------------- 传递的 js_json 数据
+        row_edit.data = JSON.parse('{$js_data}');
+        console.log(row_edit.data);
+
+        // ---------------------按钮 与 控件---------------------------
+        // 关闭、新增、保存、删除
+        // 关闭之前，需要检测此单据有没有明细数据，
+        // 如果有明细数据，没有保存过，提示是否需要保存
+        row_edit.linkbutton().win_close('close');
+        row_edit.linkbutton().win_close('tb_close');
+        row_edit.linkbutton().record_save('save');
+        row_edit.linkbutton().record_save('tb_save');
+        row_edit.linkbutton().record_add('add');
+
+        row_edit.form().mb_field_init();
+
+        // 点击拍照
+        $(row_edit.CA + 'Img').on('click', function () {
+            wx.chooseImage({
+                count: 1, // 默认9
+                sizeType: ['compressed'],                // 可以指定是原图还是压缩图，默认二者都有
+//                sourceType: ['album', 'camera'],       // 可以指定来源是相册还是相机，默认二者都有
+                sourceType: ['camera'],
+                success: function (res) {
+                    var localIds = res.localIds;         // 返回选定照片的本地ID列表，localId可以作为img标签的src属性显示图片
+                    // alert('选择照片之后的参数: ' + JSON.stringify(localIds));
+                    $(row_edit.CA + 'Img').attr('src', localIds[0]);      // 前端 选择或拍照的图片
+
+                    wx.uploadImage({
+                        localId: localIds[0],               // 需要上传的图片的本地ID，由chooseImage接口获得
+                        isShowProgressTips: 0,              // 默认为1，显示进度提示
+                        success: function (res) {
+                            var serverId = res.serverId;    // 返回图片的服务器端ID
+                            $(row_edit.CA + 'a_img_1').val(serverId);
+                        }
+                    });
+                }
+            });
+
+
+        });
+    })
+</script>

@@ -1,0 +1,161 @@
+{extend name="$member_style_layout" /}
+
+{block name="content"}
+	{include file="member@common/form" /}
+
+	
+<script type="text/javascript">
+$(document).ready(function(){
+	$("#form_group_url div").html('<input placeholder="点击右边可选择菜单" style="width:200px;float:left;"  type="text" name="url" class="atc_url" class="layui-input c_url" value="{$info.url}" /> <span style="flaot:right;" onclick="select_menu();"><i class="fa fa-chain-broken"></i> 选择菜单</span>');
+});
+</script>
+
+ 
+	
+<!--  菜单选择S -->
+<style>
+.backContBox{
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:#000;
+    left:0;
+    top:0;
+    z-index:10000000;
+    opacity:0;
+    display:none;
+}
+.SetContentBox{
+    width:40%;
+    height:100%;
+    position:fixed;
+    z-index:10000001;
+    background:#FFF;
+    left:-30%;
+    top:0px;
+    display:none;
+    overflow-Y:auto;
+    overflow-X:hidden;
+}
+.SetContentBox .head{
+    height:50px;
+    text-align:center;
+    line-height:50px;
+    font-size:18px;
+    border-bottom:#DDD solid 1px;
+    background:#EFEFEF;
+}
+
+/**/
+.ListMyShop .butters{
+    border:#CCC solid 1px;
+    margin:10px 10px 0 10px;
+    height:35px;
+    line-height:35px;
+    text-align:center;
+    overflow:hidden;
+    background:#EFEFEF;
+    border-radius:5px;
+}
+.ListMyShop .sortbox{
+    border:#CCC solid 1px;
+    margin:10px 10px 0 10px;
+    overflow:hidden;
+    border-radius:5px;
+}
+.ListMyShop .sortbox ol{
+    height:35px;
+    line-height:35px;
+    text-align:center;
+    background:#EFEFEF;
+    overflow:hidden;
+}
+.ListMyShop .sortbox li{
+    height:35px;
+    line-height:35px;
+    text-align:center;
+    overflow:hidden;
+    border-top:#CCC solid 1px;
+    display:none;
+}
+</style>
+
+<div class="backContBox" onClick="HiddenMoreAciton()"></div>
+<div class="SetContentBox">
+    <input name="nums" type="hidden"/>
+    <div class="head">选择菜单链接</div>
+    <div class="ListMyShop">
+					<div class="butters" onclick="editurl('{:get_url('msg','-'.input('hy_id'))}','fa fa-comments-o','群聊')">群聊</div>
+					<div class="butters" onclick="editurl('{:urls('qun/content/show',['id'=>input('hy_id')])}','fa fa-home','商铺主页')">商铺主页</div>
+					<div class="butters" onclick="editurl('{:get_url('member')}','fa fa-user-circle-o','会员中心')">会员中心</div>
+					<div class="butters" onclick="editurl('{:urls('qun/map/index',['id'=>input('hy_id')])}','fa fa-flag-checkered','一键导航')">一键导航</div>
+					<div class="butters" onclick="editurl('tel:{:fun('qun@getByid',input('hy_id'))['telphone']}','fa fa-phone','一键拨号')",>一键拨号</div>
+					<div class="butters" onclick="editurl('{:urls('qun/member/index',['id'=>input('hy_id')])}','fa fa-fw fa-user','所有成员')">__QUN__成员</div>
+
+					<div class="butters" onclick="editurl('{:urls('qun/content/abouts',['id'=>input('hy_id')])}','fa fa-child','关于我们')">关于我们</div>
+					<div class="butters" onclick="editurl('{:urls('qun/content/contact',['id'=>input('hy_id')])}','fa fa-qrcode','联系我们')">联系我们</div>
+
+					<div class="butters" onclick="editurl('{:urls('qun/content/apply',['id'=>input('hy_id')])}','fa fa-star','关注')",>关注</div>
+					<div class="butters" onclick="editurl('{:murl('tongji/msg/index')}','fa fa-volume-up','我的信息')",>我的信息</div>
+					<div class="butters" onclick="editurl('{:urls('qun/content/my')}','fa fa-group','我的__QUN__')",>我的__QUN__</div>
+					<div class="butters" onclick="editurl('{:urls('qun/near/index')}','fa fa-flag-checkered','附近__QUN__')",>附近__QUN__</div>
+            {volist name=":controller('qun/GetLink','index')->get_menu_link(input('hy_id'))" id="rs"}
+                    {if $rs.sons}
+                    <ul class="sortbox">
+                    <ol onclick="changeShow($(this))"><span>{$rs.title}</span></ol>
+                            {volist name="$rs.sons" id="val"}
+                                <li onclick="editurl('{$val.url}','{$val.icon}','{$val.title}')">{$val.title}</li>
+                            {/volist}
+                    </ul>
+                    {else /}
+                    <div class="butters" onclick="editurl('{$rs.url}','{$rs.icon}','{$rs.title}')">{$rs.title}</div>
+                    {/if}
+            {/volist}
+        </div>
+</div>
+
+<script type="text/javascript">
+//点击一级菜单显示二级菜单
+function changeShow(thiobj){
+    if(thiobj.siblings().is(":hidden")){
+       thiobj.siblings().show();    //如果元素为隐藏,则将它显现
+    }else{
+          thiobj.siblings().hide();     //如果元素为显现,则将其隐藏
+    }
+    //thiobj.siblings().show();
+}
+
+//点击选择菜单
+function select_menu(){
+    $('.backContBox').show();
+    $('.SetContentBox').show();
+    $('.backContBox').stop().animate({'opacity':0.7},200,function(){
+        $('.SetContentBox').stop().animate({'left':0},200);
+    });
+}
+//选中菜单
+function editurl(url,icon,title){
+    $('.atc_url').val(url);
+	$('#atc_logo').val(icon);
+	$('#atc_title').val(title);
+    HiddenMoreAciton();
+}
+
+function HiddenMoreAciton(){
+    $('.SetContentBox').stop().animate({'left':'-30%'},200);
+    $('.backContBox').stop().animate({'opacity':0},200,function(){
+        $('.backContBox').hide();
+        $('.SetContentBox').hide();
+        $('.upflieBox').hide();
+    });
+}
+</script>
+<!--  菜单选择E-->
+
+{/block}
+
+{block name="foot_menu"}
+ <style type="text/css">
+	.qb_header{display:none;}
+ </style>
+{/block}

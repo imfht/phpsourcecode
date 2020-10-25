@@ -1,0 +1,219 @@
+{php}
+$share = is_array($share)?array_merge($info?:[],$share):$info;
+isset($share['about'])||$share['about'] = get_word(str_replace(["'","\r","\n","\t",' ','　'],'',del_html($share['content'])),150);
+isset($share['link'])||$share['link'] = get_url('location');
+$share['link'] = get_url($share['link']);
+if($userdb['uid']){
+$share['link'] = preg_replace("/(&|\?)p_uid=([\d]*)(\?|&)/is", '\\1', $share['link']);
+$share['link'].=(strstr($share['link'],'?')?'&':'?').'p_uid='.$userdb['uid'].'&';
+}
+$share['picurl'] = get_url($share['picurl']);
+$share['title'] = str_replace(["'","\r","\n","\t",' ','　'],'',$share['title']);
+$share['about'] = str_replace(["'","\r","\n","\t",' ','　'],'',$share['about']);
+{/php}
+<style>
+.Share_Message{ 
+	position: fixed; 
+	width:100%; 
+	height: 100%; 
+	background: rgba(0,0,0,0.8);
+	z-index: 900000; 
+	top:0; 
+	left: 0; 
+	display: none;
+}
+.Share_Message div{
+	background:url(__STATIC__/images/sharebg.png) no-repeat right center; 
+	width:100%; 
+	height:350px; 
+	background-size:contain; 
+	top:0; 
+	display: block;
+}
+</style>
+<script type="text/javascript">
+function SharShowMsg(){
+	var t = $(document).height();
+	$('.Share_Message').html('<div></div>');
+	$('.Share_Message').height(t).fadeIn();
+}
+function SharHiddenMsg() {
+	$('.Share_Message').fadeOut();
+}
+</script>
+<div class="Share_Message" onClick="SharHiddenMsg();"></div>
+<script src="__STATIC__/js/jweixin.js?f"></script>
+<script type="text/javascript">
+var wxShare = {
+	title: '{$share.title}',
+	about: '{$share.about}',
+	timeline: '{$share.timeline?:$share.title}',
+	link: '{:preg_replace("/token=([\\w]+)/", '', $share.link)}',
+	picurl: '{$share.picurl}',	
+}
+wx.miniProgram.postMessage({ data:{title: wxShare.title , desc:wxShare.about } }); //小程序的分享
+function ShareTimeline(){
+    wx.onMenuShareTimeline({
+      title: wxShare.title,
+      link: wxShare.link,
+      imgUrl: wxShare.picurl,
+      trigger: function (res) {
+        // 不要尝试在trigger中使用ajax异步请求修改本次分享的内容，因为客户端分享操作是一个同步操作，这时候使用ajax的回包会还没有返回
+      },
+      success: function (res) {
+        layer.msg('成功分享到朋友圈');
+      },
+      cancel: function (res) {
+        //alert('系统监测到你没有真正分享到朋友圈，请重新分享！');
+      },
+      fail: function (res) {
+        alert(JSON.stringify(res));
+      }
+    });
+	wx.showOptionMenu();
+	//SharShowMsg();
+    //alert('请点击左上角的菜单，然后分享到朋友圈去即可');
+}
+
+function ShareAppMessage(){
+	wx.onMenuShareAppMessage({
+      title: wxShare.title ,
+      desc: wxShare.about ,
+      link: wxShare.link ,
+      imgUrl: wxShare.picurl ,
+      trigger: function (res) {
+        // 不要尝试在trigger中使用ajax异步请求修改本次分享的内容，因为客户端分享操作是一个同步操作，这时候使用ajax的回包会还没有返回
+		//alert('请分享到朋友圈去，分享到微信好友无效！');
+      },
+      success: function (res) {
+		  layer.msg('成功分享到好友');
+		//window.location.href='?job=have_shareFriend';
+      },
+      cancel: function (res) {
+        //alert('你已取消操作，建议你重新分享给好友！');
+      },
+      fail: function (res) {
+        alert(JSON.stringify(res));
+      }
+    });
+    //alert('请点击左上角的菜单，发送给朋友');
+}
+
+
+function wx_share_config(){
+	wx.config({
+		debug: false,
+		appId: '{:weixin_share("appId")}',
+		timestamp: {:weixin_share("timestamp")?:0},
+		nonceStr: '{:weixin_share("nonceStr")}',
+		signature: '{:weixin_share("signature")}',
+		jsApiList: [
+			'checkJsApi',
+			'onMenuShareTimeline',
+			'onMenuShareAppMessage', 
+			'hideMenuItems',
+			'showMenuItems',
+		  ],
+		openTagList: ['wx-open-launch-weapp'],
+	});
+
+	wx.ready(function () {
+		//wx.hideOptionMenu();
+		ShareTimeline();
+		ShareAppMessage();
+		if(typeof(wx_ready)=='function'){
+			wx_ready();
+		}
+	});
+
+	wx.error(function (res) {
+	  //alert(res.errMsg);
+	});
+}
+
+var have_load_wx_share_config = false;
+window.onload = function(){	//避免jweixin.js没有完全加载进来的情况
+	have_load_wx_share_config = true;
+	wx_share_config();
+};
+
+$(function(){
+	//处理window.onload被覆盖的情况
+	setTimeout(function(){
+		if(have_load_wx_share_config==false){
+			wx_share_config();
+		}
+	},5000);
+})
+
+</script>
+
+
+
+<!-------------在APP里边的分享按钮开始------------------>
+<div class="share_botton_wrap">
+	<div class="share_btnmenu"><span class="ishare_btn si si-action-redo"></span></div>
+	<!--<div class="ishare_list button1" onclick="window.location.href='{:urls('bbs/content/add','mid=1&ext_id='.$id)}?fromurl={:urls('show/content',['id'=>$id])}'"><span>贴子</span></div>-->
+	 <div class="ishare_list button2" onclick="share_app('user')"><span>好友</span></div> 	
+	 <div class="ishare_list button3" onclick="share_app('quan')"><span>朋友圈</span></div> 
+	<div class="ishare_list button4" onclick="share_app('fav')"><span>收藏夹</span></div>
+</div>
+<style type="text/css">
+.share_botton_wrap{width:38px;height:38px;position:fixed;right:0;top:180px;}
+.share_botton_wrap .share_btnmenu span{
+	line-height:38px;
+}
+.ishare_btn{
+	width:38px;height:38px;background:#62B3E7;position:absolute;top:-60px;right:2px;z-index:10;cursor:pointer;
+	border-radius:100%;
+	-moz-border-radius:100%;
+	opacity:0.5;
+	font-size:30px;
+	color:#fff;
+	text-align:center;
+	line-height:42px;
+}
+.ishare_list{
+	width:38px;
+	height:38px;
+	background:#62B3E7;
+	border-radius:100%;
+	-moz-border-radius:100%;
+	opacity:0.3;
+	font-size:12px;
+	color:#fff;
+	text-align:center;
+	line-height:38px;
+	z-index:1;position:absolute;bottom:60px;right:0;margin:0 5px 2px 0;cursor:pointer;
+}
+.button1.close, .button2.close, .button3.close, .button4.close{bottom:60px;right:0;}
+.button1.open{bottom:175px;right:0;opacity:0.8;}
+.button2.open{bottom:150px;right:62px;opacity:0.8;}
+.button3.open{bottom:105px;right:112px;opacity:0.8;}
+.button4.open{bottom:48px;right:135px;opacity:0.8;}
+.ishare_list{
+	-webkit-transition:bottom .2s,right .2s;-moz-transition:bottom .2s,right .2s;-o-transition:bottom .2s,right .2s;-ms-transition:bottom .2s,right .2s;transition:bottom .2s,right .2s;
+}
+</style>
+<script type="text/javascript">
+$(function(){
+	$(".share_btnmenu").click(function(){
+		var span = $(this).find("span");
+		if(span.hasClass("open")){
+			span.removeClass("open").addClass("close");
+			$(".ishare_list").removeClass("open").addClass("close");
+		}else{
+			span.removeClass("close").addClass("open");
+			$(".ishare_list").removeClass("close").addClass("open");
+		}
+	});
+
+	if(typeof(window.inApk)!='object'){
+		$(".share_botton_wrap").hide();		//不在APP里,分享按钮就隐藏起来
+	}
+});
+function share_app(type){
+	window.inApk.app_share("{$share.link}","{$share.title}","{$share.about}","{$share.picurl}",type);
+}
+</script>
+<!---------------在APP里边的分享按钮结束--------------------------->

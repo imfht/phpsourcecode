@@ -1,0 +1,1 @@
+<?php return array('HD_banner' => array ());

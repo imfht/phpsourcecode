@@ -1,0 +1,227 @@
+{extend name="Public:base" /}
+{block name="body"}
+        <div class="page " id="searchhtml">
+        
+<header class="aui-bar aui-bar-nav  aui-bar-light " >
+
+    <div class="clear aui-searchbar-wrap demo" id="search">
+<a style="color:#ccc;display:block;padding:0px 10px;" class="icon icon-xiangzuojiantou back" href="{:es_url('Wap/index')}"></a>
+
+        <div class="aui-searchbar aui-border-radius" onclick="doSearch()">
+            <i class="icon icon-sousuo"></i>
+            <div class="aui-searchbar-text">搜索关键字</div>
+            <div class="aui-searchbar-input">
+            	<form action="javascript:search();">
+            	<input type="search" placeholder="搜索关键字" id="search-input">
+            	</form>
+            </div>
+            <i class="icon icon-guanbi"  onclick="clearInput()"></i>
+        </div>
+        <div class="aui-searchbar-cancel aui-text-danger"  onclick="search()">搜索</div>
+    </div>
+</header>
+  
+  <div class="content infinite-scroll infinite-scroll-bottom infinite-scroll-searchhtml" data-distance="100" style="position:fixed;">
+  <div class="normal-title">为您找到<em id="count" class="aui-text-danger">0</em>个匹配项</div>
+    <script id="topiclisttpl" type="text/x-dot-template">
+ {{ for(var i=0; i< it.length; i++) { }}	
+ <div class="aui-card-list aui-border-b hrefa"   data-url="{:es_url('Wap/topicdetail')}&id={{=it[i]['id']}}">
+            <div class="aui-card-list-header aui-card-list-user dataurla"  style="overflow:hidden;">
+                <div class="aui-card-list-user-avatar">
+                    <img src="{{=it[i].userhead}}" class="aui-img-round">
+                </div>
+                <div class="aui-card-list-user-name">
+                    <div class="aui-text-info">{{=it[i].nickname}}</div>
+                    <div class="aui-font-size-14 text-light"></div>
+                </div>
+                <div class="aui-card-list-user-info text-light">{{=it[i].create_time}}</div>
+            </div>
+            <div class="aui-card-list-content-padded aui-padded-t-5 aui-padded-b-5 dataurla" >
+                <div class="aui-list-item-title aui-font-size-14">
+{{? it[i].settop==1}}               
+
+<span class="aui-label aui-label-info aui-margin-r-5">置顶</span>
+  {{?}}
+{{? it[i].choice==1}}      
+<span class="aui-label aui-label-warning aui-margin-r-5">精</span>
+  {{?}}
+                {{=it[i].title}}</div>
+                    <p class="aui-ellipsis-2 aui-margin-t-10 aui-font-size-12">{{=it[i].descontent}}</p>
+                    
+                <div class="aui-card-list-content">
+                <div class="aui-row aui-row-padded">
+               
+                    {{ for(var k=0; k< it[i].imagesarr.length; k++) { }}	
+                    <div class="aui-col-xs-4 listimg">    
+{{=it[i].imagesarr[k]}}
+   </div>
+                      {{ } }}
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="aui-info">
+                    <div class="aui-info-item aui-font-size-12">
+                      
+                    </div>
+                    <div class="aui-info-item aui-font-size-12">{{=it[i].reply}}回帖</div>
+                </div>
+                    </div>
+
+        </div>
+       
+  
+  {{ } }}
+    </script>   
+
+
+<div class="aui-content ">
+
+        <ul class="aui-user-view" id="hottopiclist">
+
+        </ul>
+    </div>
+                 
+
+    </div>
+
+         <script>
+         function doSearch(){
+     		
+ 	        $(".aui-searchbar-wrap").addClass("focus");
+ 			$('.aui-searchbar-input input').focus();
+ 		}
+ 		function cancelSearch(){
+ 			$(".aui-searchbar-wrap.focus").removeClass("focus");
+ 			
+ 			$("#search-input").val('');
+ 			$('.aui-searchbar-input input').blur();
+ 		}
+ 		function clearInput(){
+ 			$("#search-input").val('');
+ 		}
+ 		function search(){
+ 		
+ 			var content = $("#search-input").val();
+ 			if(content){
+
+ 	         $('.aui-searchbar-text').html('当前搜索关键词:'+content);
+ 	        getsearchitemlist(content,1,false);
+ 	   
+ 		
+ 			}else{
+ 				alert('您没有输入任何内容');
+ 			}
+ 			cancelSearch();
+ 		}
+         var current_page=1;
+         var cont;
+         function getsearchitemlist(content,page,isAppend){
+
+         cont=content;
+
+         var url = "{:es_url('Wap/getsearchitemlist')}";
+          
+          var bodyParam = {
+                 cont:cont,
+                 page:page,
+            
+             }
+
+
+           
+           
+          $.post(url, bodyParam, function(ret){
+
+          if (ret.code==0) {
+
+         if(ret.data.status=='error'){
+         if(page==1){
+
+         $("#hottopiclist").html('');
+
+         }
+
+
+         }else{
+
+
+         				    var interText = doT.template($("#topiclisttpl").text());
+         			    
+         			  
+         				if (!isAppend) {
+         				$('#count').html(ret.data.count);
+         					$("#hottopiclist").html(interText(ret.data.info));
+         				} else {
+         					$("#hottopiclist").append(interText(ret.data.info));
+         				}
+
+         $('.listimg img').css('height',$('.listimg img').width());
+        	$('.hrefa').click(function(){
+        		
+        		var url = $(this).data('url');
+        		$.router.loadPage(url);
+        		
+        	});	
+         }
+
+
+
+
+
+                   
+                    
+                 
+              }else{
+            	  $.toast('数据出错');
+              
+              }
+
+                 	
+
+            
+            
+            });
+
+
+
+         }
+ 	 	var oldTop = $('.infinite-scroll-searchhtml').scrollTop();
+
+
+	 	$('.infinite-scroll-searchhtml').on('infinite',debounce(function(){
+	 		
+	 	var newTop = $(this).scrollTop();
+	 
+	 	if(newTop-oldTop>0){
+	 		current_page = current_page+1;
+	 	
+	 		getsearchitemlist(cont,current_page, true);
+	 		
+	 		oldTop = newTop;
+		}
+	 	
+	 	
+	 },500));
+         
+    $('#searchhtml').on('pageInit', function(e,id,page) {
+    	
+		
+	
+		
+		
+	
+		
+		 
+
+	 });
+
+</script>
+  </div>
+      
+
+        
+     
+        
+{/block}

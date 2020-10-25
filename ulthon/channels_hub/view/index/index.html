@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>首页</title>
+    {include file='common/require'/}
+    <script>
+        var currentLeftNavItem = 'client'
+    </script>
+</head>
+
+<body>
+
+    {include file='common/left_menu'/}
+
+    <div class="main-container">
+        <div class="main-header">
+            <span class="layui-breadcrumb">
+                <a href="">首页</a>
+                <a href="{:url('Index/index')}"><cite>客户端管理</cite></a>
+            </span>
+        </div>
+
+        <div class="main-body">
+            <div>
+                <blockquote class="layui-elem-quote">添加客户端获取key，客户端通过key连接服务器。key错误或禁用都不能用来连接服务器。</blockquote>
+            </div>
+            <div class="control-container">
+                <div class="layui-btn-container">
+                    <div class="layui-btn layui-btn-normal create">增加客户端</div>
+                </div>
+                <div class="right-container">
+                    <form action="">
+                        <div>
+                            <input style="width: 160px;display: inline-block;" type="text" name="keywords" class="layui-input" value="{$Request.param.keywords}" placeholder="请输入关键字">
+                            <button class="layui-btn layui-btn-normal " >搜索</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div>
+                <table class="layui-table" lay-skin="line" lay-size="sm">
+                    <colgroup>
+                        <col width="50">
+                        <col width="50">
+                        <col width="100">
+                        <col width="150">
+                        <col width="300">
+                        <col>
+                        <col>
+                        
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" name="check-all">
+                            </th>
+                            <th>ID</th>
+                            <th>客户端名称</th>
+                            <th>key</th>
+                            <th>备注</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {volist name='client_list' id='vo'}
+                        <tr data-item="{$vo->toJson()}">
+                            <td>
+                                <input type="checkbox" name="item" id="">
+                            </td>
+                            <td>{$vo.id}</td>
+                            <td>
+                                <span class="name">{$vo.name}</span>
+                                <i class="layui-icon layui-icon-edit edit-name" style="cursor: pointer;"></i>
+                            </td>
+                            <td>
+                                <span class="key">{$vo.key}</span>
+                                <i class="layui-icon layui-icon-refresh refresh-key" style="cursor: pointer;"></i>
+                            </td>
+                            <td>
+                                <span class="comment">{$vo.comment}</span>
+                                <i class="layui-icon layui-icon-edit edit-comment" style="cursor: pointer;"></i>
+                            </td>
+                            <td>
+                                <span class="set-status text-button">{$vo.status}</span>
+                            </td>
+                            <td>
+                                <div class="layui-btn-container">
+                                    
+                                    <div class="layui-btn layui-btn-sm delete layui-btn-normal ">删除</div>
+                                </div>
+                            </td>
+                        </tr>
+                        {/volist}
+                        {empty name='client_list'}
+                        <tr>
+                            <td colspan="7">暂无内容</td>
+                        </tr>
+                        {else /}
+                        {/empty}
+
+                    </tbody>
+                </table>
+                <div>
+                    {$client_list->render()|raw}
+                </div>
+            </div>
+        </div>
+    </div>
+    {include file='common/footer'/}
+    <script>
+    
+        layui.use([],function(){
+            
+
+            $('.create').click(function(){
+                var item = this;
+
+                layer.prompt({
+                    title:'客户端名称'
+                },function(value,index){
+                    $.post('{:url("save")}',{
+                        name:value
+                    },function(result){
+                        if(result.code == 0){
+                            layer.msg('添加成功')
+                            setTimeout(() => {
+                                location.reload()
+                            }, 1200);
+                        }else{
+                            layer.msg(result.msg)
+                        }
+                    })
+                })
+            })
+
+            $('.refresh-key').click(function(){
+                var item = this;
+                $.post('{:url("resetKey")}',{
+                    id:$(item).parents('tr').data('item').id
+                },function(result){
+                    if(result.code == 0){
+                        layer.msg('修改成功')
+                        $(item).parents('tr').data('item',result.data)
+                        $(item).siblings('.key').text(result.data.key)
+                    }else{
+                        layer.msg(result.msg)
+                    }
+                })
+            })
+
+            $('.edit-comment').click(function(){
+                var item = this;
+                layer.prompt({
+                    title:'编辑备注',
+                    formType:2,
+                    value:$(item).parents('tr').data('item').comment
+                },function(value,index){
+                    $.post('{:url("update")}',{
+                        id:$(item).parents('tr').data('item').id,
+                        comment:value
+                    },function(result){
+                        if(result.code == 0){
+                            layer.msg('修改成功')
+                            layer.close(index)
+                            $(item).parents('tr').data('item',result.data)
+                            $(item).siblings('.comment').text(result.data.comment)
+                        }else{
+                            layer.msg(result.msg)
+                        }
+                    })
+                })
+            })
+            $('.edit-name').click(function(){
+                var item = this;
+                layer.prompt({
+                    title:'编辑名称',
+                    formType:0,
+                    value:$(item).parents('tr').data('item').name
+                },function(value,index){
+                    $.post('{:url("update")}',{
+                        id:$(item).parents('tr').data('item').id,
+                        name:value
+                    },function(result){
+                        if(result.code == 0){
+                            layer.msg('修改成功')
+                            layer.close(index)
+                            $(item).parents('tr').data('item',result.data)
+                            $(item).siblings('.name').text(result.data.name)
+                        }else{
+                            layer.msg(result.msg)
+                        }
+                    })
+                })
+            })
+            $('.set-status').click(function(){
+                var item = this;
+                var status = '正常'
+                if($(item).parents('tr').data('item').status == '正常'){
+                    status = '禁用'
+                }
+                $.post('{:url("update")}',{
+                    id:$(item).parents('tr').data('item').id,
+                    status:status
+                },function(result){
+                    if(result.code == 0){
+                        layer.msg('修改成功')
+                        $(item).parents('tr').data('item',result.data)
+                        $(item).text(result.data.status)
+                    }else{
+                        layer.msg(result.msg)
+                    }
+                })
+            })
+        })
+
+        $('.delete').click(function(){
+            var item = this;
+            layer.confirm('确定要删除吗？',function(index){
+
+                $.post('{:url("delete")}',{
+                    id:$(item).parents('tr').data('item').id
+                },function(result){
+                    if(result.code == 0){
+                        layer.msg('删除成功')
+                        layer.close(index)
+                        $(item).parents('tr').remove()
+                        
+                    }else{
+                        layer.msg(result.msg)
+                    }
+                })
+            })
+        })
+
+    </script>
+</body>
+
+</html>

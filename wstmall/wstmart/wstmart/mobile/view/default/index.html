@@ -1,0 +1,143 @@
+{extend name="default/base" /}
+{block name="title"}首页 - {__block__}{/block}
+{block name="css"}
+<link rel="stylesheet"  href="__STATIC__/plugins/swiper/swiper.min.css"/>
+<link rel="stylesheet"  href="__MOBILE__/css/index.css?v={$v}"/>
+{/block}
+{block name="header"}
+{/block}
+{block name="main"}
+<section class="ui-container">
+		<div class="wst-in-top">
+			<div class="wst-in-search wst-flex-row wst-jsb">
+				<div class="classify"><a href="{:url('mobile/goodscats/index')}"><i></i></a></div>
+				<div class="searchs wst-flex-row wst-ac" id="j-searchs">
+					<i class="ui-icon-search" onclick="javascript:WST.search(0);"></i>
+					<form action＝"" class="input-form" onclick="javascript:WST.searchPage('goods',1);" style="width:80%;">
+					<input type="search" class='search-tip' placeholder="请您输入商品、品牌、店铺" onsearch="WST.search(0)" autocomplete="off" id="wst-search">
+					</form>
+					<div class="wst-clear"></div>
+				</div>
+				<div class="user"><a href="{:url('mobile/messages/index')}">{if condition="session('WST_USER.userId') >0"}<i>{if($news['message']['num']>0)}<span class="number">{$news['message']['num']}</span>{/if}</i>{else}<i></i>{/if}</a></div>
+			</div>
+		</div>
+		<div class="wst-in-top" style="margin-top:0.49rem;">
+			<div class="swiper-container banner" style="margin:0 0.12rem;">
+				<div class="swiper-wrapper ads">
+					{wst:ads code="mo-ads-index" cache='86400'}
+					<div class="swiper-slide"><a class='ms-slide' href="{$vo.adURL}"><img src="__RESOURCE_PATH__/{:WSTImg($vo.adFile,2)}" style="width:3.51rem;height:1.42rem !important;"></a></div>
+					{/wst:ads}
+				</div>
+				<div class="swiper-pagination" style="background:none;"></div>
+			</div>
+			<div class="ui-row wst-in-choose">
+				{volist name=':WSTMobileBtns(0)' id='btn'}
+				<div class="ui-col ui-col-20 wst-flex-row wst-center">
+					<?php if(stripos($btn['btnUrl'],'https://') !== false || stripos($btn['btnUrl'],'http://') !== false){ ?>
+						<a href="{$btn['btnUrl']}">
+					<?php }else{ ?>
+						<a href="__ROOT__/{$btn['btnUrl']}">
+					<?php } ?>
+							<p><img src="__RESOURCE_PATH__/{$btn['btnImg']}" /></p>
+							<span>{$btn['btnName']}</span>
+						</a>
+				</div>
+				{/volist}
+			</div>
+		</div>
+		<div class="wst-in-news wst-flex-row wst-jsb wst-ac">
+			<div class="new"></div>
+			<div class="wst-flex-row wst-ac">
+				<div class="hot">热点</div>
+				<div class="article">
+					<div class="swiper-container swiper-container1">
+						<div class="swiper-wrapper">
+							{wst:article cat="new" num='6' cache='86400'}
+							<div class="swiper-slide" >
+								<a class="words" href="{:url('mobile/news/getNews',['id'=>$vo['articleId']])}"><p class="">{$vo['articleTitle']}</p></a>
+							</div>
+							{/wst:article}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="more" onclick="location.href='{:url('mobile/news/view')}'"></div>
+		</div>
+		<div class="wst-in-ads">
+			{wst:ads code="mo-index-long" cache='86400' num='4'}<a class="advert4" href="{$vo.adURL}"><div class="img"><img src="__RESOURCE_PATH__/{:WSTImg($vo.adFile,2)}"/></div></a>{/wst:ads}
+		</div>
+		{php}
+			$ads1 = WSTAds('mo-index-left',1,86400);
+			$ads2 = WSTAds('mo-index-right',2,86400);
+			$ads3 = WSTAds('mo-index-three',3,86400);
+		{/php}
+		<div class="wst-in-hot-activity" {if count($ads1)==0 && count($ads2)==0 && count($ads3)==0}style='display:none'{/if}>
+			<div class="activity-title wst-flex-row wst-ac">
+				<div class="hot"></div>
+				<p>热门活动</p>
+			</div>
+			<div class="wst-in-adst">
+				{if !empty($ads1)}
+				<a class="advert2" href="{$ads1['adURL']}"><img src="__RESOURCE_PATH__/{:WSTImg($ads1['adFile'],2)}" style="height:1.6rem;margin-right:0.1rem;"/></a>
+				{/if}
+			    {volist name='$ads2' id='vo' key='k'}
+				<a class="advert2" href="{$vo.adURL}"><img src="__RESOURCE_PATH__/{:WSTImg($vo.adFile,2)}" style="width:48%;height:0.75rem;{if $k==2}margin-top:0.1rem;{/if}"/></a>
+				{/volist}
+				<div class="wst-clear"></div>
+			</div>
+			<div class="wst-in-ads-three wst-flex-row">
+				{volist name='$ads3' id='vo' key='k'}
+				<a class="advert2" href="{$vo.adURL}"><img src="__RESOURCE_PATH__/{:WSTImg($vo.adFile,2)}" style="width:1.11rem;height:1.29rem;{if $k>1}margin-left:0.1rem;{/if}"/></a>
+				{/volist}
+			</div>
+		</div>
+
+		{:hook('mobileDocumentIndex')}
+
+		<div class="wst-in-goods-tab">
+			<input type="hidden" id="catId" value="{if count($goodsCat)}{$goodsCat[0]['catId']}{else}0{/if}">
+			<div class="g_ui_tab" id="goodsTab">
+				<ul class="g_tab_nav wst-flex-row wst-jsb" >
+					{volist name='goodsCat' id="vo" key="k"}
+					<div style="position: relative;">
+						<li class="g_tab_item {if $k==1}active{/if}"  data="{$vo['catId']}" onclick="changeIndexTab(this)">{$vo['simpleName']}</li>
+					</div>
+					{/volist}
+				</ul>
+			</div>
+			<div class="g_tab_content" id="goodsContent">
+				{volist name='goodsCat' id="vo" key="k"}
+				<input type="hidden" name="" value="-1" id="currPage_{$vo['catId']}" autocomplete="off">
+				<input type="hidden" name="" value="-1" id="lastPage_{$vo['catId']}" autocomplete="off">
+				<div id="g_item_content_{$vo['catId']}" class="g_item_content {if $k==1}g_tab_show{else}g_tab_hide{/if}">
+					<div id="goods-list-{$vo['catId']}" class="wst-flex-row wst-fw"></div>
+				</div>
+				{/volist}
+				<div class="wst-flex-row wst-center wst-load-text">加载中</div>
+			</div>
+		</div>
+
+</section>
+<script id="list" type="text/html">
+	{{# if(d.data.length>0){ }}
+		{{# for(var i=0; i<d.data.length; i++){ }}
+			<div class="wst-index-goods {{# if((i)%2==0){ }}left{{# }else{ }}right{{# } }}" onclick="javascript:WST.intoGoods({{ d.data[i].goodsId }});">
+				<div class="img j-imgAdapt"><a href="javascript:void(0);" ><img src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" data-echo="__RESOURCE_PATH__/{{ d.data[i].goodsImg }}" title="{{ d.data[i].goodsName }}" /></a></div>
+				<div class="name ui-nowrap-multi" >{{ d.data[i].goodsName }}</div>
+				<div class="wst-flex-row wst-jsb info"><span class="price">¥ <span>{{ d.data[i].shopPrice }}</span></span><span class="deal">成交数:{{ d.data[i].saleNum }}</span></div>
+			</div>
+		{{# } }}
+	{{# } }}
+<div class="wst-clear"></div>
+</script>
+<div class="decoration-container">
+	{:hook('mobileDocumentIndexDisplay')}
+</div>
+{/block}
+{block name="include"}
+{include file="default/goods_search_box" /}
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__STATIC__/plugins/swiper/swiper.min.js'></script>
+<script type='text/javascript' src='__MOBILE__/js/index.js?v={$v}'></script>
+{/block}

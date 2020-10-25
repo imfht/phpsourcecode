@@ -1,0 +1,1 @@
+function redirect(a,b){if(undefined==a||a==""){a=location}if(undefined==b){b=20}setTimeout("location.href='"+a+"'",20)};

@@ -1,0 +1,304 @@
+<?php
+/**
+ * 公共组件，Table List
+ *
+ * @var \Ke\Web\Web     $web
+ * @var \Ke\Web\Http    $http
+ * @var \Ke\Web\Html    $html
+ * @var \Ke\Web\Context $this
+ */
+
+use Ke\Web\Html;
+
+//$html = $this->html;
+$rows      = $rows ?? [];
+$rowsCount = 0;
+
+$caption = $caption ?? '';
+
+$tableFoot = $foot ?? null;
+
+$fixed = !empty($fixed ?? false);
+
+$rowsType = false;
+if (is_array($rows)) {
+	$rowsType  = Html::DATA_ARRAY;
+	$rowsCount = count($rows);
+} else if ($rows instanceof \ArrayObject) {
+	$rowsType  = Html::DATA_ARRAY_ACCESS;
+	$rowsCount = $rows->count();
+} else if ($rows instanceof \Generator) {
+	$rowsType  = Html::DATA_GENERATOR;
+	$rowsCount = 1;
+}
+
+if ($rowsType === false) {
+	$html->message($html->getText(Html::TABLE_EMPTY), Html::MSG_WARN);
+	return true;
+}
+
+// 取出数据的第一行，作为一个数据参考
+if ($rowsType === Html::DATA_GENERATOR)
+	$firstRow = $rows->current();
+else {
+	$firstRow = $rows[0] ?? [];
+	if (is_object($firstRow))
+		$firstRow = (array)$firstRow;
+}
+
+$checkbox = $checkbox ?? false;
+if (!isset($firstRow[$checkbox]) && !isset($firstRow->{$checkbox}))
+	$checkbox = false;
+
+$checked = $checked ?? [];
+if (!is_array($checked))
+	$checked = (array)$checked;
+$checked = array_values($checked);
+$checked = array_combine($checked, $checked);
+
+$pagination = $pagination ?? null;
+
+$columnsType  = Html::TABLE_HEAD_FROM_COLUMNS;
+$columnsCount = 0;
+if (!isset($columns)) {
+	$columnsType = Html::TABLE_HEAD_FROM_DATA;
+	$columns     = $firstRow;
+}
+if (!is_array($columns))
+	$columns = [];
+
+
+$prefix       = $prefix ?? '';
+$modelColumns = [];
+if ($rows instanceof \Ke\Adm\DataList) {
+	/** @var \Ke\Adm\Model|null $model */
+	$model = $rows->getModel();
+	if (!empty($model) && is_subclass_of($model, \Ke\Adm\Model::class)) {
+		$modelColumns = $model::getStaticColumns();
+		list($ns, $cls) = parse_class($model);
+		$prefix = class2id($cls);
+	}
+	if (!isset($pagination))
+		$pagination = $rows->getPagination();
+}
+
+$fieldPrefix = $fieldPrefix ?? null;
+
+if (empty($fieldPrefix)) {
+	if (!empty($prefix)) {
+		$fieldPrefix = mb_strtolower($prefix);
+	} else if (!empty($model)) {
+		list($ns, $cls) = parse_class($model);
+		if (empty($cls))
+			$fieldPrefix = mb_strtolower($cls);
+	}
+}
+
+$mkFieldCls = function ($prefix, $field) {
+	$cls = "{$prefix}-{$field}";
+	$cls = mb_strtolower($cls);
+	return str_replace('_', '-', $cls);
+};
+
+if (!empty($prefix))
+	$prefix .= '_table';
+else
+	$prefix = 'table_list';
+
+$tail = $tail ?? false;
+if (!is_callable($tail))
+	$tail = false;
+if ($tail)
+	$columnsCount += 1;
+
+$onRow = $onRow ?? false;
+if (!is_callable($onRow))
+	$onRow = false;
+
+$attr = $attr ?? [];
+if (!empty($attr) && !is_array($attr))
+	$attr = $html->attr2array($attr);
+
+if (!isset($attr['id']))
+	$attr['id'] = $html->autoId($prefix);
+
+$attr['data-ui'] = 'table-list';
+
+$baseClass = $html->getBaseClass('table', 'list');
+if ($fixed)
+	$baseClass .= ' is-fixed';
+
+$html->addClass($attr, $baseClass);
+
+$checkboxClass = $html->getBaseClass('input', 'checkbox');
+
+$tailClass = 'tail ' . ($tailClass ?? '');
+
+?>
+	<div class="table-fixed <?php echo $fixed ? 'is-fixed' : '' ?>">
+		<table <?php print $html->attr($attr); ?>>
+			<?php if (!empty($caption)) { ?>
+				<caption>
+					<?php print $caption; ?>
+				</caption>
+			<?php } ?>
+			<thead>
+			<tr>
+				<?php
+				if ($checkbox) {
+					$columnsCount += 1;
+					?>
+					<th><input type="checkbox" class="<?php print $checkboxClass; ?>"
+					           data-field="<?php print $checkbox ?>"
+					           data-ui="check-all"/></th>
+					<?php
+				}
+				?>
+				<?php if (empty($columns)) { ?>
+					<th><?php print $html->getText(Html::TABLE_HEAD_EMPTY); ?></th>
+					<?php
+				} else {
+					foreach ($columns as $field => $column) {
+						$column          = $html->mkTableColumn($field, $column, $columnsType, $modelColumns[$field] ?? null);
+						$columns[$field] = $column;
+						if (isset($column['showTable']) && empty($column['showTable']))
+							continue;
+						$columnsCount += 1;
+						$cellClass    = $column['class'] ?? '';
+						?>
+						<th <?php print $cellClass ?>data-field="<?php print $field; ?>"><?php
+							print $column['label'];
+							?></th>
+						<?php
+					}
+				}
+				?>
+			</tr>
+			</thead>
+			<tbody>
+			<?php
+			if (empty($rows)) {
+				?>
+				<tr>
+					<td colspan="<?php print $columnsCount; ?>">
+						<?php print $html->message($html->getText(Html::TABLE_EMPTY), Html::MSG_WARN, 'table-data-empty'); ?>
+					</td>
+				</tr>
+				<?php
+			} else {
+				$treeSort     = null;
+				$treeSortRows = null;
+				if ($rows instanceof \Ke\Adm\DataList) {
+					$treeSort = $rows->getTreeSort();
+					if ($treeSort !== null) {
+						$treeSortRows = [];
+						foreach ($treeSort->getPaginateIds() as $id) {
+							if (isset($rows[$id]))
+								$treeSortRows[$id] = $rows[$id];
+						}
+						$pagination = $treeSort->getPagination();
+					}
+				}
+				foreach ($treeSortRows ?? $rows as $index => $row) {
+					$clone = new ArrayObject((array)$row);
+					if ($onRow) {
+						call_user_func($onRow, $html, $row, $clone);
+					}
+					?>
+					<tr>
+						<?php if ($checkbox) { ?>
+							<?php
+							$value        = null;
+							$disabledAttr = '';
+							$checkedAttr  = '';
+							if (isset($row[$checkbox]))
+								$value = $row[$checkbox];
+							else if (isset($row->{$checkbox}))
+								$value = $row->{$checkbox};
+							else {
+								$disabledAttr = ' disabled="disabled"';
+							}
+							if (empty($disabledAttr)) {
+								if (isset($checked[$value]))
+									$checkedAttr = ' checked="checked"';
+							}
+							?>
+							<td><input type="checkbox" class="<?php print $checkboxClass; ?>"
+							           data-field="<?php print $checkbox ?>"
+							           data-value="<?php print $value; ?>"
+							           data-ui="check-row"<?php print $disabledAttr . $checkedAttr ?>
+								/></td>
+						<?php } ?>
+						<?php
+						$colIndex = 0;
+						foreach ($columns as $field => $column) {
+							if (isset($column['showTable']) && empty($column['showTable']))
+								continue;
+							$value     = $clone[$field] ?? '';
+							$value     = $html->filterColumnValue($row, $field, $value, $column);
+							$pureValue = $value;
+							$label     = $column['label'] ?? $field;
+							
+							if (is_string($value))
+								$pureValue = strip_tags($value);
+							else if (is_array($value)) {
+								$pureValue = json_encode($value);
+							}
+							?>
+							<td<?php print ($column['class'] ?? ''); ?>
+									data-label="<?php print $label; ?>"
+									data-field="<?php print $field ?>">
+								<div class="table-cell-item">
+									<?php
+									if ($colIndex === 1 && $tail !== false) {
+										echo '<div class="table-cell-func">';
+										call_user_func($tail, $html, $row, $clone);
+										echo '</div>';
+									}
+									$class = 'table-cell-value table-cell-' . $mkFieldCls($fieldPrefix, $field);
+									if (is_object($value) || is_array($value)) {
+										print $html->tag('div', json_encode($value), ['class' => $class]);
+									} else {
+										print $html->tag('div', $value, [
+											'data-value' => $pureValue,
+											'title'      => $label . '：' . $pureValue,
+											'class'      => $class,
+										]);
+									}
+									?>
+								</div>
+							</td>
+							<?php
+							$colIndex += 1;
+						}
+						?>
+					</tr>
+					<?php
+				}
+			}
+			?>
+			</tbody>
+			<?php
+			if (isset($tableFoot)) {
+				if (is_callable($tableFoot))
+					$tableFoot = call_user_func($tableFoot, $html, $treeSortRows ?? null);
+				if (!empty($tableFoot) && (is_array($tableFoot) || $tableFoot instanceof ArrayObject)) {
+					?>
+					<tfoot>
+					<tr>
+						<?php
+						foreach ($columns as $field => $column) {
+							?>
+							<th><?php echo $tableFoot[$field] ?? ''; ?></th>
+							<?php
+						}
+						?>
+					</tr>
+					</tfoot>
+					<?php
+				}
+			}
+			?>
+		</table>
+	</div>
+<?php print $html->paginate($pagination); ?>

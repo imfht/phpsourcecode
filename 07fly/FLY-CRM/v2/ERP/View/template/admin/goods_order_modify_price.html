@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="ibox-content">
+  <form class="form-horizontal" method="post" action="#">
+	  <input type="hidden" name="order_id" value="#{$one.order_id}#">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th width="100">商品名称</th>
+          <th width="50">商品清单</th>
+          <th width="60">涨价或减价（-表示减价）</th>
+          <th width="60">运费</th>
+        </tr>
+      </thead>
+        <tbody>
+      <tr>
+        <td colspan="3"><table class="table table-hover">
+            <tbody>
+            #{foreach from=$one.order_list key=k item=v}#
+            <input type="hidden" name="order_list_id[]" value="#{$v.order_list_id}#">
+            <tr id="goods_order_list">
+              <input type="hidden" name="sku_sale_price[]" value="#{$v.sale_price}#" class="sku_sale_price">
+              <td width="100">#{$v.goods_name}#</td>
+              <td width="40">#{$v.sale_price}#元<br>
+                #{$v.num}#件</td>
+              <td width="30"><input type="text" name="adjust_money[]" class="modify_adjust_money form-control" value="#{$v.adjust_money}#"></td>
+            </tr>
+            #{/foreach}#
+              </tbody>
+          </table></td>
+        <td><input type="text" name="shipping_money" class="form-control modify_shipping_money" value="#{$one.shipping_money}#"></td>
+      </tr>
+        </tbody>
+      
+    </table>
+    <div class="form-group">
+      <div class="col-sm-12"> 商品总价:
+        <input type="hidden" name="goods_money" id="goods_money" value="#{$one.goods_money}#">
+        <span class="goods_money">#{$one.goods_money}#</span>元
+		  	&nbsp;&nbsp;&nbsp;&nbsp;运费:
+        <input type="hidden" name="shipping_money" id="shipping_money" value="#{$one.shipping_money}#">
+        <span class="shipping_money">#{$one.shipping_money}#</span> 元
+		  	&nbsp;&nbsp;&nbsp;&nbsp;实收费用:
+        <input type="hidden" name="pay_money" id="pay_money" value="#{$one.pay_money}#">
+        <span class="pay_money">#{$one.pay_money}#</span>元 </div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button class="btn  btn-w-m btn-info save-remarks" type="button">保存数据</button>
+      </div>
+    </div>
+  </form>
+</div>
+<!-- 自定义js --> 
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script> 
+<script>
+$(document).ready(function () {
+	$("body").on("blur", ".modify_adjust_money", function() {
+		//商品价格
+		p_all_m=0;
+		$("input[name='sku_sale_price[]']").each(function(){
+			p_all_m +=parseFloat($(this).val());	
+		});
+		//调整价格
+		a_all_m=0;
+		$("input[name='adjust_money[]']").each(function(){
+			a_all_m +=parseFloat($(this).val());	
+		});	
+		
+		s_m=parseFloat($("#shipping_money").val());//运费
+		g_all_m=p_all_m+a_all_m;//商品总价
+		p_all_m=g_all_m+s_m;//实付
+		
+		$(".goods_money").html(g_all_m);
+		$("#goods_money").val(g_all_m);
+		
+		$(".pay_money").html(p_all_m);
+		$("#pay_money").val(p_all_m);
+		
+	});
+	$("body").on("blur", ".modify_shipping_money", function() {
+		g_m=parseFloat($("#goods_money").val());
+		s_m=parseFloat($(this).val());
+		$(".shipping_money").html(s_m);
+		$("#shipping_money").val(s_m);
+		$(".pay_money").html(g_m+s_m);
+		$("#pay_money").val(g_m+s_m);
+	});	
+	$("body").on("click", ".save-remarks", function() {
+		FormData=$("form").serialize();
+		$.ajax({
+			type: "POST",
+			url: "#{$smarty.const.ACT}#/admin/GoodsOrder/goods_order_modify_price/",
+			data:FormData,
+			dataType:"json",
+			success: function(data){
+				if(data.rtnstatus=='success'){
+					layer.msg('操作成功', {icon: 1}); 		
+				}
+			},    
+			complete: function() {   
+				setTimeout(function(){
+					//关闭窗口
+					var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+					parent.layer.close(index);
+				 },800);
+
+   		  },
+		});		
+	});
+});
+</script>
+</body>
+</html>

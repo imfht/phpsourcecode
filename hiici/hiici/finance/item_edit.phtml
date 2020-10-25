@@ -1,0 +1,292 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！');
+
+if (!empty($_POST)) die;
+
+$item_id = intval($_GET['item_id']);
+
+global $config;
+if (!in_array($auth['id'], $config['manager'])) if (1 > dt_count('finance_item', 'WHERE id = '.$item_id.' AND lmcy_id = (SELECT id FROM finance_lmcy WHERE user_id = '.$auth['id'].')')) die('用户权限不够!');
+
+$rs = dt_query("SELECT * FROM finance_item WHERE id=$item_id");
+$item = mysql_fetch_array($rs);
+if (empty($item)) {
+	put_info('项目不存在！');
+	header('Location:?c=finance&a=item_list');
+	die;
+}
+
+if (!file_exists('img/finance/item/'.$item_id)) {
+	mkdir('img/finance/item/'.$item_id); 
+	mkdir('img/finance/item/'.$item_id.'/htxy/'); 
+	mkdir('img/finance/item/'.$item_id.'/sdzp/'); 
+}
+$i_htxy_d = opendir('img/finance/item/'.$item_id.'/htxy/');
+$i_sdzp_d = opendir('img/finance/item/'.$item_id.'/sdzp/');
+
+$lmcys = dt_query("SELECT id, name FROM finance_lmcy ORDER BY c_at");
+if (!$lmcys) {
+	put_info('获取数据失败！');
+	header('Location:?c=finance');
+	die;
+}
+
+?>
+<?php require_once('finance/inc/nav_sub_im.html') ?>
+<div class="container finance-item-add" style="padding-top:15px">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<h3><span class="glyphicon glyphicon-edit"></span> 编辑项目</h3>
+			<hr class="solid">
+			<div class="col-md-12 column">
+				<form class="form-horizontal" action="?c=finance&a=do_item_edit" method="post" enctype="multipart/form-data">
+					<fieldset>
+						<!-- id -->
+						<input type="hidden" name="item_id" value="<?php echo $item['id'] ?>"/>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">项目名称</label>  
+							<div class="col-md-7">
+								<input name="name" type="text" placeholder="某某项目" class="form-control input-md" required="" value="<?php echo $item['name'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">融资金额</label>  
+							<div class="col-md-7">
+								<input name="money" type="text" placeholder="000.00" class="form-control input-md" required="" value="<?php echo $item['money'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">年化收益</label>  
+							<div class="col-md-7">
+								<input name="revenue" type="text" placeholder="8.25%" class="form-control input-md" required="" value="<?php echo $item['revenue'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">融资期限</label>  
+							<div class="col-md-7">
+								<input name="term" type="text" placeholder="3个月" class="form-control input-md" required="" value="<?php echo $item['term'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">项目区域位置</label>  
+							<div class="col-md-7">
+								<input name="location" type="text" placeholder="雁峰区白沙洲工业园内" class="form-control input-md" required="" value="<?php echo $item['location'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">资金用途</label>  
+							<div class="col-md-7">
+								<input name="use_to" type="text" placeholder="企业经营用途.企业经营流动性资金" class="form-control input-md" required="" value="<?php echo $item['use_to'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">项目情况</label>  
+							<div class="col-md-7">
+								<textarea name="item_info" type="text" placeholder="公司成立于xxxx年x月，注册资本xxxx万元，属自然人出资有限公司。公司经营范围谷物种植；水果、肉、禽、蛋、水产品销售；冷藏、冷冻服务；蔬菜种植、收购、销售。本次贷款主体为公司的法定代表人。" class="form-control input-md" rows="3" required=""><?php echo $item['item_info'] ?></textarea>
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">借款用途</label>  
+							<div class="col-md-7">
+								<input name="use_to_do" type="text" placeholder="公司的经营周转，补充流动资金。" class="form-control input-md" required="" value="<?php echo $item['use_to_do'] ?>">
+							</div>
+						</div>
+
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">还款来源</label>  
+							<div class="col-md-7">
+								<input name="income" type="text" placeholder="公司经营收入。" class="form-control input-md" required="" value="<?php echo $item['income'] ?>">
+							</div>
+						</div>
+						<br>
+						<hr class="dashed">
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">机构选择</label>  
+							<div class="col-md-7">
+								<select name="lmcy_id" class="form-control">
+									<?php while($lmcy = mysql_fetch_array($lmcys)) { ?>
+									<option value="<?php echo $lmcy['id'] ?>" <?php if ($lmcy['id'] == $item['lmcy_id']) echo 'selected="selected"' ?>><?php echo $lmcy['name'] ?></option>
+									<?php } ?>
+								</select>
+							</div>
+						</div>
+						<!-- Text input-->
+						<div class="form-group">
+							<label class="col-md-2 control-label">联系电话</label>  
+							<div class="col-md-7">
+								<input name="phone" type="text" placeholder="158****8888" class="form-control input-md" required="" value="<?php echo $item['phone'] ?>">
+							</div>
+						</div>
+						<br>
+						<hr class="dashed">
+						<div class="form-group">
+							<label class="col-md-2 control-label">授信额度</label>  
+							<div class="col-md-7">
+								<input name="money_v" type="text" placeholder="000.00" class="form-control input-md" required="" value="<?php echo $item['money_v'] ?>">
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label">信用评级</label>  
+							<div class="col-md-7">
+								<input name="credit_s" type="text" placeholder="50%" class="form-control input-md" required="" value="<?php echo $item['credit_s'] ?>">
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label">财务实力</label>  
+							<div class="col-md-7">
+								<input name="financial_s" type="text" placeholder="50%" class="form-control input-md" required="" value="<?php echo $item['financial_s'] ?>">
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label">经营情况</label>  
+							<div class="col-md-7">
+								<input name="operate_s" type="text" placeholder="50%" class="form-control input-md" required="" value="<?php echo $item['operate_s'] ?>">
+							</div>
+						</div>
+
+						<br>
+						<hr class="dashed">
+						<div class="form-group">
+							<label class="col-md-2 control-label">主体信息</label>  
+							<div class="col-md-10">
+								<textarea id="company_info" name="company_info" type="text" class="form-control input-md finance-item-well" style="height:800px" required="">
+									<?php echo $item['company_info'] ?>
+								</textarea>
+							</div>
+						</div>
+
+						<br>
+						<hr class="dashed">
+						<div class="form-group">
+							<label class="col-md-2 control-label">风险控制</label>  
+							<div class="col-md-10">
+								<textarea id="risk_control" name="risk_control" type="text" class="form-control input-md finance-item-well" style="height:500px" required="">
+									<?php echo $item['risk_control'] ?>
+								</textarea>
+							</div>
+						</div>
+
+						<br>
+						<hr class="dashed">
+						<div class="form-group">
+							<label class="col-md-2 control-label">合同协议</label>  
+							<div id="htxy_upload" class="col-md-7">
+								<?php while ($f = readdir($i_htxy_d)) { if (is_dir($f)) continue; ?>
+								<h5 id="<?php echo preg_replace('/\./', '', $f) ?>">
+									<a href="img/finance/item/<?php echo $item_id ?>/htxy/<?php echo $f ?>"><?php echo $f ?></a>
+									<a class="btn btn-default btn-sm" href="javascript:do_del_htxy('<?php echo $f ?>')">删除</a>
+								</h5> 
+								<?php } ?>
+								<input type="file" name="htxy_1"/> 
+							</div>
+							<div class="col-md-3">
+								<a class="btn btn-default" href="javascript:add_htxy_upload()"><span class="glyphicon glyphicon-plus"></span> 上传更多</a>
+							</div>
+						</div>
+
+						<br>
+						<hr class="dashed">
+						<div class="form-group">
+							<label class="col-md-2 control-label">实地照片</label>  
+							<div id="sdzp_upload" class="col-md-7">
+								<?php while ($f = readdir($i_sdzp_d)) { if (is_dir($f)) continue; ?>
+								<h5 id="<?php echo preg_replace('/\./', '', $f) ?>">
+									<a href="img/finance/item/<?php echo $item_id ?>/sdzp/<?php echo $f ?>"><?php echo $f ?></a>
+									<a class="btn btn-default btn-sm" href="javascript:do_del_sdzp('<?php echo $f ?>')">删除</a>
+								</h5> 
+								<?php } ?>
+								<input type="file" name="sdzp_1"/> 
+							</div>
+							<div class="col-md-3">
+								<a class="btn btn-default" href="javascript:add_sdzp_upload()"><span class="glyphicon glyphicon-plus"></span> 上传更多</a>
+							</div>
+						</div>
+
+
+						<!-- token -->
+						<input type="hidden" name="token" value="<?php echo get_token() ?>"/>
+
+						<!-- Button -->
+						<br>
+						<hr class="dashed">
+						<div class="form-group">
+							<label class="col-md-2 control-label"></label>
+							<div class="col-md-2">
+								<button class="btn btn-primary btn-block <?php if (empty($_SESSION['auth'])) echo "disabled"; ?>">更新项目</button>
+							</div>
+						</div>
+
+					</fieldset>
+				</form>	
+
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+var company_info = UM.getEditor("company_info");  
+var risk_control = UM.getEditor("risk_control");  
+var htxy_sum = 1;
+var sdzp_sum = 1;
+
+$(document).ready(function(){
+	$('li#finance_im').addClass('active');
+	$('li#im_xmgl').addClass('active');
+});
+
+function add_htxy_upload() {
+	htxy_sum += 1;
+	$('div#htxy_upload').append('<br><input type="file" name="htxy_'+htxy_sum+'"/>');
+}
+
+function add_sdzp_upload() {
+	sdzp_sum += 1;
+	$('div#sdzp_upload').append('<br><input type="file" name="sdzp_'+sdzp_sum+'"/>');
+}
+
+function do_del_htxy(htxy) {
+	if (!confirm (" O_O 确定要删除吗！")) return;
+	$.get('?c=finance&a=do_item_opr&opr=4&item_id=<?php echo $item['id'] ?>&htxy='+htxy, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('h5#'+htxy.replace('.', '')).remove();
+	});
+}
+
+function do_del_sdzp(sdzp) {
+	if (!confirm (" O_O 确定要删除吗！")) return;
+	$.get('?c=finance&a=do_item_opr&opr=5&item_id=<?php echo $item['id'] ?>&sdzp='+sdzp, function(rs){
+		if ('s0' != rs) { 
+			alert(rs);
+			return;
+		}
+		$('h5#'+sdzp.replace('.', '')).remove();
+	});
+}
+
+</script>

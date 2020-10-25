@@ -1,0 +1,189 @@
+{include file="public/header" /}
+<div class="page">
+    <div class="fixed-bar">
+        <div class="item-title">
+            <div class="subject">
+                <h3>{$Think.lang.instant_message}</h3>
+                <h5></h5>
+            </div>
+            {include file="public/admin_items" /}
+        </div>
+    </div>
+  <div class="fixed-empty"></div>
+
+  <form method="get" name="formSearch" id="formSearch">
+      <div class="ds-search-form">
+
+          <dl>
+              
+              <dt>{$Think.lang.instant_message_verify}</dt>
+              <dd>
+                  <select name="instant_message_verify">
+                      <option value="">{$Think.lang.ds_please_choose}...</option>
+                      {foreach name="Think.lang.instant_message_verify_text" item="val" key="key" }
+                      <option value="{$key}" {if isset($search['instant_message_verify']) &&  $search['instant_message_verify'] == $key }selected{/if}>{$val}</option>
+                      {/foreach}
+                  </select>
+              </dd>
+          </dl>
+          
+            <div class="btn_group">
+                 <a href="javascript:$('#formSearch').submit();" id="dssubmit" class="btn " title="{$Think.lang.ds_query}">{$Think.lang.ds_query}</a>     
+                 <a href="{:url('instant_message/index')}" class="btn btn-default" title="{$Think.lang.ds_cancel}">{$Think.lang.ds_cancel}</a>
+            </div>
+        </div>
+  </form>
+  
+      
+    <table class="ds-default-table">
+      <thead>
+        <tr class="thead">
+            <th class="w24"></th>
+          <th class="w24">{$Think.lang.instant_message_id}</th>
+          <th>{$Think.lang.instant_message_from_type}</th>
+          <th>{$Think.lang.instant_message_to_type}</th>
+          <th>{$Think.lang.message_content}</th>
+          <th class="w72 align-center">{$Think.lang.instant_message_verify}</th>
+          <th class="w200 align-center" >{$Think.lang.instant_message_add_time}</th>
+          <th class="w200 align-center" >{$Think.lang.ds_handle}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {notempty name="instant_message_list"}
+        {foreach name="instant_message_list" item="v"}
+        <tr class="hover edit" id="ds_row_{$v.instant_message_id}">
+            <td><input type="checkbox" value="{$v.instant_message_id}" {if $v.instant_message_verify!=0}disabled="disabled"{/if} class="checkitem"></td>
+          <td>{$v.instant_message_id}</td>
+          <td>[{$Think.lang.instant_message_type_text[$v['instant_message_from_type']]}]{$v.instant_message_from_name}</td>
+          <td>[{$Think.lang.instant_message_type_text[$v['instant_message_to_type']]}]{$v.instant_message_to_name}</td>
+          <td>{$v.instant_message}</td>
+          <td>{$Think.lang.instant_message_verify_text[$v['instant_message_verify']]}</td>
+          <td>{$v.instant_message_add_time|date='Y-m-d H:i'}</td>
+          <td class="align-center">
+              {if $v.instant_message_verify==0}
+              <a href="javascript:dsLayerConfirm('{:url('instant_message/view',['verify_state'=>1,'instant_message_id'=>$v.instant_message_id])}','{:printf(lang("confirm_verify_message_content"),lang("ds_pass"))}',{$v.instant_message_id})" class="dsui-btn-edit"><i class="iconfont"></i>{$Think.lang.ds_pass}</a>
+              <a href="javascript:dsLayerConfirm('{:url('instant_message/view',['verify_state'=>0,'instant_message_id'=>$v.instant_message_id])}','{:printf(lang("confirm_verify_message_content"),lang("ds_refuse"))}',{$v.instant_message_id})" class="dsui-btn-del"><i class="iconfont"></i>{$Think.lang.ds_refuse}</a>
+              {/if}
+          </td>
+
+        </tr>
+ 
+        {/foreach}
+        {else /}
+        <tr class="no_data">
+          <td colspan="15">{$Think.lang.ds_no_record}</td>
+        </tr>
+        {/notempty}
+      </tbody>
+      <tfoot>
+        <tr class="tfoot">
+            &nbsp;&nbsp;
+            <td><input type="checkbox" class="checkall" id="checkallBottom"></td>
+            <td colspan="16"><label for="checkallBottom">{$Think.lang.ds_select_all}</label>
+                <a href="JavaScript:void(0);" class="btn btn-small" dstype="verify_batch" data-state="1"><span>{$Think.lang.ds_pass}</span></a>
+                &nbsp;&nbsp;<a href="javascript:void(0);" class="btn btn-small" dstype="verify_batch" data-state="0"><span>{$Think.lang.ds_refuse}</span></a>
+            </td>
+
+        </tr>
+      </tfoot>
+    </table>
+    {$show_page|raw}
+</div>
+<script type="text/javascript">
+    /*{if($instant_message_url)}*/
+    var ws = new WebSocket('{$instant_message_url}')
+        ws.onopen = function(){
+            
+        }
+        ws.onmessage = function(res){
+            var message = JSON.parse(res.data)
+            if (!message) {
+              layer.alert('{$Think.lang.message_transfer_fail}{$Think.lang.ds_colon}' + res.data)
+              return
+            }
+            var type = message.type || ''
+            switch (type) {
+              // Events.php中返回的init类型的消息，将client_id发给后台进行uid绑定
+              case 'init':
+                var clientId = message.client_id
+                $.getJSON('{$Think.ADMIN_SITE_URL}/instant_message/join?client_id=' + clientId, function (data) {
+                    if (data.code != 10000) {
+                        layer.msg(data.message);
+                    } else {
+                        
+                    }
+                })
+                break
+              default:
+                  var instant_message_type_text={:json_encode($Think.lang.instant_message_type_text)}
+                  var instant_message_verify_text={:json_encode($Think.lang.instant_message_verify_text)}
+                  var str='<tr class="hover edit" id="ds_row_'+message.instant_message_id+'">'
+            str+='<td><input type="checkbox" value="'+message.instant_message_id+'" '+((message.instant_message_verify!=0)?'disabled="disabled"':'')+' class="checkitem"></td>'
+          str+='<td>'+message.instant_message_id+'</td>'
+          str+='<td>['+instant_message_type_text[message.instant_message_from_type]+']'+message.instant_message_from_name+'</td>'
+          str+='<td>['+instant_message_type_text[message.instant_message_to_type]+']'+message.instant_message_to_name+'</td>'
+          str+='<td>'+message.instant_message+'</td>'
+          str+='<td>'+instant_message_verify_text[message.instant_message_verify]+'</td>'
+          str+='<td>'+dateFtt("yyyy-MM-dd hh:mm",message.instant_message_add_time)+'</td>'
+          str+='<td class="align-center">'
+              if(message.instant_message_verify==0){
+              str+='<a href="javascript:dsLayerConfirm(\'{:url('instant_message/view')}?verify_state=1&instant_message_id='+message.instant_message_id+'\',\'{:printf(lang("confirm_verify_message_content"),lang("ds_pass"))}\','+message.instant_message_id+')" class="dsui-btn-edit"><i class="iconfont"></i>{$Think.lang.ds_pass}</a>'
+              str+='<a href="javascript:dsLayerConfirm(\'{:url('instant_message/view')}?verify_state=0&instant_message_id='+message.instant_message_id+'\',\'{:printf(lang("confirm_verify_message_content"),lang("ds_refuse"))}\','+message.instant_message_id+')" class="dsui-btn-del"><i class="iconfont"></i>{$Think.lang.ds_refuse}</a>'
+              }
+          str+='</td>'
+        str+='</tr>'
+                $('.ds-default-table tbody').prepend(str)
+            }
+        }
+        ws.onclose = function(res){
+            layer.alert('{$Think.lang.chat_system_disconnected}{$Think.lang.ds_colon}' + res.reason)  
+        }
+        ws.onerror = function(res){
+            layer.alert(res.errMsg)  
+        }
+    /*{/if}*/    
+    // 审核批量处理
+    $('a[dstype="verify_batch"]').click(function(){
+        var state=$(this).attr('data-state')
+        var ids_str = getItems();
+        if (ids_str) {
+            var _uri = ADMINSITEURL+"/instant_message/view?verify_state="+state+"&instant_message_id=" + ids_str;
+            dsLayerConfirm(_uri,state==1?'{:printf(lang("confirm_verify_message_content"),lang("ds_pass"))}':'{:printf(lang("confirm_verify_message_content"),lang("ds_refuse"))}');
+        }
+    });
+    
+    // 获得选中ID
+    function getItems() {
+        /* 获取选中的项 */
+        var items = '';
+        $('.checkitem:checked').each(function () {
+            items += this.value + ',';
+        });
+        if (items != '') {
+            items = items.substr(0, (items.length - 1));
+        }else{
+            layer.alert('{$Think.lang.please_check_the_option}', {icon: 2})  
+        }
+        return items;
+    }
+    
+    function dateFtt(fmt,date) 
+    { //author: meizz 
+     var o = { 
+     "M+" : date.getMonth()+1,     //月份 
+     "d+" : date.getDate(),     //日 
+     "h+" : date.getHours(),     //小时 
+     "m+" : date.getMinutes(),     //分 
+     "s+" : date.getSeconds(),     //秒 
+     "q+" : Math.floor((date.getMonth()+3)/3), //季度 
+     "S" : date.getMilliseconds()    //毫秒 
+     }; 
+     if(/(y+)/.test(fmt)) 
+     fmt=fmt.replace(RegExp.$1, (date.getFullYear()+"").substr(4 - RegExp.$1.length)); 
+     for(var k in o) 
+     if(new RegExp("("+ k +")").test(fmt)) 
+     fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length))); 
+     return fmt; 
+    }
+</script>
+{include file="public/footer" /}

@@ -1,0 +1,240 @@
+<div class="dux-page-header uk-clearfix">
+    <div class="page-title">
+        <a class="uk-button uk-button-primary" href="{url('index')}"> 素材列表</a>
+    </div>
+    <div class="page-action">
+        <a class="uk-button uk-button-danger" href="javascript:location.reload();"><i class="fa fa-refresh"></i></a>
+    </div>
+</div>
+
+
+<div class="uk-margin-top">
+
+    <div class="dux-box">
+        <div class="box-side" style="width: 310px">
+            <div class="dux-material-panel">
+                <div class="panel-top active" data-index="0">
+                    <div class="body">
+                        <!--if{$info.image}-->
+                        <img src="{$info.image}" data-img alt="">
+                        <!--{else}-->
+                        <img src="__PUBLIC__/system/images/topic.gif" data-img alt="">
+                        <!--{/if}-->
+                        <h2 data-title>{$info.title ? $info.title : '标题'}</h2>
+                    </div>
+                    <div class="menu">
+                        <a href="javascript:;" data-edit="">编辑</a>
+                    </div>
+                </div>
+                <div class="panel-list" data-list>
+
+                </div>
+                <div class="panel-add">
+                    <a href="javascript:;" data-add=""> <i class="fa fa-plus"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="box-body">
+            <div class="uk-card uk-card-default uk-card-small dux-panel">
+                <div class="uk-card-header">图文信息</div>
+                <div class="uk-card-body">
+                    <form class="dux-form uk-form  " id="form" data-dux="form-bind" method="post">
+                        <fieldset>
+                            <div class="uk-form-group">
+                                <label class="uk-form-label">标题</label>
+                                <input class="uk-form-field" name="title" value="{$info.title}"
+                                       placeholder="不超过30个字" maxlength="30">
+                            </div>
+                            <div class="uk-form-group">
+                                <label class="uk-form-label">作者</label>
+                                <input class="uk-form-field" name="author" value="{$info.author}"
+                                       placeholder="不超过8个字" maxlength="8">
+                            </div>
+                            <div class="uk-form-group">
+                                <div>
+                                    <button class="uk-button uk-button-default uk-button-primary" type="button"
+                                            data-dux="form-upload" data-size="102400"
+                                            data-target="#image" data-type="jpg,png,bmp" data-callback="imageUpload">
+                                        <i class="fa fa-upload"></i> 选择封面图
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="uk-form-group">
+                                <label class="uk-form-label">正文</label>
+                                <div>
+                                    <textarea data-dux="form-editor" name="content" style="height: 400px"
+                                              data-upload="true"
+                                              data-linkimg="true"
+                                              data-toolbar="source,|,bold,underline,italic,strikethrough,eraser,forecolor,bgcolor,|,quote,fontfamily,fontsize,head,unorderlist,orderlist,alignleft,aligncenter,alignright,|,link,unlink,table,|,img,indent,insertcode,|,undo,redo,fullscreen"
+                                              data-upload-size="102400"
+                                    >{$info.content_location}</textarea>
+                                </div>
+                            </div>
+                            <div class="uk-form-group" data-digest>
+                                <label class="uk-form-label">摘要</label>
+                                <textarea name="digest" placeholder="单篇图文请填写摘要"></textarea>
+                            </div>
+                            <div class="uk-form-group">
+                                <label class="uk-form-label">原文链接</label>
+                                <input class="uk-form-field" name="url" value="{$info.content_source_url}" maxlength="250" placeholder="完整URL地址">
+                            </div>
+                            <div class="uk-form-group">
+                                <input type="hidden" name="image" value="{$info.image}">
+                                <input type="hidden" name="index" value="0">
+                                <button class="uk-button uk-button-primary" type="button" data-save disabled>保存</button>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="item-tpl">
+    <div class="panel-item uk-clearfix" data-index="{{d.index}}">
+        <div class="pic">
+            <img src="__PUBLIC__/system/images/topic_small.png" data-img alt="">
+        </div>
+        <h3 data-title>标题</h3>
+
+        <div class="menu">
+            <a href="javascript:;" data-edit="">编辑</a>
+            <a href="javascript:;" data-del="">删除</a>
+        </div>
+    </div>
+</script>
+
+<script>
+    Array.prototype.remove = function (obj) {
+        for (var i = 0; i < this.length; i++) {
+            var temp = this[i];
+            if (!isNaN(obj)) {
+                temp = i;
+            }
+            if (temp == obj) {
+                for (var j = i; j < this.length; j++) {
+                    this[j] = this[j + 1];
+                }
+                this.length = this.length - 1;
+            }
+        }
+    }
+    Do('base', 'tpl', 'dialog', function () {
+        var newsData = {
+            0: {
+                content: '<p></p>'
+            }
+        }, index = 0;
+
+        $panel = $('.dux-material-panel'), $panelList = $('[data-list]'), $form = $('#form');
+
+
+        //上传封面图
+        window.imageUpload = function (info) {
+            //var index = parseInt($form.find('[name="index"]').val());
+            $form.find('[name="image"]').val(info.url);
+            $panel.find('.active').find('[data-img]').attr('src', info.url);
+        };
+        //绑定输入
+        $form.find('[name="title"]').bind('input propertychange', function () {
+            $panel.find('.active').find('[data-title]').text($(this).val());
+
+        });
+
+        //增加图文
+        $panel.on('click', '[data-add]', function () {
+            index = index + 1;
+            var data = {
+                index: index
+            };
+            var gettpl = $('#item-tpl').html();
+            laytpl(gettpl).render(data, function (html) {
+                $panelList.append(html);
+            });
+            newsData[index] = {
+                content: '<p></p>'
+            };
+            $form.find('[data-digest]').hide();
+        });
+        //编辑图文
+        $panel.on('click', '[data-edit]', function () {
+            saveData();
+            $panel.find('.active').removeClass('active');
+            $(this).parents('.panel-item,.panel-top').addClass('active');
+            var i = parseInt($(this).parents('.panel-item,.panel-top').data('index'));
+            //读取当前信息
+            var data = newsData[i];
+            $form.find('[name="title"]').val(data.title);
+            $form.find('[name="author"]').val(data.author);
+            contentEditor.$txt.html(data.content);
+            $form.find('[name="url"]').val(data.url);
+            $form.find('[name="image"]').val(data.image);
+            $form.find('[name="index"]').val(i);
+            $form.find('[name="digest"]').val(data.digest);
+        });
+        //保存信息
+        var saveData = function () {
+            var i = parseInt($panel.find('.active').data('index'));
+            //保存当前信息
+            newsData[i] = {
+                title: $form.find('[name="title"]').val(),
+                author: $form.find('[name="author"]').val(),
+                content: contentEditor.$txt.html(),
+                url: $form.find('[name="url"]').val(),
+                image: $form.find('[name="image"]').val(),
+                digest : $form.find('[name="digest"]').val()
+            };
+        };
+
+        //删除图文
+        $panel.on('click', '[data-del]', function () {
+            saveData();
+            var item = $(this).parents('.panel-item');
+            var i = parseInt(item.data('index'));
+            delete newsData[i];
+            item.remove();
+            $panel.find('.panel-top').find('[data-edit]').click();
+            if($panelList.find('.panel-item').length <= 1) {
+                $form.find('[data-digest]').show();
+            }
+        });
+        //保存图文
+        $form.find('[data-save]').click(function () {
+            saveData();
+            //检查数据
+            var n = 0;
+            $.each(newsData, function (i, v) {
+                if (!v.title || !v.content ||  !v.image) {
+                    $panel.find('[data-index="' + i + '"]').find('[data-edit]').click();
+                    layer.alert('请检查图文信息是否完整!');
+                    n = 1;
+                    return false;
+                }
+            });
+            if (n == 1) {
+                return false;
+            }
+            //提交数据
+            app.ajax({
+                url: '{url()}',
+                type: 'post',
+                data: {
+                    data: newsData
+                },
+                success: function (msg, url) {
+                    layer.confirm(msg, {
+                        icon: 1,
+                        btn: ['返回', '继续']
+                    }, function () {
+                        window.location.href = url;
+                    }, function () {
+                        location.reload();
+                    });
+                }
+            });
+
+        });
+
+    });
+</script>

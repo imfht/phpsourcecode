@@ -1,0 +1,256 @@
+<?php
+/**
+ * @var \Ke\Web\Context          $this
+ * @var \Ke\Web\Http             $http
+ * @var \Ke\Web\Web              $web
+ * @var string                   $content
+ * @var \Ke\Utils\DocMen\DocHtml $html
+ */
+
+use Ke\Utils\DocMen\DocMen;
+
+/** @var \Ke\Utils\DocMen\DocMen $doc */
+$doc = $this->doc;
+?>
+<?php
+if (!$doc->isLoadMainDataFile()) {
+	print $html->warning('Can\'t load main data file, please re-generate the doc data!');
+}
+?>
+<?php if (empty($this->scope) || $this->scope === DocMen::INDEX) { ?>
+	<h1 class="header">Index Page</h1>
+	<?php if ($doc->getAllMissedItemsCount() > 0) { ?>
+		<?php
+		print $html->warning('There are ' . $doc->getAllMissedItemsCount() . ' items missed in generation!');
+		print $html->tableList($doc->getAllMissedItems(), [
+			'columns' => [
+				'name'    => 'Name',
+				'scope'   => 'Scope',
+				'path'    => [
+					'label'  => 'Path',
+					'onShow' => function (\Ke\Utils\DocMen\DocHtml $html, $value) {
+						return $html->fileLink($value);
+					},
+				],
+				'dir'     => false,
+				'message' => 'Message',
+			],
+		]);
+		?>
+	<?php } ?>
+	<div class="ui two column stackable grid">
+		<div class="column">
+			<h2 class="ui header">Classes
+				<small>[<?php print $doc->getAllClassesCount() ?>]</small>
+			</h2>
+			<div class="ui divider"></div>
+			<div class="ui list bulleted">
+				<?php foreach ($doc->getAllClasses() as $cls => $hash) { ?>
+					<div class="item scope-name">
+						<?php print $html->scopeLink(DocMen::CLS, $cls); ?>
+					</div>
+				<?php } ?>
+			</div>
+			<h2 class="ui header">Functions
+				<small>[<?php print $doc->getAllFunctionsCount() ?>]</small>
+			</h2>
+			<div class="ui divider"></div>
+			<div class="ui list bulleted">
+				<?php foreach ($doc->getAllFunctions() as $fn => $hash) { ?>
+					<div class="item scope-name">
+						<?php print $fn; ?>
+					</div>
+				<?php } ?>
+			</div>
+		</div>
+		<div class="column">
+			<h2 class="ui header">Files
+				<small>[<?php print $doc->getAllFilesCount() ?>]</small>
+			</h2>
+			<div class="ui divider"></div>
+			<div class="ui list bulleted">
+				<?php foreach ($doc->getAllFiles() as $file => $data) { ?>
+					<div class="item scope-name">
+						<?php print $html->fileLink($file); ?>
+					</div>
+				<?php } ?>
+			</div>
+		</div>
+	</div>
+<?php }
+elseif ($this->scope === DocMen::NS) { ?>
+	<?php
+	$data = $doc->getNamespace($this->name);
+	if (empty($data)) {
+		$html->warning("Unknown {$this->scope} with {$this->name}!");
+		return true;
+	}
+	?>
+	<h1 class="header"><?php print $html->scopeName(DocMen::NS, $this->name); ?></h1>
+	<div class="ui sticky static-sticky">
+		<div class="ui horizontal divider header">Classes
+			<small>[<?php print count($data['cls']) ?>]</small>
+		</div>
+	</div>
+	<div>
+		<?php foreach ($data['cls'] as $cls) { ?>
+			<div class="ui vertical segment">
+				<h2 class="header"><?php
+					print $html->scopeNameLink($cls['type'], $cls['name'], [
+						'parent'     => $cls['parent'],
+						'parentLink' => true,
+					]);
+					?></h2>
+				<?php print $html->classMisc($cls); ?>
+			</div>
+		<?php } ?>
+	</div>
+	<div class="ui sticky static-sticky">
+		<div class="ui horizontal divider header">Functions
+			<small>[<?php print count($data['fn']) ?>]</small>
+		</div>
+	</div>
+	<div>
+		<?php foreach ($data['fn'] as $func) { ?>
+			<div class="ui vertical segment">
+				<?php
+				print $html->functionBlock($func);
+				?>
+			</div>
+		<?php } ?>
+	</div>
+<?php }
+elseif ($this->scope === DocMen::CLS) { ?>
+	<?php
+	$data = $doc->getClass($this->name);
+	if (empty($data)) {
+		$html->warning("Unknown {$this->scope} with {$this->name}!");
+		return true;
+	}
+	print $html->scopeLabelLink(DocMen::NS, $data['namespace']);
+	?>
+	<h1 class="header"><?php
+		print $html->scopeName($data['type'], $this->name, [
+			'parent'     => $data['parent'],
+			'parentLink' => true,
+		]);
+		?></h1>
+	<?php print $html->classMisc($data); ?>
+	<?php if (!empty($data['impls'])) { ?>
+		<h2 class="ui horizontal divider header">Implements
+			<small>[<?php print count($data['impls']) ?>]</small>
+		</h2>
+		<div class="ui tag labels">
+			<?php foreach ($data['impls'] as $impl) {
+				print $html->scopeLabelLink('interface', $impl);
+			} ?>
+		</div>
+	<?php } ?>
+	<?php if (!empty($data['traits'])) { ?>
+		<h2 class="ui horizontal divider header">Traits
+			<small>[<?php print count($data['traits']) ?>]</small>
+		</h2>
+		<div class="ui tag labels">
+			<?php foreach ($data['traits'] as $trait) {
+				print $html->scopeLabelLink('trait', $trait);
+			} ?>
+		</div>
+	<?php } ?>
+	<?php
+	$packages = $data['packages'];
+	?>
+	<div class="ui sticky static-sticky">
+		<div id="class_tab" class="ui secondary pointing menu">
+			<?php
+			$index = 0;
+			foreach ($packages as $class => $groups) {
+				?>
+				<?php $active = $index === 0 ? ' active' : ''; ?>
+				<a class="item scope-name" href="#<?php print $doc->convertTagAttr($class) ?>"
+				   data-tab="<?php print $doc->convertTagAttr($class) ?>">
+					<?php print $class; ?>
+				</a>
+				<?php
+				++$index;
+			}
+			?>
+		</div>
+	</div>
+	<?php
+	$index = 0;
+	foreach ($packages as $class => $package) {
+		?>
+		<?php $active = $index === 0 ? ' active' : ''; ?>
+		<div class="ui tab" name="<?php print $doc->convertTagAttr($class) ?>"
+		     data-tab="<?php print $doc->convertTagAttr($class) ?>">
+			<?php
+			$type = $package['scope'];
+			foreach ($package['items'] as $name => $item) {
+				$itemHtml = $html->showClassItem($this->name, $type, $item['name'], $item, 'header');
+				print $html->tag('div', $itemHtml, 'ui vertical segment');
+			}
+			?>
+		</div>
+		<?php
+		++$index;
+	}
+	?>
+	<script>
+		(function ($) {
+			var tab = $('#class_tab .item');
+			var hash = location.hash.replace(/^(\#+)/, '');
+			tab.tab({
+				history: true,
+				historyType: 'hash'
+			});
+//			if (hash > 0) {
+//				tab.tab('change tab', hash);
+//			}
+//			else {
+//				tab.tab();
+//			}
+		})(jQuery);
+
+	</script>
+<?php }
+elseif ($this->scope === DocMen::FILE) { ?>
+	<?php
+	$data = $doc->getFile($this->name);
+	if (empty($data)) {
+		$html->warning("Unknown {$this->scope} with {$this->name}!");
+		return true;
+	}
+	$attr = [
+		'id'    => 'source',
+		'class' => 'line-numbers',
+	];
+	$startLine = $http->query('line', null);
+	if (!empty($startLine))
+		$attr['data-line'] = $startLine;
+	?>
+	<h1 class="header"><?php print $html->scopeName($this->scope, $this->name); ?></h1>
+	<?php $web->asset('prism'); ?>
+	<pre <?php print $html->attr($attr); ?>><code
+			class="language-php"><?php print htmlentities($data['source']); ?></code></pre>
+<?php }
+elseif ($this->scope === DocMen::WIKI) { ?>
+	<?php
+	$wikiBasePath = $doc->getWikiDir();
+
+	if (empty($this->name))
+		$this->name = 'Home';
+
+	if (!empty($this->name)) {
+		$content = $doc->loadWikiContent($this->name);
+		$content = trim($content);
+		$warning = '';
+		if (empty($content)) {
+			$warning = $html->warning("This file with no content!");
+//			$content = '# ' . $data['relative'];
+		}
+
+		echo $html->docCommentWithTextArea(htmlentities($content), 'wiki');
+		echo $warning;
+	}
+	?>
+<?php } ?>

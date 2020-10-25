@@ -1,0 +1,128 @@
+{extend name="index_layout"/}
+{block name="main"}
+<div class="layui-card">
+    <div class="layui-card-header">编辑配置</div>
+    <div class="layui-card-body">
+        <form class="layui-form" method="post">
+            <div class="layui-form-item">
+                <label class="layui-form-label">分组</label>
+                <div class="layui-input-inline w300">
+                    <select name="group" lay-verify="required">
+                        <option value=""></option>
+                        {volist name="groupArray" id="vo"}
+                        <option value="{$key}" {if $info.group==$key}selected{/if}>{$vo}[{$key}]</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">配置类型</label>
+                <div class="layui-input-inline w300">
+                    <select name="type" lay-filter="fieldType" lay-verify="required">
+                        <option value=""></option>
+                        {volist name="fieldType" id="vo"}
+                        <option value="{$vo.name}" data-ifoption="{$vo.ifoption}" {if $info.type==$vo.name}selected{/if}>{$vo.title}[{$vo.name}]</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">配置标题</label>
+                <div class="layui-input-inline w300">
+                    <input type="text" name="title" lay-verify="required" value="{$info.title}" autocomplete="off" placeholder="字段中文标题" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">一般由中文组成，仅用于显示</div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">配置名称</label>
+                <div class="layui-input-inline w300">
+                    <input type="text" name="name" lay-verify="required" value="{$info.name}" autocomplete="off" placeholder="字段英文名称" class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">由英文字母开头和下划线组成，如 <code>web_site_title</code></div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">配置默认值</label>
+                <div class="layui-input-inline w300">
+                    <textarea name="value" placeholder="未指定值时默认插入字段的值" class="layui-textarea">{$info.value}</textarea>
+                </div>
+                <div class="layui-form-mid layui-word-aux">配置类型为<code>数组</code>时请按如下格式填写：
+                    <br>{"键值1":"键名1","键值2":"键名2"}</div>
+            </div>
+            <div class="layui-form-item layui-form-text" id="options" {if $info.type !== 'checkbox' &&  $info.type !== 'select' &&  $info.type !== 'selects' && $info.type !== 'radio' && $info.type !== 'selectpage' } style="display: none;" {/if}>
+                <label class="layui-form-label">配置项</label>
+                <div class="layui-input-inline w300">
+                    <textarea name="options" placeholder="{if $info.type !== 'selectpage'}
+键值:键名
+键值:键名
+键值:键名
+.....
+{else}
+url:提供数据源的URL地址
+field:列表显示读取的字段,默认[name]
+key:列表选中后渲染的字段,默认[id]
+pagination:是否开启分页,默认[true]
+limit:分页大小,默认[10]
+multiple:是否支持多选,默认[false]
+max:最多可选择数量
+order:排序字段，默认[id]
+{/if}
+" class="layui-textarea">{$info.options}</textarea>
+                </div>
+                <div class="layui-form-mid layui-word-aux">如：
+                    {if $info.type !== 'selectpage'}
+<br>1:北京
+<br>2:上海
+<br>3:广东
+                    {else}
+<br>url:admin/manager/index
+<br>field:username
+<br>key:id
+<br>pagination:true
+<br>limit:10
+<br>multiple:true
+<br>max:20
+<br>order:id
+                    {/if}
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">配置备注</label>
+                <div class="layui-input-inline w300">
+                    <textarea name="remark" placeholder="填写配置说明" class="layui-textarea">{$info.remark}</textarea>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">排序</label>
+                <div class="layui-input-inline w300">
+                    <input type="number" name="listorder" autocomplete="off" placeholder="只能是正整数" class="layui-input" value="{$info.listorder}">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="formSubmit">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+            <input type="hidden" name="id" value="{$info.id}">
+        </form>
+    </div>
+</div>
+{/block}
+{block name="script"}
+<script type="text/javascript">
+layui.use('form', function() {
+    var form = layui.form;
+    form.on('select(fieldType)', function(data) {
+        if (data.value == 'checkbox' || data.value == 'select' || data.value == 'selects' || data.value == 'radio' || data.value == 'selectpage') {
+            $('#options').show();
+        }else{
+            $('#options').hide();
+        }
+        if (data.value == 'selectpage') {
+            $('#options textarea').attr('placeholder','url:提供数据源的URL地址\nfield:列表显示读取的字段,默认[name]\nkey:列表选中后渲染的字段,默认[id]\npagination:是否开启分页,默认[true]\nlimit:分页大小,默认[10]\nmultiple:是否支持多选,默认[false]\nmax:最多可选择数量\norder:排序字段，默认[id]');
+            $('#options .layui-word-aux').html("如<br>url:admin/manager/index<br>field:username<br>key:id<br>pagination:true<br>page_size:10<br>multiple:true<br>max:20<br>order:id")
+        }
+    });
+});
+</script>
+{/block}

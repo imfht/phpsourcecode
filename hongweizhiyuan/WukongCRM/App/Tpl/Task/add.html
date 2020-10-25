@@ -1,0 +1,325 @@
+<include file="Public:header" />
+<script type="text/javascript" src="__PUBLIC__/js/kindeditor-all-min.js"></script>
+<script type="text/javascript" src="__PUBLIC__/js/zh_CN.js"></script>
+<link rel="stylesheet" href="__PUBLIC__/css/kindeditor.css" type="text/css" />
+<script type="text/javascript">
+	var editor;
+		KindEditor.ready(function(K) {
+			editor = K.create('textarea[name="description"]', {
+				uploadJson:'{:U("file/editor")}',
+				allowFileManager : true,
+				loadStyleMode : false,
+				fileManagerJson: "{:U('file/manager')}"
+			});
+		});
+</script>
+<div class="container">
+	<div class="page-header">
+		<h4>{:L('ADD_TASK')}</h4>
+	</div>
+	<div class="row-fluid">
+		<div class="span12">
+			<include file="Public:alert"/>
+			<form action="{:U('task/add')}" method="post">
+			<input type="hidden" name="creator_role_id" value="{$Think.session.role_id}"/>
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<td>&nbsp;</td>						
+						<td <if condition="C('ismobile') neq 1">colspan="3"</if>><input class="btn btn-primary" name="submit" type="submit" value="{:L('SAVE')}"/> &nbsp; <if condition="C('ismobile') neq 1"><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE AND NEW')}"/></if> &nbsp; <input class="btn" onclick="javascript:history.go(-1)" type="reset" value="{:L('RETURN')}"/></td>
+					</tr>
+				</thead>
+				<tfoot>
+					<tr>
+						<td>&nbsp;</td>
+						<td <if condition="C('ismobile') neq 1">colspan="3"</if>><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE')}"/> &nbsp; <if condition="C('ismobile') neq 1"><input name="submit" class="btn btn-primary" type="submit" value="{:L('SAVE AND NEW')}"/></if> &nbsp; <input onclick="javascript:history.go(-1)" class="btn" type="reset" value="{:L('RETURN')}"/></td>
+					</tr>
+				</tfoot> 
+				<tbody>
+					<tr><th colspan="4">{:L('BASIC_INFO')}</th></tr>
+					<tr>
+						<td class="tdleft" <if condition="C('ismobile') neq 1">width="15%"</if>>{:L('THEME')}</td>
+						<td <if condition="C('ismobile') neq 1">width="35%"</if>><input type="text" name="subject" id="subject" /></td>
+						<if condition="C('ismobile') eq 1"></tr><tr></if>
+						<td class="tdleft" <if condition="C('ismobile') neq 1">width="15%"</if>>{:L('NOTIFICATION_METHODS')}</td>
+						<td <if condition="C('ismobile') neq 1">width="35%"</if>><input type="checkbox" name="message_alert" value="1" checked="checked">{:L('MESSAGE')} &nbsp; <input type="checkbox" name="email_alert" value="1">{:L('EMAIL')}</td>
+					</tr>
+					<tr>
+						<td class="tdleft">负责人</td>
+						<td <if condition="C('ismobile') neq 1">colspan="3"</if>><input type="hidden" name="owner_role_id_str" id="owner_id"/><input class="span6" type="text" id="owner_name" name="owner_name" />&nbsp; {:L('CLICK_TO_SELECT')}</td>
+					</tr>
+					<tr>
+						<td class="tdleft">任务相关人</td>
+						<td <if condition="C('ismobile') neq 1">colspan="3"</if>><input type="hidden" name="about_roles" id="about_roles"/><input class="span6" type="text" id="about_roles_name" name="about_roles_name" />&nbsp; {:L('CLICK_TO_SELECT')}</td>
+					</tr>
+					<tr>
+						<td class="tdleft">{:L('SELECT_RELATED')}</td>
+						<td>
+							<select name="module" class="span2" onchange="changeContent()" id="select1">
+								<option value=""></option>
+								<option value="contacts">{:L('CONTACTS')}</option>
+								<!-- <option value="leads">线索</option> -->
+								<option value="customer">{:L('CUSTOMER')}</option>
+								<option value="business">{:L('BUSINESS')}</option>
+								<option value="product">{:L('PRODUCT')}</option>
+							</select>
+							<input type="hidden" id="module_id" name="module_id" id="select_content"/>
+							<input type="text" name="module_name" id="module_name"/>
+						</td>
+						<if condition="C('ismobile') eq 1"></tr><tr></if>
+						<td class="tdleft">{:L('DEADLINE')}</td>
+						<td><input type="text" id="due_date" onClick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm'})" name="due_date" class="Wdate"/></td>
+					</tr>
+					<tr>
+						<td class="tdleft" >{:L('STATUS')}</td>
+						<td><select name="status">
+							<option value="{:L('NOT_START')}">{:L('NOT_START')}</option>
+							<option value="{:L('DELAY')}">{:L('DELAY')}</option>
+							<option value="{:L('ONGOING')}">{:L('ONGOING')}</option>
+							<option value="{:('COMPLETE')}">{:L('COMPLETE')}</option>
+						</select></td>
+						<if condition="C('ismobile') eq 1"></tr><tr></if>
+						<td class="tdleft" >{:L('PRECEDENCE')}</td>
+						<td><select name="priority">
+							<option>{:L('HIGH')}</option>
+							<option>{:L('GENERAL')}</option>
+							<option>{:L('LOW')}</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td class="tdleft">{:L('DESCRIPTION')}</td>
+						<td <if condition="C('ismobile') neq 1">colspan="3"</if>>
+							<textarea rows="15" class="span10" name="description"></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			</form>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-message2" title="{:L('SELECT_CONTACTS')}">loading...</div>
+<div class="hide" id="dialog-message3" title="{:L('SELECT_LEADS')}">loading...</div>
+<div class="hide" id="dialog-message4" title="{:L('SELECT_CUSTOMER')}">loading...</div>
+<div class="hide" id="dialog-message5" title="{:L('SELECT_BUSINESS')}">loading...</div>
+<div class="hide" id="dialog-message6" title="{:L('SELECT_PRODUCT')}">loading...</div>
+<div class="hide" id="dialog-message7" title="{:L('SELECT_EXECUTOR')}">loading...</div>
+<div class="hide" id="dialog-message8" title="选择任务相关人">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+
+$("#dialog-message7").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	height:400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			checked_role_id = ',';
+			checked_role_name = '';
+			$(".muti_role_id:checked").each(function(){
+				checked_role_id += ($(this).val()+',');
+				checked_role_name += ($(this).attr('rel')+',');
+			});
+			$('#owner_id').val(checked_role_id);
+			$('#owner_name').val(checked_role_name);
+			$(this).html(""); 
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message8").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	height:400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			checked_role_id = ',';
+			checked_role_name = '';
+			$(".muti_role_id:checked").each(function(){
+				checked_role_id += ($(this).val()+',');
+				checked_role_name += ($(this).attr('rel')+',');
+			});
+			$('#about_roles').val(checked_role_id);
+			$('#about_roles_name').val(checked_role_name);
+			$(this).html(""); 
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message2").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="contacts"]:checked').val();
+			var name = $('input:radio[name="contacts"]:checked').parent().next().html();
+			$('#module_id').val(item);
+			$('#module_name').val(name);
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message3").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="leads"]:checked').val();
+			var name = $('input:radio[name="leads"]:checked').parent().next().html();
+			var company = $('input:radio[name="leads"]:checked').parent().next().next().html();
+			$('#module_id').val(item);
+			$('#module_name').val(name+" "+company);
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message4").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: {
+        "Ok": function () {
+			var item = $('input:radio[name="customer"]:checked').val();
+			var name = $('input:radio[name="customer"]:checked').parent().next().html();
+			$('#module_id').val(item);
+			$('#module_name').val(name);
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message5").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="business"]:checked').val();
+			var name = $('input:radio[name="business"]:checked').parent().next().html();
+			if(item){
+				$('#module_id').val(item);
+				$('#module_name').val(name);
+			}
+			
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+$("#dialog-message6").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+    close: function () {
+        $(this).html(""); 
+    },
+    buttons: { 
+        "Ok": function () {
+			var item = $('input:radio[name="product_id"]:checked').val();
+			var name = $('input:radio[name="product_id"]:checked').parent().next().html();
+			$('#module_id').val(item);
+			$('#module_name').val(name);
+            $(this).dialog("close"); 
+        },
+		"Cancel": function () {
+            $(this).dialog("close");
+        }
+    },
+	position:["center",100]
+});
+function changeContent(){
+	$('#module_id').val("");
+	$('#module_name').val("");
+}
+$(function(){
+	$("input[name='submit']").click(function(){			
+		if($("#subject").val() == null || $("#subject").val() == ""){
+			alert('{:L('SUBJECT_CAN_NOT_EMPTY')}');
+			return false;
+		}
+	});
+	$('#module_name').click(
+		function(){
+			a = $("#select1  option:selected").val();
+			if (a == "contacts"){
+				$('#dialog-message2').dialog('open');
+				$('#dialog-message2').load('{:U("contacts/radiolistdialog")}');
+			}else if(a == "leads"){
+				$('#dialog-message3').dialog('open');
+				$('#dialog-message3').load('{:U("leads/listdialog")}');
+			}else if(a == "business"){
+				$('#dialog-message5').dialog('open');
+				$('#dialog-message5').load('{:U("business/listdialog")}');
+			}else if(a == "customer"){
+				$('#dialog-message4').dialog('open');
+				$('#dialog-message4').load('{:U("customer/listdialog")}');
+			}else if(a == "product"){
+				$('#dialog-message6').dialog('open');
+				$('#dialog-message6').load('{:U("product/allproductdialog")}');
+			}
+		}
+	);
+	$('#owner_name').click(
+		function(){
+			$('#dialog-message7').dialog('open');
+			$('#dialog-message7').load('{:U("user/mutiListDialog","by=task")}');
+		}
+	);
+	$('#about_roles_name').click(
+		function(){
+			$('#dialog-message8').dialog('open');
+			$('#dialog-message8').load('{:U("user/mutiListDialog","by=task")}');
+		}
+	);
+});
+</script>
+<include file="Public:footer" />

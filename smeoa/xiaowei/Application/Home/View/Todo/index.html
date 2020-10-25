@@ -1,0 +1,161 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'待办事项','search'=>'L'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-left"></div>
+			<div class="pull-right">
+				<a  onclick="add();" class="btn btn-sm btn-primary" >新建</a>
+			</div>
+		</div>
+	</div>
+	<form id="form_data" name="form_data" method='post' >
+		<div>
+			<div class="ul_table border-bottom">
+				<ul>
+					<li class="thead">
+						<span class="col-9 pull-right text-center">操作</span>
+						<span class="col-10 pull-right text-center">状态</span>
+						<span class="col-9 pull-right text-center">截至日期</span>
+						<div class="auto autocut text-left">
+							待办事项
+						</div>
+					</li>
+					<foreach name="list" item="vo" >
+						<li class="tbody" node="{$vo.id}">
+							<input class="node" type="hidden" name="node[]" value="{$vo.id}">
+							<input class="priority" type="hidden" name="priority[]" value="{$vo.priority}">
+							<input class="sort" type="hidden" name="sort[]">
+							<span class="col-3 pull-right text-center"> <a title="删除" class="del" onclick="del(this);"><i class="fa fa fa-times"></i></a> </span>
+							<span class="col-3 pull-right text-center"> <a title="调低优先级" class="down"><i class="fa fa-arrow-down"></i></a> </span>
+							<span class="col-3 pull-right text-center"> <a title="调高优先级" class="up"><i class="fa fa-arrow-up"></i></a> </span>
+							<span class="col-10 pull-right text-center"> <a class="status">{$vo.status|todo_status}</a> </span>
+							<span class="col-9 pull-right text-center">{$vo.end_date}</span>
+							<span class="auto"> <a href="{:U('edit','id='.$vo['id'])}">{$vo.name}</a> </span>
+						</li>
+					</foreach>
+				</ul>
+				<br>
+				<ul>
+					<li class="thead">
+						<span class="col-9 pull-right text-center">操作</span>
+						<span class="col-10 pull-right text-center">状态</span>
+						<span class="col-9 pull-right text-center">完成日期</span>
+						<div class="auto autocut text-left">
+							已完成事项
+						</div>
+					</li>
+					<foreach name="list2" item="vo">
+						<li class="tbody" node="{$vo.id}">
+							<input class="node" type="hidden" name="node[]" value="{$vo.id}">
+							<input class="priority" type="hidden" name="priority[]" value="{$vo.priority}">
+							<input class="sort" type="hidden" name="sort[]">
+							<span class="col-3 pull-right text-center"> <a title="删除" class="del" onclick="del(this);"><i class="fa fa fa-times"></i></a> </span>
+							<span class="col-3 pull-right text-center"> <a title="低" class="down"><i class="fa fa-arrow-down"></i></a> </span>
+							<span class="col-3 pull-right text-center"> <a title="高" class="up"><i class="fa fa-arrow-up"></i></a> </span>
+							<span class="col-10 pull-right text-center"><a class="status">{$vo.status|todo_status}</a> </span>
+							<span class="col-9 pull-right text-center">{$vo.end_date}</span>
+							<span class="auto"> <a href="{:U('edit','id='.$vo['id'])}">{$vo.name}</a> </span>
+						</li>
+					</foreach>
+				</ul>
+			</div>
+		</div>
+	</form>
+	<div id="dialog2" class="dropdown">
+		<ul class="dropdown-menu">
+			<li>
+				<a onclick="mark_status(1);">尚未开始</a>
+			</li>
+			<li>
+				<a onclick="mark_status(2);">正在进行</a>
+			</li>
+			<li>
+				<a onclick="mark_status(3);">完成</a>
+			</li>
+		</ul>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function add() {
+			window.open("{:U('add')}", "_self");
+		}
+
+		function del(obj) {
+			ui_confirm('确定要删除吗?', function() {
+				id = $(obj).parent().parent().find("input.node").val();
+				sendAjax("{:U('del')}", "id=" + id, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							$(obj).parent().parent().remove();
+						});
+					}
+				});
+			});
+		}
+
+
+		$(document).ready(function() {
+			set_return_url();
+			$("#dialog2").mouseleave(function() {
+				//$("#dialog2").hide();
+			});
+
+			$("li a.status").on("click", (function() {				
+				$("#dialog2").css("left", $(this).parents("span").offset().left - $("#page-wrapper").offset().left);
+				$("#dialog2").css("top", $(this).parents("span").offset().top - $("#page-wrapper").offset().top+25);
+				$("#dialog2").show();
+				node = $(this).parents("li").find("input.node").val();
+				$("#dialog2").attr("node", node);
+			}));
+
+			$("li").each(function() {
+				$(this).css("background-color", schedule_bg($(this).find("input.priority").val()));
+			});
+
+			$("a.up").click(function() {
+				moveUp($(this));
+			});
+
+			$("a.down").click(function() {
+				moveDown($(this));
+			});
+		});
+		function moveUp(obj) {
+			var current = $(obj).parent().parent();
+			var prev = current.prev();
+			if (current.index() > 1) {
+				current.insertBefore(prev);
+			}
+			set_sort();
+		}
+
+		function moveDown(obj) {
+			var current = $(obj).parent().parent();
+			var next = current.next();
+			if (next) {
+				current.insertAfter(next);
+			}
+			set_sort();
+		}
+
+		function mark_status(val) {
+			node = $("#dialog2").attr("node");
+			if (node) {
+				sendAjax("{:U('mark_status')}", "id=" + node + "&val=" + val, function(data) {
+					location.reload(true);
+				});
+			}
+		}
+
+		function set_sort() {
+			$("li.tbody").each(function() {
+				$(this).find("input.sort").val($(this).index());
+			});
+			var vars = $("#form_data").serialize();
+			sendAjax("{:U('set_sort')}", vars);
+		}
+
+	</script>
+</block>

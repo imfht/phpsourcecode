@@ -1,0 +1,303 @@
+{extend name="base" /}
+{block name="body"}
+<style>
+.inputtable select{display:block;}
+
+</style>
+    <!--tab标签-->
+    <div class="layui-tab-brief">
+
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <form class="layui-form form-container" data-url="{:url('')}"  localtion-url="{:es_url('apiList')}">
+        
+        <input type="hidden" name="id" value="{$info['id']|default='0'}"/>
+                    
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="name" value="{$info.name|default=''}" required  lay-verify="required" placeholder="请输入API接口名称" class="layui-input">
+                      
+                        </div>  <div class="layui-form-mid layui-word-aux">API接口名称 </div>
+                    </div>                    
+   
+                 <div class="layui-form-item">
+                        <label class="layui-form-label">排序</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="sort" placeholder="请输入API接口排序值"  value="{$info.sort|default='0'}" required  lay-verify="required" class="layui-input">
+                          
+                        </div>   <div class="layui-form-mid layui-word-aux">API接口排序值 </div>
+                    </div>
+                                     <div class="layui-form-item">
+                        <label class="layui-form-label">请求地址</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="api_url" placeholder="请输入请求地址"  value="{$info['api_url']|default=''}" required  lay-verify="required" class="layui-input">
+                            
+                        </div> <div class="layui-form-mid layui-word-aux">控制器/方法名 </div>
+                    </div>
+                                     <div class="layui-form-item">
+                        <label class="layui-form-label">请求类型</label>
+                        <div class="layui-input-inline">
+                            <select name="request_type" class="layui-input">
+                                  <option value="0" {if condition="$edit eq 'yes'"}{if condition="$info.request_type eq 0"}checked{/if}{/if}  >POST</option>
+                             </select>
+                        </div>
+                    </div>
+                                     <div class="layui-form-item">
+                        <label class="layui-form-label">是否为分页接口</label>
+                        <div class="layui-input-inline">
+                            <input type="radio" lay-filter="is_page" {if condition="($edit eq 'yes') AND ($info.is_page eq 0)"}checked{/if} name="is_page" value="0" title="否">
+                            <input type="radio" lay-filter="is_page" {if condition="($edit eq 'yes') AND ($info.is_page eq 1)"}checked{/if} name="is_page" value="1" title="是">
+                            
+                        </div>
+                         <div class="layui-form-mid layui-word-aux">若为分页接口则需传递分页相关参数 </div>
+                    </div>
+                                                         <div class="layui-form-item">
+                        <label class="layui-form-label">研发者</label>
+                        <div class="layui-input-inline">
+                            <select name="developer" class="layui-input">
+                                   {volist name=":parse_config_array('team_developer')" id='vo'}
+                        <option value="{$key}" {if condition="($edit eq 'yes') AND ($info.developer eq $key)"}checked{/if}>{$vo}</option>
+                    {/volist}
+                             </select>
+                        </div>
+                    </div>
+                                                 <div class="layui-form-item">
+                        <label class="layui-form-label">请求数据</label>
+                        <div class="layui-input-inline">
+                            <input type="radio" lay-filter="is_request_data" {if condition="($edit eq 'yes') AND ($info.is_request_data eq 0)"}checked{/if} name="is_request_data" value="0" title="否" >
+                            <input type="radio" lay-filter="is_request_data" {if condition="($edit eq 'yes') AND ($info.is_request_data eq 1)"}checked{/if} name="is_request_data" value="1" title="是" >
+                          
+                        </div>  <div class="layui-form-mid layui-word-aux">若为否则无需添加请求字段 </div>
+                    </div>
+                    <div class="layui-form-item">
+                     <table id="request_data_table" style="display : none;"></table>
+                     </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">响应数据</label>
+                        <div class="layui-input-inline">
+                            <input  type="radio" lay-filter="is_response_data" {if condition="($edit eq 'yes') AND ($info.is_response_data eq 0)"}checked{/if} name="is_response_data" value="0" title="否" >
+                            <input type="radio" lay-filter="is_response_data" {if condition="($edit eq 'yes') AND ($info.is_response_data eq 1)"}checked{/if} name="is_response_data" value="1" title="是">
+                        
+                        </div>     <div class="layui-form-mid layui-word-aux">若为否则无需添加响应字段 </div>
+                    </div>
+                      <div class="layui-form-item">
+                     <table id="response_data_table" style="display : none;"></table>
+                     </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">分组</label>
+                        <div class="layui-input-inline">
+                            <select name="group_id" class="layui-input">
+                                   <option value="0">---请选择分组---</option>
+                    {volist name="group_list" id='vo'}
+                        <option value="{$vo.id}" {if condition="($edit eq 'yes') AND ($info.group_id eq $vo.id)"}selected{/if}>{$vo.name}</option>
+                    {/volist}
+                             </select>
+                        </div>
+                    </div>
+                                        <div class="layui-form-item">
+                        <label class="layui-form-label">接口状态</label>
+                        <div class="layui-input-inline">
+                            <select name="api_status" class="layui-input">
+                                    {volist name=":parse_config_array('api_status_option')" id='vo'}
+                        <option value="{$key}" {if condition="($edit eq 'yes') AND ($info.api_status eq $key)"}selected{/if}>{$vo}</option>
+                    {/volist}
+                             </select>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">接口响应示例</label>
+                        <div class="layui-input-block">
+                         <textarea class="layui-textarea" name="response_examples" rows="3" placeholder="请输入接口响应示例">{$info['response_examples']|default=''}</textarea>
+                       
+                        </div>
+                    </div>
+     <div class="layui-form-item">
+                        <label class="layui-form-label">接口简介</label>
+                        <div class="layui-input-block">
+                         <textarea class="layui-textarea" name="describe" rows="3" placeholder="请输入接口简介">{$info['describe']|default=''}</textarea>
+                       
+                        </div>
+                    </div>          
+   <div class="layui-form-item">
+                        <label class="layui-form-label">是否验证用户令牌：user_token</label>
+                        <div class="layui-input-inline">
+                            <input  type="radio" lay-filter="is_user_token" {if condition="($edit eq 'yes') AND ($info.is_user_token eq 0)"}checked{/if} name="is_user_token" value="0" title="否">
+                            <input type="radio" lay-filter="is_user_token" {if condition="($edit eq 'yes') AND ($info.is_user_token eq 1)"}checked{/if} name="is_user_token" value="1" title="是" >
+                           
+                        </div>  <div class="layui-form-mid layui-word-aux">若为否则为无需验证身份的接口，若为是则需要登录后获取 user_token</div>
+                    </div>
+              
+               <div class="layui-form-item">
+                        <label class="layui-form-label">是否响应数据签名：data_sign</label>
+                        <div class="layui-input-inline">
+                            <input type="radio" lay-filter="is_response_sign" {if condition="($edit eq 'yes') AND ($info.is_response_sign eq 0)"}checked{/if}  name="is_response_sign" value="0" title="否">
+                            <input type="radio" lay-filter="is_response_sign" {if condition="($edit eq 'yes') AND ($info.is_response_sign eq 1)"}checked{/if}  name="is_response_sign" value="1" title="是" >
+                           
+                        </div>  <div class="layui-form-mid layui-word-aux">若为否则无需验证数据签名，若为是则会返回 data_sign 用于验证数据是否安全</div>
+                    </div>  
+              
+                             <div class="layui-form-item">
+                        <label class="layui-form-label">是否验证请求数据签名：data_sign</label>
+                        <div class="layui-input-inline">
+                            <input type="radio" lay-filter="is_request_sign" {if condition="($edit eq 'yes') AND ($info.is_request_sign eq 0)"}checked{/if} name="is_request_sign" value="0" title="否">
+                            <input type="radio" lay-filter="is_request_sign"{if condition="($edit eq 'yes') AND ($info.is_request_sign eq 1)"}checked{/if} name="is_request_sign" value="1" title="是" >
+                         
+                        </div>    <div class="layui-form-mid layui-word-aux">若为否则无需验证数据签名，若为是则需要请求中带 data_sign 字段 用于验证数据安全</div>
+                    </div>  
+ <div class="layui-form-item">
+                        <label class="layui-form-label">接口文本描述</label>
+                        <div class="layui-input-block">
+                         <textarea class="layui-textarea" name="describe_text" rows="3" placeholder="请输入接口文本描述">{$info['describe_text']|default=''}</textarea>
+                       
+                        </div>
+                    </div>
+
+
+{:hook('ArticleEditor', array('name'=> 'describe_text','number'=>10000,'value'=> ''))}
+
+                    
+                    
+                    
+                    
+                    
+                         <div class="btable-paged" >
+				<div class="layui-main">
+                    <div class="formbtngroup">
+<button class="layui-btn layui-btn-sm" lay-submit="" lay-filter="formadd">更新</button>
+<a href="javascript:;"  class="layui-btn layui-btn-primary layui-btn-sm closebtn">返回</a>
+</div>
+</div>
+        </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+<script type="text/javascript">
+
+
+    showOrHideFieldData({$info['is_request_data']|default=0}, 'request_data_table'); 
+    showOrHideFieldData({$info['is_response_data']|default=0}, 'response_data_table'); 
+    layui.use(['layer','jquery','form','upload'],function(){
+    	  var layer = parent.layer === undefined ? layui.layer : parent.layer
+    	  , form = layui.form
+    	  ,upload = layui.upload
+    	  ,$ = layui.jquery;
+    		form.on('radio(is_request_data)', function(data){
+        		showOrHideFieldData($(this).val(), 'request_data_table'); 
+        		}); 
+        	form.on('radio(is_response_data)', function(data){
+        		showOrHideFieldData($(this).val(), 'response_data_table');
+        		}); 
+    	  
+    	  
+    });
+
+
+
+    function showOrHideFieldData(handle, mark)
+    {
+        if (1 == handle) { $('#' + mark).show();} else { $('#' + mark).hide(); }
+    }
+    
+    var default_text_name = 'request_data[field_name][]';
+    var api_data_type_option = "{$api_data_type_option}";
+    
+</script>
+
+<script src="__ADMIN__/edittable/jquery.edittable.js"></script>
+<link rel="stylesheet" href="__ADMIN__/edittable/jquery.edittable.min.css">
+
+<script type="text/javascript">
+
+var request_data_table = $('#request_data_table').editTable({
+    field_templates: {
+        'request_data_field_describe' : {
+            html: "<textarea name='request_data[field_describe][]'/>",
+            getValue: function (input) {
+                return $(input).val();
+            },
+            setValue: function (input, value) {
+                return $(input).text(value);
+            }
+        },
+        'request_data_is_require' : {
+            html: "<select lay-ignore name='request_data[is_require][]' style='margin: 5px;'><option value='1'>是</option><option  value='0'>否</option></select>",
+            getValue: function (input) {
+                return $(input).val();
+            },
+            setValue: function (input, value) {
+                var select = $(input);
+                select.find('option').filter(function() {
+                    return $(this).val() == value; 
+                }).attr('selected', true);
+                return select;
+            }
+        },
+        'request_data_type' : {
+            html: "<select lay-ignore name='request_data[data_type][]' style='margin: 5px;'>"+api_data_type_option+"</select>",
+            getValue: function (input) {
+                return $(input).val();
+            },
+            setValue: function (input, value) {
+                var select = $(input);
+                select.find('option').filter(function() {
+                    return $(this).val() == value; 
+                }).attr('selected', true);
+                return select;
+            }
+        }
+    },
+    row_template: ['text', 'request_data_type', 'request_data_is_require', 'request_data_field_describe'],
+    headerCols: ['字段名称', '数据类型', '&nbsp;&nbsp;是否必填&nbsp;&nbsp;' , '字段描述'],
+    first_row: false,
+    data: [],
+    tableClass: 'inputtable custom'
+});
+
+request_data_table.loadData({$info.request_data_json});
+
+default_text_name = 'response_data[field_name][]';
+
+var response_data_table = $('#response_data_table').editTable({
+    field_templates: {
+        'response_data_field_describe' : {
+            html: "<textarea name='response_data[field_describe][]'/>",
+            getValue: function (input) {
+                return $(input).val();
+            },
+            setValue: function (input, value) {
+                return $(input).text(value);
+            }
+        },
+        'response_data_type' : {
+            html: "<select lay-ignore name='response_data[data_type][]' style='margin: 5px;'>"+api_data_type_option+"</select>",
+            getValue: function (input) {
+                return $(input).val();
+            },
+            setValue: function (input, value) {
+                var select = $(input);
+                select.find('option').filter(function() {
+                    return $(this).val() == value; 
+                }).attr('selected', true);
+                return select;
+            }
+        }
+    },
+    row_template: ['text', 'response_data_type', 'response_data_field_describe'],
+    headerCols: ['字段名称', '数据类型', '字段描述'],
+    first_row: false,
+    data: [],
+    tableClass: 'inputtable custom'
+});
+
+response_data_table.loadData({$info.response_data_json});
+
+</script>
+{/block}
+
+
+ 

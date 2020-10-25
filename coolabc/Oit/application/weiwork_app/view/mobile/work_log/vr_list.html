@@ -1,0 +1,115 @@
+<div style="padding:5px;border:1px solid #ddd">
+    <a id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_ref" href="#" class="easyui-linkbutton"
+       data-options="iconCls:'icon-reload'">{:lang('刷新')}</a>
+</div>
+
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_MG" style="width:100%;height:90%" data-options=" border: false, lines: true "></div>
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Fun_Win"></div>
+
+
+<!-- 将明细卡片的按钮调整至上级页面，固定在顶端 -->
+<div id="{$Think.CONTROLLER_NAME}_vr_record_toolbar" style="display: none">
+    <a id="{$Think.CONTROLLER_NAME}_vr_record_close" href="#" class="easyui-linkbutton"
+       data-options="iconCls:'icon-close'">{:lang('关闭')}</a>
+</div>
+
+<script>
+    $(function () {
+        var auto_open = 0;
+        var index = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        index.gui_build_state = {
+            linkbutton: false,
+        };
+
+        var record = index.child_record = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: 'vr_record',
+        });
+        record.gui_build_state = {
+            linkbutton: false,
+            form: false,
+        };
+
+        // 传递的 js_json 数据
+        index.data = JSON.parse('{$js_data}');
+        record.data = JSON.parse('{$record_js_data}');
+
+        index.menubutton().linkbutton_init(index.data.Top_Buttons, 'ref', 'after');
+        record.menubutton().linkbutton_init(record.data.Top_Buttons, 'close', 'after');
+
+        // 窗口定义
+        var url = "{:url('vr_record')}";
+        url = index.url().add_param(url);
+        var win_record = {
+            href: url,
+            fit: true,
+            title: "{:lang('单据明细')}",
+            draggable: false,
+            toolbar: '#{$Think.CONTROLLER_NAME}_vr_record_toolbar',
+            onOpen: function () {
+                record.auto_run().when_build_ele_finish();
+            }
+        };
+        index.linkbutton().index_add({
+            btn_id: 'add',
+            open_win_id: 'vr_record',
+            open_win_val: win_record,
+            record: record,
+        });
+        index.linkbutton().index_ref('ref');
+
+        // ----------------------事件---------------------------
+        // 刷新单据数据, 新增或编辑时运行
+        index.event._create_voucher = function () {
+            function open_voucher(key, row) {
+                win_record.href = index.url().add_param(url, 'voucher_id/' + row.voucher_id + '/');
+
+                // 编辑或查看记录
+                record.edit_state = 'edit';
+                record.edit_row_data = row;
+                record.edit_index = key;
+
+                if (index.open_win_id == 'vr_record') {
+                    index.Fun_Win.dialog('open');
+                } else {
+                    index.Fun_Win.dialog(win_record);
+                    index.open_win_id = 'vr_record';
+                }
+            }
+
+            $.post('vr_get_voucher_list_data', function (data) {
+                // 单据列表
+                index.MG.datalist({
+                    data: data.vr_data,
+                    textField: 'voucher_no',
+                    groupField: 'group',
+                    textFormatter: function (value) {
+                        return '<a href="javascript:void(0)" class="datalist-link">' + value + '</a>';
+                    },
+                    onClickRow: function (key, row) {
+                        open_voucher(key, row);
+                    },
+                });
+
+                // 如果有当天的单据，那么自动打开当天单据
+                // 只运行一次
+                if(data.auto_open_vr == true && auto_open == 0) {
+                    open_voucher(0, (data.vr_data[0]));
+                    auto_open = 1;
+                }
+
+                // 异步顺序执行
+                // 在异步中，直接调用
+                index.seq.run_next();
+            });
+
+        };
+        index.auto_run().when_build_ele_finish();
+
+    })
+</script>

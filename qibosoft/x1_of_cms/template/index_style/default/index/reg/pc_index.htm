@@ -1,0 +1,198 @@
+{extend name="index@layout" /}
+{block name="head_mui_css"}<!--不使用mui-->{/block}
+{block name="head_title"}用户登录{/block}
+{block name="nav"}
+<div class="qb_ui_Site_nav">
+	<ul>
+		<ol><i class="si si-home"></i>当前位置：</ol>
+		<li>
+			<a href='/' class="home">网站首页</a> <a href='#'>用户注册</a>
+		</li>
+	</ul>
+</div>
+{/block}
+{block name="body_content"}
+<link rel="stylesheet" href="__STATIC__/index/default/pclogin.css"> 
+<div class="UserLoginCont">
+	<div class="head"><i class="fa fa-address-book-o"></i> 用户注册</div>
+	<div class="LoginCont">
+		<div class="Left">
+			<form class="mui-input-group" action="{:urls('reg/index')}" method="post">
+				<div class="LoginBox">
+					<ul>
+						<li class="icon"><i class="fa fa-fw fa-user-o"></i></li>
+						<ol><input type="text" name="username" minlength="3" maxlength="20" placeholder="请输入帐号" onBlur="checkinput($(this),'username')" required/></ol>
+						<li>3个字符以上</li>
+					</ul>
+					<ul>
+						<li class="icon"><i class="si si-lock"></i></li>
+						<ol><input type="password" class='password1' name="password" minlength="5" maxlength="30" placeholder="请输入密码" onBlur="checkinput($(this),'password')" required/></ol>
+						<li>6个字符以上</li>
+					</ul>
+					<ul>
+						<li class="icon"><i class="si si-lock"></i></li>
+						<ol><input type="password" name="password2" minlength="5" maxlength="30" placeholder="请重复输入密码" onBlur="checkpassword($(this))" required/></ol>
+						<li>与密码一致</li>
+					</ul>
+					<ul>
+						<li class="icon"><i class="fa fa-envelope"></i></li>
+						<ol><input type="text" name="email" placeholder="邮箱可不填" onBlur="checkinput($(this),'email')"/></ol>
+						<li>&nbsp;</li>
+					</ul>
+					{eq name="webdb.reg_email_num" value="1"}
+					<ul>
+						<li class="icon"><i class="glyphicon glyphicon-question-sign"></i></li>
+						<ol><input type="text" name="email_code" placeholder="请点击右边文字获取验证码" onBlur="check_num($(this),'email')" required/></ol>
+						<li><a href="#" onclick="get_code_num('email')">获取验证码</a></li>
+					</ul>
+					{/eq}
+					{eq name="webdb.reg_phone_num" value="1"}
+					<ul>
+						<li class="icon"><i class="fa fa-fw fa-mobile-phone"></i></li>
+						<ol><input type="text" name="mobphone" placeholder="手机号不能留空" required/></ol>
+						<li>&nbsp;</li>
+					</ul>
+					<ul>
+						<li class="icon"><i class="glyphicon glyphicon-question-sign"></i></li>
+						<ol><input type="text" name="phone_code" placeholder="请点击右边文字获取验证码" onBlur="check_num($(this),'mobphone')" required/></ol>
+						<li><a href="#" onclick="get_code_num('mobphone')">获取验证码</a></li>
+					</ul>
+					{/eq}
+					<!--
+					<ul>
+						<li class="icon"><i class="fa fa-weixin"></i></li>
+						<ol><input type="text" name="weixin_id" placeholder="可留空"/></ol>
+						<li>&nbsp;</li>
+					</ul>-->
+					{eq name="webdb.yzImgReg" value="1"}
+					<ul>
+						<li class="icon"><i class="glyphicon glyphicon-question-sign"></i></li>
+						<ol><input type="text" name="captcha" placeholder="请输入右边验证码" onBlur="checkinput($(this),'captcha')" required/></ol>
+						<li><img src="{:captcha_src()}" style="cursor: pointer;" onclick="this.src='{:captcha_src()}?d='+Math.random();" title="点击刷新"/></li>
+					</ul>
+					{/eq}
+
+					{eq name="webdb.reg_weixin_num" value="1"}
+					<ul>
+						<li class="icon"><i class="glyphicon glyphicon-question-sign"></i></li>
+						<ol><input type="text" name="weixin_code" placeholder="请点击右边文字获取验证码" onBlur="check_num($(this),'weixin')" required/></ol>
+						<li><a href="#" onclick="weixin_mp()">获取验证码</a></li>
+					</ul>
+					{/eq}
+					
+
+					<div class="butter"><button type="submit">立即注册</button></div>
+				</div>
+</form>
+<script type="text/javascript">
+
+function weixin_mp(){
+	layer.open({
+	  type: 1,
+	  title: '关注公众号',
+	  shadeClose: true,
+	  shade: false,
+	  maxmin: true, //开启最大化最小化按钮
+	  area: ['500px', '500px'],
+	  content: "<center><img style='width:400px' src='{:tempdir(config('webdb.mp_code_img')?:config('webdb.weixin_code_img'))}'><br>请扫描上方二维码关注公众号，然后在公众号那里回复：验证码</center>",
+	  end: function(){
+		  	//get_code_num('weixin');
+		}
+	});
+}
+
+function get_code_num(type){
+	var to='';
+	var obj = $(".mui-input-group input[name='"+type+"']");
+	if(type=='mobphone'){
+		to = obj.val();
+		if(to==''){
+			obj.focus();
+			layer.msg('请先输入手机号码');
+			return false;
+		}
+	}else if(type=='email'){
+		to = obj.val();
+		if(to==''){
+			obj.focus();
+			layer.msg('请先输入邮箱');
+			return false;
+		}
+	}
+	layer.msg('请稍候,系统正在发送验证码!',{time:3000});
+	$.get("{:urls('reg/getnum')}?type="+type+'&to='+ to +'&'+Math.random(),function(res){
+		layer.close();
+		if(res.code==0){
+			layer.alert('验证码已成功发出,请耐心等候,注意查收!');
+			objs.removeClass('error');
+		}else{
+			layer.alert(res.msg);
+			objs.addClass('error');
+		}			
+	});
+}
+
+function check_num(objs,type){
+	var vals=objs.val();
+	var field = $(".mui-input-group input[name='"+type+"']").val();
+	$.get("{:urls('reg/check_num')}?num="+vals+"&type="+type+'&field='+field+'&'+Math.random(),function(res){
+		if(res.code==0){
+			objs.removeClass('error');
+		}else{
+			layer.msg(res.msg);
+			objs.addClass('error');
+		}			
+	});
+}
+
+function checkinput(objs,type){
+	var vals=objs.val();
+	$.get("{:urls('reg/check')}?"+type+"="+vals+'&'+Math.random(),function(d){
+		if(d=='ok'){
+			objs.removeClass('error');
+		}else{
+			layer.msg(d);
+			//objs.focus();
+			objs.addClass('error');
+		}			
+	});
+}
+function checkpassword(objs){
+	var repassword=objs.val();
+	var password=$('.password1').val();
+	if(repassword!=password){
+		layer.alert('重复输入密码不一致！');
+		objs.addClass('error');
+	}else{
+		objs.removeClass('error');
+	}
+}
+</script>
+		</div>
+		<div class="Right">
+			<h3>已有帐号？点击登录</h3>
+			<p>你也可以用微信扫描下面二维码自动注册或自动登录</p>
+			<dl>
+				<dt><a href="{:urls('login/index')}">点击登录</a></dt>
+				<dd>
+					<img src="{:purl('login/scan/qrcode',['type'=>'wx'])}"/>
+				</dd>
+			</dl>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+<!--
+function countSecond(){　
+	$.get("{:purl('login/scan/cklogin')}?"+Math.random(), function(data){
+		if(data=='ok')window.location.href="{:purl('login/scan/cklogin')}?type=success";
+	});
+	setTimeout("countSecond()",2000);
+}
+countSecond()
+//-->
+</script>
+
+
+{/block}

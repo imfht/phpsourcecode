@@ -1,0 +1,123 @@
+<notdefined name="W_UPLOADIER">
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/Js/Webuploader/webuploader.css" />
+<script type="text/javascript" src="__PUBLIC__/Js/Webuploader/webuploader.js"></script>
+<define name="W_UPLOADIER" value="1" />
+</notdefined>
+
+<div class="webUploadBox">
+    <div id="{$name}_list" class="cl webUploadList"></div>
+    <div id="{$name}_pick" class="btn webUploadPicker">选择文件</div>
+    <div id="{$name}_upload" class="btn btn-blue webUploadBegin" href="javascript:;">开始上传</div>
+</div>
+
+<script type="text/javascript">
+(function($){
+    var id="{$name}",
+        $list = $('#'+id+'_list'),
+        $btn = $('#'+id+'_upload');
+
+    var state = 'pending',
+        thumb = '__PUBLIC__/Img/upload-thumb.png',
+        Uploader;
+
+    Uploader = WebUploader.create({
+        swf: "__PUBLIC__/Js/Webuploader/Uploader.swf",
+        server:"{:U('Admin/Index/widget/name/uploader')}",
+        pick: '#'+id+'_pick',
+
+        auto:false,
+        compress:false,
+        thumb:{
+            width: 130,
+            height: 110,
+            quality: 70,
+            allowMagnify: false,
+            crop: false,
+            type: 'image/jpeg'
+        },
+        accept: {
+            title: 'Images',
+            extensions: 'gif,jpg,jpeg,bmp,png',
+            mimeTypes: 'image/*'
+        },
+        formData:{
+            session_id : "{:session_id()}",
+        };
+    });
+
+    Uploader.on( 'fileQueued', function( file ) {
+        $list.append('<div id="' + file.id + '" class="webUploadItem fl">'+
+            '<img class="webUploadImg" src="'+ thumb +'">'+
+            '<a class="webUploadRemove" href="javascript:;">取消上传</a>'+
+            '<input type="hidden" name="file[]">'+
+        '</div>');
+
+        // 创建缩略图
+        Uploader.makeThumb( file, function( error, src ) {
+            if ( error ) return false;
+            $( '#'+file.id ).find('img').attr('src',src);
+            return true;
+        });
+    });
+
+    //文件上传过程中创建进度条实时显示。
+    Uploader.on( 'uploadProgress', function( file, percentage ) {
+        var $li = $( '#'+file.id ),
+            $percent = $li.find('.progress .progress-bar');
+
+        // 避免重复创建
+        if ( !$percent.length ) {
+            $percent = $('<div class="progress progress-striped active">' +
+              '<div class="progress-bar" role="progressbar" style="width: 0%">' +
+              '</div>' +
+            '</div>').appendTo( $li ).find('.progress-bar');
+        }
+
+        $li.find('p.webUploadState').text('上传中');
+        $percent.css( 'width', percentage * 100 + '%' );
+    });
+
+    Uploader.on( 'uploadSuccess', function( file ,response) {
+        $( '#'+file.id ).find('.webUploadImg').wrap("<a href='__ROOT__"+response.url+"'  target='_blank'></a>");
+        $( '#'+file.id ).find('input').val(response.url);
+        $( '#'+file.id ).append('<img class="webUploadYes" src="__PUBLIC__/Js/Webuploader/images/success.png" alt="success" />');
+        
+    });
+    Uploader.on( 'uploadError', function( file ) {
+        $( '#'+file.id ).find('p.webUploadState').text('上传出错');
+    });
+    Uploader.on( 'uploadComplete', function( file,data ) {
+        $( '#'+file.id ).find('.progress').fadeOut();
+    });
+
+    Uploader.on( 'all', function( type ) {
+        if ( type === 'startUpload' ) {
+            state = 'uploading';
+        } else if ( type === 'stopUpload' ) {
+            state = 'paused';
+        } else if ( type === 'uploadFinished' ) {
+            state = 'done';
+        }
+
+        if ( state === 'uploading' ) {
+            $btn.text('暂停上传');
+        } else {
+            $btn.text('开始上传');
+        }
+    });
+
+    $list.delegate(".webUploadRemove", "click", function(){
+        var id =$(this).parent('.webUploadItem').attr('id');
+        Uploader.removeFile( id , true );
+        $(this).parent('.webUploadItem').fadeOut('normal',function(){$(this).remove();});
+    });
+
+    $btn.on( 'click', function() {
+        if ( state === 'uploading' ) {
+            Uploader.stop();
+        } else {
+            Uploader.upload();
+        }
+    });
+})(jQuery);
+</script>

@@ -1,0 +1,160 @@
+{extend name="base" /}
+{block name="body"}
+	<div class="layui-form users_list">
+	  	<table class="layui-table">
+                    <thead>
+                    <tr>
+                       
+                        <th>备份名称</th>
+                        <th>卷数</th>
+                        <th>压缩</th>
+                        <th>数据大小</th>
+                        <th>备份时间</th>
+                        <th>状态</th>     
+                        <th>操作</th>     
+                        </tr>
+                    </thead>
+                    <tbody>
+                 
+                    <tbody class="users_content">
+                       {volist name='list' id='vo'}
+                        <tr> 
+                        <td>{$vo.time|date='Ymd-His',###}</td>
+                        <td>{$vo.part}</td>
+                        <td>{$vo.compress}</td>
+                        <td>{$vo.size|format_bytes}</td>
+                        <td>{$key}</td>
+                        <td id="{$vo['time']}">未恢复</td>
+                        <td>
+                         <ob_link> <a class="db-import layui-btn layui-btn-normal layui-btn-mini"  data-id="{$vo['time']}" data-url="{:url('import?time='.$vo['time'])}">
+                          <i class="fa fa-undo"></i>还原
+                          </a></ob_link>&nbsp;
+                           <ob_link> <a class="elementdel layui-btn layui-btn-danger layui-btn-mini"  data-url="{:url('delete?time='.$vo['time'])}">
+                           <i class="fa fa-trash"></i> 删除
+                            </a></ob_link>
+                        <ob_link> <a class="download layui-btn layui-btn-success layui-btn-mini"  data-url="{:url('download?time='.$vo['time'])}">
+                         <i class="fa fa-download"></i>下载
+                         </a></ob_link>
+                            
+                        </td>
+                    </tr>
+                    {/volist}
+                    </tbody>
+
+                    </table>
+                   
+                </div>
+        
+ {/block}
+  {block name="script"}
+ <script>
+ layui.use(['form'],function(){
+	  var form = layui.form
+	  ,$ = layui.jquery;
+	  
+	  $('.download').click(function(){
+		  var url=$(this).data('url');
+		  var self = this;
+	 
+	
+			 
+				  
+				   $.getJSON(url,function(data){
+				      if(data.code == 1){
+				    	
+				       var path=data.data.path;
+				        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+				        	
+				        	
+				        		 var downurl="{:url('File/downloadFile')}?url="+path+'&name='+data.data.name+"&local="+data.data.local;
+				        		
+					        	 location.href=downurl;
+				        	
+				        	
+				        });
+				      }else{
+				      
+				        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+				      }
+				    });
+			 
+			
+	  });
+	  
+	  
+	  
+	  $('.elementdel').click(function(){
+		  var url=$(this).data('url');
+		  var self = this;
+		 
+	 	  layer.confirm('你确定要删除该备份吗?', {icon: 3, title:'删除提示'}, function(index){
+			    loading = layer.load(2, {
+				      shade: [0.2,'#000']
+				    });
+			 
+				  
+				   $.getJSON(url,function(data){
+				      if(data.code == 1){
+				        layer.close(loading);
+				        layer.msg(data.msg, {icon: 1, time: 1000}, function(){
+				        
+				       
+				        		 $(self).closest('tr').remove();
+				        
+				        });
+				      }else{
+				        layer.close(loading);
+				        layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+				      }
+				    });
+			 
+			}); 
+	  });
+
+      $(".db-import").click(function(){
+          var self = this, code = ".";
+          var url=$(this).data('url');
+          var id=$(this).data('id');
+          $.get(url, success, "json");
+          window.onbeforeunload = function(){ return "正在还原数据库，请不要关闭！" }
+          return false;
+      
+          function success(data){
+        	
+              if(data.code){
+            	 
+                  if($.isPlainObject(data.data)){
+                      data.msg += code;
+                      if(code.length === 5){
+                          code = ".";
+                      } else {
+                          code += ".";
+                      } 
+                      
+                      $('#'+id).text(data.msg);
+                      if(data.data.part){
+                          $.get(url, 
+                              {"part" : data.data.part, "start" : data.data.start}, 
+                              success, 
+                              "json"
+                          );
+                      }
+                  }else{
+                	  $('#'+id).text(data.msg);
+                  }
+                 
+                 
+          
+              } else {
+            	  layer.msg(data.msg, {icon: 2, anim: 6, time: 1000});
+                 
+              }
+          }
+      });
+	
+	  
+ });
+ 
+ </script>
+ 
+  {/block}

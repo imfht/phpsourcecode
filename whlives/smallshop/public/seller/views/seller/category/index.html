@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <button type="button" class="layui-btn layui-btn-sm" lay-event="add">添加</button>
+            <button type="button" class="layui-btn layui-btn-sm" lay-event="all_open">全部展开</button>
+            <button type="button" class="layui-btn layui-btn-sm" lay-event="all_close">全部收缩</button>
+        </div>
+        <div class="layui-card-body">
+            <div class="layui-form">
+                <script type="text/html" template lay-url="{{ layui.setter.apiHost }}/seller/category" lay-done="layui.form.render();">
+                    <table class="layui-table" lay-filter="system-menu-index">
+                        <colgroup>
+                            <col>
+                            <col width="80">
+                            <col width="100">
+                            <col width="200">
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>分类名称</th>
+                            <th>排序</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        {{# layui.each(d.data, function(index, item){ }}
+                        <thead>
+                        <tr class="menu_id" data-id="{{ item.id }}" id="row_menu_id_{{ item.id }}">
+                            <td>
+                                {{# if(item.children){ }}
+                                <i class="sm_iconfont icon-shixiangxiajiantou-" data-id="{{ item.id }}"></i>
+                                {{# }else{ }}
+                                &nbsp;&nbsp;&nbsp;&nbsp;
+                                {{# } }}
+                                {{ item.title }}
+                                {{# if(item.image){ }}
+                                <a href="{{ item.image }}" target="_blank"><img src="{{ layui.helper.image_resize(item.image, 30, 30) }}" width="30" height="30"></a>
+                                {{# } }}
+                            </td>
+                            <td align="center">{{ item.position }}</td>
+                            <td align="center"><input type="checkbox" name="status" value="{{ item.id }}" lay-skin="switch" lay-text="锁定|正常" lay-filter="status_btn" {{# if(item.status == 1){ }}checked{{# } }}></td>
+                            <td>
+                                <a class="layui-btn layui-btn-xs" lay-event="edit" data-id="{{ item.id }}">编辑</a>
+                                <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" data-id="{{ item.id }}">删除</a>
+                                <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="add_menu" data-id="{{ item.id }}">添加子分类</a>
+                            </td>
+                        </tr>
+                        {{# layui.each(item.children, function(index1, item1){ }}
+                        <tr class="menu_id_{{ item.id }}" data-id="{{ item1.id }}" id="row_menu_id_{{ item1.id }}">
+                            <td>
+                                {{# if(item1.children){ }}
+                                &nbsp;&nbsp;&nbsp;&nbsp;<i class="sm_iconfont icon-shixiangxiajiantou-" data-id="{{ item1.id }}"></i>
+                                {{# }else{ }}
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                {{# } }}
+                                {{ item1.title }}
+                                {{# if(item1.image){ }}
+                                <a href="{{ item1.image }}" target="_blank"><img src="{{ layui.helper.image_resize(item1.image, 30, 30) }}" width="30" height="30"></a>
+                                {{# } }}
+                            </td>
+                            <td align="center">{{ item1.position }}</td>
+                            <td align="center"><input type="checkbox" name="status" value="{{ item1.id }}" lay-skin="switch" lay-text="锁定|正常" lay-filter="status_btn" {{# if(item1.status == 1){ }}checked{{# } }}></td>
+                            <td>
+                                <a class="layui-btn layui-btn-xs" lay-event="edit" data-id="{{ item1.id }}">编辑</a>
+                                <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" data-id="{{ item1.id }}">删除</a>
+                            </td>
+                        </tr>
+                        {{#  }); }}
+                        </thead>
+                        {{#  }); }}
+                    </table>
+                </script>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'table', 'helper'], function () {
+        var form = layui.form,
+            table = layui.table,
+            $ = layui.$,
+            helper = layui.helper,
+            edit_view_url = 'seller/category/add',//添加编辑页模板地址
+            api_action_url = layui.setter.apiHost + '/seller/category';
+
+        table.set({
+            page: false
+        });
+
+        $('.layui-card-header .layui-btn').on('click', function () {
+            var type = $(this).attr('lay-event');
+            switch (type) {
+                case 'add':
+                    helper.open_window('添加', api_action_url, edit_view_url, {}, {parent_id: "0"});
+                    break;
+                case 'all_open':
+                    $('.layui-form tr').each(function (i) {
+                        if (!$(this).hasClass('menu_id') && i > 0) {
+                            $('.layui-form .menu_id .sm_iconfont').removeClass('icon-shixiangyoujiantou-').addClass('icon-shixiangxiajiantou-');
+                            $(this).show();
+                        }
+                    });
+                    break;
+                case 'all_close':
+                    $('.layui-form tr').each(function (i) {
+                        if (!$(this).hasClass('menu_id') && i > 0) {
+                            $('.layui-form .menu_id .sm_iconfont').removeClass('icon-shixiangxiajiantou-').addClass('icon-shixiangyoujiantou-');
+                            $(this).hide();
+                        }
+                    });
+                    break;
+            }
+        });
+
+        //监听操作按钮
+        $('.layui-form').on('click', '.layui-btn', function () {
+            var type = $(this).attr('lay-event');
+            var id = $(this).data('id');
+            switch (type) {
+                case 'del':
+                    layer.confirm('确定删除吗', function (index) {
+                        if (helper.ajax(api_action_url + '/delete', {id: id}, false)) {
+                            $('#row_menu_id_' + id).remove();
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case 'edit':
+                    helper.open_window('编辑', api_action_url, edit_view_url, {id: id});
+                    break;
+                case 'add_menu':
+                    helper.open_window('添加', api_action_url, edit_view_url, {}, {parent_id: id});
+                    break;
+            }
+        });
+
+        //监听锁定操作
+        form.on('switch(status_btn)', function (obj) {
+            var send_data = {id: this.value, status: obj.elem.checked == true ? 1 : 0};
+            helper.ajax(api_action_url + '/status', send_data, false);
+        });
+
+        //隐藏展开下级
+        $('.layui-form').on('click', '.sm_iconfont', function () {
+            var menu_id = $(this).parent().parent().attr('data-id');
+            $('.menu_id_' + menu_id).toggle();
+            //动态更换图标
+            $(this).toggleClass(function () {
+                if ($(this).hasClass('icon-shixiangxiajiantou-')) {
+                    $(this).removeClass('icon-shixiangxiajiantou-');
+                    return 'icon-shixiangyoujiantou-';
+                } else {
+                    $(this).removeClass('icon-shixiangyoujiantou-');
+                    return 'icon-shixiangxiajiantou-';
+                }
+            });
+            //循环隐藏或展开下级
+            $('.menu_id_' + menu_id).each(function (i) {
+                if ($(this).css('display') == 'none') {
+                    $(this).find('.sm_iconfont').removeClass('icon-shixiangxiajiantou-').addClass('icon-shixiangyoujiantou-');
+                    $('.menu_id_' + $(this).attr('data-id')).hide();
+                } else {
+                    $(this).find('.sm_iconfont').removeClass('icon-shixiangyoujiantou-').addClass('icon-shixiangxiajiantou-');
+                    $('.menu_id_' + $(this).attr('data-id')).show();
+                }
+            })
+        })
+    });
+</script>
+</body>
+</html>

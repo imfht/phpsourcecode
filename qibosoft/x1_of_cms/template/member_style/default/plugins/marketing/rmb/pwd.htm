@@ -1,0 +1,55 @@
+{extend name="$member_style_layout" /}
+
+{block name="title"}平台结算帐号设置{/block}
+{block name="content"}
+<div class="WapFormContainer">
+	<div class="tag">支付密码设置</div>
+	<form name="form1" method="post" action="" class="ajax_post">
+		<ul>
+			<ol>新的支付密码:</ol>
+			<li><input type="password" name="pay_pwd" placeholder="输入新密码"/></li>
+		</ul>
+		<ul>
+			<ol>重复输入密码:</ol>
+			<li><input type="password" name="pay_pwd2" placeholder="重复新密码"/></li>
+		</ul>
+{if $userdb.rmb_pwd!=''}
+		<ul>
+			<ol>旧的支付密码:<input type="button" onclick="phone_get_pwd()" value="手机重置密码" class="layui-btn layui-btn-normal layui-btn-sm"></ol>
+			<li><input type="password" name="old_pwd" placeholder="输入旧密码"/></li>
+		</ul>
+{/if}
+		<div class='butter'><button type="submit">提交</button></div>	
+		<dl>
+			<dt>备注:</dt>
+			<dd>
+			  	<div>1.支付密码很重要,涉及到你的人民币消费与取现等相关操作.请尽量不要跟登录密码一样.</div>
+			  	<div>2.除首次设置外,今后更改支付密码需要输入原密码,如果忘记原密码,请联系管理员重置!</div>
+				<div>3.如果你验证了手机号的话,也可通过手机重置支付密码!</div>
+		  	</dd>          
+	    </dl>
+	</form>
+</div>
+<script type="text/javascript">
+function phone_get_pwd(){
+	{if empty($userdb.mob_yz)||empty($userdb.mobphone)}
+		layer.confirm("你还没有验证手机号不能通过手机号重置支付密码,是否现在去验证手机号?",{btn:['立即验证','以后再说']},function(){
+			window.location.href = "{:urls('member/yz/mob')}";
+		});
+	{else /}
+
+	{php} $userdb['mobphone']=preg_replace("/^([\d]{7})([\d]+)$/",'\\1***',$userdb['mobphone']); {/php}
+		layer.confirm("你确认要重置支付密码吗?请确认你的手机号 {$userdb.mobphone} 能收到信息",{btn:['确认重置','取消']},function(){
+			$.get("{:purl('getpwd')}",function(res){
+				if(res.code==0){
+					layer.msg('重置成功,请注意查收新的支付密码');
+				}else{
+					layer.alert('重置失败,详情如下:'+res.msg);
+				}
+			});
+		});
+	{/if}
+}
+</script>
+<script type="text/javascript" src="__STATIC__/js/form/base.js"></script>
+{/block}

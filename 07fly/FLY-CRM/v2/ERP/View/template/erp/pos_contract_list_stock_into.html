@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="ibox float-e-margins">
+  <div class="ibox-content">
+    <form id="stock-list" method="post" class="form-inline">
+      <input type="hidden" name="contract_id" value="#{$contract.contract_id}#">
+      <input type="hidden" name="title" value="#{$contract.title}#">
+      <table class="table table-hover sorttable 07fly-table" width="100%">
+        <thead>
+          <tr>
+            <th width="200">商品名称/商品规格</th>
+            <th width="100"><span>成本价格</span></th>
+            <th width="100"><span>数量</span></th>
+            <th width="100"><span>已入库数量</span></th>
+            <th width="100"><span>本次入库数量</span></th>
+            <th width="100"><span>本次入库金额</span></th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <table class="table table-hover" width="100%">
+        <tr>
+			  <td>选择仓库</td>
+			  <td>
+          <select data-placeholder="选择仓库..." name="store_id" class="chosen-select store-chosen-select" style="width: 200px;" tabindex="2">    
+					  #{foreach from=$store key=k item=v}#	  
+            <option value="#{$v.store_id}#" hassubinfo="true">#{$v.name}#</option>
+					  #{/foreach}#
+          </select>
+				</td>
+          <td>说明:入库数量不能超过合同清单数量</td>
+          <td></td>
+          <td class="text-right"><button type="button" class="btn btn-lg btn-info save-data">保存数据</button></td>
+        </tr>
+      </table>
+    </form>
+  </div>
+</div>
+</body>
+</html>
+<script id="tab-1-Tpl" type="text/html">
+<% for(var i=0;i<list.length;i++) { %>
+	<tr>
+		<td>
+			<input type="hidden" name="list_id[]" value="<%=list[i]['list_id']%>">
+			<input type="hidden" name="sku_id[]" value="<%=list[i]['sku_id']%>">
+			<input type="hidden" name="sku_name[]" value="<%=list[i]['sku_name']%>">
+			<input type="hidden" name="goods_id[]" value="<%=list[i]['goods_id']%>">
+			<input type="hidden" name="goods_name[]" value="<%=list[i]['goods_name']%>">
+			<%=list[i]['goods_name']%>/<%=list[i]['sku_name']%></td>
+		<td><input type="text" class="form-control calculate" size="10"  name="cost_price[]" value="<%=list[i]['cost_price']%>" readonly></td>
+		<td><input type="text" class="form-control calculate" size="10"  name="num[]" value="<%=list[i]['num']%>" readonly></td>
+		<td><input type="text" class="form-control calculate" size="10"  name="into_num[]" value="<%=list[i]['into_num']%>" readonly></td>
+		<td><input type="text" class="form-control calculate" size="10"  name="owe_num[]" value="<%=list[i]['owe_num']%>"></td>
+		<td><input type="text" class="form-control calculate" size="10"  name="owe_money[]" value="<%=list[i]['owe_money']%>" readonly></td>
+	</tr>
+<% } %>
+	<tr>
+		<td><strong>合计：</strong></td>
+		<td>
+			<input type="hidden" name="total_owe_num" value="<%=totalCount['total_owe_num']%>">
+			<input type="hidden" name="total_owe_money" value="<%=totalCount['total_owe_money']%>">
+		</td>
+		<td></td>
+		<td></td>
+		<td><strong class="total_owe_num"><%=totalCount['total_owe_num']%></strong></td>
+		<td><strong><span class="text-danger total_owe_money">￥<%=totalCount['total_owe_money']%><span></strong></td>
+	</tr>
+</script>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+<script type="text/javascript">
+$(document).ready(function () {
+
+	//下拉选择+联动效果
+	$('.chosen-select').chosen({search_contains: true});
+	//关闭窗口
+	var list_add_index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+	
+	var tabl_index=1;
+	$.ajax({
+		type: "POST",
+		url: "#{$smarty.const.ACT}#/erp/PosContractList/pos_contract_list_stock_into_json/",
+		data:{"contract_id":"#{$contract.contract_id}#"},
+		dataType:"json",
+		success: function(returnJsonData){
+			var tpl=baidu.template;
+			var html=tpl('tab-1-Tpl',returnJsonData);
+			$(".07fly-table tbody").html(html);
+		},    
+		complete: function() {  },
+	});
+	//保存数据
+	$("body").on("click", ".save-data", function() {
+		FormData=$("#stock-list").serialize();
+		$.ajax({
+			type: "POST",
+			url: "#{$smarty.const.ACT}#/erp/StockInto/stock_into_contract_add/",
+			data:FormData,
+			dataType:"json",
+			success: function(data){
+				if(data.statusCode=='200'){
+					layer.msg('操作成功', {icon: 1}); 	
+					setTimeout(function(){
+						parent.layer.close(list_add_index);
+					 },800);
+				}else{
+					layer.msg(data.message, {icon: 5});
+					return false;
+				}
+			}
+		});	
+	});	
+	$("body").on("keyup", ".calculate", function() {
+		//查询本行的数据
+		var price=$(this).parent().parent().find("input[name='cost_price[]']").val();
+		var num=$(this).parent().parent().find("input[name='owe_num[]']").val();
+		goods_money = parseFloat(price)*num;
+		var goods_money=$(this).parent().parent().find("input[name='owe_money[]']").val(goods_money.toFixed(2));
+		
+		//计算所有表单的总金额
+		var total_owe_money=0;
+		$(this).parent().parent().parent().find("input[name='owe_money[]']").each(function(){
+			total_owe_money += parseFloat($(this).val());
+		});
+		var total_owe_num=0;
+		$(this).parent().parent().parent().find("input[name='owe_num[]']").each(function(){
+			total_owe_num += parseFloat($(this).val());
+		});
+		$('.total_owe_money').html(total_owe_money.toFixed(2));
+		$('.total_owe_num').html(total_owe_num);
+	});	
+
+	//统计总金额
+	calculate_goods_money();
+	
+});
+	
+function calculate_goods_money(){
+		//统计总金额
+	var total_owe_money=0;
+	$("#list-table tbody tr").find("input[name='owe_money[]']").each(function(){ 
+		total_goods_money += parseFloat($(this).val());
+		console.log(total_owe_money);
+	});		
+	var total_owe_num=0;
+	$("#list-table tbody tr").find("input[name='owe_num[]']").each(function(){ 
+		total_owe_num += parseFloat($(this).val());
+		console.log(total_owe_num);
+	});	
+	$('.total_owe_num').html(total_owe_num);	
+}
+</script>

@@ -1,0 +1,169 @@
+<extend name="Base/common"/>
+<block name="header">
+    <include file="Public/_nav"/>
+    <link type="text/css" rel="stylesheet" href="__CSS__/forum.css"/>
+    <script type="text/javascript" src="__JS__/common.js"></script>
+</block>
+<block name="body">
+    <div id="body-container" class="container">
+        <div class="fmBox sendBox">
+            <p class="sendTit">
+                <if condition="$isEdit">
+                    {:L('_POST_EDIT_')}<sub>{:L('_POST_PUBLISH_KNOWLEDGE_CONTENT_')}</sub>
+                    <else/>
+                    {:L('_POST_PUBLISH_')}<sub>{:L('_POST_PUBLISH_KNOWLEDGE_CONTENT_')}</sub>
+                </if>
+            </p>
+            <section id="contents">
+                <form action="{:U('Forum/Index/doEdit')}" method="post" id="edit-article-form" >
+                    <input type="hidden" name="post_id" value="{$post.id}"/>
+                    <div class="row" style="margin-bottom: 10px">
+                        <div class="col-xs-3">
+                            <select class="form-control" name="forum_id">
+                                <volist name="forum_list" id="each_forum">
+                                    <if condition="$each_forum['allow_publish']">
+                                        <php>
+                                            $selected = $each_forum['id'] == $forum_id ?
+                                            'selected' : '';
+                                        </php>
+                                        <option value="{$each_forum.id}"
+                                                {$selected}>{$each_forum.title|op_t}
+                                        </option>
+                                    </if>
+                                </volist>
+                            </select>
+                        </div>
+                        <div class="col-xs-9">
+                            <input id="title" type="text" name="title" placeholder="{:L('_TITLE_')}" value="{$post.title}" class="form-control"/>
+                        </div>
+                    </div>
+                    <php>
+                        $config=get_editor_config("FORUM_ADD");
+                    </php>
+                    {:W('Common/Ueditor/editor',array('myeditor','content',$post['content'],'100%','350px',$config))}
+                    <p style="margin-top: 5px">
+                        <php>$hasWeibo=D('Module')->checkInstalled('Weibo');</php>
+                        <eq name="hasWeibo" value="1">
+                            <label>
+                                <input type="checkbox" name="sendWeibo" value="1" checked> {:L('_SYN_TO_TWITTER_')}
+                            </label>
+                        </eq>
+
+                    </p>
+
+                    <p class="text-center">
+                        <button type="submit" class="btn btn-large btn-primary" id="submit-button">
+                            <span class="glyphicon glyphicon-edit"></span>
+                            <span id="submit-content">
+                        <if condition="$isEdit">
+                            {:L('_POST_EDIT_')} Ctrl+Enter
+                            <else/>
+                            {:L('_POST_PUBLISH_')} Ctrl+Enter
+                        </if>
+                    </span>
+                        </button>
+                        <input type="hidden" id="isEdit" value="{$isEdit}">
+                    </p>
+                </form>
+            </section>
+        </div>
+
+          <!--  <div class="row">
+                <div class="col-xs-12">
+                    <div class="fourm-top common_block_border"
+                         style="padding: 15px 20px;margin: -15px;margin-top: 0;margin-bottom: 15px">
+                        <section id="contents">
+                            <form action="{:U('Forum/Index/doEdit')}" method="post" id="edit-article-form" style="width: 665px;">
+
+
+
+                            </form>
+                        </section>
+                    </div></div>
+
+            </div>-->
+    </div>
+</block>
+
+
+<script type="text/javascript">
+    $(function () {
+        $(window).resize(function () {
+            $("#main-container").css("min-height", $(window).height() - 343);
+        }).resize();
+    });
+</script>
+<!-- /主体 -->
+</block>
+
+
+<block name="script">
+    <script type="text/javascript" src="__PUBLIC__/Core/js/ext/atwho/atwho.js"></script>
+    <link type="text/css" rel="stylesheet" href="__PUBLIC__/Core/js/ext/atwho//atwho.css"/>
+    <script>
+        //点击编辑或发表按钮之后
+        $(function () {
+            $('#edit-article-form').keypress(function (e) {
+                if (e.ctrlKey && e.which == 13 || e.which == 10) {
+                    $('#submit-button').focus();
+                    $("#submit-button").click();
+                }
+            });
+
+            var $inputor = $('#contentEditor').atwho(atwho_config);
+
+            var submitCount = 0;
+            $('#edit-article-form').submit(function (e) {
+                //为了得到编辑器中的内容，触发两次提交事件
+                if (submitCount == 0) {
+                    submitCount = 1;
+                    $('#edit-article-form').trigger('submit');
+                    e.preventDefault();
+                    return false;
+                } else {
+                    submitCount = 0;
+                }
+                //显示正在提交
+                showSubmitting();
+                //获取用户输入的内容
+                var postData = $(this).serialize();
+                var action = $(this).attr('action');
+                $.post(action, postData, function (e) {
+                    if (e.status) {
+                        showSubmitSuccess(e.info, e.url);
+                    } else {
+                        showSubmitError(e.info);
+                    }
+                });
+                //停止提交
+                e.preventDefault();
+                return false;
+            });
+
+            function showSubmitError(message) {
+                $('#submit-button').removeClass('disabled');
+                var isEdit = $('#isEdit').val();
+                var text = '';
+                if (isEdit) {
+                    text = "{:L('_POST_EDIT_')}";
+                } else {
+                    text ="{:L('_POST_PUBLISH_')}";
+                }
+                $('#submit-content').text(text);
+                toast.error(message, "{:L('_ERROR_')}");
+            }
+
+            function showSubmitSuccess(message, url) {
+                toast.success(message, "{:L('_TIP_SWEET_')}");
+                setTimeout(function () {
+                    location.href = url;
+                }, 1500);
+            }
+
+            function showSubmitting() {
+                $('#submit-button').attr('class', 'btn btn-primary disabled');
+                $('#submit-content').text("{:L('_SUBMITTING_')}");
+            }
+        })
+    </script>
+</block>

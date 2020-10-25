@@ -1,0 +1,67 @@
+<?php
+/**
+ * @var \Ke\Web\Web     $web
+ * @var \Ke\Web\Http    $http
+ * @var \Ke\Web\Html    $html
+ * @var \Ke\Web\Context $this
+ */
+
+$isDebug = $web->isDebug();
+$uri = $web->http->toUri(true);
+$ref = (new \Ke\Uri($web->http->referer))->toUri(true);
+$title = $this->title ?? 'An error occurred';
+/** @var Throwable|array|null $error */
+$error = $error ?? null;
+$messages = [];
+
+if (!empty($tip))
+	$messages[] = "<p>{$tip}</p>";
+
+if ($error instanceof Throwable) {
+	while ($error) {
+		$messages[] = '<p>' . get_class($error) . ' : ' . $error->getMessage() . '</p>';
+		if ($isDebug) {
+			$trace = $error->getTrace();
+			if (!empty($trace)) {
+				$messages[] = $this->loadComponent('trace', [
+					'trace' => $trace,
+					'file'  => $error->getFile(),
+					'line'  => $error->getLine(),
+				]);
+			}
+		}
+		$error = $error->getPrevious();
+	}
+}
+elseif (!empty($error) || is_array($error)) {
+	$messages[] = '<p>' . error_name($error['code']) . ' : ' . $error['message'] . '</p>';
+	if ($isDebug && !empty($error['trace'])) {
+		$messages[] = $this->loadComponent('trace', [
+			'trace' => $error['trace'],
+			'file'  => $error['file'],
+			'line'  => $error['line'],
+		]);
+	}
+}
+
+?>
+<div class="error-show">
+	<h1><?php print $title ?></h1>
+	<?php
+	if (empty($messages)) {
+		print '<p>Unknown error message!</p>';
+	}
+	else {
+		print implode('', $messages);
+	}
+	?>
+	<hr/>
+	<address>
+		<?php
+		print "Server: {$_SERVER['SERVER_SOFTWARE']}";
+		printf(', <a href="%s">%s</a>', $uri, $uri);
+		if (!empty($ref))
+			printf('<br />Referer: <a href="%s">%s</a>', $ref, $ref);
+		?>
+	</address>
+</div>

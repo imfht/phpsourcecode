@@ -1,0 +1,50 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: 姜伟
+ * Date: 2020/6/23 0023
+ * Time: 15:07
+ */
+namespace SyMessageHandler\Producers\Sms;
+
+use DesignPatterns\Singletons\SmsConfigSingleton;
+use SyConstant\ProjectBase;
+use SyMessageHandler\IProducer;
+use SyMessageHandler\Producers\BaseSms;
+
+/**
+ * Class DaYu
+ * @package SyMessageHandler\Producers\Sms
+ */
+class DaYu extends BaseSms implements IProducer
+{
+    public function __construct()
+    {
+        parent::__construct(ProjectBase::MESSAGE_HANDLER_TYPE_SMS_DAYU);
+        $this->msgData['app_id'] = SmsConfigSingleton::getInstance()->getDaYuConfig()->getAppKey();
+        $this->checkMap = [
+            1 => 'checkSendTime',
+            2 => 'checkReceivers',
+            3 => 'checkTemplateId',
+            4 => 'checkTemplateSign',
+            5 => 'checkTemplateParams',
+        ];
+    }
+
+    private function __clone()
+    {
+    }
+
+    private function checkTemplateSign(array $data) : string
+    {
+        $templateSign = $data['template_sign'] ?? '';
+        if (!is_string($templateSign)) {
+            return '模板签名不合法';
+        } elseif (strlen($templateSign) == 0) {
+            return '模板签名不能为空';
+        }
+
+        $this->msgData['template_sign'] = $templateSign;
+        return '';
+    }
+}

@@ -1,0 +1,206 @@
+{extend name="index:layout" /}
+
+{block name="menu"} {/block}
+
+{block name="content"}
+<link rel="stylesheet" href="__STATIC__/admin/default/market/style.css" type="text/css">
+<script src="__STATIC__/js/core/vue.js"></script>
+
+<style type="text/css">
+.new_setup div{background:#666; position:absolute;
+left:-800px;top:0px;color:#fff;line-height:20px; padding:5px 10px;border-radius:10px; font-size:14px; z-index:100;height:20px;display: -webkit-box;overflow: hidden;text-overflow: ellipsis;word-wrap: break-word;white-space: normal !important;-webkit-line-clamp: 1;-webkit-box-orient: vertical;}
+.new_setup div img{border-radius:50%; width:20px; height:20px;vertical-align:middle;}
+.new_setup div a{color:yellow;}
+</style>
+
+<script type="text/javascript">
+var total_msg,ii=0;
+$(function (){
+	$.get("https://x1.php168.com/appstore/api/appsetup.html?id={$id}",function(res){
+		if(res.code==0){
+			var str = '';
+			res.data.forEach((rs,j)=>{
+				str += `<div class="son${j}">${rs.domain} 在 ${rs.time} 安装了<a href="https://x1.php168.com/appstore/content/show/id/${rs.id}.html" target="_blank">${rs.title}</a></div>`;
+			});
+			$('.new_setup').html(str);
+			total_msg = res.paginate.total;
+			show_tanmu(500);
+		}
+	});
+});
+
+function show_tanmu(time){	
+	setTimeout(function(){
+		console.log(total_msg,ii)
+		if(ii>=total_msg) ii = 0;
+		$(".new_setup .son"+ii).animate({
+			left:'200px',
+			opacity:'0.9', 
+		},500,'linear',function(){ii++;show_tanmu(4000);}).animate({
+			left:'700px',
+			opacity:'0.5', 
+		},8000).animate({
+			opacity:'0', 
+		},500).animate({
+			left:'-300px',
+		},1);
+	}, time);
+}
+</script>
+
+<div class="MainContainers vueId" style="position:relative;">  
+	<div class="new_setup"></div>
+	<div class="Conter">
+		<!--当前要安装的应用-->
+		<div class="mainshop">
+			<div class="showpic">
+				<a :href="'https://x1.php168.com/appstore/content/show/id/'+info.id+'.html'" class="button buzz-out" target="_blank"><img onerror="this.src='__STATIC__/images/nopic.png'" :src="info.picurl"></a>
+			</div>
+			<div class="mytext">
+				<div class="tag">
+					<a :href="'https://x1.php168.com/appstore/content/show/id/'+info.id+'.html'" target="_blank">{{info.title}}</a>
+				</div>
+				<div class="word">
+					{{info.content}}
+				</div>
+				<a :href="'https://x1.php168.com/member.php/home/'+info.uid+'.html'" target="_blank">
+					<img class="uimg" onerror="this.src='__STATIC__/images/nopic.png'" :src="info.user_icon">
+				</a> 
+				<div class="uinfo">
+					<a :href="'https://x1.php168.com/member.php/home/'+info.uid+'.html'" class="uname" target="_blank">{{info.username}}</a>
+					<span v-if="info.price>0" class="app_price">
+						<i class="glyphicon glyphicon-yen"></i> 价格：<em>{{info.price}}元</em> <em class="jifen" v-if="info.jifen>0">（{{info.jifen}}积分）</em>
+						<a v-if="info.vip_price>0" :href="'https://x1.php168.com/qun/content/apply/id/'+info.ext_id+'.html'" target="_blank"
+								title="点击申请VIP" style="margin-left:15px;" class="si si-diamond">
+							vip价：<em>{{info.vip_price}} 元</em>
+						</a>
+					</span>
+					<span v-else class="app_free">免费</span>
+				</div>
+				<div class="mbtn">
+					<a :href="'https://x1.php168.com/qun/content/show/id/'+info.ext_id+'.html'" target="_blank"><i class="fa fa-group"></i> 讨论区</a> 
+					<a href="javascript:" onclick="send_user_msg($(this))" :data-uid="info.uid" :data-name="info.username"><i class="fa fa-commenting"></i> 私信开发者</a> 
+				</div>
+			</div>							
+		</div>
+		<!--当前要安装的应用-->
+		<div class="setup_btn"><a href="#" class="fa fa-cloud-download" data-id="{$id}"> 确认安装</a></div>
+
+		<div class="choose_btn" style="width:100%;">
+			<button data-type="must" :data-ids="info.depend_app" class="must layui-btn layui-btn-primary">依赖插件</button>
+			<button data-type="other" :data-uid="info.uid" class="other layui-btn layui-btn-primary">TA的其它应用</button> 
+			<button data-type="good" class="good layui-btn layui-btn-normal">推荐应用</button>
+		</div>
+
+		<ul class="MarketBox Markercontents">
+				<li v-for="rs in listdb" v-bind:key="rs.id">
+					<dl>
+						<dt>
+							<a :href="'https://x1.php168.com/appstore/content/show/id/'+rs.id+'.html'" target="_blank">
+								<img onerror="this.src='__STATIC__/images/nopic.png'" :src="rs.picurl">
+							</a>
+						</dt>
+						<dd>
+							<h3>
+								{{rs.title}}
+								<span>
+									{{rs.downs>50 ?'热门':''}}
+								</span>
+							</h3>
+							<div v-if="rs.price>0 && rs.jifen>0">
+								<span class="price red">
+									¥ {{rs.price}} 
+								</span>
+								<span class="price blue">
+									(积分 {{rs.jifen}} 个)
+								</span>
+								<a v-if="rs.vip_price>0" :href="'https://x1.php168.com/qun/content/apply/id/'+rs.ext_id+'.html'" target="_blank"
+								title="点击申请VIP" class="price" style="color:orange;float:right;">
+									vip尊享:{{rs.vip_price}}
+								</a>
+							</div>
+							<div v-else-if="rs.price>0">
+								<span class="price red">
+									¥ {{rs.price}}
+								</span>
+								<a v-if="rs.vip_price>0" :href="'https://x1.php168.com/qun/content/apply/id/'+rs.ext_id+'.html'" target="_blank"
+								title="点击申请VIP" class="price" style="color:orange;float:right;">
+									vip尊享:{{rs.vip_price}}
+								</a>
+							</div>
+							<div v-else class="price blue">免费</div>
+							
+							<div class="other">
+								开发者主页：
+								<a target="_blank" :href="'https://x1.php168.com/member.php/home/'+rs.uid+'.html'">
+									{{rs.author}}
+								</a>
+								<a v-if="rs.vip_price>0" :href="'https://x1.php168.com/qun/content/apply/id/'+rs.ext_id+'.html'" target="_blank"
+								title="点击申请VIP" style="color:#3D8EC1;float:right;">
+									申请vip
+								</a>
+							</div>
+							 
+							<div class="other">
+								安装次数：{{rs.downs}} 次
+							</div>
+							<div class="butter">
+								<a @click="setup(rs.id,rs.fid,rs.app_keywords,rs.price,rs.must_view_about)" href="javascript:;" :data-id="rs.id"
+								class="fa fa-cloud-download">
+									安装
+								</a>
+								<a :href="'https://x1.php168.com/appstore/content/show/id/'+rs.id+'.html'" target="_blank"
+								class="fa fa-bolt">
+									详情
+								</a>
+								<a class="demo_url" v-if="rs.author_url!=''" :href="''+rs.author_url+''" target="_blank" class="fa fa-bolt">预览</a>
+							</div>
+						</dd>
+					</dl>
+				</li>
+		</ul>
+	</div>
+	<div class="ShowPage ShowMoreInfo" style="margin-bottom:20px:text-align:center;width:100%;"><span style="width:200px;margin:auto;display:block;padding:8px;background:#eee;" onclick="showlist()">显示更多</span></div>
+</div>
+<script type="text/javascript">
+var Id = "{$id}";
+var domain = "{:request()->domain()}";
+var appkey = "{:urlencode(config('webdb.mymd5'))}";
+var market_url = "{:urls('show')}";
+//检查安装情况
+function check_setup(){
+	var array = "{:fun('upgrade@local_edition')}".split(',');
+	var sr = new Array();
+	for(var i=0;i<array.length;i++){
+		var ar = array[i].split('-');
+		sr[ar[2]] = ar[2];
+	}
+	$(".fa-cloud-download").each(function(){
+		var id = $(this).data("id");
+		if( typeof(sr[id])!="undefined" ){
+			var obj = $(this);
+			$.post('https://x1.php168.com/appstore/upgrade/check_app.html?id='+id,{
+				domain:'{:request()->domain()}',
+				appkey:'{$webdb.mymd5}'
+			},function(res){
+				if(res.code==0){
+					obj.html('已安装');
+					app_have_setup[id]= true;
+					//obj.removeAttr('onclick');
+					obj.css({'color':'yellow',});
+				}else{
+					ids_ck_msg[id] = res.msg;
+					obj.html('购买正版授权');
+					obj.attr('title','提醒，当前应用处于：'+res.msg);
+					obj.removeClass('fa fa-cloud-download');
+					obj.addClass('fa fa-key');
+					obj.css({'color':'#FFFFFF',});
+				}
+			});
+		}
+	});
+};
+</script>
+<SCRIPT LANGUAGE="JavaScript" src="__STATIC__/admin/default/market/main.js?0"></SCRIPT>
+
+{/block}

@@ -1,0 +1,198 @@
+<script src="__STATIC__/module/common/qqface/js/browser.js"></script>
+<script src="__STATIC__/module/common/qqface/js/jquery.qqFace.js"></script>
+<script src="/static/widget/admin/file/jquery.Huploadify.js"></script>
+<style>
+.qqFace { margin-top: 4px; background: #fff; padding: 2px; border: 1px #dfe6f6 solid; padding: 5px; }
+.qqFace table td { padding: 0px; }
+.qqFace table td img { cursor: pointer; border: 1px #fff solid; }
+.qqFace table td img:hover { border: 1px #0066cc solid; }
+.uploadify-button{
+    color: #fff;
+}
+.uploadify-button:hover{
+    color: #fff;
+}
+.chat img {
+    max-width: 10%;
+}
+.wrap {
+ position: fixed;
+ top: 0;
+ left: 0;
+ background: rgba(0, 0, 0, 0.7);
+ z-index: 2;
+ width: 100%;
+ height: 100%;
+ display: none;
+}
+</style>
+
+<div class="box box-success">
+  <div class="box-header">
+    <i class="fa fa-comments-o"></i>
+    <h3 class="box-title">聊天室</h3>
+  </div>
+    <div class="box-body chat" id="chat-box" style="overflow-y:scroll;">
+    {notempty name='ob_chat_contents'}
+        {volist name='ob_chat_contents' id='vo'}
+            <div class="item">
+              <img src="{$vo.head_img}" alt="user image" class="online">
+
+              <p class="message">
+                <a class="name">
+                  <small class="text-muted pull-right"><i class="fa fa-clock-o"></i> {$vo.time}</small>
+                  {$vo.nickname}
+                </a>
+                {$vo.msg}
+              </p>
+            </div>
+        {/volist}
+    {/notempty}
+  </div>
+    
+  <div class="box-footer">
+      
+    <div class="input-group">
+        
+        <div class="input-group-btn">
+            <button type="button" class="btn pic" id="upload_picture_chat"></button>
+            <button type="button" class="btn emotion"><i class="fa fa-smile-o"></i></button>
+        </div>
+        
+        <input class="form-control" id="send_text" placeholder="请输入发送内容">
+
+        <div class="input-group-btn">
+          <button type="button" class="btn btn-success chat-send"><i class="fa fa-send-o"></i> 发 送</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+    
+<div id="outerdiv" class="wrap">
+  <div id="innerdiv" style="position:absolute;">
+   <img id="bigimg" style="border:5px solid #fff;" src=""/>
+  </div>
+</div>
+
+<script>
+var member_id = "{$member_info['id']}";
+var head_img  = "{$member_info['head_img_id']|get_head_picture_url}";
+var nickname  = "{$member_info['nickname']}";
+var window_height =  window.screen.height;
+
+$("#chat-box").height(window_height-window_height/2);
+$('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+$('.new_message_num').html('');
+
+$('.chat-send').on('click',function(){
+    
+    var send_text = $('#send_text').val();
+    
+    if (send_text == '') {
+        
+        toast.error('发送内容不能为空');
+        $('#send_text').focus();
+        return;
+    } else {
+        $('#send_text').val('');
+    }
+    
+    var ws_send_json = '{"member_id":"'+member_id+'", "msg":"'+send_text+'", "head_img":"'+head_img+'", "nickname":"'+nickname+'"}';
+
+    ws.send(ws_send_json);
+
+});
+
+
+$(document).keyup(function(event){  
+    if(event.keyCode ==13){
+        $(".chat-send").click();
+    }
+});
+
+$('.emotion').qqFace({
+
+        id : 'facebox', 
+
+        assign:'send_text', 
+
+        path:'/static/module/common/qqface/arclist/'	//表情存放的路径
+
+});
+
+
+$("#upload_picture_chat").Huploadify({
+    auto: true,
+    height: 30,
+    fileObjName: "file",
+    buttonText: "上传图片",
+    uploader: "{:url('File/pictureUpload',array('session_id'=>session_id()))}",
+    width: 120,
+    removeTimeout: 1,
+    onUploadComplete: uploadPictureChat
+});
+
+function uploadPictureChat(file, data)
+{
+
+    var data = $.parseJSON(data);
+
+    var src = !data['url'] ? "__ROOT__/upload/picture/" + data.path : '/' + data.url;
+
+    $('#send_text').val($('#send_text').val()+'['+src+']');
+}
+
+$(function(){
+    $(".chat_imgs").click(function(){
+    var _this = $(this);
+    imgShow("#outerdiv", "#innerdiv", "#bigimg", _this);
+    });
+});
+
+
+function chatImgsOnClick(_this)
+{
+    imgShow("#outerdiv", "#innerdiv", "#bigimg", $(_this));
+}
+
+
+function imgShow(outerdiv, innerdiv, bigimg, _this){
+
+    var src = _this.attr("src");
+
+    $(bigimg).attr("src", src);
+
+    $("<img/>").attr("src", src).load(function(){
+
+      var windowW = $(window).width();
+      var windowH = $(window).height();
+      var realWidth = this.width;
+      var realHeight = this.height;
+      var imgWidth, imgHeight;
+      var scale = 0.8;
+      if(realHeight>windowH*scale){
+       imgHeight = windowH*scale;
+       imgWidth = imgHeight/realHeight*realWidth;
+       if(imgWidth>windowW*scale){
+            imgWidth = windowW*scale;
+       }
+      } else if(realWidth>windowW*scale) {
+       imgWidth = windowW*scale;
+        imgHeight = imgWidth/realWidth*realHeight;
+      } else {
+       imgWidth = realWidth;
+       imgHeight = realHeight;
+      }
+      $(bigimg).css("width",imgWidth);
+      var w = (windowW-imgWidth)/2;
+      var h = (windowH-imgHeight)/2;
+      $(innerdiv).css({"top":h, "left":w});
+      $(outerdiv).fadeIn("fast");
+     });
+     $(outerdiv).click(function(){
+      $(this).fadeOut("fast");
+     });
+}
+</script>

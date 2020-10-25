@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>会员登录</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/jquery-1.7.2.js" charset="utf-8"></script>
+</head>
+<body  style="background:#FCFCFC;">
+<div class="hui-wrap">
+  <div class="hui-row" style="margin-top: 20px;">
+    <div class="hui-col-4"></div>
+    <div class="hui-col-4">
+      <div class="hui-img-list"> <img src="#{$smarty.const.APP}#/View/template/home/img/logo.png"> </div>
+    </div>
+    <div class="hui-col-4"></div>
+  </div>
+  <div style="margin:20px 10px 0px;" class="hui-form" id="form1">
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">用户UID</div>
+      <input type="text" name="account" id="account" class="hui-input hui-input-clear" placeholder="请输入你的帐号/手机号" checkType="string" checkData="2,20" checkMsg="用户名应为2-20个字符" value="#{$one.account}#" />
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">登录密码</div>
+      <input type="password" id="password" class="hui-input hui-pwd-eye" placeholder="请输入你的登录密码" checkType="string" checkData="6,18" checkMsg="密码应为6-18个字符" value="#{$one.password}#"/>
+    </div>
+    #{if $need eq 'need'}#
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">验证码</div>
+      <input type="number" id="rpcode" class="hui-input" name="yzm" value="" checkType="reg" checkData="^\d{4,4}$" checkMsg="验证码应该为4个数字" style="width: 50%;" />
+      <div style="width:200px;padding-right: 20px;">
+        <input id="getCode" type="button" value="获取验证码" class="hui-button  hui-primary" onclick="sendMessages()">
+      </div>
+    </div>
+    #{/if}#
+    <div class="hui-row" style="line-height: 25px;color:#f00;padding:5px 10px;">
+      <div class="hui-col-6"><a href="#{$smarty.const.ACT}#/home/Register/main/">注册用户</a></div>
+      <div class="hui-col-6 hui-tr"><a href="#{$smarty.const.ACT}#/home/Register/forget_password/">忘记密码</a></div>
+    </div>
+  </div>
+  <div style="padding:20px; padding-top:10px;">
+    <button type="button" class="hui-button hui-button-large hui-primary" id="submit">立即登录</button>
+  </div>
+</div>
+<!-- 保存验证码 -->
+<input type="text" id="code" hidden="true">
+<script>
+ var InterValObj; //timer变量，控制时间 
+ var count = 60; //间隔函数，1秒执行 
+ var curCount; //当前剩余秒数 
+ var code = ""; //验证码 
+ var codeLength = 4; //验证码长度 
+ function sendMessages() {
+	curCount = count;
+	var phone = $("#account").val()
+	if(validatePhone(phone)) {
+	   return true;
+	}
+	if(phone != "") {
+	   //设置button效果，开始计时 
+	   $("#getCode").attr("disabled", "true");
+	   $("#getCode").removeClass('hui-primary')
+	   $("#getCode").val("" + curCount + "秒后重获取");
+	   InterValObj = window.setInterval(SetRemainTimes, 1000); //启动计时器，1秒执行一次 
+	   //向后台发送处理数据 
+	   $.ajax({
+		  url: "#{$smarty.const.ACT}#/home/Register/api_sms_send_login/",
+		  dataType: "json",
+		  type: "get",
+		  data: "phone=" + phone,
+		  success: function(data) {
+			  //hui.toast(data.message);
+			 //保存验证码
+			
+				if(data.code=='sucess'){
+					 $("#code").val(data.message);
+				}else{
+					hui.upToast(data.message);
+				}
+		  }
+	   });
+	} else {
+	  hui.toast('手机号不能为空！');
+	}
+ }
+ //timer处理函数 
+ function SetRemainTimes() {
+	if(curCount == 0) {
+	   window.clearInterval(InterValObj); //停止计时器 
+	   $("#getCode").removeAttr("disabled"); //启用按钮 
+		$("#getCode").addClass('hui-primary')
+	   $("#getCode").val("重新发送验证码");
+	   code = ""; //清除验证码。如果不清除，过时间后，输入收到的验证码依然有效   
+	} else {
+	   curCount--;
+	   $("#getCode").val("" + curCount + "秒后重获取");
+	}
+ }
+ //验证手机号
+ function validatePhone(phone) {
+	if(phone == '') {
+		hui.toast('请先填写手机号！');
+	   return true;
+	}
+	var myreg =/(^1[3|4|5|7|8|9]\d{9}$)|(^09\d{8}$)/;  
+	if(!myreg.test(phone)) {
+		hui.toast('请输入有效的手机号！');
+	   return true;
+	}
+	return false;
+ }
+ //验证码非空和错误验证
+ function validateCode() {
+	var phone = $("#account").val();
+	var code = $("#code").val();
+	var rpcode = $("#rpcode").val();
+/*	if(validatePhone(phone)) {
+	   return true;
+	}*/
+	if(code == '') {
+		hui.toast('请先获取验证码！');
+	   return true;
+	}
+	if(rpcode == '' || code != rpcode) {
+		hui.toast('请正确输入验证码！');
+	   return true;
+	}
+	//alert(code != rpcode);
+	return false;
+ }
+ $("#phone").on("focus", function() {
+	$("#errMsg1").hide();
+ })
+ $("#rpcode").on("focus", function() {
+	$("#errMsg2").hide();
+ })
+</script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-form.js" charset="utf-8"></script> 
+<script type="text/javascript">
+//初始化表单
+hui.formInit();
+
+hui('#submit').click(function(){
+	//验证
+	var res = huiFormCheck('#form1');
+	var account = hui('#account').val();
+	var password = hui('#password').val();
+	if('#{$need}#'=='need'){
+	   if(validateCode()){
+		   return true;
+	   }
+	 }
+	//提交
+	if(res){
+		hui.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/Login/login_auth/',
+			data : {account:account,password:password},
+			backType:'json',
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.code=='sucess'){
+					var url="#{$smarty.const.ACT}#";
+					window.location.href=url;
+				}else{
+					hui.upToast(data.message);
+				}
+
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});//end ajax		   
+	}
+});
+</script>
+</body>
+</html>

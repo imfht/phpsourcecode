@@ -1,0 +1,65 @@
+<div class="easyui-navpanel" style="position:relative;padding:20px">
+    <form id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Form"></form>
+</div>
+
+
+<div id="{$Think.CONTROLLER_NAME}_{$Think.ACTION_NAME}_Fun_Win"></div>
+
+<script>
+    $(function () {
+        // ---------------------页面对象------------------------
+        var row_edit = new Page({
+            Module: '{$Think.MODULE_NAME}',
+            Controller: '{$Think.CONTROLLER_NAME}',
+            Action: '{$Think.ACTION_NAME}',
+        });
+        row_edit.father = new Page({
+            Module: '{$Think.P_M}',
+            Controller: '{$Think.P_C}',
+            Action: '{$Think.P_A}',
+        });
+
+        // 重置选择器
+        row_edit.init().select();
+
+        // ----------------------事件---------------------------
+        // 新增或编辑 单据行
+        row_edit.event._create_voucher = function () {
+            if (row_edit.edit_state == 'add') {
+                row_edit.Fm.form('clear');
+            } else if (row_edit.edit_state == 'edit') {
+                row_edit.Fm.form('load', row_edit.edit_row_data);
+            }
+            setTimeout(function () {
+                row_edit.seq.run_next();
+            }, 200);
+        };
+
+        row_edit.event._func_before_save = function () {
+            console.log('row_edit save');
+            // 需要处理一些表格所需要的列而表单中没有显示的 字典列
+            row_edit.form().save_data_to_datagrid('MG_Item');
+
+
+            setTimeout(function () {
+                row_edit.seq.run_next();
+            }, 200);
+        };
+
+        //----------------------- 传递的 js_json 数据
+        row_edit.data = JSON.parse('{$js_data}');
+        console.log(row_edit.data);
+
+        // ---------------------按钮 与 控件---------------------------
+        // 关闭、新增、保存、删除
+        // 关闭之前，需要检测此单据有没有明细数据，
+        // 如果有明细数据，没有保存过，提示是否需要保存
+        row_edit.linkbutton().win_close('close');
+        row_edit.linkbutton().win_close('tb_close');
+        row_edit.linkbutton().record_save('save');
+        row_edit.linkbutton().record_save('tb_save');
+        row_edit.linkbutton().record_add('add');
+
+        row_edit.form().mb_field_init();
+    })
+</script>

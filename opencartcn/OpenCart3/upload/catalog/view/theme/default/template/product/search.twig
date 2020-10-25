@@ -1,0 +1,144 @@
+{{ header }}
+<div id="product-search" class="container">
+  {{ include(helper.template('_partial/breadcrumb')) }}
+  <div class="row">{{ column_left }}
+    {% if column_left and column_right %}
+    {% set class = 'col-sm-6' %}
+    {% elseif column_left or column_right %}
+    {% set class = 'col-sm-9' %}
+    {% else %}
+    {% set class = 'col-sm-12' %}
+    {% endif %}
+    <div id="content" class="{{ class }}">{{ content_top }}
+      <label class="control-label" for="input-search">{{ entry_search }}</label>
+      <div class="row">
+        <div class="col-sm-4">
+          <input type="text" name="search" value="{{ search }}" placeholder="{{ text_keyword }}" id="input-search" class="form-control" />
+        </div>
+        <div class="col-sm-3">
+          <select name="category_id" class="form-control">
+            <option value="0">{{ text_category }}</option>
+            {% for category_1 in categories %}
+            {% if category_1.category_id == category_id %}
+            <option value="{{ category_1.category_id }}" selected="selected">{{ category_1.name }}</option>
+            {% else %}
+            <option value="{{ category_1.category_id }}">{{ category_1.name }}</option>
+            {% endif %}
+            {% for category_2 in category_1.children %}
+            {% if category_2.category_id == category_id %}
+            <option value="{{ category_2.category_id }}" selected="selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_2.name }}</option>
+            {% else %}
+            <option value="{{ category_2.category_id }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_2.name }}</option>
+            {% endif %}
+            {% for category_3 in category_2.children %}
+            {% if category_3.category_id == category_id %}
+            <option value="{{ category_3.category_id }}" selected="selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_3.name }}</option>
+            {% else %}
+            <option value="{{ category_3.category_id }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_3.name }}</option>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <label class="checkbox-inline">
+            {% if sub_category %}
+            <input type="checkbox" name="sub_category" value="1" checked="checked" />
+            {% else %}
+            <input type="checkbox" name="sub_category" value="1" />
+            {% endif %}
+            {{ text_sub_category }}</label>
+        </div>
+      </div>
+      <p>
+        <label class="checkbox-inline">
+          {% if description %}
+          <input type="checkbox" name="description" value="1" id="description" checked="checked" />
+          {% else %}
+          <input type="checkbox" name="description" value="1" id="description" />
+          {% endif %}
+          {{ entry_description }}</label>
+      </p>
+      <input type="button" value="{{ button_search }}" id="button-search" class="btn btn-primary" />
+      <h2>{{ text_search }}</h2>
+      {% if products %}
+      {{ include(helper.template('_partial/product/filter_bar_block')) }}
+      {% if style == 'list' %}
+        {% set class = 'product-list col-xs-12' %}
+      {% else %}
+        {% if column_left and column_right %}
+        {% set class = 'product-grid col-lg-6 col-md-6 col-sm-6 col-xs-6' %}
+        {% elseif column_left or column_right %}
+        {% set class = 'product-grid col-lg-4 col-md-4 col-sm-6 col-xs-6' %}
+        {% else %}
+        {% set class = 'product-grid col-lg-3 col-md-3 col-sm-6 col-xs-6' %}
+        {% endif %}
+      {% endif %}
+      <div class="row">
+        <div class="product-wrapper">
+          {% for product in products %}
+          <div class="product-layout {{ class }}">
+            {{ include(helper.template('_partial/product/product_single')) }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 text-left">{{ pagination }}</div>
+        <div class="col-sm-6 text-right">{{ results }}</div>
+      </div>
+      {% else %}
+      <p>{{ text_no_results }}</p>
+      {% endif %}
+      {{ content_bottom }}</div>
+    {{ column_right }}</div>
+</div>
+<script type="text/javascript"><!--
+$('#button-search').bind('click', function() {
+  url = 'index.php?route=product/search';
+
+  var search = $('#content input[name=\'search\']').prop('value');
+
+  if (search) {
+    url += '&search=' + encodeURIComponent(search);
+  }
+
+  var category_id = $('#content select[name=\'category_id\']').prop('value');
+
+  if (category_id > 0) {
+    url += '&category_id=' + encodeURIComponent(category_id);
+  }
+
+  var sub_category = $('#content input[name=\'sub_category\']:checked').prop('value');
+
+  if (sub_category) {
+    url += '&sub_category=true';
+  }
+
+  var filter_description = $('#content input[name=\'description\']:checked').prop('value');
+
+  if (filter_description) {
+    url += '&description=true';
+  }
+
+  location = url;
+});
+
+$('#content input[name=\'search\']').bind('keydown', function(e) {
+  if (e.keyCode == 13) {
+    $('#button-search').trigger('click');
+  }
+});
+
+$('select[name=\'category_id\']').on('change', function() {
+  if (this.value == '0') {
+    $('input[name=\'sub_category\']').prop('disabled', true);
+  } else {
+    $('input[name=\'sub_category\']').prop('disabled', false);
+  }
+});
+
+$('select[name=\'category_id\']').trigger('change');
+--></script>
+{{ footer }}

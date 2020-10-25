@@ -1,0 +1,458 @@
+<include file="Public:header" />
+<script src="__PUBLIC__/js/chart/highcharts.js"></script>
+<script src="__PUBLIC__/js/chart/modules/exporting.js"></script>
+
+<div class="container">
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li><a  href="{:U('finance/index','t=receivables')}"><img src="__PUBLIC__/img/yingshoukuan.png"/>&nbsp; {:L('RECEIVABLES')}</a></li>
+		  <li><a href="{:U('finance/index','t=payables')}"><img src="__PUBLIC__/img/yingfukuan.png"/> &nbsp; {:L('PAYABLES')}</a></li>
+		  <li><a href="{:U('finance/index','t=receivingorder')}"><img src="__PUBLIC__/img/shoukuandan.png"/> &nbsp; {:L('RECEIVINGORDER')}</a></li>
+		  <li><a href="{:U('finance/index','t=paymentorder')}"><img src="__PUBLIC__/img/fukuandan.png"/> &nbsp; {:L('PAYMENTORDER')}</a></li>
+		  <li class="active"><a href="{:U('finance/analytics')}"><img src="__PUBLIC__/img/tongji.png"/> &nbsp; {:L('STATISTICS')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=29" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/> {:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />
+	<div class="row">
+		<div class="span12">
+			<ul class="nav pull-left">
+				<li class="pull-left">
+					<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action="" method="get">
+						<ul class="nav pull-left">
+							<li class="pull-left">
+								{:L('SELECT DEPARTMENT')}&nbsp; <select style="width:auto" name="department" id="department" onchange="changeRole()">
+									<option class="all" value="all">{:L('ALL')}</option>
+									<volist name="departmentList" id="vo">
+										<option value="{$vo.department_id}">{$vo.name}</option>
+									</volist>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								{:L('SELECT USER')}&nbsp; <select style="width:auto" name="role" id="role" onchange="changeCondition()">
+									<option class="all" value="all">{:L('ALL')}</option>
+									<volist name="roleList" id="vo">
+										<option value="{$vo.role_id}">{$vo.role_name}-{$vo.user_name}</option>
+									</volist>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								{:L('SELECT DATE')}&nbsp; {:L('FROM')}<input type="text" id="start_time" name="start_time" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" class="Wdate" value="{$Think.get.start_time}"/>{:L('TO')}<input type="text" id="end_time" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})" name="end_time" class="Wdate" value="{$Think.get.end_time}" />&nbsp;&nbsp;
+							</li>
+							<li class="pull-left"><input type="hidden" name="m" value="finance"/><input type="hidden" name="a" value="analytics"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" class="btn">{:L('SEARCH')}</button></li>
+						</ul>
+					</form>
+				</li>				
+			</ul>
+		</div>
+		<div class="span2 knowledgecate">
+			<ul class="nav nav-list">
+				<li class="active">
+					<a href="javascript:void(0);">{:L('CHOOSE STATISTICAL CONTENT')}</a>
+				</li>
+				<li id="report"><a id="show_report" class="active" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('FINANCIAL STATISTICS REPORT')}</a></li>
+				<li id="moon"><a id="show_moon" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('MONTHLY STATISTICS')}</a></li>
+				<li id="shoukuan"><a id="show_shoukuan" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('RECEIVINGORDER YOY')}</a></li>
+				<li id="fukuan"><a id="show_fukuan" href="javascript:void(0)"><i class="icon-white icon-chevron-right"></i>{:L('PAYABLES YOY')}</a></li>
+			</ul> 
+		</div>
+		<div class="span10">
+			<div id="report_content">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							<th colspan="7" style="text-align:center;background-color:#F5F5F5;border-right:2px solid #E0DCDC;">收款项</th>
+							<th colspan="6" style="text-align:center;background-color:#F5F5F5;">付款项</th>
+						</td>
+						<tr>
+							<th>{:L('USER')}</th>
+							<th>{:L('RECEIVABLES NUMBER')}</th>
+							<th>{:L('NO_RECEIVING')}</th>
+							<th>{:L('PARTIALLY_RECEIVED')}</th>
+							<th>{:L('AMOUNTS RECEIVABLE')}</th>
+							<th>{:L('THE ACTUAL AMOUNT OF RECEIVABLES')}</th>
+							<th style="border-right:2px solid #E0DCDC;">{:L('RECEIVINGORDER')}</th>
+							<th>{:L('PAYABLES NUMBER')}</th>
+							<th>{:L('UNPAID')}</th>
+							<th>{:L('PARTIALLY PAID')}</th>
+							<th>{:L('AMOUNT PAYABLE')}</th>
+							<th>{:L('THE ACTUAL PAYMENT AMOUNT')}</th>
+							<th>{:L('PAYMENTORDER')}</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr style="background: #029BE2;color: #fff;font-size: 13px;">
+							<td>{:L('TOTAL')}</td>
+							<td>{$total_report.shoukuan_count}</td>
+							<td>{$total_report.weishou_count}</td>
+							<td>{$total_report.bufenshoukuan_count}</td>
+							<td>{$total_report.shoukuan_money}</td>
+							<td>{$total_report.yishou_money}</td>
+							<td>{$total_report.shoukuandan_count}</td>
+							<td>{$total_report.fukuan_count}</td>
+							<td>{$total_report.weifu_count}</td>
+							<td>{$total_report.bufenfukuan_count}</td>
+							<td>{$total_report.fukuan_money}</td>
+							<td>{$total_report.yifu_money}</td>
+							<td>{$total_report.fukuandan_count}</td>
+						</tr>
+					</tfoot>
+					<tbody>
+						<volist name="reportList" id="vo">
+						<tr>
+							<td class="tdleft"><a class="role_info" rel="{$vo.user.role_id}" href="javascript:void(0)">{$vo.user.user_name}</a></td>
+							<td>
+								<a href="{:U('finance/index','t=receivables&field=owner_role_id&search='.$vo['user']['role_id'])}" target="_blank">
+									{$vo.shoukuan_count}
+								</a>
+							</td> 
+							<td>
+								<a href="{:U('finance/index','t=receivables&field=owner_role_id&search='.$vo['user']['role_id'].'&by=none')}" target="_blank">
+									{$vo.weishou_count}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=receivables&field=owner_role_id&search='.$vo['user']['role_id'].'&by=part')}" target="_blank">
+									{$vo.bufenfukuan_count}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=receivables&field=owner_role_id&search='.$vo['user']['role_id'])}" target="_blank">
+									{$vo.shoukuan_money}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=receivingorder&field=owner_role_id&search='.$vo['user']['role_id'].'&by=part')}" target="_blank">
+									{$vo.yishou_money}
+								</a>
+							</td>
+							<td style="border-right:2px solid #E0DCDC;">
+								<a href="{:U('finance/index','t=receivingorder&field=owner_role_id&search='.$vo['user']['role_id'])}" target="_blank">
+									{$vo.shoukuandan_count}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=payables&field=owner_role_id&search='.$vo['user']['role_id'])}" target="_blank">
+									{$vo.fukuan_count}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=payables&field=owner_role_id&search='.$vo['user']['role_id'].'&by=none')}" target="_blank">
+									{$vo.weifu_count}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=payables&field=owner_role_id&search='.$vo['user']['role_id'].'&by=part')}" target="_blank">
+									{$vo.bufenfukuan_count}
+								</a>
+							</td> 
+							<td>
+								<a href="{:U('finance/index','t=payables&field=owner_role_id&search='.$vo['user']['role_id'])}" target="_blank">
+									{$vo.fukuan_money}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=paymentorder&field=owner_role_id&search='.$vo['user']['role_id'].'&by=part')}" target="_blank">
+									{$vo.yifu_money}
+								</a>
+							</td>
+							<td>
+								<a href="{:U('finance/index','t=paymentorder&field=owner_role_id&search='.$vo['user']['role_id'])}" target="_blank">
+									{$vo.fukuandan_count}
+								</a>
+							</td>
+						</tr>
+
+						</volist>
+					</tbody>
+				</table>
+			</div>
+			
+			<div id="moon_content" class="hidden">
+				<div id="an_chart">
+					<div id="canvas_moon" style="min-width: 800px; height: 500px; margin: 0 auto"></div>
+				</div>
+			</div>
+			<div id="shoukuan_year_content" class="hidden">
+				<div id="an_chart">
+					<div id="canvas_shoukuan" style="min-width: 800px; height: 500px; margin: 0 auto"></div>
+				</div>
+			</div>
+			<div id="fukuan_year_content" class="hidden">
+				<div id="an_chart">
+					<div id="canvas_fukuan" style="min-width: 800px; height: 500px; margin: 0 auto"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+	<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+	$("#dialog-role-info").dialog({
+		autoOpen: false,
+		modal: true,
+		width: width,
+		maxHeight: 400,
+		position: ["center",100]
+	});
+	
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	
+	$(function () {
+		$('#canvas_moon').highcharts({
+			chart: {
+				type: 'column'
+			},
+			title: {
+				text: '{:L('FINANCIAL INFORMATION MONTHLY STATISTICS')}'
+			},
+			xAxis: {
+				categories: [
+					'Jan',
+					'Feb',
+					'Mar',
+					'Apr',
+					'May',
+					'Jun',
+					'Jul',
+					'Aug',
+					'Sep',
+					'Oct',
+					'Nov',
+					'Dec'
+				]
+			},
+			yAxis: {
+				min: 0,
+				title: {
+					text: '{:L('FINANCIAL INFORMATION MONTHLY STATISTICS')}'
+				}
+			},
+			tooltip: {
+				headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+				pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+					'<td style="padding:0"><b>{point.y:.1f} {:L('YUAN',array(''))}</b></td></tr>',
+				footerFormat: '</table>',
+				shared: true,
+				useHTML: true
+			},
+			plotOptions: {
+				column: {
+					pointPadding: 0.2,
+					borderWidth: 0
+				}
+			},
+			series: [{
+				name: '{:L('RECEIVABLES')}',
+				data: {$moon_count['shoukuan']}
+	
+			}, {
+				name: '{:L('THE ACTUAL RECEIVABLES')}',
+				data: {$moon_count['shijishoukuan']}
+	
+			}, {
+				name: '{:L('PAYABLES')}',
+				data: {$moon_count['fukuan']}
+	
+			}, {
+				name: '{:L('THE ACTUAL PAYABLES')}',
+				data: {$moon_count['shijifukuan']}
+	
+			}]
+		});
+		
+		$('#canvas_shoukuan').highcharts({
+			chart: {
+				type: 'column'
+			},
+			title: {
+				text: '{:L('RECEIVINGORDER YOY')}'
+			},
+			xAxis: {
+				categories: [
+					'Jan',
+					'Feb',
+					'Mar',
+					'Apr',
+					'May',
+					'Jun',
+					'Jul',
+					'Aug',
+					'Sep',
+					'Oct',
+					'Nov',
+					'Dec'
+				]
+			},
+			yAxis: {
+				min: 0,
+				title: {
+					text: '{:L('RECEIVINGORDER YOY')}'
+				}
+			},
+			tooltip: {
+				headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+				pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+					'<td style="padding:0"><b>{point.y:.1f} {:L('YUAN',array(''))}</b></td></tr>',
+				footerFormat: '</table>',
+				shared: true,
+				useHTML: true
+			},
+			plotOptions: {
+				column: {
+					pointPadding: 0.2,
+					borderWidth: 0
+				}
+			},
+			series: [{
+				name: '{:L('LAST YEAR')}',
+				data: {$year_count['shoukuan_previousyear']}
+	
+			}, {
+				name: '{:L('THIS YEAR')}',
+				data: {$year_count['shoukuan_thisyear']}
+	
+			}]
+		});
+		
+		$('#canvas_fukuan').highcharts({
+			chart: {
+				type: 'column'
+			},
+			title: {
+				text: '{:L('PAYABLES YOY')}'
+			},
+			xAxis: {
+				categories: [
+					'Jan',
+					'Feb',
+					'Mar',
+					'Apr',
+					'May',
+					'Jun',
+					'Jul',
+					'Aug',
+					'Sep',
+					'Oct',
+					'Nov',
+					'Dec'
+				]
+			},
+			yAxis: {
+				min: 0,
+				title: {
+					text: '{:L('PAYABLES YOY')}'
+				}
+			},
+			tooltip: {
+				headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+				pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+					'<td style="padding:0"><b>{point.y:.1f} {:L('YUAN',array(''))}</b></td></tr>',
+				footerFormat: '</table>',
+				shared: true,
+				useHTML: true
+			},
+			plotOptions: {
+				column: {
+					pointPadding: 0.2,
+					borderWidth: 0
+				}
+			},
+			series: [{
+				name: '{:L('LAST YEAR')}',
+				data: {$year_count['fukuan_previousyear']}
+	
+			}, {
+				name: '{:L('THIS YEAR')}',
+				data: {$year_count['fukuan_thisyear']}
+	
+			}]
+		});
+	});
+	
+	
+	
+	function changeRole(){
+		department_id = $("#department option:selected").val();
+		$.ajax({
+			type:'get',
+			url:'index.php?m=user&a=getrolebydepartment&department_id='+department_id,
+			async:true,
+			success:function(data){
+				options = '<option value="all">{:L('ALL')}</option>';
+				if(data.data != null){
+					$.each(data.data, function(k, v){
+						options += '<option value="'+v.role_id+'">'+v.role_name+"-"+v.user_name+'</option>';
+					});
+				}
+				$("#role").html(options);
+				<if condition="$_GET['role']">
+				$("#role option[value='{$Think.get.role}']").prop("selected", true);
+				</if>
+			},
+			dataType:'json'});
+	}
+	
+	<if condition="$_GET['department'] and $_GET['department'] neq 'all'">
+	$("#department option[value='{$Think.get.department}']").prop("selected", true); 
+	changeRole();
+	</if>
+	<if condition="$_GET['department'] eq 'all'">
+	$("#role option[value='{$Think.get.role}']").prop("selected", true);
+	</if>
+	
+	$(function(){
+		$("#show_report").click(function(){
+			$(this).addClass('active');
+			$("#show_moon").removeClass('active');
+			$("#show_shoukuan").removeClass('active');
+			$("#show_fukuan").removeClass('active');
+			
+			$("#report_content").removeClass('hidden');
+			$("#moon_content").addClass('hidden');
+			$("#shoukuan_year_content").addClass('hidden');
+			$("#fukuan_year_content").addClass('hidden');
+		});
+		$("#show_moon").click(function(){
+			$(this).addClass('active');
+			$("#show_report").removeClass('active');
+			$("#show_shoukuan").removeClass('active');
+			$("#show_fukuan").removeClass('active');
+			
+			$("#report_content").addClass('hidden');
+			$("#moon_content").removeClass('hidden');
+			$("#shoukuan_year_content").addClass('hidden');
+			$("#fukuan_year_content").addClass('hidden');
+		});
+		$("#show_shoukuan").click(function(){
+			$(this).addClass('active');
+			$("#show_report").removeClass('active');
+			$("#show_moon").removeClass('active');
+			$("#show_fukuan").removeClass('active');
+			
+			$("#report_content").addClass('hidden');
+			$("#moon_content").addClass('hidden');
+			$("#shoukuan_year_content").removeClass('hidden');
+			$("#fukuan_year_content").addClass('hidden');
+		});
+		$("#show_fukuan").click(function(){
+			$(this).addClass('active');
+			$("#show_report").removeClass('active');
+			$("#show_moon").removeClass('active');
+			$("#show_shoukuan").removeClass('active');
+			
+			$("#report_content").addClass('hidden');
+			$("#moon_content").addClass('hidden');
+			$("#shoukuan_year_content").addClass('hidden');
+			$("#fukuan_year_content").removeClass('hidden');
+		});
+	});
+</script>
+<include file="Public:footer" />

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+<title>{echo admin_title()}</title>
+<!--header-->
+{template _:header}
+<style>
+#template_benefit_info_detail{padding-top:1em; margin-top:15px; border-top:1px solid #e6e6e6;}
+#template_benefit_info_detail .layui-form-label{width:4em; padding-left:0;}
+#template_benefit_info_detail .layui-input-block{margin-left:71px;}
+.layui-upload.card_bg_url .layui-upload-list{ width: 251px; height: 140px; line-height: 140px;}
+.layui-upload.card_logo_url .layui-upload-list{ width: 80px; height: 80px; line-height: 80px;}
+.layui-upload .layui-upload-list .layui-upload-img{ max-width: 100%; width:100%; height: 100%; background: #fff url('/public/image/image.png') no-repeat center center;}
+.layui-upload .layui-upload-list{ display: inline-block; position: relative; margin-right: 10px;}
+.layui-upload .layui-upload-list .progress-mask{ position: absolute; left: 0; bottom: 0; width: 100%; height: 0%; background:rgba(0,0,0,.6);}
+.layui-upload .layui-upload-list .progress-text{ position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; color:#fff; text-align: center; text-shadow: 0px 1px 1px black;}
+p.tip{ color:#999; font-size: small;}
+</style>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+<!--top-->
+{template _main_top}
+<!--nav-->
+{template _main_nav}
+	<div class="position"><h1>微信配置</h1></div>
+	<div class="layui-body admin-body">
+		<div class="admin-content">
+			<div class="layui-tab layui-tab-brief" style="margin-top:-5px;">
+				<ul class="layui-tab-title layui-tab-links">
+					<li class="<!--{if request()->action() == 'index'}-->layui-this<!--{/if}-->"><a href="{echo url('weixin/index')}">公众号授权</a></li>
+					<li class="<!--{if request()->action() == 'card'}-->layui-this<!--{/if}-->"><a href="{echo url('weixin/card')}">微信会员卡</a></li>
+				</ul>
+			</div>
+			<div class="opwindow">
+				<form name="theform" id="theform" method="post" action="{echo \befen\get_url()}" class="layui-form">
+					<table class="layui-table">
+						<tbody>
+							<tr>
+								<td class="td1">会员卡状态：</td>
+								<td class="td2">
+									<div class="layui-form-item">
+										<input type="checkbox" name="is_card" lay-filter="is_card" lay-skin="switch" lay-text="开启|关闭" <!--{echo !empty($value['is_card']) ? 'checked' : '';}--> value="1">
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">充值(iot小程序)：</td>
+								<td class="td2">
+									<div class="layui-form-item">
+										<input type="checkbox" name="is_charge" lay-filter="is_charge" lay-skin="switch" lay-text="开启|关闭" <!--{echo !empty($value['is_charge']) ? 'checked' : '';}--> value="1">
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">商户名称：</td>
+								<td class="td2">
+									<input type="text" name="brand_name" placeholder="商户名称，开卡后不可修改" class="layui-input <!--{if $value['brand_name']}-->layui-disabled<!--{/if}-->" value="{$value[brand_name]}" <!--{if $value['brand_name']}-->readonly<!--{/if}-->>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">会员卡背景：</td>
+								<td class="td2">
+									<div class="layui-upload card_bg_url">
+										<div class="layui-upload-list">
+											<img class="layui-upload-img" src="{$value[card_bg_url]}" onerror="this.src='/public/image/blank.png'">
+											<div class="progress-mask"></div>
+											<span class="progress-text" style="display:none;">0%</span>
+											<input type="hidden" name="background_id" value="{$value[background_id]}">
+											<input type="hidden" name="card_bg_url" value="{$value[card_bg_url]}">
+										</div>
+										<button type="button" class="layui-btn">上传图片</button>
+										<p class="tip">* 图片说明：2M以内，格式：png、jpg；尺寸不小于1000*600px；图片不得有圆角，不得拉伸变形</p>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">会员卡LOGO：</td>
+								<td class="td2">
+									<div class="layui-upload card_logo_url">
+										<div class="layui-upload-list">
+											<img class="layui-upload-img" src="{$value[card_logo_url]}" onerror="this.src='/public/image/blank.png'">
+											<div class="progress-mask"></div>
+											<span class="progress-text" style="display:none;">0%</span>
+											<input type="hidden" name="logo_id" value="{$value[logo_id]}">
+											<input type="hidden" name="card_logo_url" value="{$value[card_logo_url]}">
+										</div>
+										<button type="button" class="layui-btn">上传图片</button>
+										<p class="tip">* 图片说明：1M以内，格式png、jpg；尺寸不小于300*300px的正方形；请优先使用商家LOGO；</p>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">会员卡标题：</td>
+								<td class="td2">
+									<input type="text" name="title" placeholder="请输入标题" class="layui-input" value="{$value[title]}">
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">颜色：</td>
+								<td class="td2">
+									<div style="float:left;">
+										<select name="color" id="color" lay-filter="color">
+											<option value="Color010" style="background-color:#63B359;" <!--{if $value['color'] == 'Color010'}-->selected<!--{/if}-->>Color010</option>
+											<option value="Color020" style="background-color:#2C9F67;" <!--{if $value['color'] == 'Color020'}-->selected<!--{/if}-->>Color020</option>
+											<option value="Color030" style="background-color:#509FC9;" <!--{if $value['color'] == 'Color030'}-->selected<!--{/if}-->>Color030</option>
+											<option value="Color040" style="background-color:#5885CF;" <!--{if $value['color'] == 'Color040'}-->selected<!--{/if}-->>Color040</option>
+											<option value="Color050" style="background-color:#9062C0;" <!--{if $value['color'] == 'Color050'}-->selected<!--{/if}-->>Color050</option>
+											<option value="Color060" style="background-color:#D09A45;" <!--{if $value['color'] == 'Color060'}-->selected<!--{/if}-->>Color060</option>
+											<option value="Color070" style="background-color:#E4B138;" <!--{if $value['color'] == 'Color070'}-->selected<!--{/if}-->>Color070</option>
+											<option value="Color080" style="background-color:#EE903C;" <!--{if $value['color'] == 'Color080'}-->selected<!--{/if}-->>Color080</option>
+											<option value="Color081" style="background-color:#F08500;" <!--{if $value['color'] == 'Color080'}-->selected<!--{/if}-->>Color081</option>
+											<option value="Color082" style="background-color:#A9D92D;" <!--{if $value['color'] == 'Color080'}-->selected<!--{/if}-->>Color082</option>
+											<option value="Color090" style="background-color:#DD6549;" <!--{if $value['color'] == 'Color090'}-->selected<!--{/if}-->>Color090</option>
+											<option value="Color100" style="background-color:#CC463D;" <!--{if $value['color'] == 'Color100'}-->selected<!--{/if}-->>Color100</option>
+											<option value="Color101" style="background-color:#CF3E36;" <!--{if $value['color'] == 'Color101'}-->selected<!--{/if}-->>Color101</option>
+											<option value="Color102" style="background-color:#5E6671;" <!--{if $value['color'] == 'Color102'}-->selected<!--{/if}-->>Color102</option>
+										</select>
+									</div>
+									<div id="show_color" style="float:left;margin-left:10px;width:50px;height:38px;background-color:#63B359;"></div>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">商家电话：</td>
+								<td class="td2">
+									<input type="text" name="service_phone" placeholder="请输入电话" class="layui-input" value="{$value[service_phone]}">
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">有效期：</td>
+								<td class="td2">永久有效</td>
+							</tr>
+							<tr>
+								<td class="td1">会员权益说明：</td>
+								<td class="td2">
+									<textarea name="prerogative" placeholder="请输入权益说明" class="layui-textarea">{$value[prerogative]}</textarea>
+								</td>
+							</tr>
+							<tr>
+								<td class="td1">&nbsp;</td>
+								<td class="td2">
+									<button type="submit" name="submit" value="submit" id="submit" class="layui-btn" lay-submit lay-filter="*">提交</button>
+									<button style="display:none;" type="button" class="layui-btn layui-btn-primary" id="card_activateurl">领卡链接</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<!--footer-->
+{template _:footer}
+<script type="text/javascript">
+init_upload({
+	elem: document.querySelector('.layui-upload.card_bg_url > button'),
+	field: 'image',
+	url: '/merchant/weixin/media_upload',
+	//exts: '',
+	//acceptMime: '',
+	callback: function(item, data, index, upload){
+		console.log(data);
+		if(data.status == 0) {
+			showTips(null, data.message);
+		} else {
+			item.parent().find('.layui-upload-img').attr("src", data.contents.local_url);
+			$('.layui-upload.card_bg_url > .layui-upload-list input[name=background_id]').val(data.contents.image_url);
+			$('.layui-upload.card_bg_url > .layui-upload-list input[name=card_bg_url]').val(data.contents.local_url);
+		}
+	}
+});
+init_upload({
+	elem: document.querySelector('.layui-upload.card_logo_url > button'),
+	field: 'image',
+	url: '/merchant/weixin/media_upload',
+	//exts: '',
+	//acceptMime: '',
+	callback: function(item, data, index, upload){
+		console.log(data);
+		if(data.status == 0) {
+			showTips(null, data.message);
+		} else {
+			item.parent().find('.layui-upload-img').attr("src", data.contents.local_url);
+			$('.layui-upload.card_logo_url > .layui-upload-list input[name=logo_id]').val(data.contents.image_url);
+			$('.layui-upload.card_logo_url > .layui-upload-list input[name=card_logo_url]').val(data.contents.local_url);
+		}
+	}
+});
+layui.use(['laydate','form','upload','element'], function(){
+
+	var form = layui.form, laydate = layui.laydate;
+	form.on('switch(is_card)', function(data){
+		var is_card = data.elem.checked ? 1 : 0;
+		$.ajax({
+			type: "POST",
+			dataType: "json",
+			timeout: 50000,
+			url: "{echo url('card_switch')}",
+			data: {
+				ajax: "json",
+				is_card: is_card,
+			},
+			success: function(data){
+				if(data.status == 1) {
+					showInfo(data.message);
+				} else {
+					showAlert(data.message, function(){
+						reload();
+					});
+				}
+			},
+			error: function(data){
+				showAlert("提交数据失败", function(){
+					reload();
+				});
+			},
+			complete: function(){
+				hideLoader();
+			},
+			beforeSend: function(){
+				showLoader();
+			}
+		});
+	});
+	form.on('switch(is_charge)', function(data){
+		var is_charge = data.elem.checked ? 1 : 0;
+		$.ajax({
+			type: "POST",
+			dataType: "json",
+			timeout: 50000,
+			url: "{echo url('charge_switch')}",
+			data: {
+				ajax: "json",
+				is_charge: is_charge,
+			},
+			success: function(data){
+				if(data.status == 1) {
+					showInfo(data.message);
+				} else {
+					showAlert(data.message, function(){
+						reload();
+					});
+				}
+			},
+			error: function(data){
+				showAlert("提交数据失败", function(){
+					reload();
+				});
+			},
+			complete: function(){
+				hideLoader();
+			},
+			beforeSend: function(){
+				showLoader();
+			}
+		});
+	});
+	laydate.render({ 
+		elem: document.querySelector('input[name="template_benefit_info[start_date]"]')
+		,type: 'datetime'
+	});
+	laydate.render({ 
+		elem: document.querySelector('input[name="template_benefit_info[end_date]"]')
+		,type: 'datetime'
+	});
+
+	//会员权益信息
+	form.on('switch(template_benefit_info[show])', function(data){
+		$('#template_benefit_info_detail').toggle();
+	});
+
+	form.on('submit(*)', function(data){
+		if(data.field['template_benefit_info[show]'] == 1){
+			if(!(data.field['template_benefit_info[title]'] && data.field['template_benefit_info[benefit_desc]'] && data.field['template_benefit_info[start_date]'] && data.field['template_benefit_info[end_date]'])){
+				layer.alert('会员权益信息均为必填项');
+				return false;
+			}
+			data.field['template_benefit_info[benefit_desc]'] = data.field['template_benefit_info[benefit_desc]'].split('\n');
+		}
+		$.ajax({
+			method: 'post',
+			url: '{echo \befen\get_url()}', 
+			data: data.field,
+			success: (res) => {
+				if(res.status != 1) {
+					if(res.message){
+						showAlert(res.message);
+					} else {
+						showAlert("请求失败");
+					}
+				} else {
+					showInfo("操作成功");
+				}
+			},
+			complete: function(){
+				hideLoader();
+			},
+			beforeSend: function(){
+				showLoader();
+			}
+		});
+		return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+	});
+
+	$('#card_activateurl').click(function(e){
+		$.ajax({
+			method: 'post',
+			url: '/merchant/weixin/card_activateurl',
+			data: {},
+			success: res => {
+				if(res.status != 1) {
+					if(res.message){
+						showAlert(res.message);
+					} else {
+						showAlert("请求失败");
+					}
+				} else {
+					layer.open({
+						title: '微信APP扫码领卡',
+						shade: 0.5,
+						isOutAnim: true,
+						content: '<div style="text-align:center"><div id="card_qrcode" style="width:250px;height:250px;margin:0 auto 1em;"></div>' + res.contents.apply_card_url + '</div>',
+						btn: false
+					});
+					var qrcode = new QRCode(document.getElementById("card_qrcode"), {
+						width: 250,
+						height: 250
+					});
+					qrcode.makeCode(res.contents.apply_card_url);
+				}
+			},
+			error: function(){
+				hideLoader();
+			},
+			complete: function(){
+				hideLoader();
+			},
+			beforeSend: function(){
+				showLoader();
+			}
+		});
+	});
+
+	form.on('select(color)', function(data){
+		$("#show_color").css("background-color", $(data.elem).find("option:selected").css("background-color"));
+	});
+
+});
+$(document).ready(function(){
+    $("#show_color").css("background-color", $("#color").find("option:selected").css("background-color"));
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+(function (window, document) {
+    /**
+     * init about
+     */
+    (function () {
+        var aboutList = [
+            '性能|高性能极致加载、高效率编译和读取！',
+            '清晰|大量注释及实例，几分钟就上马进门！',
+            '小巧|整个框架 400k，几乎没有冗余代码！',
+            '奔放|支持 http 和 cli 双运行，方法：php index.php {$control} {$action}',
+            '易用|优化过的 discuz 模板引擎，使模板调用更加易用。',
+            '安全|简单又安全的取参数过程，有效防止 xss，封装的 SQL 防注入过程，确保系统安全。',
+            '扩展|丰富的库和插件：scss 语法支持、css 压缩、css sprite 生成、js 合并、js 压缩等。',
+            '调试|详细的 DEBUG、运行时间和SQL查询信息，只需在 URL 中加上固定参数，简单好用。',
+            '本项目地址：<a href="http://git.oschina.net/mz/mzphp-todo" target="_blank">http://git.oschina.net/mz/mzphp-todo</a>',
+            'MzPHP地址：<a href="http://git.oschina.net/mz/mzphp2" target="_blank">http://git.oschina.net/mz/mzphp2</a>'
+        ];
+        return new Vue({
+            // 绑定DOM
+            el: '#about-page',
+            // 数据定义
+            data: {
+                // 底部选项卡的激活状态
+                tabActive: 'about',
+                //
+                aboutList: aboutList
+            },
+            // 实例创建完成
+            created: function () {
+            }
+        });
+    })();
+
+})(window, document);

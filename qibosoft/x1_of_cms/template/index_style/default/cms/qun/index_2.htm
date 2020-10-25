@@ -1,0 +1,271 @@
+{extend name="$index_style_layout" /}
+
+<!--SEO相关-->
+{block name="head_title"}{$info.title}{/block}
+{block name="head_keword"}{$info.keywords?:$info.title}  {$s_info.name} {/block}
+{block name="head_description"}{:get_word(del_html($info['content']),300)}{/block}
+
+{block name="body_content"}
+ 
+<link rel="stylesheet" type="text/css" href="__STATIC__/qun/bbs/pagemsg1.css">
+<div class="MainContainer">
+    <ul class="TopContainer">
+        <li class="logo"><span><a href="{:urls('content/show',['id'=>$aid])}"><img src="{$info.picurl}" onerror="this.src='https://www.wxyxpt.com/shop/images/shop/logo.png'"/></a></span>
+        </li>
+        <li class="title"><a style="color: #EEE;" href="{:urls('content/show',['id'=>$aid])}">{$info.title}</a></li>
+        <li class="shar"><a href="{:murl('cms/content/add',['mid'=>2,'ext_id'=>$aid,'ext_sys'=>M('id')])}?fromurl={:urlencode(get_url('location'))}" style="display:;"><span>发布</span></a>
+        </li>
+    </ul>
+
+<div style="margin-top:10px;padding-left:10px;background:#fff;">
+{include file="../../default/qun/common/mysort" /}
+</div>
+
+    <div class="ListContent">
+	{qb:tag name="qun_wapindex_model004" union="order,by" time="-1" where="uid=$info.uid&myfid=$myfid" type="cms" mid="2" rows="5"}
+        <ul class='listmsg'>
+            <ol><em>{:format_time($rs.create_time,'d')}</em><span>{:format_time($rs.create_time,'y.m')}</span>
+            </ol>
+            <li>
+				<div class='content'><p>{$rs.title}</p></div>
+                <div class='listimgs'>
+					{volist name="$rs.picurls" id="vs"}
+					{if $i<10}
+                    <div class='pic2'>
+					<a href="{$rs.url}">
+                        <p><span><em><img src="{$vs.picurl}" onerror="this.src='__STATIC__/images/nopic.png'" name="{$vs.picurl}" onclick='showthispic($(this));'/></em></span>
+                        </p>
+					</a>
+                    </div>
+					{/if}
+					{/volist}
+                </div>
+                <div class='listmsg listmsg3884'>
+					<!--
+                    <div class='actbox'>
+                        <dl><dt><span onClick='zanpsm(3884)'>赞</span></dt>
+                            <dd><span onClick='pingpsm(3884)'>评论</span>
+                            </dd>
+                        </dl>
+                        <div class='show' onClick='showmsgAct(3884)'><span>展开</span> </div>
+                    </div>
+					-->
+					<!--
+                    <div class='listzan listzan1'>
+					<a href='/hy/waphome.php?id=1001128'>admin</a>
+					</div>
+                    <div class='listping listping1'>
+						<div class='list'><a href='/hy/waphome.php?id=1001128'>admin</a> <span onClick='delthisping(3884,348)'>TRE</span></div>
+						<div class='list'><a href='/hy/waphome.php?id=1001128'>admin</a> <span onClick='delthisping(3884,349)'>EWTREWTREWTRE</span></div>
+                    </div>-->
+                </div>
+                <div class='action'><!--<a href='?id=1001128&cid=3884&job=ToTop' class='top'>置顶</a>-->  <a href="{:murl('cms/content/edit',['id'=>$rs.id,'ext_id'=>$aid,'ext_sys'=>M('id')])}?fromurl={:urlencode(get_url('location'))}" class='edit'>修改</a>  <a href="{:murl('cms/content/delete',['ids'=>$rs.id,'ext_id'=>$aid,'ext_sys'=>M('id')])}?fromurl={:urlencode(get_url('location'))}" onclick="return confirm('你确实要删除吗?');" class='del'>删除</a>
+                </div>
+            </li>
+        </ul>
+		{/qb:tag}
+    </div>
+    <div class="LoadingBox"><span>内容加载中……</span>
+    </div>
+</div>
+<div class="Share_Message" onClick="SharHiddenMessage();"></div>
+<div class="PostPingBox">
+    <div class="BackBox" onClick="HidePostPingBox()"></div>
+    <div class="PingCont">
+        <div class="head">给TA评论</div>
+        <input name="" type="hidden">
+        <textarea placeholder="输入评论内容"></textarea>
+        <div class="but"><span onClick="PostPings()">评论</span>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+function delthisping(cid,zid){
+	var msay = confirm('您是否确定删除当前评论？');
+	if(msay==true){
+		$.get("?action=delping&cid="+cid+"&zid="+zid+"&"+Math.random(),function(d){
+			$('.listmsg'+cid+' .listping').html(d);
+		});
+	}
+}
+var myuid=1;
+function repthisping(cid,touid){
+	if(myuid==0){
+		var msay = confirm('您还没有登录！要先登录才可以回复！你是否要登录？');
+		if(msay==true){
+			window.location.href="https://www.wxyxpt.com/do/wx_login.php?fromurl="+escape("https://www.wxyxpt.com/picmsg/wapindex.php?id=1001128&fid=0");
+		}else{
+			HidePostPingBox();
+		}
+	}else{
+		$('.PingCont input').val(cid);
+		$('.PingCont input').attr("name",touid);
+		$('.PostPingBox').fadeIn();
+		$('.PingCont .but span').attr("onClick","ReplaytPings()");
+	}
+}
+function ReplaytPings(){
+	var pingnum=$('.PingCont input').val();
+	var touid=$('.PingCont input').attr("name");
+	var pingcont=$('.PingCont textarea').val();
+	if(pingcont==''){
+		alert('请填写回复内容');
+	}else{
+		$.ajax({
+		   type: "POST",
+		   url: "?",
+		   data: "action=comment&cid="+pingnum+"&content="+pingcont+"&touid="+touid,
+		   success: function(msg){
+			 $('.listmsg'+pingnum+' .listping').html(msg);
+			 HidePostPingBox();		 
+		   }
+		});
+	}
+}
+function pingpsm(num){
+	if(myuid==0){
+		var msay = confirm('您还没有登录！要先登录才可以评论！你是否要登录？');
+		if(msay==true){
+			window.location.href="https://www.wxyxpt.com/do/wx_login.php?fromurl="+escape("https://www.wxyxpt.com/picmsg/wapindex.php?id=1001128&fid=0");
+		}else{
+			HidePostPingBox();
+		}
+	}else{
+		$('.PingCont input').val(num);
+		$('.PostPingBox').fadeIn();
+		$('.PingCont .but span').attr("onClick","PostPings()");
+	}
+}
+function HidePostPingBox(){
+	$('.PingCont textarea').val('');
+	$('.PostPingBox').fadeOut();
+	$('.listmsg .actbox dl').animate({'width':'0px'},300);
+}
+function PostPings(){
+	var pingnum=$('.PingCont input').val();
+	var pingcont=$('.PingCont textarea').val();
+	if(pingcont==''){
+		alert('请填写评论内容');
+	}else{
+		$.ajax({
+		   type: "POST",
+		   url: "wapindex.php",
+		   data: "action=comment&cid="+pingnum+"&content="+pingcont,
+		   success: function(msg){
+		   	 if($('.listmsg'+pingnum+' .listping').hasClass("listping1")==false){
+				$('.listmsg'+pingnum+' .listping').addClass("listping1");
+			 }
+			//$('.listmsg'+pingnum+' .listping').append(msg);
+			$('.listmsg'+pingnum+' .listping').html(msg);
+			 HidePostPingBox();		 
+		   }
+		});
+	}
+}
+function showmsgAct(num){
+	if(myuid==0){
+		var msay = confirm('您还没有登录！要先登录才可以评论！你是否要登录？');
+		if(msay==true){
+			window.location.href="https://www.wxyxpt.com/do/wx_login.php?fromurl="+escape("https://www.wxyxpt.com/picmsg/wapindex.php?id=1001128&fid=0");
+		}else{
+			HidePostPingBox();
+		}
+	}else{
+		$('.listmsg'+num+' .actbox dl').animate({'width':'200px'},300);
+		//$('.listmsg'+num+' .actbox dl').animate({'width':'200px'},5000,function(){
+			//$(this).animate({'width':'0px'},300);
+		//});
+	}
+}
+function zanpsm(num){
+	if(myuid==0){
+		var msay = confirm('您还没有登录！要先登录才可以评论！你是否要登录？');
+		if(msay==true){
+			window.location.href="https://www.wxyxpt.com/do/wx_login.php?fromurl="+escape("https://www.wxyxpt.com/picmsg/wapindex.php?id=1001128&fid=0");
+		}else{
+			HidePostPingBox();
+		}
+	}else{
+		$('.listmsg'+num+' .actbox dl').animate({'width':'0px'},300);
+		$.get("?action=zanpsm&cid="+num+"&"+Math.random(),function(d){
+			if(d=='noinfo'){
+				alert('数据有误！');
+			}else if(d=='havezan'){
+				alert('已经点赞过了！');
+			}else{
+				if($('.listmsg'+num+' .listzan').hasClass("listzan1")==false){
+					$('.listmsg'+num+' .listzan').addClass("listzan1");
+				}
+				$('.listmsg'+num+' .listzan').append(d);
+			}
+		});
+	}
+}
+function showcontentformat(){
+	$('.ListContent .listmsg li .content p').each(function(){
+		if($(this).height()>50){
+			$(this).addClass('moreshow');
+			$(this).append("<span onClick='showThisAll($(this))' class='moreAct'>全文</div>");
+		}
+	});
+}
+showcontentformat();
+function showThisAll(obj){
+	var thisF=obj.parent();
+	if(thisF.hasClass("moreshow")){
+		thisF.removeClass('moreshow');
+		obj.html('收起');
+	}else{
+		thisF.addClass('moreshow');
+		obj.html('全文');
+	}
+}
+
+var page=1,loading=1;
+$(window).scroll(function(){
+	// 当滚动到最底部以上100像素时， 加载新内容
+	if ($(document).height() - $(this).scrollTop() <1000 && loading==1){
+		$('.LoadingBox').fadeIn();
+		page++;
+		loading=0;
+		var urls="{qb:url name='qun_wapindex_model004'}" + page + "&myfid={$myfid}";
+		$.get(urls+"&"+Math.random(),function(res){
+			if(res.code==0){
+				if(res.data==''){
+					loading=0;
+					$('.LoadingBox').fadeOut();
+				}else{
+					$('.ListContent').append(res.data);
+					$('.LoadingBox').fadeOut();
+					loading=1;
+					showcontentformat();
+				}
+			}
+			
+		});
+	}	
+});
+
+function showthispic(objs){
+	var thispic=objs.attr("name");
+	var pics = new Array();
+	var i=0;
+	$('.ListContent img').each(function(){
+		pics[i]=$(this).attr("name");
+		i++;
+	});
+	wx.previewImage({
+	  current: thispic,
+	  urls:pics
+	});
+}
+$('.ListContent dl li img').click(function(){
+	var this_src=$(this).attr("src");
+	this_src = this_src.substring(0, this_src.length-4);
+	view_pic(this_src);
+});
+</script>
+
+{/block}

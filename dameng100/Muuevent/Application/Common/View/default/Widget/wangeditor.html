@@ -1,0 +1,62 @@
+
+
+<php> if(\Think\Hook::get('adminEditor') && MODULE_NAME == 'Admin'){</php>
+<label class="textarea">
+    <textarea name="{$name}" id="{$id}">{$default}</textarea>
+    {:hook('adminEditor', array('id'=>$id,'value'=>$default))}
+</label>
+
+<php>}elseif(\Think\Hook::get('editor')){</php>
+
+<label class="textarea">
+    <textarea name="{$name}" id="{$id}">{$default}</textarea>
+    {:hook('editor', array('id'=>$id,'value'=>$default))}
+</label>
+
+<php>}else{</php>
+    <style type="text/css">
+        .toolbar {
+            border: 1px solid #ccc;
+            width:{$width};
+        }
+        .editarea {
+            border: 1px solid #ccc;
+            border-top:0px;
+            width:{$width};
+        }
+    </style>
+    <div id="toolbar_{$id}" class="toolbar"></div>
+	<div id="editarea_{$id}" class="editarea" style="{$style}">{$default}</div>
+	<textarea id="wangeditor_{$id}" name="{$name}" class="hidden">{$default}</textarea>
+    <php>if(!$param['is_load_script']){</php>
+	<script type="text/javascript" src="__PUBLIC__/lib/wangEditor-3.1.1/wangEditor.min.js"></script>
+
+	<script type="text/javascript">
+	$(function(){
+        var E = window.wangEditor;
+        var editor = new E('#toolbar_{$id}','#editarea_{$id}');
+        // 或者 var editor = new E( document.getElementById('editor') )
+        var $text1 = $('#wangeditor_{$id}')
+        editor.customConfig.onchange = function (html) {
+            // 监控变化，同步更新到 textarea
+            $text1.val(html)
+        }
+        //上传图片
+        editor.customConfig.uploadImgServer = '{:U("Home/File/uploadPicture")}'  // 上传图片到服务器
+        editor.customConfig.uploadImgHooks = {
+        customInsert: function (insertImg, result, editor) {
+                // result 必须是一个 JSON 格式字符串！！！否则报错
+                // 图片上传并返回结果，自定义插入图片的事件（而不是编辑器自动插入图片！！！）
+                // insertImg 是插入图片的函数，editor 是编辑器对象，result 是服务器端返回的结果
+                for(var i in result.data){  
+                    var url =result.data[i].path;
+                    insertImg(url);
+                }  
+            }
+        }
+        editor.create();
+        //$('#editarea').attr('style','height:auto;');
+    });
+	</script>
+	<php>}</php>
+<php>}</php>

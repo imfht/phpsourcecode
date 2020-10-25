@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <include file="public/css" />
+</head>
+<body>
+    <form class="search layui-form" onsubmit="return false;">
+        分类：
+        <div class="layui-inline ">
+            <select name="cate_id" id="cate_id">
+                <option value="">全部</option>
+                <volist name="cates" id="vo">
+                    <option value="{$vo.id}">{$vo.name}</option>
+                </volist>
+            </select>
+        </div>
+        命令：
+        <div class="layui-inline">
+            <input class="layui-input" name="cmd" id="cmd" placeholder="模糊查询" autocomplete="off">
+        </div>
+        任务id：
+        <div class="layui-inline">
+            <input class="layui-input" type="number" name="ct_id" id="ct_id" autocomplete="off" >
+        </div>
+        <button class="layui-btn" data-type="reload">搜索</button>
+    </form>
+    <table class="layui-hide" id="datas" lay-filter="table1"></table>
+</body>
+<include file="public/js" />
+
+
+<script>
+    layui.use(['table','form'], function(){
+        var table = layui.table,form = layui.form;
+
+        var param = {$Request.param|json_encode};
+        var url = "{:url('lists')}";
+        if(param != ''){
+            for(var key in param){
+                document.getElementById(key).value = param[key];
+                url = appendParam(url,key,param[key]);
+            }
+
+        }
+        table.render({
+            elem: '#datas'
+            ,cellMinWidth: 80
+            ,url:url
+            ,cols: [[
+                {field:'ct_id',width:80,  title: '任务ID'}
+                ,{field:'cate_name',width:100,  title: '分类名称'}
+                ,{field:'remark',width:250, title: '备注'}
+                ,{field:'cmd', title: '命令',}
+                ,{field:'create_time',width:170, title: '执行时间', align:'center'}
+                ,{field:'spend_time', title: '耗时', align:'center',width:180,
+                    templet:function(d){
+                        return d.spend_time + ' 秒';
+                    }}
+            ]],
+            id:'search',
+            page:true
+        });
+
+        var $ = layui.$, active = {
+            reload: function(){
+                //执行重载
+                table.reload('search', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        cate_id : $('#cate_id').val(),
+                        ct_id : $('#ct_id').val(),
+                        cmd : $('#cmd').val()
+                    }
+
+                });
+            }
+        };
+
+        $('.search .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+
+    });
+</script>
+</html>

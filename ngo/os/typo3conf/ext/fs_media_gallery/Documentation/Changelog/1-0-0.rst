@@ -1,0 +1,261 @@
+.. ==================================================
+.. FOR YOUR INFORMATION
+.. --------------------------------------------------
+.. -*- coding: utf-8 -*- with BOM.
+
+.. include:: ../Includes.txt
+
+.. _changelog_1-0-0:
+
+v1.0.0 - 2014/12/07
+===================
+
+This is a major upgrade introducing lots of new features.
+Read and follow the section :ref:`Upgrade procedure <upgrade_procedure_1-0-0>` carefully!
+
+
+.. _important_changes_1-0-0:
+
+Important changes
+-----------------
+
+A lot of code changed in this version. Therefore it is very likely that the update is not done in only one minute.
+The most important changes are:
+
+.. todo: add link to file Classes/Hooks/ItemProcFuncHook.php if one codebase is reached
+
+* ``gallery`` was renamed to ``album`` in most places
+
+* ``image`` was renamed to ``media asset`` in most places
+
+* TypoScript paths and values have been reordered and renamed and some new features were added (see `TypoScript changes`_)
+
+* Empty flexform field can be overwritten by TypoScript (see :ref:`settings.overrideFlexformSettingsIfEmpty <plugin.tx_fsmediagallery.settings.overrideFlexformSettingsIfEmpty>`)
+
+* Plugin flexform has changed a lot (todo: upgrade script);
+  new :ref:`Display Modes <flexforms.mediagallery.tabs.general.displayMode>` (``switchableControllerActions``)
+  ``nestedList`` (former default action), ``flatList``, ``showAlbum`` and ``showAlbumByConfig``
+
+* :ref:`Display Modes <flexforms.mediagallery.tabs.general.displayMode>` (``switchableControllerActions``) can be removed in plugin via :ref:`Extension Manager <configuration-extConf>` (see ``Classes/Hooks/ItemProcFuncHook.php``)
+
+* New option ``resizeMode`` for media assets and thumbnail images for all display modes
+
+* Sort order of albums lists can be set in :ref:`plugin <flexforms.mediagallery.tabs.general.list.orderBy>` and via TS (:ref:`settings.list.orderBy <plugin.tx_fsmediagallery.settings.list.orderBy>`, :ref:`settings.list.orderDirection <plugin.tx_fsmediagallery.settings.list.orderDirection>`)
+
+* Default media asset dimensions orient on 1080i (widescreen aspect ratio of 16:9)
+
+* Translation key have been reordered and renamed
+
+* Field "Date" was added to FAL file collections (adds field ``datetime`` to database table ``sys_file_collection``)
+
+* Field "Parent" was set as exclude field so you need to enable this (BeUser/BeGroup settings) for you editors if used (table ``sys_file_collection``)
+
+* EXT:fs_media_gallery now integrates into `EXT:news <http://typo3.org/extensions/repository/view/news>`_ (alters database table ``tx_news_domain_model_news``, adds table ``tx_news_domain_model_news_fsmediaalbums_mm``)
+
+
+.. _upgrade_procedure_1-0-0:
+
+Upgrade procedure
+-----------------
+
+todo: further describe upgrade procedure
+
+
+.. _upgrade_procedure_1-0-0_database:
+
+Database Update
+^^^^^^^^^^^^^^^
+
+This version adds and alters database tables.
+If you're updating EXT:fs_media_gallery by git you have to de-install and
+re-install the extension to apply these changes.
+This can be either done in Extension Manager or from command line:
+
+.. code:: bash
+
+    cd /your/path/to/typo3root/
+    ./typo3/cli_dispatch.phpsh extbase extension:uninstall fs_media_gallery
+    ./typo3/cli_dispatch.phpsh extbase extension:install fs_media_gallery
+
+
+.. _upgrade_procedure_1-0-0_plugin-migration:
+
+Migrate existing plugins
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Because of the renaming of multiple values the existing plugins need to be updated. The extensions comes with a upgrade script than helps you with this.
+
+Go to the extension manager and search for ext:fs_media_gallery. Click on the "Execute update script" button in the Actions column.
+
+.. _upgrade_procedure_1-0-0_fluid-templates:
+
+
+Migrate your Fluid templates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Your Fluid templates will most likely require updates.
+
+.. important::
+
+   New template files were added and some files have been renamed and moved to different locations. If you experience any problems with your templates, please have a look on the default templates shipped with the extension.
+
+
+Following template files have been renamed, moved or were added:
+
+============================================ ================================== =====================================
+Template file in 0.0.6                       Alteration                         Template file in 1.0.0
+============================================ ================================== =====================================
+Partials/MediaAlbum/ListAlbums.html          moved, renamed                     Partials/MediaAlbum/NestedList/AlbumsList.html
+Partials/MediaItem/Image.html                renamed                            Partials/MediaItem/Detail.html
+Templates/MediaAlbum/RandomImage.html        renamed                            Templates/MediaAlbum/RandomAsset.html
+Templates/MediaAlbum/Show.html               renamed                            Templates/MediaAlbum/NestedList.html
+Templates/MediaAlbum/ShowImage.html          renamed                            Templates/MediaAlbum/ShowAsset.html
+.                                            new                                Partials/MediaAlbum/Lightbox.html
+.                                            new                                Partials/MediaAlbum/FlatList/AlbumsList.html
+.                                            new                                Partials/MediaAlbum/FlatList/AssetsList.html
+.                                            new                                Templates/MediaAlbum/FlatList.html
+.                                            new                                Templates/MediaAlbum/ShowAlbum.html
+.                                            new                                Templates/MediaAlbum/ShowAsset.html
+============================================ ================================== =====================================
+
+To migrate your templates, change every occurrence of the following TypoScript values:
+
+=========================================== =============================================== =====================================
+Search                                      Replace                                         Template files
+=========================================== =============================================== =====================================
+settings.album.itemsPerPage                 settings.list.pagination.itemsPerPage           Partials/MediaAlbum/ListAlbums.html
+settings.pagination.insertAbove             settings.list.pagination.insertAbove            Partials/MediaAlbum/ListAlbums.html
+settings.pagination.insertBelow             settings.list.pagination.insertBelow            Partials/MediaAlbum/ListAlbums.html
+settings.pagination.maximumNumberOfLinks    settings.list.pagination.maximumNumberOfLinks   Partials/MediaAlbum/ListAlbums.html
+settings.pagination.pagesBefore             settings.list.pagination.pagesBefore            Partials/MediaAlbum/ListAlbums.html
+settings.pagination.pagesAfter              settings.list.pagination.pagesAfter             Partials/MediaAlbum/ListAlbums.html
+settings.album.thumb.maxWidth               settings.list.thumb.width                       Partials/MediaAlbum/Thumb.html
+settings.album.thumb.maxHeight              settings.list.thumb.height                      Partials/MediaAlbum/Thumb.html
+settings.enableLightbox                     settings.album.lightbox.enable                  Partials/MediaItem/Thumb.html
+settings.image.lightbox.maxWidth            settings.album.lightbox.asset.width             Partials/MediaItem/Thumb.html,
+                                                                                            Templates/MediaAlbum/Show.html
+settings.image.lightbox.maxHeight           settings.album.lightbox.asset.height            Partials/MediaItem/Thumb.html,
+                                                                                            Templates/MediaAlbum/Show.html
+settings.image.thumb.maxWidth               settings.album.thumb.width                      Partials/MediaItem/Thumb.html
+settings.image.thumb.maxHeight              settings.album.thumb.height                     Partials/MediaItem/Thumb.html
+settings.galleryPid                         settings.random.targetPid                       Templates/MediaAlbum/RandomImage.html
+settings.random.thumb.maxHeight             settings.random.thumb.height                    Templates/MediaAlbum/RandomImage.html
+settings.random.thumb.maxWidth              settings.random.thumb.width                     Templates/MediaAlbum/RandomImage.html
+settings.image.itemsPerPage                 settings.album.pagination.itemsPerPage          Templates/MediaAlbum/Show.html
+settings.pagination.insertAbove             settings.album.pagination.insertAbove           Templates/MediaAlbum/Show.html
+settings.pagination.insertBelow             settings.album.pagination.insertBelow           Templates/MediaAlbum/Show.html
+settings.pagination.maximumNumberOfLinks    settings.album.pagination.maximumNumberOfLinks  Templates/MediaAlbum/Show.html
+settings.pagination.pagesBefore             settings.album.pagination.pagesBefore           Templates/MediaAlbum/Show.html
+settings.pagination.pagesAfter              settings.album.pagination.pagesAfter            Templates/MediaAlbum/Show.html
+settings.image.maxWidth                     settings.detail.asset.width                     Templates/MediaAlbum/ShowImage.html
+settings.image.maxHeight                    settings.detail.asset.height                    Templates/MediaAlbum/ShowImage.html
+=========================================== =============================================== =====================================
+
+
+.. _typoscript_changes_1-0-0:
+
+TypoScript changes
+------------------
+
+The following table lists all alterations to TypoScript.
+All settings are defined by using :typoscript:`plugin.tx_fsmediagallery.<property>`.
+
+
+========================================== ======================== ==============================================================================================================
+Property in 0.0.6                          Alteration               Property in 1.0.0
+========================================== ======================== ==============================================================================================================
+view.templateRootPaths.100                 not changed              view.\
+                                                                    :ref:`templateRootPaths.100 <plugin.tx_fsmediagallery.view.templateRootPaths.100>`
+view.partialRootPaths.100                  not changed              view.\
+                                                                    :ref:`partialRootPaths.100 <plugin.tx_fsmediagallery.view.partialRootPaths.100>`
+view.layoutRootPaths.100                   not changed              view.\
+                                                                    :ref:`layoutRootPaths.100 <plugin.tx_fsmediagallery.view.layoutRootPaths.100>`
+persistence.storagePid                     not changed              persistence.\
+                                                                    :ref:`storagePid <plugin.tx_fsmediagallery.persistence.storagePid>`
+.                                          new                      persistence.\
+                                                                    :ref:`recursive <plugin.tx_fsmediagallery.persistence.recursive>`
+.                                          new                      settings.\
+                                                                    :ref:`overrideFlexformSettingsIfEmpty <plugin.tx_fsmediagallery.settings.overrideFlexformSettingsIfEmpty>`
+.                                          new                      settings.\
+                                                                    :ref:`allowedAssetMimeTypes <plugin.tx_fsmediagallery.settings.allowedAssetMimeTypes>`
+settings.mediagalleries                    renamed                  settings.\
+                                                                    :ref:`mediaAlbumsUids <plugin.tx_fsmediagallery.settings.mediaAlbumsUids>`
+settings.useAlbumFilterAsExclude           value altered            settings.\
+                                                                    :ref:`useAlbumFilterAsExclude <plugin.tx_fsmediagallery.settings.useAlbumFilterAsExclude>`
+settings.album.itemsPerPage                moved                    settings.list.pagination.\
+                                                                    :ref:`itemsPerPage <plugin.tx_fsmediagallery.settings.list.pagination.itemsPerPage>`
+settings.album.thumb.maxWidth              moved, renamed,          settings.list.thumb.\
+                                           value altered            :ref:`width <plugin.tx_fsmediagallery.settings.list.thumb.width>`
+settings.album.thumb.maxHeight             moved, renamed,          settings.list.thumb.\
+                                           value altered            :ref:`height <plugin.tx_fsmediagallery.settings.list.thumb.height>`
+.                                          new                      settings.list.thumb.\
+                                                                    :ref:`resizeMode <plugin.tx_fsmediagallery.settings.list.thumb.resizeMode>`
+.                                          new                      settings.list.\
+                                                                    :ref:`hideEmptyAlbums <plugin.tx_fsmediagallery.settings.list.hideEmptyAlbums>`
+.                                          new                      settings.list.\
+                                                                    :ref:`orderBy <plugin.tx_fsmediagallery.settings.list.orderBy>`
+.                                          new                      settings.list.\
+                                                                    :ref:`orderDirection <plugin.tx_fsmediagallery.settings.list.orderDirection>`
+settings.skipGalleryWhenOneAlbum           renamed, moved           settings.list.\
+                                                                    :ref:`skipListWhenOnlyOneAlbum <plugin.tx_fsmediagallery.settings.list.skipListWhenOnlyOneAlbum>`
+settings.image.itemsPerPage                moved                    settings.album.pagination.\
+                                                                    :ref:`itemsPerPage <plugin.tx_fsmediagallery.settings.album.pagination.itemsPerPage>`
+settings.image.thumb.maxWidth              moved, renamed,          settings.album.thumb.\
+                                           value altered            :ref:`width <plugin.tx_fsmediagallery.settings.album.thumb.width>`
+settings.image.thumb.maxHeight             moved, renamed,          settings.album.thumb.\
+                                           value altered            :ref:`height <plugin.tx_fsmediagallery.settings.album.thumb.height>`
+.                                          new                      settings.album.thumb.\
+                                                                    :ref:`resizeMode <plugin.tx_fsmediagallery.settings.album.thumb.resizeMode>`
+settings.enableLightbox                    renamed, moved           settings.album.lightbox.\
+                                                                    :ref:`enable <plugin.tx_fsmediagallery.settings.album.lightbox.enable>`
+.                                          new                      settings.album.lightbox.\
+                                                                    :ref:`styleClass <plugin.tx_fsmediagallery.settings.album.lightbox.styleClass>`
+.                                          new                      settings.album.lightbox.\
+                                                                    :ref:`relPrefix <plugin.tx_fsmediagallery.settings.album.lightbox.relPrefix>`
+.                                          new                      settings.album.lightbox.\
+                                                                    :ref:`jsPlugin <plugin.tx_fsmediagallery.settings.album.lightbox.jsPlugin>`
+settings.image.lightbox.maxWidth           moved, renamed,          settings.album.lightbox.asset.\
+                                           value altered            :ref:`width <plugin.tx_fsmediagallery.settings.album.lightbox.asset.width>`
+settings.image.lightbox.maxHeight          moved, renamed,          settings.album.lightbox.asset.\
+                                           value altered            :ref:`height <plugin.tx_fsmediagallery.settings.album.lightbox.asset.height>`
+.                                          new                      settings.album.lightbox.asset.\
+                                                                    :ref:`resizeMode <plugin.tx_fsmediagallery.settings.album.lightbox.asset.resizeMode>`
+settings.image.maxWidth                    moved, renamed,          settings.detail.asset.\
+                                           value altered            :ref:`width <plugin.tx_fsmediagallery.settings.detail.asset.width>`
+settings.image.maxHeight                   moved, renamed,          settings.detail.asset.\
+                                           value altered            :ref:`height <plugin.tx_fsmediagallery.settings.detail.asset.height>`
+.                                          new                      settings.detail.asset.\
+                                                                    :ref:`resizeMode <plugin.tx_fsmediagallery.settings.detail.asset.resizeMode>`
+settings.galleryPid                        moved, renamed           settings.random.\
+                                                                    :ref:`targetPid <plugin.tx_fsmediagallery.settings.random.targetPid>`
+settings.random.thumb.maxWidth             renamed, value altered   settings.random.thumb.\
+                                                                    :ref:`width <plugin.tx_fsmediagallery.settings.random.thumb.width>`
+settings.random.thumb.maxHeight            renamed, value altered   settings.random.thumb.\
+                                                                    :ref:`height <plugin.tx_fsmediagallery.settings.random.thumb.height>`
+.                                          new                      settings.random.thumb.\
+                                                                    :ref:`resizeMode <plugin.tx_fsmediagallery.settings.random.thumb.resizeMode>`
+settings.pagination.insertAbove            splitted (moved,         settings.list.pagination.\
+                                           renamed)                 :ref:`insertAbove <plugin.tx_fsmediagallery.settings.list.pagination.insertAbove>`,
+                                                                    settings.album.pagination.\
+                                                                    :ref:`insertAbove <plugin.tx_fsmediagallery.settings.album.pagination.insertAbove>`
+settings.pagination.insertBelow            splitted (moved,         settings.list.pagination.\
+                                           renamed)                 :ref:`insertBelow <plugin.tx_fsmediagallery.settings.list.pagination.insertBelow>`,
+                                                                    settings.album.pagination.\
+                                                                    :ref:`insertBelow <plugin.tx_fsmediagallery.settings.album.pagination.insertBelow>`
+settings.pagination.pagesBefore            splitted (moved,         settings.list.pagination.\
+                                           renamed)                 :ref:`pagesBefore <plugin.tx_fsmediagallery.settings.list.pagination.pagesBefore>`,
+                                                                    settings.album.pagination.\
+                                                                    :ref:`pagesBefore <plugin.tx_fsmediagallery.settings.album.pagination.pagesBefore>`
+settings.pagination.pagesAfter             splitted (moved,         settings.list.pagination.\
+                                           renamed)                 :ref:`pagesAfter <plugin.tx_fsmediagallery.settings.list.pagination.pagesAfter>`,
+                                                                    settings.album.pagination.\
+                                                                    :ref:`pagesAfter <plugin.tx_fsmediagallery.settings.album.pagination.pagesAfter>`
+settings.pagination.maximumNumberOfLinks   splitted (moved,         settings.list.pagination.\
+                                           renamed), value altered  :ref:`maximumNumberOfLinks <plugin.tx_fsmediagallery.settings.list.pagination.maximumNumberOfLinks>`,
+                                                                    settings.album.pagination.\
+                                                                    :ref:`maximumNumberOfLinks <plugin.tx_fsmediagallery.settings.album.pagination.maximumNumberOfLinks>`
+settings.features.skipDefaultArguments     no change                settings.features.\
+                                                                    :ref:`skipDefaultArguments <plugin.tx_fsmediagallery.settings.features.skipDefaultArguments>`
+
+                                                                    `Default Extbase feature <https://forge.typo3.org/projects/typo3v4-mvc/wiki/Skip_default_arguments_in_URIs>`_
+========================================== ======================== ==============================================================================================================

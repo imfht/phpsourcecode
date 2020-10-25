@@ -1,0 +1,160 @@
+{extend name="common:base"/}
+{block name='sidebar'}
+{include file="article/sidebar" /} 
+{/block}
+{block name="body"}
+<div class="row wrapper border-bottom white-bg page-heading">
+    <div class="col-lg-12">
+        <h2>内容</h2>
+    </div>
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>文章管理</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-sm-12 m-b-sm">
+                            <form id="search" action="{:\\think\\Url::build('ajaxIndex',['cate_id'=>$cate_id ?? 0])}" method="post" class="">
+                                <div class="input-daterange col-sm-3 input-group pull-left" id="datepicker">
+                                    <input type="text" class=" form-control" name="create_time[]" value="" placeholder="请输入开始日期"/>
+                                    <span class="input-group-addon">到</span>
+                                    <input type="text" class=" form-control" name="create_time[]" value="" placeholder="请输入结束日期"/>
+                                </div>
+                                <div class="btn-group col-sm-1 input-small">
+                                    <button data-toggle="dropdown" class="btn btn-outline btn-info  dropdown-toggle"><font class="status-txt">所有</font> <span class="caret"></span></button>
+                                    <ul id="sub-sch-menu" class="dropdown-menu">
+                                        <li><a href="javascript:;" value="">所有</a></li>
+                                        <li class="divider"></li>
+                                        <li><a href="javascript:;" value="1">正常</a></li>
+                                        <li><a href="javascript:;" value="0">禁用</a></li>
+                                        <li><a href="javascript:;" value="2">待审核</a></li>
+                                    </ul>
+                                    <input type="hidden" id="status" name="status" value="">
+                                </div>
+                                <div class="input-group col-sm-3 ">
+                                    <input type="text" class="form-control" name="title" placeholder="请输入标题">
+                                    <span class="input-group-btn"> 
+                                        <button type="button" class="btn btn-primary search">搜 索</button>
+                                    </span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-9 m-b-xs">
+                            <a class="btn btn-outline btn-primary" href="{:\\think\\Url::build('add',['cate_id'=>$cate_id ?? 0])}">新增</a>
+                            <button type="button" class="btn btn-outline btn-info ajax-post " url="{:\\think\\Url::build('batchUpdate',['value'=>1])}" target-form="ids">启用</button>
+                            <button type="button" class="btn btn-outline btn-warning ajax-post confirm" url="{:\\think\\Url::build('batchUpdate',['value'=>0])}" target-form="ids" >禁用</button>
+                            <button type="button" class="btn btn-outline ajax-post  btn-success" url="{:\\think\\Url::build('move',['cate_id'=>$cate_id ?? 0])}" target-form="ids">移动</button>
+                            <button type="button" class="btn btn-outline ajax-post  btn-success" url="{:\\think\\Url::build('copy',['cate_id'=>$cate_id ?? 0])}" target-form="ids">复制</button>
+                            <button type="button" class="btn btn-outline ajax-post btn-success" url="{:\\think\\Url::build('paste',['cate_id'=>$cate_id ?? 0])}" target-form="ids">粘贴</button>
+                            <button type="button" class="btn btn-outline btn-danger ajax-post confirm" url="{:\\think\\Url::build('batchUpdate',['value'=>-1])}" target-form="ids">删除</button>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="input-group">
+                                <input type="text" placeholder="请输入关键词" class="input-sm form-control">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-sm btn-primary"> 搜索</button> </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive ajax_article">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class=""><input class="checkbox check-all" type="checkbox"></th>
+                                    <th class="">序号</th>
+                                    <th class="">标题</th>
+                                    <th class="">类型</th>
+                                    <th class="">浏览</th>
+                                    <th class="">分类</th>
+                                    <th class="">创建时间</th>
+                                    <th class="">更新时间</th>
+                                    <th class="">状态</th>
+                                    <th class="">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {notempty name="list"}
+                                {volist name="list" id="vo"}
+                                <tr>
+                                    <td><input class="ids " type="checkbox" name="ids[]" value="{$vo.id}"></td>
+                                    <td>{$vo.id} </td>
+                                    <td><a title="{$vo.title}" href="{:\\think\\Url::build('edit',['id'=>$vo['id'],'cate_id'=>$vo['category_id']])}">{$vo.title}</a></td>
+                                    <td>{$vo.type}</td>
+                                    <td>{$vo.view}</td>
+                                    <td>{$vo.category_text}</td>
+                                    <td>{$vo.create_time|time_format}</td>
+                                    <td>{$vo.update_time|time_format}</td>
+                                    <td>{$vo.status|change_status=['禁用','正常','待审核']}</td>
+                                    <td>
+                                        <a title="编辑" href="{:\\think\\Url::build('edit',['id'=>$vo['id']])}">编辑</a>
+                                        {lt name="vo.status" value="2"}
+                                        <a class="confirm ajax-get" href="{:\\think\\Url::build('setStatus',['value'=>abs($vo['status']-1),'ids'=>$vo['id']])}">{$vo.status|change_status=[1 => '禁用', 0 => '启用']}</a>
+                                        {/lt}
+                                        <a class="confirm ajax-get" href="{:\\think\\Url::build('setStatus',['value'=>-1,'ids'=>$vo['id']])}" title="删除">删除</a>
+                                    </td>
+                                </tr>
+                                {/volist}
+                                {else /}
+                            <td colspan="9" class="text-center"> aOh! 暂时还没有内容! </td>
+                            {/notempty}
+                            </tbody>
+                        </table>
+                        <div class="text-center">
+                            {notempty name="list"}
+                            {$page}
+                            {/notempty}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="css"}
+<link href="__CSS__/plugins/datapicker/datepicker3.css" rel="stylesheet">
+{/block}
+{block name="script"}
+<script src="__JS__/plugins/datapicker/bootstrap-datepicker.js"></script>
+<script type="text/javascript">
+    $(function () {
+        highlight_subnav("{:\\think\\Url::build('article/index')}");
+        $("#sub-sch-menu li a").on('click', function () {
+            var val = $(this).attr('value');
+            var text = $(this).text();
+            $(".status-txt").text(text);
+            $('#status').val(val);
+        });
+        $('#datepicker').datepicker({
+            keyboardNavigation: false,
+            forceParse: false,
+            autoclose: true
+        });
+        /**
+         * ajax 搜索功能
+         * @author static7
+         */
+        $('.search').on('click', function () {
+            var form = $('#search');
+            $.post(form.attr('action'), form.serialize(), function (data) {
+                $('.ajax_article').html(data);
+            });
+            return false;
+        });
+    });
+</script>
+{/block}

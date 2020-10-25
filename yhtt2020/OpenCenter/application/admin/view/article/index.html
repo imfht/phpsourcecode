@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="__LAYUI__/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/admin.css" media="all">
+    <link rel="stylesheet" href="__LAYUI__/style/oc.css" media="all">
+    <link rel="stylesheet" href="__STATIC__/admin/css/article.css" media="all">
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <table class="layui-hide" id="list" lay-filter="test"></table>
+                </div>
+            </div>
+        </div>
+        <script type="text/html" id="cover">
+            <img src="{{ d.cover }}">
+        </script>
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-sm" lay-event="addData">添加</button>
+                <button class="layui-btn layui-btn-sm" lay-event="delData">删除</button>
+            </div>
+        </script>
+        <script type="text/html" id="switchTpl">
+            <input type="checkbox" name="status" value="{{d.id}}" lay-skin="switch" lay-text="启用|禁用" lay-filter="statusDemo" {{ d.status == 1 ? 'checked' : '' }}>
+        </script>
+        <script type="text/html" id="barDemo">
+            <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+    </div>
+</div>
+<script src="__LAYUI__/layui/layui.js"></script>
+<script>
+    layui.use(['table',['form']], function(){
+        var table = layui.table
+            ,$ = layui.$
+            ,form = layui.form;
+        table.render({
+            elem: '#list'
+            ,url:'{:url("article/index")}'
+            ,toolbar: '#toolbarDemo'
+            ,title: '文章列表'
+            ,cols: [[
+                {type: 'checkbox'}
+                ,{field:'id', title:'ID', sort: true}
+                ,{field:'title', title:'文章标题'}
+                ,{field:'cover', title:'封面',templet: '#cover'}
+                ,{field:'content', title:'内容'}
+                ,{field:'view', title:'浏览量',sort: true}
+                ,{field:'create_time', title:'创建时间',sort: true}
+                ,{field:'update_time', title:'更新时间',sort: true}
+                ,{field:'status', title:'状态',templet: '#switchTpl', unresize: true}
+                ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+            ]]
+            ,page: true
+            ,done:function(res,curr,count){
+                hoverOpenImg();//显示大图
+            }
+        });
+        function hoverOpenImg(){
+            var img_show = null; // tips提示
+            $('td img').hover(function(){
+                //alert($(this).attr('src'));
+                var img = "<img class='img_msg' src='"+$(this).attr('src')+"' style='width:130px;' />";
+                img_show = layer.tips(img, this,{
+                    tips:[2, 'rgba(41,41,41,.5)']
+                    ,area: ['160px']
+                });
+            },function(){
+                layer.close(img_show);
+            });
+            $('td img').attr('style','max-width:70px');
+        }
+        //头工具栏事件
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'addData':
+                    layer.open({
+                        type: 2
+                        ,title: '添加文章'
+                        ,content: "{:url('article/editArticle')}"
+                        ,area: ['800px', '800px']
+                        ,btn: ['确定', '取消']
+                        ,yes: function(index, layero){
+                            var iframeWindow = window['layui-layer-iframe'+ index]
+                                ,submit = layero.find('iframe').contents().find("#LAY-submit");
+                            //监听提交
+                            iframeWindow.layui.form.on('submit(LAY-submit)', function(data){
+                                var field = data.field; //获取提交的字段
+                                $.ajax({
+                                    url:"{:url('article/editArticle')}",
+                                    type:"POST",
+                                    data:field,
+                                    success:function (res) {
+                                        layer.msg(res.msg);
+                                    }
+                                });
+                                table.reload('test');
+                                layer.close(index); //关闭弹层
+                            });
+                            submit.trigger('click');
+                        }
+                    });
+                    break;
+                case 'delData':
+                    var checkData=checkStatus.data;
+                    if(checkData.length===0){
+                        return layer.msg('请选择数据');
+                    }
+                    layer.confirm('确定删除吗？', function(index) {
+                        var id_array = new Array();
+                        for(var i=0;i<checkData.length;i++){
+                            id_array.push(checkData[i]['id']);
+                        }
+                        var ids=id_array.join(',');
+                        //执行 Ajax 后重载
+                        layer.close(index);
+                        //向服务端发送删除指令
+                        $.post("{:url('article/setStatus')}",{id:ids,status:-1},function (res) {
+                            layer.msg('删除成功');
+                        });
+                        table.reload('list');
+                    });
+                    break;
+            };
+        });
+        //监听行工具事件
+        table.on('tool(test)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    obj.del();
+                    layer.close(index);
+                    $.post("{:url('article/setStatus')}",{id:data.id,status:-1},function (res) {
+                        layer.msg('删除成功');
+                    });
+                });
+            } else if(obj.event === 'edit'){
+                layer.open({
+                    type: 2
+                    ,title: '编辑文章'
+                    ,content: "{:url('article/editArticle')}?id=" + data.id
+                    ,area: ['800px', '800px']
+                    ,btn: ['确定', '取消']
+                    ,yes: function(index, layero){
+                        var iframeWindow = window['layui-layer-iframe'+ index]
+                            ,submit = layero.find('iframe').contents().find("#LAY-submit");
+                        //监听提交
+                        iframeWindow.layui.form.on('submit(LAY-submit)', function(data){
+                            var field = data.field; //获取提交的字段
+                            $.ajax({
+                                url:"{:url('article/editArticle')}",
+                                type:"POST",
+                                data:field,
+                                success:function (res) {
+                                    layer.msg(res.msg);
+                                }
+                            });
+                            table.reload('test');
+                            layer.close(index); //关闭弹层
+                        });
+                        submit.trigger('click');
+                    }
+                });
+            }
+        });
+        //监听状态操作
+        form.on('switch(statusDemo)', function(obj){
+            var status = 0;
+            if(obj.elem.checked){
+                status = 1 ;
+            }
+            $.post("{:url('article/setStatus')}",{id:this.value,status:status},function (res) {
+                layer.msg(res.msg);
+            });
+        });
+    });
+</script>
+</body>
+</html>

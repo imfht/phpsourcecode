@@ -1,0 +1,139 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+  <f:layout name="Default" />
+
+  This template displays a NEW form for the current domain object.
+
+  If you modify this template, do not forget to change the overwrite settings
+  in /Configuration/ExtensionBuilder/settings.yaml:
+    Resources:
+      Private:
+        Templates:
+          New.html: keep
+
+  Otherwise your changes will be overwritten the next time you save the extension in the extension builder
+
+  <f:section name="content">
+    <f:if condition="{test}">
+      <f:then>
+          <f:form action="create" name="newPay" object="{newPay}" id="payment_moneyIn">
+            <fieldset>
+              <div class="modal-body">
+                <f:render partial="Pay/FormFields" arguments="{_all}"/>
+              </div>
+              <div class="modal-footer">
+                <input type="hidden" name="tx_payment_pay[action]" value="create" />
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <f:form.submit value="提交" class="btn btn-primary" />
+              </div>
+            </fieldset>
+          </f:form>
+      </f:then>
+      <f:else>
+        <f:if condition="{access}">
+          <div class="text-center"><button type="button" class="btn c-btn-square c-theme-btn c-btn-uppercase c-btn-bold"
+              data-toggle="modal" data-target="#modal-pay-{contentObject.uid}">{settings.buttontext}</button></div>
+          <div id="modal-pay-{contentObject.uid}" class="modal fade" role="dialog" aria-labelledby="" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+                <f:form action="create" name="newPay" object="{newPay}" id="payment_moneyIn">
+                  <fieldset>
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                          aria-hidden="true">&times;</span></button>
+                      <h4 class="modal-title">{settings.buttontext}</h4>
+                    </div>
+                    <div class="modal-body">
+                      <f:render partial="Pay/FormFields" arguments="{_all}" />
+                    </div>
+                    <div class="modal-footer">
+                      <input type="hidden" name="tx_payment_pay[action]" value="create" />
+                      <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                      <f:form.submit value="提交" class="btn btn-primary" />
+                    </div>
+                  </fieldset>
+                </f:form>
+                <!--<f:render partial="FormErrors" arguments="{object:Donors}"/>-->
+                <f:form.validationResults for="{object}">
+                  <f:if condition="{validationResults.flattenedErrors}">
+                    <div class="alert alert-danger">填写错误!</div>
+                    <script>
+                      (function ($) {
+                        $(function () {
+                          $("#modal-pay-<f:format.raw>{contentObject.uid}</f:format.raw>").modal('show');
+                        });
+                      })(jQuery)
+                    </script>
+                  </f:if>
+                </f:form.validationResults>
+                <script type="text/javascript">
+                  $(document).ready(function () {
+                    $("#payment_moneyIn").validate({
+                      errorElement: "span",
+                      rules: {
+                        'tx_payment_pay[newPay][money]': {
+                          required: true,
+                          isNumber: true,
+                          isFloatLteOne: true
+                        },
+                        'tx_payment_pay[newPay][email]': {
+                          required: true,
+                          email: true
+                        },
+                      },
+                      messages: {
+                        'tx_payment_pay[newPay][money]': {
+                          required: "请填写捐赠金额",
+                          digits: "只能填写整数和小数(保留两位)",
+                          isIntGtZero: "只能输入0.01~1,000,000之间的金额数"
+                        },
+                        'tx_payment_pay[newPay][email]': {
+                          required: "请填写您的邮箱",
+                          email: "邮箱输入错误"
+                        }
+                      }
+                    });
+
+                    // 判断数值类型，包括整数和两位浮点数
+                    jQuery.validator.addMethod("isNumber", function (value, element) {
+                      return this.optional(element) || /^[-\+]?\d+$/.test(value) || /^[-\+]?\d+(.[0-9]{0,2})?$/.test(value);
+                    }, "只能填写整数和小数(保留两位)");
+
+                    // 判断浮点数value是否小于或等于1000000 
+                    jQuery.validator.addMethod("isFloatLteOne", function (value, element) {
+                      value = parseFloat(value);
+                      return this.optional(element) || (value <= 1000000 && value > 0);
+                    }, "只能输入0.01~1,000,000之间的金额数");
+                  });
+
+                </script>
+              </div>
+            </div>
+          </div>
+          <div class="hide">
+            <f:flashMessages />
+          </div>
+          <div id="success-msg"></div>
+          <script type="text/javascript">
+            (function ($) {
+              $(function () {
+                $("div.hide>ul.typo3-messages>li").each(function () {
+                  var successMessage = $("div.hide>ul.typo3-messages>li>p").html();
+                  $("div#success-msg").html(unescapeHTML(successMessage));
+                  var modelDIV = $("div#success-msg").children("div").eq(0);
+                  modelDIV.modal('show');
+                });
+              });
+            })(jQuery);
+
+            with (document) 0[(getElementsByTagName('head')[0] || body).appendChild(createElement('script')).src = 'http://bdimg.share.baidu.com/static/api/js/share.js?cdnversion=' + ~(-new Date() / 36e5)];
+
+            function unescapeHTML(str) {
+              return str.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&nbsp;/g, " ");
+            }
+          </script>
+        </f:if>
+      </f:else>
+    </f:if>
+<f:flashMessages />
+  </f:section>
+</html>

@@ -1,0 +1,290 @@
+{extend name="default/base" /}
+{block name="title"}{:$data['shop']['shopName']} - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="meta"}
+<meta name="description" content="{$data['shop']['shopDesc']}">
+<meta name="keywords" content="{$data['shop']['shopKeywords']}">
+{/block}
+{block name="css"}
+<link href="__STYLE__/css/shop_floor.css" rel="stylesheet">
+{/block}
+{block name="header"}
+{php}$shopId = $data['shop']['shopId'];{/php}
+<input type="hidden" id="longitude" value="{$data['shop']['longitude']}" >
+<input type="hidden" id="latitude" value="{$data['shop']['latitude']}" >
+<div class='wst-search-container'> 
+    <div class="wst-shop-h">
+    <div class="wst-shop-img"><a href="{:url('home/shops/goods',array('shopId'=>$data['shop']['shopId']))}"><img class="shopsImg" data-original="__RESOURCE_PATH__/{$data['shop']['shopImg']}" title="{$data['shop']['shopName']|WSTStripTags}"></a></div>
+    <div class="wst-shop-info">
+      <p>{$data['shop']['shopName']}
+        {/* 在线客服 */}
+        {:hook('homeDocumentContact',['type'=>'shopHome','shopId'=>$data['shop']['shopId']])}
+      </p>
+      <div class="wst-shop-info2">
+      {volist name="$data['shop']['accreds']" id="ac"}
+      <img src="__RESOURCE_PATH__/{$ac['accredImg']}"><span>{$ac['accredName']}</span>
+      {/volist}
+      {if($data['shop']['shopQQ'])}
+      <a href="tencent://message/?uin={$data['shop']['shopQQ']}&Site=QQ交谈&Menu=yes">
+        <img border="0" style="width:65px;height:24px;" src="{:WSTProtocol()}wpa.qq.com/pa?p=1:{$data['shop']['shopQQ']}:7">
+      </a>
+      {/if}
+      {if($data['shop']['shopWangWang'])}
+      <a href="{:WSTProtocol()}www.taobao.com/webww/ww.php?ver=3&touid={$data['shop']['shopWangWang']}&siteid=cntaobao&status=1&charset=utf-8" target="_blank">
+      <img border="0" src="{:WSTProtocol()}amos.alicdn.com/realonline.aw?v=2&uid={$data['shop']['shopWangWang']}&site=cntaobao&s=1&charset=utf-8" alt="和我联系" class='wangwang'/>
+      </a>
+      {/if}
+      </div>
+      <div class="wst-shop-info3">
+        <span class="wst-shop-eva">商品：<span class="wst-shop-red">{$data['shop']['scores']['goodsScore']}</span></span>
+        <span class="wst-shop-eva">时效：<span class="wst-shop-red">{$data['shop']['scores']['timeScore']}</span></span>
+        <span class="wst-shop-eva">服务：<span class="wst-shop-red">{$data['shop']['scores']['serviceScore']}</span></span>
+        {if($data['shop']['isfollow']>0)}
+        <a href='javascript:void(0);' onclick='cancelFavorite(this,1,{$data['shop']['shopId']},{$data['shop']['isfollow']})' class="wst-shop-evaa j-fav">已关注</a>
+        {else}
+        <a href='javascript:void(0);' onclick='addFavorite(this,1,{$data['shop']['shopId']},{$data['shop']['isfollow']})' class="wst-shop-evaa j-fav2">关注店铺</a>
+        {/if}
+        {if($data['shop']['longitude'] && $data['shop']['latitude'])}
+        <a href='javascript:void(0);' onclick='javascript:init();' class="wst-shop-evaa  wst-shop-location j-fav3">店铺位置</a>
+        {/if}
+        {if isset($data['shop']['businessLicenceImg']) && $data['shop']['businessLicenceImg']!=''}
+                <a class='wst-shop-gs' href='{$data['shop']['businessLicenceImg']}' target='_blank'>工商执照</a>
+                {/if}
+    <a class="wst-shop-code"><span class="wst-shop-codes hide"><div id='qrcode' style='width:50px;height:50px;'></div></span></a>
+				<span class="wst-shop-eva">手机访问</span>
+        
+      </div>
+    </div>
+    <div class="wst-shop-sea">
+      <input type="text" id="goodsName" value="" placeholder="输入商品名称">
+      <a class="search" href="javascript:void(0);" onclick="javascript:WST.goodsSearch($('#goodsName').val());">搜全站</a>
+      <a class="search" href="javascript:void(0);" onclick="javascript:searchShopsGoods(0);">搜本店</a>
+      <div class="wst-shop-word">
+      {volist name="data['shop']['shopHotWords']" id="shw"}
+      <a href='{:Url("home/shops/goods",array('shopId'=>$data['shop']['shopId'],'goodsName'=>$shw))}'>{$shw}</a>{if $i< count($data['shop']['shopHotWords'])}&nbsp;|&nbsp;{/if}
+      {/volist}
+      </div>
+      	<div class="bdsharebuttonbox">
+            <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间"></a>
+            <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a>
+            <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+      	</div>
+      	<script>
+            with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='__ROOT__/static/plugins/baiduShare/api/js/share.js?cdnversion='+~(-new Date()/36e5)];
+       	</script>
+		</div>
+		</div>
+		<div style="clear: both;"></div>
+		</div>
+      {:hook('homeDocumentShopHomeHeader',['shop'=>$data['shop'],'getParams'=>input()])}
+    </div>
+    <div class="wst-clear"></div>
+    </div>
+</div>
+<div class="shop-home-top-container">
+  {if($data['shop']['shopBanner'])}<image class="wst-shop-tu" src="__RESOURCE_PATH__/{$data['shop']['shopBanner']}"></image>{/if}
+<div class="wst-clear"></div>
+<div class="s-wst-nav-menus">
+      <div id="s-wst-nav-items">
+           <ul>
+               <li class="s-nav-li s-cat-head"style="background-color:#DF2003"><a href="{:Url('home/shops/goods',['shopId'=>$shopId])}" target="_blank" ><em></em>本店商品分类</a></li>
+               {wst:shopcats shop="$shopId" id='cat1' key="l" num="6"}
+               <li class="s-nav-li">
+                    <a href="{:url('home/shops/goods',['shopId'=>$shopId,'ct1'=>$cat1['catId']])}" target="_blank">{$cat1['catName']}</a>
+               </li>
+               {/wst:shopcats}
+               <li class="s-nav-li"> <a class="homepage" href="{:url('/')}" target="_blank">返回商城首页</a></li>
+           </ul>
+      </div>
+
+      <span class="wst-clear"></span>
+    </div>
+</div>
+<div class="wst-clear"></div>
+</div>
+<script>
+    $(document).keypress(function(e) { 
+          if(e.which == 13) {  
+            searchShopsGoods();  
+          }
+    }); 
+</script>
+{/block}
+{block name="main"}
+<div class="shop-home-container" >
+{/*  本店分类  */}
+<div class="s-cat">
+	{wst:shopcats shop="$shopId" id="cat1" num="6" key="k1"}
+	<div class="shop-cat1" cid="{$k1}" id="ct1-{$k1}">
+		<div class="shop-cat1-title">
+		    <h3>
+	  		 <a href="{:url('home/shops/goods',['shopId'=>$data['shop']['shopId'],'ct1'=>$cat1['catId']])}">{:WSTMSubstr($cat1['catName'],0,4)}</a>
+	  		</h3>
+	  	</div>
+	  	<p class="shop-ct1-ct2">
+	  		{wst:shopcats shop='$shopId' cat="$cat1['catId']" id="v1"}
+	  		<a href="{:url('home/shops/goods',['shopId'=>$data['shop']['shopId'],'ct1'=>$cat1['catId'],'ct2'=>$v1['catId']])}">{$v1['catName']}</a> 
+	  		{/wst:shopcats}
+	  	</p>
+	</div>
+
+	<ul class="shop-cat2 cid{$k1}" cid="{$k1}">
+	    {wst:shopcats shop='$shopId' cat="$cat1['catId']" id="cat2" num="6" key="k1"}
+	      	<li><a href="{:url('home/shops/goods',['shopId'=>$data['shop']['shopId'],'ct1'=>$cat1['catId'],'ct2'=>$cat2['catId']])}">{$cat2['catName']}</a></li>
+	    {/wst:shopcats}
+	</ul>
+	{/wst:shopcats}
+</div>
+{/* 横栏广告  */}
+{if($data['shop']['shopAds'])}
+<div class="s-banner">
+	<div class="s-wst-slide" id="s-wst-slide" style="width:100%;float:right;height:500px;overflow:hidden;">
+		<ul class="s-wst-slide-items">
+			{volist name="$data['shop']['shopAds']" id="vo"}
+				<a href="{$vo.adUrl}" {if ($vo['isOpen'])}target='_blank'{/if}><li style="background: url(__RESOURCE_PATH__/{$vo.adImg}) no-repeat  scroll center center;background-size:cover" ></li></a>
+			{/volist}
+		</ul>
+		<div class="s-wst-slide-numbox">
+			<div class="s-wst-slide-controls">
+				{volist name="$data['shop']['shopAds']" id="vo" key="k"}
+					{if condition="$k eq 1"}
+					    <span class="curr"> </span>
+					{else/}
+					  	<span class=""> </span>
+					{/if}
+				{/volist}
+			</div>
+		</div>
+	</div>
+</div>
+{/if}	
+<div class="shop_rec_out">
+	<div class="s-buy-new-best-hot">
+		<ul class="s-rec">
+				<li class="s-rec-item j-s-rec-selected" id="fl_f_0" onmouseover="gpanelOver2(this);"><a href="javascript:void(0)">店长推荐</a></li>
+				<li class="s-rec-item">
+					<a href="javascript:void(0)">&nbsp;/&nbsp;</a>
+				</li>
+				<li class="s-rec-item" id="fl_f_1" onmouseover="gpanelOver2(this);"><a href="javascript:void(0)">热卖商品</a></li>
+				<div class="wst-clear"></div>
+		</ul>
+		{/* 店长推荐  */}
+		<div class="s-rec-glistbox" id="fl_f_0_pl">
+			<ul class="s-rec-goods-list">
+			    {wst:shopgoods type="recom" shop="$shopId" id="vo" num="4"}
+				<li>
+				    <a href='{:Url("home/goods/detail","goodsId=".$vo["goodsId"])}' target='_blank'>
+					  <img class='goodsImg' data-original="__RESOURCE_PATH__/{:WSTImg($vo['goodsImg'])}"  title="{$vo['goodsName']|WSTStripTags}" src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}"/>
+					</a>
+					<div class="rec_ginfo">
+						<p class="s-rec-goods-desc"><a href='{:Url("home/goods/detail","goodsId=".$vo["goodsId"])}' target='_blank'>{$vo['goodsName']}</a></p>
+						<div class="s-rec-goods-bottom">
+						   <p class="s-rec-goods-price"><span>￥{$vo['shopPrice']}</span></p>
+						   <a href="javascript:addCart({$vo['goodsId']});">加入购物车</a>
+						</div>
+					</div>
+				</li>
+				{/wst:shopgoods}
+				<div class="wst-clear"></div>
+			</ul>
+		</div> 
+
+		<div class="s-rec-glistbox" id="fl_f_1_pl" style="display:none;">
+			<ul class="s-rec-goods-list">
+			    {wst:shopgoods type="hot" shop="$shopId" id="hot" num="4"}
+				<li>
+				    <a href='{:Url("home/goods/detail","goodsId=".$hot["goodsId"])}' target='_blank'>
+					  <img class='goodsImg' data-original="__RESOURCE_PATH__/{:WSTImg($hot['goodsImg'])}" src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" title="{$hot['goodsName']|WSTStripTags}"/>
+					</a>
+					<div class="rec_ginfo">
+						<p class="s-rec-goods-desc"><a href='{:Url("home/goods/detail","goodsId=".$hot["goodsId"])}' target='_blank'>{$hot['goodsName']}</a></p>
+						<div class="s-rec-goods-bottom">
+						   <p class="s-rec-goods-price"><span>￥{$hot['shopPrice']}</span></p>
+						   <a href="javascript:addCart({$hot['goodsId']});">加入购物车</a>
+						</div>
+					</div>
+				</li>
+				{/wst:shopgoods}
+			</ul>
+			<div class="wst-clear"></div>
+		</div>
+	</div>
+	
+</div>
+{wst:shopcats shop='$shopId' cat="0" id="cat1" key="l" num="6"}
+{php}$lkey = $l+1;{/php}
+<div class="self_container_out">
+	<div class="sf_headerbox">
+		{/* 店铺一级分类 */}
+		<div class="sfhl f{$lkey}_tit_bg">
+			<a class="sfh_tit" href="#">{$cat1['catName']}</a>
+		</div>
+		{/* 店铺二级分类 */}
+		<div class="sfhr">
+			{/* 楼层二级分类 */}
+			{wst:shopcats shop='$shopId' cat="$cat1['catId']" id="cat2" key="l2" num="5"}
+			<a href="{:url('home/shops/goods',['shopId'=>$data['shop']['shopId'],'ct1'=>$cat1['catId'],'ct2'=>$cat2['catId']])}" class="c18_333">{$cat2['catName']}</a>
+			<span class="c18_333 separatory">/</span>
+			{/wst:shopcats}
+			<a href="{:url('home/shops/goods',['shopId'=>$data['shop']['shopId'],'ct1'=>$cat1['catId']])}" class="c18_333">查看更多&nbsp;&nbsp;>></a>
+		</div>
+		<div class="wst-clear"></div>
+	</div>
+	{/* 自营店铺楼层广告 */}
+	{wst:ads code="self-shop-f$lkey" id="vo" num="1" cache="86400"}
+	<div class="sf_adsbox">
+		<a {if ($vo['isOpen'])}target='_blank'{/if} {if ($vo['adURL']!='')}onclick="WST.recordClick({$vo['adId']})"{/if} href="{$vo.adURL}" onfocus="this.blur()">
+			<img data-original="__RESOURCE_PATH__/{$vo.adFile}" class="goodsImg" />
+		</a>
+	</div>
+	{/wst:ads}
+	{/* 楼层商品列表 */}
+	<div class="sf_glistbox f{$lkey}_g_bg">
+		<ul class="sf_glist">
+			{wst:shopgoods shop="$shopId" type='recom' cat="$cat1['catId']" cache="86400" num='10' id='sgf'}
+			<li>
+				<a target="_blank" href="{:Url('home/goods/detail','goodsId='.$sgf['goodsId'])}" title="{$sgf['goodsName']|WSTStripTags}">
+					<div class="sf_img">
+						<img class='goodsImg' data-original="__RESOURCE_PATH__/{:WSTImg($sgf['goodsImg'])}" src="__RESOURCE_PATH__/{:WSTConf('CONF.goodsLogo')}" alt="{$sgf['goodsName']|WSTStripTags}" title="{$sgf['goodsName']|WSTStripTags}"/>
+					</div>
+					<p class="sf_gname">
+						{$sgf['goodsName']}
+					</p>
+					<p class="sf_price">
+						<span class="c11">￥</span>{:sprintf('%.1f',$sgf['shopPrice'])}
+					</p>
+				</a>
+			</li>
+			{/wst:shopgoods}
+			<div class="wst-clear"></div>
+		</ul>
+	</div>
+</div>
+{/wst:shopcats}
+<div id="container" class="container" style='display:none'></div>
+</div>
+<div class="decoration-container">
+    {:hook('homeDocumentShopHomeDisplay',['shopId'=>$shopId])}
+</div>
+{include file="default/right_cart"/}
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__STYLE__/js/shop_floor.js?v={$v}'></script>
+<script type='text/javascript' src='__STYLE__/js/qrcode.js?v={$v}'></script>
+<script type="text/javascript" src="{:WSTProtocol()}map.qq.com/api/js?v=2.exp&key={:WSTConf('CONF.mapKey')}"></script>
+<script type='text/javascript'>
+$(function(){
+	WST.dropDownLayer(".wst-shop-code",".wst-shop-codes");
+	var qr = qrcode(10, 'H');
+	var shopId = $("#shopId").val();
+	var url = "{:url('mobile/shops/index',array('shopId'=>$data['shop']['shopId']),true,true)}";
+	qr.addData(url);
+	qr.make();
+	$('#qrcode').html(qr.createImgTag());
+	var width = $(window).width();
+	$('.wst-shop-tu').css('width',width);
+});
+</script>
+{/block}
+{block name="footer"}{__block__}
+{/block}

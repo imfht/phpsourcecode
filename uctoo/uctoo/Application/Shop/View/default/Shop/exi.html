@@ -1,0 +1,116 @@
+<extend name="Public/base"/>
+<block name="style">
+    <style type="text/css">
+        .sku-param-div{ overflow: hidden; margin-bottom: 10px;}
+        .sku-param-div>a{ display: inline-block; margin-left: 10px; text-decoration: none;}
+        .sku-param-div>span{ display: inline-block; margin: 0 10px;}
+        .sku-param-div>input{ display: inline; width: 200px;}
+        .sku-param-div>input:nth-child(3){ width: 300px;}
+    </style>
+</block>
+<block name="body">
+
+    <div class="main-title">
+        <h2>{:isset($info['id'])?'编辑':'新增'}物品参数菜单</h2>
+    </div>
+    <div class="controls">
+        <button class="btn add-sku-param" style="margin-bottom: 5px">添加参数</button>
+    </div>
+
+    <div class="sku-param-box">
+	    <php>
+		    var_dump(__file__.' line:'.__line__,$exi);exit;
+	    </php>
+        <!-- <div class="sku-param-div">
+            <input type="text" class="form-control" placeholder="请输入属性名称">
+            <span>:</span>
+            <input type="text" class="form-control" placeholder="请输入属性内容">
+            <a href="javascript:;">删除</a>
+        </div>  
+        <div class="sku-param-div">
+            <input type="text" class="form-control" placeholder="请输入属性名称">
+            <span>:</span>
+            <input type="text" class="form-control" placeholder="请输入属性内容">
+            <a href="javascript:;">删除</a>
+        </div> -->
+    </div>
+<!--    <button class="btn sku-param-save-btn" style="display:none;">保存</button>-->
+
+
+    <button class="btn am-btn-secondary am-btn-sm getJSON">提交</button>
+</block>
+
+<block name="script">
+    <script type="text/javascript">
+        $(function(){
+            
+            //添加参数
+            $('.add-sku-param').on('click', function(){
+                var html = '';
+                html+='<div class="sku-param-div extra-box">'
+                    +'<input type="text" class="form-control extra-name" placeholder="请输入属性名称">'
+                    +'<span>:</span>'
+                    +'<input type="text" class="form-control extra-value" placeholder="请输入属性内容">'
+                    +'<a href="javascript:;">删除</a>'
+                    +'</div>';
+                $('.sku-param-box').append(html);
+                if($('.sku-param-div').length){
+                    $('.sku-param-save-btn').show();
+                }
+            });
+            
+            //删除
+            $(document).on('click', '.sku-param-div>a', function(){
+                if(confirm('确定要删除吗？')){
+                    $(this).parent().remove();
+                }
+                if($('.sku-param-div').length){
+                    $('.sku-param-save-btn').show();
+                }else{
+                    $('.sku-param-save-btn').hide();
+                }
+            });
+
+            $('.getJSON').click(function () {
+                console.log('asdasdasdasdasd');
+                var data = {};
+                $('.extra-box').each(function () {
+                    var name = $(this).children('.extra-name').val();
+                    data[name] = $(this).children('.extra-value').val();
+                });
+                console.log(data);
+	            data={"pei":data};
+                $.post("{:U('shop/product',array('action'=>'sku_param','id'=>$data['id']))}",data,function(ret){
+                    console.log(ret);
+	                data = ret;
+	                if (data.status == 1) {
+		                if (data.url) {
+			                updateAlert(data.info + ' 页面即将自动跳转~', 'success');
+		                } else {
+			                updateAlert(data.info, 'success');
+		                }
+		                setTimeout(function () {
+			                if (data.url) {
+				                location.href = data.url;
+			                } else if ($(that).hasClass('no-refresh')) {
+				                $('#top-alert').find('button').click();
+			                } else {
+				                location.reload();
+			                }
+		                }, 3000);
+	                } else {
+		                updateAlert(data.info);
+		                setTimeout(function () {
+			                if (data.url) {
+				                location.href = data.url;
+			                } else {
+				                $('#top-alert').find('button').click();
+			                }
+		                }, 15000);
+	                }
+                })
+            });
+
+        }); 
+    </script>
+</block>

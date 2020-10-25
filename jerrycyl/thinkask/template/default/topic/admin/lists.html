@@ -1,0 +1,205 @@
+{include file="admin/public/header" /}
+<form role="form" method="post" action="{:url('ajax/setting/')}" class ="cmzForm">
+<style type="text/css">
+    .tab-pane{padding-top: 20px;padding: 20px;}
+</style>
+    <div class="row">
+    <div class="col-sm-12">
+    <div class="tabs-container">
+            <div style="clear:both;height:20px"></div>
+            <div class="tab-content">
+                <div id="tab-1" class="tab-pane active">
+                     <div class="ibox float-e-margins">
+                            <div class="row">
+                                <div class="col-sm-12 b-r">
+                                   <div class="ibox-title">
+                                        <a class="btn btn-outline btn-info btn-xs pull-right" href="{:url('admin/topic/creat')}" id="admin">新建话题</a>
+                                        <h5>话题</h5>
+                                    </div>
+                                    <div class="ibox-content">
+                                     
+<div class="aw-content-wrap">
+    <div class="mod">
+        <div class="mod-head">
+            <h3>
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#list" data-toggle="tab"><?php e('话题管理'); ?></a></li>
+                    <li><a href="#search" data-toggle="tab"><?php e('搜索'); ?></a></li>
+                    <li><a href="#today-topics" data-toggle="tab"><?php e('今日话题'); ?></a></li>
+                </ul>
+            </h3>
+        </div>
+
+        <div class="mod-body tab-content">
+            <div class="tab-pane active" id="list">
+                <?php if ($_GET['action'] == 'search') { ?>
+                <div class="alert alert-info"><?php e('找到 %s 条符合条件的内容', intval($this->topics_count)); ?></div>
+                <?php } ?>
+
+                <div class="table-responsive">
+                <form id="batchs_form" action="admin/ajax/topic_manage/" method="post">
+                    <input type="hidden" id="action" name="action" value="" />
+                    <input type="hidden" id="parent_id" name="parent_id" value="" />
+                <?php if ($list) { ?>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" class="check-all chooseall"></th>
+                                <th>id</th>
+                                <th><?php e('话题标题'); ?></th>
+                                <th><?php e('讨论'); ?></th>
+                                <th><?php e('关注'); ?></th>
+                                <th><?php e('合并'); ?></th>
+                                <th><?php e('状态'); ?></th>
+                                <th><?php e('根话题'); ?></th>
+                                <th><?php e('最后编辑用户'); ?></th>
+                                <th><?php e('最后编辑时间'); ?></th>
+                                <th><?php e('操作'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <form action="" class="cmzForm">
+                            <?php foreach ($list AS $topic_info) { ?>
+                            <tr>
+                            
+                                <td><input type="checkbox" class="checkbox1" name="topic_id" value="<?php echo $topic_info['topic_id']; ?>"></td>
+                                <td>{$topic_info.topic_id}</td>
+
+                                <td><?php echo $topic_info['topic_title']; ?></td>
+
+                                <td><?php echo $topic_info['discuss_count']; ?></td>
+
+                                <td><?php echo $topic_info['focus_count']; ?></td>
+
+                                <td><?php if ($topic_info['merged_id']) { ?><?php e('是'); ?><?php } else { ?><?php e('否'); ?><?php } ?></td>
+
+                                <td>
+                                    <?php if ($topic_info['topic_lock']) { ?>
+                                    <a  title="<?php e('解除锁定'); ?>" data-toggle="tooltip" class="icon icon-lock md-tip"></a>
+                                    <?php } else { ?>
+                                    <a href="javascript:;"  data-toggle="tooltip" title="<?php e('锁定话题'); ?>" class="icon icon-unlock md-tip"></a>
+                                    <?php } ?>
+                                </td>
+
+                                <td>
+                                    <?php if ($topic_info['parent_id']) { ?>
+                                    <a href="topic/<?php echo $this->parent_topic_list[$topic_info['parent_id']]['url_token']; ?>" target="_blank"><?php echo $this->parent_topic_list[$topic_info['parent_id']]['topic_title']; ?></a>
+                                    <?php } ?>
+                                </td>
+
+                                <td><a href="people/<?php echo $this->users_info[$topic_info['last_edited_uid']]['url_token']; ?>" target="_blank"><?php echo $this->users_info[$topic_info['last_edited_uid']]['user_name'] ?></a></td>
+
+                                <td><?php echo date_friendly($topic_info['last_edited_time']); ?></td>
+
+                                <td><a href="admin/topic/edit/topic_id-<?php echo $topic_info['topic_id']; ?>" class="icon icon-edit md-tip" title="<?php e('编辑'); ?>" data-toggle="tooltip"></a></td>
+                            </tr>
+                            <?php } ?>
+                            </form>
+                        </tbody>
+                    </table>
+                    <div class="pull-left">  {$list->render()}</div>
+                <?php } ?>
+                </form>
+                </div>
+
+                <div class="mod-table-foot">
+                    <?php echo $this->pagination; ?>
+
+                    <a class="btn btn-danger cmzdelmore" table="{:encode('topic')}" where="topic_id" ><?php e('删除话题'); ?></a>
+                   <!--  <a class="btn btn-primary" ><?php e('锁定话题'); ?></a>-->
+                    <!-- <a class="btn btn-primary" id="batchs_post">选择根话题</a> -->
+                </div>
+            </div>
+
+            <div class="tab-pane" id="search">
+                <form method="post" action="admin/topic/list/" onsubmit="return false;" id="search_form" class="form-horizontal" role="form">
+
+                    <input name="action" type="hidden" value="search" />
+
+                    <div class="form-group">
+                        <label class="col-sm-2 col-xs-3 control-label"><?php e('关键词'); ?>:</label>
+
+                        <div class="col-sm-5 col-xs-8">
+                            <input class="form-control" type="text" value="<?php echo rawurldecode($_GET['keyword']); ?>" name="keyword" />
+                        </div>
+                    </div>
+
+                 
+
+                    <div class="form-group">
+                        <label class="col-sm-2 col-xs-3 control-label"><?php e('作者'); ?>:</label>
+
+                        <div class="col-sm-5 col-xs-8">
+                            <input class="form-control" type="text" value="<?php echo $_GET['user_name']; ?>" name="user_name" />
+                        </div>
+                    </div>
+
+                 
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-5 col-xs-8">
+                            <a type="button"  class="btn btn-primary search">搜索</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+<script type="text/javascript">
+    $('.search').click(function(event) {
+        keyword=$("input[name='keyword']").val();
+        user_name= $("input[name='user_name']").val();
+        window.location.href="?keyword="+keyword+"&user_name="+user_name
+    });
+</script>
+            <div class="tab-pane" id="today-topics">
+                <form method="post" action="admin/ajax/save_today_topics/" onsubmit="return false;" id="today_topics_form" class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <span class="col-sm-2 col-xs-3 control-label"><?php e('今日话题'); ?>:</span>
+                        <div class="col-sm-5 col-xs-8">
+                            <input type="text" name="today_topics" class="form-control" value="" />
+
+                            <span class="help-block"><?php e('填写话题名称, 系统每天随机选出一个作为今日话题, 留空则不显示今日话题, 可填写一个或多个话题, 多个话题请用 , 分隔'); ?></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-5 col-xs-8">
+                            <button type="button"  class="btn btn-primary"><?php e('保存设置'); ?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                                    </div>
+                                </div>
+                                
+                            </div>  
+                            <div style="clear:both;height:5px"></div> 
+                            <div class="hr-line-dashed"></div>
+                             
+                             
+                             <div style="clear:both;height:5px"></div>    
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+        
+           
+</div>
+<div style="clear:both;"></div>
+ <div>
+     
+  
+    </div>
+
+
+           
+   </form>
+
+{include file="admin/public/footer" /}

@@ -1,0 +1,170 @@
+<include file="Public:header" />
+<style>
+table tbody tr{cursor:move;}
+</style>
+	<div class="container">
+		<div class="page-header">
+			<h4>{:L('ANNOUNCEMENT OF THE LIST')}</h4>
+		</div>
+		<include file="Public:alert" />
+		<div class="row">
+			<div class="span12">
+				<div class="bulk-actions align-left">
+					<div class="pull-left"><a id="delete"  class="btn" style="margin-right: 8px;"><i class="icon-remove"></i>&nbsp;{:L('DELETE')}</a></div>
+					<div class="pull-left"><a id="sort_btn" class="btn" style="margin-right: 8px;">&nbsp;{:L('SAVE ORDER')}</a></div>
+					<ul class="nav pull-left">
+						<form class="form-inline" id="searchForm" onsubmit="return checkSearchForm();" action="" method="get">
+							<li class="pull-left">
+								<select style="width:auto" id="field" name="field" id="selectCondition" onchange="changeCondition()">
+									<option class="all" value="all">{:L('ANY FIELD')}</option>
+									<option class="word" value="title">{:L('HEADLINE')}</option>
+									<option class="word" value="content">{:L('CONTENT')}</option>
+									<option class="role" value="role_id">{:L('AUTHORS')}</option>
+									<option class="date" value="create_time">{:L('CREATE_TIME')}</option>
+									<option class="date" value="update_time">{:L('UPDATE_TIME')}</option>
+								</select>&nbsp;&nbsp;
+							</li>
+							<li id="conditionContent" class="pull-left">
+							<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">		
+								<option value="contains">{:L('CONTAINS')}</option>
+								<option value="is">{:L('IS')}</option>
+								<option value="start_with">{:L('START_WITH')}</option>
+								<option value="end_with">{:L('END_WITH')}</option>
+								<option value="is_empty">{:L('IS_EMPTY')}</option>
+							</select>&nbsp;&nbsp;
+							</li>
+							<li id="searchContent" class="pull-left">
+								<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+							</li>
+							<li class="pull-left">
+								<input type="hidden" name="m" value="announcement"/>
+								<if condition="$Think.get.by neq null"><input type="hidden" name="category_id" value="{$Think.get.category_id}"/></if>
+								<button type="submit" class="btn"> <img src="__PUBLIC__/img/search.png"/>  {:L('SEARCH')}</button>&nbsp;
+							</li>
+						</form>
+					</ul>
+				</div>
+				<div class="pull-right">
+						<a class="btn btn-primary" href="{:U('announcement/add')}"><i class="icon-plus"></i>&nbsp; {:L('ADD THE ANNOUNCEMENT')}</a>
+					</div>
+			</div>
+			<div class="span12">
+				<form id="form1"  method="Post">
+					<table class="table table-hover table-striped table_thead_fixed">
+						<if condition="$list eq null">
+							<tr><td>{:L('EMPTY_TPL_DATA')}</td></tr>
+						<else/>
+						<thead>
+							<tr>
+							   <th><input class="check_all" name="check_all" id="check_all" type="checkbox" /> &nbsp;</th>
+							   <th>{:L('HEADLINE')}</th>
+							   <th>{:L('CREATOR_ROLE')}</th>
+							   <if condition="C('ismobile') neq 1">
+							   <th>{:L('UPDATE TIME')}</th>
+							   <th>{:L('THE CURRENT STATE')}</th>
+							   <th>{:L('LOGIN INTERFACE STATE')}</th>
+							   </if>
+							   <th>{:L('OPERATING')}</th>
+							</tr>
+						</thead>
+						<tfoot>
+							<tr>
+								<td colspan="7">
+									{$page}
+								</td>
+							</tr>
+						</tfoot>
+						<tbody>
+							<volist name="list" id="vo">
+								<tr>
+									<td>
+										<input class="list" type="checkbox" name="announcement_id[]" value="{$vo.announcement_id}"/>
+									</td>
+									<td><a href="{:U('announcement/view','id='.$vo['announcement_id'])}">{$vo.title}</a></td>
+									<td><notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty></td>
+									<if condition="C('ismobile') neq 1">
+									<td><notempty name="vo.update_time">{$vo.update_time|date="Y-m-d",###}<notempty></td>
+									<td><if condition="$vo['status'] == 1"><span style="color:green;"><i class="icon-ok-circle"></i>{:L('RELEASE')}</span><else /><span style="color:red;"><i class="icon-remove-circle"></i>{:L('HAS BEEN DISCONTINUED')}</span></if></td>
+									<td><if condition="$vo['isshow'] == 1"><span style="color:green;"><i class="icon-ok-circle"></i>{:L('SHOW')}</span><else /><span style="color:red;"><i class="icon-remove-circle"></i>{:L('NOT SHOW')}</span></if></td>
+									</if>
+									<td><a href="{:U('announcement/changestatus','id='.$vo['announcement_id'])}"><if condition="$vo['status'] == 1">{:L('DISABLE')}<else />{:L('PUBLISH')}</if></a> &nbsp;<a href="{:U('announcement/view','id='.$vo['announcement_id'])}">{:L('SEE ABOUT')}</a> &nbsp;<a href="{:U('announcement/edit','id='.$vo['announcement_id'])}">{:L('EDIT')}</a></td>
+								</tr>
+							</volist>
+						</tbody>
+						</if>
+					</table>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-import" title="{:L('IMPORT DATA')}">loading...</div>
+<div class="hide" id="dialog-role-info" title="{:L('DIALOG_USER_INFO')}">loading...</div>
+<script type="text/javascript">
+$("#dialog-import").dialog({
+	autoOpen: false,
+	modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: 600,
+	maxHeight: 400,
+	position: ["center",100]
+});
+
+	function deleteConfirm(id,name){
+		if(confirm("{:L('WHETHER TO DELETE THE ARTICLE')}"+name)){
+			window.location="{:U('announcement/delete','id=')}"+id;
+		}
+	}
+	function searchByCategory(){
+		var objCategory=document.getElementById("categoryList");
+		var id=objCategory.options[objCategory.selectedIndex].value;
+		window.location="{:U('announcement/index','by=all&category_id=')}"+id;
+	}
+$("table tbody").sortable({connectWith: "table tbody"});
+
+$(function(){
+<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+</if>
+
+	$("#check_all").click(function(){
+		$("input[class='list']").prop('checked', $(this).prop("checked"));
+	});
+	$("#add_category").click(function(){
+		$('#dialog-message1').dialog('open');
+		$('#dialog-message1').load("{:U('announcement/categoryAdd')}");
+	});
+	$('#delete').click(function(){
+		$("#form1").attr('action', '{:U("announcement/delete")}');
+		$("#form1").submit();
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+	$("#sort_btn").click(
+		function() {
+			position = [];
+			$.each($(".list"), function(i, item){position.push(item.value)});
+			$.get('{:U("announcement/announcementOrder")}',{postion:position.join(',')}, function(data){
+				if (data.status == 1) {
+					$(".page-header").after('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+				} else {
+					$(".page-header").after('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button>' + data.info + '</div>');
+				}
+			}, 'json');
+		}	
+	);
+});
+</script>
+<include file="Public:footer" />
+

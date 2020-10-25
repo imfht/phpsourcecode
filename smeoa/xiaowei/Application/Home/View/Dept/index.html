@@ -1,0 +1,149 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	<input type="hidden" name="ajax" id="ajax" value="1">
+	<select name="dept_list" id="dept_list" class="hidden">
+		{:fill_option($dept_list)}
+	</select>
+	{:W('PageHeader/simple',array('name'=>'部门管理','search'=>'N'))}
+	<form id="form_search" name="form_search" method="post">
+		<div class="operate panel panel-default">
+			<div class="panel-body">
+				<div class="pull-right">
+					<a onclick="add()" class="btn btn-sm btn-primary">新增</a>
+					<a onclick="save()"  class="btn btn-sm btn-primary">保存</a>
+					|
+					<a onclick="del()"  class="btn btn-sm btn-danger">删除</a>
+				</div>
+			</div>
+		</div>
+	</form>
+	<!-- 功能操作区域结束 -->
+	<!-- 列表显示区域  -->
+	<div class="row">
+		<div class="col-sm-4 sub_left_menu ">
+			<div class="well">
+				<?php echo $menu ?>
+			</div>
+		</div>
+		<div class="col-sm-8 sub_content">
+			<form id="form_data" name="form_data" method="post" class="well form-horizontal clearfix">
+				<input type="hidden" name="id" id="id">
+				<input type="hidden" name="opmode" id="opmode" value="">
+				<div class="form-group col-xs-12 hidden">
+					<label class="col-sm-4 control-label" for="dept_no">编码*：</label>
+					<div class="col-sm-8">
+						<input class="form-control" type="text" id="dept_no" name="dept_no" >
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="name">名称*：</label>
+					<div class="col-sm-8">
+						<input class="form-control" type="text" id="name" name="name" check="require" msg="请输入名称">
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="short">简称*：</label>
+					<div class="col-sm-8">
+						<input class="form-control" type="text" id="short" name="short" check="require" msg="请输入简称">
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="dept_name">上级部门*：</label>
+					<div class="col-sm-8">
+						<div class="input-group">
+							<input name="dept_name" class="form-control" id="dept_name" type="text" readonly="readonly" msg="请选择上级部门" check="require"/>
+							<input name="pid" id="pid" type="hidden" msg="请选择上级部门" check="require" />
+							<span class="input-group-btn">
+								<button class="btn btn-sm btn-primary" onclick="select_pid()" type="button">
+									选择
+								</button> </span>
+						</div>
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="dept_grade_id">部门级别*：</label>
+					<div class="col-sm-8">
+						<select name="dept_grade_id" id="dept_grade_id" class="form-control" msg="请选择部门级别" check="require">
+							<option>选择部门级别</option>
+							{:fill_option($dept_grade_list)}
+						</select>
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="sort">排序：</label>
+					<div class="col-sm-8">
+						<input class="form-control" type="text" id="sort" name="sort" >
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="is_del">状态*：</label>
+					<div class="col-sm-8">
+						<select   name="is_del" id="is_del" class="form-control">
+							<option  value="0">启用</option>
+							<option value="1">禁用</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="remark" >其他：</label>
+					<div class="col-sm-8" >
+						<textarea class="form-control" name="remark" id="remark" rows="5" class="col-xs-12" ></textarea>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function add() {
+			winopen("{:U('add')}",560, 470);
+		};
+
+		function save() {
+			sendForm("form_data", "{:U('save')}", "{:U('index')}");
+		}
+
+		function del() {
+			if ($(".sub_left_menu a.active").parent().find(".tree_menu").html() != undefined) {
+				ui_error("有子目录不能删除");
+				return false;
+			}
+			ui_confirm('确定要删除吗?', function() {
+				var vars = $("#form_data").serialize();
+				sendAjax("{:U('del')}", vars, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							location.reload(true);
+						});
+					}
+				});
+			});
+		}
+
+		function select_pid() {
+			winopen("{:U('winpop')}",560, 470);
+		}
+
+		function showdata(result) {
+			for (var s in result.data) {
+				set_val(s, result.data[s]);
+			}
+			$("#dept_name").val($("#dept_list option[value='" + $("#pid").val() + "']").text());
+			$("#opmode").val("edit");
+		}
+
+		$(document).ready(function() {
+			$(".sub_left_menu .tree_menu a").click(function() {
+				$(".sub_left_menu .tree_menu a.active").removeClass("active");
+				$(this).addClass("active");
+				sendAjax("{:U('read')}", "id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+		});
+	</script>
+
+</block>

@@ -1,0 +1,165 @@
+<!--{template /module/admin/view/head}-->
+<div id="left_layout">
+	<div id="main_content" class="container-fluid">
+		<!--{template /module/admin/view/head_nav}-->
+		<div class="row-fluid">
+			<div class="well widget">
+				<div class="widget-header">
+					<h3 class="title">{lang bbs.forum.view.header}</h3>
+				</div>
+				<div class="widget-content">
+					<form class="form-search" id="frm_search" name="frmSearch" action="{$ADMIN_SCRIPT}/bbs/forum" method="post">
+					<div class="action-wrapper">
+						<div class="pull-left">
+							<a href="javascript:void(null);" id="btn_submit" class="btn btn-small btn-primary" {$dispatches[operations][edit]}>{lang admin.operation.submit}</a>
+							<a href="javascript:void(null);" id="btn_delete_list" class="btn btn-small" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+							<a href="{$ADMIN_SCRIPT}/bbs/forum/_pub"  class="btn btn-small" {$dispatches[operations][add]}>{lang bbs.forum.view.operation.add}</a>
+						</div>
+						<div class="pull-right" {$dispatches[operations][search]}>
+							<div class="input-append" >
+								<input type="text" name="txtKeyword" value="{$_var[gp_txtKeyword]}" class="input-small search-query" size="18"  maxlength="20"/>
+								<button type="submit" class="btn">{lang admin.search.submit}</button>
+							</div>
+						</div>
+					</div>
+					</form>
+					
+					<hr>
+					<form id="frm_grid" name="frmGrid" action="{$ADMIN_SCRIPT}/bbs/forum&page={$_var[page]}&psize={$_var[psize]}" method="post">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th width="20"><input type="checkbox" class="fancy" name="cbxAll"/></th>
+								<th width="64">{lang bbs.forum.view.th.pic}</th>
+								<th width="55">{lang bbs.forum.view.th.no}</th>
+								<th>{lang bbs.forum.view.th.name}</th>
+								<th>{lang bbs.forum.view.th.group}</th>
+								<th width="60">{lang bbs.forum.view.th.audit}</th>
+								<th width="60">{lang bbs.forum.view.th.condition}</th>
+								<th width="120">{lang bbs.forum.view.th.edit}</th>
+								<th width="90">{lang bbs.forum.view.th.operate}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!--{loop $forums $_loop $forum}-->
+							<tr class="item-row">
+								<td>
+	                				<input type="checkbox" class="fancy" name="cbxItem[]" value="{$forum[FORUMID]}" title="{$forum[NAME]}"/>
+	            				</td>
+	            				<td>
+            						<!--{if is_array($forum[FILE01])}-->
+            							<img src="{$forum[FILE01][0]}" width="60" style="width:60px;" />
+            						<!--{else}-->
+            							<img src="static/images/no-picture.jpg" width="60" style="width:60px; height:40px;" />
+            						<!--{/if}-->
+            					</td>
+	            				<td>
+				             		<input type="text" class="input-mini" name="displayorder[{$forum[FORUMID]}]" value="{$forum[DISPLAYORDER]}" />
+				            		<input type="hidden" class="input-small" name="forumid[{$forum[FORUMID]}]" value="{$forum[FORUMID]}" />	
+				            	</td>
+	            				<td>
+	            					<p class="text-success thin">{$forum[NAME]} ID:{$forum[FORUMID]} <small>[{$forum[TOPICS]}{lang bbs.forum.view.td.topic}/{$forum[POSTCOUNT]}{lang bbs.forum.view.td.post}]</small></p>
+	            					<!--{if $forum[REMARK]}--><p class="thin">{$forum[REMARK]}</p><!--{/if}-->
+	            					<!--{if $forum[MANAGER]}--><p class="thin">{lang bbs.forum.view.td.manager}:{$forum[MANAGER]}</p><!--{/if}-->
+					            </td>
+	            				<td>{$forum[GROUPS]}</td>
+	            				<td>
+	            					<!--{if $forum['ISAUDIT']}-->
+	            						{lang bbs.forum.view.td.isaudit.yes}
+	            					<!--{else}-->
+	            						{lang bbs.forum.view.td.isaudit.no}
+	            					<!--{/if}-->
+	            				</td>
+					            <td>
+					            	<!--{if $forum['GUEST']}-->
+	            						{lang bbs.forum.view.td.guest.yes}
+	            					<!--{else}-->
+	            						{lang bbs.forum.view.td.guest.no}
+	            					<!--{/if}-->
+	            					<br/>
+					            	<!--{if $forum['ISSUBSCRIBE']}-->
+	            						{lang bbs.forum.view.td.issubscribe.yes}
+	            					<!--{else}-->
+	            						{lang bbs.forum.view.td.issubscribe.no}
+	            					<!--{/if}-->
+					            </td>
+					            <td class="f10">{$forum[USERNAME]}<br/>{$forum[EDITTIME]}</td>
+								<td>
+					            	<a class="btn btn-mini btn-primary" href="{$ADMIN_SCRIPT}/bbs/forum/_update&id={$forum[FORUMID]}&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}" {$dispatches[operations][edit]}>{lang admin.operation.edit}</a>
+					                <a class="btn btn-mini btn-delete" title="{$forum[NAME]}" data="{$forum[FORUMID]}" href="javascript:void(null);" {$dispatches[operations][delete]}>{lang admin.operation.delete}</a>
+					            </td>
+				            </tr>
+							<!--{/loop}-->							
+							<!--{if $count == 0}-->
+							<tr>
+					            <td colspan="9">
+					                * {lang admin.operation.empty}
+					            </td>
+					        </tr>
+					        <!--{/if}-->
+						</tbody>
+					</table>
+					</form>
+					
+					<hr/>
+					{$pager}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	$('.fancy').uniform();
+	
+	$('#btn_submit').click(function(){
+		$('#frm_grid').submit();
+	});
+	
+	$('#btn_delete_list').click(function(){
+		if($("#frm_grid input[name='cbxItem[]']:checked").length > 0){
+			var tempHTML = '<p>';
+			$("#frm_grid input[name='cbxItem[]']:checked").each(function(){
+				tempHTML += $(this).attr('title') + '； ';
+			});
+			
+			tempHTML += '</p>';
+			
+			$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang bbs.forum.view.operation.delete.message}</p>' + tempHTML, callback:function(){
+				$('#modal_dialog .btn-primary').click(function(){
+					$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/bbs/forum&do=delete_list&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}');
+					$('#frm_grid').submit();
+				});
+			}});
+		}else $.dialog({message:'{lang bbs.forum.view.operation.empty}'});
+	});
+	
+	$("#frm_grid input[name='cbxAll']").click(function(){
+		if(this.checked){
+			$('#frm_grid .item-row').addClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', true).parent().addClass('checked');
+		}else{
+			$('#frm_grid .item-row').removeClass('warning');
+			$("#frm_grid input[name='cbxItem[]']").attr('checked', false).parent().removeAttr('class');
+		}
+	});
+	
+	$("#frm_grid input[name='cbxItem[]']").click(function(){
+		if(this.checked) $(this).parent().parent().parent().parent().addClass('warning');
+		else $(this).parent().parent().parent().parent().removeClass('warning');
+	});
+	
+	$('#frm_grid .btn-delete').click(function(){
+		var forumid = $(this).attr('data');
+		var tempHTML = '<p>' + $(this).attr('title') + '； </p>';
+		$.dialog({submit:'{lang admin.operation.delete}', message:'<p>{lang bbs.forum.view.operation.delete.one}</p>' + tempHTML, callback:function(){
+			$('#modal_dialog .btn-primary').click(function(){
+				$('#frm_grid').attr('action', '{$ADMIN_SCRIPT}/bbs/forum&do=delete&id=' + forumid + '&page={$_var[page]}&psize={$_var[psize]}{$search[querystring]}');
+				$('#frm_grid').submit();
+			});
+		}});
+	});
+});
+</script>
+<!--{template /module/admin/view/foot}-->

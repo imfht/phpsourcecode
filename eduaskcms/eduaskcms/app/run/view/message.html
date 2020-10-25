@@ -1,0 +1,66 @@
+{extends file="global.html"}
+
+{block name=global}
+<div class="admin_message">
+    {$local.dummy=settype($data.message,'array')}
+    <div class="notification {$data.type}"> 
+    {foreach $data.message as $msg}
+    	<div>{$msg}</div>
+    {/foreach}
+    </div>
+    
+    <div class="redirect layui-btn-group btn_count_{count($data.redirect)}">
+    	{foreach $data.redirect as $title=>$url}
+        {if !$url}{continue}{/if}
+        {if $title=='close'}
+        <a class="javascript redirect_selection  hidden layui-btn layui-btn layui-btn-danger" id="rs_close">关闭窗口</a>
+        {else}
+    	<a class="redirect_selection  layui-btn layui-btn-normal {if $title=='返回上一页'}layui-btn-danger{/if}" href="{$url}">{$title}</a>
+        {/if}
+    	{/foreach}
+    </div>
+    {$auto=$data.auto}
+    {if $auto&&$data.redirect}
+    <div class="count_down">
+    	系统将在<span id="count_down_count">{$auto}</span>秒后自动跳转到第一个链接 <a id="cancel_count_down" style="cursor:pointer;">取消自动跳转</a>
+    </div>
+    
+    <script>
+    	var left_seconds=parseInt('{$auto}');
+    	function count_down(){
+    		if(left_seconds<0){
+	            if (!$('#rs_close:visible').length) {
+	               var href = "{url('run/Index/index')}";
+                    if ($('a.redirect_selection').eq(0).attr('href')) {
+                        href = $('a.redirect_selection').eq(0).attr('href')
+                    }  
+                    window.location.href = href;
+	            } else {
+	               $('#rs_close').trigger('click');
+	            }
+                
+                
+    			return;
+    		}
+    		$('#count_down_count').html(left_seconds--);
+    		count_down.timeout=window.setTimeout(count_down,1000);
+    	}
+    	$(document).ready(function(){ count_down(); });
+    	$('#cancel_count_down').click(function(){
+    		window.clearTimeout(count_down.timeout);
+    		$(this).parent().remove();
+    	})
+    	
+    </script>
+    {/if}
+    <script type="text/javascript">
+    $(document).ready(function(){
+        if(self != top)
+        $('#rs_close').css('display','inline-block').click(function(){
+            top.$('.layui-tab').find('.layui-tab-title li.layui-this .layui-tab-close').trigger('click');
+        });    
+        
+    })
+    </script>
+</div>
+{/block}

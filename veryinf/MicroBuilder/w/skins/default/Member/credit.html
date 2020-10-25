@@ -1,0 +1,121 @@
+<include file="Common/header-control" />
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs">
+            <li{$do == 'list' ? ' class="active"' : ''}><a href="{:U('control/member/credit');}">积分</a></li>
+            <li{$do == 'policy' ? ' class="active"' : ''}><a href="{:U('control/member/credit?do=policy');}">积分策略</a></li>
+        </ul>
+    </div>
+    <if condition="$do == 'list'">
+        <script type="text/javascript">
+            require(['jquery', 'util'], function($, u){
+                $("#form1").submit(function(){
+                    var colarr=new Array();
+                    var col;
+                    var bool=true;
+                    $(":checkbox[name^=enabled]:checked").each(function(){
+                        var key=$(this).attr('name').substr(8,7);
+                        if($("#"+key).val().trim()==''){
+                            u.message('启用某个积分后，对应的积分名称不能为空.', '', 'error');
+                            bool = false;
+                        }
+                    })
+
+                    $(":text.form-control").each(function(index){
+                        value=$(this).val().trim();
+                        if(value !=""){
+                            for(col in colarr){
+                                if(colarr[col]==value){
+                                    u.message('积分名称重复.', '', 'error');
+                                    bool = false;
+                                }
+                            }
+                            colarr[index+1]=value;
+                        }
+                    })
+                    if(!bool) return false;
+                });
+            });
+        </script>
+        <div class="box col-md-12">
+            <div class="box-inner">
+                <div class="box-header well" data-original-title="">
+                    <h2><i class="fa fa-list"></i> <a name="result"></a>积分列表</h2>
+                </div>
+                <div class="box-content">
+                    <form action="" method="post" id="form1">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <tr>
+                                    <th style="width:200px;">积分标记</th>
+                                    <th class="text-center" style="width:60px;">启用？</th>
+                                    <th style="min-width:120px;">积分名称</th>
+                                    <th></th>
+                                </tr>
+                                <foreach name="credits" key="key" item="item">
+                                    <tr>
+                                        <td>{$key}</td>
+                                        <td class="text-center">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input name="enabled[{$key}]" value="1" type="checkbox" {$item['issystem'] ? ' disabled' : ''}{$item['enabled'] ? ' checked' : ''}> &nbsp;
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="row">
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control" id="{$key}" placeholder="请输入积分的名称" name="title[{$key}]" value="{$item['title']}">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </foreach>
+                            </table>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="提交" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </if>
+    <if condition="$do == 'policy'">
+        <div class="box col-md-12">
+            <div class="box-inner">
+                <div class="box-header well" data-original-title="">
+                    <h2><i class="fa fa-list"></i> 积分策略</h2>
+                </div>
+                <div class="box-content">
+                    <div class="alert alert-warning">
+                        积分策略设计到运营方式, 请谨慎修改积分行为参数, 修改不当将会造成积分变余额, 余额变积分的糟糕情况
+                    </div>
+                    <form class="form-horizontal" action="" method="post">
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-3 col-lg-2 control-label">基本&营销</label>
+                            <div class="col-sm-4">
+                                <credits name="activity" value="$policy['activity']" />
+                                <span class="help-block">请设置使用系统内置营销功能时, 默认关联的积分类型. (具体功能或模块可能会提供独立的设置选项, 这里设置的是没有特殊选项时系统的默认值)</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-xs-12 col-sm-3 col-md-3 col-lg-2 control-label">交易&支付(余额)</label>
+                            <div class="col-sm-4">
+                                <credits name="currency" value="$policy['currency']" />
+                                <span class="help-block">请设置系统支付或者购买时使用的积分, 这个积分一般是使用实际货币购买(充值)的.</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-2">
+                                <input type="submit" class="btn btn-primary btn-block" onclick="return confirm('您确定修改积分策略参数吗？');" name="submit" value="提交" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </if>
+</div>
+<include file="Common/footer-control" />

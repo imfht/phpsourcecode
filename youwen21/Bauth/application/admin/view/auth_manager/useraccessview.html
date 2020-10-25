@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>用户授权</title>
+
+  <!-- Bootstrap -->
+  <link href="{:config('__public__')}/static/bootstrap-3.3.4/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+  <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <style type="text/css">
+    dl {
+        -webkit-margin-before: 1em;
+        -webkit-margin-after: 1em;
+        -webkit-margin-start: 0px;
+        -webkit-margin-end: 0px;
+    }
+    dt {
+        padding-left: 10px;
+        height: 30px;
+        line-height: 30px;
+        font-weight: bold;
+        border-bottom: 1px solid #ebebeb;
+        background-color: #ECECEC;
+    }
+    dd {
+        margin-left:20px; 
+    }
+    span {
+        display: inline-block;
+        margin-left: 0 ;/* !important*/
+    }
+    input{
+        display: inline-block;
+    }
+    label {
+        display: inline-block !important;
+        cursor: default !important;
+    }
+    .checkmod {
+        border-color: #ebebeb;
+        border: 1px solid #ebebeb;
+        margin-bottom: 20px;
+    }
+
+    .divsion {
+        width: 20px;
+        display: inline-block;
+    }
+
+    .rule_check{
+        /*border-color: #ebebeb;
+        border-width: 0;
+        border-bottom: 1px; 
+        border-style: dashed; */
+    }
+
+    .checkbox {
+        display: inline-block;
+        margin-left: 20px; 
+        margin: 0 10px 0 0;
+    }
+
+    .child_row{
+        padding-left: 30px; 
+        display: inline-block;
+    }
+
+
+</style>
+
+<div class="title"><span class="h2">用户授权</span>:<span class="h4">用户ID = {:input('uid')}</span></div>
+
+<div class="container">
+  {empty name="$_groupids"}
+  <div class="alert alert-warning" role="alert">
+  该用户不属于任何角色组，因此，该用户只有登录、退出权限。
+  </div>
+  {/empty}
+  <!--  分组  -->
+  <div class="panel panel-info">
+    <div class="panel-heading">用户所属角色组</div>
+    <div class="panel-body">
+      <div class="child_row">
+        <form class="ajaxForm" method="POST" action="{:url('modify_user_groups')}">
+        {volist name="_allGroup" id="ag"}
+        <div class="single" style="float: left;">
+          <label class="checkbox" {notempty name="ag['id']"}title='{$ag.id}'{/notempty}></label>
+          <input name="groupId[]" class="groups" type="checkbox" value="{$ag.id}"/>
+          {$ag.title}
+        </div>
+        {/volist}
+        <input type="hidden" name="uid" value="{:input('uid')}" />
+        <input type="hidden" name="groupids" value="{$_groupids}" />
+        <button class="btn btn-sm btn-success" style="margin-left: 50px;">提 交</button>
+        &nbsp;&nbsp;
+        <button class="btn btn-sm btn-warning" onclick="javascript:history.back(-1);return false;">取消保存</button>
+        </form>
+      </div>
+    </div>
+    <ul class="list-group">
+      <li class="list-group-item">！用户可添加到多个角色中，用户拥有角色权限并集。</li>
+      <li class="list-group-item">！为角色分配权限请到 <a href="{:url('auth_manager/index')}">角色管理</a>。</li>
+    </ul>
+  </div>
+  <!--  /分组  -->
+  <h3>用户拥有的最终权限</h3>
+  <!-- 访问授权 -->
+  <form action="{:url('AuthManager/updateAccess')}" enctype="application/x-www-form-urlencoded" method="POST" class="ajaxForm">
+    {volist name="node_list" id="node" }
+    <dl class="checkmod">
+      <dt>
+        <input class="auth_rules rules_all" type="checkbox" name="rules[]" value="{$node.id}" disabled="disabled">{$node.title} -- ({$node.module})</dt>
+      <dd>
+        {present name="node['_child']"}
+                {volist name="node['_child']" id="child" }
+        <div class="rule_check" >
+          <div style="display: block;">
+            <label class="checkbox" {notempty name="child['tip']"}title='{$child.tip}'{/notempty}></label>
+            <input class="auth_rules rules_row" type="checkbox" name="rules[]" value="{$child.id}" disabled="disabled"/>
+            {$child.title}
+          </div>
+          {notempty name="child['_child']"}
+          <!-- <span class="divsion">&nbsp;</span>
+        -->
+        <span class="child_row">
+          {volist name="child['_child']" id="op"}
+          <div class="single" style="float: left;">
+            <label class="checkbox" {notempty name="op['tip']"}title='{$op.tip}'{/notempty}></label>
+            <input class="auth_rules" type="checkbox" name="rules[]"
+                                                       value="{$op.id}" disabled="disabled"/>
+            {$op.title}
+          </div>
+          {/volist}
+        </span>
+        {/notempty}
+      </div>
+      <div class="" style="clear: both;"></div>
+      {/volist}
+                {/present}
+    </dd>
+  </dl>
+  {/volist}
+  <!-- <button type="submit" class="btn btn-success">确 定</button>
+<button class="btn btn-warning" onclick="javascript:history.back(-1);return false;">返 回</button>
+-->
+</form>
+<!-- /访问授权 -->
+</div>
+<div class="hide">
+  {volist name="_allRule" id="vlist"}
+  <input type="hidden" name="rule_{$vlist.id}" value="{$vlist.rules}">
+  {/volist}
+</div>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+<script src="{:config('__public__')}/static/form-3.51/jquery.form.js"></script>
+<link rel="stylesheet" href="{:config('__public__')}/static/artDialog-6.0.4/css/ui-dialog.css">
+<script src="{:config('__public__')}/static/artDialog-6.0.4/dist/dialog-min.js"></script>
+<script src="{:config('__public__')}/Admin/js/ajaxSubmit.js"></script>
+<script type=text/javascript>
+// 自定义数组删除
+Array.prototype.del = function(n)
+{
+n = parseInt(n);
+if (n<0) return this;
+return this.slice(0,n).concat(this.slice(n+1, this.length+1));
+}
+ 
+Array.prototype.getIndex = function(ele)
+{
+    for (x in this){
+        if (this[x] == ele){
+            return x;
+        }
+    }
+    return -1;
+}
+</script>
+<script type="text/javascript" charset="utf-8">
+$('select[name=group]').change(function(){
+    location.href = this.value;
+});
+
++function($){
+    //用户所属于组
+    var belongGroup = [{$_groupids}];
+    $('.groups').each(function(){
+        if( $.inArray( parseInt(this.value,10),belongGroup )>-1 ){
+            $(this).prop('checked',true);
+        }
+    });
+    //授权
+    var rules = [{$_rules}];
+    $('.auth_rules').each(function(){
+        if( $.inArray( parseInt(this.value,10),rules )>-1 ){
+            $(this).prop('checked',true);
+        }
+        if(this.value==''){
+            $(this).closest('span').remove();
+        }
+    });
+
+    // 钩选权限预览
+    $('.groups').on('change', function(){
+      $('.auth_rules').each(function(){
+        $(this).prop('checked',false);
+      })
+      $('.groups').each(function(){
+        if($(this).is(':checked')){
+          var thisid = $(this).val();
+          var ruleIds = $("input[name='rule_"+thisid+"']").val();
+          if('' != ruleIds || 'undefined' != ruleIds){
+            var ruleArr = ruleIds.split(',');
+            $('.auth_rules').each(function(){
+                // if( $.inArray( parseInt(this.value,10),ruleArr )>-1 ){
+                if( ruleArr.getIndex(parseInt(this.value,10))>-1 ){
+                    $(this).prop('checked',true);
+                }
+            });
+          }
+        }
+      })
+    })
+
+
+
+
+
+
+    //全选节点
+    $('.rules_all').on('change',function(){
+        $(this).closest('dl').find('dd').find('input').prop('checked',this.checked);
+    });
+    $('.rules_row').on('change',function(){
+        $(this).closest('.rule_check').find('.child_row').find('input').prop('checked',this.checked);
+    });
+
+    // $('.checkbox').each(function(){
+    //     $(this).qtip({
+    //         content: {
+    //             text: $(this).attr('title'),
+    //             title: $(this).text()
+    //         },
+    //         position: {
+    //             my: 'bottom center',
+    //             at: 'top center',
+    //             target: $(this)
+    //         },
+    //         style: {
+    //             classes: 'qtip-dark',
+    //             tip: {
+    //                 corner: true,
+    //                 mimic: false,
+    //                 width: 10,
+    //                 height: 10
+    //             }
+    //         }
+    //     });
+    // });
+
+    $('select[name=group]').change(function(){
+        location.href = this.value;
+    });
+
+}(jQuery);
+</script>
+</body>
+</html>

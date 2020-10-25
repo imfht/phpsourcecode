@@ -1,0 +1,115 @@
+<extend name="Base/common"/>
+<block name="header">
+    <include file="Public/nav"/>
+</block>
+<block name="body">
+
+    <link type="text/css" rel="stylesheet" href="__CSS__/group.css"/>
+    <script type="text/javascript" src="__JS__/common.js"></script>
+
+        <div class="col-xs-12">
+            <div class="fourm-top common_block_border" style="padding: 15px 20px;margin: -15px;margin-top: 0;margin-bottom: 15px">
+                <h4>
+                    <if condition="$isEdit">
+                        {:L('_EDIT_')}{:L('_POST_')}
+                        <else/>
+                        {:L('_POSTING_')}{:L('_NEW_POST_')}
+                    </if>
+                </h4>
+                <hr/>
+                <section id="contents">
+                    <form action="{:U('Group/Index/doEdit')}" method="post" class="ajax-form" id="edit-article-form" >
+                        <input type="hidden" name="post_id" value="{$post.id}"/>
+                        <input id="group_id" type="hidden" name="group_id" value="{$group.id}" />
+                        <div class="row">
+                            <!-- 帖子分类 -->
+                            <div class="col-sm-3 col-xs-12">
+                                <p>
+                                    <select class="form-control" name="category">
+                                        <option value="0">{:L('_PLEASE_SELECT_')}{:L('_CATEGORY_')}</option>
+                                        <volist name="post_cate" id="category">
+                                            <php>
+                                                $selected = $category['id'] == $post['cate_id'] ? 'selected' : '';
+                                            </php>
+                                            <option value="{$category.id}"
+                                            {$selected}>{$category.title|htmlspecialchars}</option>
+                                        </volist>
+                                    </select>
+                                </p>
+                            </div>
+                            <div class="col-sm-9 col-xs-12">
+                                <p>
+                                    <input id="title" type="text" name="title" placeholder="{:L('_TITLE_')}" value="{$post.title}"
+                                           class="form-control"/>
+
+                                </p>
+                            </div>
+
+                        </div>
+                        <p>
+                            <php>
+                                $config=get_editor_config("GROUP_ADD", "toolbars:[['source','|','bold','italic','underline','fontsize','forecolor','fontfamily','backcolor','|','link','emotion','scrawl','attachment','insertvideo','insertimage','insertcode','wordimage']]");</php>
+                            </php>
+                            {:W('Common/Ueditor/editor',array('contentEditor','content',$post['content'],'100%','250px',$config))}
+                        </p>
+                        <p>&nbsp;</p>
+                        <script>
+                            $(function(){
+                                ue_contentEditor.addListener( 'ready', function( editor ) {
+                                    $(this.document.body).atwho(atwho_config);
+
+                                } );
+
+                                ue_contentEditor.addListener("beforeSubmit",function(){
+                                    ue_contentEditor.sync();
+                                    $("#reply_form").submit();
+                                    return false;
+                                })
+                            })
+                        </script>
+                        <p class="pull-right">
+                            <button type="submit" class="btn btn-large btn-primary" id="submit-button">
+                                <span class="glyphicon glyphicon-edit"></span>
+                            <span id="submit-content">
+
+                                   {:L('_SUBMIT_')} Ctrl+Enter
+
+                            </span>
+                            </button>
+                            <input type="hidden" id="isEdit" value="{$isEdit}">
+                        </p>
+                        <p>
+                            <a class="btn btn-large btn-primary" onclick="history.go(-1)">
+                                <span class="glyphicon glyphicon-home"></span>
+                                {:L('_RETURN_')}{:L('_POST_')}{:L('_LIST_')}
+                            </a>
+                        </p>
+                    </form>
+                </section>
+            </div>
+        </div>
+    <script>
+        var SUPPORT_URL = "{:addons_url('Support://Support/doSupport')}";
+        $(function () {
+            $('.input_tips').keypress(function (e) {
+                var $this = $(this);
+                if (e.ctrlKey && e.which == 13 || e.which == 10) {
+                    $this.closest('.weibo_post_box').find('[data-role="sendLzlReply"]').click();
+                }
+            });
+
+            $.post(U('Core/Public/atWhoJson'),{},function(res){
+                atwho_config = {
+                    at: "@",
+                    data: res,
+                    tpl: "<li data-value='[at:${id}]'><img class='avatar-img' style='width:2em;margin-right: 0.6em' src='${avatar32}'/>${nickname}</li>",
+                    show_the_at: true,
+                    search_key: 'search_key',
+                    start_with_space: false
+                };
+            },'json')
+
+        })
+    </script>
+</block>
+

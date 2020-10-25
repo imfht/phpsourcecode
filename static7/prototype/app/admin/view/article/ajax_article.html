@@ -1,0 +1,96 @@
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th class=""><input class=" checkbox check-all" type="checkbox"></th>
+            <th class="">序号</th>
+            <th class="">标题</th>
+            <th class="">类型</th>
+            <th class="">浏览</th>
+            <th class="">分类</th>
+            <th class="">创建时间</th>
+            <th class="">更新时间</th>
+            <th class="">状态</th>
+            <th class="">操作</th>
+        </tr>
+    </thead>
+    <tbody class="">
+        {notempty name="list"}
+        {volist name="list" id="vo"}
+        <tr>
+            <td><input class="ids " type="checkbox" name="ids[]" value="{$vo.id}"></td>
+            <td>{$vo.id} </td>
+            <td><a title="{$vo.title}" href="{:\\think\\Url::build('edit',['id'=>$vo['id'],'cate_id'=>$vo['category_id']])}">{$vo.title}</a></td>
+            <td>{$vo.type}</td>
+            <td>{$vo.view}</td>
+            <td>{$vo.category_text??''}</td>
+            <td>{$vo.create_time|time_format}</td>
+            <td>{$vo.update_time|time_format}</td>
+            <td>{$vo.status|change_status=['禁用','正常','待审核']}</td>
+            <td>
+                <a title="编辑" href="{:\\think\\Url::build('edit',['id'=>$vo['id']])}">编辑</a>
+                {lt name="vo.status" value="2"}
+                <a class="confirm ajax-get" href="{:\\think\\Url::build('setStatus',['value'=>abs($vo['status']-1),'ids'=>$vo['id']])}">{$vo.status|change_status=[1 => '禁用', 0 => '启用']}</a>
+                {/lt}
+                <a class="confirm ajax-get" href="{:\\think\\Url::build('setStatus',['value'=>-1,'ids'=>$vo['id']])}" title="删除">删除</a>
+            </td>
+        </tr>
+        {/volist}
+        {else /}
+    <td colspan="9" class="text-center"> aOh! 暂时还没有内容! </td>
+    {/notempty}
+</tbody>
+</table>
+<div class="text-center">
+    {notempty name="list"}
+    {$page}
+    {/notempty}
+</div>
+<script type="text/javascript">
+    //get条件查询
+    $('.pagination li a').on('click', function () {
+        var url = $(this).attr('href');
+        $.post(url, function (data) {
+            $('.ajax_article').html(data);
+        });
+        return false;
+    });
+    //全选的实现
+    $(".check-all").click(function () {
+        $(".ids").prop("checked", this.checked);
+    });
+    $(".ids").click(function () {
+        var option = $(".ids");
+        option.each(function (i) {
+            if (!this.checked) {
+                $(".check-all").prop("checked", false);
+                return false;
+            } else {
+                $(".check-all").prop("checked", true);
+            }
+        });
+    });
+    //ajax get请求
+    $('.ajax-get').on('click', function () {
+        var target;
+        if ($(this).hasClass('confirm')) {
+            if (!confirm('确认要执行该操作吗?')) {
+                return false;
+            }
+        }
+        if ((target = $(this).attr('href')) || (target = $(this).attr('url'))) {
+            $.get(target).success(function (data) {
+                if (data.code === 1) {
+                    data.url ? alert_msg(data.msg + ' 页面即将自动跳转~', 1) : alert_msg(data.msg, 1);
+                    setTimeout(function () {
+                        data.url ? location.href = data.url : '';
+                    }, 1500);
+                } else {
+                    alert_msg(data.msg, 0);
+                    setTimeout(function () {
+                    }, 1500);
+                }
+            });
+        }
+        return false;
+    });
+</script>

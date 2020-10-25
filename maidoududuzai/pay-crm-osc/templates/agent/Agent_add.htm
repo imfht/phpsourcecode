@@ -1,0 +1,150 @@
+<div class="opwindow">
+	<form name="theform2" id="theform2" method="post" action="{echo \befen\get_url()}">
+	<div class="layui-form layui-row">
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md4">
+				<label>代理名称</label>
+				<input type="text" name="agent_name" id="agent_name" class="layui-input layui-input-wdith" value="" placeholder="请输入代理名称">
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>代理类型</label>
+				<div class="layui-input-inline layui-input-wdith">
+					<select name="agent_type" id="agent_type" class="layui-select">
+						<!--{loop model('Agent')->get_type() $key $val}-->
+						<option value="{$val}">{$val}</option>
+						<!--{/loop}-->
+					</select>
+				</div>
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>代理级别</label>
+				<div class="layui-input-inline layui-input-wdith">
+					<select name="level_id" id="level_id" class="layui-select">
+						<!--{loop $this->AgentLevel $key $val}-->
+						<option value="{$val[level_id]}">{$val[level_name]}</option>
+						<!--{/loop}-->
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md4">
+				<label>联系人</label>
+				<input type="text" name="per_name" id="per_name" class="layui-input layui-input-wdith" value="" placeholder="请输入联系人">
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>联系电话</label>
+				<input type="text" name="per_phone" id="per_phone" class="layui-input layui-input-wdith" value="" placeholder="请输入联系电话">
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>电子邮箱</label>
+				<input type="text" name="per_email" id="per_email" class="layui-input layui-input-wdith" value="" placeholder="请输入电子邮箱">
+			</div>
+		</div>
+		<div class="layui-form-item" id="area-picker">
+			<div class="layui-col layui-col-md4">
+				<label>所属省级</label>
+				<div class="layui-input-inline layui-input-wdith">
+					<select name="province" id="province" class="province-selector" data-value=""><option value="">--选择省--</option></select>
+				</div>
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>所属市级</label>
+				<div class="layui-input-inline layui-input-wdith">
+					<select name="city" id="city" class="city-selector" data-value=""><option value="">--选择市--</option></select>
+				</div>
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>所属区级</label>
+				<div class="layui-input-inline layui-input-wdith">
+					<select name="county" id="county" class="county-selector" data-value=""><option value="">--选择区--</option></select>
+				</div>
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md4">
+				<label>详细地址</label>
+				<input type="text" name="address" id="address" class="layui-input layui-input-wdith" value="" placeholder="请输入详细地址">
+			</div>
+			<div class="layui-col layui-col-md8">
+				<label>备注信息</label>
+				<input type="text" name="remarks" id="remarks" class="layui-input layui-input-wdith" value="">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md4">
+				<label>结算信息-开户银行</label>
+				<input type="text" name="account_bank" id="account_bank" class="layui-input layui-input-wdith" value="" placeholder="请输入开户银行">
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>结算信息-账户名称</label>
+				<input type="text" name="account_name" id="account_name" class="layui-input layui-input-wdith" value="" placeholder="请输入账号名称">
+			</div>
+			<div class="layui-col layui-col-md4">
+				<label>结算信息-账户卡号</label>
+				<input type="text" name="account_number" id="account_number" class="layui-input layui-input-wdith" value="" placeholder="请输入银行卡号">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-col layui-col-md12" style="text-align:right;">
+				<button type="submit" name="submit2" value="submit2" id="submit2" class="layui-btn">提交</button>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<script type="text/javascript">
+init_Form();
+init_Layarea("#area-picker");
+$("#submit2").click(function(){
+	if(checkAgent("#theform2") == false) {
+		return false;
+	}
+	var the_btn = "#submit2";
+	var the_form = "#theform2";
+	$(the_form).ajaxForm({
+		dataType: "json",
+		timeout: 30000,
+		data: {ajax:"json"},
+		success: function(data){
+			if(data.status == "nologin") {
+				showAlert(data.message, function(){
+					reload();
+				});
+			} else if(data.status == 0) {
+				showAlert(data.message);
+			} else if(data.status == 1) {
+				var msg = '';
+				msg += '<div style="line-height:30px;color:#009688;font-size:18px;">';
+				msg += '添加成功！';
+				msg += '<br>';
+				msg += '登录账号：' + data.contents.agent_no;
+				msg += '<br>';
+				msg += '登录密码：' + data.contents.agent_password;
+				msg += '</div>';
+				_Layer(function(){
+					layer.close(index_window);
+					layer.alert(msg, {
+						anim:0,
+						shade:0.5,
+						isOutAnim:true,
+						closeBtn:0,
+					}, function(index){
+						layer.close(index);
+						reload();
+					});
+				});
+			}
+		},
+		error: function(data){
+			showAlert("提交数据失败");
+		},
+		complete: function(){
+			submit(0, the_btn, the_form);
+		},
+		beforeSend: function(){
+			submit(1, the_btn, the_form);
+		}
+	});
+});
+</script>

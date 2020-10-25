@@ -1,0 +1,109 @@
+<div class="titlebar">
+    <div class="fn-left"><i class="iconfont icon-line-chart_icon"></i> 数据统计</div>
+    <div class="fn-right">
+        <form class="input-group" id="form" action="{:url('device/index',['types' => 0,'operate_id' => $operate_id])}">
+            <input placeholder="开始时间" class="input w100 ui-date" type="text" name="starttime" readonly autocomplete="false" value="{$starttime}"/>
+            <input placeholder="结束时间" class="input w100 ui-date" type="text" name="endtime" readonly autocomplete="false" value="{$endtime}"/>
+            <input type="submit" value="搜索" class="button button-blue" />
+        </form>
+    </div>
+    <div class="fn-right button-group">
+        <a href="{:url('device/index',['time' => 1,'types'=>0,'operate_id' => $operate_id])}" class="button {$time==1?'button-violet':''}">今日</a>
+        <a href="{:url('device/index',['time' => 2,'types'=>0,'operate_id' => $operate_id])}" class="button {$time==2?'button-violet':''}">昨日</a>
+        <a href="{:url('device/index',['time' => 30,'types'=>0,'operate_id' => $operate_id])}" class="button {$time==30?'button-violet':''}">本月</a>
+        <a href="{:url('device/index',['time' => 60,'types'=>0,'operate_id' => $operate_id])}" class="button {$time==60?'button-violet':''}">上月</a>
+    </div>
+</div>
+<div class="cards">
+    <div class="card green">
+        <div class="fn-left"><i class="iconfont icon-wodedingdan2"></i></div>
+        <div class="fn-right fn-tar"><div class="num">{$line_num}</div><div class="text">在线数量</div></div>
+    </div>
+    <div class="card yellow">
+        <div class="fn-left"><i class="iconfont icon-wodedingdan2"></i></div>
+        <div class="fn-right fn-tar"><div class="num">{$off_line_num}</div><div class="text">离线数量</div></div>
+    </div>
+    <div class="card violet">
+        <div class="fn-left"><i class="iconfont icon-wodedingdan2"></i></div>
+        <div class="fn-right fn-tar"><div class="num">{$alarm_num}</div><div class="text">告警数量</div></div>
+    </div>
+</div>
+<div class="titlebar"><i class="iconfont icon-text_icon"></i>设备列表</div>
+<div id="actionbar">
+    <div class="fn-left">
+        <a href="{:url('device/edit')}" class="button button-blue"> <i class="iconfont icon-add_icon"></i>增加设备</a>
+    </div>
+    <form class="input-group" id="form" action="{:url('device/index')}" method="get">
+    <div class="fn-right">
+        <input placeholder="请输入名称|设备编码" class="input w200" type="text" name="keyword" value="{$keyword}" />
+        <input type="submit" value="搜索" class="button button-blue" />
+    </div>
+    <div class="fn-right">
+        {if $founder}
+        <select name="operate_id" class="select" id="operate_id">
+            <option value="0">请选择运营商</option>
+            {volist name="operate" id="vo"}<option value="{$vo.id}" {if $vo.id == $operate_id}selected{/if}>{$vo.operate_name}</option>{/volist}
+        </select>
+        {/if}
+        <a href="{:url('device/index',['types'=>0,'operate_id' => $operate_id,'time'=>$time,'starttime' => $starttime,'endtime' => $endtime])}" class="button{if $types == 0} button-green{/if}">在线</a>
+        <a href="{:url('device/index',['types'=>1,'operate_id' => $operate_id,'time'=>$time,'starttime' => $starttime,'endtime' => $endtime])}" class="button{if $types == 1} button-green{/if}">离线</a>
+    </div>
+    </form>
+</div>
+<table class="table table-border">
+    <thead>
+    <tr>
+        <th class="w60 fn-tac">No.</th>
+        <th>设备名称</th>
+        <th class="w80 fn-tac">设备编号</th>
+        <th class="w60 fn-tac">状态</th>
+        <th class="w60 fn-tac">告警</th>
+        <th class="w60 fn-tac">#</th>
+        <th class="w140 fn-tac">管理员</th>
+        <th class="w350 fn-tac">二维码</th>
+        <th class="w140 fn-tac">创建时间</th>
+        <th class="w200 fn-tac">操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    {foreach $lists as $vo}
+    <tr>
+        <td class="fn-tac red">{$vo.id}</td>
+        <td>
+            <i class="iconfont icon-home_icon"></i>【<span class="blue">{$vo.operate.operate_name}</span>】<a href="javascript:;" url="{:url('device/deviceMap',['id'=>$vo.id])}" class="fn-fb selectID">{$vo.title}</a><br />
+            <i class="iconfont icon-address_icon"></i><span class="gray">{$vo.address}</span>
+        </td>
+        <td class="fn-tac">{$vo.device_id}</td>
+        <td class="fn-tac">{if $vo.state == 1}<span class="badge bg-red">离线</span>{else/}<span class="badge">在线</span>{/if}</td>
+        <td class="fn-tac">
+            <a href="javascript:;" url="{:url('device/alarm',['id'=>$vo.device_id])}" class="fn-fb selectID">{if !empty($vo.danger)}<span class="badge bg-red">告警</span>{else/}<span class="badge">无</span>{/if}</a>
+        </td>
+        <td class="fn-tac"><img src="{$vo.user.face}" class="w40" /></td>
+        <td class="fn-tac">{$vo.user.nickname}</td>
+        <td class="fn-tac">
+            <a class="trigger" href="javascript:;" rel="{:action("common/library/qrcode/create",['url'=>$Request.root.true.'/green/'.$member_miniapp_id.'/?'.$vo.device_id,'qrname'=>md5('green_device_'.$member_miniapp_id.'_'.$vo.id)],'facade')}"><i class="iconfont icon-erweima1"></i>
+            {$Request.root.true.'/green/'.$member_miniapp_id.'/?'.$vo.device_id}
+            </a>
+        </td>
+        <td class="fn-tac">{$vo.create_time|date='Y-m-d H:i'}</td>
+        <td class="button-group">
+            <a class="button" href="{:url('device/edit',['id'=>$vo.id])}"><i class="iconfont icon-edit"></i>编辑</a>
+            <a class="button isDel" url="{:url('device/delete',['id'=>$vo.id])}" href="javascript:;"><i class="iconfont icon-lajixiang"></i>删除</a>
+        </td>
+    </tr>
+    {/foreach}
+    </tbody>
+</table>
+{$lists|raw}
+<script type="text/javascript">
+    Do('base','form','layer','tip','date', function () {
+        $('#form').isForm({types:1});
+        $('.isDel').isDel();
+        $(".trigger").powerFloat({targetMode:"ajax"});
+        $('#operate_id').change(function(){
+            var id = $(this).val();
+            window.location.href = "{:url('device/index',['types'=>$types,'time'=>$time,'starttime' => $starttime,'endtime' => $endtime])}&operate_id="+id;
+        });
+        $(".selectID").win();
+    })
+</script>

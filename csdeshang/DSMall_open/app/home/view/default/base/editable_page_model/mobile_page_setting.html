@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>DSMall</title>
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="stylesheet" href="{$Think.ADMIN_SITE_ROOT}/css/admin.css">
+        <link rel="stylesheet" href="{$Think.PLUGINS_SITE_ROOT}/js/jquery-ui/jquery-ui.min.css">
+        <script src="{$Think.PLUGINS_SITE_ROOT}/jquery-2.1.4.min.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/jquery.validate.min.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/jquery.cookie.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/common.js"></script>
+        <script src="{$Think.ADMIN_SITE_ROOT}/js/admin.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/js/jquery-ui/jquery-ui.min.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/js/jquery-ui/jquery.ui.datepicker-zh-CN.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/perfect-scrollbar.min.js"></script>
+        <script src="{$Think.PLUGINS_SITE_ROOT}/layer/layer.js"></script>
+        <script type="text/javascript">
+            var BASESITEROOT = "{$Think.BASE_SITE_ROOT}";
+            var ADMINSITEROOT = "{$Think.ADMIN_SITE_ROOT}";
+            var BASESITEURL = "{$Think.BASE_SITE_URL}";
+            var HOMESITEURL = "{$Think.HOME_SITE_URL}";
+            var ADMINSITEURL = "{$Think.ADMIN_SITE_URL}";
+        </script>
+    </head>
+    <body>
+        <div id="append_parent"></div>
+        <div id="ajaxwaitid"></div>
+<script src="{$Think.PLUGINS_SITE_ROOT}/jquery.ajaxContent.pack.js"></script>
+<script type="text/javascript" src="{$Think.PLUGINS_SITE_ROOT}/ajaxfileupload.js" charset="utf-8"></script>
+<script type="text/javascript" src="{$Think.PLUGINS_SITE_ROOT}/mlselection.js" charset="utf-8"></script>
+<script src="{$Think.PLUGINS_SITE_ROOT}/jquery.SuperSlide.2.1.1.js"></script>
+<link rel="stylesheet" href="{$Think.HOME_SITE_ROOT}/css/editable_page.css"> 
+<div class="page">
+
+
+    <div class='editable-content-wrapper'>
+        <div class="model-wrapper">
+            <div class="model-title"><span class="title">{$Think.lang.model_list}</span><span class="desc">{$Think.lang.model_list_tips}</span></div>
+            <div class="model-list"><div id="model_list"></div></div>
+            <div class="model-btn"><span style="display: none" id="current_model_page">1</span><span style="display: none" id="total_model_page">1</span><a href="javascript:void(0)" id="model_page_prev" class="iconfont disable">&#xe738;</a><a href="javascript:void(0)" id="model_page_next" class="iconfont">&#xe73a;</a></div>
+        </div>
+        <div class="mobile-back">
+        <div class='mobile-wrapper'>
+            
+            <div id='editable_page' class="editable-page" ></div>
+
+        </div>
+        </div>
+        <div class='form-wrapper' style='display: none'>
+            <div class='title'></div>
+            <div id='config_form'></div>
+        </div>
+    </div>
+</div>
+<script>
+    {if $Request.controller=='EditablePage'}
+    var EDITABLE_PAGE_URL='{$Think.ADMIN_SITE_URL}/editable_page'
+    {else}
+    var EDITABLE_PAGE_URL='{$Think.HOME_SITE_URL}/seller_editable_page'
+    {/if}
+</script>
+<script>
+    window.UEDITOR_HOME_URL='{$Think.PLUGINS_SITE_ROOT}/ueditor/'
+    function getConfigForm(title, url, width){
+        $('.form-wrapper .title').text(title)
+        $('.form-wrapper .title').css('min-width',width+'px');
+        $('#config_form').load(url);
+        $('.form-wrapper').show();
+    }
+    function addEditableModel(model_id,config_id){
+        var index=layer.load()
+        $.getJSON(EDITABLE_PAGE_URL+'/model_add?editable_page_id={$Request.param.editable_page_id}&type=h5&model_id='+model_id+'&config_id='+config_id,function(res){
+            layer.close(index)
+            if(res.code!=10000){
+                layer.msg(res.message)
+            }else{
+
+                afterAdd(res,config_id)  
+                addDialogEvent()
+                initSlide()
+            }
+        })
+    }
+function submitEditableModelForm(){
+    
+    var _form = $("#editable_model_form");
+    $.ajax({
+        type: "POST",
+        url: _form.attr('action'),
+        data: _form.serialize(),
+        dataType:"json",
+        success: function (res) {
+                if (res.code == 10000) {
+                    afterEdit(res)
+                    addDialogEvent()
+                    initSlide()
+                }else{
+                    layer.msg(res.message)
+                }
+        }
+    });
+}
+$(function(){
+    $.ajax({ url:"{:url(request()->controller().'/mobile_page_view',['editable_page_id'=>$Request.param.editable_page_id])}",success: function(res){
+        $('#editable_page').html(res)
+    }})
+    $.ajax({ url:EDITABLE_PAGE_URL+'/model_add?editable_page_id={$Request.param.editable_page_id}&type=h5',success: function(res){
+        $('#model_list').html(res)
+        if($('.model-item-list .model-item-wrapper').length<=4){
+            $('#model_page_next').addClass('disable')
+        }
+        var total=$('.model-item-wrapper').length;
+       if(total){
+            $('#total_model_page').text(Math.ceil(total/4))
+       }
+        show_page(4,1)
+        $('#model_page_prev').click(function(){
+            var current_model_page=parseInt($('#current_model_page').text());
+            var total_model_page=parseInt($('#total_model_page').text());
+            if(current_model_page>1){
+                show_page(4,current_model_page-1)
+            }
+            if((current_model_page-1)<=1){
+                $('#model_page_prev').addClass('disable')
+            }else{
+                $('#model_page_prev').removeClass('disable')
+            }
+            if((current_model_page-1)<total_model_page){
+                $('#model_page_next').removeClass('disable')
+            }
+        })
+        $('#model_page_next').click(function(){
+            var current_model_page=parseInt($('#current_model_page').text());
+            var total_model_page=parseInt($('#total_model_page').text());
+            if(current_model_page<total_model_page){
+                show_page(4,current_model_page+1)
+            }
+            if((current_model_page+1)>=total_model_page){
+                $('#model_page_next').addClass('disable')
+            }else{
+                $('#model_page_next').removeClass('disable')
+            }
+            if((current_model_page+1)>1){
+                $('#model_page_prev').removeClass('disable')
+            }
+        })
+    }})
+})
+</script>
+
+<style>
+.pb20 {
+    padding-bottom: 20px !important;
+}
+.pt20 {
+    padding-top: 20px;
+}
+.tc {
+    text-align: center !important;
+}
+    .editable-content-wrapper{padding:10px;overflow: hidden;}
+    .editable-content-wrapper .form-wrapper{overflow: hidden;padding:10px;border:1px solid #e1e1e1}
+    .editable-content-wrapper .form-wrapper .title{
+        position: relative;
+        padding: 0 22px;
+        height: 30px;
+        line-height: 30px;
+        border-bottom: 1px solid #eef1f5;
+    }
+    .editable-content-wrapper .form-wrapper .title:before{
+        content: '';
+        position: absolute;
+        width: 4px;
+        height: 13px;
+        background: #00aeff;
+        top: 8px;
+        left: 9px;
+    }
+    .model-wrapper{margin-top: 30px;float:left;margin-right:20px;}
+    
+    
+    .mobile-back{background:url({$Think.UPLOAD_SITE_URL}/home/common/mobile-back.png);float: left;padding-left:28px;padding-right:26px;padding-top:55px;padding-bottom:29px;background-size: 100%;width: 375px;margin-right: 20px;}
+    .mobile-wrapper{position: relative;overflow: hidden;width:373px;height: 778px;border-radius: 0 0 35px 35px;}
+    .mobile-wrapper .phone-top-back{width:100%}
+    .mobile-wrapper .phone-bottom-back-wrapper{position: absolute;bottom:0;width:100%;border-top: 1px solid #e1e1e1;overflow: hidden}
+    .mobile-wrapper .phone-bottom-back{height: 50px;}
+    .mobile-wrapper .phone-bottom-back-wrapper .item{float: left;width:20%;text-align: center;font-size: 0}
+    .editable-page{border:0;width:390px;height: 778px;overflow-x:hidden;overflow-y:auto;}
+</style>

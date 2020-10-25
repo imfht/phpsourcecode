@@ -1,0 +1,203 @@
+<!-- include tpl=head_lay js=js/art-template.js -->
+<div class="layui-row layui-col-space15">
+	<div class="layui-col-xs12 layui-col-sm4">
+		<form method="post" class="layui-form">
+		<div class="layui-card" id="report_filter">
+			<div class="layui-card-header">
+				{lang统计筛选}
+			</div>
+			<div class="layui-card-body">
+				<div class="layui-form-item">
+					<label class="layui-form-label">
+						{lang统计类型}
+					</label>
+					<div class="layui-input-block">
+						<select name="type" lay-filter="type">
+							<option value="">{lang统计类型…}</option>
+							<!-- loop from=$plist key=$key value=$value id=$tmpid -->
+							<option value="{$key}"{if $type == $key} selected{/if}>{$value}</option>
+							<!-- /loop -->
+						</select>
+					</div>
+				</div>
+				<div class="layui-form-item {if !$xlist}hide{/if}" data-id="line-x">
+					<label class="layui-form-label">
+						{lang分组}
+					</label>
+					<div class="layui-input-block">
+						<select name="x">
+							<option value="">{lang请选择…}</option>
+							<!-- loop from=$xlist key=$key value=$value id=$tmpid -->
+							<option value="{$key}"{if $x == $key} selected{/if}>{$value}</option>
+							<!-- /loop -->
+						</select>
+					</div>
+				</div>
+				<div{if !$ylist} class="hide"{/if} data-id="line-y">
+					<div class="layui-form-item">
+						<label class="layui-form-label">
+							{lang统计选项}
+						</label>
+						<div class="layui-input-block">
+							<!-- loop from=$ylist key=$key value=$value id=$tmpid -->
+							<div style="margin-bottom:5px">
+							<select name="data_mode[{$key}]">
+								<option value="">{$value}_{lang不统计}</option>
+								<option value="count" {if $data_mode && $data_mode[$key]=='count' } selected{/if}>{$value}_{lang数量计算_COUNT}</option>
+								<option value="sum" {if $data_mode && $data_mode[$key]=='sum' } selected{/if}>{$value}_{lang和计算_SUM}</option>
+							</select>
+							</div>
+							<!-- /loop -->
+						</div>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">
+						{lang开始时间}
+					</label>
+					<div class="layui-input-block">
+						<input type="text" name="startdate" id="startdate" class="layui-input" value="{$startdate}" />
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">
+						{lang开始时间}
+					</label>
+					<div class="layui-input-block">
+						<input type="text" name="stopdate" id="stopdate" class="layui-input" value="{$stopdate}" />
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">
+						{lang条件限制}
+					</label>
+					<div class="layui-input-block">
+						<input type="text" name="sqlext" id="sqlext" class="layui-input" value="{$sqlext}" placeholder="{lang仅限熟悉系统的开发人员使用}" />
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">
+						{lang图表模式}
+					</label>
+					<div class="layui-input-block">
+						<select name="chart">
+						<option value="line"{if $chart == 'line'} selected{/if}>{lang折线图}</option>
+						<option value="bar"{if $chart == 'bar'} selected{/if}>{lang柱状图}</option>
+					</select>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">
+						&nbsp;
+					</label>
+					<div class="layui-input-inline">
+						<button type="submit" class="layui-btn layui-btn-sm" >
+							{lang开始统计}
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		</form>
+	</div>
+	<!-- if $y_title || $rslist -->
+	<div class="layui-col-xs12 layui-col-sm8">
+		<div class="layui-card" id="report_echart">
+			<div class="layui-card-header">
+				{lang统计图示}
+			</div>
+			<div class="layui-card-body">
+				<!-- if $chart -->
+				<div id="chart_main" class="layui-carousel" data-anim="fade" lay-filter="LAY-index-normcol" lay-anim="fade" style="width: 100%; height:550px;"></div>
+				<!-- /if -->
+			</div>
+		</div>
+	</div>
+	<div class="layui-col-xs12">
+		<div class="layui-card">
+			<div class="layui-card-header">
+				{lang统计结果}
+			</div>
+			<div class="layui-card-body">
+				<table class="layui-table">
+				<thead>
+				<tr>
+					<th>{$x_title}</th>
+					<!-- loop from=$y_title key=$key value=$value id=$tmpid -->
+					<th class="center" name="y_title">{$value}</th>
+					<!-- /loop -->
+				</tr>
+				</thead>
+				<tbody>
+				<!-- loop from=$rslist key=$key value=$value id=$tmpid -->
+				<tr name="chart">
+					<td>
+						<span>{$value.x}</span>
+						<!-- if $value.x_title -->/ <b>{$value.x_title}</b><!-- /if -->
+					</td>
+					<!-- loop from=$y_title key=$k value=$v id=$idx -->
+					<td class="center">{$value['y_'.$k]}</td>
+					<!-- /loop -->
+				</tr>
+				<!-- /loop -->
+				</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<!-- /if -->
+</div>
+
+<script id="line-y-html" type="text/html">
+<div class="layui-form-item">
+	<label class="layui-form-label">
+		{lang统计选项}
+	</label>
+	<div class="layui-input-block">
+		<% for(var i in ylist){ %>
+		<div style="margin-bottom:5px">
+		<select name="data_mode[<%= i %>]">
+			<option value=""><%= ylist[i] %>_{lang不统计}</option>
+			<option value="count">{lang数计算_COUNT}</option>
+			<option value="sum">{lang和计算_SUM}</option>
+		</select>
+		</div>
+		<% } %>
+	</div>
+</div>
+</script>
+<!-- if $chart -->
+<script type="text/javascript">
+    $(document).ready(function(){
+        var myChart = echarts.init(document.getElementById('chart_main'));
+        var chart = "{$chart}";
+        var data_x = new Array();
+        var data_y = new Array();
+        var y_title = new Array();
+        var series_data = new Array();
+        $("th[name=y_title]").each(function(i){
+            y_title[i] = $(this).text();
+            var tmp = {'name':y_title[i],'type':chart};
+            var tmp_data = new Array();
+            $("tr[name=chart]").each(function(m){
+                var m_i = i+1;
+                tmp_data[m] = $(this).find('td:eq('+m_i+')').text();
+            });
+            tmp.data = tmp_data;
+            series_data[i] = tmp;
+        });
+        $("tr[name=chart]").each(function(i){
+            data_x[i] = $(this).find('td:eq(0)').find("span").text();
+        });
+        var option = {
+            title:{text:'{$lead_title}'},
+            legend: {data:y_title},
+            xAxis: {data: data_x},
+            yAxis: {},
+            series: series_data
+        };
+        myChart.setOption(option);
+    });
+</script>
+<!-- /if -->
+<!-- include tpl=foot_lay -->

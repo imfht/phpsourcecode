@@ -1,0 +1,126 @@
+{extend name="common:base" /}
+{block name="content"}
+<form class="form-horizontal" id="form" name="form" action="{:url('index',['act'=>'update'])}" method="post">
+<input type="hidden" name="id" value="{$group.id ?? 0}">
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="title"> 用户组名 </label>
+    <div class="col-sm-9">
+        <input type="text" name="title" id="title" placeholder="用户组名" class="col-xs-10 col-sm-5" value="{$group.title ?? ''}" required="required">
+        <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle">用户组名称，不能为空。</span>
+        </span>
+    </div>
+</div>
+
+<div class="space-4"></div>
+
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right" for="status"> 是否启用 </label>
+    <div class="control-label no-padding-left col-sm-1">
+        <label>
+            <input name="status" id="status" value="1" {notempty name="group.status"}{$group.status == 1 ? 'checked="checked"' : ''}{else /}checked="checked"{/notempty} class="ace ace-switch ace-switch-2" type="checkbox" />
+            <span class="lbl"></span>
+        </label>
+    </div>
+    <span class="help-inline col-xs-12 col-sm-7">
+            <span class="middle">YES，启用；NO，禁用</span>
+    </span>
+</div>
+<div class="space-4"></div>
+<div class="form-group">
+    <label class="col-sm-1 control-label no-padding-right"> 权限选择 </label>
+        <div class="col-sm-9">
+            <div class="col-sm-12">
+                {volist name="auth" id="v"}
+                <div class="row">
+                    <div class="widget-box">
+                        <div class="widget-header">
+                            <h4 class="widget-title">
+                                <label>
+                                    <input name="auth[]" class="ace ace-checkbox-2 father" <?php if(in_array($v['id'],$group['auth'])){echo 'checked="checked"';};?> type="checkbox" value="{$v.id}"/>
+                                    <span class="lbl"> {$v.title}</span>
+                                </label>
+                            </h4>
+                            <div class="widget-toolbar">
+                                {notempty name="v.children"}
+                                <a href="#" data-action="collapse">
+                                    <i class="ace-icon fa fa-chevron-up"></i>
+                                </a>
+                                {/notempty}
+                            </div>
+                        </div>
+                        {notempty name="v.children"}
+                        <div class="widget-body">
+                            <div class="widget-main row">
+                                {notempty name="v.children"}
+                                {volist name="v.children" id="vv"}
+                                <label class="col-xs-2" style="width:160px;">
+                                    <input name="auth[]" class="ace ace-checkbox-2 children" <?php if(in_array($vv['id'],$group['auth'])){echo 'checked="checked"';};?> type="checkbox" value="{$vv.id}"/>
+                                    <span class="lbl"> {$vv.title}</span>
+                                </label>
+                                {notempty name="vv.children"}
+                                    {volist name="vv.children" id="vvv"}
+                                    <label class="col-xs-2" style="width:160px;">
+                                        <input name="auth[]" class="ace ace-checkbox-2 children" <?php if(in_array($vvv['id'],$group['auth'])){echo 'checked="checked"';};?> type="checkbox" value="{$vvv.id}"/>
+                                        <span class="lbl"> {$vvv.title}</span>
+                                    </label>
+                                    {/volist}
+                                {/notempty}
+                                {/volist}
+                                {/notempty}
+                            </div>
+                        </div>
+                        {/notempty}
+                    </div>
+                </div>
+                {/volist}
+            </div>
+        </div>
+    </div>
+<div class="space-4"></div>
+<div class="col-md-offset-2 col-md-9">
+    <button class="btn btn-info submit" type="button">
+        <i class="icon-ok bigger-110"></i>
+        提交
+    </button>
+
+    &nbsp; &nbsp; &nbsp;
+    <button class="btn" type="reset">
+        <i class="icon-undo bigger-110"></i>
+        重置
+    </button>
+</div>
+</form>
+{/block}
+{block name="javascript"}
+<script type="text/javascript">
+$(function(){
+    $(".children").click(function(){
+        $(this).parent().parent().parent().parent().find(".father").prop("checked", true);
+    })
+    $(".father").click(function(){
+        if(this.checked){
+            $(this).parent().parent().parent().parent().find(".children").prop("checked", true);
+        }else{
+            $(this).parent().parent().parent().parent().find(".children").prop("checked", false);
+        }
+    })
+    $(".submit").click(function(){
+        var title = $("#title").val();
+        if(title==''){
+            bootbox.dialog({
+                message: "用户组名称不能为空。", 
+                buttons: {
+                    "success" : {
+                        "label" : "确定",
+                        "className" : "btn-danger"
+                    }
+                }
+            });
+            return;
+        }
+        $("#form").submit();
+    })
+})
+</script>
+{/block}

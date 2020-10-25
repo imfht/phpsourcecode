@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>产品添加</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+<!--引入CSS-->
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/webuploader/webuploader.css">
+<!--引入JS-->
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/webuploader/jquery-1.7.2.js" charset="UTF-8"></script>
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/webuploader/webuploader.js"></script>
+</head>
+<body style="background:#F4F5F6;">
+<header class="hui-header">
+  <div id="hui-back"></div>
+  <h1>产品添加</h1>
+</header>
+
+<div class="hui-wrap">
+<!--dom结构部分-->
+<!--dom结构部分-->
+<div id="uploader-demo">
+    <!--用来存放item-->
+    <div id="fileList" class="uploader-list hui-row"></div>
+    <div id="filePicker" class="hui-col-4 ">+选择图片</div>
+</div>
+  <div style="margin-top:35px;" class="hui-form" id="form1">
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">产品名称：</div>
+      <input type="text" name="name" id="name" class="hui-input hui-input-clear" placeholder="请输入产品名称" checkType="string" />
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">产品类型：</div>
+      <div style="width:100%;">
+        <select id="shop_type">
+			#{foreach from=$shop_type key=k item=v}#  
+          <option value="#{$v.id}#">#{$v.typename}#</option>       
+			#{/foreach}# 
+        </select>
+      </div>
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">价格：</div>
+      <input type="text" name="price" id="price" class="hui-input hui-input-clear" placeholder="请输入产品价格" checkType="int" />
+    </div>
+	  <div class="hui-form-items">
+      <div class="hui-form-items-title">库存：</div>
+      <input type="text" name="stock" id="stock" class="hui-input hui-input-clear" placeholder="请输入产品库存" checkType="int" />
+    </div>
+    <div class="hui-form-items">
+      <div class="hui-form-items-title">产品介绍</div>
+      <div class="hui-form-textarea">
+        <textarea placeholder="产品介绍..." name="intro" id="intro"></textarea>
+      </div>
+    </div>
+    <div style="padding:10px; padding-top:10px;">
+      <button type="button" class="hui-button hui-button-large hui-primary" id="submit">提交申请</button>
+    </div>
+  </div>
+</div>
+<input type="hidden" id="shop_id" value="#{$shop_id}#">
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui.js" charset="UTF-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-form.js" charset="utf-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-select-beautify.js" charset="utf-8"></script> 
+<script type="text/javascript" src="#{$smarty.const.APP}#/View/template/home/js/hui-image-cuter.js" charset="UTF-8"></script>
+
+
+<script type="text/javascript">
+$(function(){
+   var thumbnailWidth = 100;   //缩略图高度和宽度 （单位是像素），当宽高度是0~1的时候，是按照百分比计算，具体可以看api文档
+   var thumbnailHeight = 100;
+	// 初始化Web Uploader
+	var uploader = WebUploader.create({
+
+		// 选完文件后，是否自动上传。
+		auto: true,
+
+		// swf文件路径
+		swf: '#{$smarty.const.APP}#/View/template/home/webuploader/Uploader.swf',
+
+		// 文件接收服务端。
+		server: '#{$smarty.const.APP}#/View/template/home/webuploader/fileupload.php',
+
+		// 选择文件的按钮。可选。
+		// 内部根据当前运行是创建，可能是input元素，也可能是flash.
+		pick: '#filePicker',
+
+		// 只允许选择图片文件。
+		accept: {
+			title: 'Images',
+			extensions: 'gif,jpg,jpeg,bmp,png',
+			mimeTypes: 'image/*'
+		}
+	});
+	
+	// 当有文件添加进来的时候
+	uploader.on( 'fileQueued', function( file ) {
+		var $li = $(
+				'<div id="' + file.id + '" class="file-item thumbnail hui-col-4">' +
+					'<img>' +
+					'<div class="info">' + file.name + '</div>' +
+				'</div>'
+				),
+			$img = $li.find('img');
+
+
+		// $list为容器jQuery实例
+		var $list = $("#fileList");
+		$list.append( $li );
+
+		// 创建缩略图
+		// 如果为非图片文件，可以不用调用此方法。
+		// thumbnailWidth x thumbnailHeight 为 100 x 100
+		uploader.makeThumb( file, function( error, src ) {
+			if ( error ) {
+				$img.replaceWith('<span>不能预览</span>');
+				return;
+			}
+
+			$img.attr( 'src', src );
+		}, thumbnailWidth, thumbnailHeight );
+	});
+	// 文件上传过程中创建进度条实时显示。
+	uploader.on( 'uploadProgress', function( file, percentage ) {
+		var $li = $( '#'+file.id ),
+			$percent = $li.find('.progress span');
+
+		// 避免重复创建
+		if ( !$percent.length ) {
+			$percent = $('<p class="progress"><span></span></p>')
+					.appendTo( $li )
+					.find('span');
+		}
+
+		$percent.css( 'width', percentage * 100 + '%' );
+	});
+
+	// 文件上传成功，给item添加成功class, 用样式标记上传成功。
+	uploader.on( 'uploadSuccess', function( file ) {
+		$( '#'+file.id ).addClass('upload-state-done');
+	});
+
+	// 文件上传失败，显示上传出错。
+	uploader.on( 'uploadError', function( file ) {
+		var $li = $( '#'+file.id ),
+			$error = $li.find('div.error');
+
+		// 避免重复创建
+		if ( !$error.length ) {
+			$error = $('<div class="error"></div>').appendTo( $li );
+		}
+
+		$error.text('上传失败');
+	});
+
+	// 完成上传完了，成功或者失败，先删除进度条。
+	uploader.on( 'uploadComplete', function( file ) {
+		$( '#'+file.id ).find('.progress').remove();
+	});	
+	
+});
+ </script>
+	
+<script type="text/javascript">
+hui.formInit();
+
+hui('#shop_type').selectBeautify(showVal);
+function showVal(val){
+    hui.toast('选项值 : ' + val);
+}
+	
+hui('#submit').click(function(){
+	
+	
+	//验证
+	var res = huiFormCheck('#form1');
+	var name = hui('#name').val();
+	var type_id = hui('#shop_type').val();
+	var shop_id = hui('#shop_id').val();
+	var price = hui('#price').val();
+	var stock = hui('#stock').val();
+	var intro = hui('#intro').val();
+	var imgs =[];
+	hui('#fileList .info').each(function(cObj){
+		imgs.push(cObj.innerHTML);
+		console.log('index: ' + cObj.index);
+		console.log('html: '+ cObj.innerHTML);
+	});	
+//提交
+	if(res){
+		hui.ajax({
+			type : 'POST',
+			url : '#{$smarty.const.ACT}#/home/WxProduct/product_add/',
+			data : {name:name,type_id:type_id,price:price,stock:stock,shop_id:shop_id,intro:intro,imgs:imgs},
+			backType:'json',
+			beforeSend : function(){hui.loading();},
+			complete : function(){hui.closeLoading();},
+			success : function(data){
+				if(data.code=='sucess'){
+					hui.iconToast('操作成功', 'success');
+					var url='#{$smarty.const.ACT}#/home/WxShopMember/shop_member_show/';
+					window.location.href=url;
+				}else{
+					hui.upToast(data.message);
+				}
+
+			},
+			error : function(e){
+				console.log(JSON.stringify(e));
+				hui.iconToast('读取消息失败', 'warn');
+			}
+		});	
+	}	
+	
+});
+</script>
+
+</body>
+</html>

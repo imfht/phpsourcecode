@@ -1,0 +1,118 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+<f:layout name="Default" />
+<!-- /**  
+ * @Author: Wang Hongbin  
+ * @Email:   wanghongbin@ngoos.org  
+ * @Date:   2018-06-21 14:28:22  
+ * @Last Modified by:   Wang Hongbin  
+ * @Last Modified time: 2018-06-21 14:28:22  
+ */ -->  
+<f:section name="main">
+
+<f:flashMessages />
+<div class="portlet light ">
+    <div class="portlet-title">
+        <div class="caption">
+        	<f:link.action action="list" arguments="{excelExport: 1, keyword:keyword}" class="btn btn-sm btn-info">导出</f:link.action>
+        </div>
+        <div class="actions">
+            <div class="btn-group btn-group-devided">
+                <f:form action="list" name="search" class="form-inline" method="GET">
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fa fa-search"></i>
+                            <f:form.textfield name="keyword" value="{keyword}" class="form-control" placeholder="关键字..."/>
+                        </div>
+                        <span class="input-group-btn">
+                            <f:form.submit class="btn btn-success" value="搜" />
+                        </span>
+                    </div>
+                </f:form>
+            </div>
+        </div>
+        <f:widget.paginate objects="{users}" as="usersPagination"  configuration="{settings.paginate}">
+	        <div class="portlet-body">
+	            <div class="table-scrollable" style="overflow-x: unset !important;overflow-y: unset !important;">
+	            	<table class="tx_user table table-hover table-light">
+						<thead>
+							<tr class="uppercase">
+								<th>序号</th>
+								<th>姓名</th>
+								<th>性别</th>
+								<th>手机号（登录账号）</th>
+								<!-- <th>身份证号</th> -->
+								<th>出生年月</th>
+								<th>所在社区</th>
+								<th>政治面貌</th>
+								<th>角色</th>
+								<th>审核状态</th>
+								<th>加入时间</th>
+								<th class="text-center">操作</th>
+							</tr>
+						</thead>
+	                    <tbody>
+							<f:for each="{usersPagination}" as="user" iteration="itemIteration1">
+							<tr>
+								<td>
+	                            	{f:cObject(typoscriptObjectPath:'lib.calc', data:'{itemIteration1.cycle}+({page}-1)*{settings.paginate.itemsPerPage}')}
+	                            </td>
+								<td>
+									<f:link.action action="show" arguments="{user : user}"> {user.name}</f:link.action>
+								</td>
+	                            <td>
+	                            	{user.gender.name}
+	                            </td>
+	                            <td>{user.telephone}</td>
+	                            <!-- <td>{user.idcard}</td> -->
+	                            <td>{user.birthday->f:format.date(format:'Y-m-d')}</td>
+	                            <td>{user.community.name}</td>
+	                            <td>{user.politicaloutlook.name}</td>
+	                            <td>
+	                            	<f:if condition="{user.ckstat}==0 && {user.isadmin}==1">
+	                            		<f:then>申请管理员</f:then>
+	                            		<f:else>
+			                            	<f:for each="{user.usergroup}" as="gp">
+			                            		{gp.title}
+			                            	</f:for>
+		                            	</f:else>
+		                            </f:if>
+	                            </td>
+	                            <td>
+	                            	<f:for each="{ckstatType}" as="ck">
+	                            		<f:if condition="{ck.uid}=={user.ckstat}">
+	                            			{ck.name}
+	                            		</f:if>
+	                            	</f:for>
+	                            </td>
+	                            <td>{user.crdate->f:format.date(format:'Y-m-d H:i')}</td>
+								<td  class="text-right">
+									<f:link.page pageUid="{settings.page}" additionalParams="{useruid : user}"  class="btn btn-success btn-xs">我的活动</f:link.page>
+									<f:link.action action="print" arguments="{user : user}"  class="btn btn-info btn-xs">二维码</f:link.action>
+									<f:if condition="{user.ckstat}==0 && {user.isadmin}==1">
+										<f:then>
+											<div class="btn-group">
+											    <button type="button" class="btn btn-success btn-xs dropdown-toggle" data-toggle="dropdown">
+											       	 审核<span class="caret"></span>
+											    </button>
+											    <ul class="dropdown-menu" style="min-width: 100%;">
+											        <li><f:link.action action="review" arguments="{user : user.uid,chstat:1}" onclick="return confirm('您确定要执行该操作吗?');" >通过</f:link.action></li>
+													<li><f:link.action action="review" arguments="{user : user.uid,chstat:2}" onclick="return confirm('您确定要执行该操作吗?');" >不通过</f:link.action></li>
+											    </ul>
+											</div>
+										</f:then>
+										<f:else>
+											<a href="javascript:;" class="btn btn-success btn-xs disabled" >&nbsp;通过&nbsp;</a>
+										</f:else>
+									</f:if>
+								</td>
+							</tr>
+							</f:for>
+						</tbody>
+					</table>
+				</div>
+	        </div>
+	    </f:widget.paginate>
+    </div>
+</div>
+</f:section>
+</html>

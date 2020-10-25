@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+#{include file="header.html"}#
+<body class="gray-bg">
+<div class="row">
+    <div class="col-sm-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-content table-responsive">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="m-b-md">
+                            <h4>合同标题：#{$contract.title}#</h4>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="m-b-md">
+                            <h4>合同金额：#{$contract.money}#</h4>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="m-b-md">
+                            <h4>合同编号：#{$contract.contract_no}#</h4>
+                        </div>
+                    </div>
+                </div>
+                <form id="goods_list" method="post" class="form-inline">
+                    <input type="hidden" name="contract_id" value="#{$contract.contract_id}#">
+                    <input type="hidden" name="contract_money" id="contract_money" value="#{$contract.money}#">
+                    <table class="table table-hover  07fly-table" width="100%" id="list-table">
+                        <thead>
+                        <tr>
+                            <th width="200"><span>商品名称/商品规格</span></th>
+                            <th width="50"><span>价格</span></th>
+                            <th width="50"><span>数量</span></th>
+                            <th width="50"><span>金额</span></th>
+                            <th width="150"><span>备注</span></th>
+                            <th width="80"><span>删除</span></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                    <table class="table table-hover" width="100%">
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-info sal_contract_list_add"><i
+                                        class="fa fa-plus"></i> 添加商品
+                                </button>
+                            </td>
+                            <td>说明：商品总金额不能超过合同金额</td>
+                            <td>商品总金额：<span class="total_goods_money text-danger"></span>
+                                <input type="hidden" name="total_goods_money" value="0"></td>
+                            <td class="text-right">
+                                <button type="button" class="btn btn-lg btn-info save-data">保存数据</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+<script id="tableListTpl" type="text/html">
+    <% for(var i=0;i<list.length;i++) { %>
+    <tr>
+        <td>
+            <input type="hidden" name="sku_id[]" value="<%=list[i]['sku_id']%>">
+            <input type="hidden" name="sku_name[]" value="<%=list[i]['sku_id']%>">
+            <input type="hidden" name="goods_id[]" value="<%=list[i]['goods_id']%>">
+            <input type="hidden" name="goods_name[]" value="<%=list[i]['goods_name']%>">
+            <%=list[i]['goods_name']%>/<%=list[i]['sku_name']%>
+        </td>
+        <td><input type="text" class="form-control calculate" name="sale_price[]" value="<%=list[i]['sale_price']%>">
+        </td>
+        <td><input type="text" class="form-control calculate" name="num[]" value="<%=list[i]['num']%>"></td>
+        <td><input type="text" class="form-control calculate" name="goods_money[]" value="<%=list[i]['goods_money']%>">
+        </td>
+        <td><input type="text" class="form-control calculate" name="remarks[]" value="<%=list[i]['remarks']%>"></td>
+        <td><a href="javascript:void(0);" onclick="delTr(this);">删除</a></td>
+    </tr>
+    <% } %>
+</script>
+<script src="#{$smarty.const.APP}#/View/template/js/content.js?v=1.0.0"></script>
+<script type="text/javascript">
+    var ajaxUrl = '#{$smarty.const.ACT}#/crm/SalContractList/sal_contract_list_json/';
+    $(document).ready(function () {
+        ////获取窗口索引关闭窗口
+        var list_add_index = parent.layer.getFrameIndex(window.name);
+        $.ajax({
+            type: "POST",
+            url: "#{$smarty.const.ACT}#/crm/SalContractList/sal_contract_list_json/",
+            data: {"contract_id": "#{$contract.contract_id}#", "pageSize": "1000"},
+            dataType: "json",
+            async: false,
+            success: function (returnJsonData) {
+                var tpl = baidu.template;
+                var html = tpl('tableListTpl', returnJsonData);
+                $(".07fly-table tbody").html(html);
+            },
+        });
+        //添加
+        $("body").on("click", ".sal_contract_list_add", function () {
+            layer.open({
+                type: 2,
+                title: '添加商品',
+                shadeClose: true,
+                fixed: false, //不固定
+                area: ['90%', '90%'],
+                content: '#{$smarty.const.ACT}#/goods/Goods/goods_list_loop/' //iframe的url
+            });
+            return false;
+        });
+        //保存数据
+        $("body").on("click", ".save-data", function () {
+            FormData = $("#goods_list").serialize();
+            $.ajax({
+                type: "POST",
+                url: "#{$smarty.const.ACT}#/crm/SalContractList/sal_contract_list_add/",
+                data: FormData,
+                dataType: "json",
+                success: function (data) {
+                    if (data.statusCode == '200') {
+                        layer.msg('操作成功', {icon: 1});
+                        setTimeout(function () {
+                            parent.layer.close(list_add_index);
+                        }, 800);
+                    } else {
+                        layer.msg(data.message, {icon: 5});
+                        return false;
+                    }
+                }
+            });
+        });
+        $("body").on("keyup", ".calculate", function () {
+            //查询本行的数据
+            var price = $(this).parent().parent().find("input[name='sale_price[]']").val();
+            var num = $(this).parent().parent().find("input[name='num[]']").val();
+            goods_money = parseFloat(price) * num;
+            var goods_money = $(this).parent().parent().find("input[name='goods_money[]']").val(goods_money.toFixed(2));
+
+            //计算所有表单的总金额
+            var total_goods_money = 0;
+            $(this).parent().parent().parent().find("input[name='goods_money[]']").each(function () {
+                total_goods_money += parseFloat($(this).val());
+            });
+            $('.total_goods_money').html(total_goods_money.toFixed(2));
+        });
+
+        calculate_goods_money();
+
+    });
+
+    function delTr(obj) {
+        $(obj).parent().parent().remove();
+        calculate_goods_money();
+    }
+
+    function calculate_goods_money() {
+        //统计总金额
+        var total_goods_money = 0;
+        $("#list-table tbody tr").find("input[name='goods_money[]']").each(function () {
+            total_goods_money += parseFloat($(this).val());
+            //console.log(total_goods_money);
+        });
+        $('.total_goods_money').html(total_goods_money.toFixed(2));
+    }
+</script>

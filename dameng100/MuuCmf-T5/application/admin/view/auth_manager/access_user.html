@@ -1,0 +1,126 @@
+<!-- 管理员用户组新增和编辑页面 -->
+{extend name="common/main" /}
+{block name="body"}
+    <div class="main-title">
+        <h2>{:lang("_FRONT_DESK_ACCESS_AUTHORIZATION_")}</h2>
+    </div>
+	<div class="with-padding">
+
+        <div class="tab-wrap rows clearfix">
+            <div class="col-xs-10">
+                <ul class="nav nav-pills">
+                    <li><a href="{:url('AuthManager/access',['group_name'=>input('group_name') ,'group_id'=> input('group_id')])}">{:lang("_MANAGEMENT_BACKGROUND_AUTHORIZATION_")}</a></li>
+                    <li class="active"><a href="javascript:;">{:lang("_FRONT_DESK_ACCESS_AUTHORIZATION_")}</a></li>
+                    <li><a href="{:url('AuthManager/user',array('group_name'=>input('group_name') ,'group_id'=> input('group_id')))}">{:lang("_MEMBER_DELEGATION_")}</a></li>
+
+                </ul>
+            </div>
+            <div class="col-xs-2 text-right">
+                    <select name="group" class="form-control">
+                        {volist name="auth_group" id="vo"}
+                            <option value="{:url('AuthManager/accessuser',['group_id'=>$vo['id'],'group_name'=>$vo['title']])}" {eq name="vo['id']" value="$this_group['id']"}selected{/eq} >{$vo.title}</option>
+                        {/volist}
+                    </select>
+            </div>
+        </div>
+
+		<div class="node-list">
+			<!-- 访问授权 -->
+			<div class="tab-pane in">
+				<form action="{:url('')}" enctype="application/x-www-form-urlencoded" method="post" class="form-horizontal auth-form ajax-form">
+
+					{volist name="node_list" id="node" }
+						<dl class="checkmod">
+							<dt class="hd">
+                                <input class="auth_rules rules_all" id="auth-rules-{$node.name}" type="checkbox" name="rules[]" value="
+                                    {php} 
+                                    if(!empty($main_rules)) {
+                                        echo $main_rules[$node['url']];
+                                    }{/php}
+                                    ">
+                                <label for="auth-rules-{$node.name}">{$node.alias}{:lang("_MODULAR_")}</label>
+							</dt>
+							<dd class="bd">
+								{present name="node['child']"}
+								{volist name="node['child']" id="child" }
+                                    <div class="rule_check">
+                                        <div>
+                                            
+                                            <input class="auth_rules rules_row" id="auth-rules-{$child.id}" type="checkbox" name="rules[]" value="{$child.id}"/>
+                                            <label for="auth-rules-{$child.id}">{$child.title}</label>
+                                            
+                                                <a class="btn btn-info btn-mini" data-toggle="modal" data-remote="{:url('addnode',['id'=>$child['id'],'group_id'=>input('group_id')])}">
+                                                    {:lang("_EDIT_")}
+                                                </a>
+                                                <a class="btn btn-danger btn-mini" data-toggle="del" data-href="{:url('deletenode',array('id'=>$child['id']))}">
+                                                    {:lang("_DELETE_")}
+                                                </a>
+                                            
+                                        </div>
+                                       {notempty name="child['operator']"}
+                                           <span class="divsion">&nbsp;</span>
+                                           <div class="child_row">
+                                               {volist name="child['operator']" id="op"} 
+                                                <input class="auth_rules" id="auth-child-rules-{$auth_rules[$op['url']]}" type="checkbox" name="rules[]" value="{$auth_rules[$op['url']]}"/>{$op.title}
+                                                <label for="auth-child-rules-{$auth_rules[$op['url']]}"></label>
+                                               {/volist}
+                                           </div>
+                                        {/notempty}
+				                    </div>
+								{/volist}
+
+								{/present}
+
+                                <a class="btn btn-success btn-sm btn-mini" data-remote="{:url('addnode',array('module'=>$node['name'],'group_id'=>input('group_id')))}" data-toggle="modal">+ {:lang("_NEW_NODE_")}</a>
+							</dd>
+						</dl>
+					{/volist}
+
+			        <input type="hidden" name="group_id" value="{$this_group.id}" />
+                    <button type="submit" class="btn btn-success submit-btn">{:lang('_SURE_WITH_SPACE_')}</button>
+                    <button class="btn btn-return" onclick="javascript:history.back(-1);return false;">{:lang("_RETURN_WITH_SPACE_")}</button>
+			    </form>
+			</div>
+
+		</div>
+	</div>
+
+{/block}
+{block name="script"}
+<script>
+    $(function(){
+
+        var rules = [{$this_group.rules}];
+        $('.auth_rules').each(function(){
+            if( $.inArray( parseInt(this.value,10),rules )>-1 ){
+                $(this).prop('checked',true);
+            }
+            if(this.value==''){
+                $(this).closest('span').remove();
+            }
+        });
+
+        //全选节点
+        $('.rules_all').on('change',function(){
+            $(this).closest('dl').find('dd').find('input').prop('checked',this.checked);
+        });
+        $('.rules_row').on('change',function(){
+            $(this).closest('.rule_check').find('.child_row').find('input').prop('checked',this.checked);
+        });
+
+        $('select[name=group]').change(function(){
+            location.href = this.value;
+        });
+
+        $('[data-toggle="del"]').click(function(){
+            var sure=confirm('{:lang("_QUERY_DEL_AUTH_NODE_")}');
+            if(sure){
+                var self = $(this);
+                $.get(self.data('href'),function(msg){
+                    handleAjax(msg);
+                });
+            }
+        });
+    })
+</script>
+{/block}

@@ -1,0 +1,1 @@
+<img src="{{$friendLink->cover}}" alt="{{$friendLink->name}}">

@@ -1,0 +1,491 @@
+<extend name="Base/common"/>
+<block name="style">
+    <link href="__CSS__/event.min.css" rel="stylesheet" type="text/css"/>
+    <link href="__PUBLIC__/lib/webuploader/css/webuploader.css" rel="stylesheet" type="text/css"/>
+    <link href="__ZUI__/lib/datetimepicker/datetimepicker.min.css" rel="stylesheet" type="text/css">
+</block>
+<block name="header">
+    <include file="_nav"/>
+</block>
+<block name="body">
+<div id="main-container" class="container">
+ 
+        <div class="muuevent-edit-box">
+                <h2 class="post_event_title"></h2>
+
+                <div class="aline" style="margin-bottom: 35px"></div>
+                <div class="muuevent-form-item">
+                    <form class="form ajax-form" data-role="form" action="{:U('Muuevent/Index/edit')}"
+                          method="post">
+                        <input type="hidden" name="id" value="{$content.id}" />
+
+                        <div class="form-group has-feedback">
+                            <label for="title" class="control-label">活动标题</label>
+
+                            <div class="">
+                                <input id="title" name="title" class="form-control input-lg form_check" check-type="Text" value="{$content.title}" placeholder="活动标题" required />
+                            </div>
+                            
+                        </div>
+                        <div class="form-group ">
+                            <label for="type_id" class="control-label">活动分类</label>
+
+                            <div class="type_box">
+                                
+                                    <volist name="tree" id="vo">
+                                        <div value="{$vo.id}" >
+                                        <empty name="vo._">
+                                            <ul class="clearfix">
+                                                <li <eq name="content['type_id']" value="$vo['id']">class="active"</eq>>
+                                                    <a class="top_type" data-type-id = "{$vo.id}">{$vo.title}</a>
+                                                    <span class="font-icon"></span>
+                                                </li>
+                                            </ul> 
+                                        <else />
+                                            <span class="top_type">{$vo.title}</span>
+                                        </empty>
+
+                                        <notempty name="vo._">
+                                        <ul class="clearfix">
+                                            <volist name="vo._" id="son">
+                                            
+                                            <li <eq name="content['type_id']" value="$son['id']">class="active"</eq>>
+                                                <a data-type-id = "{$son.id}">{$son.title}</a>
+                                                <span class="font-icon"></span>
+                                            </li>
+                                            </volist>
+                                        </ul>
+                                        </notempty>
+                                        </div>
+                                    </volist>
+                                <input type="hidden" name="type_id" value="{$content.type_id}"/>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group datatime-box clearfix">
+                            <label for="" class="control-label">活动时间</label>
+
+                            <div class="col-md-6" data-role="sTime">
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <input type="text" name="startDate" class="form-control input-lg form_check" readonly check-type="Date" value="{$content.sDate_format}" placeholder="开始日期" required />
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="input-group form-stime" data-role="time">
+                                            <input class="form-control input-lg" name="startTime" size="16" type="text" value="{$content.sTime_format}" readonly placeholder="00:00" required>
+                                            <span class="input-group-addon"><span class="icon-time"></span></span>
+                                        </div>
+
+                                        <div class="time-list-box sTime-list hidden">
+                                            <ul></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+
+                            <div class="col-md-6" data-role="eTime">
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <input type="text" name="endDate" class="form-control input-lg form_check" readonly check-type="Date"  value="{$content.eDate_format}" placeholder="结束日期" required />
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="input-group form-etime" data-role="time">
+                                            <input class="form-control input-lg" name="endTime" size="16" type="text" value="{$content.eTime_format}" readonly placeholder="00:00" required>
+                                            <span class="input-group-addon"><span class="icon-time"></span></span>
+                                      </div>
+                                      <div class="time-list-box eTime-list hidden">
+                                            <ul></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="address" class="control-label">活动地址</label>
+                            <div class="address-box clearfix">
+                                <div class="col-md-6">
+                                    {:hook('J_China_City',array('province'=>$content['province'],'city'=>$content['city'],'district'=>$content['district']))}
+                                </div>
+                                <div class="col-md-6">
+                                    <input id="address"  name="address" class="form-control input-lg form_check" check-type="Text" value="{$content.address}" placeholder="活动地址，如：安源大厦4层会议厅" required/>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="tip"><p><span>*如果自动定位产生误差，请手动调整</span></p></div>
+                                    <div id="allmap" class="baidu_map"></div>
+                                </div>
+                                <input type="hidden" id="point" name="point" value="{$content.point}" />
+                            </div>
+
+                        </div>
+                        <div class="form-group  has-feedback">
+                            <label for="limitCount" class="control-label">活动人数</label>
+
+                            <div class="">
+                                <input id="limitCount" name="limitCount" type="number" class="form-control input-lg form_check" check-type="Num"  value="{$content.limitCount}" placeholder="人数" required />
+                            </div>
+
+                        </div>
+                        <div class="form-group ">
+                            <label for="cover-id" class="control-label">活动海报</label>
+                            <input type="hidden" name="cover_id" id="cover_id_cover" value="{$content.cover_id}" />
+                            <div class="cover-box clearfix">
+                                <div class="col-md-6">
+                                    <div class="webuploader-box">
+                                        <div id="uploadimg">
+                                            <div id="imgPicker" class="btn btn-lg btn-warning cover-upload-btn">上传海报</div>
+                                        </div>
+                                        <span class="tip">海报尺寸：400*300px</span>
+                                    </div>
+                                    <div class="uploader-text">
+                                        <p>
+                                            一张漂亮的海报，能让你的活动锦上添花，带来更多用户报名
+                                            及增加传播效果，也将影响其被推荐的几率！
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="upload-img-box">
+                                        <if condition="$content['cover_id']">
+                                            <img src="{$content.cover_id|get_cover='path'}" class="img-responsive">
+                                            <else/>
+                                            <img src="__IMG__/cover.png" class="img-responsive">
+                                        </if>
+                                        <div class="progress-box"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="description" class="control-label">活动摘要</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="活动摘要">{$content.description}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="explain" class="control-label">活动详情</label>
+
+                            <div class="">
+                                {:W('Common/Wangeditor/editor',array('myeditor_edit','explain',$content["explain"],'','background:#fff;min-height:300px;'))}
+                            </div>
+                        </div>
+                        <div class="form-group text-center clearfix">
+                            
+                                <button type="submit" class="btn btn-primary btn-lg" href="{:U('Index/doPost')}" > <i class="icon icon-check"></i> 发布活动 
+                                </button>
+                            
+                            
+                                <button onclick="history.go(-1);" class="btn btn-default btn-lg" href="{:U('Index/doPost')}">返回
+                                </button>
+                        </div>
+                    </form>
+                </div>
+
+                
+        </div>
+
+</div>
+
+</block>
+<block name="script">
+    <script type="text/javascript" src="__ZUI__/lib/datetimepicker/datetimepicker.min.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="__PUBLIC__/lib/webuploader/js/webuploader.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak={:modC('MUUEVENT_CONFIG_BAIDUMAP_AK')}"></script>
+    <script type="text/javascript" src="__JS__/main.min.js"></script>
+<script type="text/javascript">
+
+$(function(){
+    //分类点击
+    $('.type_box li').click(function(){
+        $('.type_box li').removeClass('active');
+        $(this).addClass('active');
+
+        var type_id = $(this).find('a').data('type-id');
+        $('input[name="type_id"]').val(type_id);
+    });
+    //$('.type_box li:first').click();
+});
+
+$(function(){
+    //发布活动 ajax 提交
+    $('form[data-role="form"]').submit(function (e) {
+    e.preventDefault();
+    toast.showLoading();
+    var self = $(this);
+
+    var serializeJson = function () {
+        var serializeObj = {};
+        $(self.serializeArray()).each(function () {
+            serializeObj[this.name] = this.value;
+        });
+        return serializeObj;
+   };
+
+    var data = serializeJson();
+    //开始时间转时间戳
+    //var sAllTime = data.startDate+' '+data.startTime+':00';
+    //var sTime = $.MuueventTime.DateToUnix(sAllTime);
+    //    data.sTime = sTime;
+    //结束时间转时间戳
+    //var eAllTime = data.endDate+' '+data.endTime+':00';
+    //var eTime = $.MuueventTime.DateToUnix(eAllTime);
+    //    data.eTime = eTime;
+
+    if(data.startDate==""){
+        $('input[name="startDate"]').focus();
+    }
+    if(data.endDate==""){
+        $('input[name="endDate"]').focus();
+    }
+    if(data.province==""){
+        $('select[name="province"]').focus();
+    }
+    if(data.city==""){
+        $('select[name="city"]').focus();
+    }
+    if(data.district==""){
+        $('select[name="district"]').focus();
+    }
+
+    //console.log(data);
+    $.post(self.attr("action"), data, callback, "json");
+    return false;
+    });
+
+    function callback(data) {
+        if (data.status) {
+            toast.success(data.info, '温馨提示');
+            setTimeout(function () {
+                window.location.href = data.url;
+            }, 1000);
+        }else{
+            toast.error(data.info, '温馨提示');
+        }
+           
+    }
+});
+
+$(function(){
+
+    //上传图片
+     // 初始化Web Uploader
+    var uploader = WebUploader.create({
+        // 选完文件后，是否自动上传。
+        auto: true,
+        // swf文件路径
+        swf: '__JS__/Uploader.swf',
+        // 文件接收服务端。
+        server: U('Home/File/uploadPicture'),
+        // 选择文件的按钮。可选。
+        // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+        pick: '#imgPicker',
+        // 只允许选择图片文件。
+        accept: {
+            title: 'Images',
+            extensions: 'gif,jpg,jpeg,bmp,png',
+            mimeTypes: 'image/jpg,image/jpeg,image/png'
+        }
+    });
+
+    // 当有文件添加进来的时候
+    uploader.on( 'fileQueued', function( file ) {
+        uploader.upload();
+    });
+    // 文件上传过程中创建进度条实时显示。
+    uploader.on( 'uploadProgress', function( file, percentage ) {
+        var $percent = $('.upload-progress');
+
+        // 避免重复创建
+        if ( !$percent.length ) {
+            $percent = $('<div class="progress"><div class="progress-bar upload-progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"><span class="sr-only">0%</span></div></div>')
+                    .appendTo('.progress-box' )
+                    .find('.upload-progress');
+        }
+        $percent.find('span').html(percentage * 100 + '%');
+        $percent.css( 'width', percentage * 100 + '%' );
+    });
+
+    // 文件上传成功，给item添加成功class, 用样式标记上传成功。
+    uploader.on( 'uploadSuccess', function( file,data ) {
+        var data = data.data;
+        $( '#'+file.id ).addClass('upload-state-done');
+        //var data = $.parseJSON(data);
+        $('#cover_id_cover').val(data.file.id);
+        $('.progress').remove(); //移除进度条
+        $('.upload-img-box').html('<img src="'+data.file.path+'"/>');
+    });
+
+    // 文件上传失败，显示上传出错。
+    uploader.on( 'uploadError', function( file ) {
+        var $li = $( '#'+file.id ),
+            $error = $li.find('div.error');
+
+        // 避免重复创建
+        if ( !$error.length ) {
+            $error = $('<div class="error"></div>').appendTo( $li );
+        }
+
+        $error.text('上传失败');
+    });
+});
+
+$(function(){
+//百度地图标注
+    
+    //初始化地址解析地址
+    var province='';
+    var city='';
+    var district='';
+    var address='';
+
+    $('#J_province').change(function () {
+        var v = $(this).find('option:selected').text();
+        province = v;
+        baidu_map(address);
+    })
+
+    $('#J_city').change(function () {
+        var v = $(this).find('option:selected').text();
+        city = v;
+        baidu_map(address);
+    })
+
+    $('#J_district').change(function () {
+        var v = $(this).find('option:selected').text();
+        district = v;
+        baidu_map(address);
+    })
+
+    $('#address').change(function(){
+        var v = $(this).val();
+        address = v;
+        baidu_map(address);
+    })
+
+    // 百度地图API功能
+    var map = new BMap.Map("allmap");
+    var point = new BMap.Point({$content.point});
+    //console.log(point);
+    map.centerAndZoom(point,12);
+    map.enableScrollWheelZoom();
+    map.enableInertialDragging();
+    map.enableContinuousZoom();
+    var marker = new BMap.Marker(point);// 创建标注
+    map.addOverlay(marker);             // 将标注添加到地图中
+
+
+    function baidu_map(){
+
+        var all_address = province+city+district+address;
+        //console.log(all_address);
+        // 创建地址解析器实例
+        var myGeo = new BMap.Geocoder();
+        // 将地址解析结果显示在地图上,并调整地图视野
+        myGeo.getPoint(all_address, function(point){
+            if (point) {
+                map.centerAndZoom(point, 16);
+                marker_point(point);
+            }else{
+                //alert("您选择地址没有解析到结果!");
+            }
+        }, "北京市");
+        remove_overlay();
+        map.addEventListener("click", function(e){   
+            //通过点击百度地图，可以获取到对应的point, 由point的lng、lat属性就可以获取对应的经度纬度   
+            var pt = e.point;
+            remove_overlay();
+            marker_point(pt);
+        });
+
+        function marker_point(point){
+            var marker = new BMap.Marker(point);
+            map.addOverlay(marker);
+            marker.enableDragging(); //可拖拽
+            marker.addEventListener("dragend", function(e){    
+                get_point();
+            });
+            get_point();
+
+            function get_point(){
+                var p = marker.getPosition();
+                //console.log(p.lng+'|'+p.lat); 
+                //将p写入HTML
+                $('#point').val(p.lng+','+p.lat);
+            }
+        }
+
+        //清除覆盖物
+        function remove_overlay(){
+            map.clearOverlays();         
+        }
+    }
+    
+});
+
+
+$(function(){
+    //日期选择
+    $('input[name="startDate"]').datetimepicker({
+        language:'zh-CN',
+        weekStart:1,
+        todayBtn:1,
+        autoclose:1,
+        todayHighlight:1,
+        startView:2,
+        minView:2,
+        forceParse:0,
+        format: 'yyyy-mm-dd'
+    });
+
+    $('input[name="endDate"]').datetimepicker({
+        language:'zh-CN',
+        weekStart:1,
+        todayBtn:1,
+        autoclose:1,
+        todayHighlight:1,
+        startView:2,
+        minView:2,
+        forceParse:0,
+        format: 'yyyy-mm-dd'
+    });
+    //时间选择
+    $('div[data-role="time"]').click(function(){
+        var _self = $(this);
+        if(_self.siblings('.time-list-box').hasClass('hidden')){
+            _self.siblings('.time-list-box').removeClass('hidden');
+        }else{
+            _self.siblings('.time-list-box').addClass('hidden');
+        }
+        
+        _self.siblings('.time-list-box').find('li').click(function(){
+            var time = $(this).text();
+            _self.find('input').val(time);
+            _self.siblings('.time-list-box').addClass('hidden');
+        });
+    });
+    
+    //循环输出时间到页面
+    var timestampToTime = function(timestamp) {
+        var date = new Date(timestamp);//时间戳为10位需*1000，时间戳为13位的话不需乘1000
+        var h = date.getHours();
+        if(h<10){h="0"+h}   //前加个0
+        
+        var m = date.getMinutes();
+        if(m<10){m="0"+m}   //前加个0
+
+        return h+':'+m;
+    }
+
+    //循环时间输出
+    var seconds = 1800*1000;
+    var timestamp = 1514755800000;//初始化个时间
+    for(var i=0;i<48;i++){
+        timestamp=timestamp+seconds;
+        var time = timestampToTime(timestamp);
+        //console.log(timestamp+'=='+time);
+        $('.time-list-box ul').append("<li>"+time+"</li>");
+    } 
+})
+</script>
+</block>

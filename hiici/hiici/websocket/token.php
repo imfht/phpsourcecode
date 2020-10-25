@@ -1,0 +1,1 @@
+<?php echo "var count = 1;"; if (!empty($_SESSION["auth"])) echo "var user = ".json_encode($_SESSION["auth"]).", token = 'b7656d929e2dbcd364d21f0189d0040f';";

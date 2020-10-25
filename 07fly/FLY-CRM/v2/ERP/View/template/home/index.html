@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>零起飞商城系统分带销功能</title>
+<link rel="stylesheet" type="text/css" href="#{$smarty.const.APP}#/View/template/home/css/hui.css" />
+</head>
+<script>
+function plusReady(){
+	// 隐藏滚动条
+	//plus.webview.currentWebview().setStyle({scrollIndicator:'none'});
+	// Android处理返回键
+	plus.key.addEventListener('backbutton',function(){
+		('iOS'==plus.os.name)?plus.nativeUI.confirm('确认退出？', function(e){
+			if(e.index>0){
+				plus.runtime.quit();
+			}
+		}, 'CORN', ['取消','确定']):(confirm('确认退出？')&&plus.runtime.quit());
+	},false);
+	//compatibleAdjust();
+}
+if(window.plus){
+	plusReady();
+}else{
+	document.addEventListener('plusready',plusReady,false);
+}	
+
+</script>
+<link rel="stylesheet" href="/h5/css/common.css" type="text/css" charset="utf-8"/>
+<script type="text/javascript" src="/h5/js/common.js"></script>
+<script type="text/javascript">
+var img = null;
+var blist = [];
+function scaned(t, r, f){
+//	var d = new Date();
+//	var h=d.getHours(),m=d.getMinutes(),s=d.getSeconds(),ms=d.getMilliseconds();
+//	if(h < 10){ h='0'+h; }
+//	if(m < 10){ m='0'+m; }
+//	if(s < 10){ s='0'+s; }
+//	if(ms < 10){ ms='00'+ms; }
+//	else if(ms < 100){ ms='0'+ms; }
+//	var ts = '['+h+':'+m+':'+s+'.'+ms+']';
+//	var li=null,hl = document.getElementById('history');
+//	if(blist.length > 0){
+//		li = document.createElement('li');
+//		li.className = 'ditem';
+//		hl.insertBefore(li, hl.childNodes[0]);
+//	} else{
+//		li = document.getElementById('nohistory');
+//	}
+//	li.id = blist.length;
+//	var html = '['+h+':'+m+':'+s+'.'+ms+']'+'　　'+t+'码<div class="hdata">';
+//	html += r;
+//	html += '</div>';
+//	li.innerHTML = html;
+//	li.setAttribute('onclick', 'selected(id)');
+//	blist[blist.length] = {type:t,result:r,file:f};
+	update(t, r, f);
+}
+function selected(id){
+	var h = blist[id];
+	update( h.type, h.result, h.file );
+	if(h.result.indexOf('http://')==0  || h.result.indexOf('https://')==0){
+		plus.nativeUI.confirm(h.result, function(i){
+			if(i.index == 0){
+				plus.runtime.openURL(h.result);
+			}
+		}, '', ['打开', '取消']);
+	} else{
+		plus.nativeUI.alert(h.result);
+	}
+}
+function update(t, r, f){
+	//outSet('扫描成功：');
+	window.location.href=r;
+//	outLine(t);
+//	outLine(r);
+//	outLine('\n图片地址：'+f);
+//	if(!f || f=='null'){
+//		img.src = '../img/barcode.png';	
+//	} else{
+//		plus.io.resolveLocalFileSystemURL(f, function(entry){
+//			img.src=entry.toLocalURL();
+//		});
+//		//img.src = 'http://localhost:13131/'+f;
+//	}
+}
+function onempty(){
+	if(window.plus){
+		plus.nativeUI.alert('无扫描记录');
+	} else {
+		alert('无扫描记录');
+	}
+}
+function cleanHistroy(){
+	if(blist.length > 0){
+		var hl = document.getElementById('history');
+		hl.innerHTML = '<li id="nohistory" class="ditem" onclick="onempty();">无历史记录	</li>';
+	}
+	plus.io.resolveLocalFileSystemURL('_doc/barcode/', function(entry){
+		entry.removeRecursively(function(){
+			// Success
+		}, function(e){
+			//alert( "failed"+e.message );
+		});
+	});
+}
+		</script>
+<body>
+<header class="hui-header">
+ <div style="width:40%; flex-shrink:0;">
+  <div class="hui-row" style="line-height: 18px;padding:0 5px;font-size:12px;">
+   <div class="hui-col-4" style="text-align: center;"> #{if $member.photo eq ''}# <img src="#{$smarty.const.APP}#/View/template/home/img/list/home.png" style="width:40px;height: 40px; border-radius:50%;"  /> #{else}# <img src="#{$member.photo}#" style="width:35px;height: 35px; border-radius:50%;" /> #{/if}# </div>
+   <div class="hui-col-8">
+    <div class="hui-row hui-font-white hui-tl hui-font-s12">UID:#{$member.account}# #{$member.vip_txt}# </div>
+    <div class="hui-row hui-tl hui-font-s12" id="member_star_txt"><span class="hui-icons hui-icons-like hui-font-red"></span> </div>
+   </div>
+  </div>
+ </div>
+ <h1></h1>
+ <a href="#{$smarty.const.ACT}#/home/WxMember/member_center/" class="hui-header-icon hui-header-my"></a> </header>
+<div class="hui-wrap">
+ <input type="hidden" id="member_star" value="#{$member.star}#">
+ <!--<div class="hui-list" style="padding:20px;">
+    <div class="hui-row">
+      <div class="hui-col-12" style="padding:10px;text-align:center;"> 
+		  		<div id="dcontent">
+					<img src="#{$smarty.const.APP}#/View/template/home/img/shao.png" style="width:80px;" onclick="clicked('barcode_scan.html',true,true)">
+				</div>
+		  		<div>扫码支付</div>
+				<div id="output" style="display: none;">Barcode</div>
+		</div>
+    </div>
+    <div class="hui-row">
+      <div class="hui-col-5">
+		  	<a href="#{$smarty.const.ACT}#/home/WxMemberLog/member_log_balance_show/">余额 : #{$member.balance}# </a>
+		 </div>
+		<div class="hui-col-2" style="text-align: center;">|</div>
+      <div class="hui-col-5 hui-tr">
+		  <a href="#{$smarty.const.ACT}#/home/WxMemberLog/member_log_integral_show/">积分 : #{$member.integral}#</a>
+		</div>
+    </div>
+  </div>-->
+ <div style="padding:0px;">
+  <div class="hui-swipe" id="swipe">
+   <div class="hui-swipe-items"> #{foreach from=$banner key=k item=v}#
+    <div class="hui-swipe-item"><a href="#{$smarty.const.ACT}#/home/WxNoticeBanner/notice_banner_show_one/id/#{$v.id}#/"><img src="#{$v.img}#" height='165'/></a></div>
+    #{/foreach}# </div>
+  </div>
+ </div>
+ <div class="hui-img-list-content" style="padding: 0px 10px;">
+  <div class="hui-row">
+   <div class="hui-col-1"><img src="#{$smarty.const.APP}#/View/template/home/img/spiker.png" width="20" style="padding:3px 0px;" /></div>
+   <div class="hui-col-11">
+    <div class="hui-scroll-news" style="margin:0px;" id="scrollnew1">
+		#{foreach from=$notice key=k item=v}#
+			<div class="hui-scroll-news-items"><a href="#{$smarty.const.ACT}#/home/WxNotice/notice_show_one/id/#{$v.id}#/">#{$v.title}#</a></div>
+     #{/foreach}# 
+	   </div>
+   </div>
+  </div>
+ </div>
+<div class="hui-img-list goods-list" id="list2" style="padding:10px 5px 50px;">
+ <ul>
+  #{foreach from=$goods key=k item=v}#
+  <li> <a href="#{$smarty.const.ACT}#/home/WxGoods/goods_show_one/id/#{$v.goods_id}#/">
+   <div class="hui-media-list-img"><img src="#{$v.defaultpic}#" /></div>
+   <div class="hui-img-list-content">
+    <h1>#{$v.goods_name}#</h1>
+    <p><span class="pri">￥#{$v.price}#</span><span class="buy">购买</span></p>
+   </div>
+   </a> </li>
+  #{/foreach}#
+ </ul>
+</div>
+</div>
+<div id="hui-footer">
+ <div class="hui-row">
+  <div class="hui-col-3"><a href="#{$smarty.const.ACT}#">
+   <div class="iconfont-footer icon-6dianpu"></div>
+   <div class="hui-footer-text">首页</div>
+   </a></div>
+  <div class="hui-col-3"><a href="#{$smarty.const.ACT}#/home/WxGoods/goods_show/">
+   <div class="iconfont-footer icon-shangpinguanli"></div>
+   <div class="hui-footer-text">商城</div>
+   </a></div>
+  <div class="hui-col-3"><a href="#{$smarty.const.ACT}#/home/WxDistribution/">
+   <div class="iconfont-footer icon-dingdankuozhan2"></div>
+   <div class="hui-footer-text">分销</div>
+   </a></div>
+  <div class="hui-col-3"><a href="#{$smarty.const.ACT}#/home/WxMember/member_center/">
+   <div class="iconfont-footer icon-kehufuwu"></div>
+   <div class="hui-footer-text">个人</div>
+   </a></div>
+ </div>
+</div>
+<script type="text/javascript" src="/h5/js/immersed.js" ></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui.js" type="text/javascript" charset="utf-8"></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui-swipe.js" type="text/javascript" charset="utf-8"></script> 
+<script src="#{$smarty.const.APP}#/View/template/home/js/hui-popover-msg.js" type="text/javascript" charset="utf-8"></script> 
+<script type="text/javascript">
+	var swipe = new huiSwpie('#swipe');
+	swipe.autoPlay = true;
+	swipe.run();
+	hui.scrollNews(scrollnew1);
+	//增加显示用户信用
+	var member_star = hui('#member_star').val();
+	var html  = '';
+	for(var i = 0; i < member_star; i++){
+		html += '<span class="hui-icons hui-icons-like hui-font-red hui-tl hui-font-s12" style="padding-right:2px;"></span>';
+	}
+	hui('#member_star_txt').html(html);
+		
+function freshindex(){
+	window.location.href='#{$smarty.const.ACT}#';
+}
+</script>
+</body>
+</html>

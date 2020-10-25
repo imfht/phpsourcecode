@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=GV487u57VTQGBfFBT7mvpSdWu1kK8sFY"></script>
+    <style type="text/css">
+        body, html, #allmap {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+
+        .search {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            padding: 5px;
+            z-index: 1000;
+        }
+
+        input {
+            border: 1px solid #ddd;
+            padding: 5px 5px;
+            width: 150px;
+        }
+
+        button {
+            border: none;
+            border-radius: 0;
+            background: #2e8ded;
+            color: #fff;
+            padding: 6px 10px;
+        }
+
+        *:focus {
+            outline: none;
+        }
+
+        .anchorBL {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="search">
+    <input type="text" placeholder="请输入查找地址" id="keywords">
+    <button type="button" id="search-map">搜索</button>
+    <button type="button" id="clear-marker">清除标点</button>
+</div>
+<div id="allmap"></div>
+</body>
+</html>
+<script type="text/javascript">
+
+
+    var map = new BMap.Map("allmap", {enableMapClick:false});
+    map.centerAndZoom("北京", 11);
+    map.addControl(new BMap.MapTypeControl());
+    map.enableScrollWheelZoom(true);
+    var mapData = {};
+    mapData.markers = [];
+    map.addEventListener("click", function (e) {
+        addMarker(e.point.lng, e.point.lat);
+    }, false);
+    window.initMap = function() {
+        var request = getRequest();
+        var id = request['id'];
+        var url = window.parent.document.getElementById(id).value;
+        setMap(url);
+        map.removeEventListener("tilesloaded",initMap);
+    };
+    map.addEventListener("tilesloaded",initMap);
+
+    window.addMarker = function(lng, lat) {
+        var marker = new BMap.Marker(new BMap.Point(lng, lat));
+        map.addOverlay(marker);
+        marker.enableDragging();
+        mapData.markers.push(marker);
+    };
+
+    document.getElementById('clear-marker').addEventListener("click", function () {
+        mapData.markers = [];
+        map.clearOverlays();
+    });
+    document.getElementById('search-map').addEventListener("click", function () {
+        map.centerAndZoom(document.getElementById('keywords').value, 11);
+    });
+    window.getMap = function (id) {
+        var center = map.getCenter(),
+                centerLng = center.lng,
+                centerLat = center.lat,
+                zoom = map.getZoom(),
+                sizeWidth = 500,
+                sizeHeight = 400,
+                markers =  mapData.markers;
+        var src = 'http://api.map.baidu.com/staticimage?' +'center=' + centerLng + ',' + centerLat +
+                '&zoom=' + zoom +
+                '&width=' + sizeWidth +
+                '&height=' + sizeHeight;
+        if(markers.length > 0){
+            src = src + '&markers=';
+            for(var i = 0;i < markers.length; i++) {
+                position = markers[i].getPosition();
+                if(i > 0){
+                    src = src + '|';
+                }
+                src = src + position.lng + ',' + position.lat;
+            }
+        }
+        window.parent.document.getElementById(id).value = src;
+    };
+    window.setMap = function(url) {
+        if(url == '' || url == undefined) {
+            return;
+        }
+        var request = getRequest(url);
+        var center = request.center.split(","),  zoom = request.zoom;
+        map.centerAndZoom(new BMap.Point(center[0], center[1]), zoom);
+        if(!request.markers) {
+            return;
+        }
+        var markers = request.markers.split("|");
+        if(markers.length > 0) {
+            for (var i = 0; i < markers.length; i++) {
+                var marker = markers[i].split(",");
+                addMarker(marker[0], marker[1]);
+            }
+        }
+    };
+    window.getRequest = function(url) {
+        if(url == '' || url == undefined) {
+            url = location.search;
+        }else {
+            url = url.substr(url.indexOf("?"));
+        }
+        var theRequest = new Object();
+        if (url.indexOf("?") != -1) {
+
+            var str = url.substr(1);
+
+            strs = str.split("&");
+            for(var i = 0; i < strs.length; i ++) {
+                theRequest[strs[i].split("=")[0]]=unescape(strs[i].split("=")[1]);
+            }
+        }
+        return theRequest;
+    }
+</script>

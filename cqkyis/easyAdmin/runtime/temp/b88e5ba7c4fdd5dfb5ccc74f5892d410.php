@@ -1,0 +1,34 @@
+<?php /*a:1:{s:59:"E:\kyweixin\EasyAdmin\cqkyicms\admin\view\user\editpwd.html";i:1526100999;}*/ ?>
+
+<style>
+    #icon div:nth-child(2){width:100%!important;height:100%!important;}
+</style>
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title"><?php echo htmlentities($name); ?></h4>
+        </div>
+        <form id="Add" method="post" action="<?php echo url('user/editpwd',['id'=>$id]); ?>" target="frame">
+        <div class="modal-body">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label  class="control-label">密码</label>
+
+                        <input type="password" class="form-control" id="password"  name="password"  placeholder="密码">
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default waves-effect" data-dismiss="modal">关闭</button>
+            <button type="submit" class="btn btn-info waves-effect waves-light">保存</button>
+        </div>
+        </form>
+    </div>
+</div>

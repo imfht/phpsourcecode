@@ -1,0 +1,147 @@
+<include file="Public/header" />
+        
+        <div class="layui-container" style="margin-top: 20px;">
+            <div class="layui-row">
+                <div class="layui-col-md12">
+                <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+                  <legend><{$sel.title}></legend>
+                </fieldset>
+                    <form class="layui-form" action="__URL__/do_sel/seid/<{$sel.seid}>" method="post">
+                    <blockquote class="layui-elem-quote"><{$sel.description}></blockquote>
+                     
+                    
+                    <div class="layui-form-item">
+                      <label class="layui-form-label">课程选择</label>
+                        <div class="layui-input-block">
+                           <input type="checkbox" name="selection[]" title="物理" id="selection" value="物" <?php check_checkbox('物',$stusel);?>>
+                           <input type="checkbox" name="selection[]" title="化学" id="selection" value="化" <?php check_checkbox('化',$stusel);?>>
+                           <input type="checkbox" name="selection[]" title="生物" id="selection" value="生" <?php check_checkbox('生',$stusel);?>>
+                           <input type="checkbox" name="selection[]" title="政治" id="selection" value="政" <?php check_checkbox('政',$stusel);?>>
+                           <input type="checkbox" name="selection[]" title="历史" id="selection" value="史" <?php check_checkbox('史',$stusel);?>>
+                           <input type="checkbox" name="selection[]" title="地理" id="selection" value="地" <?php check_checkbox('地',$stusel);?>>
+                           
+                        </div>
+                    </div>
+                    <!-- <div class="layui-form-item layui-form-text">
+                        <label class="layui-form-label">选课说明</label>
+                        <div class="layui-input-block">
+                          <textarea class="layui-textarea layui-hide" name="description" lay-verify="content" id="LAY_demo_editor"><{$sel.description}>
+                          </textarea>
+                        </div>
+                    </div> -->
+                    <hr class="layui-bg-green">
+                    <div class="layui-form-item">
+                      <div class="layui-input-block">
+                      <!-- <a class="layui-btn" href="javascript:;" lay-submit onclick="sub('<{$te.tid}>')">立即提交</a> -->
+                      <!-- <button class="layui-btn" lay-submit onsubmit="sub('<{$te.tid}>')">立即提交</button> -->
+                      <empty name="stusel">
+                        <button class="layui-btn" lay-submit onclick="return check_sel(<{$sel.seid}>,'提交');">立即提交</button>
+                        <else />
+                         <button class="layui-btn layui-btn-danger" lay-submit  onclick="return check_sel(<{$sel.seid}>,'修改');">确认修改</button>
+                    </empty>
+                        <!-- <button class="layui-btn" lay-submit onclick="return check_sel(<{$sel.seid}>);">立即提交</button> -->
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                      <div style="height:54px;">&nbsp;</div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+            </div>
+           
+            <include file="Public/footer" />
+        </div>
+       
+    </div>
+    
+    <script type="text/javascript">
+        // var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+        // document.write(unescape("%3Cspan id='cnzz_stat_icon_1264021086'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s22.cnzz.com/z_stat.php%3Fid%3D1264021086%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    
+    <script>
+layui.use(['layer','element','form'], function(){
+  var layer = layui.layer,element=layui.element,layedit = layui.layedit,form=layui.form;
+});
+$('#pay').on('click', function() {
+    layer.open({
+        title: false,
+        type: 1,
+        content: '<img src="__PUBLIC__/img/me.jpg" />',
+        area: ['430px', '430px'],
+        shadeClose: true
+    });
+ });
+$('#me').on('click', function() {
+    layer.open({
+        title: '朋友，你好！',
+        btn:'朕已知道',
+        type: 0,
+        scrollbar: false,
+        content: '<div style="width:300px; height:105px; background-color:#393D49;color: #fff; margin:-20px;"><div style="padding:20px;text-align:center;">Email:hxb0810@163.com<br>Tel:15534378771</div></div>',
+        area: ['300px', '200px'],
+        shadeClose: true
+    });
+ });
+    function out_login(){
+        if(confirm("确定要退出么？")){
+        return true;
+        }else{
+        return false;
+        }
+    };
+    function check_sel(x,action){
+      var index1 = layer.load();
+        var chk_value=[];
+        $('input[id="selection"]:checked').each(function(){
+            chk_value.push($(this).val());
+        });
+        var seid=x,year='<{$sel.year}>',action=action;
+        //发异步验证
+        //alert(action);
+          $.get("<{:U('check_sel')}>",{seldata:chk_value,seid:seid},function(data,status){
+                //alert("Data: " + data + "\nStatus: " + status);
+                if (status=='success') {
+                    layer.close(index1);
+                      if (data == 3) {
+                      
+                        layer.confirm('确认提交本次选课结果么？', {
+                        title:'提示：',
+                        skin: 'layui-layer-molv',
+                        btn: ['确定','取消'] //按钮
+                      }, function(index){
+                          $.post("<{:U('do_sel')}>",{seldata:chk_value,seid:seid,action:action,year:year},function(data,status){
+                              if (data>=1) {
+                                   layer.msg('选课成功！', {icon: 1});
+                                   setTimeout("history.go(-1)",2000) ; 
+                              } else {
+                                   layer.msg('数据库错误，请联系管理员！',{icon: 5,time:3000});
+                              }
+                              //alert("Data: " + data + "\nStatus: " + status); 
+                          });
+                      });
+                      //location.href="__URL__/selection/seid/"+seid;
+                  } else{
+                      if (data == 1) {
+                          layer.msg('本次选课为6选3,您所选的科目不是三科！',{icon: 5,time:3000});
+                      }
+                      if (data==0) {
+                          layer.msg('该选课组合尚未开放！请重新选择！',{icon: 5,time:3000});
+                      }
+                      if (data==2) {
+                          layer.msg('尚未修改，请修改！',{icon: 5,time:3000});
+                      }
+                           
+                      
+                  } 
+                } else {
+                    layer.msg('程序错误！');
+                }
+                
+          });
+          return false;
+    }
+    </script>
+
+</body>
+
+</html>

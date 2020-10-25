@@ -1,0 +1,100 @@
+{extend name="common:base"/}
+{block name="body"}
+<div class="row wrapper border-bottom white-bg page-heading">
+    <div class="col-lg-12">
+        <h2>系统</h2>
+    </div>
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>数据库还原</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>  
+                </div>
+                <div class="ibox-content">
+                    <div class="table-responsive">
+                        <form id="export-form" method="post" action="{:\\think\\Url::build('export')}">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr> 
+                                        <th >备份名称</th>
+                                        <th >卷数</th>
+                                        <th >压缩</th>
+                                        <th >数据大小</th>
+                                        <th >备份时间</th>
+                                        <th >状态</th>
+                                        <th >操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {notempty name="data"}
+                                    {volist name="data" id="vo"}
+                                    <tr>
+                                        <td>{$vo.time|date='Ymd-His',###}</td>
+                                        <td>{$vo.part}</td>
+                                        <td>{$vo.compress}</td>
+                                        <td>{$vo.size|format_bytes}</td>
+                                        <td>{$key}</td>
+                                        <td>-</td>
+                                        <td>
+                                            <a title="还原" class="db-import" href="{:\\think\\Url::build('revert',['time'=>$vo['time']])}">还原</a>
+                                            <a class=" ajax-get confirm" title="删除" href="{:\\think\\Url::build('del',['time'=>$vo['time']])}">删除</a>
+                                        </td>
+                                    </tr>
+                                    {/volist}
+                                    {else /}
+                                <td colspan="7" class="text-center"> aOh! 暂时还没有内容! </td>
+                                {/notempty}
+                                </tbody>
+                            </table>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="script"}
+<script type="text/javascript">
+    $(function () {
+        highlight_subnav("{:\\think\\Url::build('DataBase/import')}");
+        $(".db-import").click(function () {
+            var self = this, status = ".";
+            $.get(self.href, success, "json");
+            window.onbeforeunload = function () { return "正在还原数据库，请不要关闭！";};
+            return false;
+            function success(data) {
+                if (data.code) {
+                    if (data.data.gz) {
+                        data.msg += status;
+                        if (status.length === 5) {
+                            status = ".";
+                        } else {
+                            status += ".";
+                        }
+                    }
+                    $(self).parent().prev().text(data.msg);
+                    if (data.data.part) {
+                        $.get(self.href, {"part": data.data.part, "start": data.data.start}, success, "json");
+                    } else {
+                        window.onbeforeunload = function () {return null;};
+                    }
+                } else {
+                    alert_msg(data.msg, 0);
+                }
+            }
+        });
+    });
+
+</script>
+{/block}

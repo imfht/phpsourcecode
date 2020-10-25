@@ -1,0 +1,324 @@
+CREATE TABLE sysconf_table (
+	program_name VARCHAR(50) NOT NULL,
+	version VARCHAR(16) NOT NULL,
+	date_format varchar(12) NOT NULL,
+	auto_redirect char(1) NOT NULL,
+	auth_method VARCHAR(16) NOT NULL,
+	imap_server VARCHAR(255),
+	imap_port int2,
+	mail_from_name VARCHAR(50) NOT NULL,
+	mail_from_email VARCHAR(60) NOT NULL,
+	mail_function VARCHAR(8) NOT NULL default 'mail',
+	mail_smtp_server VARCHAR(255),
+	mail_smtp_port int2,
+	mail_smtp_auth char(1),
+	mail_smtp_user VARCHAR(128),
+	mail_smtp_password VARCHAR(128),
+	allow_subscribe char(1) NOT NULL default 'f',
+	max_area int2 NOT NULL,
+	max_minor_area int2 NOT NULL,
+	max_filter_per_user int2 NOT NULL,
+	max_shared_filter int2 NOT NULL,
+	max_syslog int4 NOT NULL
+);
+
+CREATE TABLE feedback_config_table (
+	feedback_system_name VARCHAR(50) NOT NULL,
+	mail_from_name VARCHAR(50) NOT NULL,
+	mail_from_email VARCHAR(60) NOT NULL,
+	login_mode VARCHAR(16) NOT NULL,
+	import_description text,
+	closed_description text
+);
+
+CREATE TABLE language_table (
+	language VARCHAR(3) NOT NULL,
+	language_desc VARCHAR(32) NOT NULL
+);
+
+CREATE TABLE string_table (
+	string_id int4 NOT NULL,
+	string_section VARCHAR(64) NOT NULL,
+	string_key VARCHAR(64) NOT NULL,
+	string_value text,
+	string_lang VARCHAR(3) NOT NULL,
+	CONSTRAINT string_pkey PRIMARY KEY(string_id)
+);
+CREATE INDEX string_index ON string_table(string_lang);
+
+CREATE TABLE login_log_table (
+	login_id int4 NOT NULL AUTO_INCREMENT,
+	user_id int4 NOT NULL,
+	login_time datetime NOT NULL,
+	CONSTRAINT login_log_pkey PRIMARY KEY(login_id)
+);
+CREATE INDEX login_log_index ON login_log_table(user_id);
+
+CREATE TABLE syslog_table (
+	syslog_id int4 NOT NULL AUTO_INCREMENT,
+	user_id int4 NOT NULL,
+	ip  varchar(16) NOT NULL,
+	log_type int2 NOT NULL,
+	time	datetime NOT NULL,
+	log_string_key	VARCHAR(64) NOT NULL,
+	arg_key  VARCHAR(64),
+	arg_string  VARCHAR(128),
+	CONSTRAINT syslog_pkey PRIMARY KEY(syslog_id)
+);
+CREATE INDEX syslog_index ON syslog_table(time);
+
+CREATE TABLE feedback_syslog_table (
+	syslog_id int4 NOT NULL AUTO_INCREMENT,
+	customer_email varchar(60) NOT NULL,
+	ip  varchar(16) NOT NULL,
+	log_type int2 NOT NULL,
+	time	datetime NOT NULL,
+	log_string_key	VARCHAR(64) NOT NULL,
+	arg_key  VARCHAR(64),
+	arg_string  VARCHAR(128),
+	CONSTRAINT feedback_syslog_pkey PRIMARY KEY(syslog_id)
+);
+CREATE INDEX feedback_syslog_index ON feedback_syslog_table(time);
+
+CREATE TABLE customer_table (
+	customer_id int4 NOT NULL AUTO_INCREMENT,
+	customer_name VARCHAR(100) NOT NULL,
+	created_date datetime NOT NULL,
+	address VARCHAR(150),
+	tel VARCHAR(20),
+	fax VARCHAR(20),
+	CONSTRAINT customer_pkey PRIMARY KEY(customer_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE customer_user_table (
+	customer_user_id int4 not null AUTO_INCREMENT,
+	customer_id int4 NOT NULL DEFAULT -1,
+	email varchar(60) not null, 
+	password varchar(50), 
+	realname varchar(100),
+	language VARCHAR(3),
+	created_date datetime,
+	last_login datetime,
+	account_disabled char(1) DEFAULT 'f' not null,
+	auto_cc_to char(1) DEFAULT 'f' NOT NULL,
+	CONSTRAINT customer_user_pkey PRIMARY KEY (customer_user_id)
+) ENGINE=InnoDB;
+CREATE index customer_user_index on customer_user_table(customer_id);
+
+CREATE TABLE customer_user_tmp_table (
+	email VARCHAR(60) NOT NULL,
+	password VARCHAR(50),
+	created_date datetime,
+	CONSTRAINT customer_user_tmp_pkey PRIMARY KEY (email)
+) ENGINE=InnoDB;
+
+CREATE TABLE group_table(
+	group_id int4 not null AUTO_INCREMENT,
+	group_name varchar(50) not null,
+	privilege	int8 NOT NULL DEFAULT 0,
+	CONSTRAINT group_pkey PRIMARY KEY(group_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE group_allow_status_table (
+	group_id int4 NOT NULL,
+	status_id int4 NOT NULL,
+	CONSTRAINT group_allow_status_table_key UNIQUE(group_id, status_id)
+) ENGINE=InnoDB;
+CREATE INDEX group_allow_status_index ON group_allow_status_table(group_id);
+
+CREATE TABLE user_table (
+	user_id int4 not null AUTO_INCREMENT,
+	username varchar(50) not null, 
+	password varchar(50), 
+	realname varchar(100),
+	language VARCHAR(3),
+	created_date datetime,
+	last_login datetime,
+	email varchar(60),
+	group_id int4 NOT NULL DEFAULT -1,
+	account_disabled char(1) DEFAULT 'f' not null,
+	perpage int2 DEFAULT 100 NOT NULL, 
+	default_filter int2 DEFAULT 0 NOT NULL,
+	show_shared_filter char(1) DEFAULT 'f' NOT NULL,
+	show_in_blank char(1) DEFAULT 'f' NOT NULL, 
+	show_reported_by char(1) DEFAULT 'f' NOT NULL, 
+	show_created_date char(1) DEFAULT 't' NOT NULL, 
+	show_assign_to char(1) DEFAULT 't' NOT NULL, 
+	show_priority char(1) DEFAULT 't' NOT NULL, 
+	show_status char(1) DEFAULT 't' NOT NULL, 
+	show_fixed_by char(1) DEFAULT 't' NOT NULL, 
+	show_fixed_date char(1) DEFAULT 'f' NOT NULL, 
+	show_version char(1) DEFAULT 'f' NOT NULL, 
+	show_fixed_in_version char(1) DEFAULT 't' NOT NULL, 
+	show_verified_by char(1) DEFAULT 'f' NOT NULL, 
+	show_verified_date char(1) DEFAULT 'f' NOT NULL, 
+	show_area char(1) DEFAULT 'f' NOT NULL, 
+	show_minor_area char(1) DEFAULT 'f' NOT NULL, 
+	show_estimated_time char(1) DEFAULT 'f' NOT NULL,
+	show_type char(1) DEFAULT 'f' NOT NULL,
+	show_reported_by_customer char(1) DEFAULT 'f' NOT NULL,
+	CONSTRAINT user_pkey PRIMARY KEY (user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE document_class_table (
+	document_class_id int4 NOT NULL AUTO_INCREMENT,
+	class_name varchar(64),
+	CONSTRAINT document_class_table_pkey PRIMARY KEY (document_class_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE document_map_table (
+	document_id int4 not null,
+	document_class_id int4 not null,
+	CONSTRAINT document_map_key UNIQUE(document_id, document_class_id)
+) ENGINE=InnoDB;
+CREATE INDEX document_map_index ON document_map_table(document_class_id);
+
+CREATE TABLE document_table(
+	document_id int4 NOT NULL AUTO_INCREMENT,
+	subject text NOT NULL,
+	created_by int4 NOT NULL,
+	last_update datetime,
+	description text,
+	filename VARCHAR(255),
+	filedata LONGBLOB,
+	group_class int4 NOT NULL DEFAULT -1,
+	allow_other_group char(1) DEFAULT 't' NOT NULL,
+	CONSTRAINT document_pkey PRIMARY KEY (document_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE document_history_table(
+	document_history_id int4 NOT NULL AUTO_INCREMENT,
+	document_id int4 NOT NULL,
+	subject text NOT NULL,
+	created_by int4 NOT NULL,
+	created_date timestamp,
+	description text,
+	filename VARCHAR(255),
+	filedata LONGBLOB,
+	CONSTRAINT document_history_pkey PRIMARY KEY (document_history_id)
+) ENGINE=InnoDB;
+CREATE INDEX document_history_index ON document_history_table(document_id);
+
+CREATE TABLE filter_table(
+	filter_id int4 not null AUTO_INCREMENT,
+	user_id int4 not null,
+	filter_name varchar(100) not null default 'filter1',
+	real_condition text not null,
+	text_condition text not null,
+	share_filter char(1) DEFAULT 'f' NOT NULL,
+	CONSTRAINT filter_pkey PRIMARY KEY(filter_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE status_table (
+	status_id int2 not null AUTO_INCREMENT,
+	status_name varchar(60),
+	status_color varchar(20),
+	status_type	VARCHAR(8),
+	CONSTRAINT status_pkey PRIMARY KEY(status_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE proj_access_table (
+	project_id int4 NOT NULL,
+	user_id	int4 NOT NULL,	
+	last_read datetime,
+   CONSTRAINT proj_access_key UNIQUE(project_id, user_id)
+) ENGINE=InnoDB;
+CREATE INDEX proj_access_index ON proj_access_table(user_id);
+
+CREATE TABLE proj_customer_access_table (
+	project_id int4 NOT NULL,
+	customer_id	int4 NOT NULL,	
+	CONSTRAINT proj_customer_access_key UNIQUE(project_id, customer_id)
+) ENGINE=InnoDB;
+CREATE INDEX proj_customer_access_table_index ON proj_customer_access_table(customer_id);
+
+CREATE TABLE project_table (
+	project_id int4 not null AUTO_INCREMENT,
+	project_name varchar(100) not null, 
+	created_date datetime, 
+	created_by int4 NOT NULL, 
+	version_pattern varchar(40), 
+	CONSTRAINT project_pkey PRIMARY KEY (project_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE proj_area_table (
+	area_id int4 not null AUTO_INCREMENT,
+	project_id int4 NOT NULL,
+	area_name varchar(40) not null,
+	area_parent int4 not null,
+	owner int4,
+	CONSTRAINT proj_area_pkey PRIMARY KEY (area_id)
+) ENGINE=InnoDB;
+CREATE INDEX proj_area_index ON proj_area_table(area_parent );
+
+CREATE TABLE proj_auto_mailto_table (
+	project_id int4 NOT NULL,
+	user_id int4 NOT NULL,
+	can_unsubscribe char(1) NOT NULL,
+	CONSTRAINT proj_auto_mailto_key UNIQUE(project_id, user_id)
+) ENGINE=InnoDB;
+CREATE INDEX proj_auto_mailto_index ON proj_auto_mailto_table(project_id );
+
+CREATE TABLE proj_feedback_mailto_table (
+	project_id int4 NOT NULL,
+	user_id int4 NOT NULL,
+	CONSTRAINT proj_feedback_mailto_key UNIQUE(project_id, user_id)
+) ENGINE=InnoDB;
+CREATE INDEX proj_feedback_mailto_index ON proj_feedback_mailto_table(project_id );
+
+CREATE TABLE faq_class_table (
+	faq_class_id int4 NOT NULL AUTO_INCREMENT,
+	project_id int4 NOT NULL,
+	class_name varchar(50),
+	CONSTRAINT faq_class_table_pkey PRIMARY KEY (faq_class_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE faq_content_table (
+	faq_id int4 NOT NULL AUTO_INCREMENT,
+	project_id int4 NOT NULL,
+	question text,
+	answer text,
+	created_by int4,
+	created_date datetime,
+	last_update datetime,
+	is_verified char(1) NOT NULL DEFAULT 'f',
+	assign_to int4,
+	verified_by int4,
+	verified_date datetime,
+	CONSTRAINT faq_content_table_pkey PRIMARY KEY (faq_id)
+) ENGINE=InnoDB;
+CREATE INDEX faq_content_index ON faq_content_table(project_id );
+
+CREATE TABLE faq_map_table (
+	faq_id int4 not null,
+	faq_class_id int4 not null,
+	CONSTRAINT faq_map_key UNIQUE(faq_id, faq_class_id)
+) ENGINE=InnoDB;
+CREATE INDEX faq_map_index ON faq_map_table(faq_class_id);
+
+CREATE TABLE schedule_table (
+	schedule_id int4 not null AUTO_INCREMENT,
+	date datetime not null,
+	created_by int4 not null,
+	subject text,
+	description text,
+	project_id int,
+	publish	char(1),
+	email_to text,
+	CONSTRAINT schedule_table_pkey PRIMARY KEY (schedule_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE label_table (
+	label_id serial not null,
+	project_id int4 not null,
+	label_name varchar(128),
+	color int4 not null,
+	CONSTRAINT label_table_pkey PRIMARY KEY (label_id)
+) ENGINE=InnoDB;
+CREATE INDEX label_table_index ON label_table(project_id);
+
+CREATE TABLE label_mapping_table (
+	report_id int4 not null,
+	label_id int4 not null,
+	CONSTRAINT label_mapping_table_key UNIQUE(report_id, label_id)
+) ENGINE=InnoDB;

@@ -1,0 +1,166 @@
+<extend name="Public/base"/>
+<block name="body">
+	
+    <div class="am-container">
+        <!-- 面包屑 -->
+        <ol class="am-breadcrumb">
+		  <li><a href="{:U('Index/index')}">{:C('WEB_SITE_TITLE')}</a></li>
+		  <li> <a href="{:U('Goods/cate',array('id'=>$goods['cate_id']))}">{$goods['cate_id']|get_goods_category_name}</a></li>
+		  <li class="am-active">{$goods['name']}</li>
+		</ol>
+       
+        <!--items start-->
+        <div class="am-g">
+	        <div class="am-u-sm-9">
+	            <div class="goods-header am-fl">
+	                <div class="goods-img am-fl">
+	                    <a class="show_big buy" title="{$goods['name']}">
+	                        <img class="am-img-responsive" alt="{$goods['seo_title']}" src="{$goods['pic_url']}" >
+	                    </a>
+	                </div>
+	                <div class="goods-info am-fl">
+						<h3 class="title">{$goods['name']}</h3>
+						<div class="goods-price">
+	                        <span class="now-price">
+								 ￥
+	                            <i class="price">{$goods['price']}</i>
+	                        </span>
+	                        <span class="market-price">
+	                        	<del>（原价：{$goods['market_price']}）</del>
+	                        </span>
+						</div>
+						<ul class="other-info">
+							<li class="volume">
+								销量<span class="other-data">{$goods['volume']}</span>
+							</li>
+							<li class="like" data="{$goods.id}" >
+								喜欢<i class="icon icon-heart"></i><span class="other-data">{$goods['favor']}</span>
+							</li>
+
+						</ul>
+						<div class="goods-buy">
+							<button class="like am-btn am-btn-lg am-btn-danger am-btn-150" type="button" data="{$goods.id}" onclick="favor('{$goods['id']}')">喜欢</button>
+							<notempty name="goods.click_url">
+								<a class="am-btn am-btn-lg am-btn-primary am-btn-150" href="{$goods['click_url']}" target="_blank">
+									<span>去购买</span>
+								</a>
+								<else/>
+								<a class="go_pay am-btn am-btn-lg am-btn-primary am-btn-150" href="{$goods['item_url']}" target="_blank">
+									<span>去购买</span>
+								</a>
+							</notempty>
+
+						</div>
+						<div class="ke-shares" >
+							<a >分享到</a>
+							<a class="share-icon share-icon-weixin" href="{:U('Share/share',array('share_id'=>'weixin','type'=>'goods','id'=>$goods['id']));}" target="_blank"></a>
+							<a class="share-icon share-icon-qzone" href="{:U('Share/share',array('share_id'=>'qzone','type'=>'goods','id'=>$goods['id']));}" target="_blank"></a>
+							<a class="share-icon share-icon-tsina" href="{:U('Share/share',array('share_id'=>'tsina','type'=>'goods','id'=>$goods['id']));}" target="_blank"></a>
+							<a class="share-icon share-icon-sqq" href="{:U('Share/share',array('share_id'=>'cqq','type'=>'goods','id'=>$goods['id']));}" target="_blank"></a>
+						</div>
+	                </div>
+	            </div>
+	           
+	            <div class="goods-body-part am-fl" style="margin-top: 20px;">
+					<ul class="am-tabs-nav am-nav am-nav-tabs">
+						<li class="am-active"><a href="javascript: void(0)">商品详情</a></li>
+					</ul>
+
+					<div class="am-tabs-bd con">
+						<div class="am-tab-panel am-active">
+								<if condition="$goods['item_body']">
+									{$goods['item_body']}
+								<else/>
+
+									商品详情加载中，请稍等...
+								</if>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+			<div class="am-u-sm-3">
+				<div class="hot-goods">
+					<h3 class="normal">
+						HOT同类热卖
+					</h3>
+					<ul class="am-list">
+						<volist name="hot_goods" id="v">
+							<li class="item">
+								<a target="_blank" href="{:U('/goods/'.$v['id'])}">
+									<img class="lazy am-img-responsive" src="{$v.pic_url}" alt="{$v.name}">
+									<h3 class="am-list-item-hd">{$v.name}</h3>
+									<h3 class="hot_price">￥{$v.price}</h3>
+								</a>
+							</li>
+						</volist>
+					</ul>
+				</div>
+			</div>
+    </div>
+</div>
+</block>
+<block name="script">
+	<script>
+		<empty name="goods.item_body">
+		var url = "<php>echo $goods['item_url']</php>";
+		$.get('{:U("Goods/ajGetGoodsDetial")}',{url:url},function(data){
+			if(data.status){
+				$(".am-tab-panel").html(data.content);
+			}else{
+				location.href="{:U('Goods/goBuy',array('id'=>$goods['num_iid']))}";
+				updateAlert('即将为您跳转爱淘宝');
+				setTimeout(function(){
+					$('#top-alert').find('button').click();
+					location.onload();
+				},1500);
+			}
+		});
+		</empty>
+
+
+		var btn = $(".go_pay").eq(0);
+		var org_url = btn.attr('href');
+		var click_url = '{$goods.item_url}';
+		var pid = "{:C('PID')}";
+		var wt = '0';
+		var ti = '625';
+		var tl = '230x45';
+		var rd = '1';
+		var ct = encodeURIComponent('itemid='+'{$goods.num_iid}');
+		var st = '2';
+		var url = "{:C('TDJ_URL')}" ? "{:C('TDJ_URL')}" :document.URL;
+		var rf = encodeURIComponent(url);
+		var et = get_et();
+		var pgid = get_pgid();
+		var v = '2.0';
+		var data = 'pid='+pid+'&wt='+wt+'&ti='+ti+'&tl='+tl+'&rd='+rd+'&ct='+ct+'&st='+st+'&rf='+rf+'&et='+et+'&pgid='+pgid+'&v='+v;
+
+
+		$.ajax({
+			url: 'http://g.click.taobao.com/display?cb=?',
+			type: 'GET',
+			dataType: 'jsonp',
+			jsonp: 'cb',
+			data: 'pid='+pid+'&wt='+wt+'&ti='+ti+'&tl='+tl+'&rd='+rd+'&ct='+ct+'&st='+st+'&rf='+rf+'&et='+et+'&pgid='+pgid+'&v='+v,
+			success: function(msg) {
+				if(msg.code == 200 || msg.code == 201){
+					if(window.location.href.indexOf('shop')   ==-1  ){
+						var url = msg.data.items[0].ds_item_click;
+					}else{
+						var url = msg.data.items[0].ds_shop_click;
+					}
+					btn.attr('href',url);
+
+				}
+				else{
+					btn.attr('href',org_url);
+				}
+			},
+			error: function(msg){
+				btn.attr('href',org_url);
+			}
+		});
+
+	</script>
+</block>
+

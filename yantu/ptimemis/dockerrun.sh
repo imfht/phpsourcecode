@@ -1,0 +1,1 @@
+docker run -d -p 23:22 -p 4000-4020:4000-4020 -p 81:80 -v /c/Users/hills/data:/data hillsdong/ubuntu:lnmp  /usr/sbin/sshd -D

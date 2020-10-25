@@ -1,0 +1,70 @@
+<div class="titlebar">
+    <div class="fn-left"><i class="iconfont icon-line-chart_icon"></i>回收列表</div>
+    <form class="input-group" id="form" action="{:url('retrieve/index')}">
+    <div class="fn-right">
+        {if $founder}
+        <select name="operate_id" class="select" id="operate_id">
+            <option value="0">请选择运营商</option>
+            {volist name="operate" id="vo"}<option value="{$vo.id}" {if $vo.id == $operate_id}selected{/if}>{$vo.operate_name}</option>{/volist}
+        </select>
+        {/if}
+        <input placeholder="开始时间" class="input w100 ui-date" type="text" name="starttime" readonly autocomplete="false" value="{$starttime}"/>
+        <input placeholder="结束时间" class="input w100 ui-date" type="text" name="endtime" readonly autocomplete="false" value="{$endtime}"/>
+        <input type="submit" value="搜索" class="button button-blue" />
+    </div>
+    </form>
+    <div class="fn-right button-group">
+        <a href="{:url('retrieve/index',['time' => 1])}" class="button {$time==1?'button-violet':''}">今日</a>
+        <a href="{:url('retrieve/index',['time' => 2])}" class="button {$time==2?'button-violet':''}">昨日</a>
+        <a href="{:url('retrieve/index',['time' => 30])}" class="button {$time==30?'button-violet':''}">本月</a>
+        <a href="{:url('retrieve/index',['time' => 60])}" class="button {$time==60?'button-violet':''}">上月</a>
+    </div>
+</div>
+<table class="table table-border">
+    <thead>
+    <tr>
+        <th class="w80 fn-tac"></th>
+        <th class="w100 fn-tac">微信昵称</th>
+        <th class="w150 fn-tac">手机号</th>
+        <th>地址</th>
+        <th class="w140 fn-tac">重量</th>
+        <th>备注</th>
+        <th class="w100 fn-tac">状态</th>
+        <th class="w140 fn-tac">回收时间</th>
+        <th class="w140 fn-tac">创建时间</th>
+    </tr>
+    </thead>
+    <tbody>
+    {foreach $lists as $vo}
+    <tr>
+        <td class="fn-tac"><img src="{$vo.user['face']}" class="w40" /></td>
+        <td class="fn-tac"><a href="javascript:;" url="{:url('/system/passport.user/review',['uid' => $vo.uid])}" class="review">{$vo.realname}</a></td>
+        <td class="fn-tac">{$vo.phone}</td>
+        <td>{$vo.address}</td>
+        <td class="fn-tac">{$vo.weight}(克)</td>
+        <td>{$vo.message}</td>
+        <td class="fn-tac li"><a class="isAction" url="{:url('retrieve/isLock',['id'=> $vo.id])}" href="javascript:;">
+            {if $vo.state}<span class="badge">已回收</span>{else}<span class="badge bg-red">未回收</span>{/if}</a></td>
+        <td class="fn-tac">{if $vo->date}{$vo->date|date='Y-m-d H:i'}{else/}尽快上门{/if}</td>
+        <td class="fn-tac">{$vo->create_time|date='Y-m-d H:i'}</td>
+    </tr>
+    {/foreach}
+    </tbody>
+</table>
+{$lists|raw}
+<script type="text/javascript">
+    Do('base','form','layer','tip','date', function () {
+        $('#form').isForm({types:1});
+        $('.review').win();
+        $('.isAction').click(function () {
+            var url = $(this).attr("url");
+            parent.layer.confirm('确认要设置回收状态',{ icon: 3,title: '友情提示' }, function (index) {
+                $.getJSON(url,function (data) {
+                    parent.layer.alert(data.msg);
+                    window.location.reload();
+                });
+                parent.layer.close(index);
+            });
+        })
+    })
+</script>

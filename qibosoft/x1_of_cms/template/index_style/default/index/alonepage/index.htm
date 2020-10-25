@@ -1,0 +1,163 @@
+{extend name="$index_style_layout" /}
+{block name="head_title"}{$info.title}{/block}
+ 
+{block name="body_content"}
+<style>
+.article-container{
+	padding:10px;
+}
+.article-container .head h1 {
+	font-size: 20px;
+	color: #000;
+	line-height: 30px;
+	padding: 10px 0 5px 0;
+	font-family:Arial, Helvetica, sans-serif;
+	text-shadow: 1px 1px 1px #fff;
+	font-weight: bold;
+}
+.article-container .head div{
+	padding-bottom: 15px;
+	font-size: 14px;
+	color: #666;
+}
+.article-container .head div>a {
+	color: #666;
+	margin-left: 6px;
+}
+.article-container img{
+	max-width:98%;
+}
+
+/*mod-share*/
+.mod-share{
+    overflow: hidden;
+    width: 98%;
+    margin:10px auto;
+    text-align: center;
+}
+.share-btn {
+    background: #D6D6D6;
+    border-radius: 5px;
+    height: 35px;
+    line-height: 35px;
+    text-align: center;
+    color: #444444;
+    width: 48%;
+    display: inline-block;
+}
+.Share_Message{ 
+	position: fixed; 
+	width:100%; 
+	height: 100%; 
+	background: rgba(0,0,0,0.8);
+	z-index: 900000; 
+	top:0; 
+	left: 0; 
+	display: none;
+}
+.Share_Message div{
+	background:url(__STATIC__/images/text.png) no-repeat right center; 
+	width:100%; 
+	height:350px; 
+	background-size:contain;
+}	
+</style>
+<article class="article-container">
+	<div class="head">
+    	<h1>{$info.title}</h1>
+        <div>
+        	<time>{:date('Y-m-d H:i:s',$info.posttime)}</time> 浏览:{$info.view}次
+        </div>
+    </div>
+    <section>
+    	{$info.content}
+    </section>
+</article>
+<div class="mod-share">
+    <a class="share-btn" onClick="ShareAppMessage();ShareTimeline();SharShowMessage();"><i class="glyphicon glyphicon-share"></i>发送给朋友</a>
+    <a class="share-btn" onClick="ShareAppMessage();ShareTimeline();SharShowMessage();"><i class="si si-support"></i>分享朋友圈</a>
+</div>
+<div class="Share_Message" onClick="SharHiddenMessage();"></div>
+<script src="__STATIC__/js/jweixin-1.2.0.js"></script>
+<script type="text/javascript">
+  wx.config({
+    debug: false,
+    appId: "{:weixin_share('appId')}",
+    timestamp: {:weixin_share('timestamp')},
+    nonceStr: "{:weixin_share('nonceStr')}",
+    signature: "{:weixin_share('signature')}",
+    jsApiList: [
+        'checkJsApi',
+		'onMenuShareTimeline',
+        'onMenuShareAppMessage',        
+      ]
+  });
+</script>
+<script type="text/javascript">
+$('.article-container section img').attr('height','');
+$('.article-container section img').attr('width','');
+function ShareTimeline(){
+    wx.onMenuShareTimeline({
+      title: '{$info.title}',
+      link: "{:get_url('location')}",
+      imgUrl: '{$info.picurl|tempdir}',
+      trigger: function (res) {
+        // 不要尝试在trigger中使用ajax异步请求修改本次分享的内容，因为客户端分享操作是一个同步操作，这时候使用ajax的回包会还没有返回
+        //alert('用户点击分享到朋友圈');
+      },
+      success: function (res) {
+        //alert('分享成功，请注意查收红包！');
+		//window.location.reload();
+		//window.location.href='wapbencandy.php?fid=$fid&id=$id&job=have_shareTimeline';
+      },
+      cancel: function (res) {
+        //alert('系统监测到你没有真正分享到朋友圈，请重新分享！');
+      },
+      fail: function (res) {
+        alert(JSON.stringify(res));
+      }
+    });
+	//SharShowMessage();
+    //alert('请点击左上角的菜单，然后分享到朋友圈去即可');
+}
+function ShareAppMessage(){
+	wx.onMenuShareAppMessage({
+      title: '{$info.title}',
+      desc: '{$info.descrip?:$info.title}',
+      link: "{:get_url('location')}",
+      imgUrl: '{$info.picurl|tempdir}',
+      trigger: function (res) {
+        // 不要尝试在trigger中使用ajax异步请求修改本次分享的内容，因为客户端分享操作是一个同步操作，这时候使用ajax的回包会还没有返回
+       // alert('请分享到微信群去，发给单个好友效果没这么明显！');
+      },
+      success: function (res) {
+        //alert('感谢你分享给好友');
+		//window.location.href='wapbencandy.php?fid=$fid&id=$id&job=have_shareFriend';
+      },
+      cancel: function (res) {
+        //alert('你已取消操作，建议你重新分享给好友！');
+      },
+      fail: function (res) {
+        alert(JSON.stringify(res));
+      }
+    });
+    //alert('请点击左上角的菜单，发送给朋友');
+}
+wx.ready(function () {
+	wx.showOptionMenu();
+	ShareTimeline();
+	ShareAppMessage();
+});
+
+wx.error(function (res) {
+  //alert(res.errMsg);
+});
+function SharShowMessage(){
+	$('.Share_Message').html('<div></div>');
+	$('.Share_Message').fadeIn();
+}
+function SharHiddenMessage() {
+	$('.Share_Message').fadeOut();
+}
+</script>
+{/block}

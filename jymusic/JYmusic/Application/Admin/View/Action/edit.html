@@ -1,0 +1,100 @@
+<extend name="Public/base"/>
+<block name="content">
+<h3>行为管理</h3>
+<div class="panel panel-default">
+	<div class="panel-heading">查看行为日志</div>
+ 	<div class="panel-body">
+		<!-- 表单 -->
+		<form id="form" method="post" class="form-horizontal">
+			<!-- 基础 -->
+			<div id="tab1" class="tab-pane in tab1">
+				<div class="form-group">
+					<label class="col-sm-2 control-label">行为名称</label>
+					<div class="col-sm-2">
+						<span class="form-control"><{:get_action($info['action_id'], "title")}></span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">执行者</label>
+					<div class="col-sm-2">
+						<span class="form-control"><{:get_nickname($info['user_id'])}></span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">执行IP</label>
+					<div class="col-sm-2">
+						<span class="form-control"><{:long2ip($info['action_ip'])}></span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">执行时间</label>
+					<div class="col-sm-3">
+						<span class="form-control"><{:date('Y-m-d H:i:s',$info['create_time'])}></span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label">备注</label>
+					<div class="col-sm-4">
+						<textarea class="form-control" readonly="readonly"><{$info.remark}></textarea>
+					</div>
+				</div>
+			</div>
+
+    		<div class="form-group">
+    			<input type="hidden" name="status" value="<{$data.status|default=''}>">       		
+            	<div class="col-sm-4 col-sm-offset-2">
+                	<button class="btn btn-default" type="button" onclick="javascript:history.back(-1);return false;">取消</button>
+            	</div>
+        	</div>
+        </form>
+	</div>
+</div>													
+
+</block>
+<block name="script">
+<script type="text/javascript" src="__STATIC__/jquery.dragsort-0.5.1.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+Think.setValue("extend", {$info.extend|default=0});
+//导航高亮
+highlight_subnav('{:U('Action/actionlog')}');
+
+
+$(function(){
+	showTab();
+})
+//拖曳插件初始化
+$(function(){
+	$(".dragsort").dragsort({
+	     dragSelector:'li',
+	     placeHolderTemplate: '<li class="draging-place">&nbsp;</li>',
+	     dragBetween:true,	//允许拖动到任意地方
+	     dragEnd:function(){
+	    	 var self = $(this);
+	    	 self.find('input').attr('name', 'field_sort[' + self.closest('ul').data('group') + '][]');
+	     	//updateVal();
+	     }
+	 });
+
+	$('#sortUl li b').click(function(){
+		$(this).parent().remove();
+		updateVal();
+	});
+
+	// 更新排序后的隐藏域的值
+	function updateVal() {
+		var fields = new Array();
+		$('.form_field_sort').each(function(){
+			var i = 1;
+			var self = this;
+			var group = $(self).attr('group');
+			$(self).find('li').each(function(){
+		   		var id = $(this).find('em').attr('data');
+		   		$('#field-' + id).val(id + ':' + group + ':' + i++);
+		   	});
+		});
+
+	}
+})
+</script>
+</block>
+

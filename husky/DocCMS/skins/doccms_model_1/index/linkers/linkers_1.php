@@ -1,0 +1,1 @@
+<a href="<?php echo $data['linkAddress']; ?>" target="_blank"><img src="<?php echo $data['smallPic']; ?>" width="88" height="31" border="0" alt="<?php echo $data['title']; ?>"></a>

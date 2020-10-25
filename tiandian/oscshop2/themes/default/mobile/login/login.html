@@ -1,0 +1,98 @@
+{extend name="public:base" /}
+{block name="head"}
+<link href="__PUBLIC__/view_res/mobile/css/login.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/lib/weui.min.css" type="text/css" rel="Stylesheet" />
+<link href="__PUBLIC__/jquery-weui/dist/css/jquery-weui.min.css" type="text/css" rel="Stylesheet" />
+<script src="__PUBLIC__/jquery-weui/dist/js/jquery-weui.min.js"></script>
+{/block} 
+{block name="header"}
+{include file="public/top-nav" /}
+{/block}
+
+{block name="content"}
+<div id="container">
+	<div class="register">
+
+	    <div class="weui_cells_title">用户登录</div>
+	    <div class="weui_cells weui_cells_form">
+	    	
+	        <div class="weui_cell">
+	            <div class="weui_cell_hd">
+	                <label for="" class="weui_label">用户名</label>
+	            </div>
+	            <div class="weui_cell_bd weui_cell_primary">
+	                <input name="username" class="weui_input" required="" placeholder="请输入用户名" type="text">
+	            </div>            
+	        </div>
+	   
+	        <div class="weui_cell">
+	            <div class="weui_cell_hd">
+	                <label for="" class="weui_label">密码</label>
+	            </div>
+	            <div class="weui_cell_bd weui_cell_primary">
+	                <input name="password" class="weui_input" required="" pattern="[\w]{6,}" notmatchtips="密码至少6位" placeholder="请输入密码" type="password">
+	            </div>            
+	        </div>
+	        {if condition="1 eq config('use_captcha')"}	
+	        <div class="weui_cell weui_vcode">
+			<div class="weui_cell_hd">
+				<label class="weui_label">验证码</label>
+			</div>
+			<div class="weui_cell_bd weui_cell_primary">
+				<input name="captcha" class="weui_input" type="text" placeholder="请输入验证码">
+			</div>
+			<div class="weui_cell_ft">
+				<img class="verifyimg reloadverify" src="{:url('login/verify')}">
+			</div>
+			</div>
+			{/if}
+	    </div>
+	    <p class="weui_cells_tips"><a href="{:url('login/reg')}">还没有账号？去注册</a></p>
+	
+	    <div class="weui_btn_area">
+	        <a class="weui_btn weui_btn_primary js_btn">登录</a>
+	    </div>
+
+	</div>
+</div>
+{/block}
+
+{block name="footer"}
+
+{/block}
+
+{block name="script"}
+<script>
+
+<?php if(1==config('use_captcha')){ ?>
+	//刷新验证码
+	var verifyimg = $(".verifyimg").attr("src");
+    $(".reloadverify").click(function(){
+        if( verifyimg.indexOf('?')>0){
+            $(".verifyimg").attr("src", verifyimg+'&random='+Math.random());
+        }else{
+            $(".verifyimg").attr("src", verifyimg.replace(/\?.*$/,'')+'?'+Math.random());
+        }
+    });	
+<?php } ?>
+
+$('.js_btn').click(function(){
+	$.post(
+		"{:url('login/login')}",
+		$('input[type=\'text\'],input[type=\'password\']'),
+		function(d){
+			if(d.error){			
+				$.toast(d.error,"forbidden");			
+			}else if(d.success){				
+				$.toast(d.success);				
+				if(d.url){
+					setTimeout(function (){
+				        location.href=d.url;
+				    }, 1000);					
+				}				
+			}
+		}
+	);	
+});
+</script>
+{/block}

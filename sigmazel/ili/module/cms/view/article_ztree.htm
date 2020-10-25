@@ -1,0 +1,58 @@
+<!--{template /module/admin/view/head}-->
+
+<link rel="stylesheet" href="static/zTreeStyle/zTreeStyle.css" type="text/css">
+<script type="text/javascript" src="static/plugins/jquery.ztree.js"></script>
+
+<div style="margin-left:10px; padding-top:10px;">
+	<button class="btn btn-mini" type="button" id="btn_toggle" ref="1">{lang cms.article_ztree.view.button.show}</button>
+</div>
+
+<div id="div_tree" class="ztree"></div>
+
+<script>
+var setting = {
+	data: {
+		simpleData: {
+			enable: true
+		}
+	},
+	callback: {
+		onClick: onClick
+	}
+};
+
+{code $loopcount = 0;}
+var zNodes = [
+    {id:-1, pId:0, name:'{lang cms.article_ztree.view.all}'},
+    {loop $categories $key $category}
+	{id:{$category[CATEGORYID]}, pId:{$category[PARENTID]}, name:'{$category[CNAME]}'}
+	{if count($categories) != $loopcount + 1},{/if}
+	{code $loopcount = $loopcount + 1;}
+	{/loop}
+];
+
+$.fn.zTree.init($("#div_tree"), setting, zNodes);
+var zTreeObj = $.fn.zTree.getZTreeObj("div_tree");
+
+function onClick(event, treeId, treeNode, clickFlag) {
+	var frm_article_list = parent.document.getElementById('frm_article_list');
+	if(frm_article_list) frm_article_list.src="{$ADMIN_SCRIPT}/cms/article/_list&cid=" + treeNode.id + "&ztree=true";
+}
+
+$('#btn_toggle').click(function(){
+	var ref = $(this).attr('ref');
+	if(ref == '1'){
+		$(this).html('{lang cms.article_ztree.view.button.hide}');
+		$(this).attr('ref', '0');
+		parent.document.getElementById('frm_article_main').cols = '80,*';
+		$('#div_tree').hide();
+	}else{
+		$(this).html('{lang cms.article_ztree.view.button.show}');
+		$(this).attr('ref', '1');
+		parent.document.getElementById('frm_article_main').cols = '200,*';
+		$('#div_tree').show();
+	}
+});
+</script>
+
+<!--{template /module/admin/view/foot}-->

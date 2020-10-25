@@ -1,0 +1,53 @@
+# To get started with security, check out the documentation:
+# https://symfony.com/doc/current/security.html
+security:
+    encoders:
+        FOS\UserBundle\Model\UserInterface:
+            id: phpdish_user.security.password_encoder.generic
+#            algorithm: md5
+#            encode_as_base64: false
+#            iterations: 0
+
+
+    role_hierarchy:
+        ROLE_ADMIN:       ROLE_USER
+        ROLE_SUPER_ADMIN: ROLE_ADMIN
+
+    # https://symfony.com/doc/current/security.html#b-configuring-how-users-are-loaded
+    providers:
+        phpdish_user:
+            id: fos_user.user_provider.username_email
+
+    firewalls:
+        # disables authentication for assets and the profiler, adapt it according to your needs
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        main:
+            anonymous:  ~
+            pattern: ^/
+            form_login:
+                provider: phpdish_user
+                csrf_token_generator: security.csrf.token_manager
+            logout: true
+            remember_me:
+                secret:   '%secret%'
+                lifetime: 604800 # 1 week in seconds
+                path:     /
+                always_remember_me: true
+
+            oauth:
+                login_path:  "/login"
+                failure_path: "/login"
+                resource_owners:
+                    weibo: "/login/check-weibo"
+                    github: "/login/check-github"
+                    qq: "/login/check-qq"
+                oauth_user_provider:
+                    service:  phpdish_user.oauth.user_provider
+
+    access_control:
+        - { path: ^/login$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/register, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/admin, role: ROLE_SUPER_ADMIN }
+        - { path: ^/manager, role: ROLE_SUPER_ADMIN } # 旧管理界面，废除

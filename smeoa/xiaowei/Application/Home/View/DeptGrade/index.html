@@ -1,0 +1,108 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	<input type="hidden" name="ajax" id="ajax" value="1">
+	{:W('PageHeader/search',array('name'=>'部门级别','search'=>'S'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-right">
+				<a onclick="add()" class="btn btn-sm btn-primary">新增</a>
+				<a onclick="save()"  class="btn btn-sm btn-primary">保存</a>
+				|
+				<a onclick="del()"  class="btn btn-sm btn-danger">删除</a>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-4 sub_left_menu ">
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>名称</th>
+						<th>状态</th>
+					</tr>
+				</thead>
+				<tbody>
+					<volist name="list" id="data">
+						<tr id="{$data.id}">
+							<td>{$data.name}</td>
+							<td>{$data.is_del|status}</td>
+						</tr>
+					</volist>
+				</tbody>
+			</table>
+		</div>
+		<div class="col-sm-8 last sub_content">
+			<form id="form_data" name="form_data"method="post" class="well form-horizontal clearfix">
+				<input type="hidden" name="id" id="id">
+				<input type="hidden" name="opmode" id="opmode" value="">
+				<input type="hidden" name="ajax" id="ajax" value="1">
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="name">名称*：</label>
+					<div class="col-sm-8">
+						<input class="form-control"  type="text" id="name" name="name" check="require" msg="请输入名称">
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="sort">排序：</label>
+					<div class="col-sm-8">
+						<input class="form-control"  type="text" id="sort" name="sort" >
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-4 control-label" for="is_del">状态：</label>
+					<div class="col-sm-8">
+						<select  class="form-control" name="is_del" id="is_del">
+							<option  value="0">启用</option>
+							<option value="1">禁用</option>
+						</select>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function add() {
+			winopen("{:U('add')}",560, 470);
+		};
+
+		function del() {
+			var vars = $("#form_data").serialize();
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('del')}", vars, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							location.reload(true);
+						});
+					}
+				});
+			});
+		}
+
+		function save() {
+			sendForm("form_data", "{:U('save')}", "__SELF__");
+		}
+
+		function showdata(result) {
+			for (var s in result.data) {
+				set_val(s, result.data[s]);
+			}
+			$("#opmode").val("edit");
+		}
+
+		$(document).ready(function() {
+			set_return_url();
+			$(".sub_left_menu tbody tr").click(function() {
+				$(".sub_left_menu  tr.active").removeClass("active");
+				$(this).attr("class", "active");
+				sendAjax("{:U('read')}", "id=" + $(this).attr("id"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+		});
+	</script>
+</block>

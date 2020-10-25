@@ -1,0 +1,288 @@
+<?php
+/**
+ * @var \Ke\Web\Web              $web
+ * @var \Ke\Web\Http             $http
+ * @var \Ke\Web\Context          $this
+ * @var string                   $content
+ * @var \Ke\Utils\DocMen\DocHtml $html
+ */
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title><?php print $this->title; ?></title>
+	<?php $this->doc->getAsset()->load('docmen'); ?>
+	<style>
+		@import url(http://fonts.useso.com/css?family=Bitter|Roboto+Mono:400,400italic,500,500italic,700,700italic,300italic,300);
+
+		body, input, select, textarea, p {
+			font-family: "PingFang SC", "PingHei", "STHeitiSC-Light", "Helvetica Neue", "Helvetica", "Hiragino Sans GB", "Microsoft YaHei", "Arial", sans-serif;
+		}
+
+		@font-face {
+			font-family: "PingFang-SC";
+			font-weight: 100;
+			src: local("PingFang SC ExtraLight")
+		}
+
+		@font-face {
+			font-family: "PingFang-SC";
+			font-weight: 300;
+			src: local("PingFang SC Light")
+		}
+
+		@font-face {
+			font-family: "PingFang-SC";
+			font-weight: 400;
+			src: local("PingFang SC Regular")
+		}
+
+		@font-face {
+			font-family: "PingFang-SC";
+			font-weight: 600;
+			src: local("PingFang SC Medium")
+		}
+
+		@font-face {
+			font-family: "PingFang-SC";
+			font-weight: 700;
+			src: local("PingFang SC Bold")
+		}
+
+		@font-face {
+			font-family: "PingFang-SC";
+			font-weight: 800;
+			src: local("PingFang SC Heavy")
+		}
+
+		strong, h1, h2, h3, h4, h5, h6 {
+			font-weight: 600;
+		}
+
+		.main {
+		}
+
+		.header small {
+			color: #a0a0a0;
+		}
+
+		.count:before {
+			content: "[";
+		}
+
+		.count:after {
+			content: "]";
+		}
+
+		.scope-name, code, pre, header, .source-file, .func-args {
+			font-family: "Roboto Mono", "Cousine", "Source Code Pro", "Consolas", "Courier New", monospace;
+			font-weight: 300;
+		}
+
+		code {
+			padding: 0 3px;
+			margin: 0 3px;
+			background-color: #f5f2f0;
+			color: #07a;
+			font-weight: 500;
+			border-radius: 3px;
+		}
+
+		.hljs {
+			font-weight: 500;
+		}
+
+		.label.scope-name {
+			font-weight: 500;
+		}
+
+		.header .scope-name {
+			font-weight: 500;
+		}
+
+		.func-args {
+			font-size: 80%;
+			font-weight: normal;
+			margin-left: 6px;
+		}
+
+		.source-file {
+			margin-top: 15px;
+			margin-bottom: 5px;
+			color: #a0a0a0;
+		}
+
+		.func-args-equal {
+			margin: 0 6px;
+		}
+
+		.func-args-comma {
+			margin-right: 6px;
+		}
+
+		.var-type {
+			color: blue;
+		}
+
+		.var.string {
+			color: brown;
+		}
+
+		.var.integer {
+			color: red;
+		}
+
+		.var.NULL,
+		.var.boolean,
+		.var.array {
+			color: green;
+		}
+
+		.logo {
+			font-family: 'Bitter';
+			font-size: 16px;
+		}
+
+		.foot {
+			font-family: 'Bitter';
+			padding: 1.5em 0;
+			color: #909090;
+		}
+
+		.doc-comment {
+			font-size: 115%;
+		}
+
+		.doc-comment textarea {
+			display: none;
+		}
+
+		.doc-comment p {
+			margin: 1.2em 0;
+		}
+
+		.doc-comment code strong {
+			font-weight: 500;
+		}
+
+		.doc-header {
+			margin: 1.2em 0;
+			font-weight: bold;
+			font-size: 120%;
+		}
+
+		.static-sticky {
+			background-color: #fff;
+		}
+
+		.static-sticky .divider {
+			padding: 0.5em;
+		}
+
+		.menu .item {
+			cursor: pointer;
+		}
+
+		pre, textarea {
+			overflow: visible;
+		}
+	</style>
+</head>
+<body>
+<?php $this->component('docmen/menu'); ?>
+<div class="ui main container">
+	<div class="ui segment">
+		<?php $this->component('docmen/side'); ?>
+		<?php print $content; ?>
+	</div>
+</div>
+<div class="ui divider hidden"></div>
+<div class="foot ui center aligned container">
+	Power by Kephp, page execute <?php print round(diff_milli(KE_BOOTSTRAP_TIME), 4); ?>ms.
+</div>
+<div id="alert_box" class="ui small basic test modal transition">
+	<div class="header"></div>
+	<div class="content"></div>
+	<div class="actions">
+		<div class="ui green ok inverted button"><i class="checkmark icon"></i> Yes</div>
+	</div>
+</div>
+<script type="text/javascript">
+	$(document).ready(function () {
+		$('a[data-ajax]').click(function () {
+			$.getJSON($(this).attr('href'), function (data) {
+				$('#alert_box .header').html(data.status ? 'Operation success!' : 'Operation failure!');
+				$('#alert_box .content').html(data.message);
+				$('#alert_box').modal({
+					closable: false,
+					onApprove: function () {
+						if (data.status)
+							location.reload(true);
+						else
+							$('#alert_box').modal('hide');
+					}
+				}).modal('show');
+			});
+			return false;
+		});
+
+
+		var renderer = new marked.Renderer();
+
+		renderer.heading = function (text, level) {
+			if (this.inWiki) {
+				return '<h' + level + '>' + text + '</h' + level + '>';
+			}
+			else {
+				return '<div class="doc-header">' + text + '</div>';
+			}
+//			var escapedText = text.toLowerCase().replace(/[^\w]+/g, '-');
+
+		};
+//		renderer.code = function (code, lang) {
+//			if (!lang)
+//				lang = 'php';
+//			var hlCode = hljs.highlight(lang, $('<textarea/>').html(code).text());
+//			return '<pre><code class="hljs lineNumbers lang-'+lang+'">' + hlCode.value + '</code></pre>';
+//		};
+
+		marked.setOptions({
+			renderer: renderer,
+			gfm: true,
+			tables: true,
+			breaks: true,
+			pedantic: false,
+			sanitize: false,
+			smartLists: true,
+			highlight: function (code, lang, callback) {
+				if (typeof lang === 'undefined' || !lang || lang.length <= 0)
+					lang = 'php';
+				return Prism.highlight(code, Prism.languages[lang]);
+//				code = $('<textarea/>').html(code).text();
+//				var hlCode = hljs.highlight(lang, code);
+//				return hlCode.value;
+			}
+		});
+
+		$('.doc-comment').each(function (i, item) {
+			item = $(item);
+			var textArea = item.find('textarea'), text = textArea.val();
+			if (item.hasClass('wiki') && marked.defaults.renderer) {
+				marked.defaults.renderer.inWiki = true;
+			}
+			text = $('<textarea/>').html(text).text();
+			$(item).append(marked(text));
+		});
+
+		$('.ui.sticky[data-sticky]').each(function (i, item) {
+			$(item).sticky({context: $(item).attr('data-sticky')});
+		});
+		$('.ui.sticky.static-sticky').each(function (i, item) {
+			$(item).sticky();
+		});
+
+	})
+</script>
+</body>
+</html>

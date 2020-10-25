@@ -1,0 +1,173 @@
+<script type="text/javascript">
+	$(document).ready(function(){
+
+		
+		
+
+
+		var imagename = "{$info['qr_code']}";
+		var fullbackuptab = $('#config_upload_process').html5uploader({
+			fileTypeExts:'image/jpeg,image/png,image/jpg,image/gif', //支持上传的后缀名，多个用逗号隔开, 填写mime类型
+			auto:true,  //是否自动上传
+			removeTimeout:3000,  //上传成功后，进度条多少毫秒后消失
+			url:"{:U('Station/add_slide')}",
+			input_file_id:'input-file-config',  //上传控件的id
+			
+			onCheckFileTypeExts:function(){   //文件类型不对的回调函数
+				$("#alert_box").jk_alert({msg:'文件类型错误!', type:'danger', show_time:8000});
+			},
+			onSelect: function(file){
+				
+			},
+			onUploadStart:function(){  //开始上传的回调函数
+				
+			},
+			onInit:function(){  //初始化的回调函数
+				//美化上传框
+				$('#input-file-config').ace_file_input({no_file:'点击选择文件 ...', btn_choose:'上传', btn_change:'修改', droppable:false});
+			},
+			onUploadComplete:function(){   //上传完成的回调函数
+				//$("#alert_box_config").jk_alert({msg:'上传完成，正在升级，请稍候...', type:'success', show_time:8000});
+			
+			},
+			onUploadSuccess:function(file, responseText){  //上传成功的回调函数
+				var data = JSON.parse(responseText);
+				if ( 1 == data.ret) { 
+					location.reload();
+					
+				}else{
+					$("#alert_box").jk_alert({msg: data.msg, type:'danger', show_time:12000});
+				}
+			
+			},
+			onUploadError:function(file, responseText){
+				$("#alert_box").jk_alert({msg:responseText.msg, type:'danger', show_time:8000});
+			}
+		});
+		
+		
+
+
+
+
+	});
+	
+	function del_ad(id){
+		if (id == ''){
+			$("#alert_box"+id).jk_alert({msg: '请选择要删除的图片', type:'danger', show_time:12000});
+			return false;
+		}
+		
+		showdialog({
+			'title':'提示',
+			'message':'您确定要删除这个广告吗？',
+			'okfunction':function(){
+				$.ajax({ 
+		            url: "{:U('Station/del_slide')}",  
+		            data:{'id': id},
+		            dataType:'json',
+		            type:'POST',
+		            success: function(data){
+		                if (data.ret == 1){
+		                    
+		                    location.reload();
+		                }else{
+		                    $("#alert_box"+id).jk_alert({ msg: data.msg, type: 'danger', show_time: 3500 });
+		                }
+		            }
+		        });
+			}
+		})
+		
+	}
+	function edit_slide(id){
+		if (id == ''){
+			$("#alert_box"+id).jk_alert({msg: '请选择要编辑的图片', type:'danger', show_time:12000});
+			return false;
+		}
+		var sort = $('#sort'+id).val();
+		if (sort == ''){
+			$("#alert_box"+id).jk_alert({msg: '请填写一个排序号，越大越靠前', type:'danger', show_time:12000});
+			return false;
+		}
+		var url = $('#url'+id).val();
+		if (url == ''){
+			$("#alert_box"+id).jk_alert({msg: '请填写一个链接地址', type:'danger', show_time:12000});
+			return false;
+		}
+		var reg = /^((http(s)?:\/\/)?)+([\w-]+\.)+[\w-]+[\w]+((\/[\w- .\/?%&=]*)?)$/;
+		if(!url.match(reg)){
+			$("#alert_box"+id).jk_alert({msg: '链接地址格式错误', type:'danger', show_time:12000});
+			return false;
+		}
+		$.ajax({ 
+            url: "{:U('Station/edit_slide')}",  
+            data:{'id': id, 'sort':sort, 'url':url},
+            dataType:'json',
+            type:'POST',
+            success: function(data){
+                if (data.ret == 1){
+                    
+                    $("#alert_box"+id).jk_alert({ msg: data.msg, type: 'success', show_time: 3500 });
+                }else{
+                    $("#alert_box"+id).jk_alert({ msg: data.msg, type: 'danger', show_time: 3500 });
+                }
+            }
+        });
+		
+		
+	}
+</script>
+
+<div class="page-content">
+	<div class="row">
+		<div class="col-xs-12">
+			<!-- PAGE CONTENT BEGINS -->
+			<div  class="col-xs-10 col-sm-12 padding0" style="margin-bottom:0px;">
+				<label class="col-sm-2 control-label no-padding-right margintop5" for="form-field-1"> 
+					上传广告图片： 
+				</label>
+				<div class="col-sm-4">
+					<div class="input-group col-xs-10 col-sm-12 ">
+						<div id="config_upload_process" ></div>
+					</div>
+
+				</div>
+				<div class="col-sm-6">
+					<p class="help-block dp">png/jpg/jpeg/gif图片，小于2MB，分辨率建议宽度640px，高度960px</p>
+				</div>
+			</div>
+			<div style="clear:both;"></div>
+			<div id="alert_box"></div>
+			<div class="hr hr-24" style="margin-top: 0px;"></div>
+
+			<volist name="slide_list" id="vo">
+				<div class="col-sm-3 col-md-3">
+					<div class="thumbnail">
+						<img src="__PUBLIC__/upload/station_slide/{$vo.image}" style="height:330px;">
+						<div class="caption">
+
+							<p>
+								<div class="input-group col-sm-12">
+									<input type="text" class="form-control" id="sort{$vo.id}" value="{$vo.sort}" placeholder="序号">
+									
+								</div><!-- /input-group -->
+							</p>
+
+							<p>
+								<div class="input-group col-sm-12" style="margin-top:5px;margin-bottom:5px;">
+									<input type="text"  class="form-control" id="url{$vo.id}" value="{$vo.url}" placeholder="链接地址">
+									
+								</div><!-- /input-group -->
+							</p>
+							<p>
+								<button type="button" onClick="edit_slide({$vo.id})" class="btn btn-success" style="width:40%;"><i class=" icon-pencil bigger-110" ></i>修改</button>
+								<button type="button" onClick="del_ad({$vo.id})" class="btn btn-danger" style="width:50%;"><i class=" icon-remove bigger-110"></i>删除</button></p>
+							<p><div id="alert_box{$vo.id}"></div></p>
+						</div>
+					</div>
+				</div>
+			</volist>
+		</div><!-- /.col -->
+	</div>
+</div>

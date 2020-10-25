@@ -1,0 +1,133 @@
+<extend name="Public/base"/>
+<block name="content">
+<h3 class="col-md-8">信息管理</h3>
+<div class="col-md-4">
+	<div class="input-group mb-lg">
+    	<input type="text" name="title" class="form-control" value="<{:I('title')}>" placeholder="请输入信息内容">
+    	<span class="input-group-addon">    		
+        	<a class="fa-search fa" href="javascript:;" id="search" url="__SELF__"></a> 
+    	</span>
+	</div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+    	<div class="panel panel-default">
+       		<div class="panel-heading ">信息列表
+       			 [ <eq name="Think.get.type" value=""><span class="mr-sm">全部</span><else/><a class="mr-sm" href="<{:U('index')}>">全部</a></eq>
+					<eq name="Think.get.type" value="system"><span class="mr-sm">系统</span><else/><a class="mr-sm"  href="<{:U('index?type=system')}>">系统</a></eq>
+					<eq name="Think.get.type" value="app"><span class="mr-sm">应用</span><else/><a class="mr-sm"  href="<{:U('index?type=app')}>">应用</a></eq>
+					<eq name="Think.get.type" value="letter"><span class="mr-sm">私信</span><else/><a  href="<{:U('index?type=letter')}>">私信</a></eq>
+				  ] 
+       			
+       			<div class="btn-group pull-right">
+	       			<a class="btn btn-labeled btn-success" href="<{:U('add')}>">发送通知</a>               
+	                <a class="btn btn-labeled btn-danger ajax-post" href="<{:U('del')}>" target-form="ids">删除</a>
+	       			<a class="btn btn-labeled btn-success ajax-post "  href="<{:U('setStatus',array('status'=>1))}>" target-form="ids">启用</a>
+	       			<a class="btn btn-labeled btn-danger ajax-post "  href="<{:U('setStatus',array('status'=>0))}>" target-form="ids">禁用</a>  
+	         	</div>      			
+       		</div>
+			<div class="table-responsive">
+				<div class="tab-pane active" >
+					<table class="table table-bordered table-striped">
+            			<thead>
+            				<tr>      	
+            					<th style="width: 5%" class="check-all">
+                              		<div data-toggle="tooltip" data-title="全选" class="checkbox c-checkbox">
+                                 		<label>
+                                    		<input type="checkbox">
+                                    		<span class="fa fa-check"></span>
+                                 		</label>
+                              		</div>
+                           		</th> 
+            					<th>ID</th>
+            					<th>类型</th>
+            					<th>标题</th>
+            					<th>内容</th>
+            					<th>提交用户</th>
+            					<th>接收用户</th>
+            					<th>读取</th>
+            					<th>状态</th>
+            					<th>添加时间</th>
+            					<th class='text-center'>操作</th>
+            				</tr>
+            			</thead>
+            			<tbody>
+            				<notempty name="list">
+            				<volist name="list" id="vo">
+            					<tr>
+            						<td>
+                              		<div class="checkbox c-checkbox">
+                                 		<label>
+                                    	<input type="checkbox" class="ids" value="<{$vo.id}>" name="ids[]">
+                                    	<span class="fa fa-check"></span>
+                                 		</label>
+                              		</div>
+                           			</td>
+            						<td><{$vo.id}></td>
+            						<td><{$vo.type}></td>
+            						<td><{$vo.title|msubstr=0,20}></td>
+            						<td><{$vo.content|msubstr=0,20}></td>
+            						<td><{$vo.post_uname}></td>
+            						<td><{$vo.to_uid|get_nickname}></td>
+            						<td> 
+            							<if condition="$vo.is_read eq 1">
+            								<span style="color:#63930A">已读</spna>		        						
+			        					<else/>
+			        						未读
+			        					</if>	
+		        					</td>
+            						<td><{$vo.status|get_status_title}></td>
+            						<td><{$vo.post_time|time_format='Y-m-d'}></td>
+            						<td class='text-center'>
+    	                            <a class="btn btn-labeled btn-sm btn-del" url="<{:U('del?ids='.$vo['id'])}>"><em class="fa fa-times"></em></a>
+            						</td>
+            					</tr>
+            				</volist>
+            				<else/>
+            				<td colspan="9" class="text-center">暂时还没有内容! </td>
+            				</notempty>
+            			</tbody>
+        			</table>
+           		</div>
+           	</div>
+    		<!-- 结束 表格 -->
+    		<div class="panel-footer">
+    			<div class="row">
+					<ul class="pagination">
+					<{$_page}>
+					</ul>
+				 </div>
+            </div>    		
+    	</div>
+	</div>
+</div>
+</block>
+<block name="script">
+<script type="text/javascript">
+	//搜索功能
+	$("#search").click(function(){
+		var url = $(this).attr('url');
+        var query  = $('.search-form').find('input').serialize();
+        query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g,'');
+        query = query.replace(/^&/g,'');
+        if( url.indexOf('?')>0 ){
+            url += '&' + query;
+        }else{
+            url += '?' + query;
+        }
+		window.location.href = url;
+	});
+	//回车搜索
+	$(".search-input").keyup(function(e){
+		if(e.keyCode === 13){
+			$("#search").click();
+			return false;
+		}
+	});
+    //导航高亮
+    highlight_subnav("<{:U('Message/index')}>");
+	</script>
+</block>
+
+
+

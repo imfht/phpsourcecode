@@ -1,0 +1,203 @@
+<extend name="Layout/ins_popup" />
+<block name="content">
+	<div class="popup-fixed">
+		<div class="popup-header clearfix">
+			<div class="pull-left">
+				<label>
+					<input class="ace"  type="radio" id="rb_dept" name="type" value="dept" >
+					<span class="lbl">部门</span> </label>
+				<label>
+					<input  class="ace"  type="radio" id="rb_position" name="type" value="position">
+					<span class="lbl">职位</span> </label>
+			</div>
+			<div class="pull-right">
+				<a onclick="save();" class="btn btn-sm btn-primary">确定</a>
+				<a onclick="myclose();" class="btn btn-sm btn-default">关闭</a>
+			</div>
+		</div>
+		<div class="popup-body clearfix">
+			<div class="col-23 pull-left">
+				<b class="popup-label">地址簿</b>
+				<div class="popup_tree_menu" >
+					<div id="dept" class="hidden" style="height:170px;">
+						{$list_dept}
+					</div>
+					<div id="position" class="hidden" style="height:170px;">
+						{$list_position}
+					</div>
+				</div>
+				<b class="popup-label">&nbsp;</b>
+				<div>
+					<div id="addr_list" style="width:100%;height:170px;"></div>
+				</div>
+			</div>
+			<div class="col-30 pull-left">
+				<div class="col-7 pull-left text-center mid" style="margin-top: 24px;">
+					<div style="height: 220px;">
+						<a onclick="add_address('rc');" class="btn btn-sm btn-primary"><i class="fa fa-angle-double-right"></i></a>
+						<a onclick="save();" class="hidden-lg btn btn-sm btn-primary">确定</a>
+						<a onclick="myclose();" class="btn btn-sm btn-default">关闭</a>
+					</div>
+					<a onclick="add_address('cc');" class="btn btn-sm btn-primary"> <i class="fa fa-angle-double-right"></i></a>
+				</div>
+				<div class="col-23 pull-left">
+					<b class="popup-label">审批</b><span id="rc_count"></span>
+					<div id="rc" class="selected" style="width:100%;height:172px;overflow:hidden">
+						<ul></ul>
+					</div>
+					<b class="popup-label">协商</b><span id="cc_count"></span>
+					<div id="cc" class="selected" style="width:100%;height:172px;overflow:hidden">
+						<ul></ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function add_address(name) {
+			$("input:checked[name='addr_id']").each(function() {
+				$text = $(this).next().text().trim();
+				$val = $(this).val();
+				if ($("#" + name + ".selected li[data='" + $val + "']").length == 0) {
+					$li = $('<li><span></span><a class="fa fa-times"></a></li>');
+					$li.find('span').text($text);
+					$li.attr('data', $val);
+					$li.appendTo("#" + name + ".selected ul");
+					recount();
+				};
+			});
+			$("#addr_list input:checked").prop('checked', false);
+		}
+
+
+		$(document).on("click", ".selected a.fa-times", function() {
+			$(this).parent().remove();
+			recount();
+		});
+
+		// 双击添加到收件人 因后添加的数据 所以需要用live函数
+		$(document).on("dblclick", "#addr_list label", function() {
+			$text = $(this).text();
+			$val = $(this).find("input").val();
+			if ($("#rc.selected li[data='" + $val + "']").length == 0) {
+				$li = $('<li><span></span><a class="fa fa-times"></a></li>');
+				$li.find('span').text($text);
+				$li.attr('data', $val);
+				$li.appendTo("#rc.selected ul");
+				recount();
+			};
+		});
+
+		function recount() {
+			$("#rc_count").text("(" + $("#rc.selected li").length + ")");
+			$("#cc_count").text("(" + $("#cc.selected li").length + ")");
+			$("#bcc_count").text("(" + $("#bcc.selected li").length + ")");
+		}
+
+		function save() {
+			$("#rc.selected li").each(function(i) {
+				emp_no = $(this).attr('data');
+				name = jQuery.trim($(this).text());
+				name = name.replace(/<.*>/, '');
+				html_string = conv_inputbox_item(name, emp_no);
+				$("#actor_wrap .address_list", parent.document).append(html_string);
+			});
+			myclose();
+		}
+
+		function save() {
+			$("#confirm_wrap,#consult_wrap", parent.document).html('');
+
+			$("#rc.selected li").each(function(i) {
+				emp_no = $(this).attr('data');
+				name = jQuery.trim($(this).text());
+				name = name.replace(/<.*>/, '');
+				html_string = conv_inputbox_item(name, emp_no);
+				$("#confirm_wrap", parent.document).append(html_string);
+			});
+
+			$("#cc.selected li").each(function() {
+				emp_no = $(this).attr('data');
+				name = jQuery.trim($(this).text());
+				name = name.replace(/<.*>/, '');
+				html_string = conv_inputbox_item(name, emp_no);
+				$("#consult_wrap", parent.document).append(html_string);
+			});
+
+			$("#confirm_wrap span i", parent.document).remove();
+
+			$("#confirm_wrap span", parent.document).append("<b><i class=\"fa fa-arrow-right\"></i></b>");
+			$("#confirm_wrap span b:last", parent.document).html("<i class=\"fa\"></i>");
+
+			$("#consult_wrap span a", parent.document).remove();
+
+			$("#consult_wrap span", parent.document).append("<b><i class=\"fa fa-arrow-right\"></i></b>");
+			$("#consult_wrap span b:last", parent.document).html("<b><i class=\"fa\"></i></b>");
+
+			$("#confirm_wrap,#consult_wrap", parent.document).show();
+
+			myclose();
+		}
+
+		// 显示AJAX 读取的数据
+		function showdata(result) {
+			$("#addr_list").html("");
+			if ( type = $("input[name='type']:checked").val() == "dept") {
+				var detp_id = "dept_" + $("#dept a.active").attr("node");
+				var dept_name = $("#dept a.active span").text();
+				var name = dept_name + "&lt;dept@group&gt;";
+				var html_string = conv_address_item(name, detp_id);
+				$("#addr_list").html(html_string);
+			}
+			for (s in result.data) {
+				var id = result.data[s].id;
+				var position_name = result.data[s].position_name;
+				var emp_no = result.data[s].emp_no;
+				var name = result.data[s].name;
+				var name = name + "/" + position_name;
+				var html_string = conv_address_item(name, emp_no);
+				$("#addr_list").append(html_string);
+			}
+		}
+
+
+		$(document).ready(function() {
+
+			$("#rb_{$type}").prop('checked', true);
+			// 选择用户默认选择的类型
+			$("#{$type}").removeClass("hidden");
+
+			$("input[name='type']").on('click', function() {
+				$("input[name='type']").each(function() {
+					$("#" + $(this).val()).addClass("hidden");
+				});
+				$("#" + $(this).val()).removeClass("hidden");
+			});
+			//点击节点时读取相应的数据
+			$(".tree_menu  a").click(function() {
+				$(".tree_menu a").removeClass("active");
+				var type = $("input[name='type']:checked").val();
+				$(this).addClass("active");
+				sendAjax("{:U('read')}", "type=" + type + "&id=" + $(this).attr("node"), function(data) {
+					showdata(data);
+				});
+				return false;
+				//禁止连接生效
+			});
+
+			/* 双击添加到收件人 因后添加的数据 所以需要用live函数 */
+			$("#rc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#rc_count").text("(" + $("#rc select option").length + ")");
+			});
+
+			$("#cc select").on("dblclick", function() {
+				$(this).find("option:selected").remove();
+				$("#cc_count").text("(" + $("#cc select option").length + ")");
+			});
+		});
+
+	</script>
+</block>

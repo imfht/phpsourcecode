@@ -1,0 +1,205 @@
+{extend name="base" /}
+{block name="body"}
+<style>
+.upload-img-box img{float:left;padding:5px;}
+</style>
+<!--tab标签-->
+    <div class="layui-tab-brief">
+
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+            
+                <form class="layui-form form-container"  data-url="{:url('addonConfig')}"  localtion-url="{:url('addonList')}">
+
+                    <input type="hidden" name="id" value="{$list.id}" readonly>
+
+       
+        
+         {empty name="custom_config"}
+			{foreach name="list['config']" item="form" key="o_key"}
+			<div class="layui-form-item">
+			
+			 <label style="width:{$form.labelwidth}" class="layui-form-label">{$form.title|default=''}</label>
+			  <div class="layui-input-inline">
+						{switch name="form.type"}
+						{case value="text"}
+							
+								<input type="text" style="width:{$form.width}" name="config[{$o_key}]" class="layui-input" value="{$form.value}">
+							
+							{/case}
+							{case value="password"}
+							
+								<input type="password" style="width:{$form.width}" name="config[{$o_key}]" class="layui-input" value="{$form.value}">
+							
+							{/case}
+							{case value="hidden"}
+								<input type="hidden" name="config[{$o_key}]" value="{$form.value}">
+							{/case}
+							{case value="radio"}
+							
+								{foreach name="form.options" item="opt" key="opt_k"}
+									
+										<input type="radio" name="config[{$o_key}]" value="{$opt_k}"  title="{$opt}"  {eq name="form.value" value="$opt_k"} checked{/eq}>
+									
+								{/foreach}
+							
+							{/case}
+							{case value="checkbox"}
+							
+								{foreach name="form.options" item="opt" key="opt_k"}
+									
+										{php}
+											is_null($form["value"]) && $form["value"] = array();
+										{/php}
+										<input type="checkbox" title="{$opt}" name="config[{$o_key}][]" value="{$opt_k}"  {in name="opt_k" value="$form.value" } checked{/in}>
+									
+								{/foreach}
+							
+							{/case}
+							{case value="select"}
+							
+								<select name="config[{$o_key}]" class="layui-input"  >
+									{foreach name="form.options" item="opt" key="opt_k"}
+										<option value="{$opt_k}" {eq name="form.value" value="$opt_k"} selected{/eq}>{$opt}</option>
+									{/foreach}
+								</select>
+							
+							{/case}
+							{case value="textarea"}
+							
+								
+									<textarea class="autosize layui-textarea" rows="{$form.rows}" cols="{$form.cols}" name="config[{$o_key}]">{$form.value}</textarea>
+								
+							
+							{/case}
+							
+							{case value="picture_union"}
+								<input type="file" name="file" class="layui-upload-file" id="upload_picture_{$o_key}" style="float: left;">
+	                            
+								<input type="hidden" name="config[{$o_key}]" id="cover_id_{$o_key}" value="{$form.value}"/>
+								<div class="upload-img-box" >
+									{notempty name="form['value']"}
+									{php} $mulimages = explode(",", $form["value"]); {/php}
+									{foreach name="mulimages" item="one"}
+										<div class="upload-pre-item" val="{$one}">
+											<img width="100" height="70" src="{$one|get_cover='savepath'}"  id="removePicture{$o_key}"/>
+										</div>
+									{/foreach}
+									{/notempty}
+								</div>
+								
+								<script type="text/javascript">
+							
+								
+								layui.use(['form', 'upload'],function(){
+								  var form = layui.form()
+								  ,$ = layui.jquery;
+								  
+								  $('#removePicture{$o_key}').click(function(){
+									  var p = $(this).parent().parent();
+										$(this).parent().remove();
+										var ids = [];
+										
+										
+										$("#cover_id_{$o_key}").parent().find('.upload-img-box').find('.upload-pre-item').each(function(){
+											ids.push($(this).attr('val'));
+										});
+										if(ids.length > 0)
+											$("#cover_id_{$o_key}").val(ids.join(','));
+										else
+											$("#cover_id_{$o_key}").val('');
+									  
+									  
+								  });
+								  
+								  
+								  
+								  layui.upload({
+								    url: '{:url("File/pictureUpload")}'
+								    ,elem:'#upload_picture_{$o_key}'
+								    ,before: function(input){
+								    	
+							
+								      loading = layer.load(2, {
+								        shade: [0.2,'#000']
+								      });
+								    }
+								    ,success: function(res){
+								      layer.close(loading);
+										if(res.code==200){
+											src = res.headpath;
+											$("#cover_id_{$o_key}").parent().find('.upload-img-box').append(
+												'<div class="upload-pre-item" val="' + res.id + '"><img src="' + src + '" width="120" height="120"  id="removePicture{$o_key}"/></div>'
+											);
+											var ids = [];
+											
+											
+											$("#cover_id_{$o_key}").parent().find('.upload-img-box').find('.upload-pre-item').each(function(){
+												ids.push($(this).attr('val'));
+											});
+											if(ids.length > 0)
+												$("#cover_id_{$o_key}").val(ids.join(','));
+											else
+												$("#cover_id_{$o_key}").val('');
+										} else {
+											
+											 layer.msg(data.msg, {icon: 1, time: 1000});
+										
+										}
+								    
+								     
+								    }
+								  }); 
+
+
+								})
+								
+								
+								
+								</script>
+					
+							{/case}
+							
+							
+							
+							
+							
+							
+							{/switch}
+							
+							
+							<div class="layui-form-mid layui-word-aux">
+						{present name="form.tip"}
+							{$form.tip}
+						{/present}
+						</div>
+							
+							</div>
+							
+						
+	
+			
+			</div>
+		
+			{/foreach}
+		{else /}
+			{present name="custom_config"}
+				{$custom_config}
+			{/present}
+		{/empty}
+
+ <div class="btable-paged" >
+                 <div class="layui-main">
+                    <div class="formbtngroup">
+<button class="layui-btn layui-btn-small" lay-submit="" lay-filter="formadd">提交</button>
+<a href="javascript:;"  class="layui-btn layui-btn-primary layui-btn-small closebtn">返回</a>
+</div>
+</div>
+     </div>        
+    </form>
+   </div>
+        </div>
+    </div>
+    {/block}
+
+

@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Proxy验证助手 - V1.0</title>
+<script src="//cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+<style type="text/css">
+* {font-size:14px;font-family:Verdana, Geneva, sans-serif;line-height:24px;}
+td {padding:3px;}
+.all {width:960px;margin:0 auto;}
+.red {color:#D95200;}
+.red1 {color:#f00;}
+.green {color:#0f0;}
+fieldset {margin-bottom:30px;}
+th{text-align: left;background: #ddd;}
+</style>
+<script>
+var iparr=[];
+function checkone(dom){
+    var ip=$('#ip').val();
+    var port=$('#port').val();
+    checkajax(ip,port,dom);
+}
+function checkajax(ip,port,dom,type){
+    $(dom).html('查询中...');
+    if(!ip || ip.indexOf('.')==-1){$(dom).html('ip格式错误');return;}
+    var query = new Object;
+    query.ip=ip;
+    query.port=port;
+    query.type=type;
+    $.ajax({
+	url: 'http://tool.bitefu.net/proxy/testproxy.php',
+	type: "get",
+    data: query,
+	dataType: "jsonp",
+	success: function(obj) {
+		if (obj.status) {
+			$(dom).html('<span class="green">'+ip+':'+port+' 有效</span>');
+			return false;
+		} else {
+			$(dom).html('<span class="red1">'+obj.info+'</span>');
+			return false;
+		}
+	}
+});
+}
+function mulitcheck(){
+    var ips=$('#ips').val();
+    if(ips){
+        var arr1=ips.split("\n");var html='';
+        iparr=[];
+        for(var i in arr1){
+            var nowip=arr1[i];
+            nowip=nowip.replace('@',':');
+            nowip=nowip.replace(';',':');
+            var arr=nowip.split(':');
+            iparr[i]=arr;
+            if(arr[0] && arr[0].indexOf('.')>=0){
+            html+='<tr><td>'+arr[0]+'</td><td>'+arr[1]+'</td><td>'+arr[2]+'</td><td>'+arr[3]+'</td><td id="lc_'+i+'">待查</td></tr>';
+            }
+        }
+        if(iparr){
+            $('#loops').show();
+            $('#loopsbody').append(html);
+            loopcheck(0);
+        }else{
+            $('.mulitcheck').html('ip解析失败');
+        }     
+        
+    }else{
+        $('.mulitcheck').html('要检测的ip为空');
+    }
+}
+function loopcheck(i){
+    if(iparr[i]){
+        var type='';
+        if(iparr[i][2] && iparr[i][2].indexOf('sock')>=0)type='1';
+        checkajax(iparr[i][0],iparr[i][1],'#lc_'+i,type);
+        setTimeout(function(){
+            i++;
+            loopcheck(i);
+        },500);
+    }
+} 
+</script>
+</head>
+
+<body>
+<div class="all">
+		<fieldset>
+			<legend><b class="red">HTTP代理验证[SINGLE模式]</b></legend>
+			IP：<input type="text" id="ip" />
+			端口：<input type="text" id="port" value="80" />
+			<input type="button" onclick="checkone('.onecheck')" name="tj" value="轻击进行验证" /><a href="listsuccess.php" target="_blank">历史查询</a>
+            <div class="onecheck red"></div>
+		</fieldset>		
+		<fieldset id="loops" style="display: none;">
+        <table style="width: 100%;">
+            <tbody id="loopsbody">
+              <tr>
+                <th>ip</th>
+                <th>端口</th>
+                <th>类型</th>
+                <th>备注</th>
+                <th>结果</th>
+              </tr>
+        </tbody>
+        </table>
+</fieldset>
+		<fieldset>
+			<legend><b class="red">HTTP代理验证[固定格式批量验证]</b></legend>
+			请把固定格式的内容复制到下面的文本框中，格式如：<span class="red">221.130.18.125:80@HTTP;移动</span><br />
+			<textarea id="ips" style="width:900px; height:400px; overflow-y:scroll; font-size:13px; color:#333;"></textarea><br />
+			<input type="button" onclick="mulitcheck()" name="tj" value="轻击进行验证" />
+		</fieldset><div class="mulitcheck red"></div>
+</div><script type="text/javascript" src="https://js.users.51.la/3729735.js"></script>
+</body>
+</html>

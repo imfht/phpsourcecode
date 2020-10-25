@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!--{template /module/bbs/theme/mobile_meta}-->
+<link type="text/css" href="tpl/_res/mobile/css/swiper.css?v={$setting[Version]}" rel="stylesheet" />
+<script type="text/javascript" src="tpl/_res/mobile/js/swiper.js?v={$setting[Version]}"></script>
+</head>
+<body>
+	<div class="bbs">
+		<section id="section">
+			<!--{template /module/bbs/theme/mobile_head}-->
+			
+			<div class="block">
+				<form class="pure-form" method="post" action="mobile.do?ac=bbs/{$dispatches[method]}&id={$_var[gp_id]}&topicid={$_var[gp_topicid]}" onsubmit="javascript:return check_from(this);">
+					<input type="hidden" name="formsubmit" value="yes" />
+					
+					<div class="pure-g">
+						<textarea rows="5" cols="45" name="txtContent" class="pure-u-1" placeholder="{lang bbs.topic.content.placeholder}{lang bbs.topic.content.limit}">{$topic[CONTENT]}</textarea>
+					</div>
+					
+					<div class="operation">
+						<p class="left">
+							<span class="icon active image" ref="picture"></span>
+							<span class="icon ellipsis" ref="faces"></span>
+						</p>
+						<p class="right">
+							<button type="reset" class="pure-button">{lang bbs.button.reset}</button>&nbsp;
+							
+							<!--{if $_var['gp_op'] == 'post'}-->
+							<button type="submit" class="pure-button pure-submit">{lang bbs.button.post}</button>
+							<!--{else}-->
+							<button type="submit" class="pure-button pure-submit">{lang bbs.button.submit}</button>
+							<!--{/if}-->
+						</p>
+						<br class="clear"/>
+				    </div>
+				</form>
+				
+				<div class="operate picture">
+					<p class="tips">{lang bbs.topic.picture.limit}</p>
+					
+					<form id="frm_upload" method="post" enctype="multipart/form-data">
+						<div style="height:0px; overflow:hidden;"><input type="file" name="flePath" id="fle_Path" /></div>
+					</form>
+					
+					<div class="list">
+						<!--{loop $topic_files $_loop $file}-->
+						<p class="ref">
+							<input type="hidden" name="hdnImagePath[]" value="{$file[4]}" />
+							<img src="{$file[0]}" alt="" border="0" onclick="delete_image(this)"/>
+							<span class="icon cancel-circle"></span>
+						</p>
+						<!--{/loop}-->
+						
+						<p class="ref add" {echo count($topic_files) > 3 ? 'style="display:none;"' : '';}>
+							<img src="module/bbs/theme/images/mobile/icon-bbs-upload.png" border="0"/>
+							<span class="loadding" style="display:none;"><img src="module/bbs/theme/images/mobile/loading.gif"/></span>
+						</p>
+						<br class="clear"/>
+					</div>
+				</div>
+				
+				<div class="operate faces swiper-container" style="visibility:hidden;">
+					<div class="swiper-wrapper">
+						<!--{loop $faces_list $loop $faces}-->
+						<div class="swiper-slide face-panel-{$loop}">
+							<img src="module/bbs/theme/images/mobile/bg-2-1.png" border="0"/>
+							<p class="panel">
+								<!--{loop $faces $loop $face}-->
+								<span ref="{$face}" class="face"></span>
+								<!--{/loop}-->
+								<br class="clear"/>
+							</p>
+						</div>
+						<!--{/loop}-->
+					</div>
+					
+					<div class="swiper-pagination"></div>
+				</div>
+			</div>
+		</section>
+	</div>
+	
+	<!--{template /module/bbs/theme/mobile_foot}-->
+	
+	<script>
+	var uploading = false;
+	function check_from(frm){
+		if(frm.txtContent.value.trim().length == 0){
+			frm.txtContent.focus();
+			return false;
+		}
+		
+		$('.bbs .block .pure-form').append($('.picture .list input'));
+		
+		return true;
+	}
+	
+	function delete_image(spn){
+		$(spn).parent().remove();
+		if($('.picture .list input').length < 4) $('.picture .list .add').show();
+	}
+	
+	function show_image(path, name, thumb){
+		var tempHTML = '<p class="ref">';
+		tempHTML += '<input type="hidden" name="hdnImagePath[]" value="' + path + '|' + name + '|' + thumb + '" />';
+		tempHTML += '<img src="' + path + '" alt="" border="0" onclick="delete_image(this)"/>';
+		tempHTML += '<span class="icon cancel-circle"></span>';
+		tempHTML += '</p>';
+		
+		$(tempHTML).insertBefore('.picture .list .add');
+		$('.picture .list .add .loadding').hide();
+		
+		if($('.picture .list input').length > 3) $('.picture .list .add').hide();
+		
+		uploading = false;
+	}
+	
+	$(function(){
+		$.gotop({id:'gotop'});
+		
+		$('#fle_Path').change(function(){
+			uploading = true;
+			$('.picture .list .add .loadding').show();
+			
+			var fdata = new FormData($('#frm_upload').get(0));
+			
+			$.ajax({url:'mobile.do?ac=bbs/_upload&rnd=' + Math.random(), type:'POST', data:fdata, processData:false, contentType:false, success:function(data){
+				data = eval('(' + data + ')');
+				
+				$('.picture .list .add .loadding').hide();
+				
+				if(data.success == true) show_image(data.path, data.name, data.thumb);
+				else $.toast({message:data.message});
+			}});
+		});
+		
+		$('.picture .list .add').click(function(){
+			if(!uploading) $('#fle_Path').click();
+		});
+		
+		$('.operation .left .icon').click(function(){
+			$('.operation .left .icon').removeClass('active');
+			$(this).addClass('active');
+			
+			$('.operate').hide();
+			$('.' + $(this).attr('ref')).show();
+		});
+		
+		$('.faces .face').click(function(){
+			if($(this).attr('ref') != '{}') $('.pure-form textarea').val($('.pure-form textarea').val() + $(this).attr('ref'));
+		});
+		
+		var swiper = new Swiper('.swiper-container', {pagination:'.swiper-pagination'});
+		$('.swiper-container').css('visibility', '').hide();
+	});
+	</script>
+</body>
+</html>

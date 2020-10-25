@@ -1,0 +1,1 @@
+{{php_cmd}} %~dp0/epii-server.php %* %cd%

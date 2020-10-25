@@ -1,0 +1,90 @@
+<?php 
+
+if (!empty($_POST)) die;
+
+$cond = "WHERE city = $forum_city";
+
+$topic_news = dt_query("SELECT id, title, icon_url FROM forum_topic $cond ORDER BY l_r_at DESC LIMIT 6");
+if (!$topic_news) die('获取数据失败！');
+
+$kinds = dt_query("SELECT id, name FROM forum_kind $cond ORDER BY today_up_c DESC");
+if (!$kinds) die('获取kind数据失败！');
+
+has_order();  //检查订单
+function has_order() {
+	if (!empty($_SESSION['user_has_order'])) return false;
+
+	$auth = @$_SESSION['auth'];
+	if (!empty($auth)) {
+		if (dt_query_one("SELECT id FROM forum_topic WHERE user_id = ".$auth['id']." AND order_c > 0 LIMIT 1")) $_SESSION['user_has_order'] = 1;
+	}
+}
+
+?>
+<div class="container top_ads">
+<?php echo $city_info['top_ads'] ?>
+</div>
+<div class="container index-box-1">
+	<div class="col-md-6 column">
+                <div class="pull-right" style="width:45%;margin-top:20px">
+                        <form id="search" action="javascript:topic_my_list_search(0, '3')">
+                                <div class="input-group">
+                                        <input id="topic_my_list_search" class="form-control" type="text" placeholder="搜索" value="">
+                                        <a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"><span class="glyphicon glyphicon-search"></span></a>
+                                </div>
+                        </form>
+                </div>
+		<h3><a href="?c=forum&a=topic_my_list&m_falter=3"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> 新发布 <small>>></small></a> </h3>
+		<ul class="list-unstyled">
+ 			<?php $t_1 = 0; while($topic_new = mysql_fetch_array($topic_news)) { ?>
+                        <?php if (!$t_1) { ?>
+                        <li><a target="_blank" href="<?php echo s_url('?c=forum&a=topic_show&topic_id='.$topic_new['id']) ?>"><?php if ($topic_new['icon_url']) { ?><div class="col-xs-4 title-b-img" style="background-image:url('<?php echo $topic_new['icon_url'] ?>')"></div><?php } ?><div class="title-a"><?php echo $topic_new['title'] ?></div></a></li>
+                        <?php $t_1 = 1; } else { ?>
+                        <li><div class="title-a" ><a target="_blank" href="<?php echo s_url('?c=forum&a=topic_show&topic_id='.$topic_new['id']) ?>"><?php echo $topic_new['title'] ?></a></div></li>
+                        <?php } ?>
+			<?php } ?>
+		</ul>
+
+	</div>
+	<a target="_blank" href="<?php echo $city_info['index_img_link'] ?>"><div class="col-md-6 column index-box-1-img hidden-xs hidden-sm" style="background-image:url('<?php echo $city_info['index_img_url'] ?>')"></div></a>
+</div>
+<?php while($kind = mysql_fetch_array($kinds)) { ?>
+<?php $forums = dt_query("SELECT * FROM forum WHERE kind = '".$kind['id']."' ORDER BY today_up_c DESC LIMIT 12") ?>
+<div class="container index-forum">
+        <h3><a target="_blank" href="<?php echo s_url('?c=forum&a=forum_list&m_falter=5&kind='.$kind['id']) ?>"><img src="img/finance/hengxin_logo_sm_1.png" height="25px"> <?php echo $kind['name'] ?> <small>>></small></a></h3>
+        <?php while($forum = mysql_fetch_array($forums)) { ?>
+	<div class="col-md-2 col-sm-3 col-xs-4 column">
+		<?php if ($forum['url']) echo '<a id="seo_url" href="'.$forum['url'].'">'.$city_info['name'].$forum['name'].' - '.$city_info['name'].SYS_NAME.'</a>' ?>
+		<a target="_blank" href="<?php echo s_url('?c=forum&a=topic_list&forum_id='.$forum['id']) ?>">
+			<div class="row forum-item">
+				<div class="forum-info">
+					<h4> <?php echo $forum['name'] ?> <?php if (date('Ymd', time()) == $forum['today']) echo '<b class="badge">'.$forum['today_reply_c'].'</b>' ?></h4>
+				</div>
+			</div>
+		</a>
+	</div>
+        <?php } ?>
+</div>
+<?php } ?>
+<div class="index-forum-bottom"></div>
+<?php
+if (1 == $city_info['carousel']) { 
+	$carousels = dt_query_array("SELECT img_url, img_link FROM forum_carousel $cond ORDER BY c_at DESC LIMIT 40");
+?>
+<div class="container index-forum ads">
+	<?php foreach ($carousels as $c) { ?>
+	<a target="_blank" href="<?php echo $c['img_link'] ?>"> <img src="<?php echo $c['img_url'] ?>"/> </a>
+	<?php } ?>
+</div>
+<?php } ?>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$('li#forum_index').addClass('active');
+		<?php if (!empty($_SESSION['user_has_order'])) echo 'user_has_order();' ?>
+
+		<?php if (!empty($_SESSION['app_version']) && (1.04 != @$_SESSION['app_version'])) {  ?>
+		if (confirm ("<?php echo $city_info['name'].SYS_NAME ?>有新APP了,快更新来看看吧！^_^")) location = '<?php echo APP_URL ?>';
+		<?php } ?>
+	});
+
+	</script>

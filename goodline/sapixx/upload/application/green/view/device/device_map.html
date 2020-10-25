@@ -1,0 +1,62 @@
+{if empty($id)}
+<div id="actionbar">
+    <form class="input-group" id="form" action="{:url('device/deviceMap')}" method="get">
+        <div class="fn-left">
+            {if $founder}
+            <select name="operate_id" class="select" id="operate_id">
+                <option value="0">请选择运营商</option>
+                {volist name="operate" id="vo"}<option value="{$vo.id}" {if $vo.id == $operate_id}selected{/if}>{$vo.operate_name}</option>{/volist}
+            </select>
+            {/if}
+            <a href="{:url('device/deviceMap',['types'=>0,'operate_id' => $operate_id])}" class="button{if $types == 0} button-green{/if}">在线</a>
+            <a href="{:url('device/deviceMap',['types'=>1,'operate_id' => $operate_id])}" class="button{if $types == 1} button-green{/if}">离线</a>
+        </div>
+        <div class="fn-left">
+            <input placeholder="请输入名称|设备编码" class="input w200" type="text" name="keyword" value="{$keyword}" />
+            <input type="submit" value="搜索" class="button button-blue" />
+        </div>
+    </form>
+</div>
+{/if}
+<div id="allmap"></div>
+<script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=F51571495f717ff1194de02366bb8da9&s=1"></script>
+<style>
+    html,body{background-color: #f4f5f9;}
+    #allmap{height:100%}
+    #footer{background-color: #f4f5f9;border-top: 0;text-align: center;padding:20px}
+</style>
+<script type="text/javascript">
+Do('base','layer',function(){
+    // 百度地图API功能
+    var map = new BMap.Map("allmap");
+    var point = new BMap.Point(116.404, 39.915);
+    map.centerAndZoom(point, 15);
+    map.enableScrollWheelZoom();
+    var list = JSON.parse('{$list|raw}');
+    if(list.length >= 0){
+        for (var i = 0; i < list.length; i++) {
+            var point = new BMap.Point(list[i].longitude, list[i].latitude);
+            var marker = new BMap.Marker(point);
+            map.addOverlay(marker);
+            var label = new BMap.Label(list[i].title,{offset:new BMap.Size(20,-10)});
+            if(list[i].danger) {
+                label.setStyle({backgroundColor : "red"});
+            }
+            marker.setLabel(label);
+            if(i == 0){
+                map.panTo(point);
+            }
+        }
+    }else if(list){
+        var point = new BMap.Point(list.longitude, list.latitude);
+        var marker = new BMap.Marker(point);
+        map.addOverlay(marker);
+        var label = new BMap.Label(list.title,{offset:new BMap.Size(20,-10)});
+        if(list.danger) {
+            label.setStyle({backgroundColor : "red"});
+        }
+        marker.setLabel(label);
+        map.panTo(point);
+    }
+})
+</script>

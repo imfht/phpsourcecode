@@ -1,0 +1,135 @@
+<div class="content-wrapper">
+
+    <section class="content-header">
+        <?=$this->partial('layout/breadcrumb')?>
+
+        <h1 class="pull-right">
+            <a href="<?=$this->url('supplier', ['action'=> 'add']);?>" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> <?=$this->translate('添加供应商')?></a>
+            <?=$this->HelpUrl('supplierList')?>
+        </h1>
+
+    </section>
+
+    <section class="content">
+        <?=$this->partial('layout/messages'); ?>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box erp-box">
+
+                    <div class="box-body table-responsive no-padding">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr class="erp-bg-thead">
+                                    <th width="2%"><input type="checkbox" class="minimal select-all-checkbox"></th>
+                                    <th width="5%">ID</th>
+                                    <th width="20%"><?=$this->translate('供应商名称')?></th>
+                                    <th><?=$this->translate('供应商编码')?></th>
+                                    <th><?=$this->translate('供应商联系人')?></th>
+                                    <th width="15%"><?=$this->translate('供应商电话 / 手机')?></th>
+                                    <th><?=$this->translate('供应商分类')?></th>
+                                    <th width="8%"><?=$this->translate('排序')?></th>
+                                    <th width="12%"><?=$this->translate('操作')?></th>
+                                </tr>
+
+                                <?php
+                                $sForm = $this->searchForm;
+                                $sForm->prepare();
+                                ?>
+                                <?= $this->form()->openTag($sForm); ?>
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <p>
+                                            <?= $this->formElement($sForm->get('start_id')); ?>
+                                        </p>
+                                        <div>
+                                            <?= $this->formElement($sForm->get('end_id')); ?>
+                                        </div>
+                                        <?=$this->formElementErrors($sForm->get('start_id'), ['class'=>'error-message']);?>
+                                        <?=$this->formElementErrors($sForm->get('end_id'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td>
+                                        <?= $this->formElement($sForm->get('supplier_name')); ?>
+                                        <?=$this->formElementErrors($sForm->get('supplier_name'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td>
+                                        <?= $this->formElement($sForm->get('supplier_code')); ?>
+                                        <?=$this->formElementErrors($sForm->get('supplier_code'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td>
+                                        <?= $this->formElement($sForm->get('supplier_contacts')); ?>
+                                        <?=$this->formElementErrors($sForm->get('supplier_contacts'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td>
+                                        <?= $this->formElement($sForm->get('supplier_phone')); ?>
+                                        <?=$this->formElementErrors($sForm->get('supplier_phone'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td>
+                                        <?= $this->formElement($sForm->get('supplier_category_id')); ?>
+                                        <?=$this->formElementErrors($sForm->get('supplier_category_id'), ['class'=>'error-message']);?>
+                                    </td>
+                                    <td></td>
+                                    <td>
+                                        <button type="submit" class="btn btn-info btn-sm"><i class="fa fa-search"></i></button>
+                                        <?php if(!empty(array_filter($sForm->getData()))) { ?>
+                                            <a href="<?=$this->url('supplier');?>" class="btn btn-default btn-sm"><i class="fa fa-reply"></i></a>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+                                <?= $this->form()->closeTag(); ?>
+                                </thead>
+
+                                <form method="post" action="<?=$this->url('supplier', ['action' => 'updateAll']);?>" name="edit-all-form" id="edit-all-form">
+                                <?php if($this->supplierList) foreach ($this->supplierList as $supplier) { ?>
+                                    <tr>
+                                        <td><input  name="select_id[]" value="<?=$supplier->getSupplierId()?>" type="checkbox" class="minimal"></td>
+                                        <td><?= $supplier->getSupplierId()?></td>
+                                        <td><?= $this->escapeHtml($supplier->getSupplierName())?></td>
+                                        <td><?= $this->escapeHtml($supplier->getSupplierCode())?></td>
+                                        <td><?=$this->escapeHtml($supplier->getSupplierContacts())?></td>
+                                        <td><?=$this->escapeHtml($supplier->getSupplierTelephone() . ' / ' . $supplier->getSupplierPhone())?></td>
+                                        <td><?= $this->escapeHtml($supplier->getSupplierCategory()->getSupplierCategoryName())?></td>
+                                        <td><input type="text" name="supplier_sort[<?=$supplier->getSupplierId()?>]" value="<?= $supplier->getSupplierSort()?>" class="form-control input-sm"></td>
+                                        <td>
+                                            <a href="<?= $this->url('supplier',
+                                                ['action'=>'edit', 'id'=>$supplier->getSupplierId()]); ?>"
+                                               class="btn btn-xs btn-success"><i class="fa fa-pencil"></i> <?=$this->translate('编辑')?>
+                                            </a>
+
+                                            <a href="javascript:;" onclick="deleteConfirm('<?php echo $this->translate('您确实要删除该供应商吗？'); ?>', '<?= $this->url('supplier', ['action'=>'delete', 'id'=>$supplier->getSupplierId()], ['query' => ['qToken' => $this->adminHelper()->getCsrfValue()]]); ?>');" class="btn btn-xs btn-danger">
+                                                <i class="fa fa-trash"></i> <?=$this->translate('删除')?>
+                                            </a>
+
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+
+                                <tfoot>
+                                <tr>
+                                    <td colspan="9">
+                                        <input type="checkbox" class="minimal select-all-checkbox"> <?=$this->translate('全选')?>
+                                        <select name="editAllState">
+                                            <option value=""><?=$this->translate('选择状态')?></option>
+                                            <option value="sort"><?=$this->translate('更新排序')?></option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-check"></i> <?=$this->translate('更新')?></button>
+                                        <?= $this->paginationControl($this->supplierList,
+                                            'Sliding',
+                                            'layout/page',
+                                            ['route' => 'supplier']); ?>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                                </form>
+                            </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>

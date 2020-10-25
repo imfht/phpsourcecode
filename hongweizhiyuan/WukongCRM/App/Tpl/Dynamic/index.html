@@ -1,0 +1,372 @@
+<include file="Public:header" />
+<link type="text/css" href="__PUBLIC__/css/dynamic.css" rel="stylesheet" />
+<link type="text/css" href="__PUBLIC__/css/flat/blue.css" rel="stylesheet">
+<script src="__PUBLIC__/js/icheck.min.js"></script>
+<div class="container">
+	<div class="page-header">
+		<h4>动态首页</h4>
+	</div>
+	<include file="Public:alert" />
+	<div class="row">
+		<div class="span3 knowledgecate">
+			<div class="personal-panel">
+				<div class="avatar01">
+					<if condition="empty($userInfo['img'])">
+						<img src="__PUBLIC__/img/avatar_default.png" class="thumbnail avatar-img"/>
+					<else />
+						<img src="{$userInfo.img}" class="thumbnail avatar-img"/>
+					</if>
+				</div>
+				<div class="position01">
+					<p>{$userInfo.user_name}</p>
+					<p>{$userInfo.department_name} - {$userInfo.role_name}</p>
+				</div>
+			</div>
+			<div class="dynamiccate">
+				<div class="dynamiccate-title">动态信息</div>
+				<ul class="nav nav-list">
+					<li><a href="{:U('dynamic/index')}" <if condition="$_GET['department_id'] eq ''">class="active"</if>><i class="icon-refresh"></i> 全部</a></li>
+					<volist name="department" id="vo">
+						<li>
+							<a href="{:U('dynamic/index','department_id='.$vo['department_id'])}" <if condition="$_GET['department_id'] eq $vo['department_id']">class="active"</if>>
+								<i class="icon-refresh"></i> {$vo.name}
+							</a>
+						</li>
+					</volist>
+				</ul>
+				<div class="dynamiccate-title">我的动态</div>
+				<ul class="nav nav-list">
+					<li>
+						<a href="{:U('dynamic/index','reply=tome'.'&department_id='.$_GET['department_id'].'&by='.$_GET['by'].'&field='.$_GET['field'].'&search='.$_GET['search'])}" <if condition="$_GET['reply'] eq 'tome'">class="active"</if>><i class="icon-refresh"></i> 回复我的</a>
+					</li>
+					<li>
+						<a href="{:U('dynamic/index','reply=toother'.'&department_id='.$_GET['department_id'].'&by='.$_GET['by'].'&field='.$_GET['field'].'&search='.$_GET['search'])}" <if condition="$_GET['reply'] eq 'toother'">class="active"</if>><i class="icon-refresh"></i> 我回复的</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div class="span9">
+			<form action="{:U('dynamic/index')}" id="searchForm" method="get">
+				<div class="top-panel">
+					<input type="hidden" name="m" value="dynamic" />
+					<input type="hidden" name="reply" value="{$Think.get.reply}" />
+					<input type="hidden" name="by" value="{$Think.get.by}" />
+					<input type="hidden" name="department_id" value="{$Think.get.department_id}" />
+					<ul class="list0 pull-left">
+						<li><a href="{:U('dynamic/index','reply='.$_GET['reply'].'&department_id='.$_GET['department_id'].'&field='.$_GET['field'].'&search='.$_GET['search'])}" <if condition="$Think.get.by eq ''">class="active"</if>>全部</a></li>
+						<li><a href="{:U('dynamic/index','by=log'.'&reply='.$_GET['reply'].'&department_id='.$_GET['department_id'].'&field='.$_GET['field'].'&search='.$_GET['search'])}"  <if condition="$Think.get.by eq 'log'">class="active"</if>>日志</a></li>
+						<li><a href="{:U('dynamic/index','by=crm'.'&reply='.$_GET['reply'].'&department_id='.$_GET['department_id'].'&field='.$_GET['field'].'&search='.$_GET['search'])}" <if condition="$Think.get.by eq 'crm'">class="active"</if>>CRM</a></li>
+					</ul>
+					<ul class="list0 pull-right">
+						<li>
+							<select name="field" id="field" class="span1">
+								<option value="role" selected>用户</option>
+								<option value="content">内容</option>
+							</select>
+						</li>
+						<li><input type="text" name="search" value="" class="search-text" placeholder="请输入..."></li>
+						<li><button type="button" id="searchBtn" class="btn btn-primary">查询</button></li>
+					</ul>
+				</div>
+			</form>
+			<div class="middle-content">
+				<div class="title0">
+					<div class="title1">动态更新</div>
+				</div>
+				<empty name="actionLog">
+					<div class="alert alert-info">没有动态信息</div>
+				<else />
+					<volist name="actionLog" id="vo">
+						<div class="dy-content" id="anchor_{$vo.log_id}">
+							<div class="title3">
+								<if condition="empty($vo['creator']['img'])">
+									<img src="__PUBLIC__/img/avatar_default.png" class="avatar"/>
+								<else />
+									<img src="{$vo.creator.img}" class="avatar"/>
+								</if>
+							</div>
+							<div class="role0">
+								<p>
+									<a href="javascript:void(0)" class="role_info" rel="{$vo.creator.role_id}">{$vo.creator.user_name}</a>
+									<span>{$vo.creator.department_name} - {$vo.creator.role_name}</span>
+								</p>
+								<p class="time">{$vo.create_time|date='Y-m-d H:i:s',###}</p>
+							</div>
+							<div class="conent0">{$vo.dynamic}</div>
+							<div class="toolbar"> <a href="javascript:void(0);" class="reply" rel="{$vo.log_id}">回复(<span class="reply-count">{$vo.comment_count}</span>)</a></div>
+							<div class="clear"></div>
+							<div class="reply-panel" id="reply_{$vo.log_id}" <if condition="!empty($vo['comment_count'])">style="display: block;"</if>>
+								<textarea class="reply-content"  id="content_{$vo.log_id}" name="content"></textarea>
+								
+								<div class="subbtn">
+									<if condition="$Think.get.by eq 'log' || strpos($vo['dynamic'], 'm=log')">
+										<input type="checkbox" id="messageAlert" name="messageAlert[]" value="message" checked="checked"/> <span class="alert-type">站内信</span>&nbsp;&nbsp;
+									</if>
+									<input type="button" name="submit" class="btn btn-primary submit" rel="{$vo.log_id}" action_id="{$vo.action_id}" to_role_id="{$vo.creator.role_id}" module_name="{$vo.module_name}" value="评论">
+									&nbsp;&nbsp;<input type="button" name="cancel" class="btn cancel" rel="{$vo.log_id}" value="取消">
+								</div>
+								
+							</div>
+							<div class="comment-panel" id="comment_{$vo.log_id}" rel="{$vo.log_id}" <if condition="!empty($vo['comment_count'])">style="display: block;"</if>>
+								<volist name="vo['comment']" id="val">
+									<div class="comment-fold-{$val.comment_id} fold" rel="{$val.comment_id}">
+										<div class="comment-header">
+											<if condition="empty($val['comment_role']['img'])">
+												<img src="__PUBLIC__/img/avatar_default.png" class="avatar"/>
+											<else />
+												<img src="{$val['comment_role']['img']}" class="avatar"/>
+											</if>
+										</div>
+										<div class="comment-list">
+											<a href="javascript:void(0)" class="role_info" rel="{$val.comment_role.role_id}">{$val.comment_role.user_name}</a>
+											<span>: {$val.content}</span>
+											<span class="time">（{$val.create_time|date='Y-m-d H:i:s',###}）</span>
+										</div>
+										<div class="clear"></div>
+									</div>
+								</volist>
+								<if condition="$vo['comment_count'] gt '5'">
+									<div class="more-bar">
+										<a href="javascript:void(0);" class="more" rel="{$vo.log_id}">展开剩余{$vo.comment_left_count}条回复</a>
+									</div>
+								</if>
+							</div>
+						</div>
+					</volist>
+					{$page}
+				</empty>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-role-info" title="{:L('EMPLOYEE_INFORMATION')}">loading...</div>
+<script type="text/javascript">
+	$(document).ready(function(){
+		/**初始化Checkbox和radio样式*/
+		$('input').iCheck({
+			checkboxClass: 'icheckbox_flat-blue',
+			radioClass: 'iradio_flat'
+		});
+		/**点击回复，显示回复输入框*/
+		$('.reply').click(function(){
+			var val = $(this).attr('rel');
+			$('#reply_'+val).slideToggle('1500');
+			$('#comment_'+val).slideToggle('1500');
+		});
+		/**点击取消按钮，关闭回复输入框*/
+		$('.cancel').click(function(){
+			var val = $(this).attr('rel');
+			$('#reply_'+val).slideToggle('1500');
+			$('#comment_'+val).slideToggle('1500');
+		});
+		
+		/**点击评论按钮，提交评论*/
+		$('.submit').click(function(){
+			//获取站内信是否为发送状态
+			if($(this).parent().children().attr('class').indexOf('checked') > 0){
+				var messageAlert = 'message';
+			}else{
+				var messageAlert = '';
+			}
+
+			var log_id = $(this).attr('rel');
+			var action_id = $(this).attr('action_id');
+			var module_name = $(this).attr('module_name');
+			//如果是评论日志的话，直接评论日志id的那条记录，否则评论操作日志id的记录
+			if(module_name == 'log'){
+				var object_id = action_id;	//提交到数据库的id，如果module_name=log，则object_id为log表的log_id，否则为action_log表的log_id
+			}else{
+				var object_id = log_id;		//提交到数据库的id，如果module_name=log，则object_id为log表的log_id，否则为action_log表的log_id
+			}
+			var content = $('#reply_'+log_id).children().val();
+			var to_role_id = $(this).attr('to_role_id');
+
+			if(log_id == '' || content == '' || to_role_id == ''){
+				alert('请输入评论内容！');
+				return false;
+			}else{
+
+				//先设置按钮为不可用，防止重复提交
+				$(this).val('评论中...');
+				$(this).attr('disabled', true);
+				$.ajax({
+					url : '{:U("dynamic/adddynamiccomment")}',
+					type : 'post',
+					dataType : 'json',
+					async : false,
+					data : {module_id : object_id, module_name : module_name, content : content, to_role_id : to_role_id, messageAlert: messageAlert},
+					success : function(data){
+						if(data.status == 1){
+							//增加回复数目
+							objReply = $('#anchor_'+log_id).find('.toolbar').find('.reply-count');
+							$(objReply).html(parseInt(objReply.html())+1);
+							//清空输入框内容
+							$('#reply_'+log_id).children().val('');
+							//加载评论内容
+							var commnet_html = '<div class="comment-fold-'+data.data.comment_id+' fold" rel="'+data.data.comment_id+'">';
+							commnet_html += '<div class="comment-header">';
+							if(data.data.img != ''){
+								commnet_html += '<img src="'+data.data.img+'" class="avatar"></div>';
+							}else{
+								commnet_html += '<img src="__PUBLIC__/img/avatar_default.png" class="avatar"></div>';
+							}
+							commnet_html += '<div class="comment-list">';
+							commnet_html += '<a href="javascript:void(0)"class="role_info" rel="'+data.data.role_id+'">'+data.data.user_name+'</a>';
+							commnet_html += ': '+content+'<span class="time">（'+data.data.time+'）</span>';
+							commnet_html += '<div class="clear"></div></div></div>';
+							$('#comment_'+log_id).prepend(commnet_html);
+							//缓慢显示
+							$('.comment-fold-'+data.data.comment_id).css("opacity","0");
+							$('.comment-fold-'+data.data.comment_id).animate({opacity:1},800);
+						}else{
+							alert(data.info);
+						}
+					},
+					error : function(data){
+						alert(data.info);
+					}
+				});
+				//评论成功时，评论按钮恢复可用
+				$(this).attr('disabled',false);
+				$(this).val('评论');
+			}
+		});
+		
+		/**鼠标移上评论，显示删除和回复按钮*/
+		$('.comment-panel').on('mouseenter','.fold',function(){
+			var comment_id = $(this).attr('rel');
+			var creator_role_id = $(this).find('.role_info').attr('rel');	//评论人
+			var session_role_id = "{:session('role_id')}";					//当前登陆用户
+			var log_id = $(this).parent().attr('rel');						//日志id
+			
+			var tail_html = '<span class="tail">';
+			
+			//如果评论人与当前登录用户是同一个人，显示删除按钮，否则显示回复
+			if(creator_role_id == session_role_id){
+				tail_html += '<a href="javascript:void(0);" class="del" rel="'+comment_id+'">删除</a>';
+			}else{
+				tail_html += '<a href="javascript:void(0);" class="anchor" rel="'+log_id+'">回复</a>&nbsp;&nbsp';
+			}
+			tail_html += '</span>';
+			$(this).find('.time').after(tail_html);
+		});
+		
+		/**鼠标移出评论，去除删除和回复按钮*/
+		$('.comment-panel').on('mouseleave','.fold',function(){
+			$(this).find('.tail').remove();
+		});
+		
+		/**点击回复*/
+		$('.comment-panel').on('click','.anchor',function(){
+			var log_id = $(this).attr('rel');
+			window.location.href = "#anchor_"+log_id;
+			var to_role_id = $(this).parent().parent().find('.role_info').attr('rel');
+			var to_role_name = $(this).parent().parent().find('.role_info').html();
+			$('#content_'+log_id).val('@'+to_role_name+' ');
+		});
+		
+		/**点击员工名，发送站内信*/
+		$(".role_info").on('click',function(){
+			$role_id = $(this).attr('rel');
+			$('#dialog-role-info').dialog('open');
+			$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+		});
+	});
+	
+	/**删除自己发的评论*/
+	$('.comment-panel').on('click','.del',function(){
+		var comment_id = $(this).attr('rel');
+		if(!comment_id){
+			alert('参数错误');
+			return false;
+		}
+		
+		if(confirm('确定要删除么？')){
+			$.ajax({
+				url : '{:U("dynamic/deleteComment")}',
+				type : 'post',
+					dataType : 'json',
+					data : {comment_id : comment_id},
+					success : function(data){
+						if(data.status == 1){
+							//减少回复数目
+							log_id = $('.comment-fold-'+comment_id).parent().attr('rel');
+							objReply = $('#anchor_'+log_id).find('.toolbar').find('.reply-count');
+							oldReplyCount = parseInt(objReply.html());
+							nowReplyCount = oldReplyCount - 1 < 0 ? 0 : oldReplyCount - 1;
+							$(objReply).html(nowReplyCount);
+							//评论内容缓慢消失
+							$('.comment-fold-'+comment_id).css("opacity","1");
+							$('.comment-fold-'+comment_id).animate({opacity:0},800,function(){
+								$('.comment-fold-'+comment_id).remove();
+							});
+						}else{
+							alert(data.info);
+						}
+					},
+					error : function(data){
+						alert(data.info);
+					}
+			});
+		}else{
+			return false;
+		}
+	});
+	
+	/**点击更多显示更多评论*/
+	$('.more').click(function(){
+		var log_id = $(this).attr('rel');
+		$(this).after('<div class="loadDiv"><img src="__PUBLIC__/img/load.gif" class="loading" alt="加载中..."> 加载中...</div>');
+		$(this).remove();
+		
+		$.ajax({
+			url : '{:U("dynamic/more")}',
+			type : 'post',
+			dataType : 'json',
+			data : {log_id : log_id},
+			success : function(data){
+				if(data.status == 1){
+					$.each(data.data, function(i, item){
+						//加载评论内容
+						var commnet_html = '<div class="comment-fold-'+item.comment_id+' fold" rel="'+item.comment_id+'">';
+						commnet_html += '<div class="comment-header">';
+						if(item.comment_role.img != ''){
+							commnet_html += '<img src="'+item.comment_role.img+'" class="avatar"></div>';
+						}else{
+							commnet_html += '<img src="__PUBLIC__/img/avatar_default.png" class="avatar"></div>';
+						}
+						commnet_html += '<div class="comment-list">';
+						commnet_html += '<a href="javascript:void(0)"class="role_info" rel="'+item.comment_role.role_id+'">'+item.comment_role.user_name+'</a>';
+						commnet_html += ': '+item.content+'<span class="time">（'+item.time+'）</span>';
+						commnet_html += '<div class="clear"></div></div></div>';
+						$('#comment_'+log_id).append(commnet_html);
+					});
+					$('.loadDiv').remove();
+				}else{
+					alert(data.info);
+				}
+			},
+			error : function(data){
+				alert(data.info);
+			}
+		});
+	});
+	
+	/** 查询 */
+	$('#searchBtn').click(function(){
+		$('#searchForm').submit();
+	});
+	
+	/** 搜索结果自动填充 */
+	$("#field option[value='{$Think.get.field}']").prop('selected', true);
+	$('.search-text').val("{$Think.get.search}");
+	
+	$("#dialog-role-info").dialog({
+		autoOpen: false,
+		modal: true,
+		width: 600,
+		maxHeight: 400,
+		position: ["center",100]
+	});
+</script>
+<include file="Public:footer" />

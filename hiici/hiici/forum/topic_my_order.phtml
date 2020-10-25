@@ -1,0 +1,123 @@
+<?php 
+
+$auth = $_SESSION['auth'];
+if (empty($auth)) die('用户未登录！^_^');
+
+if (!empty($_POST)) die;
+
+$topic_id = intval($_GET['topic_id']);
+$search = @filter_var($_GET['search'], FILTER_SANITIZE_STRING);
+
+if (!dt_query_one("SELECT id FROM forum_topic WHERE id = $topic_id AND user_id = ".$auth['id']." LIMIT 1")) die('非属，用户权限不够！^_^');
+
+$page = @intval($_GET['page']);
+
+if (empty($page)) $page = 1;
+$limit = require_once('inc/order_search_limit.php');
+$cond = 'WHERE topic_id = '.$topic_id;
+if (!empty($search)) $cond .= " AND user_id = '$search'"; 
+
+$orders = dt_query("SELECT * FROM forum_topic_order LEFT JOIN account_addr ON forum_topic_order.user_id = account_addr.id $cond ORDER BY complete, c_at DESC LIMIT ".$limit * ($page - 1).",$limit");
+if (!$orders) die('获取forum_topic_orders数据失败！^_^');
+
+$topic = dt_query_one("SELECT forum_id, title FROM forum_topic WHERE id = $topic_id");
+if (!$topic) die('获取数据失败！');
+
+$forum = dt_query_one("SELECT id, name FROM forum WHERE id = ".$topic['forum_id']);
+if (!$forum) die('获取数据失败！');
+
+?>
+<div class="container">
+	<div class="row clearfix">
+		<ol class="breadcrumb forum-breadcrumb">
+			<li><a href="?c=forum"><span class="glyphicon glyphicon-home"></span> 首页</a></li>
+			<li><a href="?c=forum&a=topic_list&forum_id=<?php echo $forum['id'] ?>"><?php echo $forum['name'] ?></a></li>
+			<li><a href="?c=forum&a=topic_show&topic_id=<?php echo $topic_id ?>"><?php echo $topic['title'] ?></a></li>
+			<li class="active">订单 </li>
+		</ol>
+	</div>
+</div>
+<div class="container">
+	<div class="forum-add">
+		<div class="row clearfix">
+			<div class="col-md-12 column">
+				<h3><span class="glyphicon glyphicon-th-list"></span> [<?php echo $topic['title'] ?>] 的订单 </h3>
+				<hr class="solid">
+				<div class="col-md-12 column">
+					<fieldset>
+						<table class="table">
+							<thead>
+								<tr>
+									<th>用户</th>
+									<th>联系电话</th>
+									<th class="hidden-xs">收货地址</th>
+									<th class="hidden-xs">邮政编码</th>
+									<th class="hidden-xs">下单时间</th>
+									<th class="hidden-xs">数量</th>
+									<th> 操作</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php while($order = mysql_fetch_array($orders)) { ?>
+								<tr>
+									<td>
+										<a target="_blank" href="?c=center&user_id=<?php echo $order['user_id'] ?>"><?php echo $order['name'] ?></a>
+										<a target="_blank" class="btn btn-default btn-sm" href="?c=forum&a=topic_my_list&m_falter=2&user_id=<?php echo $order['user_id'] ?>">Ta的订单</a>
+									</td>
+									<?php if (empty($order['phone'])) { ?>
+									<td><?php echo $order['tel'] ?></td>
+									<td class="hidden-xs"></td>
+									<td class="hidden-xs"></td>
+									<?php } else { ?>
+									<td><?php echo $order['phone'] ?></td>
+									<td class="hidden-xs"><?php echo $order['addr'] ?></td>
+									<td class="hidden-xs"><?php echo $order['p_code'] ?></td>
+									<?php } ?>
+									<td class="hidden-xs"><?php echo fmt_date($order['c_at']) ?></td>
+									<td class="hidden-xs"><?php echo $order['num'] ?></td>
+									<td>
+										<?php if (0 == $order['complete']) { ?>
+										<a id="do_order_<?php echo $order[0] ?>_complete" target="_blank" class="btn btn-default btn-sm order-complete" href="javascript:do_order_complete(<?php echo $order[0] ?>)">已经发货</a>
+										<?php } ?>
+									</td>
+								</tr>
+								<?php } ?>
+								<tr>
+									<td></td>
+									<td></td>
+									<td class="hidden-xs"></td>
+									<td class="hidden-xs"></td>
+									<td class="hidden-xs"></td>
+									<td class="hidden-xs"></td>
+									<td>
+										<a target="_blank" class="btn btn-default btn-sm order-complete" href="javascript:do_order_complete_all(<?php echo $topic_id ?>, <?php echo $page ?>)">全部已发</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<div class="row clearfix">
+							<div class="col-md-8 column">
+								<?php pagination('forum_topic_order', $cond, $page, $limit, '?c=forum&a=topic_my_order&topic_id='.$topic_id.'&page=') ?>	
+							</div>
+							<div class="col-md-4 column">
+								<form id="search" action="javascript:order_search(<?php echo $topic_id ?>)">	
+									<div class="input-group order-search">
+										<input id="order_search" class="form-control" type="text" placeholder="用户ID" value="<?php echo $search ?>">
+										<a href="javascript:onclick=$('form#search').submit()" class="input-group-addon btn"> <span class="glyphicon glyphicon-search"></span> </a>
+									</div>
+								</form>	
+							</div>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+$(document).ready(function(){
+});
+
+
+</script>

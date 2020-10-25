@@ -1,0 +1,237 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/simple',array('name'=>'写邮件','search'=>'N'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="left">
+				<a class="btn btn-sm btn-primary" onclick="send(true);">发送</a>
+				<a class="btn btn-sm btn-primary" onclick="send(false);" >存草稿</a>
+			</div>
+		</div>
+	</div>
+	<form class="well form-horizontal" method='post' id="form_send" name="form_send" enctype="multipart/form-data">
+		<input type="hidden" id="ajax" name="ajax" value="0">
+		<input type="hidden" id="id" name="id" value="{$vo.id}">
+		<input type="hidden" id="to" name="to"/>
+		<input type="hidden" id="cc" name="cc"/>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="recever">收件人*：</label>
+			<div class="col-sm-10">
+				<div id="recever" class="inputbox">
+					<a class="pull-right btn btn-link text-center" onclick="popup_contact();"> <i class="fa fa-user"></i> </a>
+					<div class="wrap" >
+						<span class="address_list"> {$vo.to|show_contact="edit"} </span>
+						<span class="text" >
+							<input class="letter" type="text"  >
+						</span>
+					</div>
+					<div class="search dropdown ">
+						<ul class="dropdown-menu"></ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<div class="col-sm-2 control-label">
+				<label for="carbon_copy"> 抄送*：</label>
+				<a onclick="toggle_bcc();"><i id="toggle_bcc_icon" class="fa fa-chevron-down"></i></a>
+			</div>
+			<div class="col-sm-10">
+				<div id="carbon_copy" class="inputbox">
+					<div class="wrap" >
+						<span class="address_list">{$vo.cc|show_contact}</span>
+						<span class="text" >
+							<input class="letter" type="text"  >
+						</span>
+					</div>
+					<div class="search dropdown ">
+						<ul class="dropdown-menu"></ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="bcc_wrap" class="form-group hidden">
+			<label class="col-sm-2 control-label" for="blind_carbon_copy"> 密送*： </label>
+			<div class="col-sm-10">
+				<div id="blind_carbon_copy" class="inputbox">
+					<div class="wrap" >
+						<span class="address_list">{$vo.bcc|show_contact}</span>
+						<span class="text" >
+							<input class="letter" type="text"  >
+						</span>
+					</div>
+					<div class="search dropdown ">
+						<ul class="dropdown-menu"></ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="mail_title"> 标题*： </label>
+			<div class="col-sm-10">
+				<input class="form-control"  type="text" name="title" id="mail_title"  check="require" msg="请输入标题" value="{$vo.name}">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-2 control-label" for="mail_title"> 附件*： </label>
+			<div class="col-sm-10">
+				{:W('FileUpload/edit',array('add_file'=>$vo['add_file']))}
+			</div>
+		</div>
+		
+		<div class="form-group">
+			<div class="col-xs-12">
+				<textarea  class="editor" id="content" name="content" class="col-xs-12">{$vo.content}</textarea>
+			</div>
+		</div>
+	</form>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		$(document).ready(function() {
+			/*单击删除已选联系人*/
+			$(document).on("click", ".inputbox .address_list a.del", function() {
+				$(this).parent().parent().remove();
+			});
+
+			/* 查找联系人input 功能*/
+			$(document).on("click", ".inputbox .search li", function() {
+				name = $(this).text().replace(/<.*>/, '');
+				email = $(this).find("a").attr("title");
+				html = conv_inputbox_item(name, email);
+
+				inputbox = $(this).parents(".inputbox");
+				inputbox.find("span.address_list").append(html);
+				inputbox.find("input.letter").val("");
+				inputbox.find(".search ul").html("");
+				inputbox.find(".search ul").hide();
+				inputbox.find(".search").hide();
+			});
+
+			$(".inputbox .letter").blur(function(e) {
+				email = $(this).val();
+				if (validate(email, 'email')) {
+					name = email;
+					html = conv_inputbox_item(name, email);
+					$(this).parents(".inputbox").find("span.address_list").append(html);
+					$(this).val("");
+				} else {
+					$(this).val("");
+					//ui_error("邮件格式错误");
+					return false;
+				}
+			});
+			/* 查找联系人input 功能*/
+			$(".inputbox .letter").keyup(function(e) {
+				switch(e.keyCode) {
+				case 40:
+					var $curr = $(this).parents(".inputbox").find(".search li.active").next();
+					if ($curr.html() != null) {
+						$(this).parents(".inputbox").find(".search li").removeClass("active");
+						$curr.addClass("active");
+					}
+					break;
+				case 38:
+					var $curr = $(this).parents(".inputbox").find(".search li.active").prev();
+					if ($curr.html() != null) {
+						$(this).parents(".inputbox").find(".search li").removeClass("active");
+						$curr.addClass("active");
+					}
+					break;
+				case 13:
+					if ($(this).parents(".inputbox").find(".search ul").html() != "") {
+						name = $(".search li.active").text().replace(/<.*>/, '');
+						email = $(".search li.active a").attr("title");
+						html = conv_inputbox_item(name, email);
+						$(this).parents(".inputbox").find("span.address_list").append(html);
+						$(this).parents(".inputbox").find(".search ul").html("");
+						$(this).val("");
+						$(this).parents(".inputbox").find(".search ul").hide();
+					} else {
+						email = $(this).val();
+						if (validate(email, 'email')) {
+							name = email;
+							html = conv_inputbox_item(name, email);
+							$(this).parents(".inputbox").find("span.address_list").append(html);
+							$(this).val("");
+						} else {
+							ui_error("邮件格式错误");
+							return false;
+						}
+					}
+					break;
+				default:
+					var search = $(this).parents(".inputbox").find("div.search ul");
+					if ($(this).val().length > 1) {
+						$.getJSON("{:U('popup/json','type=all')}", {
+							key : $(this).val()
+						}, function(json) {
+							if (json != "") {
+								if (json.length > 0) {
+									search.html("");
+									$.each(json, function(i) {
+										search.append('<li><a title="' + json[i].email + '">' + json[i].name + '&lt;' + json[i].email + '&gt;</a></li>');
+									});
+									search.children("li:first").addClass("active");
+									search.show();
+								}
+							} else {
+								search.html("");
+								search.hide();
+							}
+						});
+					} else {
+						search.hide();
+					}
+				}
+			});
+		});
+		function send(flag) {
+			$("#to").val("");
+			$("#recever .address_list span").each(function() {
+				$("#to").val($("#to").val() + $(this).find("b").text() + '|' + $(this).attr("email") + ";");
+			});
+			$("#cc").val("");
+			$("#carbon_copy .address_list span").each(function() {
+				$("#cc").val($("#cc").val() + $(this).find("b").text() + '|' + $(this).attr("email") + ";");
+			});
+
+			$("#bcc").val("");
+			$("#blind_carbon_copy .address_list span").each(function() {
+				$("#cc").val($("#cc").val() + $(this).find("b").text() + '|' + $(this).attr("email") + ";");
+			});
+			if (($("#to").val().indexOf("@") < 1) && ($("#to").val().indexOf("dept_") < 1)) {
+				ui_error("请选择收件人");
+				$("#recever letter").focus();
+				return false;
+			}
+			if (flag) {
+				sendForm("form_send", "{:U('send')}");
+			} else {
+				sendForm("form_send", "{:U('save_darft')}");
+			}
+		}
+
+		function toggle_bcc() {
+			if ($("#bcc_wrap").attr("class").indexOf("hidden") < 0) {
+				$("#bcc_wrap").addClass("hidden");
+				$("#toggle_bcc_icon").addClass("fa-chevron-down");
+				$("#toggle_bcc_icon").removeClass("fa-chevron-up");
+			} else {
+				$("#bcc_wrap").removeClass("hidden");
+				$("#toggle_bcc_icon").addClass("fa-chevron-up");
+				$("#toggle_bcc_icon").removeClass("fa-chevron-down");
+			}
+		}
+
+		function popup_contact() {
+			winopen("{:U('popup/contact')}", 560, 470);
+		}
+	</script>
+
+</block>

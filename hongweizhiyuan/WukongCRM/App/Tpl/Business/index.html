@@ -1,0 +1,283 @@
+<include file="Public:header" />
+<script src="__PUBLIC__/js/PCASClass.js" type="text/javascript"></script>
+<div class="container">
+	<!-- Docs nav ================================================== -->
+	<div class="page-header" style="border:none; font-size:14px;">
+		<ul class="nav nav-tabs">
+		  <li class="active">
+			<a href="{:U('business/index')}"><img src="__PUBLIC__/img/shangji.png"/>&nbsp; {:L('BUSINESS')}</a>
+		  </li>
+		  <li><a href="{:U('business/analytics')}"><img src="__PUBLIC__/img/tongji.png"/> &nbsp;{:L('STATISTICS')}</a></li>
+		  <li><a href="http://5kcrm.com/index.php?m=doc&a=index&id=26" target="_blank" style="font-size: 12px;color: rgb(255, 102, 0);"><img width="20px;" src="__PUBLIC__/img/help.png"/>{:L('HELP')}</a></li>
+		</ul>
+	</div>
+	<include file="Public:alert" />
+	<p class="view"><b>{:L('VIEW_NAV')}</b>
+		<img src=" __PUBLIC__/img/by_owner.png"/> <a href="{:U('business/index')}" <if condition="$Think.get.by eq null">class="active"</if>>{:L('ALL')}</a> |
+		<a href="{:U('business/index','by=me')}" <if condition="$Think.get.by eq 'me'">class="active"</if>>{:L('I_AM_IN_CHARGE_OF_THE')}</a> | 
+		<a href="{:U('business/index','by=create')}" <if condition="$Think.get.by eq 'create'">class="active"</if>>{:L('I_CREATED')}</a> | 
+		<a href="{:U('business/index','by=sub')}" <if condition="$Think.get.by eq 'sub'">class="active"</if>>{:L('SUBORDINATES_RESPONSIBLE_FOR')}</a> | 
+		<a href="{:U('business/index','by=subcreate')}" <if condition="$Think.get.by eq 'subcreate'">class="active"</if>>{:L('SUBORDINATES_CREATED')}</a>  &nbsp;  &nbsp; 
+		<img src="__PUBLIC__/img/by_time.png"/> 
+		<a href="{:U('business/index','by=today')}" <if condition="$Think.get.by eq 'today'">class="active"</if>>{:L('TODAY_NEED_TO_CONTACT')}</a> | 
+		<a href="{:U('business/index','by=week')}" <if condition="$Think.get.by eq 'week'">class="active"</if>>{:L('THIS_WEEK_NEED_TO_CONTACT')}</a> | 
+		<a href="{:U('business/index','by=month')}" <if condition="$Think.get.by eq 'month'">class="active"</if>>{:L('THIS_MONTH_NEED_TO_CONTACT')}</a> | 
+		<a href="{:U('business/index','by=d7')}" <if condition="$Think.get.by eq 'd7'">class="active"</if>>{:L('7_did_not_contact')}</a> | 
+		<a href="{:U('business/index','by=d15')}" <if condition="$Think.get.by eq 'd15'">class="active"</if>>{:L('15_did_not_contact')}</a> | 
+		<a href="{:U('business/index','by=d30')}" <if condition="$Think.get.by eq 'd30'">class="active"</if>>{:L('30_did_not_contact')}</a> |  
+		<a href="{:U('business/index','by=add')}" <if condition="$Think.get.by eq 'add'">class="active"</if>>{:L('RECENTLY_CREATED')}</a> | 
+		<a href="{:U('business/index','by=update')}" <if condition="$Think.get.by eq 'update'">class="active"</if>>{:L('RECENT_UPDATES')}</a>  &nbsp;  &nbsp; 
+		<a href="{:U('business/index','by=deleted')}" <if condition="$Think.get.by eq 'deleted'">class="active"</if>><img src="__PUBLIC__/img/task_garbage.png"/> {:L('RECYCLE_BIN')}</a>
+	</p>
+	<div class="row">
+		<div class="span12">
+			<ul class="nav pull-left">
+				<if condition="$Think.session.admin eq 1 or $Think.get.by neq 'deleted'">
+				<li class="pull-left"><a id="delete"  class="btn" style="margin-right: 8px;"><i class="icon-remove"></i>{:L('DELETE')}</a></li>
+				</if>
+				<li class="pull-left">
+				<form class="form-inline" id="searchForm" action="" method="get">
+					<ul class="nav pull-left">
+						<li class="pull-left">
+							<select id="field" style="width:auto" onchange="changeCondition()" name="field">
+								<option class="" value="">--{:L('PLEASE_SELECT_A_FILTER_CONDITION')}--</option>
+								<volist name="search_field_array" id="v">
+									<if condition="$v['field'] eq 'status_id'">
+										<option class="business_status" value="{$v[field]}" rel="business">{$v[name]}</option>
+									<else/>
+										<option class="{$v['form_type']}" value="{$v[field]}" rel="business">{$v[name]}</option>
+									</if>
+								</volist>
+								<option class="role" value="owner_role_id">{:L('PRINCIPAL')}</option>
+								<option class="date" value="create_time">{:L('CREATION_TIME')}</option>
+								<option class="date" value="update_time">{:L('MODIFICATION_TIME')}</option>
+							</select>&nbsp;&nbsp;
+						</li>
+						<li id="conditionContent" class="pull-left">
+							<select id="condition" style="width:auto" name="condition" onchange="changeSearch()">
+								<option value="contains">{:L('INCLUDE')}</option>
+								<option value="is">{:L('YES')}</option>								
+								<option value="start_with">{:L('BEGINNING_CHARACTER')}</option>
+								<option value="end_with">{:L('TERMINATION_CHARACTER')}</option>
+								<option value="is_empty">{:L('MANDATORY')}</option>
+							</select>&nbsp;&nbsp;
+						</li>
+						<li id="searchContent" class="pull-left">
+							<input id="search" type="text" class="input-medium search-query" name="search"/>&nbsp;&nbsp;
+						</li>
+						<li class="pull-left">
+							<input type="hidden" name="m" value="business"/>
+							<input type="hidden" name="act" id="act" value="search"/>
+							<if condition="$Think.get.by neq null"><input type="hidden" name="by" value="{$Think.get.by}"/></if>
+							<button type="submit" id="dosearch" class="btn"> <img src="__PUBLIC__/img/search.png"/>   {:L('SEARCH')}</button>
+						</li>
+					</ul>
+				</form>
+				</li>
+			</ul>
+			<div class="pull-right">
+				<a class="btn btn-primary" href="{:U('business/add')}"><i class="icon-plus"></i>&nbsp; {:L('ADD_THE_BUSINESS_OPPORTUNITIES')}</a>&nbsp;
+				<div class="btn-group">
+					<button class="btn btn-primary dropdown-toggle" data-toggle="dropdown"><i class="icon-wrench"> </i>&nbsp; {:L('BUSINESS_TOOL')} <span class="caret"></span></button>
+					<ul class="dropdown-menu">
+						<li><a href="javascript:void(0);" id="excelExport" class="link"><i class="icon-download"></i>{:L('EXPORT_BUSINESS_OPPORTUNITIES')}</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="span12">
+			<form id="form1"  method="post">
+			<table class="table table-hover table-striped table_thead_fixed">
+				<notempty name="list">
+					<thead>
+						<tr id="childNodes_num">
+							<th><input class="check_all" id="check_all" type="checkbox" /> &nbsp;</th>
+							<th width="20px">&nbsp;</th>
+							<volist name="field_array" id="vo">
+								<if condition="C('ismobile') eq 1 and $i  elt 1">
+									<th>{$vo.name}</th>
+								<elseif condition="C('ismobile') neq 1"/>
+									<th>{$vo.name}</th>
+								</if>
+							</volist>
+							<th>{:L('PRINCIPAL')}</th>
+							<th>{:L('FOUNDER')}</th>
+							<if condition="(C('ismobile') neq 1) and ($Think.get.by eq 'deleted')">
+								<th>{:L('DELETE_THE_PEOPLE')}</th>
+								<th>{:L('DELETE_THE_TIME')}</th>
+							</if>
+							<th>
+								<if condition="$_GET['asc_order'] == 'create_time'">
+									<a href="{:U('business/index','desc_order=create_time&'.$parameter)}">
+										{:L('CREATION_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_up.png">
+									</a>
+								<elseif condition="$_GET['desc_order'] == 'create_time'"/>
+									<a href="{:U('business/index','asc_order=create_time&'.$parameter)}">
+										{:L('CREATION_TIME')}&nbsp;<img src="__PUBLIC__/img/arrow_down.png">
+									</a>
+								<else/>
+									<a href="{:U('business/index','desc_order=create_time&'.$parameter)}">{:L('CREATION_TIME')}</a>
+								</if>
+							</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<if condition="$Think.get.by eq 'deleted'"><tr><td id="td_colspan"><p>{:L('INFUSE')} <img src="__PUBLIC__/img/task_owner.png"/> {:L('I_AM_IN_CHARGE_OF_THE')} &nbsp; <img src="__PUBLIC__/img/task_creator.png"/>{:L('I_CREATED')} &nbsp; </p>{$page}</td></tr>
+						<else /><tr><td id="td_colspan"><p>{:L('INFUSE')} <img src="__PUBLIC__/img/task_owner.png"/> {:L('I_AM_IN_CHARGE_OF_THE')} &nbsp; <img src="__PUBLIC__/img/task_creator.png"/>{:L('I_CREATED')} &nbsp; </p>{$page}</td></tr>
+						</if>
+					</tfoot>
+					<tbody>
+						<volist name="list" id="vo">
+						<tr>
+							<td><input type="checkbox" class="check_list" name="business_id[]" value="{$vo.business_id}"/> &nbsp;
+							</td>
+							<td>
+								<if condition="session('role_id') eq $vo['owner_role_id'] "><img src="__PUBLIC__/img/task_owner.png"/><elseif condition="session('role_id') eq $vo['creator_role_id'] "/><img src="__PUBLIC__/img/task_creator.png"/></if>
+							</td>
+							<volist name="field_array" id="v">
+								<if condition="C('ismobile') eq 1 and $i  elt 1">
+									<td>
+										<if condition="$v['field'] eq 'name'">
+											<a href="{:U('business/view', 'id='.$vo['business_id'])}">
+											<span style="color:#{$v['color']}">{$vo[$v['field']]}</span></a>
+										</if>
+									</td>		
+								<elseif condition="C('ismobile') neq 1"/>
+									<td>
+										<if condition="$v['field'] eq 'name'">
+											<a href="{:U('business/view', 'id='.$vo['business_id'])}">
+											<span style="color:#{$v['color']}">{$vo[$v['field']]}</span></a>
+										<elseif condition="$v['field'] eq 'contacts_id'"/>
+											<a  href="{:U('contacts/view','id='.$vo['contacts_id'])}">{$vo['contacts_name']}</a></span>
+										<elseif condition="$v['field'] eq 'customer_id'"/>
+											<a  href="{:U('customer/view','id='.$vo['customer_id'])}">{$vo['customer_name']}</a>
+										<elseif condition="$v['field'] eq 'status_id'"/>
+											{$vo['status_name']}
+										<elseif condition="$v['field'] eq 'nextstep_time' and $vo[$v['field']] lt (strtotime(date('Y-m-d'))+86400)  and $vo[$v['field']] egt 0 and  $vo[$v['field']] gt (strtotime(date('Y-m-d')))"/>
+											<span style="color:green">{$vo[$v['field']]|date='Y-m-d',###}</span>
+										<elseif condition="$v['field'] eq 'nextstep_time' and $vo[$v['field']] lt strtotime(date('Y-m-d')) and $vo[$v['field']] gt 0" />
+											<span style="color:red">{$vo[$v['field']]|date='Y-m-d',###}</span>
+										<elseif condition="$v['form_type'] eq 'datetime'  and $vo[$v['field']] gt 0" />
+											<span style="color:#{$v['color']}">{$vo[$v['field']]|date='Y-m-d',###}</span>
+										<else />
+											<span style="color:#{$v['color']}"><notempty name="vo[$v['field']]">{$vo[$v['field']]}</notempty></span>
+										</if>
+									</td>
+								</if>
+								
+							</volist>
+							
+							
+							<td>
+								<notempty name="vo.owner.user_name"><a class="role_info" rel="{$vo.owner.role_id}" href="javascript:void(0)">{$vo.owner.user_name}</a></notempty>
+							</td>
+							<td>
+								<notempty name="vo.creator.user_name"><a class="role_info" rel="{$vo.creator.role_id}" href="javascript:void(0)">{$vo.creator.user_name}</a></notempty>
+							</td>
+							</if>
+							<if condition="$Think.get.by eq 'deleted'">
+							<if condition = "C('ismobile') neq 1">
+							<td><a class="role_info" rel="{$vo.delete_role.role_id}" href="javascript:void(0)">{$vo.delete_role.user_name}</a></td><td>{$vo.delete_time|date='Y-m-d',###}</td>
+							</if>
+							<td>
+								<a href="{:U('business/view','id='.$vo['business_id'])}" title="{:L('CHECK')}">{:L('CHECK')}</a>&nbsp;
+								<a href="{:U('business/revert','id='.$vo['business_id'])}" title="{:L('REDUCTION')}">{:L('REDUCTION')}</a>
+							</td>
+							<else />
+							<if condition = "C('ismobile') neq 1">
+							<td>{$vo.create_time|date='Y-m-d',###}</td>
+							</if>
+							<td>
+								<a href="{:U('business/view','id='.$vo['business_id'])}" title="{:L('CHECK')}">{:L('CHECK')}</a>&nbsp;
+								<a class="advance" rel="{$vo.business_id}" href="javascript:void(0)">{:L('BOOST')}</a>&nbsp;
+								<a href="{:U('business/edit','id='.$vo['business_id'])}" title="{:L('COMPILE')}">{:L('COMPILE')}</a>
+							</td>
+							</if>											
+						</tr> 
+						</volist>
+					</tbody>
+				<else/>
+					<tr><td>----{:L('TEMPORARILY_NO_DATA')}----</td></tr>
+				</notempty>
+			</table>
+			</form>
+		</div>
+	</div>
+</div>
+<div class="hide" id="dialog-role-info" title="{:L('EMPLOYEE_INFORMATION')}">loading...</div>
+<div class="hide" id="dialog-advance" title="{:L('ADVANCE_INFORMATION')}">loading...</div>
+<script type="text/javascript">
+<if condition="C('ismobile') eq 1">width=$('.container').width() * 0.9;<else/>width=800;</if>
+$("#dialog-advance").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$("#dialog-role-info").dialog({
+    autoOpen: false,
+    modal: true,
+	width: width,
+	maxHeight: 400,
+	position: ["center",100]
+});
+$(function(){
+	$("#check_all").click(function(){
+		$("input[class='check_list']").prop('checked', $(this).prop("checked"));
+	});
+});
+function changeContent(){
+	a = $("#select1  option:selected").val();
+	window.location.href="{:U('business/index', 'by=')}"+a;
+}
+$(".advance").click(function(){
+	id = $(this).attr('rel');
+	$('#dialog-advance').dialog('open');
+	$('#dialog-advance').load('{:U("business/advance","id=")}'+id);
+});
+$(function(){
+<if condition="$Think.get.field neq null">
+	$("#field option[value='{$Think.get.field}']").prop("selected", true);changeCondition();
+	$("#condition option[value='{$Think.get.condition}']").prop("selected", true);changeSearch();
+	$("#search").prop('value', '{$Think.get.search}');
+	<if condition="$_GET['state'] and $_GET['city']">
+		new PCAS("state","city","{$Think.get.state}","{$Think.get.city}");
+	</if>
+</if>
+
+	$("#excelExport").click(function(){
+		if(confirm("{:L('ARE_YOU_SURE_YOU_WANT_TO_EXPORT_THE_BUSINESS_OPPORTUNITIES')}")){
+			$("#act").val('excel');	
+			$("#searchForm").submit();
+		}
+	})	
+	
+	$("#dosearch").click(function(){
+		result = checkSearchForm();
+		if(result) $("#act").val('search');$("#searchForm").submit();
+	});
+	
+	$('#delete').click(function(){
+		if(confirm('{:L('ARE_YOU_SURE_YOU_WANT_TO_DELETE')}')){
+		<if condition="$Think.session.admin eq 1 and $Think.get.by eq 'deleted'">
+			$("#form1").attr('action', '{:U("business/completedelete")}');
+			$("#form1").submit();
+		<else />
+			$("#form1").attr('action', '{:U("business/delete")}');
+			$("#form1").submit();
+		</if>
+		}
+	});
+	$(".role_info").click(function(){
+		$role_id = $(this).attr('rel');
+		$('#dialog-role-info').dialog('open');
+		$('#dialog-role-info').load('{:U("user/dialoginfo","id=")}'+$role_id);
+	});
+})
+<if condition="$list neq null">
+	$nodes_num = document.getElementById("childNodes_num").children.length;
+	$("#td_colspan").attr('colspan',$nodes_num);
+</if>
+</script>
+<include file="Public:footer" />

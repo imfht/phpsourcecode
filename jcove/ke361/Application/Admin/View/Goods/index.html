@@ -1,0 +1,160 @@
+<extend name="Public/base"/>
+
+<block name="body">
+    <div class="cf">
+		<div class="fl">
+            <a class="btn" href="{:U('Goods/edit')}">新 增</a>
+            <a class="btn ajax-post" href="{:U('Goods/status?status=0')}" target-form="ids">上架</a>
+           	<button class="btn ajax-post" target-form="ids" url="{:U("Goods/move")}">剪切</button>
+			<button class="btn ajax-post" target-form="ids" url="{:U("Goods/copy")}">复 制</button>
+			<button class="btn ajax-post" target-form="ids" hide-data="true" url="{:U("Goods/paste")}">粘 贴</button>
+			<input type="hidden" class="hide-data" name="cate_id" value="{$cate_id}"/>
+            <button class="btn ajax-post confirm" url="{:U('Goods/del')}" target-form="ids">删 除</button>
+            <a href="{:U('index',array('recommend'=>1))}">推荐</a>
+            <a href="{:U('index',array('new'=>1))}">新品</a>
+            <a href="{:U('index',array('status'=>'invalid'))}">无效商品</a>
+            <a href="{:U('index',array('status'=>'offsale'))}">下架商品</a>
+        </div>
+
+        <!-- 高级搜索 -->
+		<div class="search-form fr cf">
+			<div class="">
+				<form class="search-form" action="">
+					
+					<select style="float:left" name="cate_id">
+					
+                     <option value="0">选择栏目</option>
+                      <volist name='category' id='data'>
+                                        <option value="{$data['id']}">
+                                        	<if condition="$data.pid gt 0">
+                                        		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        	</if>	
+                                        		{$data['category_name']}</option>
+										   		<notempty name="data['_']">
+													<volist name="data['_']" id='id'>
+													   <option value="{$id['id']}">
+													   	<if condition="$id.pid gt 0">
+													   		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													   	</if>	
+													   		{$id['category_name']}</option>
+													   		<notempty name="id['_']">
+																<volist name="id['_']" id='id1'>
+																   <option value="{$id1['id']}">
+																   	<if condition="$id1.pid gt 0">
+																   		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+																   	</if>	
+																   		{$id1['category_name']}</option>
+																</volist>
+															</notempty>
+													</volist>
+												</notempty>
+                                        </volist>                                        
+	                 </select>
+	                <input type="text" name="name" class="search-input" value="{:I('name')}" placeholder="请输入商品名称">
+					 <a class="sch-btn" href="javascript:;" id="search" url="{:U('index')}"><i class="btn-search"></i></a>
+					
+               </form>
+			</div>
+		</div>
+    </div>
+        
+        
+    <div class="data-table table-striped">
+           
+            <table class="">
+                <thead>
+                    <tr >
+                       <th class="row-selected row-selected"><input class="check-all" type="checkbox"/></th>
+                        <th>商品名称</th>
+                        <th>商品类型</th>
+                        <th>现价(元)</th>
+                        <th>市场价(元)</th>	
+                        <th>添加人</th>
+                        <th>推荐</th>
+                        <th>新品</th>
+                        <th>状态</th>
+                        <th>添加时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <notempty name="goodsList">
+                <volist name="goodsList" id="data">
+                    <tr class="pointer even" title="">
+                        <td><input class="ids" type="checkbox" name="id[]" value="{$data.id}" /></td>
+                        <td><span class="editer" field="name" eid="{$data.id}" url="{:U('Goods/editField')}">{$data['name']}</span></td>
+                        <td>
+                        	<switch name="data.goods_type">
+                        		<case value="0">
+                        			推广商品
+                        		</case>
+                        		<case value="2">
+                        			积分兑换商品
+                        		</case>
+                        	</switch>
+                        </td>
+                        <td>{$data['price']}</td>
+						<td>{$data['market_price']}</td>
+                        <td>{$data['add_uname']}</td>
+                        <td>
+                        	<a class="ajax-get" href="{:U('Goods/recommend',array('id'=>$data['id'],'recommend'=>$data['recommend']))}" title="">
+		                        <eq name="data.recommend" value="1" ><font color="green">是</font></eq>
+		                        <eq name="data.recommend" value="0"><font color="orange">否</font></eq>
+                        	</a>
+                        </td>
+                        <td>
+                        	<a class="ajax-get" href="{:U('Goods/news',array('id'=>$data['id'],'new'=>$data['new']))}" title="">
+		                        <eq name="data.new" value="1" ><font color="green">是</font></eq>
+		                        <eq name="data.new" value="0"><font color="orange">否</font></eq>
+                        	</a>
+                        </td>
+                        <td>
+                        	<a class="ajax-get" href="<eq name='data.status' value='3'>javascript:void();<else/>{:U('Goods/status',array('id'=>$data['id'],'status'=>$data['status']))}</eq>" title="">
+		                        <eq name="data.status" value="1" ><font color="green">上架</font></eq>
+		                        <eq name="data.status" value="0"><font color="orange">下架</font></eq>
+		                        <eq name="data.status" value="3"><font color="red">无效</font></eq>
+                        	</a>
+                        </td>
+                        <td>{:date('Y-m-d H:i:s',$data['create_time'])}</td>
+                        <td> 
+                            <a target="_blank" href='http://pub.alimama.com/myunion.htm?spm=a2320.7388781.a214tr8.d006.IyDOZN#!/promo/self/items?q={:urlencode($data[item_url])}'>查看</a>
+                            |
+                            <a id="" href="{:U('Goods/edit',array('id'=>$data['id']))}" title="">编辑</a>
+                            |
+                            <a class="confirm ajax-get" href="{:U('Goods/del?id='.$data['id'])}" title="删除">删除</a>
+                        </td>
+                    </tr>
+                </volist>
+                <else/>
+				<td colspan="9" class="text-center"> aOh! 暂时还没有内容! </td>
+				</notempty>
+                </tbody>
+            </table></div>
+    <div class="page">
+        {$_page}
+    </div>
+    
+    <script type="text/javascript">
+    
+    $(function(){
+       
+      //搜索功能
+    	$("#search").click(function(){
+    		var url = $(this).attr('url');
+            var query  = $('.search-form').serialize();
+            query = query.replace(/(&|^)(\w*?\d*?\-*?_*?)*?=?((?=&)|(?=$))/g,'');
+            query = query.replace(/^&/g,'');
+            if( url.indexOf('?')>0 ){
+                url += '&' + query;
+            }else{
+                url += '?' + query;
+            }
+    		window.location.href = url;
+    	});
+    	highlight_subnav("{:U('Goods/index')}");
+    });
+
+</script>
+</block>
+     
+

@@ -1,0 +1,1354 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="/js/jquery-2.1.3.min.js" charset="UTF-8"></script>
+    <script src="/js/bootstrap/bootstrap.min.js" charset="UTF-8"></script>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css" charset="UTF-8">
+
+    <script type="text/javascript">
+        function allowDrop(ev)
+        {
+            ev.preventDefault();
+        }
+        function drag(ev)
+        {
+            ev.dataTransfer.setData("Text",ev.target.id+"|"+ev.target.parentElement.id);
+
+            var pdiv = findParentDiv(ev.target);
+        }
+        function findParentDiv(node){
+            var pdiv = null;
+            pdiv = node;
+            while(pdiv.nodeName.toLowerCase() != "div"){
+                pdiv = pdiv.parentElement;
+            }
+            return pdiv;
+        }
+        function drop(ev)
+        {
+            ev.preventDefault();
+            var z = ev.dataTransfer.getData("Text");
+
+            var data= z.split("|")[0];
+            var from = z.split("|")[1];
+            var pdiv=findParentDiv(ev.target);
+            if(data.substring(0,2)!=pdiv.getAttribute("id").substring(0,2)){
+                return;
+            }
+            var pi = pdiv.getAttribute('curImg');
+
+            if(pdiv.getAttribute("id").match("ccimg")){//当前div是下面的
+                if(from.match("ccimg") ) {//来自下面或当前有img
+                    return;
+                }
+                document.getElementById(from).removeAttribute("curImg");
+            }
+            else{
+                pdiv.setAttribute('curImg',data);
+            }
+
+            if(pi!=undefined && pi!="") {//原先有图
+                if (from.match("ccimg")) {//来自下面
+                    document.getElementById(pi.substring(0,2)+"cc" + pi.substring(2,pi.length)).appendChild(document.getElementById(pi));
+                    document.getElementById(document.getElementById(pi).getAttribute("name")).setAttribute("value", "0");
+                } else {
+                    document.getElementById(from).setAttribute("curImg", pi);
+                    document.getElementById(from).appendChild(document.getElementById(pi));
+                    document.getElementById(document.getElementById(pi).getAttribute("name")).setAttribute("value", from.substring(6, from.length));
+                }
+            }
+            if(pdiv.getAttribute("id").match("ccimg")){
+                document.getElementById(data.substring(0,2)+"ccimg"+data.substring(5,data.length)).appendChild(document.getElementById(data));
+            }
+            else{
+                pdiv.appendChild(document.getElementById(data));
+            }
+
+            if(pdiv.getAttribute("id").match("ccimg")){
+                document.getElementById(document.getElementById(data).getAttribute("name")).setAttribute("value","0");
+            }
+            else{
+
+                document.getElementById(document.getElementById(data).getAttribute("name")).setAttribute("value",pdiv.getAttribute("id").substring(6,pdiv.getAttribute("id").length));
+            }
+            if(document.getElementById(from).getElementsByTagName("img").length==0){
+                document.getElementById(from).removeAttribute("curImg");
+            }
+        }
+        function imageShow(event){
+            var t;
+
+            if((event.target.getAttribute('id') && event.target.getAttribute("id").match("cimg"))||(event.target.getAttribute("name") && event.target.getAttribute("name").match("number")) ){
+                var z = event.target;
+                if((event.target.getAttribute("name") && event.target.getAttribute("name").match("number"))){
+                    z = event.target.parentNode;
+                }
+                if(z.getElementsByTagName("img").length == 1){
+                    t = z.getElementsByTagName("img")[0];
+                }
+                else{
+                    return;
+                }
+            }
+            else{
+                t = event.target;
+            }
+
+            var id = t.getAttribute("id");
+ 
+            document.getElementById("imageShowImg").setAttribute("src",t.getAttribute("src"));
+            $('#modalImage').modal('show');
+        };
+        function imageClose(){
+            $('#modalImage').modal('hide');
+        };
+        function submitCheck(){
+            for(var i=1;i<=7;i++){
+                var b = false;
+                for(var j=1;j<=10;j++){
+                    if(document.getElementById(document.getElementById("c"+i+"img"+j).getAttribute("name")).getAttribute("value")==0)
+                        b=true;
+                }
+
+                if(b==true){
+                    alert("问题"+i+"，请给全部图片分类后再提交。");
+                    console.log("asd");
+                    return false;
+                }
+            }
+
+//            if(f.favorite7.value=="" || f.reason7.value==""){
+//                alert("对于问题7请选择一副您最喜欢的图片，并填写原因。");
+//                return false;
+//            };
+            if(f.reason_like.value==""){
+                alert("请填写什么原因让您喜欢一处风景。");
+                return false;
+            }
+            if(f.reason_dislike.value==""){
+                alert("请填写什么原因让您不喜欢一处风景。");
+                return false;
+            }
+            if(f.experience.value==""){
+                alert("请选择是否从事或者学习过风景园林及相关专业?");
+                return false;
+            }
+            if(f.visited.value=""){
+                alert("请选择是否去太湖景区实地游览过?");
+                return false;
+            }
+            if(f.age.value==""){
+                alert("请填写年龄。");
+                return false;
+            }
+            if(f.level.value==""){
+                alert("请选择教育水平。");
+                return false;
+
+            }
+            if(f.job.value==""){
+                alert("请填写职业。");
+                return false;
+            }
+            if(f.region.value==""){
+                alert("请填写所学或所从事专业。");
+                return false;
+            }
+            if(f.province.value==""){
+                alert("请填写家乡省份。");
+                return false;
+            }
+            return true;
+        }
+    </script>
+    <style>
+        .imgbox-large{
+            height: 10em;
+            border: 1px black solid;
+        }
+        .imgbox-small{
+            height: 5em;
+            border: 1px black solid;
+        }
+        label{
+            margin-right: 1em;
+        }
+        h4{
+            text-align: center;
+        }
+        body {
+            font-family: "方正姚体", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container" style="margin-top:1em;">
+    <div class="row">
+        <div class="col-xs-12">
+            <h1><div style="text-align: center;">欢迎来到 <strong>景观偏好调查</strong> 问卷</div><br><small   font-size: large;">
+                山川、河流、湖泊、瀑布、海岸、森林和草原......这些不但是珍贵的自然资源，也是珍贵的景观视觉资源。
+                优美的景观对我们来说不仅仅意味着愉悦的视觉享受，高质量的生活环境，很多时候也承载着我们的无限回忆与
+                遐想，承载着我们的文化烙印，等等。在城市高速发展，景观地貌不断被改变的今天，在期望能为未来的自己以
+                及后人留下依然美好的风景的情况下，我国的景观视觉资源保护迫在眉睫。
+            </small></h1>
+        </div>
+    </div>
+    <div style="font-family: 方正兰亭超细黑简体">
+    <h2>接下来您将会评价 7 组照片，每组照片为 10 张。<br>请按照您的感受进行评价（分类）。</h2>
+        <b>        <h3>具体操作：</h3>
+            <h3>●将照片拖拽到上方格子里，选择与您的感受相对应或最接近的分类。</h3>
+            <h3>●单击下方小图，可放大预览，以便观察每一张照片。再次单击则取消预览。</h3>
+            <h3>注意事项：</h3>
+            <h3>1、问卷是对照片中风景的评价，而不是对摄影技巧的评价。</h3>
+            <h3>2、如果页面尺寸过大，选项和题目无法同时显示，可按住“ctrl”与“-”减号键，整体缩小。</h3>
+            <h3>3、如果照片点不开，可能是浏览器或者网速问题。浏览器推荐选择chrome浏览器。</h3>
+            <h3>4、做问卷的过程中请不要刷新您的页面，否则问卷将重新生成，与之前的问卷会有所不同。</h3></b>
+    <h2 style="margin-top: 3em;">开始评价</h2>
+    <div class="row">
+        <div class="col-xs-12">
+            <form id="f" action="/api/survey/confirm" method="post" onsubmit="return submitCheck()">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h2 style="text-align: center;"> 第一组照片
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                        <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c1cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c1cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div  id="c1cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c1cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c1ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c1img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c1ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c1ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c1ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c1ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c1ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c1ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c1ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c1ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c1ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c1img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav11" type="radio"  name="favorite1" value="1" />-->
+                <!--<label for="fav11">图片1</label>-->
+                <!--<input id="fav12" type="radio"  name="favorite1" value="2" />-->
+                <!--<label for="fav12">图片2</label>-->
+                <!--<input id="fav13" type="radio"  name="favorite1" value="3" />-->
+                <!--<label for="fav13">图片3</label>-->
+                <!--<input id="fav14" type="radio"  name="favorite1" value="4" />-->
+                <!--<label for="fav14">图片4</label>-->
+                <!--<input id="fav15" type="radio"  name="favorite1" value="5" />-->
+                <!--<label for="fav15">图片5</label>-->
+                <!--<input id="fav16" type="radio"  name="favorite1" value="6" />-->
+                <!--<label for="fav16">图片6</label>-->
+                <!--<input id="fav17" type="radio"  name="favorite1" value="7" />-->
+                <!--<label for="fav17">图片7</label>-->
+                <!--<input id="fav18" type="radio"  name="favorite1" value="8" />-->
+                <!--<label for="fav18">图片8</label>-->
+                <!--<input id="fav19" type="radio"  name="favorite1" value="9" />-->
+                <!--<label for="fav19">图片9</label>-->
+                <!--<input id="fav110" type="radio"  name="favorite1" value="10" />-->
+                <!--<label for="fav110">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason1" style="width: 100%;">-->
+                <input type="hidden" name="favorite1" value="1">
+                <input type="hidden" name="reason1" value="1">
+
+
+                <div class="row" style="margin-top: 4em;">
+                    <div class="col-xs-12">
+                        <h2><h2 style="text-align: center;"> 第二组照片
+                        </h2>
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                        <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c2cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c2cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c2cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c2ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c2img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c2ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c2ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c2ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c2ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c2ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c2ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c2ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c2ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c2ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c2img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav21" type="radio"  name="favorite2" value="1" />-->
+                <!--<label for="fav21">图片1</label>-->
+                <!--<input id="fav22" type="radio"  name="favorite2" value="2" />-->
+                <!--<label for="fav22">图片2</label>-->
+                <!--<input id="fav23" type="radio"  name="favorite2" value="3" />-->
+                <!--<label for="fav23">图片3</label>-->
+                <!--<input id="fav24" type="radio"  name="favorite2" value="4" />-->
+                <!--<label for="fav24">图片4</label>-->
+                <!--<input id="fav25" type="radio"  name="favorite2" value="5" />-->
+                <!--<label for="fav25">图片5</label>-->
+                <!--<input id="fav26" type="radio"  name="favorite2" value="6" />-->
+                <!--<label for="fav26">图片6</label>-->
+                <!--<input id="fav27" type="radio"  name="favorite2" value="7" />-->
+                <!--<label for="fav27">图片7</label>-->
+                <!--<input id="fav28" type="radio"  name="favorite2" value="8" />-->
+                <!--<label for="fav28">图片8</label>-->
+                <!--<input id="fav29" type="radio"  name="favorite2" value="9" />-->
+                <!--<label for="fav29">图片9</label>-->
+                <!--<input id="fav210" type="radio"  name="favorit2" value="10" />-->
+                <!--<label for="fav210">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason2" style="width: 100%;">-->
+                <input type="hidden" name="favorite2" value="1">
+                <input type="hidden" name="reason2" value="1">
+
+                <div class="row" style="margin-top: 4em;">
+                    <div class="col-xs-12">
+                        <h2><h2 style="text-align: center;"> 第三组照片
+                        </h2>
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                        <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c3cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c3cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div  id="c3cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c3cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c3ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c3img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c3ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c3ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c3ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c3ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c3ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c3ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c3ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c3ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c3ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c3img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav31" type="radio"  name="favorite3" value="1" />-->
+                <!--<label for="fav31">图片1</label>-->
+                <!--<input id="fav32" type="radio"  name="favorite3" value="2" />-->
+                <!--<label for="fav32">图片2</label>-->
+                <!--<input id="fav33" type="radio"  name="favorite3" value="3" />-->
+                <!--<label for="fav33">图片3</label>-->
+                <!--<input id="fav34" type="radio"  name="favorite3" value="4" />-->
+                <!--<label for="fav34">图片4</label>-->
+                <!--<input id="fav35" type="radio"  name="favorite3" value="5" />-->
+                <!--<label for="fav35">图片5</label>-->
+                <!--<input id="fav36" type="radio"  name="favorite3" value="6" />-->
+                <!--<label for="fav36">图片6</label>-->
+                <!--<input id="fav37" type="radio"  name="favorite3" value="7" />-->
+                <!--<label for="fav37">图片7</label>-->
+                <!--<input id="fav38" type="radio"  name="favorite3" value="8" />-->
+                <!--<label for="fav38">图片8</label>-->
+                <!--<input id="fav39" type="radio"  name="favorite3" value="9" />-->
+                <!--<label for="fav39">图片9</label>-->
+                <!--<input id="fav310" type="radio"  name="favorit3" value="10" />-->
+                <!--<label for="fav310">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason3" style="width: 100%;">-->
+                <input type="hidden" name="favorite3" value="1">
+                <input type="hidden" name="reason3" value="1">
+
+                <div class="row" style="margin-top: 4em;">
+                    <div class="col-xs-12">
+                        <h2><h2 style="text-align: center;"> 第四组照片
+                        </h2>
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                        <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c4cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c4cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div  id="c4cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c4cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c4ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c4img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c4ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c4ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c4ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c4ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c4ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c4ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c4ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c4ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c4ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c4img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav41" type="radio"  name="favorite4" value="1" />-->
+                <!--<label for="fav41">图片1</label>-->
+                <!--<input id="fav42" type="radio"  name="favorite4" value="2" />-->
+                <!--<label for="fav42">图片2</label>-->
+                <!--<input id="fav43" type="radio"  name="favorite4" value="3" />-->
+                <!--<label for="fav43">图片3</label>-->
+                <!--<input id="fav44" type="radio"  name="favorite4" value="4" />-->
+                <!--<label for="fav44">图片4</label>-->
+                <!--<input id="fav45" type="radio"  name="favorite4" value="5" />-->
+                <!--<label for="fav45">图片5</label>-->
+                <!--<input id="fav46" type="radio"  name="favorite4" value="6" />-->
+                <!--<label for="fav46">图片6</label>-->
+                <!--<input id="fav47" type="radio"  name="favorite4" value="7" />-->
+                <!--<label for="fav47">图片7</label>-->
+                <!--<input id="fav48" type="radio"  name="favorite4" value="8" />-->
+                <!--<label for="fav48">图片8</label>-->
+                <!--<input id="fav49" type="radio"  name="favorite4" value="9" />-->
+                <!--<label for="fav49">图片9</label>-->
+                <!--<input id="fav410" type="radio"  name="favorit4" value="10" />-->
+                <!--<label for="fav410">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason4" style="width: 100%;">-->
+                <input type="hidden" name="favorite4" value="1">
+                <input type="hidden" name="reason4" value="1">
+
+                <div class="row" style="margin-top: 4em;">
+                    <div class="col-xs-12">
+                        <h2><h2 style="text-align: center;"> 第五组照片
+                        </h2>
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                        <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c5cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c5cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div  id="c5cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c5cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c5ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c5img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c5ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c5ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c5ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c5ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c5ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c5ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c5ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c5ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+                    </div>
+                    <div id="c5ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c5img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav51" type="radio"  name="favorite5" value="1" />-->
+                <!--<label for="fav51">图片1</label>-->
+                <!--<input id="fav52" type="radio"  name="favorite5" value="2" />-->
+                <!--<label for="fav52">图片2</label>-->
+                <!--<input id="fav53" type="radio"  name="favorite5" value="3" />-->
+                <!--<label for="fav53">图片3</label>-->
+                <!--<input id="fav54" type="radio"  name="favorite5" value="4" />-->
+                <!--<label for="fav54">图片4</label>-->
+                <!--<input id="fav55" type="radio"  name="favorite5" value="5" />-->
+                <!--<label for="fav55">图片5</label>-->
+                <!--<input id="fav56" type="radio"  name="favorite5" value="6" />-->
+                <!--<label for="fav56">图片6</label>-->
+                <!--<input id="fav57" type="radio"  name="favorite5" value="7" />-->
+                <!--<label for="fav57">图片7</label>-->
+                <!--<input id="fav58" type="radio"  name="favorite5" value="8" />-->
+                <!--<label for="fav58">图片8</label>-->
+                <!--<input id="fav59" type="radio"  name="favorite5" value="9" />-->
+                <!--<label for="fav59">图片9</label>-->
+                <!--<input id="fav510" type="radio"  name="favorit5" value="10" />-->
+                <!--<label for="fav510">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason5" style="width: 100%;">-->
+                <input type="hidden" name="favorite5" value="1">
+                <input type="hidden" name="reason5" value="1">
+                <div class="row" style="margin-top: 4em;">
+                    <div class="col-xs-12">
+                        <h2><h2 style="text-align: center;"> 第六组照片
+                        </h2>
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                        <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c6cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c6cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div  id="c6cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c6cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c6ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c6img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c6ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c6ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c6ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c6ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c6ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c6ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c6ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c6ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+                    </div>
+                    <div id="c6ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c6img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav61" type="radio"  name="favorite6" value="1" />-->
+                <!--<label for="fav61">图片1</label>-->
+                <!--<input id="fav62" type="radio"  name="favorite6" value="2" />-->
+                <!--<label for="fav62">图片2</label>-->
+                <!--<input id="fav63" type="radio"  name="favorite6" value="3" />-->
+                <!--<label for="fav63">图片3</label>-->
+                <!--<input id="fav64" type="radio"  name="favorite6" value="4" />-->
+                <!--<label for="fav64">图片4</label>-->
+                <!--<input id="fav65" type="radio"  name="favorite6" value="5" />-->
+                <!--<label for="fav65">图片5</label>-->
+                <!--<input id="fav66" type="radio"  name="favorite6" value="6" />-->
+                <!--<label for="fav66">图片6</label>-->
+                <!--<input id="fav67" type="radio"  name="favorite6" value="7" />-->
+                <!--<label for="fav67">图片7</label>-->
+                <!--<input id="fav68" type="radio"  name="favorite6" value="8" />-->
+                <!--<label for="fav68">图片8</label>-->
+                <!--<input id="fav69" type="radio"  name="favorite6" value="9" />-->
+                <!--<label for="fav69">图片9</label>-->
+                <!--<input id="fav610" type="radio"  name="favorit6" value="10" />-->
+                <!--<label for="fav610">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason6" style="width: 100%;">-->
+                <input type="hidden" name="favorite6" value="1">
+                <input type="hidden" name="reason6" value="1">
+                <div class="row" style="margin-top: 4em;">
+                    <div class="col-xs-12">
+                        <h2><h2 style="text-align: center;"> 第七组照片
+                        </h2>
+                        </h2>
+                    </div>
+                    <div class="col-xs-12">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-2">
+                        <h4 style="text-align: left;">图片中景色的质量：</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h3>最差</h3>
+                    </div>
+                    <div class="col-xs-offset-8 col-xs-1">
+                        <h3>最好</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-1">
+                         <h4>1</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>2</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>3</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>4</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>5</h4>
+                    </div>
+                    <div class=" col-xs-1">
+                        <h4>6</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>7</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>8</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>9</h4>
+                    </div>
+                    <div class="col-xs-1">
+                        <h4>10</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="c7cimg1" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-offset-2 col-xs-1 imgbox-small"  ></div>
+                    <div id="c7cimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div  id="c7cimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                    <div id="c7cimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" ></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-12">
+                        <h4 style="text-align: left;">待评价的照片：</h4>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 2em;">
+                    <div id="c7ccimg1" onclick="imageShow(event)"  ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-offset-2 col-xs-1 imgbox-small" style="height:5em; ">
+
+                        <img  id="c7img1"  draggable="true" ondragstart="drag(event)"   style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c7ccimg2" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img2"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+
+                    </div>
+                    <div id="c7ccimg3" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img3"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c7ccimg4" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img4"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c7ccimg5" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img5"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c7ccimg6" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img6"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c7ccimg7" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img7"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div  id="c7ccimg8" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img8"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+
+                    </div>
+                    <div id="c7ccimg9" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)" class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img9"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+                    </div>
+                    <div id="c7ccimg10" onclick="imageShow(event)" ondrop="drop(event)" ondragover="allowDrop(event)"  class="col-xs-1 imgbox-small" style="height:5em; ">
+                        <img id="c7img10"  draggable="true" ondragstart="drag(event)"  style="width:100%; max-height: 100%;" src="/data/img/loading.jpg">
+                    </div>
+                </div>
+                <!--<h2><small></small>请问上方10幅照片中你最喜欢哪张？</h2>-->
+                <!--<input id="fav71" type="radio"  name="favorite7" value="1" />-->
+                <!--<label for="fav71">图片1</label>-->
+                <!--<input id="fav72" type="radio"  name="favorite7" value="2" />-->
+                <!--<label for="fav72">图片2</label>-->
+                <!--<input id="fav73" type="radio"  name="favorite7" value="3" />-->
+                <!--<label for="fav73">图片3</label>-->
+                <!--<input id="fav74" type="radio"  name="favorite7" value="4" />-->
+                <!--<label for="fav74">图片4</label>-->
+                <!--<input id="fav75" type="radio"  name="favorite7" value="5" />-->
+                <!--<label for="fav75">图片5</label>-->
+                <!--<input id="fav76" type="radio"  name="favorite7" value="6" />-->
+                <!--<label for="fav76">图片6</label>-->
+                <!--<input id="fav77" type="radio"  name="favorite7" value="7" />-->
+                <!--<label for="fav77">图片7</label>-->
+                <!--<input id="fav78" type="radio"  name="favorite7" value="8" />-->
+                <!--<label for="fav78">图片8</label>-->
+                <!--<input id="fav79" type="radio"  name="favorite7" value="9" />-->
+                <!--<label for="fav79">图片9</label>-->
+                <!--<input id="fav710" type="radio"  name="favorit7" value="10" />-->
+                <!--<label for="fav710">图片10</label>-->
+                <!--<h2><small>为什么？</small></h2>-->
+                <!--<input type="text" name="reason7" style="width: 100%;">-->
+                <input type="hidden" name="favorite7" value="1">
+                <input type="hidden" name="reason7" value="1">
+
+                <input id="cimg1" type="hidden" name="cimg1" value="0">
+                <input id="cimg2" type="hidden" name="cimg2" value="0">
+                <input id="cimg3" type="hidden" name="cimg3" value="0">
+                <input id="cimg4" type="hidden" name="cimg4" value="0">
+                <input id="cimg5" type="hidden" name="cimg5" value="0">
+                <input id="cimg6" type="hidden" name="cimg6" value="0">
+                <input id="cimg7" type="hidden" name="cimg7" value="0">
+                <input id="cimg8" type="hidden" name="cimg8" value="0">
+                <input id="cimg9" type="hidden" name="cimg9" value="0">
+                <input id="cimg10" type="hidden" name="cimg10" value="0">
+                <input id="cimg11" type="hidden" name="cimg11" value="0">
+                <input id="cimg12" type="hidden" name="cimg12" value="0">
+                <input id="cimg13" type="hidden" name="cimg13" value="0">
+                <input id="cimg14" type="hidden" name="cimg14" value="0">
+                <input id="cimg15" type="hidden" name="cimg15" value="0">
+                <input id="cimg16" type="hidden" name="cimg16" value="0">
+                <input id="cimg17" type="hidden" name="cimg17" value="0">
+                <input id="cimg18" type="hidden" name="cimg18" value="0">
+                <input id="cimg19" type="hidden" name="cimg19" value="0">
+                <input id="cimg20" type="hidden" name="cimg20" value="0">
+                <input id="cimg21" type="hidden" name="cimg21" value="0">
+                <input id="cimg22" type="hidden" name="cimg22" value="0">
+                <input id="cimg23" type="hidden" name="cimg23" value="0">
+                <input id="cimg24" type="hidden" name="cimg24" value="0">
+                <input id="cimg25" type="hidden" name="cimg25" value="0">
+                <input id="cimg26" type="hidden" name="cimg26" value="0">
+                <input id="cimg27" type="hidden" name="cimg27" value="0">
+                <input id="cimg28" type="hidden" name="cimg28" value="0">
+                <input id="cimg29" type="hidden" name="cimg29" value="0">
+                <input id="cimg30" type="hidden" name="cimg30" value="0">
+                <input id="cimg31" type="hidden" name="cimg31" value="0">
+                <input id="cimg32" type="hidden" name="cimg32" value="0">
+                <input id="cimg33" type="hidden" name="cimg33" value="0">
+                <input id="cimg34" type="hidden" name="cimg34" value="0">
+                <input id="cimg35" type="hidden" name="cimg35" value="0">
+                <input id="cimg36" type="hidden" name="cimg36" value="0">
+                <input id="cimg37" type="hidden" name="cimg37" value="0">
+                <input id="cimg38" type="hidden" name="cimg38" value="0">
+                <input id="cimg39" type="hidden" name="cimg39" value="0">
+                <input id="cimg40" type="hidden" name="cimg40" value="0">
+                <input id="cimg41" type="hidden" name="cimg41" value="0">
+                <input id="cimg42" type="hidden" name="cimg42" value="0">
+                <input id="cimg43" type="hidden" name="cimg43" value="0">
+                <input id="cimg44" type="hidden" name="cimg44" value="0">
+                <input id="cimg45" type="hidden" name="cimg45" value="0">
+                <input id="cimg46" type="hidden" name="cimg46" value="0">
+                <input id="cimg47" type="hidden" name="cimg47" value="0">
+                <input id="cimg48" type="hidden" name="cimg48" value="0">
+                <input id="cimg49" type="hidden" name="cimg49" value="0">
+                <input id="cimg50" type="hidden" name="cimg50" value="0">
+                <input id="cimg51" type="hidden" name="cimg51" value="0">
+                <input id="cimg52" type="hidden" name="cimg52" value="0">
+                <input id="cimg53" type="hidden" name="cimg53" value="0">
+                <input id="cimg54" type="hidden" name="cimg54" value="0">
+                <input id="cimg55" type="hidden" name="cimg55" value="0">
+                <input id="cimg56" type="hidden" name="cimg56" value="0">
+                <input id="cimg57" type="hidden" name="cimg57" value="0">
+                <input id="cimg58" type="hidden" name="cimg58" value="0">
+                <input id="cimg59" type="hidden" name="cimg59" value="0">
+                <input id="cimg60" type="hidden" name="cimg60" value="0">
+                <input id="cimg61" type="hidden" name="cimg61" value="0">
+                <input id="cimg62" type="hidden" name="cimg62" value="0">
+                <input id="cimg63" type="hidden" name="cimg63" value="0">
+                <input id="cimg64" type="hidden" name="cimg64" value="0">
+                <input id="cimg65" type="hidden" name="cimg65" value="0">
+                <input id="cimg66" type="hidden" name="cimg66" value="0">
+                <input id="cimg67" type="hidden" name="cimg67" value="0">
+                <input id="cimg68" type="hidden" name="cimg68" value="0">
+                <input id="cimg69" type="hidden" name="cimg69" value="0">
+                <input id="cimg70" type="hidden" name="cimg70" value="0">
+                <h3 style="margin-top:4em;">您认为 什么因素会让一处风景变得更优美，让你更喜欢？</h3><input type="text" style="width:65em;" name="reason_like">
+                <h3>您认为 什么因素会让一处风景变得更不优美，或让你不喜欢？</h3><input type="text" style="width:65em;" name="reason_dislike">
+                <h2 style="margin-top: 4em;">个人信息收集</h2>
+                <h3>请问您是否从事或者学习过风景园林及相关专业?</h3>
+                <input id="3-1-1" type="radio" name="experience" value="1">
+                <label for="3-1-1">是</label>
+                <input id="3-1-2" type="radio" name="experience" value="2">
+                <label for="3-1-2">否</label>
+                <h3>请问您是否去太湖景区实地游览过？</h3>
+                <input id="3-a-1" type="radio" name="visited" value="1">
+                <label for="3-a-1">是</label>
+                <input id="3-a-2" type="radio" name="visited" value="2">
+                <label for="3-a-2">否</label>
+                <h3>年龄</h3><input type="text" name="age">
+                <h3>教育水平</h3>
+                <input id="3-3-1" type="radio" name="level" value="1">
+                <label for="3-3-1">小学以下</label>
+                <input id="3-3-2" type="radio" name="level" value="2">
+                <label for="3-3-2">小学</label>
+                <input id="3-3-3" type="radio" name="level" value="3">
+                <label for="3-3-3">初中</label>
+                <input id="3-3-4" type="radio" name="level" value="4">
+                <label for="3-3-4">高中</label>
+                <input id="3-3-8" type="radio" name="level" value="8">
+                <label for="3-3-8">中专</label>
+                <input id="3-3-5" type="radio" name="level" value="5">
+                <label for="3-3-5">大学</label>
+                <input id="3-3-9" type="radio" name="level" value="9">
+                <label for="3-3-9">大专</label>
+                <input id="3-3-6" type="radio" name="level" value="6">
+                <label for="3-3-6">研究生</label>
+                <input id="3-3-7" type="radio" name="level" value="7">
+                <label for="3-3-7">博士</label>
+                <h3>职业（若为学生，则填写“学生”）</h3><input type="text" name="job">
+                <h3>所学专业或所从事的专业</h3> <input type="text" name="region">
+                <h3>家乡省份</h3><input type="text" name="province">
+                <h3>您是否还有任何想对我们说的话（选填）</h3><input type="text" name="comment" style="width:100%;">
+                <input type="submit"  style="  margin-top: 2em;
+                margin-bottom: 3em;
+  border: 0;
+  background-color: gray;
+  color: white;
+  font-size: 2em;
+  float: right;" value="提交">
+
+            </form>
+
+            <div style="margin-top: 3em;"></div>
+        </div>
+    </div>
+    </div>
+</div>
+<!-- 模态框（Modal） -->
+<div class="modal fade" style="overflow-x: auto !important;" id="modalImage" tabindex="-1" role="dialog"
+     aria-labelledby="myModalLabel" aria-hidden="true"  >
+    <div id="modal" class="modal-dialog" style="margin-left:0em;width:0em;" >
+        <div id="imgText" style="font-size: 3em;color: #ffffff;;"></div>
+        <img id="imageShowImg" onload="$('#modal').modal().css({'margin-left':(document.body.clientWidth
+    -this.width)<0?0:(document.body.clientWidth
+    -this.width)/2});" onclick="imageClose();" style="  position: absolute;left: 0;top: 0;z-index: -1;">
+
+    </div><!-- /.modal -->
+</div>
+<script>
+    var images = [];
+    for(var i=0;i<70;i++){
+        images.push(
+                {
+                    url:"/data/img/survey/("+(i+1)+").jpg",
+                    name:"cimg"+(i+1)
+                }
+        )
+    }
+
+    var temp;
+    var i;
+    var k;
+
+    for(i=0;i<70;i++){
+        var a = Math.floor(Math.random()*69);
+        var b = Math.floor(Math.random()*69);
+        temp=images[a];
+        images[a]=images[b];
+        images[b]=temp;
+    }
+    for(i=0;i<7;i++){
+        for(k=0;k<10;k++){
+            var ele = document.getElementById("c"+(i+1)+"img"+(k+1));
+            ele.setAttribute("src",images[i*10+k].url);
+            ele.setAttribute("name",images[i*10+k].name);
+            //var ele2 = document.getElementById("fav"+(i+1)+(k+1));
+            //var name = images[i*10+k].name;
+            //ele2.setAttribute("value",name.substring(4,name.length));
+        }
+    }
+</script>
+</body>
+</html>

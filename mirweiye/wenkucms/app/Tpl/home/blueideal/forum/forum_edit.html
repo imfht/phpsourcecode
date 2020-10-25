@@ -1,0 +1,104 @@
+<include file="public:head" />
+<!-- 主体开始 -->
+<div class="layui-container fly-marginTop">
+  <div class="fly-panel" pad20 style="padding-top: 5px;"> 
+    <div class="layui-form layui-form-pane">
+      <div class="layui-tab layui-tab-brief" lay-filter="user">
+        <ul class="layui-tab-title">
+          <li class="layui-this">编辑帖子 {$info.cateid}</li>
+        </ul>
+        <div class="layui-form layui-tab-content" id="LAY_ucm" style="padding: 20px 0;">
+          <div class="layui-tab-item layui-show">
+            <form class="layui-form" >
+              <div class="layui-row layui-col-space15 layui-form-item">
+                <div class="layui-col-md3">
+                  <label class="layui-form-label">发布版块</label>
+                  <div class="layui-input-block">
+                    <select lay-verify="required" name="cateid" id="cateid">
+                      <option></option>
+                      <volist name='forum_cate' id="vo">
+                      <option value="{$vo.id}" <if condition="$info['cateid'] eq $vo['id']">selected</if>>{$vo.name}</option>
+                      </volist>
+                    </select>
+                  </div>
+                </div>
+                <div class="layui-col-md9">
+                  <label for="L_title" class="layui-form-label">标题</label>
+                  <div class="layui-input-block">
+                    <input type="text" id="L_title" name="title" required lay-verify="required" autocomplete="off" class="layui-input" value="{$info.title}">
+                  </div>
+                </div>
+              </div>
+               
+              <div class="layui-form-item layui-form-text">
+                <div class="layui-input-block">
+                  <textarea id="L_content" name="content" placeholder="请输入帖子内容" class="layui-textarea">{$info.content}</textarea>
+                </div>
+              </div>
+               
+              <div class="layui-form-item">
+                <button class="layui-btn" id="btn">立即发布</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 主体结束 -->
+<include file="public:footer" />
+ 
+<script>
+layui.use(['form', 'layedit', 'laydate','jquery'], function(){
+  var form = layui.form
+  ,layer = layui.layer
+  ,layedit = layui.layedit
+  ,laydate = layui.laydate, $ = layui.jquery;
+
+  //建立编辑器
+  var layedit;
+  var layedit_index;
+  // 编辑器上传配置
+  layedit.set({
+    uploadImage: {
+      url: "{:U('common/editer_upload')}",
+      type: 'post'
+    }
+  });
+  //初始化编辑器
+  layedit = layui.layedit ;
+  layedit_index = layedit.build('L_content', {height: 300})
+
+  // 提交表单
+  $('#btn').on('click',function(){
+      var title = $('#L_title').val();
+      var cateid = $('#cateid').val();
+      var content = layedit.getContent(layedit_index);
+      var uid = "{$info.uid}";
+      var id = "{$info.id}";
+      $.post("{:U('forumedit')}",{id:id,title:title,cateid:cateid,content:content,uid:uid},function(res){
+        if(res.status.status ==  1){
+            layer.msg(res.status.msg,{time:1800},function(){
+                window.location.href="{$ret_url}";
+            });
+        }else{
+            layer.msg(res.status.msg,{time:1800});
+        }
+          
+      });
+      return false;
+  });
+
+});
+ 
+</script>  
+<script>
+layui.config({
+  version: "3.0.0"
+  ,base: '__PUBLIC__/theme/blueideal/mods/' //这里实际使用时，建议改成绝对路径
+}).extend({
+  fly: 'index'
+}).use('fly');
+</script>

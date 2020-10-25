@@ -1,0 +1,746 @@
+{extend name="base" /}
+{block name="css"}
+<link rel="stylesheet" type="text/css" href="__STATIC__/plugins/webuploader/webuploader.css?v={$v}" />
+<link href="__STATIC__/plugins/validator/jquery.validator.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="main"}
+<style>
+.goodsCat{display:inline-block;width:150px}
+.accreds{display:inline-block;width:150px}
+.upload-picker div:nth-child(2){top:0!important;left:0!important;width:100%!important;height:100%!important;}
+label{font-weight: normal;}
+</style>
+<form id='editFrom' autocomplete='off'>
+<input type='hidden' id='supplierId' name='supplierId' class='a-ipt' value="0"/>
+<fieldset class="layui-elem-field layui-field-title" style='margin-top:10px;'>
+<legend>公司信息</legend>
+                <table class='wst-form wst-box-top'>
+                    <tr>
+                       <th width='170'>新增类型<font color='red'>*</font>：</th>
+                       <td class='layui-form'>
+                         <label>
+                               <input type='radio' class='a-ipt' name='isNew' id='isNew1' value='1' onclick='javascript:WST.showHide(1,".newUserTr1");WST.showHide(0,"#newUserTr0")' checked title='新账号'>
+                         </label>
+                         <label>
+                               <input type='radio' class='a-ipt' name='isNew' value='0' onclick='javascript:WST.showHide(0,".newUserTr1");WST.showHide(1,"#newUserTr0")' title='已有账号'>
+                         </label>
+                       </td>
+                    </tr>
+                    <tr id='newUserTr0' style='display:none'>
+                       <th width='170' valign="top" style='padding-top:20px;'>请输入用户账号<font color='red'>*</font>：</th>
+                       <td>
+                       <input type="text" id='keyName' name='keyName' class='ipt' placeholder='请输入用户账号/手机'/>
+                       <input type='button' value='查询' class='btn btn-primary' onclick='javascript:getUserByKey()'>
+                       <div id='keyNameBox' style='height:30px;line-height:30px'></div>
+                       <input type='hidden' class='a-ipt' id='supplierUserId' value='0'/>
+                       </td>
+                    </tr>
+                    <tr class='newUserTr1'>
+                       <th width='170'>登录账号<font color='red'>*</font>：</th>
+                       <td><input type="text" id='loginName' name='loginName' class='a-ipt' value=" " maxLength='20' data-rule="登录账号: required(#isNew1:checked);length[6~20];remote(post:{:url('admin/users/checkLoginKey')})" onkeyup="javascript:WST.isChinese(this,1)"/></td>
+                    </tr>
+                    <tr class='newUserTr1'>
+                       <th>登录密码<font color='red'>*</font>：</th>
+                       <td><input type="password" id='loginPwd' class='a-ipt' maxLength='20' value='88888888' data-rule="登录密码: required(#isNew1:checked);length[6~20];" data-target="#msg_loginPwd"/>
+                       <span class='msg-box' id='msg_loginPwd'>(默认为88888888)</span>
+                       </td>
+                    </tr>
+                    <tr>
+                        <th width='170'>供货商编号：</th>
+                        <td><input type="text" id='supplierSn' name='supplierSn' class='a-ipt' maxLength='20' data-rule="供货商编号:ignoreBlank;length[1~20];remote(post:{:url('admin/suppliers/checkSupplierSn')})" data-target="#msg_supplierSn"/><span class='msg-box' id='msg_supplierSn'>(为空则自动生成'S000000001'类型号码)</span></td>
+                    </tr>
+                    {volist name="companyFields" id="vo"}
+                        {switch $vo['fieldType']}
+                            {case input}
+                                {if $vo['isShow']==1}
+                                    <tr {if $vo['isRelevance']}id="{$vo['fieldName']}Tr"{/if} {if $vo['isRelevance']}style='display:none;'{/if} >
+                                        <th width='170' {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td height='23'>
+                                            {if $vo['isRelevance']}
+                                                <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required(#{$vo['fieldRelevance']}1:checked)"{/if} maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            {else}
+                                                <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            {/if}
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/case}
+                            {case textarea}
+                                {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <textarea id="{$vo['fieldName']}" class='a-ipt' rows="{$fieldAttr[0]}" cols="{$fieldAttr[1]}" {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if}></textarea>
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                        </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case radio}
+                                {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr >
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        {volist name="$fieldAttr" id="voo"}
+                                        {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                        <label>
+                                            <input type='radio' name="{$vo['fieldName']}"  id="{$vo['fieldName']}{$fieldAttrValue[0]}" class='a-ipt' value="{$fieldAttrValue[0]}" onclick='javascript:WST.showHide({$fieldAttrValue[0]},"#{$vo['fieldRelevance']}Tr")'/>{$fieldAttrValue[1]}
+                                        </label>
+                                        {/volist}
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case checkbox}
+                                {if $vo['fieldAttr'] == 'custom'}
+                                    <tr >
+                                        <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td>
+                                            {volist name=":WSTGoodsCats(0)" id="voo"}
+                                            <label class='goodsCat'>
+                                                <input type='checkbox' class='a-ipt' name="{$vo['fieldName']}" value='{$voo["catId"]}' {if $i == 1}data-rule="{$vo['fieldTitle']}:checked" {/if} data-target="#msg_{$vo['fieldName']}"/>{$voo["catName"]}
+                                            </label>
+                                            {/volist}
+                                            <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                        </td>
+                                    </tr>
+                                {else}
+                                    {if $vo['isShow']==1}
+                                        {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                        <tr >
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                {volist name="$fieldAttr" id="voo"}
+                                                {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                                <label>
+                                                    <input type='checkbox' name="{$vo['fieldName']}"  id="{$vo['fieldName']}" class='a-ipt' value="{$fieldAttrValue[0]}"  {if $vo['isRequire'] == 1}data-rule="{$vo['fieldTitle']}:checked" {/if}/>{$fieldAttrValue[1]}
+                                                </label>
+                                                {/volist}
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            </td>
+                                         </tr>
+                                    {/if}
+                                {/if}
+                            {/case}
+                            {case select}
+                                {if $vo['isShow']==1}
+                                {php} if($vo['fieldAttr']!='custom')$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <select id="{$vo['fieldName']}" class='a-ipt'>
+                                            {if $vo['fieldAttr']!='custom'}
+                                                {volist name="$fieldAttr" id='voo'}
+                                                {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                                <option value="{$fieldAttrValue[0]}">{$fieldAttrValue[1]}</option>
+                                                {/volist}
+                                            {else}
+                                                {php}
+                                                    $banks = WSTTable('banks',['dataFlag'=>1],'bankId,bankName',100);
+                                                    foreach($banks as $aky => $bank){
+                                                {/php}
+                                                <option value="{$bank['bankId']}">{$bank['bankName']}</option>
+                                                {php}}{/php}
+                                            {/if}
+                                        </select>
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case other}
+                                {switch $vo['fieldAttr']}
+                                    {case area}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <select id="{$vo['fieldName']}_0" class="j-{$vo['fieldName']}" data-name="{$vo['fieldName']}" level="0" onchange="WST.ITAreas({id:'{$vo['fieldName']}_0',val:this.value,isRequire:true,className:'j-{$vo['fieldName']}'});">
+                                                    <option value="">-请选择-</option>
+                                                    {php}
+                                                    $areas = WSTTable('areas',['isShow'=>1,'dataFlag'=>1,'parentId'=>0],'areaId,areaName',100,'areaSort desc');
+                                                    foreach($areas as $aky => $area){
+                                                    {/php}
+                                                    <option value="{$area['areaId']}">{$area['areaName']}</option>
+                                                    {php}}{/php}
+                                                </select>
+                                                {if $vo['isMap']}
+                                                    {if(WSTConf('CONF.mapKey'))} <button type='button' class='btn btn-primary' data-name="{$vo['fieldName']}" onclick="javascript:mapCity(this)" style="top: 8px;height: 28px;line-height: 28px;font-size: 14px;font-weight: 400;"><i class='fa fa-map-marker'></i>地图定位</button>{/if}
+                                                {/if}
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            </td>
+                                        </tr>
+                                        {if $vo['isMap']}
+                                            {if(WSTConf('CONF.mapKey'))}
+                                                <tr>
+                                                    <th>&nbsp;</th>
+                                                    <td>
+                                                        <div id="container"  style='width:700px;height:400px'></div>
+                                                        <input type='hidden' id='mapLevel' class='a-ipt'  value="{$apply['mapLevel']}"/>
+                                                        <input type='hidden' id='longitude' class='a-ipt'  value=""/>
+                                                        <input type='hidden' id='latitude' class='a-ipt'  value=""/>
+                                                    </td>
+                                                </tr>
+                                            {/if}
+                                        {/if}
+                                        {/if}
+                                    {/case}
+                                    {case date}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <input type='text' id="{$vo['fieldName']}" readonly class='a-ipt laydate'  {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}" data-timely="2"/>
+                                                {if $vo['dateRelevance']}
+                                                {php}$dateRelevance = explode(',',$vo['dateRelevance']);{/php}
+                                                
+                                                - <input type='text' id="{$dateRelevance[0]}" readonly class='a-ipt laydate'  data-timely="2"/>&nbsp;&nbsp;&nbsp;<label><input type='checkbox' name='{$dateRelevance[1]}' id='{$dateRelevance[1]}' class='a-ipt' onclick='WST.showHide(this.checked?0:1,"#{$dateRelevance[0]}")' value='1'/>{$dateRelevance[2]}</label>
+                                                {/if}
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span><br>{/if}
+                                                <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                            </td>
+                                        </tr>
+                                        {/if}
+                                    {/case}
+                                    {case time}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <select class='a-ipt time-component' id="{$vo['fieldName']}" v=""></select>
+                                                {if $vo['timeRelevance']}
+                                                至
+                                                <select class='a-ipt time-component' id="{$vo['timeRelevance']}" v=""></select>
+                                                {/if}
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            </td>
+                                        </tr>
+                                        {/if}
+                                    {/case}
+                                    {case file}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <input type='hidden' id="{$vo['fieldName']}" fileNum="{$vo['fileNum']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}"/>
+                                                <div id="{$vo['fieldName']}Picker" class="upload-picker">请上传{$vo['fieldTitle']}</div>
+                                                <span id="{$vo['fieldName']}Msg"></span>
+                                                <div id="{$vo['fieldName']}Box"></div>
+                                                <div id="{$vo['fieldName']}ImgBox">
+                                                </div>
+                                                <img id="{$vo['fieldName']}Preview" src=""  width='150'>
+                                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div><br>{/if}
+                                            </td>
+                                        </tr>
+                                        {/if}
+                                    {/case}
+                                    {default /}
+                                {/switch}
+                            {/case}
+                            {default /}
+                        {/switch}
+                    {/volist}
+                </table>
+</fieldset>
+<fieldset class="layui-elem-field layui-field-title">
+<legend>供货商信息</legend>
+                <table class='wst-form wst-box-top'>
+                    {volist name="supplierFields" id="vo"}
+                        {switch $vo['fieldType']}
+                            {case input}
+                                {if $vo['isShow']==1}
+                                    <tr {if $vo['isRelevance']}id="{$vo['fieldName']}Tr"{/if} {if $vo['isRelevance']}style='display:none;'{/if} >
+                                        <th width='170' {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td height='23'>
+                                            {if $vo['isRelevance']}
+                                                <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required(#{$vo['fieldRelevance']}1:checked)"{/if} maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            {else}
+                                                <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            {/if}
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/case}
+                            {case textarea}
+                                {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <textarea id="{$vo['fieldName']}" class='a-ipt' rows="{$fieldAttr[0]}" cols="{$fieldAttr[1]}" {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if}></textarea>
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case radio}
+                                {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr >
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        {volist name="$fieldAttr" id="voo"}
+                                        {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                        <label>
+                                            <input type='radio' name="{$vo['fieldName']}"  id="{$vo['fieldName']}{$fieldAttrValue[0]}" class='a-ipt' value="{$fieldAttrValue[0]}" onclick='javascript:WST.showHide({$fieldAttrValue[0]},"#{$vo['fieldRelevance']}Tr")'/>{$fieldAttrValue[1]}
+                                        </label>
+                                        {/volist}
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case checkbox}
+                                {if $vo['fieldAttr'] == 'custom'}
+                                    <tr >
+                                        <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td>
+                                            {volist name=":WSTGoodsCats(0)" id="voo"}
+                                            <label class='goodsCat'>
+                                                <input type='checkbox' class='a-ipt' name="{$vo['fieldName']}" value='{$voo["catId"]}' {if $i == 1}data-rule="{$vo['fieldTitle']}:checked" {/if} data-target="#msg_{$vo['fieldName']}"/>{$voo["catName"]}
+                                            </label>
+                                            {/volist}
+                                            <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                        </td>
+                                    </tr>
+                                {else}
+                                    {if $vo['isShow']==1}
+                                        {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                        <tr >
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                {volist name="$fieldAttr" id="voo"}
+                                                {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                                <label>
+                                                    <input type='checkbox' name="{$vo['fieldName']}"  id="{$vo['fieldName']}" class='a-ipt' value="{$fieldAttrValue[0]}"  {if $vo['isRequire'] == 1}data-rule="{$vo['fieldTitle']}:checked" {/if}/>{$fieldAttrValue[1]}
+                                                </label>
+                                                {/volist}
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            </td>
+                                        </tr>
+                                    {/if}
+                                {/if}
+                            {/case}
+                            {case select}
+                                {if $vo['isShow']==1}
+                                {php} if($vo['fieldAttr']!='custom')$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <select id="{$vo['fieldName']}" class='a-ipt'>
+                                            {if $vo['fieldAttr']!='custom'}
+                                                {volist name="$fieldAttr" id='voo'}
+                                                {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                                <option value="{$fieldAttrValue[0]}" >{$fieldAttrValue[1]}</option>
+                                                {/volist}
+                                            {else}
+                                                {if $vo['fieldName']=='tradeId'}
+                                                    <option value="">-请选择-</option>
+                                                    {volist name=":WSTTrades(0)" id="td"}
+                                                    <option value="{$td['tradeId']}">{$td['tradeName']}</option>
+                                                    {/volist}
+                                                {else}
+                                                    {php}
+                                                        $bankList = WSTTable('banks',['dataFlag'=>1],'bankId,bankName',100);
+                                                    {/php}
+                                                    {foreach $bankList as $bk}
+                                                    <option value="{$bk['bankId']}">{$bk['bankName']}</option>
+                                                    {/foreach}
+                                                {/if}
+                                            {/if}
+                                        </select>
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case other}
+                                {switch $vo['fieldAttr']}
+                                    {case area}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <select id="{$vo['fieldName']}_0" class="j-{$vo['fieldName']}" data-name="{$vo['fieldName']}" level="0" onchange="WST.ITAreas({id:'{$vo['fieldName']}_0',val:this.value,isRequire:true,className:'j-{$vo['fieldName']}'});">
+                                                    <option value="">-请选择-</option>
+                                                    {php}
+                                                    $areas = WSTTable('areas',['isShow'=>1,'dataFlag'=>1,'parentId'=>0],'areaId,areaName',100,'areaSort desc');
+                                                    foreach($areas as $aky => $area){
+                                                    {/php}
+                                                    <option value="{$area['areaId']}">{$area['areaName']}</option>
+                                                    {php}}{/php}
+                                                </select>
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            </td>
+                                        </tr>
+                                        {/if}
+                                    {/case}
+                                    {case date}
+                                        {if $vo['isShow']==1}
+                                            <tr>
+                                                <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                                <td>
+                                                    <input type='text' id="{$vo['fieldName']}" readonly class='a-ipt laydate'  {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}" data-timely="2"/>
+                                                    {if $vo['dateRelevance']}
+                                                    {php}$dateRelevance = explode(',',$vo['dateRelevance']);{/php}
+                                                    
+                                                    - <input type='text' id="{$dateRelevance[0]}" readonly class='a-ipt laydate'  data-timely="2" style='display:none'/>&nbsp;&nbsp;&nbsp;<label><input type='checkbox' name='{$dateRelevance[1]}' id='{$dateRelevance[1]}' class='a-ipt' onclick='WST.showHide(this.checked?0:1,"#{$dateRelevance[0]}")' value='1'/>{$dateRelevance[2]}</label>
+                                                    {/if}
+                                                    {/if}
+                                                    {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span><br>{/if}
+                                                    <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                                </td>
+                                            </tr>
+                                        {/if}
+                                    {/case}
+                                    {case time}
+                                        {if $vo['isShow']==1}
+                                            <tr>
+                                                <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                                <td>
+                                                    <select class='a-ipt time-component' id="{$vo['fieldName']}" v=""></select>
+                                                    {if $vo['timeRelevance']}
+                                                    至
+                                                    <select class='a-ipt time-component' id="{$vo['timeRelevance']}" v=""></select>
+                                                    {/if}
+                                                    {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                                </td>
+                                            </tr>
+                                        {/if}
+                                    {/case}
+                                    {case file}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <input type='hidden' id="{$vo['fieldName']}" fileNum="{$vo['fileNum']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}"/>
+                                                <div id="{$vo['fieldName']}Picker" class="upload-picker">请上传{$vo['fieldTitle']}</div>
+                                                <span id="{$vo['fieldName']}Msg"></span>
+                                                <div id="{$vo['fieldName']}Box"></div>
+                                                <div id="{$vo['fieldName']}ImgBox">
+                                                </div>
+                                                <img id="{$vo['fieldName']}Preview" src=""  width='150'>
+                                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div><br>{/if}
+                                            </td>
+                                        </tr>
+                                        {/if}
+                                    {/case}
+                                    {default /}
+                                {/switch}
+                            {/case}
+                            {default /}
+                        {/switch}
+                    {/volist}
+                </table>
+</fieldset>
+<fieldset class="layui-elem-field layui-field-title">
+<legend>附加信息</legend>
+                <table class='wst-form wst-box-top'>
+                    {volist name="otherFields" id="vo"}
+                        {switch $vo['fieldType']}
+                            {case input}
+                                {if $vo['isShow']==1}
+                                    <tr {if $vo['isRelevance']}id="{$vo['fieldName']}Tr"{/if} {if $vo['isRelevance']}style='display:none;'{/if} >
+                                        <th width='170'  {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td height='23'>
+                                            {if $vo['isRelevance']}
+                                                <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required(#{$vo['fieldRelevance']}1:checked)"{/if} maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            {else}
+                                                <input type='text' id="{$vo['fieldName']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} maxlength="{$vo['fieldAttr']}" />{if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            {/if}
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/case}
+                            {case textarea}
+                                {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <textarea id="{$vo['fieldName']}" class='a-ipt' rows="{$fieldAttr[0]}" cols="{$fieldAttr[1]}" {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if}></textarea>
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case radio}
+                                {if $vo['isShow']==1}
+                                {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr >
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        {volist name="$fieldAttr" id="voo"}
+                                        {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                        <label>
+                                            <input type='radio' name="{$vo['fieldName']}"  id="{$vo['fieldName']}{$fieldAttrValue[0]}" class='a-ipt' value="{$fieldAttrValue[0]}" onclick='javascript:WST.showHide({$fieldAttrValue[0]},"#{$vo['fieldRelevance']}Tr")'/>{$fieldAttrValue[1]}
+                                        </label>
+                                        {/volist}
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case checkbox}
+                                {if $vo['fieldAttr'] == 'custom'}
+                                    <tr >
+                                        <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td>
+                                            {volist name=":WSTGoodsCats(0)" id="voo"}
+                                            <label class='goodsCat'>
+                                                <input type='checkbox' class='a-ipt' name="{$vo['fieldName']}" value='{$voo["catId"]}' {if $i == 1}data-rule="{$vo['fieldTitle']}:checked" {/if} data-target="#msg_{$vo['fieldName']}"/>{$voo["catName"]}
+                                            </label>
+                                            {/volist}
+                                            <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                        </td>
+                                    </tr>
+                                {else}
+                                    {if $vo['isShow']==1}
+                                        {php}$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                        <tr >
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                {volist name="$fieldAttr" id="voo"}
+                                                {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                                <label>
+                                                    <input type='checkbox' name="{$vo['fieldName']}"  id="{$vo['fieldName']}" class='a-ipt' value="{$fieldAttrValue[0]}"  {if $vo['isRequire'] == 1}data-rule="{$vo['fieldTitle']}:checked" {/if}/>{$fieldAttrValue[1]}
+                                                </label>
+                                                {/volist}
+                                                {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                            </td>
+                                        </tr>
+                                    {/if}
+                                {/if}
+                            {/case}
+                            {case select}
+                                {if $vo['isShow']==1}
+                                {php} if($vo['fieldAttr']!='custom')$fieldAttr = explode(',',$vo['fieldAttr']);{/php}
+                                <tr>
+                                    <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                    <td>
+                                        <select id="{$vo['fieldName']}" class='a-ipt'>
+                                            {if $vo['fieldAttr']!='custom'}
+                                                {volist name="$fieldAttr" id='voo'}
+                                                    {php}$fieldAttrValue = explode('||',$voo);{/php}
+                                                    <option value="{$fieldAttrValue[0]}">{$fieldAttrValue[1]}</option>
+                                                {/volist}
+                                            {else}
+                                                {if $vo['fieldName']=='tradeId'}
+                                                    <option value="">-请选择-</option>
+                                                    {volist name=":WSTTrades(0)" id="td"}
+                                                    <option value="{$td['tradeId']}">{$td['tradeName']}</option>
+                                                    {/volist}
+                                                {else}
+                                                    {php}
+                                                        $bankList = WSTTable('banks',['dataFlag'=>1],'bankId,bankName',100);
+                                                    {/php}
+                                                    {foreach $bankList as $bk}
+                                                    <option value="{$bk['bankId']}">{$bk['bankName']}</option>
+                                                    {/foreach}
+                                                {/if}
+                                            {/if}
+                                        </select>
+                                        {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                    </td>
+                                </tr>
+                                {/if}
+                            {/case}
+                            {case other}
+                                {switch $vo['fieldAttr']}
+                                    {case area}
+                                    {if $vo['isShow']==1}
+                                    <tr>
+                                        <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                        <td>
+                                            <select id="{$vo['fieldName']}_0" class="j-{$vo['fieldName']}" data-name="{$vo['fieldName']}" level="0" onchange="WST.ITAreas({id:'{$vo['fieldName']}_0',val:this.value,isRequire:true,className:'j-{$vo['fieldName']}'});">
+                                                <option value="">-请选择-</option>
+                                                {php}
+                                                $areas = WSTTable('areas',['isShow'=>1,'dataFlag'=>1,'parentId'=>0],'areaId,areaName',100,'areaSort desc');
+                                                foreach($areas as $aky => $area){
+                                                {/php}
+                                                <option value="{$area['areaId']}">{$area['areaName']}</option>
+                                                {php}}{/php}
+                                            </select>
+                                            {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                        </td>
+                                    </tr>
+                                    {/if}
+                                    {/case}
+                                    {case date}
+                                        {if $vo['isShow']==1}
+                                            <tr>
+                                                <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                                <td>
+                                                    <input type='text' id="{$vo['fieldName']}" readonly class='a-ipt laydate'  {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}" data-timely="2"/>
+                                                    {if $vo['dateRelevance']}
+                                                        {php}$dateRelevance = explode(',',$vo['dateRelevance']);{/php}
+                                                        - <input type='text' id="{$dateRelevance[0]}" readonly class='a-ipt laydate'  data-timely="2" style='display:none'/>&nbsp;&nbsp;&nbsp;<label><input type='checkbox' name='{$dateRelevance[1]}' id='{$dateRelevance[1]}' class='a-ipt' onclick='WST.showHide(this.checked?0:1,"#{$dateRelevance[0]}")' value='1'/>{$dateRelevance[2]}</label>
+                                                        {/if}
+                                                    {/if}
+                                                    {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span><br>{/if}
+                                                    <span class='msg-box' id="msg_{$vo['fieldName']}"></span>
+                                                </td>
+                                            </tr>
+                                        {/if}
+                                    {/case}
+                                    {case time}
+                                        {if $vo['isShow']==1}
+                                            <tr>
+                                                <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                                <td>
+                                                    <select class='a-ipt time-component' id="{$vo['fieldName']}" v=""></select>
+                                                    {if $vo['timeRelevance']}
+                                                    至
+                                                    <select class='a-ipt time-component' id="{$vo['timeRelevance']}" v=""></select>
+                                                    {/if}
+                                                    {if $vo['fieldComment']}<br><span class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</span>{/if}
+                                                </td>
+                                            </tr>
+                                        {/if}
+                                    {/case}
+                                    {case file}
+                                        {if $vo['isShow']==1}
+                                        <tr>
+                                            <th {if $vo['fieldComment']}valign="top" style='padding-top: 20px;'{/if}>{$vo['fieldTitle']}{if $vo['isRequire']==1}<font color='red'>*</font>{/if}：</th>
+                                            <td>
+                                                <input type='hidden' id="{$vo['fieldName']}" fileNum="{$vo['fileNum']}" class='a-ipt' {if $vo['isRequire']==1}data-rule="{$vo['fieldTitle']}:required;"{/if} data-target="#msg_{$vo['fieldName']}" value=""/>
+                                                <div id="{$vo['fieldName']}Picker" class="upload-picker">请上传{$vo['fieldTitle']}</div>
+                                                <span id="{$vo['fieldName']}Msg"></span>
+                                                <div id="{$vo['fieldName']}Box"></div>
+                                                <div id="{$vo['fieldName']}ImgBox">
+                                                </div>
+                                                <img id="{$vo['fieldName']}Preview" src=""  width='150'>
+                                                {if $vo['fieldComment']}<div class="c-tip">{$vo['fieldComment']|htmlspecialchars_decode}</div><br>{/if}
+                                            </td>
+                                        </tr>
+                                        {/if}
+                                    {/case}
+                                    {default /}
+                                {/switch}
+                            {/case}
+                            {default /}
+                        {/switch}
+                    {/volist}
+                </table>
+</fieldset>
+<fieldset class="layui-elem-field layui-field-title">
+<table class='wst-form wst-box-top'>
+    <tr>
+        <th width='150'>到期日期<font color='red'>*</font>：</th>
+        <td class='layui-form'>
+            <input type='text' id="expireDate" class='a-ipt laydate' value=""  data-rule="到期日期:required;"/>
+        </td>
+    </tr>
+  <tr>
+       <td colspan='2' align='center'>
+         <button type="button" class='btn btn-primary btn-mright' onclick='javascript:add({$p},"index")'><i class="fa fa-check"></i>新增</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+         <button type="button"  class='btn' onclick="javascript:location.href='{:Url(\'admin/suppliers/index\',\'p=\'.$p)}'"><i class="fa fa-angle-double-left" ></i>返回</button>
+       </td>
+  </tr>
+</table>
+</fieldset>
+</form>
+
+{/block}
+{block name="js"}
+<script charset="utf-8" src="{:WSTProtocol()}map.qq.com/api/js?v=2.exp&key={:WSTConf('CONF.mapKey')}"></script>
+<script type='text/javascript' src='__STATIC__/plugins/webuploader/webuploader.js?v={$v}'></script>
+<script type="text/javascript" src="__STATIC__/plugins/validator/jquery.validator.min.js?v={$v}"></script>
+<script src="__ADMIN__/suppliers/suppliers.js?v={$v}" type="text/javascript"></script>
+<script>
+    $(function() {
+        $(".upload-picker").each(function (idx, item) {
+            var id_selector = $(item).prev().attr('id');
+            if(id_selector=='supplierImg'){
+                WST.upload({
+                    pick: "#" + id_selector + 'Picker',
+                    formData: {dir: 'suppliers',isThumb:1},
+                    accept: {extensions: 'gif,jpg,jpeg,png', mimeTypes: 'image/jpg,image/jpeg,image/png,image/gif'},
+                    callback: function (f) {
+                        var json = WST.toAdminJson(f);
+                        if (json.status == 1) {
+                            $('#' + id_selector + 'Msg').empty().hide();
+                            $('#' + id_selector + 'Preview').attr('src', WST.conf.RESOURCE_PATH + "/" + json.savePath + json.thumb).show();
+                            $('#' + id_selector).val(json.savePath + json.name);
+                            $('#msg_' + id_selector).hide();
+                        }
+                    },
+                    progress: function (rate) {
+                        $('#' + id_selector).show().html('已上传' + rate + "%");
+                    }
+                });
+            }else{
+                var fileNumLimit = $(item).prev().attr('fileNum');
+                var uploader = WST.upload({
+                    pick: "#" + id_selector + 'Picker',
+                    formData: {dir: 'supplierextras'},
+                    accept: {extensions: 'gif,jpg,jpeg,png', mimeTypes: 'image/jpg,image/jpeg,image/png,image/gif'},
+                    fileNumLimit:fileNumLimit,
+                    callback: function (f,file) {
+                        var json = WST.toAdminJson(f);
+                        if (json.status == 1) {
+                            if(fileNumLimit>1){
+                                $('#' + id_selector + 'ImgBox').empty();
+                                var tdiv = $("<div style='height:75px;float:left;margin:0px 5px;position:relative'><a target='_blank' href='"+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.name+"'>"+
+                                    "<img class='"+id_selector+"step_pic"+"' height='75' src='"+WST.conf.RESOURCE_PATH+"/"+json.savePath+json.thumb+"' v='"+json.savePath+json.name+"'></a></div>");
+                                var btn = $('<div style="position: absolute;top: -5px;right: 0px;cursor: pointer;background: rgba(0,0,0,0.5);width: 18px;height: 18px;text-align: center;border-radius: 50%;" ><img src="'+WST.conf.ROOT+'/wstmart/home/view/default/img/seller_icon_error.png"></div>');
+                                tdiv.append(btn);
+                                $('#' + id_selector + 'Box').append(tdiv);
+                                $('#msg_' + id_selector).hide();
+                                var imgPath = [];
+                                $('.'+id_selector+'step_pic').each(function(){
+                                    imgPath.push($(this).attr('v'));
+                                });
+                                $('#' + id_selector).val(imgPath.join(','));
+                                btn.on('click','img',function(){
+                                    uploader.removeFile(file);
+                                    $(this).parent().parent().remove();
+                                    uploader.refresh();
+                                    if($('#'+id_selector+'Box').children().size()<=0){
+                                        $('#msg_' + id_selector).show();
+                                    }
+                                    var imgPath = [];
+                                    $('.'+id_selector+'_step_pic').each(function(){
+                                        imgPath.push($(this).attr('v'));
+                                    });
+                                    $('#' + id_selector).val(imgPath.join(','));
+                                });
+                            }else{
+                                $('#' + id_selector + 'Msg').empty().hide();
+                                $('#' + id_selector + 'Preview').attr('src', WST.conf.RESOURCE_PATH + "/" + json.savePath + json.thumb).show();
+                                $('#' + id_selector).val(json.savePath + json.name);
+                                $('#msg_' + id_selector).hide();
+                                uploader.reset();
+                            }
+                        }
+                    },
+                    progress: function (rate) {
+                        $('#' + id_selector).show().html('已上传' + rate + "%");
+                    }
+                });
+            }
+        });
+
+        if(window.conf.MAP_KEY){
+            var longitude = $('#longitude').val();
+            var latitude = $('#latitude').val();
+            var mapLevel = $('#mapLevel').val();
+            initQQMap(longitude,latitude,mapLevel);
+        }
+
+        $(".time-component").each(function (idx, item) {
+            var id_selector = $(item).attr('id');
+            initTime('#'+id_selector,$('#'+id_selector).attr('v'));
+        });
+
+        var laydate = layui.laydate;
+        $(".laydate").each(function(idx,item) {
+            var id_selector = $(item).attr('id');
+            laydate.render({elem: '#'+id_selector});
+        });
+    });
+</script>
+{/block}

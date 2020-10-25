@@ -1,0 +1,167 @@
+{namespace lfe=SGalinski\Lfeditor\ViewHelpers}
+{namespace core=TYPO3\CMS\Core\ViewHelpers}
+
+<f:layout name="Default" />
+
+<f:section name="selectItems">
+	<f:render partial="SelectExtensionAndLanguageFile" arguments="{_all}" />
+</f:section>
+
+<f:section name="main">
+	<f:if condition="{languageFileSelection} && {infos}">
+		<lfe:addJavaScriptFile javaScriptFile="{f:uri.resource(path: 'JavaScript/GeneralTable.js')}" />
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<f:translate key="function.general.general" />
+			</div>
+			<div class="panel-body">
+				<p>
+					<a id="hideShowUntranslatedLanguagesInTableId" class="btn btn-default btn-sm" href="javascript:hideShowUntranslatedLanguagesInTable()">
+						[<f:translate key="function.general.hideShowUntranslated" />]
+					</a>
+				</p>
+				<table id="tx-lfeditor-table" class="table table-bordered table-responsive">
+					<thead>
+						<tr>
+							<th class="bgColor5">
+								<f:translate key="lang.shortcut" />
+							</th>
+							<th class="bgColor5">
+								<f:translate key="lang.state" />
+							</th>
+							<th class="bgColor5">
+								<f:translate key="lang.origin" />
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<f:for each="{infos}" as="info" key="langKey">
+							<tr>
+								<td>
+									<f:link.action action="goToEditFile" arguments="{language: langKey}">
+										{f:if(condition: '{langKey} == \'default\'', then: 'en', else: '{langKey}')}
+									</f:link.action>
+								</td>
+								<td>
+									<f:if condition="{info.numTranslated} >= {refLangNumTranslated}">
+										<f:then>
+											<span class="tx-lfeditor-goodMarkup">
+												<f:translate key="lang.complete" />
+											</span>
+										</f:then>
+										<f:else>
+											<span class="tx-lfeditor-badMarkup">
+												<f:translate key="lang.incomplete" />
+											</span>
+										</f:else>
+									</f:if>
+									(
+									<span class="tx-lfeditor-goodMarkup" title="{f:translate(key:'const.type.translated')}">
+										{info.numTranslated}
+									</span>
+									-
+									<span class="tx-lfeditor-specialMarkup" title="{f:translate(key:'const.type.unknown')}">
+										{info.numUnknown}
+									</span>
+									-
+									<span class="tx-lfeditor-badMarkup" title="{f:translate(key:'const.type.untranslated')}">
+										{info.numUntranslated}
+									</span>
+									)
+								</td>
+								<td>{info.origin}</td>
+							</tr>
+						</f:for>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<f:form id="contentForm" action="generalSave">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<f:translate key="function.general.metaInfo.metaInfo" />
+				</div>
+				<div class="panel-body">
+					<fieldset class="form-section">
+						<h4 class="form-section-headline">
+							<f:translate key="function.general.metaInfo.author" />
+						</h4>
+						<div class="form-group">
+							<label for="name">
+								<f:translate key="function.general.metaInfo.author.name" />
+							</label>
+							<f:form.textfield id="name" name="authorName" value="{infos.default.meta.authorName}" class="form-control" />
+						</div>
+						<div class="form-group">
+							<label for="email">
+								<f:translate key="function.general.metaInfo.author.email" />
+							</label>
+							<f:form.textfield id="email" name="authorEmail" value="{infos.default.meta.authorEmail}" class="form-control" />
+						</div>
+					</fieldset>
+					<fieldset class="form-section">
+						<h4 class="form-section-headline">
+							<f:translate key="function.general.metaInfo.desc" />
+						</h4>
+						<div class="form-group">
+							<f:form.textarea id="meta-description" cols="80" rows="{numTextAreaRows}" name="metaDescription" value="{metaDescription}" class="form-control" />
+						</div>
+					</fieldset>
+				</div>
+			</div>
+
+			<f:if condition="{editingMode} != 'override'">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<f:translate key="function.general.options" />
+					</div>
+					<div class="panel-body">
+						<f:if condition="{langFileExtension} != 'xlf' && {editingMode} != 'l10n'">
+							<fieldset class="form-section">
+								<h4 class="form-section-headline">
+									<f:translate key="function.general.split.split" />
+								</h4>
+								<div class="form-group">
+									<f:form.radio name="splitFile" id="normalSplit" value="1" checked="{preselectMerge} != 'TRUE'" />
+									<label for="normalSplit">
+										<f:translate key="function.general.split.splitNormal" />
+									</label>
+								</div>
+								<div class="form-group">
+									<f:form.radio name="splitFile" id="merge" value="2" checked="{preselectMerge}" />
+									<label for="merge">
+										<f:translate key="function.general.split.merge" />
+									</label>
+								</div>
+							</fieldset>
+						</f:if>
+
+						<fieldset class="form-section">
+							<h4 class="form-section-headline">
+								<f:translate key="function.general.transform.transform" />
+							</h4>
+							<div class="form-group">
+								<f:form.radio name="transformFile" id="xlf" value="xlf" checked="{langFileExtension} == 'xlf'" />
+								<label for="xlf">XLF</label>
+							</div>
+							<div class="form-group">
+								<f:form.radio name="transformFile" id="xml" value="xml" checked="{langFileExtension} == 'xml'" />
+								<label for="xml">
+									<f:translate key="function.general.transform.xml" />
+								</label>
+							</div>
+						</fieldset>
+					</div>
+				</div>
+			</f:if>
+		</f:form>
+	</f:if>
+</f:section>
+
+<f:section name="ButtonBarLeft">
+	<button class="btn btn-default btn-sm" onclick="document.getElementById('contentForm').submit();">
+		<core:icon identifier="actions-save" />
+		<f:translate key="button.save" />
+	</button>
+</f:section>

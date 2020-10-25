@@ -1,0 +1,192 @@
+{extend name="public:base" /}
+{block name="content"}	
+<div class="page-header">
+	<h1>
+		{$breadcrumb1}
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$breadcrumb2}
+		</small>
+		<small>
+			<i class="ace-icon fa fa-angle-double-right"></i>
+			{$crumbs}
+		</small>			
+	<button type="submit" style="float:right;" form="form-goods"  class="btn button btn-sm btn-primary">提交</button>
+	</h1>
+</div>
+	<div class="row">
+	<div class="col-xs-12">	
+		<div class="panel-body">
+        <form action="{:url('Goods/edit_links')}" method="post" enctype="multipart/form-data" id="form-goods" class="form-horizontal">
+        
+        {if condition="$Request.param.id"}
+			<input name="goods_id" type="hidden" value="{$Request.param.id}" />
+		{/if}
+          <ul class="nav nav-tabs">
+          	
+          	<li class="active"><a href="#tab-data" data-toggle="tab">关联</a></li>
+           
+          </ul>
+          <div class="tab-content">
+          		
+	       	<!-- 关联 START -->
+	          	<div class="tab-pane active" id="tab-data">	          		
+	         
+	          		<div class="form-group">
+	                <label class="col-sm-2 control-label" for="input-category"><span data-toggle="tooltip" title="(自动完成)">商品分类</span></label>
+	                <div class="col-sm-10">
+	                  <input type="text" name="category" value="" placeholder="商品分类" id="input-category" class="form-control" />
+	                  <div id="goods-category" class="well well-sm" style="height: 150px; overflow: auto;">
+	                  	<?php if(isset($goods_categories)){ ?>
+		                    <?php foreach ($goods_categories as $goods_category) { ?>
+			                    <div id="goods-category<?php echo $goods_category['category_id']; ?>"><i class="fa fa-minus-circle"></i> <?php echo $goods_category['name']; ?>
+			                      <input type="hidden" name="goods_category[]" value="<?php echo $goods_category['category_id']; ?>" />
+			                    </div>
+		                    <?php } ?>
+	                    <?php } ?>
+	                  </div>
+	                </div>
+	              </div>
+	              
+	              <div class="form-group">
+		                <label class="col-sm-2 control-label" for="input-attribute"><span data-toggle="tooltip" title="(自动完成)">商品属性</span></label>
+		                <div class="col-sm-10">
+		                  <input type="text" name="attribute" value="" placeholder="商品属性" id="input-attribute" class="form-control" />
+		                  <div id="goods-attribute" class="well well-sm" style="height: 150px; overflow: auto;">
+		                  	<?php if(isset($goods_attribute)){ ?>
+		                    <?php foreach ($goods_attribute as $attribute) { ?>
+			                    <div id="goods-attribute<?php echo $attribute['attribute_value_id']; ?>"><i class="fa fa-minus-circle"></i> <?php echo $attribute['value_name']; ?>
+			                      <input type="hidden" name="goods_attribute[]" value="<?php echo $attribute['attribute_value_id']; ?>" />
+			                    </div>
+		                    <?php } ?>
+	                    <?php } ?>
+		                  	
+		                  </div>	                  
+		                </div>
+	              	</div>	
+	              	
+	              	<div class="form-group">
+		                <label class="col-sm-2 control-label" for="input-brand"><span data-toggle="tooltip" title="(自动完成)">商品品牌</span></label>
+		                <div class="col-sm-10">
+		                  <input type="text" name="brand" value="" placeholder="商品品牌" id="input-brand" class="form-control" />
+		                  <div id="goods-brand" class="well well-sm" style="height: 150px; overflow: auto;">
+		                  	<?php if(isset($goods_brand)){ ?>
+		                    <?php foreach ($goods_brand as $brand) { ?>
+			                    <div id="goods-brand<?php echo $brand['brand_id']; ?>"><i class="fa fa-minus-circle"></i> <?php echo $brand['name']; ?>
+			                      <input type="hidden" name="goods_brand[]" value="<?php echo $brand['brand_id']; ?>" />
+			                    </div>
+		                    <?php } ?>
+	                    <?php } ?>
+		                  	
+		                  </div>	                  
+		                </div>
+	              	</div>
+
+	              
+	          
+	          	<!-- 关联 END -->
+	          	
+        		</div>
+          </div>
+        </form>
+	</div>
+	</div>
+</div>
+{/block}
+{block name="javascript"}
+<script>	
+$(function(){
+
+		
+$('input[name=\'category\']').autocomplete({
+	'source': function(request, response) {
+		$.ajax({
+			url: '{:url("Category/autocomplete")}' +'/filter_name/'+  encodeURIComponent(request),
+			dataType: 'json',			
+			success: function(json) {
+				response($.map(json, function(item) {
+					return {
+						label: item['name'],
+						value: item['category_id']
+					}
+				}));
+			}
+		});
+	},
+	'select': function(item) {
+		$('input[name=\'category\']').val('');
+		
+		$('#goods-category' + item['value']).remove();
+		
+		$('#goods-category').append('<div id="goods-category' + item['value'] + '"><i class="fa fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="goods_category[]" value="' + item['value'] + '" /></div>');	
+	}
+});	
+$('#goods-category').delegate('.fa-minus-circle', 'click', function() {
+	$(this).parent().remove();
+});	
+
+
+$('input[name=\'attribute\']').autocomplete({
+	'source': function(request, response) {
+
+		$.ajax({
+			url: '{:url("Attribute/autocomplete")}' +'/filter_name/'+  encodeURIComponent(request),
+			dataType: 'json',
+			success: function(json) {
+				response($.map(json, function(item) {
+					return {
+						category: item.attribute_group,
+						label: item.name,
+						value: item.attribute_id
+					}
+				}));
+			}
+		});
+	},
+	'select': function(item) {
+		$('input[name=\'attribute\']').val('');
+		
+		$('#goods-attribute' + item['value']).remove();
+		
+		$('#goods-attribute').append('<div id="goods-attribute' + item['value'] + '"><i class="fa fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="goods_attribute[]" value="' + item['value'] + '" /></div>');	
+	
+	}
+});
+
+$('#goods-attribute').delegate('.fa-minus-circle', 'click', function() {
+	$(this).parent().remove();
+});	
+
+$('input[name=\'brand\']').autocomplete({
+	'source': function(request, response) {
+		$.ajax({
+			url: '{:url("Brand/autocomplete")}' +'/filter_name/'+  encodeURIComponent(request),
+			dataType: 'json',			
+			success: function(json) {
+				response($.map(json, function(item) {
+					return {
+						label: item['name'],
+						value: item['brand_id']
+					}
+				}));
+			}
+		});
+	},
+	'select': function(item) {
+		$('input[name=\'brand\']').val('');
+		
+		$('#goods-brand' + item['value']).remove();
+		
+		$('#goods-brand').append('<div id="goods-brand' + item['value'] + '"><i class="fa fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="goods_brand[]" value="' + item['value'] + '" /></div>');	
+	}
+});	
+
+$('#goods-brand').delegate('.fa-minus-circle', 'click', function() {
+	$(this).parent().remove();
+});	
+
+
+});
+
+</script>
+{/block}

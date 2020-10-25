@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+<title>收银台</title>
+<!--header-->
+{template _:header}
+<style>
+body {width:100%;height:100%;background-color:#f4f7ff;}
+#cash {width:100%;height:100%;position:relative;}
+#cash {font-family:Helvetica,Tahoma,Arial,"Microsoft YaHei";}
+.cash {padding:0 25px;background-color:#5a5b62;}
+.amount {height:80px;border-bottom:1px solid #6a6b72;}
+.amount .title {float:left;line-height:80px;color:#e6e6e7;font-size:16px;}
+.amount .tbody {float:right;line-height:80px;color:#ffffe7;font-size:36px;}
+.user-code {height:40px;}
+.user-code .title {float:left;line-height:40px;color:#babbbf;}
+.user-code .tbody {float:right;line-height:40px;color:#babbbf;}
+.cash-body {width:100%;}
+.cash-body .cash-item {height:80px;line-height:80px;font-size:40px;text-align:center;}
+.cash-body .cash-item-zh-cn {font-size:24px;}
+.txt-cash {padding:10px 0;}
+.btn-cash {padding:0 15px 15px;}
+.cash-body .cash-item {width:33%;float:left;}
+.cash-body .cash-item a {width:100%;height:100%;display:block;}
+#cashing {width:100%;height:100%;background-color:#f4f7ff;position:absolute;left:0;top:0;display:none;}
+#cashing .ico_info {padding:30px 0 10px;text-align:center;}
+#cashing .ico_info i {color:#FF5722;font-size:64px;}
+#cashing .txt_info {font-size:16px;text-align:center;}
+#cashing .txt_amount {padding:20px;font-size:36px;text-align:center;}
+#cashing .txt_cancel {position:absolute;left:0;bottom:0;width:100%;padding:15px;box-sizing:border-box;}
+#tip-info {width:100%;height:60px;background-color:#fff;position:absolute;left:0;top:0;display:none;}
+#tip-info .tip-info {line-height:60px;padding:0 20px;font-size:24px;}
+#tip-info .tip-info i {padding-right:15px;color:#FF5722;font-size:24px;}
+.loginfo {position:absolute;top:0;right:0;padding:3px 5px;background:#FFF;}
+</style>
+</head>
+<body>
+<div id="cash">
+	<div class="loginfo">
+		当前员工：{echo $this->store_person['per_name']} - <a href="{echo url('cash/logout')}">注销</a>
+	</div>
+	<div class="cash">
+		<div class="amount">
+			<p class="title">金额(元)</p>
+			<p class="tbody"><span id="total_amount"></span></p>
+		</div>
+		<div class="user-code">
+			<p class="title">付款码</p>
+			<p class="tbody"><span id="auth_code_value"></span></p>
+		</div>
+	</div>
+	<div class="cash-body">
+		<div class="txt-cash">
+			<p class="cash-item"><a href="javascript:;">7</a></p>
+			<p class="cash-item"><a href="javascript:;">8</a></p>
+			<p class="cash-item"><a href="javascript:;">9</a></p>
+			<p class="cash-item"><a href="javascript:;">4</a></p>
+			<p class="cash-item"><a href="javascript:;">5</a></p>
+			<p class="cash-item"><a href="javascript:;">6</a></p>
+			<p class="cash-item"><a href="javascript:;">1</a></p>
+			<p class="cash-item"><a href="javascript:;">2</a></p>
+			<p class="cash-item"><a href="javascript:;">3</a></p>
+			<p class="cash-item"><a href="javascript:;">0</a></p>
+			<p class="cash-item"><a href="javascript:;">.</a></p>
+			<p class="cash-item cash-item-zh-cn"><a href="javascript:;">删除</a></p>
+		</div>
+		<div class="btn-cash">
+			<button id="do_submit" class="layui-btn layui-btn-lg layui-btn-normal layui-btn-fluid">收款</button>
+		</div>
+	</div>
+	<div id="cashing">
+		<div class="ico_info"><i class="layui-icon layui-icon-tips"></i></div>
+		<div class="txt_info"></div>
+		<div class="txt_amount">￥<span id="show_amount"></span></div>
+		<div class="txt_cancel"><button id="do_cancel" class="layui-btn layui-btn-lg layui-btn-primary layui-btn-fluid">取消</button></div>
+	</div>
+	<div id="tip-info">
+		<div class="tip-info"><i class="layui-icon layui-icon-tips"></i><span id="tip-msg"></span></div>
+	</div>
+</div>
+<!--footer-->
+{template _:footer}
+<script type="text/javascript">
+window.person_id = "{echo $this->store_person['person_id']}";
+window.is_pay = 0;
+window.is_paying = 0;
+window.total_amount = ""
+window.auth_code_value = "";
+$(function(){
+	$(".cash-body").find("a").click(function(){
+		var key_num = $(this).text();
+		$(this).blur();
+		if(/([\d\.]+)/.test(key_num)) {
+			if(check_amount($(this), total_amount)) {
+				return false;
+			}
+			total_amount += key_num.toString();
+			$("#total_amount").text(total_amount);
+		} else {
+			if(total_amount == "") {
+				return false;
+			}
+			total_amount = total_amount.substr(0, total_amount.length - 1);
+			$("#total_amount").text(total_amount);
+		}
+	});
+	$(document).keydown(function(event){
+		if(window.is_pay){
+			if(event.keyCode >= 48 && event.keyCode <= 57) {
+				if(auth_code_value.length >= 18) {
+					//auth_code_value = "";
+				}
+				auth_code_value += (event.keyCode - 48).toString();
+				$("#auth_code_value").text(auth_code_value);
+			}
+			if(event.keyCode >= 96 && event.keyCode <= 105) {
+				if(auth_code_value.length >= 18) {
+					//auth_code_value = "";
+				}
+				auth_code_value += (event.keyCode - 96).toString();
+				$("#auth_code_value").text(auth_code_value);
+			}
+			if(event.keyCode == 13 || event.keyCode == 108) {
+				go_submit();
+			}
+		}
+	});
+});
+var st_show_tips;
+function show_tips(msg) {
+	clearTimeout(st_show_tips);
+	$("#tip-msg").text(msg);
+	$("#tip-info").show();
+	st_show_tips = setTimeout(function(){
+		$("#tip-msg").text("");
+		$("#tip-info").hide();
+	}, 2000);
+}
+function check_amount(object, input_amount) {
+	if(input_amount.length >= 5) {
+		return true;
+	}
+	if(/^\d+\.\d{2}$/.test(input_amount)) {
+		return true;
+	}
+	if(/^0$/.test(input_amount) && '.' != object.text().toString()) {
+		return true;
+	}
+	if(/^0\.0$/.test(input_amount) && '0' == object.text().toString()) {
+		return true;
+	}
+	if((/\./.test(input_amount) || '' == input_amount) && '.' == object.text().toString()) {
+		return true;
+	}
+	return false;
+}
+$("#do_submit").click(function(){
+	$("*").blur();
+	total_amount = $("#total_amount").text();
+	auth_code_value = $("#auth_code_value").text();
+	console.log(total_amount);
+	console.log(auth_code_value);
+	var is_amount=/^(([1-9][0-9]*)|(([0]\.\d{1,2}|[1-9][0-9]*\.\d{1,2})))$/;
+	if(total_amount <= 0 || !is_amount.test(total_amount)) {
+		show_tips("金额输入有误");
+		return false;
+	}
+	window.is_pay = 1;
+	do_cash({op:"show",info:"",amount:total_amount});
+});
+$("#do_cancel").click(function(){
+	$("*").blur();
+	window.is_pay = 0;
+	do_cash({op:"hide",info:"",amount:""});
+});
+function do_cash(option) {
+	$("*").blur();
+	if(option.op == "show") {
+		$("#cashing").show();
+	} else {
+		$("#cashing").hide();
+	}
+	if(!option.info) {
+		option.info = "等待扫码";
+	}
+	$(".txt_info").text(option.info);
+	$("#show_amount").text(option.amount);
+}
+function in_array(needle, haystack) {
+	if(typeof needle == "string" || typeof needle == "number") {
+		for(var i in haystack) {
+			if(needle == haystack[i]) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+var pay_client;
+var url_client;
+function go_submit() {
+	$("*").blur();
+	if(window.is_paying) {
+		return false;
+	}
+	var auth_code = auth_code_value;
+	auth_code_value = "";
+	$("#auth_code_value").text("");
+	if(auth_code.length == 18) {
+		if(in_array(auth_code.substring(0, 2), ['10', '11', '12', '13', '14', '15'])) {
+			pay_client = "weixin";
+			url_client = "{echo url('/pay/weixin')}";
+			query_client = "{echo url('/pay/weixin/query')}";
+			cancel_client = "{echo url('/pay/weixin/cancel')}";
+		}
+	}
+	if(auth_code.length >= 16 && auth_code.length <= 24) {
+		if(in_array(auth_code.substring(0, 2), ['25', '26', '27', '28', '29', '30'])) {
+			pay_client = "alipay";
+			url_client = "{echo url('/pay/alipay')}";
+			query_client = "{echo url('/pay/alipay/query')}";
+			cancel_client = "{echo url('/pay/alipay/cancel')}";
+		}
+	}
+	if(!pay_client) {
+		show_tips("无法识别付款码");
+		console.log(auth_code);
+		auth_code_value = "";
+		$("#auth_code_value").text("");
+		return false;
+	}
+	total_amount = $("#total_amount").text();
+	$.ajax({
+		type: "POST",
+		dataType: "json",
+		timeout: 30000,
+		url: url_client,
+		data: {
+			ajax: "json",
+			person_id: person_id,
+			auth_code: auth_code,
+			total_amount: total_amount,
+		},
+		success: function(data){
+			console.log(data);
+			if(data.status == 0) {
+				window.is_paying = 0;
+				$(".txt_info").text(data.message);
+			} else {
+				if(data.message == "query") {
+					total_amount = "";
+					$("#total_amount").text("");
+					query(data.contents.out_trade_no);
+				} else {
+					$(".txt_info").text(data.message);
+					total_amount = "";
+					$("#total_amount").text("");
+					query(data.contents.out_trade_no);
+				}
+			}
+		},
+		error: function(xhr, status){
+			console.log(xhr);
+			window.is_paying = 0;
+		},
+		complete: function(){
+			//hideLoader();
+			//total_amount = "";
+			//$("#total_amount").text("");
+		},
+		beforeSend: function(){
+			//showLoader();
+			window.is_paying = 1;
+			$(".txt_info").text("支付中...");
+		}
+	});
+}
+var st_query;
+var st_query_times = 0;
+function query(out_trade_no) {
+	$.ajax({
+		type: "POST",
+		dataType: "json",
+		timeout: 30000,
+		url: query_client,
+		data: {
+			ajax: "json",
+			person_id: person_id,
+			out_trade_no: out_trade_no,
+		},
+		success: function(data){
+			console.log(data);
+			if(data.status == 0) {
+				st_query_times = 0;
+				window.is_paying = 0;
+				$(".txt_info").text(data.message);
+			} else {
+				switch(data.message) {
+					case 'TRADE_SUCCESS':
+						$(".txt_info").text("支付成功：￥" + data.contents.total_amount);
+						setTimeout(function(){
+							st_query_times = 0;
+							window.is_paying = 0;
+							do_cash({op:"hide",info:"",amount:""});
+						}, 3000);
+					break;
+					case 'SUCCESS':
+						$(".txt_info").text("支付成功：￥" + data.contents.total_amount);
+						setTimeout(function(){
+							st_query_times = 0;
+							window.is_paying = 0;
+							do_cash({op:"hide",info:"",amount:""});
+						}, 3000);
+					break;
+					case 'USERPAYING':
+						$(".txt_info").text("等待客户确认");
+						if(st_query_times < 5) {
+							st_query_times++;
+							st_query = setTimeout(function(){
+								query(out_trade_no);
+							}, 5000);
+						} else {
+							st_query_times = 0;
+							window.is_paying = 0;
+							cancel(out_trade_no);
+							$(".txt_info").text("支付失败：操作超时");
+						}
+					break;
+					case 'WAIT_BUYER_PAY':
+						$(".txt_info").text("等待客户确认");
+						if(st_query_times < 5) {
+							st_query_times++;
+							st_query = setTimeout(function(){
+								query(out_trade_no);
+							}, 5000);
+						} else {
+							st_query_times = 0;
+							window.is_paying = 0;
+							cancel(out_trade_no);
+							$(".txt_info").text("支付失败：操作超时");
+						}
+					break;
+					default:
+						st_query_times = 0;
+						window.is_paying = 0;
+						cancel(out_trade_no);
+						$(".txt_info").text("支付失败：" + data.message);
+					break;
+				}
+			}
+		},
+		error: function(xhr, status){
+			console.log(xhr);
+			st_query_times = 0;
+			window.is_paying = 0;
+		}
+	});
+}
+function cancel(out_trade_no) {
+	$.ajax({
+		type: "POST",
+		dataType: "json",
+		timeout: 10000,
+		url: cancel_client,
+		data: {
+			ajax: "json",
+			person_id: person_id,
+			out_trade_no: out_trade_no,
+		},
+		success: function(data){
+			console.log(data);
+		},
+		error: function(xhr, status){
+			console.log(xhr);
+		}
+	});
+}
+</script>
+</body>
+</html>

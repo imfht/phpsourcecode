@@ -1,0 +1,5 @@
+<?php
+define('ALISMS_KEY_ID', 'KEY_ID');
+define('ALISMS_KEY_SECRET', 'KEY_SECRET');
+define('ALISMS_SIGNNAME', '签名');
+define('ALISMS_TEMPLATE_CODE', 'TEMPLATE_CODE');

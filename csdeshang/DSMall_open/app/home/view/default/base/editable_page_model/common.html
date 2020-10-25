@@ -1,0 +1,324 @@
+<link rel="stylesheet" href="{$Think.HOME_SITE_ROOT}/css/editable_page.css">
+{if $editable_page.if_edit}
+<link rel="stylesheet" href="{$Think.ADMIN_SITE_ROOT}/css/admin.css">
+<script src="{$Think.PLUGINS_SITE_ROOT}/jquery.ajaxContent.pack.js"></script>
+<script type="text/javascript" src="{$Think.PLUGINS_SITE_ROOT}/ajaxfileupload.js" charset="utf-8"></script>
+<script type="text/javascript" src="{$Think.PLUGINS_SITE_ROOT}/mlselection.js" charset="utf-8"></script>
+
+<div class="model-wrapper active">
+    <div class="model-title"><span class="title">{$Think.lang.model_list}</span><span class="desc">{$Think.lang.model_list_tips}</span></div>
+    <div class="model-list"><div id="model_list"></div></div>
+    <div class="model-btn"><span style="display: none" id="current_model_page">1</span><span style="display: none" id="total_model_page">1</span><a href="javascript:void(0)" id="model_page_prev" class="iconfont disable">&#xe738;</a><a href="javascript:void(0)" id="model_page_next" class="iconfont">&#xe73a;</a></div>
+</div>
+<style>
+    .model-wrapper{position: fixed;top:80px;left:-180px;z-index: 100000;width:227px;background: #fff}
+    .model-wrapper.active{left:0;}
+    .model-wrapper .model-title{cursor: move}
+</style>
+<script>
+    function modelShow(obj){
+        if($('.model-wrapper').hasClass('active')){
+            $('.model-wrapper').removeClass('active')
+            obj.text('展开')
+        }else{
+            $('.model-wrapper').addClass('active')
+            obj.text('收起')
+        }
+    }
+    window.UEDITOR_HOME_URL='{$Think.PLUGINS_SITE_ROOT}/ueditor/'
+    $(function(){
+        $('.model-wrapper').draggable({ handle: ".model-title" })
+        $.ajax({ url:EDITABLE_PAGE_URL+'/model_add?editable_page_id={$editable_page.editable_page_id}',success: function(res){
+        $('#model_list').html(res)
+        if($('.model-item-list .model-item-wrapper').length<=4){
+            $('#model_page_next').addClass('disable')
+        }
+        var total=$('.model-item-wrapper').length;
+       if(total){
+            $('#total_model_page').text(Math.ceil(total/4))
+       }
+        show_page(4,1)
+        $('#model_page_prev').click(function(){
+            var current_model_page=parseInt($('#current_model_page').text());
+            var total_model_page=parseInt($('#total_model_page').text());
+            if(current_model_page>1){
+                show_page(4,current_model_page-1)
+            }
+            if((current_model_page-1)<=1){
+                $('#model_page_prev').addClass('disable')
+            }else{
+                $('#model_page_prev').removeClass('disable')
+            }
+            if((current_model_page-1)<total_model_page){
+                $('#model_page_next').removeClass('disable')
+            }
+        })
+        $('#model_page_next').click(function(){
+            var current_model_page=parseInt($('#current_model_page').text());
+            var total_model_page=parseInt($('#total_model_page').text());
+            if(current_model_page<total_model_page){
+                show_page(4,current_model_page+1)
+            }
+            if((current_model_page+1)>=total_model_page){
+                $('#model_page_next').addClass('disable')
+            }else{
+                $('#model_page_next').removeClass('disable')
+            }
+            if((current_model_page+1)>1){
+                $('#model_page_prev').removeClass('disable')
+            }
+        })
+    }})
+        $('a').attr('href','javascript:void(0)')
+        $('a').removeAttr('target')
+        addDialogEvent()
+        var model_index
+        $('.edit-mode').sortable({
+            placeholder: "ui-state-highlight",
+            cursor: "move",
+            items:".editable-page-model",
+            revert: true,
+            start: function( event, ui ) {
+              model_index=ui.item.index()
+            },
+            update: function( event, ui ) {
+              var action=ui.item.attr('data-action')
+              if(action=='add'){
+                  var model_id=ui.item.attr('data-id')  
+                  var config_id=ui.item.prev().attr('data-id')
+                  if(!config_id){
+                      config_id=0
+                  }
+                  ui.item.remove()
+                  submit_model_add(model_id,config_id)
+              }else{
+              var config_id=ui.item.attr('data-id')  
+              var index=ui.item.index()  
+              if((index-model_index)>0){
+                  var o_config_id=ui.item.prev().attr('data-id')
+                  sortModel(config_id,1,o_config_id)
+              }else{
+                  var o_config_id=ui.item.next().attr('data-id')
+                  sortModel(config_id,0,o_config_id)
+              }
+              
+              
+            }
+            }
+          });
+
+
+    })
+    
+    function sortModel(config_id,direction,o_config_id){
+        var index = layer.load()
+        $.getJSON(EDITABLE_PAGE_URL+'/model_sort?config_id='+config_id+'&o_config_id='+o_config_id+'&direction='+direction,function(res){
+                layer.close(index);
+                if(res.code!=10000){
+                    layer.msg(res.message)
+                }
+            })
+    }
+
+    function moveModel(config_id,direction){
+        var obj = $('.editable-page-model[data-id='+config_id+']');
+        var o_config_id
+        if(direction){
+            o_config_id=obj.next().attr('data-id')
+            obj.next().after(obj); //下移动
+        }else{
+            o_config_id=obj.prev().attr('data-id')
+            obj.prev().before(obj);
+        }
+        sortModel(config_id,direction,o_config_id)
+        }
+    function dropModel(config_id){
+        var index = layer.confirm('{$Think.lang.ds_ensure_del}', {
+            title: false,
+        }, function () {
+            $.getJSON(EDITABLE_PAGE_URL+'/model_del?config_id='+config_id+'&editable_page_id={$editable_page.editable_page_id}',function(res){
+                if(res.code!=10000){
+                    layer.msg(res.message)
+                }else{
+                    $('.editable-page-model[data-id='+config_id+']').remove();
+                    layer.close(index)
+                    if($('.edit-mode .editable-page-model').length==0){
+                        var html=    '<div class="no_results">';
+                            html+=            '<span>{$Think.lang.add_model_notice}</span>';
+                            html+=            "<div class='editable-page-model mt10'>";
+                            html+=            '</div>';
+                            html+=        '</div>';
+                            $('*[data-type=editable_page]').append(html);
+                            addDialogEvent()
+                    }
+                }
+            })
+        });
+        
+    }
+    function addDialogEvent(){
+
+        $('*[data-type="editable_model"]').each(function(){
+            var config_id=$(this).attr('data-id')
+            //var model_width=$(this).attr('data-width')
+            var content_obj=$(this).find('.editable-page-content')
+            content_obj.prepend('<div class="editable_model_handle_list"><a href="javascript:void(0)" class="handle_edit">{$Think.lang.ds_edit}</a><a href="javascript:moveModel('+config_id+',0)" class="handle_move_up">{$Think.lang.ds_move_up}</a><a href="javascript:moveModel('+config_id+',1)" class="handle_move_down">{$Think.lang.ds_move_down}</a><a href="javascript:dropModel('+config_id+')" class="handle_drop">{$Think.lang.ds_delete}</a></div>')
+            content_obj.find('.handle_edit').attr('ds_type','dialog').attr('dialog_id','editable_model').attr('dialog_title','{$Think.lang.ds_edit}').attr('dialog_width',400)
+            content_obj.find('.handle_edit').attr('uri',EDITABLE_PAGE_URL+'/model_edit?config_id='+config_id)
+            
+            
+            content_obj.find('*[data-type]').each(function(){
+                var model_type_list=$(this).attr('data-type')
+                model_type_list=model_type_list.split(',')
+                var item_id_list=$(this).attr('data-id')
+                item_id_list=item_id_list.split(',')
+                $(this).prepend('<div class="editable-page-handle"></div>')
+                var obj=$(this).find('.editable-page-handle')
+                for(var j in item_id_list){
+                var item_id=item_id_list[j]
+                for(var i in model_type_list){
+                var model_type=model_type_list[i]
+                var model_width=400
+                var title
+                switch(model_type){
+                  case 'brand':
+                    title='品牌'
+                    model_width=800
+                    break
+                  case 'cate':
+                    title='分类'
+                    break
+                  case 'voucher':
+                    title='代金券'
+                    break  
+                  case 'text':
+                    title='文字'
+                    break 
+                  case 'link':
+                    title='链接'
+                    break  
+                  case 'goods':
+                    title='商品'
+                    model_width=800
+                    break
+                  case 'store':
+                    title='店铺'
+                    model_width=800
+                    break
+                  case 'editor':
+                    title='富文本'
+                    model_width=800
+                    break
+                  case 'image':
+                    title='图片'
+                    model_width=420
+                    break
+                }
+                  obj.append('<div class="handel-'+model_type+'" data-id="'+item_id+'">'+title+'</div>');
+                  obj.find('.handel-'+model_type+'[data-id='+item_id+']').attr('ds_type','dialog').attr('dialog_id','editable_model').attr('dialog_title','设置'+title).attr('dialog_width',model_width)
+                  obj.find('.handel-'+model_type+'[data-id='+item_id+']').attr('uri',EDITABLE_PAGE_URL+'/model_'+model_type+'?config_id='+config_id+'&item_id='+item_id)
+                }
+                }
+            })
+            $(this).removeAttr('data-type')
+        })
+        
+        
+        $('*[ds_type="dialog"]').click(function(){
+            var id = $(this).attr('dialog_id');
+            var title = $(this).attr('dialog_title') ? $(this).attr('dialog_title') : '';
+            var url = $(this).attr('uri');
+            var width = $(this).attr('dialog_width');
+            CUR_DIALOG = ajax_form(id, title, url, width,0);
+            return false;
+        });
+    }
+    function addEditableModel(model_id,config_id){
+        var index=layer.load()
+        $.getJSON(EDITABLE_PAGE_URL+'/model_add?editable_page_id={$editable_page.editable_page_id}&model_id='+model_id+'&config_id='+config_id,function(res){
+            layer.close(index)
+            if(res.code!=10000){
+                layer.msg(res.message)
+            }else{
+                $('.dialog_close_button').click()
+                if(!config_id || $('.editable-page-model[data-id='+config_id+']').length==0){
+                    $('*[data-type="editable_page"] .no_results').remove()
+                    $('*[data-type="editable_page"]').prepend(res.result.model_html)
+                }else{
+                    $('.editable-page-model[data-id='+config_id+']').after(res.result.model_html)
+                }
+                
+                addDialogEvent()
+                initSlide()
+            }
+        })
+    }
+
+
+function submitEditableModelForm(){
+    var _form = $("#editable_model_form");
+    $.ajax({
+        type: "POST",
+        url: _form.attr('action'),
+        data: _form.serialize(),
+        dataType:"json",
+        success: function (res) {
+                if (res.code == 10000) {
+                    $('.dialog_close_button').click()
+                    $('.editable-page-model[data-id='+res.result.config_id+']').replaceWith(res.result.model_html)
+                    addDialogEvent()
+                    initSlide()
+                }else{
+                    layer.msg(res.message)
+                }
+        }
+    });
+}
+</script>
+{/if}
+
+<div data-type="editable_page" {if $editable_page.if_edit}class="edit-mode"{/if} style="background-color:{$editable_page.editable_page_theme_config.back_color|default='unset'}">
+    {notempty name='editable_page_config_list'}
+    {foreach name='editable_page_config_list' item='page_config'}
+    {switch name="page_config.editable_page_model_id"}
+    {case value="1"}{include file="default/base/editable_page_model/1"}{/case}
+    {case value="2"}{include file="default/base/editable_page_model/2"}{/case}
+    {case value="3"}{include file="default/base/editable_page_model/3"}{/case}
+    {case value="4"}{include file="default/base/editable_page_model/4"}{/case}
+    {case value="5"}{include file="default/base/editable_page_model/5"}{/case}
+    {case value="7"}{include file="default/base/editable_page_model/7"}{/case}
+    {case value="8"}{include file="default/base/editable_page_model/8"}{/case}
+    {case value="9"}{include file="default/base/editable_page_model/9"}{/case}
+    {case value="10"}{include file="default/base/editable_page_model/10"}{/case}
+    {case value="11"}{include file="default/base/editable_page_model/11"}{/case}
+    {/switch}
+    {/foreach}
+    {else}
+    {if $editable_page.if_edit}
+    <div class="no_results">
+        <span>{$Think.lang.add_model_notice}</span>
+        <div class='editable-page-model mt10'>
+        </div>
+    </div>
+    {/if}
+    {/notempty}
+</div>
+<script>
+$(function(){
+  initSlide()
+})
+function initSlide(){
+$('.editable-page-model-1[data-load=0]').each(function(){
+  $(this).slide({mainCell: ".bd ul", autoPlay: true, delayTime: 500, interTime: 5000})
+  $(this).removeAttr('data-load')
+})
+$('.editable-page-model-8[data-load=0]').each(function(){
+  $(this).slide({mainCell: ".bd ul", autoPlay: true, delayTime: 500, interTime: 5000})
+  $(this).removeAttr('data-load')
+})
+$('.editable-page-model-11[data-load=0]').each(function(){
+  $(this).slide({mainCell: ".tab_body_list",titCell:".tab_head_item"})
+  $(this).removeAttr('data-load')
+})
+}
+</script>

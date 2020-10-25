@@ -1,0 +1,246 @@
+<!-- 模态框HTML -->
+<form id="migration" method="post" action="{:url('order',['action'=>'edit_order'])}" class="form-horizontal">
+	<input type="hidden" name="status" value="{$order.status}">
+	<input type="hidden" name="id" value="{$order.id}">
+    <input type="hidden" name="type" value="{$type}">
+    {switch name="type"}
+		{case value="change_price"}
+            <style>
+                .product_item {
+                    margin-bottom: 5px;
+                }
+                .product_item .img_box {
+                    float:left;
+                    width:80px;
+                    height:80px;
+                }
+                .product_item .info_box {
+                    margin-left:80px;
+                    padding-left: 10px;
+                    height:80px;
+                }
+                .product_item .info_box .title {
+                    color:#666;
+                }
+                .product_item .info_box .sku {
+                    line-height: 32px;
+                }
+                .product_item .info_box .sku .sku_li_span {
+                    background:#ddd;
+                    padding:5px;
+                    margin-right:5px;
+                    font-size:12px;
+                }
+                .product_item .info_box .sku .paid_price {
+                    
+                }
+                .product_item .info_box .sku .paid_price em{
+                    float:left;
+                    font-size:12px;
+                }
+                .product_item .info_box .sku .paid_price input{
+                    width:80px;
+                }
+                .paid_fee {
+                    font-size:16px;
+                    font-weight: 500;
+                    line-height: 32px;
+                    color:#f60;
+                }
+            </style>
+            <div class="form-group">
+                <label class="col-sm-2">商品列表：</label>
+                <div class="col-md-8 clearfix">
+                    {volist name="order.products" id="product"}
+                    <div class="product_item">
+                        <div class="img_box"><img src="{$product.main_img|getThumbImageById=100,100}"></div>
+                        <div class="info_box">
+                            <div class="title">{$product.title}</div>
+                            <div class="sku clearfix">
+                                {foreach name="product.sku" item="sku"}
+                                 <span class="sku_li_span">{$sku}</span>  
+                                {/foreach}
+                                <span class="paid_price pull-right">
+                                    <em>价格：</em><input type="number" class="form-control" name="paid_price[]" value="{$product.paid_price}">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {/volist}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2">邮费：</label>
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="delivery_fee" value="{$order.delivery_fee}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2">总价</label>
+                <div class="col-md-8">
+                    <!--订单总价-->
+                    <span class="paid_fee" data-role="paid_fee">{$order.paid_fee}</span>
+                    <input type="hidden" class="form-control" name="paid_fee" value="{$order.paid_fee}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2"></label>
+                <div class="col-md-8">
+                    <button data-role="submit" class="btn btn-primary">确认</button>
+                    <button class="btn" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+            <script>
+                $(function(){
+                    
+                    $("input").bind('input propertychange',function(){
+                        paid_fee();
+                    });
+                    function paid_fee(){
+                        //商品的总价格
+                        var products_fee = 0;
+                        $('[name="paid_price[]"]').each(function(){
+                            products_fee += parseFloat($(this).val());
+                        });
+
+                        //计算总价格
+                        var paid_fee = (parseFloat($('[name="delivery_fee"]').val()) + parseFloat(products_fee)).toFixed(2);
+
+                        $('[data-role="paid_fee"]').text(paid_fee);
+                    }
+                })
+            </script>
+            
+        {/case}
+        {case value="cannel_order"}
+        <!--取消订单-->
+            <div class="text-center">
+                <h3 class="text-center">要确认取消订单吗？</h3>
+                <button data-role="submit" class="btn btn-primary">确认</button>
+                <button class="btn" data-dismiss="modal">取消</button>
+            </div>
+	    {/case}
+        {case value="send_good"}
+            {notempty name="delivery"}
+            <!--发货&&改物流-->
+            <div class="form-group">
+                <label class="col-sm-2">快递公司：</label>
+                <div class="col-md-8">
+                    <select class="form-control" name="ShipperValue">
+                        {foreach name="delivery" item="vo" }
+                        <option value ="{$vo},{$key}" 
+                        {notempty name="$order.delivery_info.ShipperCode"}
+                        {eq name="order.delivery_info.ShipperCode" value="$key"}selected{/eq}
+                        {/notempty}
+                        >{$vo}</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2">快递单号：</label>
+                <div class="col-md-8">
+                    <input type="text" class="form-control" name="LogisticCode" value="{notempty name="$order.delivery_info"}{$order.delivery_info.LogisticCode}{/notempty}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2"></label>
+                <div class="col-md-8">
+                    <button data-role="submit" class="btn btn-primary">确认</button>
+                    <button class="btn" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+            {else /}
+            <div class="text-center">未配置物流插件或不支持的插件</div>
+            {/notempty}
+        {/case}
+        {case value="recv_good"}
+            <!--确认收货-->
+            <div class="is_confirm_box">
+                <h3 class="text-center">要确认收货吗？</h3>
+                <button data-role="submit" class="btn btn-primary send_box">确认</button>
+                <button class="btn send_box" data-dismiss="modal">取消</button>
+            </div>
+        {/case}
+        {case value="refound_order"}
+        <!--申请退货处理-->
+            <div class="form-group">
+                <div class="col-md-3 left">退货理由：</div>
+                <div class="col-md-8"><input type="text" class="form-control" name="reason" ></div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 left">产品图片：</div>
+                <div class="col-md-8">图片列表</div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 left">拒绝原因：</div>
+                <div class="col-md-8"><input type="text" class="form-control" name="refusal" ></div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 left"></div>
+                <div class="col-md-8">
+                    <button data-role="submit" class="btn btn-primary send_box">同意退货</button>
+                    <button data-role="submit" class="btn btn-primary send_box">拒绝退货</button>
+                </div>
+            </div>
+        {/case}
+        {case value="refound_order_ok"}
+        <!--确认收到退货-->
+            <div class="form-group">
+                <div class="col-md-3 left"></div>
+                <div class="col-md-8">确认收到用户退还的商品</div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 left"></div>
+                <div class="col-md-8">
+                    <button data-role="submit" class="btn btn-primary send_box">确认</button>
+                    <button class="btn send_box" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+        {/case}
+        {case value="refound_price"}
+        <!--收到退货确认-->
+            <div class="form-group">
+                <div class="col-md-3 left"></div>
+                <div class="col-md-8">确认退还货款</div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-3 left"></div>
+                <div class="col-md-8">
+                    <button data-role="submit" class="btn btn-primary send_box">同意退款</button>
+                    <button class="btn send_box" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+        {/case}
+	    {case value="del_order"}
+		    <div class="is_confirm_box">
+			    <h3 class="text-center">要确认删除订单吗？</h3>
+			    <input type="button" data-role="submit" value="确定" class="btn btn-primary send_box">
+			    <input type="button" value="取消" class="btn send_box" data-dismiss="modal">
+		    </div>
+	    {/case}
+	    {default/}
+		    <div class="form-group">
+			    <div class="col-md-11 ">没有可以执行的相关操作</div>
+		    </div>
+    {/switch}
+</form>
+<script>
+    $(function(){
+        $('[data-role="submit"]').click(function(e){
+            e.preventDefault();
+            var query=$('#migration').serialize();
+            var url=$('#migration').attr('action');
+            $.post(url,query,function(msg){
+                if(msg.code == 1){
+                    toast.success(msg.msg);
+                    setTimeout(function(){
+                        location.reload();
+                    },1500);
+                }else{
+                    handleAjax(msg);
+                }
+            },'json');
+        });
+    });
+</script>

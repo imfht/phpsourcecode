@@ -1,0 +1,79 @@
+{extend name="admin@index_layout"/}
+{block name="main"}
+<div class="layui-card">
+    <div class="layui-card-header">插件管理</div>
+    <div class="layui-card-body">
+        <table class="layui-hide" id="currentTable" lay-filter="currentTable"></table>
+    </div>
+</div>
+<script type="text/html" id="titleTpl">
+    {{#  if(d.uninstall == "" || d.uninstall == 'null' || d.uninstall == undefined){ }}
+    {{#  if(d.config !== "" && d.config !== 'null' && d.config !== undefined){ }}
+    <a class="layui-btn layui-btn-xs" href='{:url("config")}?id={{d.id}}'>设置</a>
+    {{#  } }}
+    {{#  if(d.status == 0){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" data-request='{:url("enable")}?id={{d.id}}' data-table="currentTable">启用</a>
+    {{#  } else { }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" data-request='{:url("disable")}?id={{d.id}}' data-table="currentTable">禁用</a>
+    {{#  } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger confirm" data-request='{:url("uninstall")}?id={{d.id}}' data-table="currentTable">卸载</a>
+{{#  } else { }}
+    <a class="layui-btn layui-btn-xs confirm" data-request='{:url("install")}?addon_name={{d.name}}' data-table="currentTable">安装</a>
+{{#  } }}
+</script>
+{/block}
+{block name="script"}
+<script>
+layui.use(['yznTable', 'upload'], function() {
+    var table = layui.yznTable,
+        $ = layui.$,
+        upload = layui.upload;
+
+    var init = {
+        table_elem: '#currentTable',
+    };
+
+    table.render({
+        init: init,
+        id: 'currentTable',
+        elem: '#currentTable',
+        toolbar: ['refresh',
+            [{
+               html:'<a class="layui-btn layui-btn-sm" id="local-install">本地安装</a>'
+            }],
+        ],
+        url: '{:url("index")}',
+        cols: [
+            [
+                { field: 'title',align: "left", width: 150, title: '名称' },
+                { field: 'name', width: 150, title: '标识' },
+                { field: 'description',align: "left", title: '描述' },
+                { field: 'status_text', width: 80, title: '状态', templet: '<div>{{#  if(d.status_text){ }} {{d.status_text}} {{#  } else { }} 未安装 {{#  } }}</div>' },
+                { field: 'author', width: 90, title: '作者' },
+                { field: 'version', width: 90, title: '版本' },
+                { fixed: 'right', width: 180, title: '操作', templet: '#titleTpl' }
+            ]
+        ]
+    });
+
+    //执行实例
+    var uploadInst = upload.render({
+        elem: '#local-install',
+        url: '{:url("addons/addons/local")}',
+        accept: 'file',
+        exts: 'zip',
+        done: function(res) {
+            //上传完毕回调
+            layer.alert(res.msg, {}, function() {
+                if (res.code != 0) {
+                    location.reload();
+                }
+            });
+        },
+        error: function() {
+            //请求异常回调
+        }
+    });
+});
+</script>
+{/block}

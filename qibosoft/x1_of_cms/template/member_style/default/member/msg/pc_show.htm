@@ -1,0 +1,160 @@
+{extend name="$member_style_layout" /}
+
+{block name="title"}短消息{/block}
+{block name="content"}
+
+{if empty(input('isframe'))}
+	{include file="msg/menu" /}
+{else /}
+	<style type="text/css">
+	.qb_ui_page_menu{display:none;}
+	</style>
+{/if}
+
+<style type="text/css">
+.remind_msg{
+	background:red;
+	color:#FFF;
+	line-height:30px;
+	padding-left:20px;
+	display:none;
+}
+</style>
+<div class="remind_msg">提示：对方正在输入中，请不要离开当前窗口！</div>
+
+<div class="MainCont mtop10">
+	 
+    <div class="cont">
+ 
+<link rel="stylesheet" href="__STATIC__/layui/css/template.css" media="all">
+<style>
+.msg_title{color:#03A9F4;font-size:16px;}
+</style>
+<div class="layui-fluid layadmin-message-fluid">
+  <div class="layui-row">
+    <div class="layui-col-md12" style="padding-bottom:0px;">
+      <div class="layui-form">
+        <div class="layui-form-item layui-form-text">
+          <div class="layui-input-block">
+            <textarea name="desc"  placeholder="请输入内容" class="layui-textarea msgcontent"></textarea>
+          </div>
+        </div>
+
+         <div class="layui-form-item" style="overflow: hidden;">
+          <div class="layui-input-block layui-input-right">
+            <button class="layui-btn" onclick="postmsg()">回复</button>
+          </div>          
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md12 layadmin-homepage-list-imgtxt message-content sys_show_msg_list001">
+	 
+        {qb:tag name="sys_show_msg_list001" class="app\member\controller\Msg@showmore" union="id,uid=$info[uid],time,num" rows="5"}
+                  <div class="media-body">
+                      <a href="{:get_url('user',['uid'=>$rs['uid']])}" class="media-left" style="float: left;" target="_blank">
+                          <img src="{$rs.from_icon}" onerror="this.src='__STATIC__/images/noface.png'" height="46px" width="46px">
+                      </a>
+                      <div class="pad-btm">
+                          <p class="fontColor"><a href="{:get_url('user',['uid'=>$rs['uid']])}" target="_blank">{$rs.from_username}</a></p>
+                          <p class="min-font">
+                          {$rs.create_time}
+                          </p>         
+                      </div>
+                      <p class='msg_title'>{$rs.title}</p>
+                      <p class="message-text">{$rs.content}</p>
+                  </div>
+        {/qb:tag}
+    </div>
+  </div>
+</div>
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+function postmsg(){
+	var url = "{:urls('wxapp.msg/add')}";
+	var content = $(".msgcontent").val();
+	if(content==''){
+		layer.alert('消息内容不能为空');
+		return ;
+	}
+	$.post(url,{'uid':"{$info.uid}",'content':content,},function(res){		
+		if(res.code==0){
+			$(".msgcontent").val('');
+			layer.msg('发送成功');
+
+			{if input('isframe')}
+
+				setTimeout(function(){
+					//parent.layer.closeAll();
+				},800);
+
+			{else /}
+
+			setTimeout(function(){
+				//window.location.href = "{:urls('index')}";
+			},500);
+
+			{/if}
+			
+		    //$(".msglist").html( make_html(res.data) );
+		}else{
+			layer.alert('发送失败:'+res.msg);
+		}
+	});
+}
+
+var num = 0;
+setInterval(function(){
+	//console.log(5);
+	$.get(get_msg_url+"1&id=0&time={:time()}&num="+num,function(res){
+		if(res.code==0){
+			num++;
+			if(res.data!="")$('.sys_show_msg_list001').prepend(res.data);
+		}
+		if(res.ext.lasttime<3){	//3秒内对方还在当前页面的话,就提示当前用户不要关闭当前窗口
+			$(".remind_msg").show();
+		}else{
+			$(".remind_msg").hide();
+		}
+	});
+},1000);
+
+
+
+var msg_page=1;
+var get_msg_url = "{qb:url name='sys_show_msg_list001' /}";
+function showMoreMsg(){
+  msg_page++;
+  $.get(get_msg_url+msg_page,function(res){  
+    //console.log(res);
+    if(res.code==0){
+      if(res.data==''){
+        layer.msg("已经显示完了！",{time:500});
+      }else{
+        $('.sys_show_msg_list001').append(res.data);
+        scroll_get = true;
+      }
+    }else{
+      layer.msg(res.msg,{time:2500});
+    }
+  });
+}
+
+
+//滚动显示更多
+var scroll_get = true;  //做个标志,不要反反复复的加载
+$(document).ready(function () {
+  $(window).scroll(function () {
+    if (scroll_get==true &&  (400 + $(window).scrollTop())>($(document).height() - $(window).height())) {
+      scroll_get = false;     
+      layer.msg('内容加截中,请稍候',{time:1500});
+      showMoreMsg();
+    }
+  });
+});
+</script>
+
+{/block}

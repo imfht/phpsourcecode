@@ -1,0 +1,168 @@
+<!--海报分享开始-->
+
+<!--
+<style type="text/css">
+#share_code{
+	position:fixed;
+	right:30px;
+	top:80px;
+	z-index:200;
+	font-size:30px;
+}
+#share_code em{
+	font-size:13px;
+}
+</style>
+<i id="share_code" onclick="share_btn()" class="fa fa-qrcode"><em>点击生成海报</em></i>
+-->
+<script type="text/javascript" src="__STATIC__/libs/html2canvas/html2canvas.js"></script>
+<style type="text/css">
+.share_box {margin: 0 auto;position: relative;background:#FFF;}
+.add_tt{height:50px; line-height:50px; border-bottom:1px #f4f4f4 solid; text-align:center; background:#f8f8f8}
+.share_box{padding:10px;}
+.share_picurl{
+	background:#E7F7CE;
+}
+.share_picurl img {width: 100%;}
+.list_cnt{
+	padding:10px 10px 40px 10px; 
+	background:#E7F7CE url(__STATIC__/haibao_style/morepic/haibao_hua.png) no-repeat right top;
+}
+.head-tag{
+	font-size:14px;
+	font-weight:bold;
+	color:#0D528B;
+}
+.job-content{
+	font-size:12px;
+	color:#666;
+	line-height:18px;
+	text-indent:20px;
+}
+.phone{
+	font-size:16px;
+	letter-spacing:5px;
+}
+.foot_cpy{
+	text-align:center;
+	color:#ccc;
+	font-size:11px;
+	background:#0C275F;
+	line-height:20px;
+	border-top:1px solid #ccc;
+}
+.foot_cnt{	 
+}
+.head_cnt{
+	background:#1866A6 url(__STATIC__/haibao_style/morepic/haibao_hua.png);
+	background-size:110px 70px;
+	color:#fff;
+	text-align:center;
+	line-height:30px;
+	font-size:18px;
+	font-weight:bold;
+	padding-top:15px;
+	padding-bottom:15px;
+}
+.line_cnt{
+	height:3px;
+	margin-top:5px;
+	border-top:3px solid #1866A6;
+	border-bottom:1px solid #1866A6;
+}
+
+.user_icon{
+	position: absolute;
+	right:20px;
+	bottom:40px;
+	text-align:center;
+	font-size:12px;
+	line-height:18px;
+	color:#fff;
+}
+.user_icon img{
+	width:50px;height:50px;border-radius:100%;border:1px solid #ccc;opacity:0.7;
+}
+
+.list_image{
+	width:100%;
+	text-align:center;
+	margin-top:10px;
+	margin-bottom:10px;
+}
+.list_image img{
+	max-width:90%;
+	border-radius:30px;
+	opacity:0.9;
+	border:1px solid #E1C292;
+}
+
+.share_pro{
+	position: absolute;
+	text-align:center;
+	left: 20px;
+	bottom: 40px;
+	color:#333;
+	font-size:12px;
+	line-height:18px;
+	color:#fff;
+}
+.share_pro img {width:60px;height:60px;}
+.close_btn{background:url(__STATIC__/libs/html2canvas/close.png) no-repeat;background-size:22px auto;width:22px;height:22px;right:10px;top:14px;display:block;position:absolute;}
+
+</style>
+<div id="page_share" style="display:none;">
+  <div class="add_tt">长按下面的图片另存或分享给好友</div>
+  <div class="close_btn" onclick="app_page_close();"></div>
+  <div style="position:relative">
+    <div class="share_box" id="share_html">
+		<div class="user_icon"><img src="{:tempdir($userdb.icon)}" /><br>{$userdb.username}</div>	
+		<div class="share_pro"><img src="{$codeimg?:fun('Haibao@img',$userdb,$id)}"><br>识别查看详情</div>
+		
+        <div class="share_picurl">
+			<div class="head_cnt">{:get_word(del_html($info.title),34)}</div>
+			<div class="line_cnt"></div>
+			{volist name="$info.picurls" id="rs"}
+				{if $i<3}
+				<div class="list_image">
+					<img src="{$rs.picurl}">
+				</div>
+				{/if}
+			{/volist}
+			{if empty($info.picurls)&&$info.picurl}
+				<div class="list_image">
+					<img src="{$info.picurl}">
+				</div>
+			{/if}
+			<div class="list_cnt">
+			<div class="head-tag">{$info.title}</div><div class="job-content">{:get_word(del_html($info.content),200)}</div>
+			    {qb:showpage name="haibao_base" field="picurl,maps,telphone"}
+					{if !in_array($rs.type,['ueditor','image','file','images2','files','bmap'])&&!in_array($rs.name,['title','myfid','keywords','sncode','type1','type2','type3'])}
+					<div class="head-tag">{title}</div><div class="job-content">{value}</div>
+					{/if}
+				{/qb:showpage}	
+				{if $info.telphone!=''}<div class="head-tag">联系方式</div><div class="job-content"><span class="phone">{$info.telphone}</span> </div>{/if}
+			</div>			
+			<div class="foot_cnt">
+			<img src="__STATIC__/haibao_style/default/haibao_bg.png">
+			</div>
+			<div class="foot_cpy">本信息经《{$webdb.webname}》鉴定真实有效!</div>
+		</div>
+    </div>
+    <img src="__STATIC__/libs/html2canvas/blank.png" id="share_img" style="position:absolute;top:0;left:0;display:none;background: #fff url(__STATIC__/libs/html2canvas/loading.gif) no-repeat center">
+  </div>
+</div>
+<script type="text/javascript">
+//分享
+function share_btn() {
+	app_page('page_share', function(){
+		div_toimg("share_html", "share_img");
+	});
+}
+$(function(){	
+	setTimeout(function(){
+		//share_btn();	//自动生成预览
+	},3000);
+});
+</script>
+<!--海报分享结束-->

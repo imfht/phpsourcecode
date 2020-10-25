@@ -1,0 +1,137 @@
+{extend name="common:base"/}
+{block name="css"}<link href="__CSS__/plugins/iCheck/custom.css" rel="stylesheet">
+{/block}
+{block name="body"}
+<div class="row wrapper border-bottom white-bg page-heading">
+    <div class="col-lg-12">
+        <h2>系统</h2>
+    </div>
+</div>
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>配置管理</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link">
+                            <i class="fa fa-chevron-up"></i>
+                        </a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-wrench"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            {present name="groupList"}
+                            {foreach name='groupList' item='vo'}
+                            <li><a class="{eq name='group_id' value='$key'}font-bold{/eq}" href="{:\\think\\Url::build('index',['group'=>$key])}">{$vo}</a></li>
+                            {/foreach}
+                            {/present}
+                            <li><a class='{empty name="group_id"}font-bold{/empty}' href="{:\\think\\Url::build('index')}">全部</a></li>
+                        </ul>
+                        <a class="close-link">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-sm-9 m-b-xs">
+                            <a class="btn btn-outline btn-primary" href="{:\\think\\Url::build('edit')}">新增</a>
+                            <button type="button" class="btn btn-outline btn-danger ajax-post confirm" url="{:\\think\\Url::build('batchUpdate',['value'=>-1])}" target-form="ids">删除</button>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="input-group">
+                                <input type="text" placeholder="请输入关键词" class="input-sm form-control"> <span class="input-group-btn">
+                                    <button type="button" class="btn btn-sm btn-primary"> 搜索</button> </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="">
+                                        <input class="i-checks checkbox check-all" type="checkbox">
+                                    </th>
+                                    <th class="">ID</th>
+                                    <th class="">名称</th>
+                                    <th class="">标题</th>
+                                    <th class="">分组</th>
+                                    <th class="">排序</th>
+                                    <th class="">类型</th>
+                                    <th class="">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {notempty name="list"}
+                                {volist name="list" id="vo"}
+                                <tr>
+                                    <td><input class="ids i-checks" type="checkbox" name="ids[]" value="{$vo.id}"></td>
+                                    <td>{$vo.id} </td>
+                                    <td><a href="{:\\think\\Url::build('edit',['id'=>$vo['id']])}">{$vo.name}</a></td>
+                                    <td>{$vo.title}</td>
+                                    <td><span>{$vo.group|get_config_group}</span></td>
+                                    <td><input name="sort" data_id="{$vo.id}" class="input-x text-center is_sort" value="{$vo.sort}"></td>
+                                    <td><span>{$vo.type|get_config_type}</span></td>
+                                    <td>
+                                        <a title="编辑" href="{:\\think\\Url::build('edit',['id'=>$vo['id']])}">编辑</a>
+                                        <a class="confirm ajax-get" title="删除" href="{:\\think\\Url::build('setStatus',['value'=>-1,'ids'=>$vo['id']])}">删除</a>
+                                    </td>
+                                </tr>
+                                {/volist}
+                                {else /}
+                            <td colspan="8" class="text-center"> aOh! 暂时还没有内容! </td>
+                            {/notempty}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        {notempty name="list"}
+                        {$page}
+                        {/notempty}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="script"}
+<script type="text/javascript" src="__JS__/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript">
+    $(function () {
+        highlight_subnav("{:\\think\\Url::build('Deploy/index')}");
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green'
+        });
+        $(".is_sort").blur(function () {
+            var val = $(this).val();
+            if (isNaN(val)) {
+                alert_msg('排序必须为一个数字', 0);
+            }
+            var id = $(this).attr('data_id');
+            $.get("{:\\think\\Url::build('currentSort')}", {id: id, sort: val}, function (data) {
+                if (data.code == 1) {
+                    data.url ? alert_msg(data.msg + ',页面即将自动跳转~', 1) : alert_msg(data.msg, 1);
+                    setTimeout(function () {
+                        if (data.url) {
+                            location.href = data.url;
+                        } else {
+                            location.reload();
+                        }
+                    }, 1500);
+                } else {
+                    alert_msg(data.msg, 0);
+                    setTimeout(function () {
+                        if (data.url) {
+                            location.href = data.url;
+                        }
+                    }, 1500);
+                }
+            });
+        });
+    });
+
+</script>
+{/block}

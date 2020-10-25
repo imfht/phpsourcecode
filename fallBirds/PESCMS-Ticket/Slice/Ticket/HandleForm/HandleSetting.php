@@ -1,0 +1,52 @@
+<?php
+/**
+ * PESCMS for PHP 5.4+
+ *
+ * Copyright (c) 2014 PESCMS (http://www.pescms.com)
+ *
+ * For the full copyright and license information, please view
+ * the file LICENSE.md that was distributed with this source code.
+ * @core version 2.6
+ * @version 1.0
+ */
+
+
+namespace Slice\Ticket\HandleForm;
+
+/**
+ * 处理后台 用户添加/编辑提交过来的密码表单
+ * @package Slice\Ticket
+ */
+class HandleSetting extends \Core\Slice\Slice {
+
+    public function before() {
+        $license = PES_CORE.'/Core/LICENSE.pes';
+        if(is_file($license)){
+            $authorize = json_decode(file_get_contents($license), true);
+        }
+
+        if((empty($authorize['authorize_type']) || $authorize['authorize_type'] == 5) && METHOD == 'PUT' ){
+            $_POST['siteKeywords'] = base64_decode('UEVTQ01TLFBFU0NNUyBUaWNrZXQs5byA5rqQ55qE5bel5Y2V57O757ufLOW3peWNleezu+e7nyzlt6XljZXlrqLmnI3ns7vnu58s5a6i5pyN5bel5Y2V57O757ufLEdQTOW3peWNlSxHUEzlrqLmnI3ns7vnu58sR1BM5bel5Y2V5a6i5pyN57O757uf');
+            $_POST['siteDescription'] = base64_decode('UEVTQ01TIFRpY2tldOaYr+S4gOasvuS7pUdQTHYy5Y2P6K6u5Y+R5biD55qE5byA5rqQ5bel5Y2V5a6i5pyN57O757uf');
+        }
+
+        $check = strcmp(trim($_SERVER['HTTP_HOST']), trim($authorize['authorize_domain']));
+
+        if($check !== 0){
+            is_file($license) ? unlink($license) : '';
+        }
+        if(( $check !== 0 || empty($authorize['authorize_domain']) ) && METHOD == 'PUT'){
+            $_POST['siteTitle'] = 'PESCMS Ticket';
+            $_POST['siteLogo'] = DOCUMENT_ROOT.'/Theme/assets/i/logo.png';
+            $_POST['siteContact'] = '';
+            $_POST['pescmsIntroduce'] = file_get_contents(dirname(__FILE__).'/introduce.php');
+        }
+
+
+    }
+
+    public function after() {
+    }
+
+
+}

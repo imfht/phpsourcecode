@@ -1,0 +1,174 @@
+<include file="Common/header" />
+<script>
+    require(['angular', 'bootstrap', 'util'], function(angular, $, u){
+        angular.module('app', []).controller('joinPanel', function($scope, $http) {
+            $scope.input = {username:'',password:'',rePassword:''};
+            $scope.errorInput = {username:false,password:false,rePassword:false};
+            $scope.login = {username:'',password:''};
+            $scope.errorLogin = {username:false,password:false};
+            $scope.register = function() {
+                var error = false;
+                if($.trim($scope.input.username) == '') {
+                    $scope.errorInput.username = true;
+                    error = true;
+                }
+                if($scope.input.password == '') {
+                    $scope.errorInput.password = true;
+                    error = true;
+                }
+                if($scope.input.rePassword != $scope.input.password) {
+                    $scope.errorInput.rePassword = true;
+                    error = true;
+                }
+                if(error) {
+                    return;
+                }
+                var params = {mobile:$scope.input.username,password:$scope.input.password};
+                params.from = 'weixin';
+                $http.post("{:U('/auth/register')}", params).success(function(content, status){
+                    if(content == 'success') {
+                        location.href = '{$forward}';
+                    } else if(u.is_error(content)) {
+                        u.message(content.message);
+                    } else {
+                        u.message('系统错误, 请稍后重试');
+                    }
+                });
+            }
+            $scope.login = function() {
+                var error = false;
+                if($.trim($scope.login.username) == '') {
+                    $scope.errorLogin.username = true;
+                    error = true;
+                }
+                if($scope.login.password == '') {
+                    $scope.errorLogin.password = true;
+                    error = true;
+                }
+                if(error) {
+                    return;
+                }
+                var params = {username:$scope.input.username,password:$scope.input.password};
+                params.from = 'weixin';
+                $http.post("{:U('/auth/login')}", params).success(function(content, status){
+                    if(content == 'success') {
+                        location.href = '{$forward}';
+                    } else if(u.is_error(content)) {
+                        u.message(content.message);
+                    } else {
+                        u.message('系统错误, 请稍后重试');
+                    }
+                });
+            };
+        });
+        angular.bootstrap(document, ['app']);
+
+        $(function(){
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var from = $(e.relatedTarget).attr('href');
+                var to = $(e.delegateTarget).attr('href');
+                if($(to).index() < $(from).index()) {
+                    $(to).removeClass('fadeInRight fadeInLeft').addClass('fadeInLeft');
+                } else {
+                    $(to).removeClass('fadeInRight fadeInLeft').addClass('fadeInRight');
+                }
+            });
+        });
+    });
+</script>
+<div class="container-fluid ng-cloak" ng-controller="joinPanel">
+    <div class="page-header">
+        <h2>完善个人资料</h2>
+    </div>
+    <div class="animated fadeInUp">
+        <empty name="fan['info']">
+            <div class="alert alert-info">
+                你好. 这是你首次从微信进入系统, 因此需要完善个人资料
+            </div>
+            <else/>
+            <div class="row row-group">
+                <div class="col-xs-12">
+                    <div class="media text-warning">
+                        <div class="media">
+                            <notempty name="$fan['info']['avatar']">
+                                <a class="pull-left" href="#">
+                                    <img src="{:attach($fan['info']['avatar'])}" alt="微信头像" class="img-rounded" style="width:64px;height:64px;">
+                                </a>
+                            </notempty>
+                            <div class="media-body">
+                                <h4 class="media-heading">{$fan['info']['nickname']}</h4>
+                                你好. 这是你首次从微信进入系统, 因此需要完善个人资料
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </empty>
+        <div class="page-header"></div>
+        <div class="row row-group">
+            <div class="col-xs-12">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#register" role="tab" data-toggle="tab">完善账号资料</a></li>
+                    <li><a href="#login" role="tab" data-toggle="tab">已有账号</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="tab-content">
+                    <div class="tab-pane animated active" id="register">
+                        <div class="form-group has-feedback" ng-class="{'has-error': errorInput.username}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-user text-success"></i></span>
+                                <input ng-model="input.username" type="text" class="form-control" placeholder="请输入你的手机号" required="required">
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="errorInput.username"></span>
+                        </div>
+                        <div class="form-group has-feedback" ng-class="{'has-error': errorInput.password}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-key text-success"></i></span>
+                                <input ng-model="input.password" type="password" class="form-control" placeholder="请输入登录密码" required="required">
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="errorInput.password"></span>
+                        </div>
+                        <div class="form-group has-feedback" ng-class="{'has-error': errorInput.rePassword}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-lock text-success"></i></span>
+                                <input ng-model="input.rePassword" type="password" class="form-control" placeholder="确认登录密码" required="required">
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="errorInput.rePassword"></span>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary btn-block" type="button" ng-click="register();">确认注册</button>
+                        </div>
+                    </div>
+                    <div class="tab-pane animated" id="login">
+                        <div class="form-group has-feedback" ng-class="{'has-error': errorLogin.username}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-user text-success"></i></span>
+                                <input ng-model="login.username" type="text" class="form-control" placeholder="请输入登录手机号或邮箱" required="required">
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="errorLogin.username"></span>
+                        </div>
+                        <div class="form-group has-feedback" ng-class="{'has-error': errorLogin.hasError}">
+                            <label class="control-label sr-only"></label>
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-fw fa-lock text-success"></i></span>
+                                <input ng-model="login.password" type="password" class="form-control" placeholder="请输入登录密码" required="required">
+                            </div>
+                            <span class="glyphicon glyphicon-remove form-control-feedback" ng-show="errorLogin.password"></span>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary btn-block" type="button" ng-click="login();">确认绑定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<include file="Common/footer" />

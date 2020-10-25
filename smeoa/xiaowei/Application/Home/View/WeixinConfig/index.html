@@ -1,0 +1,141 @@
+<extend name="Layout/ins_page" />
+<block name="content">
+	{:W('PageHeader/search',array('name'=>'微信设置','search'=>'S'))}
+	<div class="operate panel panel-default">
+		<div class="panel-body">
+			<div class="pull-right">
+				<a onclick="add()" class="btn btn-sm btn-primary">新增</a>
+				<a onclick="save()" class="btn btn-sm btn-primary">保存</a>
+				|
+				<a onclick="del()"  class="btn btn-sm btn-danger">删除</a>
+			</div>
+		</div>
+	</div>
+	<!-- 功能操作区域结束 -->
+	<!-- 列表显示区域  -->
+	<div class="row">
+		<div class="col-sm-2 sub_left_menu ">
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th>agent id</th>
+						<th>控制器</th>
+					</tr>
+				</thead>
+				<tbody>
+					<volist name="list" id="data">
+						<tr id="{$data.id}">
+							<td>{$data.agent_id}</td>
+							<td>{$data.controller}</td>						
+						</tr>
+					</volist>
+				</tbody>
+			</table>
+		</div>
+		<div class="col-sm-10 sub_content">
+			<form id="form_data" name="form_data" method="post" class="well form-horizontal clearfix">
+				<input type="hidden" name="id" id="id">
+				<input type="hidden" name="ajax" id="ajax" value="0">
+				<input type="hidden" name="opmode" id="opmode" value="">
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="agent_id">agent id*：</label>
+					<div class="col-sm-9">
+						<input class="form-control" type="text" id="agent_id" name="agent_id" check="require" msg="请输入agent id">
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="controller">控制器*：</label>
+					<div class="col-sm-9">
+						<input class="form-control"  type="text" id="controller" name="controller" check="require" msg="请输入名称">
+					</div>
+				</div>
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="site_url">链接地址*：</label>
+					<div class="col-sm-9">
+						<input class="form-control"  type="text" id="site_url" name="site_url" check="require" msg="请输入链接地址">
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="site_url">crop_id*：</label>
+					<div class="col-sm-9">
+						<input class="form-control"  type="text" id="crop_id" name="crop_id" check="require" msg="请输入crop_id">
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="site_url">corp_secrect*：</label>
+					<div class="col-sm-9">
+						<input class="form-control"  type="text" id="corp_secrect" name="corp_secrect" check="require" msg="请输入corp_secrect">
+					</div>
+				</div>
+				
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="site_url">encoding_aes_key*：</label>
+					<div class="col-sm-9">
+						<input class="form-control"  type="text" id="encoding_aes_key" name="encoding_aes_key" check="require" msg="请输入encording_ase_key">
+					</div>
+				</div>
+
+				<div class="form-group col-xs-12">
+					<label class="col-sm-3 control-label" for="site_url">token*：</label>
+					<div class="col-sm-9">
+						<input class="form-control"  type="text" id="token" name="token" check="require" msg="请输入token">
+					</div>
+				</div>											
+			</form>
+		</div>
+	</div>
+</block>
+<block name="js">
+	<script type="text/javascript">
+		function add() {
+			$("#opmode").val("add");
+			$("#id").val("");
+			if (check_form("form_data")) {
+				sendForm("form_data", "{:U('save')}", "{:U('index')}");
+			}
+		};
+
+		function del() {
+			var vars = $("#form_data").serialize();
+			ui_confirm('确定要删除吗?', function() {
+				sendAjax("{:U('del')}", vars, function(data) {
+					if (data.status) {
+						ui_alert(data.info, function() {
+							location.href = location.href + "?" + (new Date()).getTime();
+						});
+					}
+				});
+			});
+		}
+
+		function save() {
+			if (check_form("form_data")) {
+				sendForm("form_data", "{:U('save')}", "{:U('index')}");
+			}
+		}
+
+		function showdata(result) {
+			for (var s in result.data) {
+				set_val(s, result.data[s]);
+			}
+			$("#opmode").val("edit");
+		}
+
+
+		$(document).ready(function() {
+			set_return_url();
+			$(".sub_left_menu tbody tr").click(function() {
+				$(".sub_left_menu  tr.active").removeClass("active");
+				$(this).attr("class", "active");
+				sendAjax("{:U('read')}", "id=" + $(this).attr("id"), function(data) {
+					showdata(data);
+				});
+				return false;
+			});
+		});
+	</script>
+
+</block>

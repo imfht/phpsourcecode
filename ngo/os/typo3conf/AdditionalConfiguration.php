@@ -1,0 +1,25 @@
+<?php
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backsite/Resources/Private/Language/locallang_be.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backsite/Resources/Private/Language/locallang_be.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:siteconfig/Resources/Private/Language/locallang.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/siteconfig/Resources/Private/Language/locallang.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:about/Resources/Private/Language/Modules/about.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/about/Resources/Private/Language/Modules/about.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:adminpanel/Resources/Private/Language/locallang_preview.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/adminpanel/Resources/Private/Language/locallang_preview.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:adminpanel/Resources/Private/Language/locallang_cache.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/adminpanel/Resources/Private/Language/locallang_cache.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:adminpanel/Resources/Private/Language/locallang_edit.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/adminpanel/Resources/Private/Language/locallang_edit.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_mod_help_cshmanual.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_mod_help_cshmanual.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_show_rechis.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_show_rechis.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_pages_new_csh.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_pages_new_csh.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_siteconfiguration_tca.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_siteconfiguration_tca.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_view_help.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_view_help.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_pages_sort_csh.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_pages_sort_csh.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:core/Resources/Private/Language/locallang_t3lib_fullsearch.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/core/Resources/Private/Language/locallang_t3lib_fullsearch.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:core/Resources/Private/Language/wizard.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/core/Resources/Private/Language/wizard.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:core/Resources/Private/Language/debugger.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/core/Resources/Private/Language/debugger.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:core/Resources/Private/Language/locallang_csh_sysnews.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/core/Resources/Private/Language/locallang_csh_sysnews.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:info/Resources/Private/Language/locallang_csh_webinfo.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/info/Resources/Private/Language/locallang_csh_webinfo.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:staticfilecache/Resources/Private/Language/locallang.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/staticfilecache/Resources/Private/Language/locallang.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:staticfilecache/Resources/Private/Language/locallang_mod.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/staticfilecache/Resources/Private/Language/locallang_mod.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:backend/Resources/Private/Language/locallang_mod.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/backend/Resources/Private/Language/locallang_mod.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:core/Resources/Private/Language/locallang_tca.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/core/Resources/Private/Language/locallang_tca.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:scheduler/Resources/Private/Language/locallang.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/scheduler/Resources/Private/Language/locallang.xml';
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['locallangXMLOverride']['EXT:scheduler/Resources/Private/Language/locallang_mod.xlf'][0] = 'typo3conf/LFEditor/OverrideFiles/scheduler/Resources/Private/Language/locallang_mod.xml';
+?>

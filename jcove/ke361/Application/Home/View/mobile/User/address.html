@@ -1,0 +1,101 @@
+<extend name="Public/base"/>
+<block name="head">
+	 <link rel="stylesheet" type="text/css" href="__MOBILE__/css/user.css">
+</block>
+<block name="body">
+<div class="container user-center">
+    <div class="row">
+        <div class="col-md-2">
+            <include file="Public:usernav"/>
+        </div>
+        <div class="col-xs-12 user-address">
+        		<h3>收货地址</h3>
+            		<notempty name="_list">
+            			<volist name="_list" id="vo">
+            			<a href="{:U('User/editAddress',array('id'=>$vo['id']))}">
+            				<div class="item col-xs-11">
+            					<div class="col-xs-12">
+            						<h4 class="col-xs-6">
+            							{$vo.consignee}
+            							
+            						</h4>
+            						<h4 class="col-xs-6">{$vo.mobile}</h4>
+            					</div>
+			            		<div class="col-xs-12">
+			            			<if condition="$vo.status eq 1">
+            								<span style="font-size:12px;"class="label label-warning label-sm">默认</span>
+            						</if>
+			            			{$vo.province|get_district_name}{$vo.city|get_district_name}{$vo.district|get_district_name}{$vo.community|get_district_name}{$vo.address}
+			            		</div>
+			            
+            				</div>
+            				<div class="col-xs-1">
+            					<div style="margin:auto;">
+            						>
+            					</div>
+            				</div>
+            				</a>
+            			</volist>
+					<else/>
+						<p>还没有地址哦，赶快    <a class="text-info" href="{:U('editAddress')}">新增地址</a></p>
+					</notempty>
+            </div>
+    </div>
+</div>
+</block>
+<block name="script">
+<script>
+$(function(){
+	
+	var pid=<if condition="$user_address.province neq ''">{$user_address.province}<else />0</if>;  //默认省份id
+	var cid=<if condition="$user_address.city neq ''">{$user_address.city}<else />0</if>;  //默认城市id
+	var did=<if condition="$user_address.district neq ''">{$user_address.district}<else />0</if>;  //默认区县市id
+	var coid=<if condition="$user_address.community neq ''">{$user_address.community}<else />0</if>;  //默认乡镇id
+
+	
+	$.post("{:U('District/getProvince')}", {pid: pid}, function(result){
+		$("#J_province").html(result);
+	});
+
+	$.post('{:U("District/getCity")}', {pid: pid, cid: cid}, function(result){
+		$("#J_city").show().html(result);
+	});
+
+	$.post('{:U("District/getDistrict")}', {cid: cid, did: did}, function(result){
+		$("#J_district").show().html(result);
+	});
+
+	$.post('{:U("District/getCommunity")}', {did: did, coid: coid}, function(result){
+		$("#J_community").show().html(result);
+	});
+
+	$('#J_province').change(function(){
+		var pid_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getCity")}', {pid: pid_g}, function(result){
+			$("#J_city").show().html(result);
+		});
+	});
+	
+	$('#J_city').change(function(){
+		var cid_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getDistrict")}', {cid: cid_g}, function(result){
+			$("#J_district").show().html(result);
+		});
+	});
+
+	$('#J_district').change(function(){
+		var did_g=$(this).children('option:selected').val();
+		$.post('{:U("District/getCommunity")}', {did: did_g}, function(result){
+			$("#J_community").show().html(result);
+		});
+	});
+	
+	
+	heightlight_bottom_nav("{:U('index')}"); 
+	
+	
+
+	
+});
+</script>
+</block>

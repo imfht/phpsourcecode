@@ -1,0 +1,142 @@
+这个MOD的广告功能需要用到首页，所以需要修改模块的BBcode类，安装有点麻烦，细心点没什么问题的。
+#
+#--------[ 打开 ]------------
+#
+includes/class/module_bbcode.php
+#
+#--------[ 找到 ]------------
+#
+var $_config = NULL;
+#
+#--------[ 后面添加 ]--------
+#
+var $ad = array();
+#
+#--------[ 找到 ]------------
+#
+		// 统计的 BBcode 默认是没有开启的
+		// 如需要开启请把下面的 // 去掉
+		//$this->total = array(
+		//	'user' => get_db_stat('usercount'),
+		//	'topic' => get_db_stat('topiccount'),
+		//	'post' => get_db_stat('postcount'),
+		//	'attach' => get_db_stat('attachcount')
+		//);
+#
+#--------[ 后面添加 ]--------
+#
+$this->load_index_ad();
+#
+#--------[ 找到 ]------------
+#
+			'[金币]'		=> $this->_userdata['user_points'],
+#
+#--------[ 后面添加 ]--------
+#
+			'[显示顶部广告]'=> $this->ad['top'],
+			'[显示底部广告]'=> $this->ad['foot'],
+#
+#--------[ 找到 ]------------
+#
+	function bbcode_hello() {
+		$hello_time = create_date('H', time(), $this->_config['board_timezone']);
+		if ( $hello_time < 5) $hello_text = '凌晨';
+		elseif ( $hello_time < 9) $hello_text = '早上';
+		elseif ( $hello_time < 14) $hello_text = '中午';
+		elseif ( $hello_time < 18) $hello_text = '下午';
+		else $hello_text = '晚上';
+		return $hello_text;
+	}
+#
+#--------[ 后面添加 ]--------
+#
+	function load_index_ad() {
+		global $table_prefix;
+		$top = '';
+		$foot = '';
+		$sql = 'SELECT ad_id, ad_name, ad_type, ad_time, ad_url
+			FROM ' . $table_prefix.'shop_ad
+			ORDER BY ad_id DESC';
+		if ( !($result = $this->_db->sql_query($sql)) ) trigger_error('无法查询广告信息', E_USER_WARNING);
+		if ( $row = $this->_db->sql_fetchrow($result) ) {
+			$i = 0;
+			do {
+				if ( $row['ad_type'] ) {
+					if ( $row['ad_time'] < time() ) $this->_db->sql_query("DELETE FROM " . $table_prefix . "shop_ad WHERE ad_id = " . $row['id']);
+					else $top .= '<a href="' . $row['ad_url'] . '">' . $row['ad_name'] . '</a><br />';
+				} else {
+					if ( $row['ad_time'] < time() ) $this->_db->sql_query("DELETE FROM ".$table_prefix."shop_ad WHERE ad_id = " . $row['id']);
+					else $foot .= '<a href="' . $row['ad_url'] . '">' . $row['ad_name'] . '</a><br />';
+				}
+				$i++;
+			}
+			while ( $row = $this->_db->sql_fetchrow($result) );
+			$this->_db->sql_freeresult($result);
+		}
+
+		$this->ad['top'] = $top;
+		$this->ad['foot'] = $foot;
+	}
+
+#
+#--------[ 打开 ]------------
+#
+includes/class/module.php
+#
+#--------[ 找到 ]------------
+#
+	function __construct($page_id = 0)
+	{
+		global $template, $db;
+
+		parent::__construct();
+
+		$this->page_id = abs(intval($page_id));
+		$this->_db = $db;
+		$this->_template = $template;
+		
+		$this->page_info();
+		$this->other();
+		$this->main();
+	}
+#
+#--------[ 替换 ]------------
+#
+	function __construct($page_id = 0)
+	{
+		global $template, $db;
+
+		$this->page_id = abs(intval($page_id));
+		$this->_db = $db;
+		$this->_template = $template;
+		
+		parent::__construct();
+
+		$this->page_info();
+		$this->other();
+		$this->main();
+	}
+#
+#--------[ 打开 ]------------
+#
+template/admin/help_module_bbcode.tpl
+#
+#--------[ 找到 ]------------
+#
+					<p><input type="text" value="[统计会员]"> => 统计您网站会员（注意：需要开启该功能请打开includes/class/module_bbcode.php按说明修改）</p>
+					<hr />
+					<p><input type="text" value="[统计主题]"> => 统计您网站的主题（注意：需要开启该功能请打开includes/class/module_bbcode.php按说明修改）</p>
+					<hr />
+					<p><input type="text" value="[统计帖子]"> => 统计您网站的帖子（注意：需要开启该功能请打开includes/class/module_bbcode.php按说明修改）</p>
+					<hr />
+					<p><input type="text" value="[统计附件]"> => 统计您网站的附件（注意：需要开启该功能请打开includes/class/module_bbcode.php按说明修改）</p>
+#
+#--------[ 后面添加 ]------------
+#
+					<div class="title">MODS</div>
+					<p><input type="text" value="[显示顶部广告]"> => 显示顶部广告</p>
+					<hr />
+					<p><input type="text" value="[显示底部广告]"> => 显示底部广告</p>
+#
+#--------[ 完成 ]------------
+#

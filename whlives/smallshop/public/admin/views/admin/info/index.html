@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="../../../layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../../layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+<div class="layui-fluid">
+    <div class="layui-card">
+        <form class="layui-form" lay-filter="form" id="form" style="padding: 20px 30px 0 0;">
+            <div class="layui-form-item">
+                <label class="layui-form-label">用户名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="username" lay-verify="required" lay-reqText="用户名不能为空" autocomplete="off" class="layui-input" readonly>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">密码</label>
+                <div class="layui-input-block">
+                    <input type="password" name="password" id="password" lay-verify="password" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">重复密码</label>
+                <div class="layui-input-block">
+                    <input type="password" name="repeat_password" lay-verify="resspaword" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">电话</label>
+                <div class="layui-input-block">
+                    <input type="text" name="tel" lay-verify="required" lay-reqText="电话不能为空" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">邮箱</label>
+                <div class="layui-input-block">
+                    <input type="text" name="email" lay-verify="email" lay-reqText="邮箱格式错误" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label"></label>
+                <div class="layui-input-inline">
+                    <input type="hidden" name="id" value="">
+                    <input type="button" lay-submit lay-filter="form-submit" value="确认" class="layui-btn">
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label"></label>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../../../layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '../../../layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'helper'], function () {
+        var admin = layui.admin,
+            form = layui.form,
+            $ = layui.$,
+            api_action_url = layui.setter.apiHost + '/admin/admin';
+
+        //自定义验证规则
+        form.verify({
+            password: function (value) {
+                var id = $('input[name="id"]').val();
+                var password = /^[\S]{6,12}$/;
+                var r = value.match(password);
+                if (r == null && !id) {
+                    return '密码必须6到12位，且不能出现空格';
+                }
+            },
+            resspaword: function (value) {
+                var pass = $('input[name="password"]').val();
+                if (value != pass) {
+                    return '两次密码不一致';
+                }
+            }
+        });
+
+        //回填数据
+        admin.req({
+            url: api_action_url + '/info',
+            success: function (result) {
+                if (result.code == 0) {
+                    form.val('form', result.data);
+                }
+            }
+        });
+
+        //监听提交
+        form.on('submit(form-submit)', function (data) {
+            admin.req({
+                type: "POST",
+                url: api_action_url + '/info_update',
+                data: data.field,
+                success: function (result) {
+                    if (result.code == 0) {
+                        layer.msg('保存成功', {time: 1000}, function () {
+                            location.reload();
+                        });
+                    } else {
+                        layer.msg(result.msg);
+                    }
+                },
+                error: function () {
+                    layer.msg('操作失败，请刷新页面重试！');
+                }
+            });
+        });
+
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>微信开发调试</title>
+<link rel="stylesheet" href="css/zui.min.css" type="text/css" />
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<style>
+	.container tr{ border:none}
+	.container th{ vertical-align:middle; width:120px}
+	.hidden{ display:none}
+</style>
+<script>
+	var begin = "<xml>\r\n";
+	var toUserName = "<ToUserName><![CDATA[]]></ToUserName>\r\n";
+	var fromUserName = "<FromUserName><![CDATA[]]></FromUserName>\r\n";
+	var content = "<Content><![CDATA[]]></Content>\r\n";
+	var msgId = "<MsgId>1234567890123456</MsgId>\r\n";
+	var mediaId = "<MediaId><![CDATA[1234567890]]></MediaId>\r\n";
+	var format = "<Format><![CDATA[]]></Format>\r\n";
+	var picUrl = "<PicUrl><![CDATA[]]></PicUrl>\r\n";
+	var location_X = "<Location_X></Location_X>\r\n";
+	var location_Y = "<Location_Y></Location_Y>\r\n";
+	var scale = "<Scale>20</Scale>\r\n";
+	var label = "<Label><![CDATA[]]></Label>\r\n";
+	var end = "</xml>";
+	var time = parseInt(new Date().getTime()/1000);
+	var br = "\r\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\r\n"
+				
+	function msgType(type){
+		return "<MsgType><![CDATA["+type+"]]></MsgType>\r\n";
+	}
+	
+	function event(event){
+		return "<Event><![CDATA["+event+"]]></Event>\r\n";
+	}
+	
+	$(function(){
+		$('input[type="radio"]').click(function(){
+			time = parseInt(new Date().getTime()/1000);
+			var createTime = "<CreateTime>"+time+"</CreateTime>\r\n";
+			if($(this).val()==0){//文本
+				$("#content").val(begin+toUserName+fromUserName+createTime+msgType("text")+content+msgId+end);
+				$(".bt").html("内容");
+				$(".nr").removeClass("hidden");
+				$(".zb").addClass("hidden");
+			}else if($(this).val()==1){//语音
+				$("#content").val(begin+toUserName+fromUserName+createTime+msgType("voice")+mediaId+format+msgId+end);
+				$(".bt").html("语音");
+				$(".nr").removeClass("hidden");
+				$(".zb").addClass("hidden");
+			}else if($(this).val()==2){//图片
+				$("#content").val(begin+toUserName+fromUserName+createTime+msgType("image")+picUrl+mediaId+msgId+end);
+				$(".bt").html("图片");
+				$(".nr").removeClass("hidden");
+				$(".zb").addClass("hidden");
+			}else if($(this).val()==3){//位置
+				$("#content").val(begin+toUserName+fromUserName+createTime+msgType("location")+location_X+location_Y+scale+label+msgId+end);
+				$(".nr").addClass("hidden");
+				$(".zb").removeClass("hidden");
+			}else if($(this).val()==4){//关注
+				$("#content").val(begin+toUserName+fromUserName+createTime+msgType("event")+event("subscribe")+end);
+				$(".nr").addClass("hidden");
+				$(".zb").addClass("hidden");
+			}else if($(this).val()==5){//取消关注
+				$("#content").val(begin+toUserName+fromUserName+createTime+msgType("event")+event("[unsubscribe]]")+end);
+				$(".nr").addClass("hidden");
+				$(".zb").addClass("hidden");
+			}
+		});
+		
+		$("#wenben").click();
+		
+		$("#FromUserName").bind("keyup keydown change",function(time){
+			fromUserName = "<FromUserName><![CDATA["+$(this).val()+"]]></FromUserName>\r\n";
+			$('input[type="radio"]:checked').click();
+		});
+		
+		$("#ToUserName").bind("keyup keydown change",function(time){
+			toUserName = "<ToUserName><![CDATA["+$(this).val()+"]]></ToUserName>\r\n";
+			$('input[type="radio"]:checked').click();
+		});
+		
+		$("#nr").bind("keyup keydown change",function(time){
+			content = "<Content><![CDATA["+$(this).val()+"]]></Content>\r\n";
+			format = "<Format><![CDATA["+$(this).val()+"]]></Format>\r\n";
+			picUrl = "<PicUrl><![CDATA["+$(this).val()+"]]></PicUrl>\r\n";
+			$('input[type="radio"]:checked').click();
+		});
+		
+		$("#x").bind("keyup keydown change",function(time){
+			location_X = "<Location_X>"+$(this).val()+"</Location_X>\r\n";
+			$('input[type="radio"]:checked').click();
+		});
+		
+		$("#y").bind("keyup keydown change",function(time){
+			location_Y = "<Location_Y>"+$(this).val()+"</Location_Y>\r\n";
+			$('input[type="radio"]:checked').click();
+		});
+		
+		$("#clear").click(function(){
+			$("#content_back").val("");
+		});
+		
+		$("#button").click(function(){ 
+			var url = $("#URL").val();
+			var con = $("#content_back").val();
+			var data123 = $("#content").val();
+			$.post("demo.php",{data:data123,url:url},function(rs){
+				if(con==""){
+					$("#content_back").val(rs);
+				}else{
+					$("#content_back").val(con+br+rs);
+				}
+			})
+			/*
+			$.ajax({
+				url: "demo.php",
+				type: "POST",
+				data: {data:$("#content").val()},
+				dataType: "text",
+				jsonp: "callback",
+				contentType: "text/xml",
+				success: function(date) {
+					if(con==""){
+						$("#content_back").val(date);
+					}else{
+						$("#content_back").val(con+br+date);
+					}
+				},
+				error: function() {
+					if(con==""){
+						$("#content_back").val("请求失败！");
+					}else{
+						$("#content_back").val(con+br+"请求失败！");
+					}
+				}
+			});
+			*/
+		});
+	});
+	
+</script>
+</head>
+
+<body>
+<div class="container">
+    <div class='panel'>
+		<div class='panel-heading'><strong>微信开发调试</strong></div>
+		<div class='panel-body'>
+            <table class="table table-form">
+                <tr>
+                    <th class="w-100px">请求网址</th>
+                    <td class="w-p40">
+                        <input type="text" id="URL" value="http://192.168.1.4/p/ruilan/index.php/Wechat/index?id=1" class="form-control" placeholder="请输入请求网址" />
+                    </td>
+                </tr>
+                <tr>
+                    <th>FromUserName</th>
+                    <td><input type="text" id="FromUserName" value="" class="form-control" placeholder="请输入FromUserName" /></td>
+                </tr>
+                <tr>
+                    <th>ToUserName</th>
+                    <td><input type="text" id="ToUserName" value="" class="form-control" placeholder="请输入ToUserName" /></td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td>
+                        <div style=" float:left; margin-right:50px; min-height:32px">
+                            <label class="radio-inline"><input type="radio" id="wenben" name="type" value="0" /> 文本</label>
+                            <label class="radio-inline"><input type="radio" id="yuyin" name="type" value="1" /> 语音</label>
+                            <label class="radio-inline"><input type="radio" id="tupian" name="type" value="2" /> 图片</label>
+                            <label class="radio-inline"><input type="radio" id="weizhi" name="type" value="3" /> 位置</label>
+                            <label class="radio-inline"><input type="radio" id="guanzhu" name="type" value="4" /> 关注</label>
+                            <label class="radio-inline"><input type="radio" id="quxiaoguanzhu" name="type" value="5" /> 取消关注</label>
+                        </div>
+                        <div class="input-group" >
+                        	<span class="input-group-addon bt nr">内容</span><input type="text" id="nr" value="" class="form-control nr" />
+                            
+                            <span class="input-group-addon zb hidden">X</span><input type="text" id="x" value="" class="form-control zb hidden" />
+							<span class="input-group-addon zb hidden">Y</span><input type="text" id="y" value="" class="form-control zb hidden" />
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td><textarea name="data" id="content" rows="11" class="form-control"></textarea></td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td> 
+                        <input type="button" id="button" class="btn btn-primary" value="提交" data-loading="正在提交..." />
+                        <input type="button" id="clear" class="btn btn-primary" value="清除回应内容" style="float:right" /> 
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td><textarea id="content_back" rows="13" class="form-control"></textarea></td>
+                </tr>
+            </table>
+    	</div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<script src="__STATIC_LIB__echarts/build/dist/echarts.js"></script>
+<form class="layui-form seller-form"  action="" >
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label seller-inline-2">表单名称：</label>
+            <div class="layui-input-inline seller-inline-4">
+                <input type="text" name="name" lay-verify="title" placeholder="请输入表单名称关键字" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button type="button" class="layui-btn layui-btn-sm" lay-submit lay-filter="form-search"><i class="iconfont icon-chaxun"></i>筛选</button>
+            <button type="button" class="layui-btn layui-btn-sm add-form"><i class="layui-icon">&#xe608;</i> 添加</button>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="export-form"><i
+                    class="iconfont icon-msnui-cloud-download" style="font-size: 20px !important;"></i>导出</button>
+        </div>
+    </div>
+</form>
+<div class="table-body">
+    <table id="formTable" lay-filter="formTable"></table>
+</div>
+<div id="exportForm" style="display: none;">
+    <form class="layui-form export-form" action="">
+        <div class="layui-form-item">
+            <div class="layui-margin-10">
+                <blockquote class="layui-elem-quote layui-text">
+                    请先筛选要导出的表单，默认导出全部
+                </blockquote>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">任务名称：</label>
+                <input type="text" name="taskname" lay-verify="title" style="width:200px;" placeholder="请输入任务名称"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    layui.use(['table','form','layer','laydate'],function(){
+        var layer = layui.layer, table = layui.table,form = layui.form,date = layui.laydate;
+        //执行渲染
+        table.render({
+            elem: '#formTable', //指定原始表格元素选择器（推荐id选择器）
+            height: 'full-99',
+            cellMinWidth: '80',
+            page: 'true',
+            limit:'20',
+            id:'formTable',
+            url: "{:url('form/index')}",
+            cols: [[ //标题栏
+                {type:'checkbox'},
+                {field:'id', width:90, title:'ID', align: 'center'},
+                {field: 'name', title: '表单名称',align:'center'},
+                {field: 'desc', title: '表单描述',align:'center'},
+                {field: 'type', title: '类型',align:'center', width: 110},
+                {field: 'is_login', title: '需要登录',align:'center', width: 100},
+                {field: 'utime',sort: true, title: '更新时间' ,align:'center', width: 170},
+                {field: 'sort', sort: true, title: '排序',align:'center', width: 80},
+                {title:'操作',align:'center',width:240, toolbar:'#formBar'}
+            ]]
+        });
+        //search
+        date.render({
+            elem:'#utime',
+						trigger: 'click' //自动弹出控件的事件，采用click弹出
+        });
+        form.on('submit(form-search)', function(data){
+            layui.table.reload('formTable', {
+                where: data.field
+                ,page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        });
+
+        $(document).on('click','.add-form',function(){
+            window.location.href="{:url('Form/add')}";
+        });
+
+        //ajax提交商品的添加
+        form.on('submit(add-form)', function(data){
+            JsPost("{:url('form/add')}", data.field, function(res){
+                if(res.status){
+                    layer.close(window.box);
+                    layer.msg(res.msg,{time:1300},function(){
+                        table.reload('formTable');
+                    });
+                }else{
+                    layer.msg(res.msg);
+                }
+            })
+        });
+
+        form.on('submit(form-edit)',function(data){
+            JsPost("{:url('form/edit')}", data.field, function(res){
+                if(res.status){
+                    layer.close(window.box);
+                    layer.msg(res.msg,{time:1300},function(){
+                        table.reload('formTable');
+                    });
+                }else{
+                    layer.msg(res.msg,{time:1300});
+                }
+            })
+        });
+
+        //监听工具条
+        table.on('tool(formTable)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            if(layEvent === 'del'){ //删除
+                layer.confirm('真的要删除么',{icon: 3}, function(index){
+                    JsGet("{:url('form/del')}?id=" + data.id, function(res){
+                        if(res.status){
+                            obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                            layer.close(index);//向服务端发送删除指令
+                        }
+                        layer.msg(res.msg);
+                    })
+                });
+            } else if(layEvent === 'edit'){ //编辑
+                window.location.href="{:url('Form/edit')}?id="+data.id;
+            }else if(layEvent == 'generate'){
+                window.box = layer.open({
+                    type: 2,
+                    content: "{:url('Form/generate')}?id="+data.id,
+                    area: setpage(380,420),
+                    title:'二维码',
+                    btn:['下载','关闭'],
+                    btnAlign:'c',
+                    yes: function(index, layero){
+                        var iframeWin = window[layero.find('iframe')[0]['name']];
+                        iframeWin.downloadQrcode();
+                    },
+                    cancel: function(){
+                        layer.closeAll();
+                    }
+                });
+            }else if(layEvent == 'report'){
+                JsGet("{:url('Form/report')}?id="+data.id, function(res) {
+                    if(res.status){
+                        window.box = layer.open({
+                            type: 1,
+                            content: res.data,
+                            area: setpage(620,520),
+                            title:'报表',
+                            btn:['关闭'],
+                            btnAlign:'c',
+                            yes: function(index, layero){
+                                layer.close(index);
+                            },
+                            cancel: function(){
+                                layer.close();
+                            }
+                        });
+                    }else{
+                        layer.msg(res.msg);
+                    }
+                });
+            }
+        });
+
+
+
+        //表单导出
+        layui.form.on('submit(export-form)', function (data) {
+
+            var checkStatus = layui.table.checkStatus('formTable');
+            var checkData = checkStatus.data;
+            var length = checkStatus.data.length;
+            if(length>1){
+                layer.msg("一次只能导出一个表单哦~");
+                return false;
+            }else if(length<=0){
+                layer.msg("请先勾选一个表单");
+                return false;
+            }
+            layer.open({
+                type: 1,
+                title: '表单导出',
+                area: setpage(400,290), //宽高
+                btn: ['确定', '取消'],
+                content: $("#exportForm").html(),
+                yes: function () {
+                    var ids = [];
+
+                    $.each(checkData,function (i,obj) {
+                        ids.push(obj.id);
+                    });
+
+                    var filter ='ids='+ids;
+
+                    $(".export-form:last").append("<input type='hidden' name='filter' value='" + filter + "'>");
+                    var data = $(".export-form:last").serializeArray();
+
+                    data.push({ 'name': 'model', 'value': 'Form' });
+                    JsPost("{:url('Ietask/export')}", data, function (res) {
+                                layer.msg(res.msg, { time: 1500 }, function () {
+                                    layer.closeAll();
+                                });
+                            }
+                    );
+                }, btn2: function () {
+                    layer.closeAll();
+                }
+            });
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        });
+
+    })
+
+
+</script>
+<script type="text/html" id="formBar">
+    <a class="layui-btn layui-btn-xs" lay-event="generate">小程序码</a>
+    <a class="layui-btn layui-btn-xs" lay-event="report">报表</a>
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>

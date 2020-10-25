@@ -1,0 +1,155 @@
+<extend name="Public/base"/>
+<block name="body">
+    <div class="main-title">
+        <h2>系统在线更新</h2>
+    </div>
+    <div class="clearfix with-padding">
+
+        <div class="clearfix">
+
+            <div class="alert alert-danger-inverse with-icon">
+                <i class="icon-info-sign"></i> 
+                <div class="content">更新时请注意备份网站数据和相关数据库文件！官方不强制要求用户跟随官方意愿进行更新尝试！</div>
+            </div>
+
+            <div class="alert alert-danger-inverse with-icon">
+                <i class="icon-info-sign"></i> 
+                <div class="content">在线系统升级需要在系统设置中关闭网站，<a class="alert-link" href="{:U('admin/config/group')}">点击这里关闭网站</a>！</div>
+            </div>
+
+            <if condition="$result['status'] neq 0">
+               
+            <form id="migration" class="form-horizontal" role="form" action="{:U('Update/startUpdate')}" method="post">
+                <legend>系统检测到有可升级的版本</legend>
+                    <div class="form-group">
+                      <label class="col-md-2 control-label">版本</label>
+                      <div class="col-md-10">
+                        <div class="form-control-static">
+                            <p>系统当前版本{:file_get_contents('./Data/version.ini')}</p>
+                            <p>可升级至版本{$result['data']['version']}</p>
+                            <p>允许升级的版本{$result['data']['enable_version']}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-md-2 control-label">云端最新版本</label>
+                      <div class="col-md-10">
+                        <div class="form-control-static">
+                            {$cloudVersion}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-md-2 control-label">新版本升级说明</label>
+                      <div class="col-md-10">
+                        <div class="form-control-static">
+                        {$result['data']['content']}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-md-2 control-label">发布时间</label>
+                      <div class="col-md-10">
+                        <div class="form-control-static">
+                            
+                            {$result['data']['create_time']|date='Y-m-d H:i:s',###}
+                            
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                    <label class="col-md-2 control-label">更新协议</label>
+                        <div class="col-md-10">
+                            <div class="">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="box" id="agreement_0"> 我已经做好了相关文件的备份工作
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="box" id="agreement_1"> 认同官方的更新行为并自愿承担更新所存在的风险
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="box" id="agreement_2"> 理解官方的辛勤劳动并报以感恩的心态点击更新按钮
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                    <label class="col-md-2 control-label"></label>
+                        <div class="col-md-10">
+                            <button type="button" id="oneupdate" class="btn btn-lg btn-primary">一键更新</button>
+                        </div>
+                    </div>
+            </form>
+            <!--确认对话框-->
+                <div class="modal modal-for-page fade" id="myModal">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+                      <h4 class="modal-title">确认在线升级至 {$result['version']}版</h4>
+                    </div>
+                    <div class="modal-body">
+                      <p>少年！确认前可不要忽略文件和数据的备份哦～</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="yesupdate" class="btn btn-primary">确认升级</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">我再想想...</button>
+                    </div>
+                  </div>
+                </div>
+                </div>
+            <!--确认对话框END-->
+            <else />
+
+                    <div class="alert alert-info-inverse with-icon">
+                        <i class="icon-info-sign"></i>
+                        <div class="content">
+                            <h3>当前系统版本：<span id="localVer">{:file_get_contents('./Data/version.ini')}</span></h3>
+                            <h3>云端最新版本：<span id="cloudVer">{$cloudVersion}</span></h3>
+                        </div>
+                   </div>
+
+                    <div class="alert alert-warning-inverse with-icon">
+                        <i class="icon-ok-sign"></i>
+                        <div class="content"><h3>已经是最新版本。</h3></div>
+                    </div>
+                    <div class="checkButtonBox">
+                        <button class="btn btn-block btn-lg btn-primary" id="checkVersion" type="button">重新检测</button>
+                    </div>
+            </if>
+        </div>
+    </div>
+
+</block>
+<block name="script">
+<script>
+    $(function(){
+        $('#oneupdate').click(function(){
+                var a = $("#agreement_0").is(':checked');
+                var b = $("#agreement_1").is(':checked');
+                var c = $("#agreement_2").is(':checked');
+                if(a && b && c) {
+                    $('#myModal').modal();
+                } else {
+                    toast.error("抱歉，更新前请仔细阅读并确认更新协议！");
+                    return false;
+                }
+        });
+        $('#yesupdate').click(function(){
+            $('#migration').submit();
+        });
+        $('#checkVersion').click(function(){
+            $('#checkVersion').html('检测中...页面即将跳转');
+            window.location.href='{:U(Admin/update/index)}'; 
+        });
+    });
+</script>
+</block>
+

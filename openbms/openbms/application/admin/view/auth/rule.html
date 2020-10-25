@@ -1,0 +1,112 @@
+{extend name="base" /}
+{block name="css"}
+<link rel="stylesheet" href="__ADMIN__/ztree/css/zTreeStyle/zTreeStyle.css">
+{/block}
+{block name="body"}
+<div class="layui-card">
+    <div class="layui-card-body">
+        <div class="layui-btn-group">
+            <a href="javascript:;" class="layui-btn" id="addRule"><i class="fa fa-plus-circle"></i> 添加规则</a>
+            <a href="javascript:;" class="layui-btn layui-btn-normal" id="editRule"><i class="fa fa-edit"></i> 编辑规则</a>
+            <a href="javascript:;" class="layui-btn layui-btn-danger" id="delRule"><i class="fa fa-trash-o"></i> 删除规则</a>
+        </div>
+        <div class="ztree" id="authRule"></div>
+    </div>
+</div>
+{/block}
+{block name="js"}
+<script src="__ADMIN__/ztree/js/jquery.ztree.all.min.js"></script>
+<script>
+$.fn.zTree.init($("#authRule"), {
+    view: {
+        dblClickExpand: false,
+        showLine: true,
+        showIcon: false,
+        selectedMulti: false
+    },
+    edit: {
+        enable: true,
+        editNameSelectAll: true,
+        showRemoveBtn: false,
+        showRenameBtn: false
+    },
+    data: {
+        simpleData: {
+            enable: true
+        }
+    }
+}, {$authRule});
+
+$('#addRule').on('click', function(){
+    var zTree = $.fn.zTree.getZTreeObj('authRule'),
+        nodes = zTree.getSelectedNodes(),
+        treeNode = nodes[0];
+    var id = treeNode == undefined ? 0 : treeNode.id;
+    var index = layer.open({
+        title: '添加规则',
+        type: 2,
+        area: ['430px', '430px'],
+        content: '{:url("admin/auth/addRule")}?id=' + id,
+    });
+});
+
+$('#editRule').on('click', function(){
+    var zTree = $.fn.zTree.getZTreeObj('authRule'),
+        nodes = zTree.getSelectedNodes(),
+        treeNode = nodes[0];
+    if (nodes.length == 0) {
+        layer.msg('请先选择一个节点');
+        return false;
+    } else {
+        var id = treeNode.id;
+        var index = layer.open({
+            title: '修改规则',
+            type: 2,
+            area: ['430px', '430px'],
+            content: '{:url("admin/auth/editRule")}?id=' + id
+        });
+    }
+});
+
+$('#delRule').on('click', function(){
+    layer.confirm('确定删除？', {
+        icon: 3,
+        title: '提示'
+    }, function(index) {
+        var zTree = $.fn.zTree.getZTreeObj('authRule'),
+            nodes = zTree.getSelectedNodes(),
+            treeNode = nodes[0];
+        if (nodes.length == 0) {
+            layer.msg('请先选择一个节点');
+            return false;
+        } else {
+            var id = treeNode.id;
+            var index = layer.msg('删除中，请稍候', {
+                icon: 16,
+                time: false,
+                shade: 0.3
+            });
+            $.ajax({
+                url: '{:url("admin/auth/delRule")}?id=' + id,
+                type: 'post',
+                dataType: 'json',
+                success: function(result) {
+                    if (result.code === 1 && result.url != '') {
+                        setTimeout(function() {
+                            location.href = result.url;
+                        }, 1000);
+                    }
+                    layer.close(index);
+                    layer.msg(result.msg);
+                },
+                error: function (xhr, state, errorThrown) {
+                    layer.close(index);
+                    layer.msg(state + '：' + errorThrown);
+                }
+            });
+        }
+    });
+    return false;
+});
+</script>
+{/block}

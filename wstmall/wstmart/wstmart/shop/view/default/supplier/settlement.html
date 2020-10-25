@@ -1,0 +1,267 @@
+{extend name="default/base" /}
+{block name="title"}我的进货单 - {:WSTConf('CONF.mallName')}{__block__}{/block}
+{block name="commoncss"}{/block}
+{block name="css"}
+<link href="__SHOP__/supplier/css/common.css?v={$v}" rel="stylesheet">
+<link href="__SHOP__/supplier/css/carts.css?v={$v}" rel="stylesheet">
+{/block}
+{block name="main"}
+<div class="wst-container">
+	<div id="stepflex" class="stepflex">
+       <dl class="first doing">
+          <dt class="s-num">1</dt>
+          <dd class="s-text">我的进货单</dd>
+          <dd></dd>
+       </dl>
+       <dl class="normal doing">
+          <dt class="s-num">2</dt>
+          <dd class="s-text">填写核对订单信息</dd>
+       </dl>
+       <dl class="last">
+          <dt class="s-num1">3</dt>
+          <dd class="s-text1">成功提交订单</dd>
+       </dl>
+    </div>
+    <div class='wst-clear'></div>
+    <div class='main-head'>填写并核对订单</div>
+    <input type='hidden' class='j-ipt' id='s_addressId' value='{if isset($userAddress["addressId"]) }{$userAddress["addressId"]}{/if}'/>
+    <input type='hidden' class='j-ipt' id='s_areaId' value='{if isset($userAddress["addressId"]) }{$userAddress["areaId2"]}{/if}'/>
+    <!-- 用户地址 -->
+    <div class='address-box'>
+       <div class='box-head'>收货人信息 <a class="add-addr" href="javascript:;" onclick="javascript:emptyAddress(this,1)">新增收货地址</a></div>
+       <!-- 选中地址 -->
+       <div class='j-show-box {if empty($userAddress)}hide{/if}' >
+          <div id="s_userName" class="wst-frame1 j-selected">{if isset($userAddress["addressId"]) }{$userAddress['userName']}{/if}<i></i></div>
+          <div class="address" onmouseover="addrBoxOver(this)" onmouseout="addrBoxOut(this)">
+	          <span id='s_address'>
+	          {if isset($userAddress["addressId"]) }
+	          {$userAddress['userName']}&nbsp;&nbsp;&nbsp;{$userAddress['areaName']}&nbsp;&nbsp;{$userAddress['userAddress']}&nbsp;&nbsp;{$userAddress['userPhone']}
+	          {/if}
+	          </span>
+	          &nbsp;&nbsp;
+	          <span id="isdefault" {if(isset($userAddress['isDefault'])&&($userAddress['isDefault']==1))} class="j-default">默认地址{else /} >{/if}</span>
+            <div class="operate-box">
+              <a href="javascript:void(0)" onclick="javascript:toEditAddress({if isset($userAddress["addressId"]) }{$userAddress["addressId"]}{/if},this,1,1,1)">编辑</a>&nbsp;&nbsp;
+            </div>
+          </div>
+                    
+          <div class='wst-clear'></div>
+
+          <div class="address">
+            <a class="wst-lfloat" href='javascript:void(0)' onclick='javascript:showEditAddressBox()' style=''>更多地址</a>
+          </div>
+
+       </div>
+       <!-- 地址列表  -->
+       <ul class='j-list-box hide' id='addressList'></ul>
+
+       <!-- 新增编辑地址 -->
+       <div class='j-edit-box {if !empty($userAddress)}hide{/if}'>
+          <form id='addressForm' autocomplete='off'>
+            <input type='hidden' class='j-eipt' id='addressId' value=''/>
+            <div class='rows'>
+                <div class='label'>收货人<font color='red'>*</font>：</div>
+                <div class='field'><input type='text' class='j-eipt' id='userName' maxLength='15'/></div>
+                <div class='wst-clear'></div>
+            </div>
+            <div class='rows'>
+                <div class='label'>收货地址<font color='red'>*</font>：</div>
+                <div class='field'>
+                <select id="area_0" class='j-areas' level="0" onchange="WST.ITAreas({id:'area_0',val:this.value,isRequire:true,className:'j-areas'});">
+			      	<option value="">-请选择-</option>
+			      	{volist name="areaList" id="vo"}
+			        <option value="{$vo['areaId']}">{$vo['areaName']}</option>
+			        {/volist}
+			    </select>
+                
+                </div>
+                <div class='wst-clear'></div>
+            </div>
+            <div class='rows'>
+                <div class='label'>详细地址<font color='red'>*</font>：</div>
+                <div class='field'><input type='text' class='j-eipt' id='userAddress' style='width:300px' maxLength='50'/>  </div>
+                <div class='wst-clear'></div>
+            </div>
+            <div class='rows'>
+                <div class='label'>联系电话<font color='red'>*</font>：</div>
+                <div class='field'><input type='text' id='userPhone' class='j-eipt' name="addrUserPhone" maxLength='11'/>  </div>
+                <div class='wst-clear'></div>
+            </div>
+            <div class='rows'>
+                <div class='label'>是否默认地址<font color='red'>*</font>：</div>
+                <div class='radio-box'>
+	                <label style='margin-right:36px;'>
+	                   <input type='radio' name='isDefault' value='1' checked class='j-eipt wst-radio' id="isDefault1"/><label class="mt-1" for="isDefault1"></label>是
+	                </label>
+	                <label>
+	                   <input type='radio' name='isDefault' value='0' class='j-eipt wst-radio' id="isDefault2"/><label class="mt-1" for="isDefault2"></label>否
+	                </label>
+                </div>
+                <div class='wst-clear'></div>
+            </div>
+            <div class='rows'>
+                <a href='javascript:void(0)' class='wst-cart-reda' id='saveAddressBtn' onclick='javascript:editAddress()' style='width:105px;line-height:33px;padding:6px 15px'>保存收货人地址</a>
+            </div>
+          </form>
+       </div>
+    </div>
+    <!-- 支付方式 -->
+    <div class='pay-box'>
+       <div class='box-head'>支付方式</div>
+       <div class="wst-list-box">
+          {if !empty($payments['0'])} 
+          <div class="wst-frame2 j-selected" onclick="javascript:changeSelected(0,'payType',this)">货到付款<i></i></div>
+          {/if}
+          {if !empty($payments['1'])}  
+          <div class="wst-frame2 <?php echo empty($payments['0'])?'j-selected':''; ?>" onclick="javascript:changeSelected(1,'payType',this)">在线支付<i></i></div>
+          {/if}
+          <input type='hidden' value="<?php echo empty($payments['0'])?1:0; ?>" id='payType' class='j-ipt' />
+          <div class='wst-clear'></div>
+       </div>
+    </div>
+    <!-- 商品清单 -->
+    <div class='cart-box2'>
+       <div class='box-head2'>商品清单</div>
+       <div class='cart-head2'>
+          <div class='goods2'>商品</div>
+          <div class='price2'>单价</div>
+          <div class='num2'>数量</div>
+          <div class='t-price2'>总价</div>
+       </div>
+       {php}$supplierFreight = 0;{/php}
+       {volist name='$carts["carts"]' id='vo'}
+       {php}
+       $freight = 0;
+       if($vo['isFreeShipping']){
+          $freight = 0;
+       }else{
+          if(!empty($userAddress)){
+             $freight = model("SupplierOrders")->getOrderFreight($vo['supplierId'],$userAddress['areaId2'],$vo);
+          }else{
+             $freight = 0;
+          }
+       }
+       $supplierFreight = $supplierFreight + $freight;
+       {/php}
+       <div class='cart-item j-supplier' dataval='{$vo['supplierId']}'>
+          <div class='supplier2'>
+          {$vo['supplierName']}
+          {if $vo['supplierQQ'] !=''}
+          <a href="tencent://message/?uin={$vo['supplierQQ']}&Site=QQ交谈&Menu=yes">
+			  <img border="0" src="{:WSTProtocol()}wpa.qq.com/pa?p=1:{$vo['supplierQQ']}:7" alt="QQ交谈" width="71" height="24"/>
+		  </a>
+          {/if}
+          {if $vo['supplierWangWang'] !=''}
+          <a target="_blank" href="{:WSTProtocol()}www.taobao.com/webww/ww.php?ver=3&touid={$vo['supplierWangWang']}&siteid=cntaobao&status=1&charset=utf-8">
+			  <img border="0" src="{:WSTProtocol()}amos.alicdn.com/realonline.aw?v=2&uid={$vo['supplierWangWang']}&site=cntaobao&s=1&charset=utf-8" alt="和我联系" />
+		  </a>
+          {/if}
+          </div>
+          <div class='goods-list'>
+             {volist name='vo["list"]' id='vo2'}
+             <div class='item selected j-g{$vo2["cartId"]}'>
+		        <div class='goods2'>
+		            <div class='img2'>
+		                <a href='{:Url("shop/suppliergoods/detail","goodsId=".$vo2["goodsId"])}' target='_blank'>
+			            <img src='__RESOURCE_PATH__/{$vo2["goodsImg"]}' width='80' height='80' title='{$vo2["goodsName"]|WSTStripTags}'/>
+			            </a>
+		            </div>
+		            <div class='name2'>{$vo2["goodsName"]}</div>
+		            <div class='spec2'>
+		            {volist name='vo2["specNames"]' id='specs'}
+		            <div>{$specs['catName']}：{$specs['itemName']}</div>
+		            {/volist}
+		            </div>
+		        </div>
+		        <div class='price2'>¥{$vo2['supplierPrice']}</div>
+		        <div class='num2'>{$vo2['cartNum']}</div>
+		        <div class='t-price2'>¥{$vo2['supplierPrice']*$vo2['cartNum']}</div>
+		        <div class='wst-clear'></div>
+             </div>
+             {/volist}
+             <div class='supplier-remark selected2'>
+              <!-- 发票信息 -->
+              {if ($vo['isInvoice']==1)}
+              <div class="pay-boxs">
+                 <div class='box-head'>发票信息</div>
+                   <div class="invoic-box">
+
+                     <div style="float:left;" id="invoice_info_{$vo['supplierId']}">不开发票</div>
+                     <div style="float:left;color:blue;margin-left:10px;cursor:pointer;" onclick='javascript:changeInvoice(1,"#invoiceClientDiv",{$vo['supplierId']},this)'>修改</div>
+
+                     <div class="wst-clear"></div>
+                        <input type="hidden" id="invoice_obj_{$vo['supplierId']}" value="0" />
+                       <input type="hidden" id="invoiceId_{$vo['supplierId']}" value="0" class='j-ipt' />
+                       <input type='hidden' value='0' id="isInvoice_{$vo['supplierId']}" class='j-ipt' />
+                       <input type='hidden' value='个人' id="invoiceClient_{$vo['supplierId']}" class='j-ipt' />
+                   </div>
+                 <div class='wst-clear'></div>
+               </div>
+              {/if}
+              <!-- 送货方式 -->
+              <div class='pay-boxs'>
+                 <div class='box-head'>送货方式</div>
+                 <div class="wst-list-box">
+                  <input type="hidden" id="deliverType_{$vo['supplierId']}" value="0" class='j-ipt j-deliver'/>
+                  <div class="wst-frame2 j-selected" onclick="javascript:changeDeliverType(0,{$vo['supplierId']},'deliverType',this)">快递运输<i></i></div>
+                   <div class="wst-frame2 " id="deliver_btn_{$vo['supplierId']}" onclick="javascript:changeDeliverType(1,{$vo['supplierId']},'deliverType',this)">自提<i></i></div>
+                   <div id="deliver_info_{$vo['supplierId']}" style="line-height: 40px;display: none;"></div>
+                    <div class='wst-clear'></div>
+                 </div>
+              </div>
+              <div class="bremark">
+                <div class='supplier-remark-box'>
+                   订单备注：<input type='text' id="remark_{$vo['supplierId']}" class='j-ipt' style='width:420px' maxLength='100' placeholder='给卖家留言'/>
+                </div>
+                <div class='supplier-summary'>
+                 
+                  <div class='row'>
+                    <dt>运费：</dt><dd>￥<span id="supplierF_{$vo['supplierId']}" style='font-weight: bold;color: #E55356;'>{$freight}</span></dd>
+                  </div>
+                  <div class='row'>
+                    <dt>店铺合计(含运费)：</dt><dd>￥<span id="supplierC_{$vo['supplierId']}" v="{$vo['goodsMoney']}" style='font-weight: bold;color: #E55356;'>{:WSTPositiveNum($freight+$vo['goodsMoney']-$vo['promotionMoney'])}</span></dd>
+                  </div>
+                </div>
+              </div>
+              
+           </div>
+          </div>
+       </div>
+       {/volist}
+    
+       <div class='cart-footer'>
+          <div class='cart-summary2'>
+          	<div class="summarys2">
+    
+     
+          	</div>
+          	<div class="summarys3" style='text-align:right;padding-right:20px'>
+             <div>运费总计：¥<span id='deliverMoney'>{$supplierFreight}</span></div>
+             
+             <div class='summary2'>应付总金额(含运费)：¥<span id='totalMoney' v='{$carts["goodsTotalMoney"]}'>
+             {if empty($userAddress)}
+             {:WSTPositiveNum($carts["goodsTotalMoney"]-$carts['promotionMoney'])}
+             {else}
+             {:WSTPositiveNum($carts["goodsTotalMoney"]+$supplierFreight-$carts['promotionMoney'])}
+             {/if}
+             </span></div>
+             
+             </div>
+             <div class='wst-clear'></div>
+          </div>         
+       </div>
+    </div>
+     <div class='cart-btn'>
+        <a href='{:Url("shop/suppliercarts/index")}' class='wst-prev wst-cart-asha' style='width:105px;height:33px;line-height:33px;'>上一步</a>
+        <a href='javascript:void(0)' onclick='javascript:submitOrder()' class='wst-order wst-cart-reda' style='width:118px;height:33px;line-height:33px;'>提交订单</a>
+        <div class='wst-clear'></div>
+     </div>
+</div>
+
+
+{/block}
+{block name="js"}
+<script type='text/javascript' src='__SHOP__/supplier/js/common.js?v={$v}'></script>
+<script type='text/javascript' src='__SHOP__/supplier/js/carts.js?v={$v}'></script>
+
+{/block}

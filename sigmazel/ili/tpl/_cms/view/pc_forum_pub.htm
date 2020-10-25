@@ -1,0 +1,192 @@
+<!--{@name 发表主题}-->
+<!DOCTYPE html>
+<html>
+<head>
+<!--{template /tpl/_cms/view/pc_meta}-->
+<style type="text/css">
+.background-pc {background:url({$categories['05'][FILE01][0]});}
+.background-mobile {background:url({$categories['05'][FILE02][0]});}
+</style>
+</head>
+<body>
+	<!--{template /tpl/_cms/view/pc_head}-->
+	
+	<div class="forum">
+		<div class="banner banner-mini background-{echo $ismobile ? 'mobile' : 'pc';}">
+			<div class="box">
+				<p class="title">{$categories['05'][COMMENT]}</p>
+			</div>
+		</div>
+		
+		<div class="topics">
+			<div class="box">
+				<div class="left">
+					<p class="crumb">
+						<a href="index.html" title="首页">首页</a> \ <a href="forum.html" title="社区">社区</a> \  <a href="forum.html?op=topics&id={$_var[gp_id]}">{$forum[NAME]}</a> \ 发布主题
+					</p>
+					<p class="line"></p>
+					
+					<div class="form form-topic">
+						<p class="head">发布主题</p>
+						<p class="line"></p>
+						
+						<form name="frmTopic" action="forum.html?op=pub&id={$_var[gp_id]}" method="post" onsubmit="javascript:return check_form(this);">
+							<input type="hidden" name="formsubmit" value="yes"/>
+							<dl class="item">
+								<dt class="label">
+									标题
+								</dt>
+								<dd class="element">
+									<input type="text" class="input-big" name="txtTitle" size="25" maxlength="50" placeholder="输入标题…"/>
+									<span class="tips">(50字以内)</span>
+								</dd>
+								<br class="clear"/>
+							</dl>
+							<dl class="item">
+								<dt class="label">
+									内容
+								</dt>
+								<dd class="element content">
+									<textarea name="txtContent" rows="16" cols="65" placeholder="输入内容…"></textarea>
+								</dd>
+								<br class="clear"/>
+							</dl>
+							<dl class="item">
+								<dt class="label"></dt>
+								<dd class="element content">
+									<p class="tips">注：不限字数<span>，可附4张图片，单张限200KB大小，双击图片可删除！，<br/>如内容中插入图片，请使用{FILE0[1-5]}</span>。</p>
+									<p class="button">
+										<button type="submit">确认提交</button>
+									</p>
+									<div class="upload" id="upload_file">
+										<p class="ref add">
+											<span class="button" id="swfu_file"></span>
+										</p>
+										<br class="clear"/>
+									</div>
+								</dd>
+							</dl>
+						</form>
+					</div>
+				</div>
+				<!--{template /tpl/_cms/view/pc_forum_right}-->
+				<br class="clear"/>
+			</div>
+		</div>
+	</div>
+	
+	<!--{template /tpl/_cms/view/pc_foot}-->
+	
+	<script type="text/javascript" src="tpl/_res/pc/js/swfupload.js"></script>
+	<script type="text/javascript" src="tpl/_res/pc/js/swfupload_handlers.js"></script>
+	<script type="text/javascript" src="tpl/_res/pc/js/swfupload_images.js"></script>
+	
+	<script type="text/javascript">
+	var swfu;
+	swfupload_params.limit = 4;
+	swfupload_params.uploaded = 0;
+	
+	function fileQueueError(file, errorCode, message) {
+		if (errorCode === SWFUpload.QUEUE_ERROR.QUEUE_LIMIT_EXCEEDED) {
+			$.dialog({message:'{lang admin.validate.swfupload.lang.limit}'});
+		}else if(errorCode == SWFUpload.QUEUE_ERROR.ZERO_BYTE_FILE){
+			$.dialog({message:'{lang admin.validate.swfupload.echo.error}'});
+		}else if(errorCode == SWFUpload.QUEUE_ERROR.FILE_EXCEEDS_SIZE_LIMIT){
+			$.dialog({message:'{lang admin.validate.swfupload.echo.size}'});
+		}else if(errorCode == SWFUpload.QUEUE_ERROR.INVALID_FILETYPE){
+			$.dialog({message:'{lang admin.validate.swfupload.echo.type}'});
+		}else{
+			$.dialog({message:'{lang admin.validate.swfupload.lang.image}'});
+		}
+	}
+	
+	function uploadSuccess(file, serverData) {
+		if(serverData.substring(0, 7) === "FILEID:"){
+			var tempArr = serverData.split('|');
+			var photoPath = formatFilePath(serverData.substring(7));
+			
+			var tempHTML = '<p class="ref" href="attachment/' + tempArr[0].substring(7) + '">';
+			tempHTML += '<input type="hidden" name="hdnImagePath_' + tempArr[5] + '[]" value="' + serverData.substring(7) + '" />';
+			
+			if(tempArr[3] - 0 >= tempArr[4] - 0) tempHTML += '<span></span><img src="' + photoPath + '" width="100%"/>';
+			else tempHTML += '<span></span><img src="' + photoPath + '" height="100%"/>';
+			
+			tempHTML += '<span class="cover" style="display:none;" data="' + tempArr[5] + '">删除</span>';
+			tempHTML += '</p>';
+			
+			$(tempHTML).insertBefore('#upload_' + tempArr[5] + ' .add');
+			
+			if($('#upload_' + tempArr[5] + ' .ref').length > 5) {
+				$('#upload_' + tempArr[5] + ' .add').hide();
+			}
+			
+			$('.upload .ref').unbind('hover').hover(function(){
+				$('.cover', this).show();
+			}, function(){
+				$('.cover', this).hide();
+			});
+			
+			$('.upload .ref .cover').unbind('click').click(function(){
+				var data = $(this).attr('data');
+				
+				if($('#upload_' + data + ' .ref').length < 7) {
+					$('#upload_' + data + ' .add').show();
+				}
+				
+				$(this).parent().remove();
+			});
+		}else $.dialog({message:serverData});
+	}
+	
+	function createSwfUpload(id){
+		var swf_config = {
+			upload_url: "forum.html?op=upload&_SALT={$_var[current][SALT]}&id=" + id,
+			
+			file_size_limit : "200KB", 
+			file_types : "*.jpg;*.bmp;*.gif;*.png",
+			file_types_description : "JPG Images",
+			file_upload_limit : '0',
+			
+			file_queue_error_handler : fileQueueError,
+			file_dialog_complete_handler : fileDialogComplete,
+			upload_progress_handler : uploadProgress,
+			upload_error_handler : uploadError,
+			upload_success_handler : uploadSuccess,
+			upload_complete_handler : uploadComplete,
+			
+			button_image_url : "tpl/_cms/static/images/forum/icon-upload.png",
+			button_placeholder_id : "swfu_" + id,
+			button_width: 40,
+			button_height: 40,
+			button_text : '',
+			button_text_style : '',
+			button_text_top_padding: 0,
+			button_text_left_padding: 18,
+			
+			flash_url : "tpl/_res/pc/swfupload.swf", 
+			debug: false
+		};
+		
+		return new SWFUpload(swf_config);
+	}
+	
+	function check_form(frm){
+		if(frm.txtTitle.value.trim().length == 0){
+			$(frm.txtTitle).addClass('input-active');
+			return false;
+		}
+		
+		if(frm.txtContent.value.trim().length == 0){
+			$(frm.txtContent).addClass('input-active');
+			return false;
+		}
+		
+		return true;
+	}
+	
+	$(function(){
+		createSwfUpload('file');
+	});
+	</script>
+</body>
+</html>
